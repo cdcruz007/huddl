@@ -1,255 +1,141 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../theme/huddl_colors.dart';
-import '../../widgets/huddl_widgets.dart';
 import 'login_screen.dart';
 import 'onboarding_screen.dart';
 
-class WelcomeScreen extends StatefulWidget {
+// Design tokens matching source project AppColors
+const _kPrimary = Color(0xFFFF7043); // primary brand orange
+const _kTextPrimary = Color(0xFF2C2C2C); // dark text
+const _kTextSecondary = Color(0xFF666666); // secondary text
+
+class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
-
-  @override
-  State<WelcomeScreen> createState() => _WelcomeScreenState();
-}
-
-class _WelcomeScreenState extends State<WelcomeScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-
-  final List<_WelcomePage> _pages = const [
-    _WelcomePage(
-      icon: Icons.people_outline,
-      title: 'Connect with parents\nwho are at the same\nstage of life',
-      subtitle:
-          'Join a community of parents going through the same experiences as you.',
-    ),
-    _WelcomePage(
-      icon: Icons.event_outlined,
-      title: 'Discover local events\nand meetups\nnear you',
-      subtitle:
-          'Find events, playdates, and activities for your family in your area.',
-    ),
-    _WelcomePage(
-      icon: Icons.storefront_outlined,
-      title: 'Buy, sell, and swap\npre-loved items\nfor your family',
-      subtitle:
-          'Browse the marketplace for great deals on kids clothing, toys and more.',
-    ),
-  ];
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.white,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(height: 16),
-              // Logo header
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
-                      borderRadius: BorderRadius.circular(8),
+              // Logo at the top
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Image.asset(
+                  'assets/images/logo_huddl.png',
+                  height: 40,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Orange illustration circle
+                    Container(
+                      width: 220,
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: _kPrimary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(110),
+                      ),
+                      child: const Icon(
+                        Icons.people_rounded,
+                        size: 120,
+                        color: _kPrimary,
+                      ),
                     ),
-                    child: Center(
-                      child: Text(
-                        'H',
-                        style: GoogleFonts.poppins(
+                    const SizedBox(height: 56),
+                    // Hero headline
+                    const Text(
+                      'Welcome to\nHuddl',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 40,
+                        color: _kTextPrimary,
+                        fontWeight: FontWeight.w800,
+                        height: 1.2,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Subheadline
+                    const Text(
+                      'Connect with local parents\nand discover events near you',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: _kTextSecondary,
+                        height: 1.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Bottom CTA section
+              Column(
+                children: [
+                  // Primary orange button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const OnboardingScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kPrimary,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Get Started',
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.primary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'huddl',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: HuddlColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              // Welcome header
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Welcome to huddl!',
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'The app for ALL parents',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: HuddlColors.textHint,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Page view
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() => _currentPage = index);
-                  },
-                  itemCount: _pages.length,
-                  itemBuilder: (context, index) {
-                    final page = _pages[index];
-                    return Column(
-                      children: [
-                        // Illustration area
-                        Expanded(
-                          child: Container(
-                            margin: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.peachLight,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                page.icon,
-                                size: 80,
-                                color: HuddlColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        // Title
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            page.title,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            page.subtitle,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: HuddlColors.textHint,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              // Page indicators
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  _pages.length,
-                  (index) => Container(
-                    width: _currentPage == index ? 24 : 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      color: _currentPage == index
-                          ? HuddlColors.primary
-                          : HuddlColors.gray200,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Buttons
-              HuddlPrimaryButton(
-                text: 'Get Started',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const OnboardingScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account? ',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: HuddlColors.textHint,
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
+                  const SizedBox(height: 16),
+                  // Secondary text button
+                  TextButton(
+                    onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const LoginScreen(),
                         ),
                       );
                     },
-                    child: Text(
-                      'Log in',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'Already have an account? Log in',
+                      style: TextStyle(
+                        color: _kPrimary,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
+                        fontSize: 16,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-class _WelcomePage {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-
-  const _WelcomePage({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-  });
 }
