@@ -4,7 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
+import '../../services/event_service.dart';
 import 'create_meetup_screen.dart';
+import 'create_event_screen.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
 
@@ -23,18 +25,24 @@ class _EventsScreenState extends State<EventsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final MeetupService _meetupService = MeetupService();
+  final EventService _eventService = EventService();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) setState(() {});
+    });
     _meetupService.addListener(_refresh);
+    _eventService.addListener(_refresh);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     _meetupService.removeListener(_refresh);
+    _eventService.removeListener(_refresh);
     super.dispose();
   }
 
@@ -47,7 +55,21 @@ class _EventsScreenState extends State<EventsScreen>
       context,
       MaterialPageRoute(builder: (_) => const CreateMeetupScreen()),
     );
-    // Meetup service notifies listeners automatically
+  }
+
+  void _navigateToCreateEvent() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateEventScreen()),
+    );
+  }
+
+  void _navigateToCreate() {
+    if (_tabController.index == 2) {
+      _navigateToCreateEvent();
+    } else {
+      _navigateToCreateMeetup();
+    }
   }
 
   @override
@@ -125,13 +147,18 @@ class _EventsScreenState extends State<EventsScreen>
                 children: [
                   _AllTab(
                     meetupService: _meetupService,
+                    eventService: _eventService,
                     onCreateMeetup: _navigateToCreateMeetup,
+                    onCreateEvent: _navigateToCreateEvent,
                   ),
                   _MeetupsTab(
                     meetupService: _meetupService,
                     onCreateMeetup: _navigateToCreateMeetup,
                   ),
-                  const _EventsTab(),
+                  _EventsTab(
+                    eventService: _eventService,
+                    onCreateEvent: _navigateToCreateEvent,
+                  ),
                 ],
               ),
             ),
@@ -152,12 +179,12 @@ class _EventsScreenState extends State<EventsScreen>
           ],
         ),
         child: FloatingActionButton.extended(
-          onPressed: _navigateToCreateMeetup,
+          onPressed: _navigateToCreate,
           backgroundColor: Colors.transparent,
           elevation: 0,
           icon: const Icon(Icons.add, color: HuddlColors.white),
           label: Text(
-            'Create Meet-up',
+            _tabController.index == 2 ? 'Create Event' : 'Create Meet-up',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -176,15 +203,22 @@ class _EventsScreenState extends State<EventsScreen>
 
 class _AllTab extends StatelessWidget {
   final MeetupService meetupService;
+  final EventService eventService;
   final VoidCallback onCreateMeetup;
+  final VoidCallback onCreateEvent;
 
-  const _AllTab({required this.meetupService, required this.onCreateMeetup});
+  const _AllTab({
+    required this.meetupService,
+    required this.eventService,
+    required this.onCreateMeetup,
+    required this.onCreateEvent,
+  });
 
   @override
   Widget build(BuildContext context) {
     final meetups = meetupService.meetups;
-    // Combine: meetups first (as cards), then events
-    final totalItems = meetups.length + _thirdPartyEvents.length;
+    final eventMaps = eventService.eventMaps;
+    final totalItems = meetups.length + eventMaps.length;
 
     if (totalItems == 0) {
       return _EmptyState(
@@ -232,10 +266,10 @@ class _AllTab extends StatelessWidget {
           );
         }
 
-        // Events section
+        // Events section (now from EventService)
         final eventIdx = index - meetups.length - 1;
-        if (eventIdx >= 0 && eventIdx < _thirdPartyEvents.length) {
-          return _EventListCard(event: _thirdPartyEvents[eventIdx]);
+        if (eventIdx >= 0 && eventIdx < eventMaps.length) {
+          return _EventListCard(event: eventMaps[eventIdx]);
         }
         return const SizedBox.shrink();
       },
@@ -318,7 +352,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _EventsTab extends StatefulWidget {
-  const _EventsTab();
+  final EventService eventService;
+  final VoidCallback onCreateEvent;
+
+  const _EventsTab({required this.eventService, required this.onCreateEvent});
 
   @override
   State<_EventsTab> createState() => _EventsTabState();
@@ -329,9 +366,10 @@ class _EventsTabState extends State<_EventsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final allEvents = widget.eventService.eventMaps;
     final events = _filter == 'All'
-        ? _thirdPartyEvents
-        : _thirdPartyEvents.where((e) {
+        ? allEvents
+        : allEvents.where((e) {
             if (_filter == 'Free') return e['isFree'] == true;
             if (_filter == 'Paid') return e['isFree'] != true;
             if (_filter == 'Online') return e['isOnline'] == true;
@@ -368,8 +406,11 @@ class _EventsTabState extends State<_EventsTab> {
           child: events.isEmpty
               ? _EmptyState(
                   icon: Icons.event_outlined,
-                  title: 'No events match',
-                  subtitle: 'Try a different filter to find events.',
+                  title: 'No events yet',
+                  subtitle:
+                      'Create an event for parents\nin your area to attend.',
+                  actionLabel: 'Create Event',
+                  onAction: widget.onCreateEvent,
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
@@ -1066,8 +1107,6 @@ _CatStyle _meetupCategoryStyle(String category) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 3RD PARTY EVENTS DATA — company / organisation advertised events
-// ═══════════════════════════════════════════════════════════════════════════════
 // SHARED — universal cover-image builder (data-URI, http, asset, fallback)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1135,109 +1174,4 @@ Widget _buildCoverImage({
   return fallback();
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-
-final _thirdPartyEvents = [
-  {
-    'title': 'Baby Sensory Play Session',
-    'description':
-        'A fun sensory play session designed for babies aged 0-12 months. Come explore different textures, sounds and colours. Run by qualified early childhood educators with 10+ years experience. All materials provided.',
-    'date': 'SAT, MAR 15',
-    'time': '10:00 - 11:30 AM',
-    'location': 'Community Centre, Carlton',
-    'attendees': 24,
-    'isFree': false,
-    'price': '\$18',
-    'isOnline': false,
-    'color': HuddlColors.primary,
-    'icon': Icons.child_care,
-    'organiser': 'Little Explorers Co.',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    'title': 'Toddler Music & Movement',
-    'description':
-        'Interactive music and movement class for toddlers aged 1-3 years. Singing, dancing and instrument play! Led by professional musicians who specialise in early childhood music education.',
-    'date': 'WED, MAR 19',
-    'time': '2:00 - 3:00 PM',
-    'location': 'Music Room, Brunswick',
-    'attendees': 18,
-    'isFree': false,
-    'price': '\$15',
-    'isOnline': false,
-    'color': HuddlColors.teal,
-    'icon': Icons.music_note,
-    'organiser': 'Tiny Tunes Academy',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    'title': 'New Parents Workshop',
-    'description':
-        'A comprehensive workshop covering baby basics: feeding, sleeping, and settling techniques from certified professionals. Morning tea provided. Certificate of completion included.',
-    'date': 'SAT, MAR 22',
-    'time': '1:00 - 4:00 PM',
-    'location': 'Health Hub, Collingwood',
-    'attendees': 20,
-    'isFree': false,
-    'price': '\$45',
-    'isOnline': false,
-    'color': const Color(0xFFE8A838),
-    'icon': Icons.school,
-    'organiser': 'Parent Pro Australia',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/3875089/pexels-photo-3875089.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    'title': 'Online: Sleep Training Masterclass',
-    'description':
-        'Join our expert paediatric sleep consultant for a live interactive webinar on establishing healthy sleep routines for babies 4-18 months. Q&A session included.',
-    'date': 'THU, MAR 27',
-    'time': '7:30 - 9:00 PM',
-    'location': 'Online (Zoom)',
-    'attendees': 85,
-    'isFree': false,
-    'price': '\$25',
-    'isOnline': true,
-    'color': HuddlColors.blue,
-    'icon': Icons.nightlight_round,
-    'organiser': 'Sleep Well Babies',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/3771519/pexels-photo-3771519.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    'title': 'Family Fun Day — Free Entry',
-    'description':
-        'A free community event with face painting, balloon artists, petting zoo, food trucks and live music. Bring the whole family for a day of fun! Organised by the Carlton Community Association.',
-    'date': 'SUN, MAR 30',
-    'time': '10:00 AM - 3:00 PM',
-    'location': 'Princes Park, Carlton North',
-    'attendees': 150,
-    'isFree': true,
-    'price': '',
-    'isOnline': false,
-    'color': HuddlColors.purple,
-    'icon': Icons.celebration,
-    'organiser': 'Carlton Community Assoc.',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/1684187/pexels-photo-1684187.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-  {
-    'title': 'Baby First Aid & CPR',
-    'description':
-        'Essential baby and child first aid course. Learn CPR, choking response, and how to handle common childhood injuries. Accredited certification included.',
-    'date': 'SAT, APR 5',
-    'time': '9:00 AM - 1:00 PM',
-    'location': 'St Vincent\'s Hospital, Fitzroy',
-    'attendees': 30,
-    'isFree': false,
-    'price': '\$65',
-    'isOnline': false,
-    'color': const Color(0xFFE53935),
-    'icon': Icons.medical_services_outlined,
-    'organiser': 'Red Cross Australia',
-    'organiserLogo': '',
-    'imageUrl': 'https://images.pexels.com/photos/263337/pexels-photo-263337.jpeg?auto=compress&cs=tinysrgb&w=600',
-  },
-];
+// Events data is now managed by EventService (lib/services/event_service.dart)
