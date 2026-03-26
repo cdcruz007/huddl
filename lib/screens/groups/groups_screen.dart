@@ -2838,9 +2838,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               clipBehavior: Clip.antiAlias,
-              child: group.imageUrl.startsWith('data:')
-                  ? _buildDataImage(group.imageUrl)
-                  : Icon(iconData, color: iconColor, size: 28),
+              child: _buildGroupImage(iconData, iconColor),
             ),
             const SizedBox(width: 12),
             // ── Name + member count ──────────────────────────────
@@ -2938,22 +2936,57 @@ class _DiscoverGroupCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDataImage(String dataUrl) {
-    try {
-      final dataUri = Uri.parse(dataUrl);
-      final bytes = dataUri.data?.contentAsBytes();
-      if (bytes != null) {
-        return Image.memory(
-          Uint8List.fromList(bytes),
-          fit: BoxFit.cover,
-          width: 56,
-          height: 56,
-        );
-      }
-    } catch (_) {
-      // fall through
+  /// Renders the group thumbnail from any source: asset path, http URL,
+  /// or base64 data-URI. Falls back to the category icon when the image
+  /// is empty or fails to load.
+  Widget _buildGroupImage(IconData fallbackIcon, Color fallbackColor) {
+    final url = group.imageUrl;
+    if (url.isEmpty) {
+      return Icon(fallbackIcon, color: fallbackColor, size: 28);
     }
-    return const Icon(Icons.people, color: HuddlColors.primary, size: 28);
+
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        width: 56,
+        height: 56,
+        errorBuilder: (_, __, ___) =>
+            Icon(fallbackIcon, color: fallbackColor, size: 28),
+      );
+    }
+
+    if (url.startsWith('http')) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        width: 56,
+        height: 56,
+        errorBuilder: (_, __, ___) =>
+            Icon(fallbackIcon, color: fallbackColor, size: 28),
+      );
+    }
+
+    if (url.startsWith('data:')) {
+      try {
+        final dataUri = Uri.parse(url);
+        final bytes = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover,
+            width: 56,
+            height: 56,
+            errorBuilder: (_, __, ___) =>
+                Icon(fallbackIcon, color: fallbackColor, size: 28),
+          );
+        }
+      } catch (_) {
+        // fall through
+      }
+    }
+
+    return Icon(fallbackIcon, color: fallbackColor, size: 28);
   }
 }
 
