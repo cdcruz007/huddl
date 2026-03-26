@@ -50,6 +50,11 @@ class _GroupsScreenState extends State<GroupsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {}); // rebuild to show/hide header icons per tab
+      }
+    });
   }
 
   @override
@@ -82,31 +87,13 @@ class _GroupsScreenState extends State<GroupsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Groups',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.search, color: HuddlColors.textDark),
-                            onPressed: () {},
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add_circle_outline,
-                                color: HuddlColors.primary),
-                            onPressed: _openCreateGroup,
-                          ),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    'Groups',
+                    style: GoogleFonts.poppins(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   // ── Tab bar ───────────────────────────────────────
@@ -460,14 +447,21 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               _ActionTile(
-                icon: Icons.mark_chat_read_outlined,
-                label: 'Mark as read',
+                icon: (group.unreadCount ?? 0) > 0
+                    ? Icons.mark_chat_read_outlined
+                    : Icons.mark_chat_unread_outlined,
+                label: (group.unreadCount ?? 0) > 0
+                    ? 'Mark as read'
+                    : 'Mark as unread',
                 onTap: () {
                   Navigator.pop(c);
                   setState(() {
                     final idx = _allGroups.indexWhere((g) => g.id == group.id);
                     if (idx != -1) {
-                      _allGroups[idx] = _allGroups[idx].copyWith(unreadCount: 0);
+                      final current = _allGroups[idx].unreadCount ?? 0;
+                      _allGroups[idx] = _allGroups[idx].copyWith(
+                        unreadCount: current > 0 ? 0 : 1,
+                      );
                       _applyFilter();
                     }
                   });
@@ -484,6 +478,30 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               _ActionTile(
+                icon: Icons.delete_outline,
+                label: 'Delete',
+                color: Colors.red,
+                onTap: () {
+                  Navigator.pop(c);
+                  final listItem = _MessageListItem(
+                    id: group.id,
+                    name: group.name,
+                    imageUrl: group.imageUrl,
+                    lastMessage: group.lastMessage,
+                    lastSenderName: group.lastSenderName,
+                    lastMessageTime: group.lastMessageTime,
+                    unreadCount: group.unreadCount ?? 0,
+                    isGroup: true,
+                    isPinned: isPinned,
+                    isMuted: isMuted,
+                    isPrivate: group.isPrivate,
+                    groupItem: group,
+                    isTyping: false,
+                  );
+                  _confirmDeleteConversation(ctx, listItem);
+                },
+              ),
+              _ActionTile(
                 icon: Icons.exit_to_app,
                 label: 'Leave group',
                 color: Colors.red,
@@ -491,6 +509,13 @@ class _MessagesTabState extends State<_MessagesTab> {
                   Navigator.pop(c);
                   _confirmLeaveGroup(ctx, group);
                 },
+              ),
+              const SizedBox(height: 4),
+              const Divider(height: 1, color: HuddlColors.divider),
+              _ActionTile(
+                icon: Icons.close,
+                label: 'Cancel',
+                onTap: () => Navigator.pop(c),
               ),
               const SizedBox(height: 8),
             ],
@@ -751,42 +776,55 @@ class _MessagesTabState extends State<_MessagesTab> {
                           ...unified.asMap().entries.map((entry) {
                             final index = entry.key;
                             final item = entry.value;
+
+                            final bool isUnread = item.unreadCount > 0;
+
+                            Widget rowWidget;
+                            if (item.isGroup) {
+                              rowWidget = _GroupMessageRow(
+                                group: item.groupItem!,
+                                isPinned: item.isPinned,
+                                isMuted: item.isMuted,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/group_chat',
+                                      arguments: {
+                                        'groupId': item.groupItem!.id,
+                                        'groupName': item.groupItem!.name,
+                                        'groupImageUrl': item.groupItem!.imageUrl,
+                                      });
+                                },
+                                onLongPress: () =>
+                                    _showGroupActions(context, item.groupItem!),
+                              );
+                            } else {
+                              rowWidget = _DMMessageRow(
+                                conversation: item.dmConversation!,
+                                isPinned: item.isPinned,
+                                isMuted: item.isMuted,
+                                onTap: () {
+                                  Navigator.pushNamed(context, '/dm_chat',
+                                      arguments: {
+                                        'recipientId': item.dmConversation!.recipientId,
+                                        'recipientName': item.dmConversation!.recipientName,
+                                        'recipientAvatarColor':
+                                            item.dmConversation!.recipientAvatarColor,
+                                        'conversationId': item.dmConversation!.id,
+                                      });
+                                },
+                                onLongPress: () =>
+                                    _showDMActions(context, item.dmConversation!),
+                              );
+                            }
+
                             return Column(
                               children: [
-                                if (item.isGroup)
-                                  _GroupMessageRow(
-                                    group: item.groupItem!,
-                                    isPinned: item.isPinned,
-                                    isMuted: item.isMuted,
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/group_chat',
-                                          arguments: {
-                                            'groupId': item.groupItem!.id,
-                                            'groupName': item.groupItem!.name,
-                                            'groupImageUrl': item.groupItem!.imageUrl,
-                                          });
-                                    },
-                                    onLongPress: () =>
-                                        _showGroupActions(context, item.groupItem!),
-                                  )
-                                else
-                                  _DMMessageRow(
-                                    conversation: item.dmConversation!,
-                                    isPinned: item.isPinned,
-                                    isMuted: item.isMuted,
-                                    onTap: () {
-                                      Navigator.pushNamed(context, '/dm_chat',
-                                          arguments: {
-                                            'recipientId': item.dmConversation!.recipientId,
-                                            'recipientName': item.dmConversation!.recipientName,
-                                            'recipientAvatarColor':
-                                                item.dmConversation!.recipientAvatarColor,
-                                            'conversationId': item.dmConversation!.id,
-                                          });
-                                    },
-                                    onLongPress: () =>
-                                        _showDMActions(context, item.dmConversation!),
-                                  ),
+                                _SwipeActionRow(
+                                  key: ValueKey('swipe_${item.id}'),
+                                  isUnread: isUnread,
+                                  onDelete: () => _confirmDeleteConversation(context, item),
+                                  onToggleRead: () => _toggleReadStatus(item),
+                                  child: rowWidget,
+                                ),
                                 if (index < unified.length - 1)
                                   const Divider(
                                     height: 1,
@@ -827,10 +865,144 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
+  // ── Toggle read / unread state ────────────────────────────────────────
+  void _toggleReadStatus(_MessageListItem item) {
+    if (item.isGroup) {
+      // Group: toggle unread on local _allGroups list
+      final idx = _allGroups.indexWhere((g) => g.id == item.id);
+      if (idx != -1) {
+        final current = _allGroups[idx].unreadCount ?? 0;
+        setState(() {
+          _allGroups[idx] = _allGroups[idx].copyWith(
+            unreadCount: current > 0 ? 0 : 1,
+          );
+          _applyFilter();
+        });
+      }
+    } else {
+      // DM: use the service so it persists
+      if (item.unreadCount > 0) {
+        _dmService.markConversationRead(item.id);
+      } else {
+        _dmService.markConversationUnread(item.id);
+      }
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            item.unreadCount > 0
+                ? '${item.name} marked as read'
+                : '${item.name} marked as unread',
+          ),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // ── Delete conversation confirmation dialog ──────────────────────────
+  void _confirmDeleteConversation(BuildContext ctx, _MessageListItem item) {
+    showDialog(
+      context: ctx,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Are you sure you want to permanently delete this conversation?',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.textDark,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: HuddlColors.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        if (item.isGroup) {
+                          await _removeFromUserCreatedGroups(item.id);
+                          setState(() {
+                            _allGroups.removeWhere((g) => g.id == item.id);
+                            _applyFilter();
+                          });
+                        } else {
+                          await _dmService.deleteConversation(item.id);
+                          setState(() {
+                            _dmConversations.removeWhere((d) => d.id == item.id);
+                            _applyFilter();
+                          });
+                        }
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text('${item.name} deleted'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── DM long-press actions ───────────────────────────────────────────────
   void _showDMActions(BuildContext ctx, DMConversation dm) {
     final isPinned = _pinnedGroupIds.contains(dm.id);
     final isMuted = _mutedGroupIds.contains(dm.id);
+    final isUnread = dm.unreadCount > 0;
 
     showModalBottomSheet(
       context: ctx,
@@ -885,25 +1057,49 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               _ActionTile(
-                icon: Icons.mark_chat_read_outlined,
-                label: 'Mark as read',
+                icon: isUnread
+                    ? Icons.mark_chat_read_outlined
+                    : Icons.mark_chat_unread_outlined,
+                label: isUnread ? 'Mark as read' : 'Mark as unread',
                 onTap: () async {
                   Navigator.pop(c);
-                  await _dmService.markConversationRead(dm.id);
+                  if (isUnread) {
+                    await _dmService.markConversationRead(dm.id);
+                  } else {
+                    await _dmService.markConversationUnread(dm.id);
+                  }
                 },
               ),
               _ActionTile(
                 icon: Icons.delete_outline,
-                label: 'Delete conversation',
+                label: 'Delete',
                 color: Colors.red,
-                onTap: () async {
+                onTap: () {
                   Navigator.pop(c);
-                  await _dmService.deleteConversation(dm.id);
-                  setState(() {
-                    _dmConversations.removeWhere((d) => d.id == dm.id);
-                    _applyFilter();
-                  });
+                  final listItem = _MessageListItem(
+                    id: dm.id,
+                    name: dm.recipientName,
+                    imageUrl: '',
+                    lastMessage: dm.lastMessage,
+                    lastSenderName: dm.lastSenderName,
+                    lastMessageTime: dm.lastMessageTime,
+                    unreadCount: dm.unreadCount,
+                    isGroup: false,
+                    isPinned: isPinned,
+                    isMuted: isMuted,
+                    isPrivate: false,
+                    dmConversation: dm,
+                    isTyping: dm.isTyping,
+                  );
+                  _confirmDeleteConversation(ctx, listItem);
                 },
+              ),
+              const SizedBox(height: 4),
+              const Divider(height: 1, color: HuddlColors.divider),
+              _ActionTile(
+                icon: Icons.close,
+                label: 'Cancel',
+                onTap: () => Navigator.pop(c),
               ),
               const SizedBox(height: 8),
             ],
@@ -3086,6 +3282,171 @@ Color _savedColorFromHex(String hex) {
     return Color(int.parse('FF$clean', radix: 16));
   }
   return HuddlColors.primary;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SWIPE ACTION ROW — swipe left for Delete (red), right for Mark read/unread (teal)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _SwipeActionRow extends StatefulWidget {
+  final Widget child;
+  final bool isUnread;
+  final VoidCallback onDelete;
+  final VoidCallback onToggleRead;
+
+  const _SwipeActionRow({
+    super.key,
+    required this.child,
+    required this.isUnread,
+    required this.onDelete,
+    required this.onToggleRead,
+  });
+
+  @override
+  State<_SwipeActionRow> createState() => _SwipeActionRowState();
+}
+
+class _SwipeActionRowState extends State<_SwipeActionRow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  double _dragExtent = 0;
+  static const double _actionThreshold = 80;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _snapBack() {
+    _controller.addListener(_animateBack);
+    _controller.forward(from: 0);
+  }
+
+  void _animateBack() {
+    setState(() {
+      _dragExtent = _dragExtent * (1 - _controller.value);
+    });
+    if (_controller.isCompleted) {
+      _controller.removeListener(_animateBack);
+      _controller.reset();
+      setState(() => _dragExtent = 0);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double clampedDrag = _dragExtent.clamp(-_actionThreshold, _actionThreshold);
+    final bool showDelete = clampedDrag < -20;
+    final bool showRead = clampedDrag > 20;
+
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) {
+        setState(() {
+          _dragExtent += details.delta.dx;
+          _dragExtent = _dragExtent.clamp(-_actionThreshold - 20, _actionThreshold + 20);
+        });
+      },
+      onHorizontalDragEnd: (details) {
+        if (_dragExtent < -_actionThreshold * 0.6) {
+          // Swiped left enough — trigger delete
+          _snapBack();
+          widget.onDelete();
+        } else if (_dragExtent > _actionThreshold * 0.6) {
+          // Swiped right enough — toggle read
+          _snapBack();
+          widget.onToggleRead();
+        } else {
+          _snapBack();
+        }
+      },
+      child: Stack(
+        children: [
+          // Background action indicators
+          Positioned.fill(
+            child: Row(
+              children: [
+                // Left side — teal mark read/unread (revealed on right swipe)
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFF34C7A0),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 24),
+                    child: AnimatedOpacity(
+                      opacity: showRead ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            widget.isUnread
+                                ? Icons.mark_chat_read
+                                : Icons.mark_chat_unread,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.isUnread ? 'Read' : 'Unread',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Right side — red delete (revealed on left swipe)
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFFFF4D4D),
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 24),
+                    child: AnimatedOpacity(
+                      opacity: showDelete ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 150),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.delete, color: Colors.white, size: 22),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Delete',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Foreground — actual row content, shifted horizontally
+          Transform.translate(
+            offset: Offset(clampedDrag, 0),
+            child: widget.child,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

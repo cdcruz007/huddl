@@ -254,6 +254,20 @@ class DMService {
     }
   }
 
+  // ── Mark conversation as unread ─────────────────────────────────────────
+  Future<void> markConversationUnread(String conversationId) async {
+    await initialize();
+    final idx = _conversations.indexWhere((c) => c.id == conversationId);
+    if (idx != -1) {
+      // Set unread to 1 if it was 0 so the bold treatment shows
+      if (_conversations[idx].unreadCount == 0) {
+        _conversations[idx] = _conversations[idx].copyWith(unreadCount: 1);
+        await _saveConversations();
+        _notify();
+      }
+    }
+  }
+
   // ── Delete conversation ─────────────────────────────────────────────────
   Future<void> deleteConversation(String conversationId) async {
     await initialize();

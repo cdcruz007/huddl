@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -6,9 +7,42 @@ import '../../models/direct_message.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
+import '../../services/media_attach_service.dart';
+import 'forward_message_sheet.dart';
+import '../../widgets/attach_bottom_sheet.dart';
+import '../../widgets/document_bubble.dart';
+import '../../widgets/emoji_reaction_picker.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 const Color _kMyBubble = Color(0xFFFFF3ED);
+
+/// Maps borough member IDs to realistic profile photo URLs
+const Map<String, String> _kMemberProfilePhotos = {
+  'mem_emma': 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_sophie': 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_james': 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_olivia': 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_luke': 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_anna': 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_kate': 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_david': 'https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_lucy': 'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_mark': 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_sarah': 'https://images.pexels.com/photos/712513/pexels-photo-712513.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'mem_tom': 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
+  // Chat demo members (used in group_chat_screen)
+  'user_emma': 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'user_sophie': 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'user_kate': 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'user_lucy': 'https://images.pexels.com/photos/1065084/pexels-photo-1065084.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'user_james': 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=200',
+  'user_anna': 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
+};
+
+/// Get profile photo URL for a member by their ID
+String? getProfilePhotoForMember(String memberId) {
+  return _kMemberProfilePhotos[memberId];
+}
 
 class DMChatScreen extends StatefulWidget {
   final String recipientId;
@@ -46,6 +80,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
   List<int> _searchMatches = []; // indices of matching messages
   int _currentMatchIndex = -1;
   Timer? _refreshTimer;
+  bool _isBlocked = false;
+  final MediaAttachService _mediaService = MediaAttachService();
+
+  /// Locally added image messages
+  final List<_ImageChatMessage> _imageMessages = [];
+
+  /// Locally added document messages
+  final List<_DocumentChatMessage> _documentMessages = [];
+
+  /// Emoji reactions: messageId → { emoji → count }
+  final Map<String, Map<String, int>> _reactions = {};
 
   @override
   void initState() {
@@ -268,32 +313,95 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ? const Center(
                     child:
                         CircularProgressIndicator(color: HuddlColors.primary))
-                : _messages.isEmpty
+                : (_messages.isEmpty && _imageMessages.isEmpty)
                     ? _emptyState()
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        itemCount: _messages.length + (_isRecipientTyping ? 1 : 0),
+                        itemCount: _sortedItems.length + (_isRecipientTyping ? 1 : 0),
                         itemBuilder: (context, index) {
+                          final items = _sortedItems;
                           // Typing indicator as last item
-                          if (index == _messages.length && _isRecipientTyping) {
+                          if (index == items.length && _isRecipientTyping) {
                             return _TypingIndicator(
                                 name: widget.recipientName,
-                                color: widget.recipientAvatarColor);
+                                color: widget.recipientAvatarColor,
+                                memberId: widget.recipientId);
+                          }
+                          if (index >= items.length) return const SizedBox.shrink();
+                          final item = items[index];
+
+                          // Image / location message
+                          if (item.type == _ChatItemType.image) {
+                            final imgMsg = _imageMessages[item.imageIndex!];
+                            if (imgMsg.isLocationPin) {
+                              return _LocationBubble(
+                                isMe: imgMsg.isMe,
+                                timestamp: imgMsg.timestamp,
+                                recipientName: widget.recipientName,
+                                recipientAvatarColor: widget.recipientAvatarColor,
+                                recipientId: widget.recipientId,
+                              );
+                            }
+                            return _ImageBubble(
+                              imageUrl: imgMsg.imageUrl,
+                              isMe: imgMsg.isMe,
+                              timestamp: imgMsg.timestamp,
+                              recipientName: widget.recipientName,
+                              recipientAvatarColor: widget.recipientAvatarColor,
+                              recipientId: widget.recipientId,
+                              bytes: imgMsg.bytes,
+                              onForward: () {
+                                showForwardSheet(
+                                  context: context,
+                                  messageText: 'Photo',
+                                  imageUrl: imgMsg.imageUrl,
+                                );
+                              },
+                            );
                           }
 
-                          final msg = _messages[index];
-                          final showTimestamp = index == 0 ||
+                          // Document message
+                          if (item.type == _ChatItemType.document) {
+                            final docMsg = _documentMessages[item.docIndex!];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                top: 4, bottom: 4,
+                                left: docMsg.isMe ? 60 : 48, right: docMsg.isMe ? 0 : 60,
+                              ),
+                              child: Align(
+                                alignment: docMsg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                child: DocumentBubble(
+                                  fileName: docMsg.fileName,
+                                  fileSize: docMsg.fileSize,
+                                  isMe: docMsg.isMe,
+                                  timestamp: docMsg.timestamp,
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: docMsg.fileName,
+                                      documentName: docMsg.fileName,
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Text message
+                          final msgIndex = item.textIndex!;
+                          final msg = _messages[msgIndex];
+                          final showTimestamp = msgIndex == 0 ||
                               msg.timestamp
                                       .difference(
-                                          _messages[index - 1].timestamp)
+                                          _messages[msgIndex - 1].timestamp)
                                       .inMinutes >
                                   5;
 
                           final isHighlighted = _isSearching &&
                               _searchMatches.isNotEmpty &&
                               _currentMatchIndex >= 0 &&
-                              _searchMatches[_currentMatchIndex] == index;
+                              _searchMatches[_currentMatchIndex] == msgIndex;
 
                           return Column(
                             children: [
@@ -304,10 +412,20 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                 recipientName: widget.recipientName,
                                 recipientAvatarColor:
                                     widget.recipientAvatarColor,
+                                recipientId: widget.recipientId,
                                 isHighlighted: isHighlighted,
                                 searchQuery: _searchQuery,
                                 isSaved: _savedMessageService.isMessageSaved(msg.id),
                                 onSave: () => _saveMessage(msg),
+                                onForward: () {
+                                  showForwardSheet(
+                                    context: context,
+                                    messageText: msg.message,
+                                  );
+                                },
+                                onReact: () => _showEmojiPicker(msg.id),
+                                reactions: _reactions[msg.id] ?? {},
+                                onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
                               ),
                             ],
                           );
@@ -337,6 +455,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           _RecipientAvatar(
             name: widget.recipientName,
             colorHex: widget.recipientAvatarColor,
+            memberId: widget.recipientId,
             size: 36,
           ),
           const SizedBox(width: 10),
@@ -384,6 +503,15 @@ class _DMChatScreenState extends State<DMChatScreen> {
           elevation: 8,
           onSelected: (value) {
             switch (value) {
+              case 'block':
+                _showBlockUserDialog();
+                break;
+              case 'user_details':
+                _showUserDetailsSheet();
+                break;
+              case 'saved':
+                Navigator.pop(context);
+                break;
               case 'search':
                 setState(() => _isSearching = true);
                 break;
@@ -392,8 +520,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   const SnackBar(content: Text('Notifications muted')),
                 );
                 break;
-              case 'saved':
-                Navigator.pop(context);
+              case 'report':
+                _showReportUserDialog();
                 break;
               case 'delete':
                 _confirmDeleteConversation();
@@ -402,12 +530,24 @@ class _DMChatScreenState extends State<DMChatScreen> {
           },
           itemBuilder: (context) => [
             PopupMenuItem<String>(
-              value: 'search',
+              value: 'block',
               child: Row(
                 children: [
-                  const Icon(Icons.search, size: 20, color: HuddlColors.textDark),
+                  Icon(_isBlocked ? Icons.check_circle_outline : Icons.block,
+                      size: 20, color: HuddlColors.textDark),
                   const SizedBox(width: 12),
-                  Text('Search messages',
+                  Text(_isBlocked ? 'Unblock user' : 'Block user',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'user_details',
+              child: Row(
+                children: [
+                  const Icon(Icons.person_outline, size: 20, color: HuddlColors.textDark),
+                  const SizedBox(width: 12),
+                  Text('User details',
                       style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 ],
               ),
@@ -424,6 +564,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
             ),
             PopupMenuItem<String>(
+              value: 'search',
+              child: Row(
+                children: [
+                  const Icon(Icons.search, size: 20, color: HuddlColors.textDark),
+                  const SizedBox(width: 12),
+                  Text('Search messages',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
               value: 'mute',
               child: Row(
                 children: [
@@ -431,6 +582,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   const SizedBox(width: 12),
                   Text('Mute notifications',
                       style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'report',
+              child: Row(
+                children: [
+                  const Icon(Icons.report_outlined, size: 20, color: Colors.red),
+                  const SizedBox(width: 12),
+                  Text('Report user',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
                 ],
               ),
             ),
@@ -492,60 +654,72 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   Widget _buildInputBar() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
-        border:
-            Border(top: BorderSide(color: HuddlColors.divider, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline,
-                color: HuddlColors.primary),
-            onPressed: () {},
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Attach menu now handled via bottom sheet (WhatsApp-style)
+        // ── Main input row ─────────────────────────────────────────
+        Container(
+          padding: EdgeInsets.fromLTRB(
+              8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
+          decoration: const BoxDecoration(
+            color: HuddlColors.white,
+            border:
+                Border(top: BorderSide(color: HuddlColors.divider, width: 0.5)),
           ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: HuddlColors.background,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _messageController,
-                focusNode: _focusNode,
-                textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.textDark),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 14, color: HuddlColors.textHint),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: HuddlColors.primary,
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                onPressed: _openAttachSheet,
               ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
-                shape: BoxShape.circle,
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.background,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, color: HuddlColors.textDark),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle: GoogleFonts.poppins(
+                          fontSize: 14, color: HuddlColors.textHint),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                    onTap: () {
+                      // Focus text field
+                    },
+                  ),
+                ),
               ),
-              child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
-            ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    gradient: HuddlColors.primaryGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -557,6 +731,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           _RecipientAvatar(
             name: widget.recipientName,
             colorHex: widget.recipientAvatarColor,
+            memberId: widget.recipientId,
             size: 72,
           ),
           const SizedBox(height: 16),
@@ -611,6 +786,459 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
+  // ── Block user dialog (matches screenshot design) ─────────────────
+  void _showBlockUserDialog() {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.block, size: 32, color: Colors.red),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                _isBlocked ? 'Unblock ${widget.recipientName}?' : 'Block ${widget.recipientName}?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _isBlocked
+                    ? 'They will be able to send you messages and see your profile again.'
+                    : 'They will no longer be able to send you messages or see your profile.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        setState(() => _isBlocked = !_isBlocked);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(_isBlocked
+                                ? '${widget.recipientName} has been blocked'
+                                : '${widget.recipientName} has been unblocked'),
+                            backgroundColor: HuddlColors.primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        _isBlocked ? 'Unblock' : 'Block',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Report user dialog ──────────────────────────────────────────────
+  void _showReportUserDialog() {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.report_outlined, size: 32, color: Colors.red),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Report this user?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Do you want to report ${widget.recipientName} for bad content directly to Huddl support?',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Report submitted. Our team will review it.'),
+                            backgroundColor: HuddlColors.primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Confirm',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── User details bottom sheet ───────────────────────────────────────
+  void _showUserDetailsSheet() {
+    final photoUrl = getProfilePhotoForMember(widget.recipientId);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Profile photo
+              CircleAvatar(
+                radius: 44,
+                backgroundColor: _colorFromHex(widget.recipientAvatarColor).withValues(alpha: 0.15),
+                backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                child: photoUrl == null
+                    ? Text(
+                        widget.recipientName.isNotEmpty ? widget.recipientName[0].toUpperCase() : '?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w600,
+                          color: _colorFromHex(widget.recipientAvatarColor),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 14),
+              Text(
+                widget.recipientName,
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 8, height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF34C759),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Online',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: HuddlColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              const Divider(height: 1, color: HuddlColors.divider),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.message_outlined, color: HuddlColors.primary),
+                title: Text('Send message',
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _focusNode.requestFocus();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.block, color: HuddlColors.textDark),
+                title: Text(_isBlocked ? 'Unblock user' : 'Block user',
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _showBlockUserDialog();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_outlined, color: Colors.red),
+                title: Text('Report user',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _showReportUserDialog();
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Media permission prompt ────────────────────────────────────────────
+  // ── Interleaved list helpers ────────────────────────────────────────
+  List<_ChatItem> get _sortedItems {
+    final items = <_ChatItem>[];
+    for (int i = 0; i < _messages.length; i++) {
+      items.add(_ChatItem(type: _ChatItemType.text, textIndex: i, timestamp: _messages[i].timestamp));
+    }
+    for (int i = 0; i < _imageMessages.length; i++) {
+      items.add(_ChatItem(type: _ChatItemType.image, imageIndex: i, timestamp: _imageMessages[i].timestamp));
+    }
+    for (int i = 0; i < _documentMessages.length; i++) {
+      items.add(_ChatItem(type: _ChatItemType.document, docIndex: i, timestamp: _documentMessages[i].timestamp));
+    }
+    items.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return items;
+  }
+
+  // ── WhatsApp-style attach handler ────────────────────────────────────
+  Future<void> _openAttachSheet() async {
+    final action = await showAttachBottomSheet(context);
+    if (action == null || !mounted) return;
+
+    switch (action) {
+      case AttachAction.camera:
+        await _handleCameraCapture();
+        break;
+      case AttachAction.gallery:
+        await _handleGalleryPick();
+        break;
+      case AttachAction.document:
+        await _handleDocumentPick();
+        break;
+      case AttachAction.location:
+        _handleLocationShare();
+        break;
+      case AttachAction.contact:
+        _handleContactShare();
+        break;
+    }
+  }
+
+  Future<void> _handleCameraCapture() async {
+    final attachment = await _mediaService.takePhoto();
+    if (attachment == null || !mounted) return;
+    _addImageMessage(attachment);
+  }
+
+  Future<void> _handleGalleryPick() async {
+    final attachments = await _mediaService.pickMultipleImages();
+    if (attachments.isEmpty || !mounted) return;
+    for (final att in attachments) {
+      _addImageMessage(att);
+    }
+  }
+
+  void _addImageMessage(MediaAttachment att) {
+    // Use the file path or object URL for display
+    final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
+    setState(() {
+      _imageMessages.add(_ImageChatMessage(
+        imageUrl: url,
+        isMe: true,
+        timestamp: DateTime.now(),
+        bytes: att.bytes,
+      ));
+    });
+    _scrollToBottom(animate: true);
+  }
+
+  Future<void> _handleDocumentPick() async {
+    final attachment = await _mediaService.pickDocument();
+    if (attachment == null || !mounted) return;
+    setState(() {
+      _documentMessages.add(_DocumentChatMessage(
+        fileName: attachment.fileName ?? 'Unknown file',
+        fileSize: attachment.fileSize,
+        isMe: true,
+        timestamp: DateTime.now(),
+      ));
+    });
+    _scrollToBottom(animate: true);
+  }
+
+  void _handleLocationShare() {
+    if (!mounted) return;
+    // Show a styled location-sharing preview
+    setState(() {
+      _imageMessages.add(_ImageChatMessage(
+        imageUrl: 'location_pin',
+        isMe: true,
+        timestamp: DateTime.now(),
+        isLocationPin: true,
+      ));
+    });
+    _scrollToBottom(animate: true);
+  }
+
+  void _handleContactShare() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Contact sharing coming soon'),
+        backgroundColor: HuddlColors.textSecondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  // ── Emoji reactions ────────────────────────────────────────────────────
+  Future<void> _showEmojiPicker(String messageId) async {
+    final emoji = await showEmojiReactionPicker(context);
+    if (emoji != null && mounted) {
+      _toggleReaction(messageId, emoji);
+    }
+  }
+
+  void _toggleReaction(String messageId, String emoji) {
+    setState(() {
+      final msgReactions = _reactions[messageId] ?? {};
+      final current = msgReactions[emoji] ?? 0;
+      if (current > 0) {
+        msgReactions.remove(emoji);
+      } else {
+        msgReactions[emoji] = 1;
+      }
+      if (msgReactions.isEmpty) {
+        _reactions.remove(messageId);
+      } else {
+        _reactions[messageId] = msgReactions;
+      }
+    });
+  }
+
   void _saveMessage(DirectMessage msg) {
     if (_savedMessageService.isMessageSaved(msg.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -662,114 +1290,139 @@ class _DMBubble extends StatelessWidget {
   final DirectMessage message;
   final String recipientName;
   final String recipientAvatarColor;
+  final String? recipientId;
   final bool isHighlighted;
   final String searchQuery;
   final bool isSaved;
   final VoidCallback? onSave;
+  final VoidCallback? onForward;
+  final VoidCallback? onReact;
+  final Map<String, int> reactions;
+  final void Function(String emoji)? onTapReaction;
 
   const _DMBubble({
     required this.message,
     required this.recipientName,
     required this.recipientAvatarColor,
+    this.recipientId,
     this.isHighlighted = false,
     this.searchQuery = '',
     this.isSaved = false,
     this.onSave,
+    this.onForward,
+    this.onReact,
+    this.reactions = const {},
+    this.onTapReaction,
   });
 
   @override
   Widget build(BuildContext context) {
     final isMe = message.isMe;
 
-    return GestureDetector(
-      onLongPress: () => _showMessageActions(context),
-      child: Padding(
-      padding: EdgeInsets.only(
-        top: 4,
-        bottom: 4,
-        left: isMe ? 60 : 0,
-        right: isMe ? 0 : 60,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        children: [
-          if (!isMe)
-            _RecipientAvatar(
-              name: recipientName,
-              colorHex: recipientAvatarColor,
-              size: 32,
+    return Column(
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onLongPress: () => _showMessageActions(context),
+          onDoubleTap: onReact,
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 4,
+              bottom: reactions.isEmpty ? 4 : 0,
+              left: isMe ? 60 : 0,
+              right: isMe ? 0 : 60,
             ),
-          if (!isMe) const SizedBox(width: 8),
-          Flexible(
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: isHighlighted
-                    ? HuddlColors.yellowLight
-                    : isMe
-                        ? _kMyBubble
-                        : HuddlColors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment:
+                  isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              children: [
+                if (!isMe)
+                  _RecipientAvatar(
+                    name: recipientName,
+                    colorHex: recipientAvatarColor,
+                    memberId: recipientId,
+                    size: 32,
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  // Message text (with search highlighting)
-                  searchQuery.isNotEmpty
-                      ? _buildHighlightedText(message.message, searchQuery)
-                      : Text(
-                          message.message,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: HuddlColors.textDark,
-                            height: 1.4,
-                          ),
-                        ),
-                  const SizedBox(height: 4),
-                  // Time + status ticks
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message.timestamp),
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          color: HuddlColors.textHint,
-                        ),
+                if (!isMe) const SizedBox(width: 8),
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isHighlighted
+                          ? HuddlColors.yellowLight
+                          : isMe
+                              ? _kMyBubble
+                              : HuddlColors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isMe ? 16 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 16),
                       ),
-                      if (isSaved) ...[
-                        Icon(Icons.bookmark, size: 12,
-                            color: HuddlColors.primary.withValues(alpha: 0.6)),
-                        const SizedBox(width: 4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
                       ],
-                      if (isMe) ...[
-                        const SizedBox(width: 4),
-                        _MessageStatusIcon(status: message.status),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Message text (with search highlighting)
+                        searchQuery.isNotEmpty
+                            ? _buildHighlightedText(message.message, searchQuery)
+                            : Text(
+                                message.message,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: HuddlColors.textDark,
+                                  height: 1.4,
+                                ),
+                              ),
+                        const SizedBox(height: 4),
+                        // Time + status ticks
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatTime(message.timestamp),
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: HuddlColors.textHint,
+                              ),
+                            ),
+                            if (isSaved) ...[
+                              Icon(Icons.bookmark, size: 12,
+                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
+                              const SizedBox(width: 4),
+                            ],
+                            if (isMe) ...[
+                              const SizedBox(width: 4),
+                              _MessageStatusIcon(status: message.status),
+                            ],
+                          ],
+                        ),
                       ],
-                    ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    ),
+        ),
+        // Emoji reactions row
+        if (reactions.isNotEmpty)
+          EmojiReactionDisplay(
+            reactions: reactions,
+            isMe: isMe,
+            onTapReaction: onTapReaction,
+          ),
+      ],
     );
   }
 
@@ -816,6 +1469,44 @@ class _DMBubble extends StatelessWidget {
                   ],
                 ),
               ),
+              // Quick emoji row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ...kQuickEmojis.map((emoji) => GestureDetector(
+                      onTap: () {
+                        Navigator.pop(c);
+                        onTapReaction?.call(emoji);
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                      ),
+                    )),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(c);
+                        onReact?.call();
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.background,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add, color: HuddlColors.textSecondary, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: HuddlColors.divider),
               ListTile(
                 leading: Icon(
                   isSaved ? Icons.bookmark : Icons.bookmark_outline,
@@ -841,6 +1532,15 @@ class _DMBubble extends StatelessWidget {
                 title: Text('Reply',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 onTap: () => Navigator.pop(c),
+              ),
+              ListTile(
+                leading: const Icon(Icons.forward_outlined, color: HuddlColors.textDark),
+                title: Text('Forward',
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  onForward?.call();
+                },
               ),
               const SizedBox(height: 8),
             ],
@@ -926,7 +1626,8 @@ class _MessageStatusIcon extends StatelessWidget {
 class _TypingIndicator extends StatefulWidget {
   final String name;
   final String color;
-  const _TypingIndicator({required this.name, required this.color});
+  final String? memberId;
+  const _TypingIndicator({required this.name, required this.color, this.memberId});
 
   @override
   State<_TypingIndicator> createState() => _TypingIndicatorState();
@@ -959,7 +1660,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           _RecipientAvatar(
-              name: widget.name, colorHex: widget.color, size: 32),
+              name: widget.name, colorHex: widget.color, memberId: widget.memberId, size: 32),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1016,17 +1717,21 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 class _RecipientAvatar extends StatelessWidget {
   final String name;
   final String colorHex;
+  final String? memberId;
   final double size;
 
   const _RecipientAvatar({
     required this.name,
     required this.colorHex,
+    this.memberId,
     this.size = 32,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(colorHex);
+    final photoUrl = memberId != null ? getProfilePhotoForMember(memberId!) : null;
+
     return Container(
       width: size,
       height: size,
@@ -1034,16 +1739,34 @@ class _RecipientAvatar extends StatelessWidget {
         color: color.withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
-      child: Center(
-        child: Text(
-          name.isNotEmpty ? name[0].toUpperCase() : '?',
-          style: GoogleFonts.poppins(
-            fontSize: size * 0.4,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: photoUrl != null
+          ? Image.network(
+              photoUrl,
+              fit: BoxFit.cover,
+              width: size,
+              height: size,
+              errorBuilder: (_, __, ___) => Center(
+                child: Text(
+                  name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  style: GoogleFonts.poppins(
+                    fontSize: size * 0.4,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ),
+            )
+          : Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: GoogleFonts.poppins(
+                  fontSize: size * 0.4,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
     );
   }
 }
@@ -1081,6 +1804,331 @@ class _TimestampDivider extends StatelessWidget {
     if (diff.inDays == 0) return 'Today';
     if (diff.inDays == 1) return 'Yesterday';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+// _AttachMenuOption removed — replaced by WhatsApp-style attach_bottom_sheet.dart
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMAGE CHAT MESSAGE — lightweight model for locally-added images
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _ImageChatMessage {
+  final String imageUrl;
+  final bool isMe;
+  final DateTime timestamp;
+  final Uint8List? bytes;
+  final bool isLocationPin;
+
+  const _ImageChatMessage({
+    required this.imageUrl,
+    required this.isMe,
+    required this.timestamp,
+    this.bytes,
+    this.isLocationPin = false,
+  });
+}
+
+class _DocumentChatMessage {
+  final String fileName;
+  final int? fileSize;
+  final bool isMe;
+  final DateTime timestamp;
+
+  const _DocumentChatMessage({
+    required this.fileName,
+    this.fileSize,
+    required this.isMe,
+    required this.timestamp,
+  });
+}
+
+enum _ChatItemType { text, image, document }
+
+class _ChatItem {
+  final _ChatItemType type;
+  final int? textIndex;
+  final int? imageIndex;
+  final int? docIndex;
+  final DateTime timestamp;
+
+  const _ChatItem({
+    required this.type,
+    this.textIndex,
+    this.imageIndex,
+    this.docIndex,
+    required this.timestamp,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMAGE BUBBLE — shows an image in the chat with a forward overlay icon
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _ImageBubble extends StatelessWidget {
+  final String imageUrl;
+  final bool isMe;
+  final DateTime timestamp;
+  final String recipientName;
+  final String recipientAvatarColor;
+  final String? recipientId;
+  final VoidCallback? onForward;
+  final Uint8List? bytes;
+
+  const _ImageBubble({
+    required this.imageUrl,
+    required this.isMe,
+    required this.timestamp,
+    required this.recipientName,
+    required this.recipientAvatarColor,
+    this.recipientId,
+    this.onForward,
+    this.bytes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 8,
+        bottom: 4,
+        left: isMe ? 60 : 0,
+        right: isMe ? 0 : 60,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe)
+            _RecipientAvatar(
+              name: recipientName,
+              colorHex: recipientAvatarColor,
+              memberId: recipientId,
+              size: 32,
+            ),
+          if (!isMe) const SizedBox(width: 8),
+          Flexible(
+            child: Stack(
+              children: [
+                // Image container
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isMe ? 16 : 4),
+                    bottomRight: Radius.circular(isMe ? 4 : 16),
+                  ),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 240, maxHeight: 280),
+                    decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: bytes != null
+                        ? Image.memory(
+                            bytes!,
+                            fit: BoxFit.cover,
+                            width: 240,
+                            height: 240,
+                            errorBuilder: (_, __, ___) => _brokenImage(),
+                          )
+                        : Image.network(
+                            imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _brokenImage(),
+                          ),
+                  ),
+                ),
+                // Forward button overlay — bottom left (matching design)
+                Positioned(
+                  left: 8,
+                  bottom: 8,
+                  child: GestureDetector(
+                    onTap: onForward,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.forward,
+                          size: 16, color: Colors.white),
+                    ),
+                  ),
+                ),
+                // Timestamp overlay — bottom right
+                Positioned(
+                  right: 8,
+                  bottom: 8,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _formatTime(timestamp),
+                      style: GoogleFonts.poppins(
+                        fontSize: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _brokenImage() => Container(
+        width: 200,
+        height: 200,
+        color: HuddlColors.background,
+        child: const Icon(Icons.broken_image, color: HuddlColors.textHint, size: 48),
+      );
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LOCATION BUBBLE — shows a location pin preview (like WhatsApp shared location)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _LocationBubble extends StatelessWidget {
+  final bool isMe;
+  final DateTime timestamp;
+  final String recipientName;
+  final String recipientAvatarColor;
+  final String? recipientId;
+
+  const _LocationBubble({
+    required this.isMe,
+    required this.timestamp,
+    required this.recipientName,
+    required this.recipientAvatarColor,
+    this.recipientId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 8, bottom: 4,
+        left: isMe ? 60 : 0,
+        right: isMe ? 0 : 60,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe)
+            _RecipientAvatar(
+              name: recipientName,
+              colorHex: recipientAvatarColor,
+              memberId: recipientId,
+              size: 32,
+            ),
+          if (!isMe) const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 240),
+              decoration: BoxDecoration(
+                color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Map-like header
+                  Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F5E9),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Grid lines to simulate map
+                        Opacity(
+                          opacity: 0.15,
+                          child: Column(
+                            children: List.generate(6, (_) => Expanded(
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                                ),
+                              ),
+                            )),
+                          ),
+                        ),
+                        const Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 16, color: HuddlColors.textSecondary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'Shared location',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: HuddlColors.textDark,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          _formatTime(timestamp),
+                          style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
   }
 }
 

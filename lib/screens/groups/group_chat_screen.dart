@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -7,6 +8,14 @@ import '../../models/direct_message.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
+import '../../services/media_attach_service.dart';
+import 'dm_chat_screen.dart' show getProfilePhotoForMember;
+import 'create_poll_screen.dart';
+import 'poll_detail_screen.dart';
+import 'forward_message_sheet.dart';
+import '../../widgets/attach_bottom_sheet.dart';
+import '../../widgets/document_bubble.dart';
+import '../../widgets/emoji_reaction_picker.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = Color(0xFFFFF3ED);
@@ -44,6 +53,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   int _currentMatchIndex = -1;
   // Simulated message status progression for user messages
   final Map<String, MessageStatus> _messageStatuses = {};
+  // ── Poll state ──────────────────────────────────────────────────────
+  final List<ActivePoll> _polls = [];
+  final MediaAttachService _mediaService = MediaAttachService();
+
+  /// Locally added image messages
+  final List<_GroupImageMessage> _imageMessages = [];
+
+  /// Locally added document messages
+  final List<_GroupDocumentMessage> _documentMessages = [];
+
+  /// Emoji reactions: messageId → { emoji → count }
+  final Map<String, Map<String, int>> _reactions = {};
 
   @override
   void initState() {
@@ -64,6 +85,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _invitationService.initialize();
     await _onboardingService.initialize();
     await _savedMessageService.initialize();
+
+    // Generate demo poll
+    _polls.add(ActivePoll(
+      id: 'poll_demo_1',
+      data: PollData(
+        question: 'What time shall we meet at the cafe on Thursday?',
+        options: ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'],
+        expiresAt: DateTime.now().add(const Duration(days: 2)),
+        allowMultiple: false,
+      ),
+      creatorName: 'Lucy',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1, minutes: 20)),
+      votes: [
+        const PollVote(memberId: 'user_emma', memberName: 'Emma', optionIndex: 1),
+        const PollVote(memberId: 'user_sophie', memberName: 'Sophie', optionIndex: 1),
+        const PollVote(memberId: 'user_james', memberName: 'James', optionIndex: 0),
+        const PollVote(memberId: 'user_anna', memberName: 'Anna', optionIndex: 2),
+      ],
+    ));
 
     // Generate demo messages
     _messages = _generateDemoMessages();
@@ -195,6 +235,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       'recipientId': senderId,
       'recipientName': senderName,
       'recipientAvatarColor': senderAvatar.startsWith('#') ? senderAvatar : '#FF975C',
+    });
+  }
+
+  // ── Emoji reactions ────────────────────────────────────────────────────
+  Future<void> _showEmojiPicker(String messageId) async {
+    final emoji = await showEmojiReactionPicker(context);
+    if (emoji != null && mounted) {
+      _toggleReaction(messageId, emoji);
+    }
+  }
+
+  void _toggleReaction(String messageId, String emoji) {
+    setState(() {
+      final msgReactions = _reactions[messageId] ?? {};
+      final current = msgReactions[emoji] ?? 0;
+      if (current > 0) {
+        msgReactions.remove(emoji);
+      } else {
+        msgReactions[emoji] = 1;
+      }
+      if (msgReactions.isEmpty) {
+        _reactions.remove(messageId);
+      } else {
+        _reactions[messageId] = msgReactions;
+      }
     });
   }
 
@@ -349,6 +414,109 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // ── Report group dialog ──────────────────────────────────────────────────
+  void _showReportGroupDialog() {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.report_outlined, size: 32, color: Colors.red),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Report this group?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Do you want to report this group for bad content directly to Huddl support?',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Report submitted. Our team will review it.'),
+                            backgroundColor: HuddlColors.primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Confirm',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -396,33 +564,98 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             child: _isLoading
                 ? const Center(
                     child: CircularProgressIndicator(color: HuddlColors.primary))
-                : _messages.isEmpty
+                : (_messages.isEmpty && _imageMessages.isEmpty)
                     ? _emptyState()
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        itemCount: _messages.length,
+                        itemCount: _groupSortedItems.length,
                         itemBuilder: (context, index) {
-                          final msg = _messages[index];
+                          final items = _groupSortedItems;
+                          if (index >= items.length) return const SizedBox.shrink();
+                          final item = items[index];
+
+                          // Image / location message
+                          if (item.type == _GChatItemType.image) {
+                            final imgMsg = _imageMessages[item.imageIndex!];
+                            if (imgMsg.isLocationPin) {
+                              return _GroupLocationBubble(
+                                isMe: imgMsg.isMe,
+                                timestamp: imgMsg.timestamp,
+                                senderName: imgMsg.senderName,
+                                senderAvatar: imgMsg.senderAvatar,
+                                senderId: imgMsg.senderId,
+                              );
+                            }
+                            return _GroupImageBubble(
+                              imageUrl: imgMsg.imageUrl,
+                              isMe: imgMsg.isMe,
+                              timestamp: imgMsg.timestamp,
+                              senderName: imgMsg.senderName,
+                              senderAvatar: imgMsg.senderAvatar,
+                              senderId: imgMsg.senderId,
+                              bytes: imgMsg.bytes,
+                              onForward: () {
+                                showForwardSheet(
+                                  context: context,
+                                  messageText: 'Photo',
+                                  imageUrl: imgMsg.imageUrl,
+                                );
+                              },
+                            );
+                          }
+
+                          // Document message
+                          if (item.type == _GChatItemType.document) {
+                            final docMsg = _documentMessages[item.docIndex!];
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                top: 4, bottom: 4,
+                                left: docMsg.isMe ? 60 : 48, right: docMsg.isMe ? 0 : 60,
+                              ),
+                              child: Align(
+                                alignment: docMsg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                child: DocumentBubble(
+                                  fileName: docMsg.fileName,
+                                  fileSize: docMsg.fileSize,
+                                  isMe: docMsg.isMe,
+                                  timestamp: docMsg.timestamp,
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: docMsg.fileName,
+                                      documentName: docMsg.fileName,
+                                    );
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+
+                          final msgIdx = item.textIndex!;
+                          if (msgIdx < 0 || msgIdx >= _messages.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final msg = _messages[msgIdx];
 
                           // System messages (join/leave)
                           if (msg.isSystem) {
                             return _SystemMessageBubble(message: msg);
                           }
 
-                          final showAvatar = index == 0 ||
-                              _messages[index - 1].senderId != msg.senderId ||
-                              _messages[index - 1].isSystem;
-                          final showTimestamp = index == 0 ||
+                          final showAvatar = msgIdx == 0 ||
+                              _messages[msgIdx - 1].senderId != msg.senderId ||
+                              _messages[msgIdx - 1].isSystem;
+                          final showTimestamp = msgIdx == 0 ||
                               msg.timestamp
-                                      .difference(_messages[index - 1].timestamp)
+                                      .difference(_messages[msgIdx - 1].timestamp)
                                       .inMinutes >
                                   5;
 
                           final isHighlighted = _isSearching &&
                               _searchMatches.isNotEmpty &&
                               _currentMatchIndex >= 0 &&
-                              _searchMatches[_currentMatchIndex] == index;
+                              _searchMatches[_currentMatchIndex] == msgIdx;
 
                           return Column(
                             children: [
@@ -443,12 +676,34 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                           msg.senderAvatar,
                                         ),
                                 onSave: () => _saveMessage(msg),
+                                onForward: () {
+                                  showForwardSheet(
+                                    context: context,
+                                    messageText: msg.message,
+                                  );
+                                },
+                                onReact: () => _showEmojiPicker(msg.id),
+                                reactions: _reactions[msg.id] ?? {},
+                                onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
                               ),
                             ],
                           );
                         },
                       ),
           ),
+
+          // ── Poll cards ──────────────────────────────────────────
+          if (_polls.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: _polls.map((poll) => PollCard(
+                  poll: poll,
+                  onSelectOption: (i) => _votePoll(poll.id, i),
+                  onViewDetails: () => _viewPollDetails(poll),
+                )).toList(),
+              ),
+            ),
 
           // ── Input bar ─────────────────────────────────────────────
           _buildInputBar(),
@@ -574,6 +829,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   'groupsSubTab': 2, // Saved sub-tab
                 });
                 break;
+              case 'report':
+                _showReportGroupDialog();
+                break;
             }
           },
           itemBuilder: (context) => [
@@ -623,6 +881,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: HuddlColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'report',
+              child: Row(
+                children: [
+                  const Icon(Icons.report_outlined, size: 20, color: Colors.red),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Report group',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.red,
                     ),
                   ),
                 ],
@@ -686,58 +961,300 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Widget _buildInputBar() {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
-        border: Border(top: BorderSide(color: HuddlColors.divider, width: 0.5)),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: HuddlColors.primary),
-            onPressed: () {},
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Attach menu now handled via bottom sheet (WhatsApp-style)
+        // ── Main input row ─────────────────────────────────────────
+        Container(
+          padding: EdgeInsets.fromLTRB(
+              8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
+          decoration: const BoxDecoration(
+            color: HuddlColors.white,
+            border: Border(top: BorderSide(color: HuddlColors.divider, width: 0.5)),
           ),
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: HuddlColors.background,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: TextField(
-                controller: _messageController,
-                focusNode: _focusNode,
-                textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle:
-                      GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: HuddlColors.primary,
                 ),
-                onSubmitted: (_) => _sendMessage(),
+                onPressed: _openAttachSheet,
               ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
-                shape: BoxShape.circle,
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.background,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    focusNode: _focusNode,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                    decoration: InputDecoration(
+                      hintText: 'Type a message...',
+                      hintStyle:
+                          GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                    onTap: () {
+                      // Focus text field
+                    },
+                  ),
+                ),
               ),
-              child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
-            ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: const BoxDecoration(
+                    gradient: HuddlColors.primaryGradient,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  // _buildAttachOption removed — replaced by WhatsApp-style attach_bottom_sheet.dart
+
+  // ── Create poll flow ──────────────────────────────────────────────────
+  Future<void> _openCreatePoll() async {
+    final result = await Navigator.push<PollData>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreatePollScreen(groupName: widget.groupName),
       ),
     );
+    if (result == null || !mounted) return;
+
+    final userName = _onboardingService.name ?? 'You';
+    setState(() {
+      _polls.add(ActivePoll(
+        id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
+        data: result,
+        creatorName: userName,
+        createdAt: DateTime.now(),
+      ));
+      // Add a system message about the poll
+      _messages.add(ChatMessage(
+        id: 'sys_poll_${DateTime.now().millisecondsSinceEpoch}',
+        senderId: 'system',
+        senderName: 'System',
+        senderAvatar: '',
+        message: '$userName created a poll: "${result.question}"',
+        timestamp: DateTime.now(),
+        isMe: false,
+        isSystem: true,
+      ));
+    });
+
+    // Scroll to bottom
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  void _votePoll(String pollId, int optionIndex) {
+    setState(() {
+      final idx = _polls.indexWhere((p) => p.id == pollId);
+      if (idx == -1) return;
+      final poll = _polls[idx];
+      if (poll.isExpired) return;
+
+      final userName = _onboardingService.name ?? 'You';
+
+      if (poll.data.allowMultiple) {
+        // Toggle vote
+        if (poll.myVotes.contains(optionIndex)) {
+          poll.myVotes.remove(optionIndex);
+          poll.votes.removeWhere(
+            (v) => v.memberId == 'current_user' && v.optionIndex == optionIndex,
+          );
+        } else {
+          poll.myVotes.add(optionIndex);
+          poll.votes.add(PollVote(
+            memberId: 'current_user',
+            memberName: userName,
+            optionIndex: optionIndex,
+          ));
+        }
+      } else {
+        // Single vote — remove any previous
+        poll.votes.removeWhere((v) => v.memberId == 'current_user');
+        poll.myVotes.clear();
+        poll.myVotes.add(optionIndex);
+        poll.votes.add(PollVote(
+          memberId: 'current_user',
+          memberName: userName,
+          optionIndex: optionIndex,
+        ));
+      }
+    });
+  }
+
+  void _viewPollDetails(ActivePoll poll) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PollDetailScreen(poll: poll)),
+    );
+  }
+
+  // ── Media permission prompt ────────────────────────────────────────────
+  // ── Interleaved list helpers ────────────────────────────────────────
+  List<_GChatItem> get _groupSortedItems {
+    final items = <_GChatItem>[];
+    for (int i = 0; i < _messages.length; i++) {
+      items.add(_GChatItem(type: _GChatItemType.text, textIndex: i, timestamp: _messages[i].timestamp));
+    }
+    for (int i = 0; i < _imageMessages.length; i++) {
+      items.add(_GChatItem(type: _GChatItemType.image, imageIndex: i, timestamp: _imageMessages[i].timestamp));
+    }
+    for (int i = 0; i < _documentMessages.length; i++) {
+      items.add(_GChatItem(type: _GChatItemType.document, docIndex: i, timestamp: _documentMessages[i].timestamp));
+    }
+    items.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return items;
+  }
+
+  // ── WhatsApp-style attach handler (group has Poll option too) ───────
+  Future<void> _openAttachSheet() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => _GroupAttachSheet(),
+    );
+    if (result == null || !mounted) return;
+
+    switch (result) {
+      case 'camera':
+        await _handleCameraCapture();
+        break;
+      case 'gallery':
+        await _handleGalleryPick();
+        break;
+      case 'document':
+        await _handleDocumentPick();
+        break;
+      case 'location':
+        _handleLocationShare();
+        break;
+      case 'contact':
+        _handleContactShare();
+        break;
+      case 'poll':
+        _openCreatePoll();
+        break;
+    }
+  }
+
+  Future<void> _handleCameraCapture() async {
+    final attachment = await _mediaService.takePhoto();
+    if (attachment == null || !mounted) return;
+    _addImageMessage(attachment);
+  }
+
+  Future<void> _handleGalleryPick() async {
+    final attachments = await _mediaService.pickMultipleImages();
+    if (attachments.isEmpty || !mounted) return;
+    for (final att in attachments) {
+      _addImageMessage(att);
+    }
+  }
+
+  void _addImageMessage(MediaAttachment att) {
+    final userName = _onboardingService.name ?? 'You';
+    final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
+    setState(() {
+      _imageMessages.add(_GroupImageMessage(
+        imageUrl: url,
+        isMe: true,
+        timestamp: DateTime.now(),
+        senderName: userName,
+        senderAvatar: '#FF975C',
+        senderId: 'current_user',
+        bytes: att.bytes,
+      ));
+    });
+    _scrollToEnd();
+  }
+
+  Future<void> _handleDocumentPick() async {
+    final attachment = await _mediaService.pickDocument();
+    if (attachment == null || !mounted) return;
+    final userName = _onboardingService.name ?? 'You';
+    setState(() {
+      _documentMessages.add(_GroupDocumentMessage(
+        fileName: attachment.fileName ?? 'Unknown file',
+        fileSize: attachment.fileSize,
+        isMe: true,
+        timestamp: DateTime.now(),
+        senderName: userName,
+        senderAvatar: '#FF975C',
+        senderId: 'current_user',
+      ));
+    });
+    _scrollToEnd();
+  }
+
+  void _handleLocationShare() {
+    if (!mounted) return;
+    final userName = _onboardingService.name ?? 'You';
+    setState(() {
+      _imageMessages.add(_GroupImageMessage(
+        imageUrl: 'location_pin',
+        isMe: true,
+        timestamp: DateTime.now(),
+        senderName: userName,
+        senderAvatar: '#FF975C',
+        senderId: 'current_user',
+        isLocationPin: true,
+      ));
+    });
+    _scrollToEnd();
+  }
+
+  void _handleContactShare() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Contact sharing coming soon'),
+        backgroundColor: HuddlColors.textSecondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  void _scrollToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Widget _emptyState() {
@@ -930,6 +1447,10 @@ class _ChatBubble extends StatelessWidget {
   final bool isSaved;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onSave;
+  final VoidCallback? onForward;
+  final VoidCallback? onReact;
+  final Map<String, int> reactions;
+  final void Function(String emoji)? onTapReaction;
 
   const _ChatBubble({
     required this.message,
@@ -940,126 +1461,145 @@ class _ChatBubble extends StatelessWidget {
     this.isSaved = false,
     this.onAvatarTap,
     this.onSave,
+    this.onForward,
+    this.onReact,
+    this.reactions = const {},
+    this.onTapReaction,
   });
 
   @override
   Widget build(BuildContext context) {
     final isMe = message.isMe;
 
-    return GestureDetector(
-      onLongPress: () => _showMessageActions(context),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: showAvatar ? 12 : 2,
-          bottom: 2,
-          left: isMe ? 60 : 0,
-          right: isMe ? 0 : 60,
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-          children: [
-            if (!isMe) ...[
-              if (showAvatar)
-                GestureDetector(
-                  onTap: onAvatarTap,
-                  child: _SenderAvatar(
-                    colorHex: message.senderAvatar,
-                    name: message.senderName,
-                    showTapHint: onAvatarTap != null,
-                  ),
-                )
-              else
-                const SizedBox(width: 32),
-              const SizedBox(width: 8),
-            ],
-            Flexible(
-              child: Column(
-                crossAxisAlignment:
-                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                children: [
-                  if (showAvatar && !isMe)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: GestureDetector(
-                        onTap: onAvatarTap,
-                        child: Text(
-                          message.senderName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _colorFromHex(message.senderAvatar),
-                          ),
-                        ),
+    return Column(
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onLongPress: () => _showMessageActions(context),
+          onDoubleTap: onReact,
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: showAvatar ? 12 : 2,
+              bottom: reactions.isEmpty ? 2 : 0,
+              left: isMe ? 60 : 0,
+              right: isMe ? 0 : 60,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+              children: [
+                if (!isMe) ...[
+                  if (showAvatar)
+                    GestureDetector(
+                      onTap: onAvatarTap,
+                      child: _SenderAvatar(
+                        colorHex: message.senderAvatar,
+                        name: message.senderName,
+                        senderId: message.senderId,
+                        showTapHint: onAvatarTap != null,
                       ),
-                    ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isHighlighted
-                          ? const Color(0xFFFFF7C9)
-                          : isMe
-                              ? _kMyBubble
-                              : HuddlColors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isMe ? 16 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 16),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        searchQuery.isNotEmpty
-                            ? _buildHighlightedText(message.message, searchQuery)
-                            : Text(
-                                message.message,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: HuddlColors.textDark,
-                                  height: 1.4,
-                                ),
-                              ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (isSaved) ...[
-                              Icon(Icons.bookmark, size: 12,
-                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
-                              const SizedBox(width: 4),
-                            ],
-                            Text(
-                              _formatTime(message.timestamp),
+                    )
+                  else
+                    const SizedBox(width: 32),
+                  const SizedBox(width: 8),
+                ],
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment:
+                        isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    children: [
+                      if (showAvatar && !isMe)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: GestureDetector(
+                            onTap: onAvatarTap,
+                            child: Text(
+                              message.senderName,
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: HuddlColors.textHint,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: _colorFromHex(message.senderAvatar),
                               ),
                             ),
-                            if (isMe && messageStatus != null) ...[
-                              const SizedBox(width: 4),
-                              _GroupMessageStatusIcon(status: messageStatus!),
-                            ],
+                          ),
+                        ),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isHighlighted
+                              ? const Color(0xFFFFF7C9)
+                              : isMe
+                                  ? _kMyBubble
+                                  : HuddlColors.white,
+                          borderRadius: BorderRadius.only(
+                            topLeft: const Radius.circular(16),
+                            topRight: const Radius.circular(16),
+                            bottomLeft: Radius.circular(isMe ? 16 : 4),
+                            bottomRight: Radius.circular(isMe ? 4 : 16),
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
                           ],
                         ),
-                      ],
-                    ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            searchQuery.isNotEmpty
+                                ? _buildHighlightedText(message.message, searchQuery)
+                                : Text(
+                                    message.message,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: HuddlColors.textDark,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isSaved) ...[
+                                  Icon(Icons.bookmark, size: 12,
+                                      color: HuddlColors.primary.withValues(alpha: 0.6)),
+                                  const SizedBox(width: 4),
+                                ],
+                                Text(
+                                  _formatTime(message.timestamp),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    color: HuddlColors.textHint,
+                                  ),
+                                ),
+                                if (isMe && messageStatus != null) ...[
+                                  const SizedBox(width: 4),
+                                  _GroupMessageStatusIcon(status: messageStatus!),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+        // Emoji reactions row
+        if (reactions.isNotEmpty)
+          EmojiReactionDisplay(
+            reactions: reactions,
+            isMe: isMe,
+            onTapReaction: onTapReaction,
+          ),
+      ],
     );
   }
 
@@ -1110,6 +1650,44 @@ class _ChatBubble extends StatelessWidget {
                   ],
                 ),
               ),
+              // Quick emoji row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ...kQuickEmojis.map((emoji) => GestureDetector(
+                      onTap: () {
+                        Navigator.pop(c);
+                        onTapReaction?.call(emoji);
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                      ),
+                    )),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(c);
+                        onReact?.call();
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.background,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.add, color: HuddlColors.textSecondary, size: 20),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: HuddlColors.divider),
               ListTile(
                 leading: Icon(
                   isSaved ? Icons.bookmark : Icons.bookmark_outline,
@@ -1140,7 +1718,10 @@ class _ChatBubble extends StatelessWidget {
                 leading: const Icon(Icons.forward_outlined, color: HuddlColors.textDark),
                 title: Text('Forward',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () => Navigator.pop(c),
+                onTap: () {
+                  Navigator.pop(c);
+                  onForward?.call();
+                },
               ),
               const SizedBox(height: 8),
             ],
@@ -1219,17 +1800,21 @@ class _GroupMessageStatusIcon extends StatelessWidget {
 class _SenderAvatar extends StatelessWidget {
   final String colorHex;
   final String name;
+  final String? senderId;
   final bool showTapHint;
 
   const _SenderAvatar({
     required this.colorHex,
     required this.name,
+    this.senderId,
     this.showTapHint = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(colorHex);
+    final photoUrl = senderId != null ? getProfilePhotoForMember(senderId!) : null;
+
     return Stack(
       children: [
         Container(
@@ -1242,16 +1827,34 @@ class _SenderAvatar extends StatelessWidget {
                 ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
                 : null,
           ),
-          child: Center(
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
-            ),
-          ),
+          clipBehavior: Clip.antiAlias,
+          child: photoUrl != null
+              ? Image.network(
+                  photoUrl,
+                  fit: BoxFit.cover,
+                  width: 32,
+                  height: 32,
+                  errorBuilder: (_, __, ___) => Center(
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : '?',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                )
+              : Center(
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ),
         ),
         if (showTapHint)
           Positioned(
@@ -1303,6 +1906,464 @@ class _TimestampDivider extends StatelessWidget {
     if (diff.inDays == 0) return 'Today';
     if (diff.inDays == 1) return 'Yesterday';
     return '${dt.day}/${dt.month}/${dt.year}';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUP IMAGE MESSAGE — lightweight model for locally-added images
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _GroupImageMessage {
+  final String imageUrl;
+  final bool isMe;
+  final DateTime timestamp;
+  final String senderName;
+  final String senderAvatar;
+  final String senderId;
+  final Uint8List? bytes;
+  final bool isLocationPin;
+
+  const _GroupImageMessage({
+    required this.imageUrl,
+    required this.isMe,
+    required this.timestamp,
+    required this.senderName,
+    required this.senderAvatar,
+    required this.senderId,
+    this.bytes,
+    this.isLocationPin = false,
+  });
+}
+
+class _GroupDocumentMessage {
+  final String fileName;
+  final int? fileSize;
+  final bool isMe;
+  final DateTime timestamp;
+  final String senderName;
+  final String senderAvatar;
+  final String senderId;
+
+  const _GroupDocumentMessage({
+    required this.fileName,
+    this.fileSize,
+    required this.isMe,
+    required this.timestamp,
+    required this.senderName,
+    required this.senderAvatar,
+    required this.senderId,
+  });
+}
+
+enum _GChatItemType { text, image, document }
+
+class _GChatItem {
+  final _GChatItemType type;
+  final int? textIndex;
+  final int? imageIndex;
+  final int? docIndex;
+  final DateTime timestamp;
+
+  const _GChatItem({
+    required this.type,
+    this.textIndex,
+    this.imageIndex,
+    this.docIndex,
+    required this.timestamp,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUP IMAGE BUBBLE — shows an image in group chat with forward overlay
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _GroupImageBubble extends StatelessWidget {
+  final String imageUrl;
+  final bool isMe;
+  final DateTime timestamp;
+  final String senderName;
+  final String senderAvatar;
+  final String? senderId;
+  final VoidCallback? onForward;
+  final Uint8List? bytes;
+
+  const _GroupImageBubble({
+    required this.imageUrl,
+    required this.isMe,
+    required this.timestamp,
+    required this.senderName,
+    required this.senderAvatar,
+    this.senderId,
+    this.onForward,
+    this.bytes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 12,
+        bottom: 4,
+        left: isMe ? 60 : 0,
+        right: isMe ? 0 : 60,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe) ...[
+            _SenderAvatar(
+              colorHex: senderAvatar,
+              name: senderName,
+              senderId: senderId,
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (!isMe)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      senderName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _colorFromHex(senderAvatar),
+                      ),
+                    ),
+                  ),
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.only(
+                        topLeft: const Radius.circular(16),
+                        topRight: const Radius.circular(16),
+                        bottomLeft: Radius.circular(isMe ? 16 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 16),
+                      ),
+                      child: Container(
+                        constraints:
+                            const BoxConstraints(maxWidth: 240, maxHeight: 280),
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: bytes != null
+                            ? Image.memory(
+                                bytes!,
+                                fit: BoxFit.cover,
+                                width: 240,
+                                height: 240,
+                                errorBuilder: (_, __, ___) => _brokenImage(),
+                              )
+                            : Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _brokenImage(),
+                              ),
+                      ),
+                    ),
+                    // Forward button overlay
+                    Positioned(
+                      left: 8,
+                      bottom: 8,
+                      child: GestureDetector(
+                        onTap: onForward,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.forward,
+                              size: 16, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    // Timestamp overlay
+                    Positioned(
+                      right: 8,
+                      bottom: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _fmtTime(timestamp),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _brokenImage() => Container(
+        width: 200,
+        height: 200,
+        color: HuddlColors.background,
+        child: const Icon(Icons.broken_image, color: HuddlColors.textHint, size: 48),
+      );
+
+  String _fmtTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUP LOCATION BUBBLE — shared location in group chat
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _GroupLocationBubble extends StatelessWidget {
+  final bool isMe;
+  final DateTime timestamp;
+  final String senderName;
+  final String senderAvatar;
+  final String? senderId;
+
+  const _GroupLocationBubble({
+    required this.isMe,
+    required this.timestamp,
+    required this.senderName,
+    required this.senderAvatar,
+    this.senderId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 12, bottom: 4,
+        left: isMe ? 60 : 0,
+        right: isMe ? 0 : 60,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe) ...[
+            _SenderAvatar(colorHex: senderAvatar, name: senderName, senderId: senderId),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                if (!isMe)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      senderName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _colorFromHex(senderAvatar),
+                      ),
+                    ),
+                  ),
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  decoration: BoxDecoration(
+                    color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(16),
+                      topRight: const Radius.circular(16),
+                      bottomLeft: Radius.circular(isMe ? 16 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 16),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                        ),
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Opacity(
+                              opacity: 0.15,
+                              child: Column(
+                                children: List.generate(6, (_) => Expanded(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                                    ),
+                                  ),
+                                )),
+                              ),
+                            ),
+                            const Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 16, color: HuddlColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Shared location',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: HuddlColors.textDark,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              _fmtTime(timestamp),
+                              style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _fmtTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUP ATTACH SHEET — WhatsApp-style with extra Poll option
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _GroupAttachSheet extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: HuddlColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _gAttachIcon(context, Icons.camera_alt_rounded, 'Camera',
+                      const Color(0xFFFF5C6A), const Color(0xFFFFE8EA), 'camera'),
+                  _gAttachIcon(context, Icons.photo_library_rounded, 'Gallery',
+                      const Color(0xFF7C4DFF), const Color(0xFFF0EAFF), 'gallery'),
+                  _gAttachIcon(context, Icons.insert_drive_file_rounded, 'Document',
+                      const Color(0xFF2979FF), const Color(0xFFE3F0FF), 'document'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _gAttachIcon(context, Icons.location_on_rounded, 'Location',
+                      const Color(0xFF00C853), const Color(0xFFE0F8EA), 'location'),
+                  _gAttachIcon(context, Icons.person_rounded, 'Contact',
+                      const Color(0xFFFF9100), const Color(0xFFFFF3E0), 'contact'),
+                  _gAttachIcon(context, Icons.poll_rounded, 'Poll',
+                      const Color(0xFF00BCD4), const Color(0xFFE0F7FA), 'poll'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 28),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _gAttachIcon(BuildContext context, IconData icon, String label,
+      Color color, Color bgColor, String action) {
+    return GestureDetector(
+      onTap: () => Navigator.pop(context, action),
+      child: SizedBox(
+        width: 76,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 56, height: 56,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, size: 28, color: color),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: HuddlColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
