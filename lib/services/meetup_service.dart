@@ -16,6 +16,7 @@ class Meetup {
   final int? maxAttendees;
   final bool isGoing;
   final List<String> attendeeNames;
+  final String imageUrl;
 
   Meetup({
     required this.id,
@@ -32,6 +33,7 @@ class Meetup {
     this.maxAttendees,
     this.isGoing = false,
     this.attendeeNames = const [],
+    this.imageUrl = '',
   });
 
   Meetup copyWith({
@@ -54,6 +56,7 @@ class Meetup {
       maxAttendees: maxAttendees,
       isGoing: isGoing ?? this.isGoing,
       attendeeNames: attendeeNames ?? this.attendeeNames,
+      imageUrl: imageUrl,
     );
   }
 }
@@ -114,6 +117,7 @@ class MeetupService extends ChangeNotifier {
         location: 'Little Bean Cafe, Fitzroy',
         organiserName: 'Sophie M.',
         organiserId: 'mem_sophie',
+        imageUrl: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 8,
         maxAttendees: 12,
         isGoing: false,
@@ -131,6 +135,7 @@ class MeetupService extends ChangeNotifier {
         location: 'Northcote Golf Course',
         organiserName: 'James D.',
         organiserId: 'mem_james',
+        imageUrl: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 5,
         maxAttendees: 8,
         isGoing: false,
@@ -148,6 +153,7 @@ class MeetupService extends ChangeNotifier {
         location: 'Edinburgh Gardens, North Fitzroy',
         organiserName: 'Emma W.',
         organiserId: 'mem_emma',
+        imageUrl: 'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 15,
         isGoing: false,
         attendeeNames: ['Emma W.', 'Sophie M.', 'Anna K.', 'Kate P.', 'Lucy R.'],
@@ -164,6 +170,7 @@ class MeetupService extends ChangeNotifier {
         location: 'Curtain Square Playground, Carlton',
         organiserName: 'Anna K.',
         organiserId: 'mem_anna',
+        imageUrl: 'https://images.pexels.com/photos/296301/pexels-photo-296301.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 10,
         isGoing: false,
         attendeeNames: ['Anna K.', 'Emma W.', 'Sophie M.', 'Olivia L.'],
@@ -180,6 +187,7 @@ class MeetupService extends ChangeNotifier {
         location: 'Trattoria Roma, Smith St, Collingwood',
         organiserName: 'Luke W.',
         organiserId: 'mem_luke',
+        imageUrl: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 6,
         maxAttendees: 10,
         isGoing: false,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import 'create_meetup_screen.dart';
@@ -444,175 +445,234 @@ class _MeetupCard extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
+        clipBehavior: Clip.antiAlias,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Top: category banner ───────────────────────────────
-            Container(
-              height: 6,
-              decoration: BoxDecoration(
-                color: catStyle.color,
-                borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Icon ───────────────────────────────────────────
-                  Container(
-                    width: 52,
-                    height: 52,
+            // ── Cover image ──────────────────────────────────────────
+            Stack(
+              children: [
+                SizedBox(
+                  height: 150,
+                  width: double.infinity,
+                  child: meetup.imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: meetup.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            color: catStyle.color.withValues(alpha: 0.12),
+                            child: Center(
+                              child: Icon(catStyle.icon, size: 40, color: catStyle.color.withValues(alpha: 0.4)),
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            color: catStyle.color.withValues(alpha: 0.12),
+                            child: Center(
+                              child: Icon(catStyle.icon, size: 40, color: catStyle.color),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: catStyle.color.withValues(alpha: 0.12),
+                          child: Center(
+                            child: Icon(catStyle.icon, size: 40, color: catStyle.color),
+                          ),
+                        ),
+                ),
+                // Gradient overlay at bottom for readability
+                Positioned(
+                  bottom: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 50,
                     decoration: BoxDecoration(
-                      color: catStyle.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.4),
+                        ],
+                      ),
                     ),
-                    child: Icon(catStyle.icon, size: 24, color: catStyle.color),
                   ),
-                  const SizedBox(width: 12),
-                  // ── Details ────────────────────────────────────────
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                // Category badge
+                Positioned(
+                  top: 10, left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: catStyle.color,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Title + category badge
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                meetup.title,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textDark,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: catStyle.color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                meetup.category,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: catStyle.color,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        // Date + time
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_today_outlined,
-                                size: 12, color: HuddlColors.textHint),
-                            const SizedBox(width: 4),
-                            Text(
-                              meetup.dateDisplay,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            const Icon(Icons.access_time,
-                                size: 12, color: HuddlColors.textHint),
-                            const SizedBox(width: 4),
-                            Text(
-                              meetup.timeDisplay,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: HuddlColors.textHint,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        // Location
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on_outlined,
-                                size: 12, color: HuddlColors.textHint),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                meetup.location,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: HuddlColors.textHint,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        // Bottom row: organiser + attendees
-                        Row(
-                          children: [
-                            // Organiser avatar
-                            CircleAvatar(
-                              radius: 10,
-                              backgroundColor: HuddlColors.primary.withValues(alpha: 0.15),
-                              child: Text(
-                                meetup.organiserName.isNotEmpty
-                                    ? meetup.organiserName[0].toUpperCase()
-                                    : '?',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: HuddlColors.primary,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              meetup.organiserName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.textSecondary,
-                              ),
-                            ),
-                            const Spacer(),
-                            const Icon(Icons.people_outline,
-                                size: 14, color: HuddlColors.textHint),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.textHint,
-                              ),
-                            ),
-                          ],
+                        Icon(catStyle.icon, size: 13, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          meetup.category,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
+                  ),
+                ),
+                // Free badge
+                Positioned(
+                  top: 10, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.teal,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Free',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                // Attendee count overlay
+                Positioned(
+                  bottom: 8, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.people, size: 13, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // ── Card body ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    meetup.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Date + time
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 13, color: catStyle.color),
+                      const SizedBox(width: 5),
+                      Text(
+                        meetup.dateDisplay,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Icon(Icons.access_time,
+                          size: 13, color: catStyle.color),
+                      const SizedBox(width: 4),
+                      Text(
+                        meetup.timeDisplay,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Location
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 13, color: catStyle.color),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          meetup.location,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.textHint,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  // Organiser row
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundColor: catStyle.color.withValues(alpha: 0.15),
+                        child: Text(
+                          meetup.organiserName.isNotEmpty
+                              ? meetup.organiserName[0].toUpperCase()
+                              : '?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: catStyle.color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Organised by ${meetup.organiserName}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -634,7 +694,9 @@ class _EventListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color eventColor = event['color'] as Color;
     final bool isFree = event['isFree'] == true;
+    final bool isOnline = event['isOnline'] == true;
     final String organiser = event['organiser'] as String? ?? '';
+    final String imageUrl = event['imageUrl'] as String? ?? '';
 
     return GestureDetector(
       onTap: () {
@@ -646,145 +708,231 @@ class _EventListCard extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Left: coloured icon area ───────────────────────────
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: eventColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                event['icon'] as IconData,
-                size: 26,
-                color: eventColor,
-              ),
+            // ── Cover image ──────────────────────────────────────────
+            Stack(
+              children: [
+                SizedBox(
+                  height: 150,
+                  width: double.infinity,
+                  child: imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(
+                            color: eventColor.withValues(alpha: 0.12),
+                            child: Center(
+                              child: Icon(event['icon'] as IconData, size: 40, color: eventColor.withValues(alpha: 0.4)),
+                            ),
+                          ),
+                          errorWidget: (_, __, ___) => Container(
+                            color: eventColor.withValues(alpha: 0.12),
+                            child: Center(
+                              child: Icon(event['icon'] as IconData, size: 40, color: eventColor),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: eventColor.withValues(alpha: 0.12),
+                          child: Center(
+                            child: Icon(event['icon'] as IconData, size: 40, color: eventColor),
+                          ),
+                        ),
+                ),
+                // Gradient overlay
+                Positioned(
+                  bottom: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.4),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // Price badge
+                Positioned(
+                  top: 10, left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isFree ? HuddlColors.teal : eventColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      isFree ? 'Free' : event['price'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                // Online / In-person badge
+                if (isOnline)
+                  Positioned(
+                    top: 10, right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.blue,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.videocam, size: 13, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Online',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Bookmark + attendees
+                Positioned(
+                  bottom: 8, right: 10,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.people, size: 13, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${event['attendees']} going',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 30,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.bookmark_border, size: 16, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            // ── Right: details ─────────────────────────────────────
-            Expanded(
+            // ── Card body ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title + bookmark
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event['title'] as String,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(Icons.bookmark_border,
-                          size: 18, color: HuddlColors.textHint),
-                    ],
+                  Text(
+                    event['title'] as String,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  // Date + time + price badge
+                  const SizedBox(height: 6),
+                  // Date + time
                   Row(
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          size: 12, color: HuddlColors.textHint),
-                      const SizedBox(width: 4),
+                          size: 13, color: eventColor),
+                      const SizedBox(width: 5),
                       Text(
                         event['date'] as String,
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: HuddlColors.textSecondary,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 10),
+                      Icon(Icons.access_time,
+                          size: 13, color: eventColor),
+                      const SizedBox(width: 4),
                       Text(
                         event['time'] as String,
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           color: HuddlColors.textHint,
-                        ),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isFree
-                              ? HuddlColors.teal.withValues(alpha: 0.1)
-                              : HuddlColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          isFree ? 'Free' : event['price'] as String,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color:
-                                isFree ? HuddlColors.teal : HuddlColors.primary,
-                          ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // Location + attendees
+                  // Location
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 12, color: HuddlColors.textHint),
-                      const SizedBox(width: 4),
+                      Icon(isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
+                          size: 13, color: eventColor),
+                      const SizedBox(width: 5),
                       Expanded(
                         child: Text(
                           event['location'] as String,
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
+                            fontSize: 12,
                             color: HuddlColors.textHint,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Icon(Icons.people_outline,
-                          size: 12, color: HuddlColors.textHint),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${event['attendees']} going',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.textHint,
-                        ),
-                      ),
                     ],
                   ),
                   if (organiser.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.business_outlined,
-                            size: 12, color: HuddlColors.textHint),
-                        const SizedBox(width: 4),
+                        CircleAvatar(
+                          radius: 11,
+                          backgroundColor: eventColor.withValues(alpha: 0.15),
+                          child: Icon(Icons.business, size: 12, color: eventColor),
+                        ),
+                        const SizedBox(width: 6),
                         Text(
                           'By $organiser',
                           style: GoogleFonts.poppins(
@@ -972,6 +1120,7 @@ final _thirdPartyEvents = [
     'icon': Icons.child_care,
     'organiser': 'Little Explorers Co.',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
   {
     'title': 'Toddler Music & Movement',
@@ -988,6 +1137,7 @@ final _thirdPartyEvents = [
     'icon': Icons.music_note,
     'organiser': 'Tiny Tunes Academy',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
   {
     'title': 'New Parents Workshop',
@@ -1004,6 +1154,7 @@ final _thirdPartyEvents = [
     'icon': Icons.school,
     'organiser': 'Parent Pro Australia',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/3875089/pexels-photo-3875089.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
   {
     'title': 'Online: Sleep Training Masterclass',
@@ -1020,6 +1171,7 @@ final _thirdPartyEvents = [
     'icon': Icons.nightlight_round,
     'organiser': 'Sleep Well Babies',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/3771519/pexels-photo-3771519.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
   {
     'title': 'Family Fun Day — Free Entry',
@@ -1036,6 +1188,7 @@ final _thirdPartyEvents = [
     'icon': Icons.celebration,
     'organiser': 'Carlton Community Assoc.',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/1684187/pexels-photo-1684187.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
   {
     'title': 'Baby First Aid & CPR',
@@ -1052,5 +1205,6 @@ final _thirdPartyEvents = [
     'icon': Icons.medical_services_outlined,
     'organiser': 'Red Cross Australia',
     'organiserLogo': '',
+    'imageUrl': 'https://images.pexels.com/photos/263337/pexels-photo-263337.jpeg?auto=compress&cs=tinysrgb&w=600',
   },
 ];
