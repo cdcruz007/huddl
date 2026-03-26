@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -75,42 +76,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Cover image or gradient fallback
-                  if ((e['imageUrl'] as String? ?? '').isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: e['imageUrl'] as String,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [color, color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [color, color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Center(child: Icon(e['icon'] as IconData, size: 48, color: Colors.white)),
-                      ),
-                    )
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [color, color.withValues(alpha: 0.7)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(child: Icon(e['icon'] as IconData, size: 48, color: Colors.white)),
-                    ),
+                  // Cover image — supports data-URI, http, and asset paths
+                  _buildEventDetailCover(
+                    imageUrl: e['imageUrl'] as String? ?? '',
+                    fallbackIcon: e['icon'] as IconData,
+                    fallbackColor: color,
+                  ),
                   // Dark gradient overlay for text readability
                   Container(
                     decoration: BoxDecoration(
@@ -562,4 +533,67 @@ class _ExpectItem extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── Universal cover-image builder for event detail ─────────────────────────
+Widget _buildEventDetailCover({
+  required String imageUrl,
+  required IconData fallbackIcon,
+  required Color fallbackColor,
+}) {
+  Widget gradientFallback({bool showIcon = true}) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [fallbackColor, fallbackColor.withValues(alpha: 0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: showIcon
+            ? Center(child: Icon(fallbackIcon, size: 48, color: Colors.white))
+            : null,
+      );
+
+  if (imageUrl.isEmpty) return gradientFallback();
+
+  // base64 data-URI (user-uploaded)
+  if (imageUrl.startsWith('data:')) {
+    try {
+      final dataUri = Uri.parse(imageUrl);
+      final bytes = dataUri.data?.contentAsBytes();
+      if (bytes != null) {
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) => gradientFallback(),
+        );
+      }
+    } catch (_) {}
+    return gradientFallback();
+  }
+
+  // http(s) URL
+  if (imageUrl.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => gradientFallback(showIcon: false),
+      errorWidget: (_, __, ___) => gradientFallback(),
+    );
+  }
+
+  // asset path
+  if (imageUrl.startsWith('assets/')) {
+    return Image.asset(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => gradientFallback(),
+    );
+  }
+
+  return gradientFallback();
 }

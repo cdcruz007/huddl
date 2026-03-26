@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -467,29 +468,11 @@ class _MeetupCard extends StatelessWidget {
                 SizedBox(
                   height: 150,
                   width: double.infinity,
-                  child: meetup.imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: meetup.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
-                            color: catStyle.color.withValues(alpha: 0.12),
-                            child: Center(
-                              child: Icon(catStyle.icon, size: 40, color: catStyle.color.withValues(alpha: 0.4)),
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => Container(
-                            color: catStyle.color.withValues(alpha: 0.12),
-                            child: Center(
-                              child: Icon(catStyle.icon, size: 40, color: catStyle.color),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          color: catStyle.color.withValues(alpha: 0.12),
-                          child: Center(
-                            child: Icon(catStyle.icon, size: 40, color: catStyle.color),
-                          ),
-                        ),
+                  child: _buildCoverImage(
+                    imageUrl: meetup.imageUrl,
+                    fallbackIcon: catStyle.icon,
+                    fallbackColor: catStyle.color,
+                  ),
                 ),
                 // Gradient overlay at bottom for readability
                 Positioned(
@@ -730,29 +713,11 @@ class _EventListCard extends StatelessWidget {
                 SizedBox(
                   height: 150,
                   width: double.infinity,
-                  child: imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(
-                            color: eventColor.withValues(alpha: 0.12),
-                            child: Center(
-                              child: Icon(event['icon'] as IconData, size: 40, color: eventColor.withValues(alpha: 0.4)),
-                            ),
-                          ),
-                          errorWidget: (_, __, ___) => Container(
-                            color: eventColor.withValues(alpha: 0.12),
-                            child: Center(
-                              child: Icon(event['icon'] as IconData, size: 40, color: eventColor),
-                            ),
-                          ),
-                        )
-                      : Container(
-                          color: eventColor.withValues(alpha: 0.12),
-                          child: Center(
-                            child: Icon(event['icon'] as IconData, size: 40, color: eventColor),
-                          ),
-                        ),
+                  child: _buildCoverImage(
+                    imageUrl: imageUrl,
+                    fallbackIcon: event['icon'] as IconData,
+                    fallbackColor: eventColor,
+                  ),
                 ),
                 // Gradient overlay
                 Positioned(
@@ -1102,6 +1067,74 @@ _CatStyle _meetupCategoryStyle(String category) {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3RD PARTY EVENTS DATA — company / organisation advertised events
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED — universal cover-image builder (data-URI, http, asset, fallback)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Widget _buildCoverImage({
+  required String imageUrl,
+  required IconData fallbackIcon,
+  required Color fallbackColor,
+}) {
+  Widget fallback() => Container(
+        color: fallbackColor.withValues(alpha: 0.12),
+        child: Center(
+          child: Icon(fallbackIcon, size: 40, color: fallbackColor),
+        ),
+      );
+
+  Widget placeholder() => Container(
+        color: fallbackColor.withValues(alpha: 0.12),
+        child: Center(
+          child: Icon(fallbackIcon, size: 40,
+              color: fallbackColor.withValues(alpha: 0.4)),
+        ),
+      );
+
+  if (imageUrl.isEmpty) return fallback();
+
+  // ── base64 data-URI (user-uploaded photos) ────────────────────────────
+  if (imageUrl.startsWith('data:')) {
+    try {
+      final dataUri = Uri.parse(imageUrl);
+      final bytes = dataUri.data?.contentAsBytes();
+      if (bytes != null) {
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) => fallback(),
+        );
+      }
+    } catch (_) {}
+    return fallback();
+  }
+
+  // ── http(s) URL (Pexels images etc.) ──────────────────────────────────
+  if (imageUrl.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => placeholder(),
+      errorWidget: (_, __, ___) => fallback(),
+    );
+  }
+
+  // ── Local asset path ──────────────────────────────────────────────────
+  if (imageUrl.startsWith('assets/')) {
+    return Image.asset(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => fallback(),
+    );
+  }
+
+  return fallback();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 
 final _thirdPartyEvents = [

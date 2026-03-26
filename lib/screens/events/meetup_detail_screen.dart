@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -106,42 +107,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Cover image or gradient fallback
-                  if (_meetup.imageUrl.isNotEmpty)
-                    CachedNetworkImage(
-                      imageUrl: _meetup.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [catStyle.color, catStyle.color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                      errorWidget: (_, __, ___) => Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [catStyle.color, catStyle.color.withValues(alpha: 0.7)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Center(child: Icon(catStyle.icon, size: 48, color: Colors.white)),
-                      ),
-                    )
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [catStyle.color, catStyle.color.withValues(alpha: 0.7)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(child: Icon(catStyle.icon, size: 48, color: Colors.white)),
-                    ),
+                  // Cover image — supports data-URI, http, and asset paths
+                  _buildDetailCoverImage(
+                    imageUrl: _meetup.imageUrl,
+                    fallbackIcon: catStyle.icon,
+                    fallbackColor: catStyle.color,
+                  ),
                   // Dark gradient overlay for readability
                   Container(
                     decoration: BoxDecoration(
@@ -585,4 +556,67 @@ _CatStyleInfo _getCatStyle(String category) {
     default:
       return _CatStyleInfo(HuddlColors.blue, Icons.groups);
   }
+}
+
+// ── Universal cover-image builder for detail screens ───────────────────────
+Widget _buildDetailCoverImage({
+  required String imageUrl,
+  required IconData fallbackIcon,
+  required Color fallbackColor,
+}) {
+  Widget gradientFallback({bool showIcon = true}) => Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [fallbackColor, fallbackColor.withValues(alpha: 0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: showIcon
+            ? Center(child: Icon(fallbackIcon, size: 48, color: Colors.white))
+            : null,
+      );
+
+  if (imageUrl.isEmpty) return gradientFallback();
+
+  // base64 data-URI (user-uploaded)
+  if (imageUrl.startsWith('data:')) {
+    try {
+      final dataUri = Uri.parse(imageUrl);
+      final bytes = dataUri.data?.contentAsBytes();
+      if (bytes != null) {
+        return Image.memory(
+          Uint8List.fromList(bytes),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (_, __, ___) => gradientFallback(),
+        );
+      }
+    } catch (_) {}
+    return gradientFallback();
+  }
+
+  // http(s) URL
+  if (imageUrl.startsWith('http')) {
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => gradientFallback(showIcon: false),
+      errorWidget: (_, __, ___) => gradientFallback(),
+    );
+  }
+
+  // asset path
+  if (imageUrl.startsWith('assets/')) {
+    return Image.asset(
+      imageUrl,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => gradientFallback(),
+    );
+  }
+
+  return gradientFallback();
 }

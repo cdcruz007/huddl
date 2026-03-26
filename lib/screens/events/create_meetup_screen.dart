@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -22,6 +26,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   TimeOfDay _startTime = const TimeOfDay(hour: 10, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 11, minute: 30);
   bool _hasMaxAttendees = false;
+  String? _pickedImageUrl; // base64 data-URI or null
+  final _picker = ImagePicker();
 
   final _meetupService = MeetupService();
   final _onboardingService = OnboardingDataService();
@@ -114,6 +120,122 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     return '$hour:$min $period';
   }
 
+  // ── Image picker ──────────────────────────────────────────────────────
+
+  Future<void> _pickImage() async {
+    if (kIsWeb) {
+      await _pickFrom(ImageSource.gallery);
+      return;
+    }
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text('Add cover photo',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w700,
+                      color: HuddlColors.textDark)),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: const BoxDecoration(
+                    color: HuddlColors.peachLight, shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.photo_library_outlined,
+                      color: HuddlColors.primary),
+                ),
+                title: const Text('Choose from gallery',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickFrom(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: const BoxDecoration(
+                    color: HuddlColors.peachLight, shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined,
+                      color: HuddlColors.primary),
+                ),
+                title: const Text('Take a photo',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickFrom(ImageSource.camera);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFrom(ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(
+        source: source, maxWidth: 1200, maxHeight: 800, imageQuality: 85,
+      );
+      if (file != null && mounted) {
+        final bytes = await file.readAsBytes();
+        final base64Str = base64Encode(bytes);
+        final mimeType = file.name.toLowerCase().endsWith('.png')
+            ? 'image/png'
+            : 'image/jpeg';
+        setState(() => _pickedImageUrl = 'data:$mimeType;base64,$base64Str');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not access photos: $e'),
+              backgroundColor: Colors.red.shade400),
+        );
+      }
+    }
+  }
+
+  Widget _buildPickedImage() {
+    if (_pickedImageUrl != null && _pickedImageUrl!.startsWith('data:')) {
+      try {
+        final dataUri = Uri.parse(_pickedImageUrl!);
+        final bytes = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.camera_alt_outlined,
+                    size: 36, color: HuddlColors.primary),
+          );
+        }
+      } catch (_) {}
+    }
+    return const Icon(Icons.camera_alt_outlined,
+        size: 36, color: HuddlColors.primary);
+  }
+
   void _createMeetup() {
     if (!_isValid) return;
 
@@ -145,6 +267,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           : null,
       isGoing: true,
       attendeeNames: [organiserName],
+      imageUrl: _pickedImageUrl ?? '',
     );
 
     _meetupService.createMeetup(meetup);
@@ -191,6 +314,83 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Cover photo picker ─────────────────────────────────
+            _sectionTitle('Cover photo'),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                width: double.infinity,
+                height: 160,
+                decoration: BoxDecoration(
+                  color: HuddlColors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: HuddlColors.divider),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _pickedImageUrl != null
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildPickedImage(),
+                          Positioned(
+                            bottom: 8, right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.edit, size: 14,
+                                      color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Change',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.add_photo_alternate_outlined,
+                              size: 40,
+                              color: HuddlColors.textHint.withValues(alpha: 0.6)),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add a cover photo',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Tap to choose from gallery or camera',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: HuddlColors.textHint.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // ── Category selector ───────────────────────────────────
             _sectionTitle('What kind of meet-up?'),
             const SizedBox(height: 10),
