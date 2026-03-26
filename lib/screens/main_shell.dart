@@ -76,9 +76,9 @@ class _MainShellState extends State<MainShell> {
                     onTap: () => setState(() => _currentIndex = 1),
                   ),
                   _NavItem(
-                    icon: Icons.event_outlined,
-                    activeIcon: Icons.event,
-                    label: 'Events',
+                    icon: Icons.explore_outlined,
+                    activeIcon: Icons.explore,
+                    label: 'Discover',
                     isActive: _currentIndex == 2,
                     onTap: () => setState(() => _currentIndex = 2),
                   ),
