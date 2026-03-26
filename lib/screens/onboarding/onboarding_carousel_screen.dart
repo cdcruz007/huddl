@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'welcome_screen.dart';
-import 'login_screen.dart';
 
-// Design tokens matching source project
-const _kOrange = Color(0xFFFCA878); // button & active dot: soft salmon
-const _kOrangeBtn = Color(0xFFFCA878); // same shade for button bg
-const _kTextDark = Color(0xFF1C1C1E); // titles
-const _kTextGray = Color(0xFF9E9E9E); // body / subtitles
+// ── Design tokens ─────────────────────────────────────────────────────────────
+// Soft salmon/peach matching the supplied screenshots: light warm coral.
+// 0xFFFCA878 == AppColors.primary (inlined to keep this file self-contained).
+const _kOrange     = Color(0xFFFCA878);   // button & active dot: soft salmon
+const _kOrangeBtn  = Color(0xFFFCA878);   // same shade for button bg
+const _kTextDark   = Color(0xFF1C1C1E);   // titles
+const _kTextGray   = Color(0xFF9E9E9E);   // body / subtitles
 const _kDotInactive = Color(0xFFDCDCDC); // inactive dots
 
 class OnboardingCarouselScreen extends StatefulWidget {
@@ -55,9 +55,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-      );
+      Navigator.pushNamed(context, '/name_input');
     }
   }
 
@@ -74,17 +72,13 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Logo: H icon + huddl wordmark
+            // ── Logo: H icon only (no "huddl" text) ─────────────────────
             Padding(
               padding: const EdgeInsets.only(top: 20),
-              child: Image.asset(
-                'assets/images/logo_huddl_splash.png',
-                height: 34,
-                fit: BoxFit.contain,
-              ),
+              child: _HuddlIconOnly(),
             ),
 
-            // Carousel pages
+            // ── Carousel pages ───────────────────────────────────────────
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -94,7 +88,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               ),
             ),
 
-            // Dot indicators - small circles
+            // ── Dot indicators — small circles ───────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(_pages.length, (i) {
@@ -114,7 +108,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
             const SizedBox(height: 28),
 
-            // Get started button
+            // ── Get started button ───────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: SizedBox(
@@ -143,7 +137,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
             const SizedBox(height: 16),
 
-            // Already have an account
+            // ── Already have an account ──────────────────────────────────
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -152,11 +146,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                   style: TextStyle(fontSize: 14, color: _kTextGray),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    );
-                  },
+                  onTap: () => Navigator.pushNamed(context, '/login'),
                   child: const Text(
                     'Login',
                     style: TextStyle(
@@ -177,7 +167,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   }
 }
 
-// Single carousel page
+// ── Single carousel page ──────────────────────────────────────────────────────
 class _CarouselPage extends StatelessWidget {
   final _PageData data;
   const _CarouselPage({required this.data});
@@ -244,7 +234,21 @@ class _CarouselPage extends StatelessWidget {
   }
 }
 
-// Data class
+// ── Huddl full logo (H icon + "huddl" wordmark — matches splash screen) ──────
+class _HuddlIconOnly extends StatelessWidget {
+  const _HuddlIconOnly();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/logo_huddl_splash.png',
+      height: 34,
+      fit: BoxFit.contain,
+    );
+  }
+}
+
+// ── Data class ────────────────────────────────────────────────────────────────
 class _PageData {
   final String illustration;
   final String title;

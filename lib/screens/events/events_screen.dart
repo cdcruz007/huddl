@@ -182,8 +182,12 @@ class _EventListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color eventColor = event['color'] as Color;
+    final bool isFree = event['isFree'] == true;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
@@ -195,145 +199,120 @@ class _EventListCard extends StatelessWidget {
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Event image
+          // ── Left: coloured icon area ─────────────────────────────
           Container(
-            height: 140,
-            width: double.infinity,
-            color: event['color'] as Color,
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    event['icon'] as IconData,
-                    size: 48,
-                    color: HuddlColors.white.withValues(alpha: 0.6),
-                  ),
-                ),
-                // Free/Paid badge
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: event['isFree'] == true
-                          ? HuddlColors.teal
-                          : HuddlColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      event['isFree'] == true ? 'Free' : event['price'] as String,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                // Bookmark
-                Positioned(
-                  top: 8,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.white.withValues(alpha: 0.9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.bookmark_border,
-                      size: 18,
-                      color: HuddlColors.textDark,
-                    ),
-                  ),
-                ),
-              ],
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: eventColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              event['icon'] as IconData,
+              size: 26,
+              color: eventColor,
             ),
           ),
-          // Event details
-          Padding(
-            padding: const EdgeInsets.all(16),
+          const SizedBox(width: 12),
+          // ── Right: details ───────────────────────────────────────
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date
+                // Title row with bookmark
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        event['title'] as String,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.bookmark_border,
+                        size: 18, color: HuddlColors.textHint),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // Date + time + badge
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.peachLight,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        event['date'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
+                    Icon(Icons.calendar_today_outlined,
+                        size: 12, color: HuddlColors.textHint),
+                    const SizedBox(width: 4),
+                    Text(
+                      event['date'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
                       event['time'] as String,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: HuddlColors.textHint,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Free / price badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isFree
+                            ? HuddlColors.teal.withValues(alpha: 0.1)
+                            : HuddlColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        isFree ? 'Free' : event['price'] as String,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: isFree ? HuddlColors.teal : HuddlColors.primary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                // Title
-                Text(
-                  event['title'] as String,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
-                  ),
-                ),
                 const SizedBox(height: 4),
-                // Description
-                Text(
-                  event['description'] as String,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: HuddlColors.textHint,
-                    height: 1.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 12),
-                // Location & attendees
+                // Location + attendees
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 16, color: HuddlColors.textHint),
+                    Icon(Icons.location_on_outlined,
+                        size: 12, color: HuddlColors.textHint),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         event['location'] as String,
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: HuddlColors.textHint,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const Icon(Icons.people_outline, size: 16, color: HuddlColors.textHint),
+                    Icon(Icons.people_outline,
+                        size: 12, color: HuddlColors.textHint),
                     const SizedBox(width: 4),
                     Text(
                       '${event['attendees']} going',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: HuddlColors.textHint,
                       ),
                     ),

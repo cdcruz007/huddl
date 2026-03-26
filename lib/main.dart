@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'theme/huddl_theme.dart';
-import 'screens/auth/splash_screen.dart';
+import 'config/router.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,10 +13,11 @@ class HuddlApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'huddl',
+      title: 'Huddl',
       debugShowCheckedModeBanner: false,
       theme: HuddlTheme.lightTheme,
-      home: const SplashScreen(),
+      initialRoute: '/splash',
+      onGenerateRoute: AppRouter.generateRoute,
     );
   }
 }
