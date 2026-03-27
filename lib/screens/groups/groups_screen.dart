@@ -559,30 +559,32 @@ class _MessagesTabState extends State<_MessagesTab> {
                   );
                 },
               ),
-              _ActionTile(
-                icon: Icons.delete_outline,
-                label: 'Delete',
-                color: Colors.red,
-                onTap: () {
-                  Navigator.pop(c);
-                  final listItem = _MessageListItem(
-                    id: group.id,
-                    name: group.name,
-                    imageUrl: group.imageUrl,
-                    lastMessage: group.lastMessage,
-                    lastSenderName: group.lastSenderName,
-                    lastMessageTime: group.lastMessageTime,
-                    unreadCount: group.unreadCount ?? 0,
-                    isGroup: true,
-                    isPinned: isPinned,
-                    isMuted: isMuted,
-                    isPrivate: group.isPrivate,
-                    groupItem: group,
-                    isTyping: false,
-                  );
-                  _confirmDeleteConversation(ctx, listItem);
-                },
-              ),
+              // Delete is only available for private groups
+              if (group.isPrivate)
+                _ActionTile(
+                  icon: Icons.delete_outline,
+                  label: 'Delete',
+                  color: Colors.red,
+                  onTap: () {
+                    Navigator.pop(c);
+                    final listItem = _MessageListItem(
+                      id: group.id,
+                      name: group.name,
+                      imageUrl: group.imageUrl,
+                      lastMessage: group.lastMessage,
+                      lastSenderName: group.lastSenderName,
+                      lastMessageTime: group.lastMessageTime,
+                      unreadCount: group.unreadCount ?? 0,
+                      isGroup: true,
+                      isPinned: isPinned,
+                      isMuted: isMuted,
+                      isPrivate: group.isPrivate,
+                      groupItem: group,
+                      isTyping: false,
+                    );
+                    _confirmDeleteConversation(ctx, listItem);
+                  },
+                ),
               _ActionTile(
                 icon: Icons.exit_to_app,
                 label: 'Leave group',
@@ -790,6 +792,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         'groupName': group.name,
         'groupImageUrl': group.imageUrl,
         'isDefaultGroup': group.isDefault,
+        'isPrivate': group.isPrivate,
         'targetAudience': group.targetAudience,
         'groupCategory': group.category,
         'searchQuery': _searchQuery, // pass query so chat can highlight
@@ -1022,6 +1025,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupName': item.groupItem!.name,
                     'groupImageUrl': item.groupItem!.imageUrl,
                     'isDefaultGroup': item.groupItem!.isDefault,
+                    'isPrivate': item.groupItem!.isPrivate,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });
@@ -1056,6 +1060,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 _SwipeActionRow(
                   key: ValueKey('swipe_${item.id}'),
                   isUnread: isUnread,
+                  canDelete: !item.isGroup || item.isPrivate,
                   onDelete: () =>
                       _confirmDeleteConversation(context, item),
                   onToggleRead: () => _toggleReadStatus(item),
@@ -1160,6 +1165,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupName': item.groupItem!.name,
                     'groupImageUrl': item.groupItem!.imageUrl,
                     'isDefaultGroup': item.groupItem!.isDefault,
+                    'isPrivate': item.groupItem!.isPrivate,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });
@@ -1404,6 +1410,18 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   // ── Delete conversation confirmation dialog ──────────────────────────
   void _confirmDeleteConversation(BuildContext ctx, _MessageListItem item) {
+    // Public groups cannot be deleted by anyone
+    if (item.isGroup && !item.isPrivate) {
+      ScaffoldMessenger.of(ctx).showSnackBar(
+        SnackBar(
+          content: const Text('Public groups cannot be deleted.'),
+          backgroundColor: HuddlColors.textSecondary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
     showDialog(
       context: ctx,
       builder: (c) => Dialog(
@@ -4148,6 +4166,7 @@ class _SwipeActionRow extends StatefulWidget {
   final bool isUnread;
   final VoidCallback onDelete;
   final VoidCallback onToggleRead;
+  final bool canDelete;
 
   const _SwipeActionRow({
     super.key,
@@ -4155,6 +4174,7 @@ class _SwipeActionRow extends StatefulWidget {
     required this.isUnread,
     required this.onDelete,
     required this.onToggleRead,
+    this.canDelete = true,
   });
 
   @override
@@ -4208,11 +4228,13 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
       onHorizontalDragUpdate: (details) {
         setState(() {
           _dragExtent += details.delta.dx;
-          _dragExtent = _dragExtent.clamp(-_actionThreshold - 20, _actionThreshold + 20);
+          // If delete is disabled, prevent left swipe
+          final double minDrag = widget.canDelete ? -_actionThreshold - 20 : 0;
+          _dragExtent = _dragExtent.clamp(minDrag, _actionThreshold + 20);
         });
       },
       onHorizontalDragEnd: (details) {
-        if (_dragExtent < -_actionThreshold * 0.6) {
+        if (widget.canDelete && _dragExtent < -_actionThreshold * 0.6) {
           // Swiped left enough — trigger delete
           _snapBack();
           widget.onDelete();

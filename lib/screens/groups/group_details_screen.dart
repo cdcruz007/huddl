@@ -44,6 +44,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isCreator = false;
 
+  /// Public groups cannot be edited or deleted by anyone.
+  bool get _isPublicGroup => !widget.isPrivate;
+
+  /// Editing is only allowed for private group creators.
+  bool get _canEdit => _isCreator && !_isPublicGroup;
+
   // Editable fields for creators
   late String _editableName;
   late String _editableDescription;
@@ -117,6 +123,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   }
 
   void _toggleEditing() {
+    // Public groups cannot be edited
+    if (_isPublicGroup) return;
+
     if (_isEditing) {
       // Save changes
       setState(() {
@@ -266,8 +275,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               onTap: () => Navigator.pop(context),
             ),
             actions: [
-              // Edit button for creators
-              if (_isCreator && _isJoined)
+              // Edit button for private-group creators only
+              if (_canEdit && _isJoined)
                 _CircleButton(
                   icon: _isEditing ? Icons.check : Icons.edit,
                   onTap: _toggleEditing,
@@ -818,8 +827,34 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
-            // Edit option for creators
-            if (_isCreator && _isJoined)
+            // Public group lock notice
+            if (_isPublicGroup)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.textHint.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_outline, size: 18, color: HuddlColors.textSecondary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'This is a public group. Group details cannot be changed or deleted by any member.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Edit option -- private-group creators only
+            if (_canEdit && _isJoined)
               ListTile(
                 leading: const Icon(Icons.edit_outlined, color: HuddlColors.textDark),
                 title: Text('Edit group details',

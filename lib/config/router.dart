@@ -108,6 +108,7 @@ class AppRouter {
             groupName: args['groupName'] as String? ?? 'Group Chat',
             groupImageUrl: args['groupImageUrl'] as String? ?? '',
             isDefaultGroup: args['isDefaultGroup'] as bool? ?? false,
+            isPrivate: args['isPrivate'] as bool? ?? false,
             targetAudience: (args['targetAudience'] as List<dynamic>?)
                     ?.map((e) => e as String)
                     .toList() ??

@@ -27,6 +27,7 @@ class GroupChatScreen extends StatefulWidget {
   final String groupName;
   final String groupImageUrl;
   final bool isDefaultGroup;
+  final bool isPrivate;
   final List<String> targetAudience;
   final String groupCategory;
 
@@ -36,6 +37,7 @@ class GroupChatScreen extends StatefulWidget {
     required this.groupName,
     required this.groupImageUrl,
     this.isDefaultGroup = false,
+    this.isPrivate = false,
     this.targetAudience = const [],
     this.groupCategory = '',
   });
@@ -1925,6 +1927,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             'groupId': widget.groupId,
             'groupName': widget.groupName,
             'groupImageUrl': widget.groupImageUrl,
+            'isPrivate': widget.isPrivate,
           });
         },
         child: Row(
@@ -1980,6 +1983,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   'groupId': widget.groupId,
                   'groupName': widget.groupName,
                   'groupImageUrl': widget.groupImageUrl,
+                  'isPrivate': widget.isPrivate,
                 });
                 break;
               case 'saved':
