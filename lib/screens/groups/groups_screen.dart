@@ -559,8 +559,8 @@ class _MessagesTabState extends State<_MessagesTab> {
                   );
                 },
               ),
-              // Delete is only available for private groups
-              if (group.isPrivate)
+              // Delete is only available for private group creator/admin
+              if (group.isPrivate && group.creatorId == 'current_user')
                 _ActionTile(
                   icon: Icons.delete_outline,
                   label: 'Delete',
@@ -793,6 +793,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         'groupImageUrl': group.imageUrl,
         'isDefaultGroup': group.isDefault,
         'isPrivate': group.isPrivate,
+        'creatorId': group.creatorId,
         'targetAudience': group.targetAudience,
         'groupCategory': group.category,
         'searchQuery': _searchQuery, // pass query so chat can highlight
@@ -1026,6 +1027,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupImageUrl': item.groupItem!.imageUrl,
                     'isDefaultGroup': item.groupItem!.isDefault,
                     'isPrivate': item.groupItem!.isPrivate,
+                    'creatorId': item.groupItem!.creatorId,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });
@@ -1173,6 +1175,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupImageUrl': item.groupItem!.imageUrl,
                     'isDefaultGroup': item.groupItem!.isDefault,
                     'isPrivate': item.groupItem!.isPrivate,
+                    'creatorId': item.groupItem!.creatorId,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });

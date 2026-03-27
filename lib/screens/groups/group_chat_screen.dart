@@ -18,6 +18,7 @@ import 'forward_message_sheet.dart';
 import 'thread_reply_screen.dart';
 import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
+import '../../widgets/huddl_widgets.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = Color(0xFFFFF3ED);
@@ -28,6 +29,7 @@ class GroupChatScreen extends StatefulWidget {
   final String groupImageUrl;
   final bool isDefaultGroup;
   final bool isPrivate;
+  final String? creatorId;
   final List<String> targetAudience;
   final String groupCategory;
 
@@ -38,6 +40,7 @@ class GroupChatScreen extends StatefulWidget {
     required this.groupImageUrl,
     this.isDefaultGroup = false,
     this.isPrivate = false,
+    this.creatorId,
     this.targetAudience = const [],
     this.groupCategory = '',
   });
@@ -58,6 +61,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Whether the user has changed borough and this is an old-borough default group
   bool _canLeaveGroup = false;
+
+  /// Admin state — creator or assigned admins can manage the private group
+  bool get _isCreatorOrAdmin =>
+      widget.creatorId == 'current_user' || _adminIds.contains('current_user');
+  final Set<String> _adminIds = {};
+
+  /// Sample members for the admin-picker
+  static final List<_GroupMember> _groupMembers = [
+    _GroupMember(id: 'emma', name: 'Emma Watson', accentColor: const Color(0xFFFF975C), isAdmin: false),
+    _GroupMember(id: 'sophie', name: 'Sophie Turner', accentColor: const Color(0xFF3580F0), isAdmin: false),
+    _GroupMember(id: 'kate', name: 'Kate Middleton', accentColor: const Color(0xFF199A85), isAdmin: false),
+    _GroupMember(id: 'lucy', name: 'Lucy Chen', accentColor: const Color(0xFFA16AE9), isAdmin: false),
+    _GroupMember(id: 'james', name: 'James Smith', accentColor: const Color(0xFF5B9DFF), isAdmin: false),
+    _GroupMember(id: 'anna', name: 'Anna Taylor', accentColor: const Color(0xFFE8A838), isAdmin: false),
+    _GroupMember(id: 'mia', name: 'Mia Johnson', accentColor: const Color(0xFFFF7575), isAdmin: false),
+    _GroupMember(id: 'oliver', name: 'Oliver Brown', accentColor: const Color(0xFF199A85), isAdmin: false),
+  ];
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
@@ -1163,6 +1183,320 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // ── Add Member sheet (private group admin only) ────────────────────────
+  void _showAddMemberSheet() {
+    // Simulated borough members not yet in this group
+    final availableMembers = [
+      _GroupMember(id: 'charlotte', name: 'Charlotte Wilson', accentColor: const Color(0xFFA16AE9), isAdmin: false),
+      _GroupMember(id: 'isabella', name: 'Isabella Davis', accentColor: const Color(0xFF3580F0), isAdmin: false),
+      _GroupMember(id: 'noah', name: 'Noah Martinez', accentColor: const Color(0xFF199A85), isAdmin: false),
+      _GroupMember(id: 'amelia', name: 'Amelia Garcia', accentColor: const Color(0xFFE8A838), isAdmin: false),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        maxChildSize: 0.85,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Add Member', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Select a member from your borough to add to this private group.',
+                style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.separated(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: availableMembers.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, indent: 56, color: HuddlColors.divider),
+                itemBuilder: (_, i) {
+                  final m = availableMembers[i];
+                  return ListTile(
+                    leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
+                    title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+                    trailing: SizedBox(
+                      width: 80,
+                      height: 34,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(c);
+                          setState(() => _groupMembers.add(m));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${m.name} added to group'), backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: EdgeInsets.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                        child: Text('Add', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Remove Member sheet (private group admin only) ─────────────────────
+  void _showRemoveMemberSheet() {
+    // Only show non-admin members that can be removed (not the creator)
+    final removable = _groupMembers.where((m) => !m.isAdmin && m.id != 'current_user').toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        maxChildSize: 0.85,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Remove Member', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Select a member to remove from this private group.',
+                style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+            ),
+            const SizedBox(height: 12),
+            if (removable.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text('No members to remove.', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint)),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: removable.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 56, color: HuddlColors.divider),
+                  itemBuilder: (_, i) {
+                    final m = removable[i];
+                    return ListTile(
+                      leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
+                      title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+                      trailing: SizedBox(
+                        width: 90,
+                        height: 34,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.pop(c);
+                            _confirmRemoveMember(m);
+                          },
+                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                          child: Text('Remove', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.red)),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmRemoveMember(_GroupMember member) {
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Remove ${member.name}?', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 17)),
+        content: Text('${member.name} will be removed from this private group and will no longer be able to see group messages.',
+          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary, height: 1.5)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: HuddlColors.textSecondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(c);
+              setState(() => _groupMembers.removeWhere((gm) => gm.id == member.id));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${member.name} removed from group'), backgroundColor: HuddlColors.primary,
+                  behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              );
+            },
+            child: Text('Remove', style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Add Admin sheet (private group admin only) ─────────────────────────
+  void _showAddAdminSheet() {
+    // Only show non-admin members
+    final nonAdmins = _groupMembers.where((m) => !m.isAdmin).toList();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        maxChildSize: 0.85,
+        minChildSize: 0.3,
+        expand: false,
+        builder: (_, scrollCtrl) => Column(
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Icon(Icons.admin_panel_settings, size: 24, color: HuddlColors.teal),
+                  const SizedBox(width: 10),
+                  Text('Add Admin', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Admins can add and remove members, edit group details, and manage the group.',
+                style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary, height: 1.4),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (nonAdmins.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  children: [
+                    const Icon(Icons.admin_panel_settings_outlined, size: 48, color: HuddlColors.textHint),
+                    const SizedBox(height: 12),
+                    Text('All members are already admins.', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint)),
+                  ],
+                ),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: nonAdmins.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1, indent: 56, color: HuddlColors.divider),
+                  itemBuilder: (_, i) {
+                    final m = nonAdmins[i];
+                    return ListTile(
+                      leading: MemberAvatar(name: m.name, size: 42, accentColor: m.accentColor, showOnlineDot: false, isOnline: false),
+                      title: Text(m.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+                      subtitle: Text('Member', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+                      trailing: SizedBox(
+                        width: 110,
+                        height: 34,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(c);
+                            _confirmMakeAdmin(m);
+                          },
+                          icon: const Icon(Icons.shield_outlined, size: 16, color: HuddlColors.white),
+                          label: Text('Make Admin', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                          style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.teal, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmMakeAdmin(_GroupMember member) {
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Make ${member.name} an admin?', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 17)),
+        content: Text(
+          '${member.name} will have admin rights including adding/removing members and editing group details.',
+          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: HuddlColors.textSecondary))),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(c);
+              setState(() {
+                final idx = _groupMembers.indexWhere((gm) => gm.id == member.id);
+                if (idx != -1) {
+                  _groupMembers[idx] = _GroupMember(
+                    id: member.id, name: member.name,
+                    accentColor: member.accentColor, isAdmin: true,
+                  );
+                }
+                _adminIds.add(member.id);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(children: [
+                    const Icon(Icons.admin_panel_settings, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text('${member.name} is now an admin'),
+                  ]),
+                  backgroundColor: HuddlColors.teal,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            },
+            child: Text('Confirm', style: GoogleFonts.poppins(color: HuddlColors.teal, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Leave group confirmation dialog (matching screenshot design) ───────
   void _showLeaveGroupDialog() {
     showDialog(
@@ -1984,6 +2318,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   'groupName': widget.groupName,
                   'groupImageUrl': widget.groupImageUrl,
                   'isPrivate': widget.isPrivate,
+                  'creatorId': widget.creatorId,
                 });
                 break;
               case 'saved':
@@ -1991,6 +2326,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 break;
               case 'saved_threads':
                 _showSavedThreadsForGroup();
+                break;
+              case 'add_member':
+                _showAddMemberSheet();
+                break;
+              case 'remove_member':
+                _showRemoveMemberSheet();
+                break;
+              case 'add_admin':
+                _showAddAdminSheet();
                 break;
               case 'leave':
                 _showLeaveGroupDialog();
@@ -2070,6 +2414,61 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ),
+            // ── Private group admin actions ──────────────────────────
+            if (widget.isPrivate && _isCreatorOrAdmin)
+              PopupMenuItem<String>(
+                value: 'add_member',
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_add_outlined, size: 20, color: HuddlColors.textDark),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Add member',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (widget.isPrivate && _isCreatorOrAdmin)
+              PopupMenuItem<String>(
+                value: 'remove_member',
+                child: Row(
+                  children: [
+                    const Icon(Icons.person_remove_outlined, size: 20, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Remove member',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (widget.isPrivate && _isCreatorOrAdmin)
+              PopupMenuItem<String>(
+                value: 'add_admin',
+                child: Row(
+                  children: [
+                    const Icon(Icons.admin_panel_settings_outlined, size: 20, color: HuddlColors.teal),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Add admin',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Leave group — only shown if eligible
             if (_canLeaveGroup)
               PopupMenuItem<String>(
@@ -3688,4 +4087,19 @@ Color _colorFromHex(String hex) {
     return Color(int.parse('FF$clean', radix: 16));
   }
   return HuddlColors.primary;
+}
+
+// ── Group member model for admin features ─────────────────────────────────
+class _GroupMember {
+  final String id;
+  final String name;
+  final Color accentColor;
+  final bool isAdmin;
+
+  const _GroupMember({
+    required this.id,
+    required this.name,
+    required this.accentColor,
+    this.isAdmin = false,
+  });
 }

@@ -44,11 +44,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isCreator = false;
 
-  /// Public groups are immutable — details cannot be changed by anyone.
+  /// Public groups are immutable -- details cannot be changed by anyone.
   bool get _isPublicGroup => !widget.isPrivate;
 
-  /// Editing is only allowed for private group creators.
-  bool get _canEdit => _isCreator && !_isPublicGroup;
+  /// Editing is only allowed for private group creator or admins.
+  bool get _isAdmin => _isCreator; // In a real app, check admin list from backend
+  bool get _canEdit => _isAdmin && !_isPublicGroup;
 
   // Editable fields for creators
   late String _editableName;
@@ -671,8 +672,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    // Invite members (only for private group creators)
-                    if (widget.isPrivate && _isCreator)
+                    // Invite members (only for private group admins/creator)
+                    if (widget.isPrivate && _isAdmin)
                       SizedBox(
                         width: double.infinity,
                         height: 48,
@@ -827,7 +828,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
-            // Public group lock notice
+            // Info notice for public groups or non-admin private group members
             if (_isPublicGroup)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -853,7 +854,32 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ],
                 ),
               ),
-            // Edit option -- private-group creators only
+            if (!_isPublicGroup && !_isAdmin)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.textHint.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 18, color: HuddlColors.textSecondary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Only the group creator or admins can edit group details.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            // Edit option -- private-group admin/creator only
             if (_canEdit && _isJoined)
               ListTile(
                 leading: const Icon(Icons.edit_outlined, color: HuddlColors.textDark),
@@ -908,6 +934,20 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   _showLeaveGroupDialog();
                 },
               ),
+            // Delete group — only for private group admins/creator
+            if (widget.isPrivate && _isAdmin)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: Text('Delete group',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _confirmDeleteGroup(ctx);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.report_outlined, color: Colors.red),
               title: Text('Report group',
@@ -955,6 +995,88 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 Text('Report', style: GoogleFonts.poppins(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _confirmDeleteGroup(BuildContext ctx) {
+    showDialog(
+      context: ctx,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline, size: 32, color: Colors.red),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Delete this group?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This will permanently delete the group and all messages. All members will be removed. This action cannot be undone.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: HuddlColors.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      child: Text('Cancel',
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        // Pop back to messages list
+                        Navigator.pop(ctx);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(ctx).showSnackBar(
+                            SnackBar(
+                              content: Text('${widget.groupName} has been deleted'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      child: Text('Delete',
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

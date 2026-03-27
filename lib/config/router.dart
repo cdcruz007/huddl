@@ -109,6 +109,7 @@ class AppRouter {
             groupImageUrl: args['groupImageUrl'] as String? ?? '',
             isDefaultGroup: args['isDefaultGroup'] as bool? ?? false,
             isPrivate: args['isPrivate'] as bool? ?? false,
+            creatorId: args['creatorId'] as String?,
             targetAudience: (args['targetAudience'] as List<dynamic>?)
                     ?.map((e) => e as String)
                     .toList() ??
