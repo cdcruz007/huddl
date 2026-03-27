@@ -124,25 +124,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _onboardingService.initialize();
     await _savedMessageService.initialize();
 
-    // Generate demo poll
-    _polls.add(ActivePoll(
-      id: 'poll_demo_1',
-      data: PollData(
-        question: 'What time shall we meet at the cafe on Thursday?',
-        options: ['10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'],
-        expiresAt: DateTime.now().add(const Duration(days: 2)),
-        allowMultiple: false,
-      ),
-      creatorName: 'Lucy',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1, minutes: 20)),
-      votes: [
-        const PollVote(memberId: 'user_emma', memberName: 'Emma', optionIndex: 1),
-        const PollVote(memberId: 'user_sophie', memberName: 'Sophie', optionIndex: 1),
-        const PollVote(memberId: 'user_james', memberName: 'James', optionIndex: 0),
-        const PollVote(memberId: 'user_anna', memberName: 'Anna', optionIndex: 2),
-      ],
-    ));
-
     // Generate demo messages
     _messages = _generateDemoMessages();
 
