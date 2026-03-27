@@ -9,6 +9,8 @@ import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
+import '../../services/block_service.dart';
+import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
 import 'poll_detail_screen.dart';
@@ -44,6 +46,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final InvitationService _invitationService = InvitationService();
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
+  final BlockService _blockService = BlockService();
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
@@ -69,10 +72,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Reply state
   ChatMessage? _replyingTo;
 
+  /// IDs of messages unsent "just for me" (hidden locally)
+  final Set<String> _hiddenMessageIds = {};
+
+  /// IDs of messages unsent "for everyone" (shown as "This message was deleted")
+  final Set<String> _deletedForEveryoneIds = {};
+
   @override
   void initState() {
     super.initState();
     _loadMessages();
+    _blockService.initialize();
   }
 
   @override
@@ -435,6 +445,383 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return '${dt.day}/${dt.month}/${dt.year}';
   }
 
+  // ── Saved threads for this group ───────────────────────────────────
+  void _showSavedThreadsForGroup() {
+    final threads = _savedMessageService.getSavedThreadsForGroup(widget.groupId);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saved Threads',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${threads.length}',
+                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: HuddlColors.divider),
+              if (threads.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72, height: 72,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.teal.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.topic_outlined, size: 36, color: HuddlColors.teal),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No saved threads',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48),
+                          child: Text(
+                            'Long press on a message with replies and select "Save reply thread" to save it under a topic.',
+                            style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: threads.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
+                    itemBuilder: (_, i) {
+                      final thread = threads[i];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        leading: Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.teal.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
+                        ),
+                        title: Text(
+                          thread.topicName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 2),
+                            Text(
+                              thread.rootMessageText,
+                              style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(Icons.chat_bubble_outline, size: 12, color: HuddlColors.textHint),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${thread.totalMessages} messages',
+                                  style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatSavedDate(thread.savedAt),
+                                  style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Navigate to group
+                            IconButton(
+                              icon: const Icon(Icons.open_in_new, size: 18, color: HuddlColors.primary),
+                              tooltip: 'Go to group',
+                              onPressed: () {
+                                Navigator.pop(c);
+                                // Navigate to this group chat (scroll to thread)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.topic, color: Colors.white, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(child: Text('Viewing "${thread.topicName}" in ${thread.groupName}')),
+                                      ],
+                                    ),
+                                    backgroundColor: HuddlColors.teal,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                );
+                              },
+                            ),
+                            // Delete
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, size: 18, color: HuddlColors.textHint),
+                              onPressed: () {
+                                _savedMessageService.unsaveThread(thread.id);
+                                Navigator.pop(c);
+                                _showSavedThreadsForGroup();
+                              },
+                            ),
+                          ],
+                        ),
+                        onTap: () {
+                          Navigator.pop(c);
+                          // Show thread detail in a new bottom sheet
+                          _showThreadDetail(thread);
+                        },
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showThreadDetail(dynamic thread) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        thread.topicName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        // Navigate directly back to this group's chat
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.group, color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text('You are in ${thread.groupName}')),
+                              ],
+                            ),
+                            backgroundColor: HuddlColors.primary,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: Text('Go to group',
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                      style: TextButton.styleFrom(foregroundColor: HuddlColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Text(
+                      '${thread.groupName}',
+                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${thread.totalMessages} messages',
+                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: HuddlColors.divider),
+              // Root message
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // Root message
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border(
+                          left: BorderSide(color: HuddlColors.primary, width: 3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                thread.rootSenderName,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                _formatSavedDate(thread.rootTimestamp),
+                                style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            thread.rootMessageText,
+                            style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark, height: 1.4),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Replies
+                    ...thread.replies.map<Widget>((reply) => Container(
+                          margin: const EdgeInsets.only(left: 16, bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: reply.isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    reply.isMe ? 'You' : reply.senderName,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: reply.isMe ? HuddlColors.primary : HuddlColors.teal,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    _formatSavedDate(reply.timestamp),
+                                    style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                reply.message,
+                                style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, height: 1.4),
+                              ),
+                            ],
+                          ),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Save message ──────────────────────────────────────────────────────
   void _saveMessage(ChatMessage msg) {
     if (_savedMessageService.isMessageSaved(msg.id)) {
@@ -473,6 +860,440 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // ── Unsend message ──────────────────────────────────────────────────
+  void _showUnsendDialog(ChatMessage msg) {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.primary),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Unsend message?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Choose how you want to unsend this message.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Unsend for everyone
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(c);
+                    setState(() {
+                      _deletedForEveryoneIds.add(msg.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('Message unsent for everyone'),
+                          ],
+                        ),
+                        backgroundColor: HuddlColors.primary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.group_outlined, size: 20),
+                  label: Text('Unsend for everyone',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Unsend just for me
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(c);
+                    setState(() {
+                      _hiddenMessageIds.add(msg.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('Message unsent for you'),
+                          ],
+                        ),
+                        backgroundColor: HuddlColors.textSecondary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline, size: 20),
+                  label: Text('Unsend just for me',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HuddlColors.textDark,
+                    side: const BorderSide(color: HuddlColors.divider),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Cancel
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: Text('Cancel',
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Save entire reply thread ──────────────────────────────────────
+  void _showSaveThreadDialog(ChatMessage rootMsg) {
+    // Collect all messages that replied to this root message
+    final replies = _messages
+        .where((m) =>
+            m.replyToText != null &&
+            m.replyToText == rootMsg.message &&
+            !m.isSystem)
+        .toList();
+
+    if (replies.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No replies found for this message'),
+          backgroundColor: HuddlColors.textHint,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
+    }
+
+    final topicController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.teal.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.teal),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Save reply thread',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${replies.length + 1} messages in this thread',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: HuddlColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Thread preview
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HuddlColors.background,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border(
+                    left: BorderSide(color: HuddlColors.primary, width: 3),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      rootMsg.senderName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                    Text(
+                      rootMsg.message,
+                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '+ ${replies.length} ${replies.length == 1 ? 'reply' : 'replies'}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Topic name input
+              TextField(
+                controller: topicController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                decoration: InputDecoration(
+                  labelText: 'Topic name',
+                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                  hintText: 'e.g. Thursday cafe meetup',
+                  hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: HuddlColors.divider),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: HuddlColors.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('Cancel',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final topic = topicController.text.trim();
+                        if (topic.isEmpty) return;
+                        Navigator.pop(c);
+                        _saveThread(rootMsg, replies, topic);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.teal,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text('Save thread',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _saveThread(ChatMessage rootMsg, List<ChatMessage> replies, String topicName) {
+    _savedMessageService.saveThread(
+      topicName: topicName,
+      rootMessageId: rootMsg.id,
+      rootMessageText: rootMsg.message,
+      rootSenderName: rootMsg.senderName,
+      rootTimestamp: rootMsg.timestamp,
+      replies: replies
+          .map((r) => SavedThreadMessage(
+                messageId: r.id,
+                message: r.message,
+                senderName: r.senderName,
+                timestamp: r.timestamp,
+                isMe: r.isMe,
+              ))
+          .toList(),
+      groupId: widget.groupId,
+      groupName: widget.groupName,
+      groupImageUrl: widget.groupImageUrl,
+    );
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.topic, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text('Thread saved as "$topicName"')),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  // ── Block user in group ───────────────────────────────────────────
+  void _showBlockMemberDialog(String memberId, String memberName) {
+    final isBlocked = _blockService.isUserBlocked(memberId);
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.block, size: 32, color: Colors.red),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                isBlocked ? 'Unblock $memberName?' : 'Block $memberName?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isBlocked
+                    ? 'Their messages will be visible in this group again.'
+                    : 'Their messages will be hidden from you in this group and DMs.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text('Cancel',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        final wasBlocked = isBlocked;
+                        await _blockService.toggleBlock(memberId);
+                        setState(() {});
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(wasBlocked
+                                  ? '$memberName has been unblocked'
+                                  : '$memberName has been blocked'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(isBlocked ? 'Unblock' : 'Block',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -810,6 +1631,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           }
                           final msg = _messages[msgIdx];
 
+                          // Skip messages unsent "just for me"
+                          if (_hiddenMessageIds.contains(msg.id)) {
+                            return const SizedBox.shrink();
+                          }
+
+                          // Hide messages from blocked users
+                          if (!msg.isMe && !msg.isSystem && _blockService.isUserBlocked(msg.senderId)) {
+                            return const SizedBox.shrink();
+                          }
+
                           // System messages (join/leave)
                           if (msg.isSystem) {
                             return _SystemMessageBubble(message: msg);
@@ -829,37 +1660,54 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               _currentMatchIndex >= 0 &&
                               _searchMatches[_currentMatchIndex] == msgIdx;
 
+                          // Check if unsent for everyone
+                          final isDeletedForEveryone = _deletedForEveryoneIds.contains(msg.id);
+
                           return Column(
                             children: [
                               if (showTimestamp)
                                 _TimestampDivider(timestamp: msg.timestamp),
-                              _ChatBubble(
-                                message: msg,
-                                showAvatar: showAvatar,
-                                messageStatus: _messageStatuses[msg.id],
-                                isHighlighted: isHighlighted,
-                                searchQuery: _searchQuery,
-                                isSaved: _savedMessageService.isMessageSaved(msg.id),
-                                onAvatarTap: msg.isMe
-                                    ? null
-                                    : () => _openDMWithMember(
-                                          msg.senderId,
-                                          msg.senderName,
-                                          msg.senderAvatar,
-                                        ),
-                                onSave: () => _saveMessage(msg),
-                                onForward: () {
-                                  showForwardSheet(
-                                    context: context,
-                                    messageText: msg.message,
-                                  );
-                                },
-                                onReact: () => _showEmojiPicker(msg.id),
-                                reactions: _reactions[msg.id] ?? {},
-                                onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
-                                onReply: () => _startReply(msg),
-                                onCopy: () => _copyMessage(msg.message),
-                              ),
+                              if (isDeletedForEveryone)
+                                _GroupDeletedMessageBubble(
+                                  isMe: msg.isMe,
+                                  timestamp: msg.timestamp,
+                                )
+                              else
+                                _ChatBubble(
+                                  message: msg,
+                                  showAvatar: showAvatar,
+                                  messageStatus: _messageStatuses[msg.id],
+                                  isHighlighted: isHighlighted,
+                                  searchQuery: _searchQuery,
+                                  isSaved: _savedMessageService.isMessageSaved(msg.id),
+                                  onAvatarTap: msg.isMe
+                                      ? null
+                                      : () => _openDMWithMember(
+                                            msg.senderId,
+                                            msg.senderName,
+                                            msg.senderAvatar,
+                                          ),
+                                  onSave: () => _saveMessage(msg),
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: msg.message,
+                                    );
+                                  },
+                                  onReact: () => _showEmojiPicker(msg.id),
+                                  reactions: _reactions[msg.id] ?? {},
+                                  onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
+                                  onReply: () => _startReply(msg),
+                                  onCopy: () => _copyMessage(msg.message),
+                                  onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
+                                  onSaveThread: (msg.replyToText != null || _messages.any((m) => m.replyToText == msg.message))
+                                      ? () => _showSaveThreadDialog(msg)
+                                      : null,
+                                  onBlockUser: (!msg.isMe && msg.senderId != 'system')
+                                      ? () => _showBlockMemberDialog(msg.senderId, msg.senderName)
+                                      : null,
+                                  isBlockedUser: !msg.isMe && _blockService.isUserBlocked(msg.senderId),
+                                ),
                             ],
                           );
                         },
@@ -997,6 +1845,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               case 'saved':
                 _showSavedMessagesForGroup();
                 break;
+              case 'saved_threads':
+                _showSavedThreadsForGroup();
+                break;
               case 'report':
                 _showReportGroupDialog();
                 break;
@@ -1045,6 +1896,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   const SizedBox(width: 12),
                   Text(
                     'Saved messages',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'saved_threads',
+              child: Row(
+                children: [
+                  const Icon(Icons.topic_outlined, size: 20, color: HuddlColors.teal),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Saved threads',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -1665,6 +2533,10 @@ class _ChatBubble extends StatelessWidget {
   final VoidCallback? onReact;
   final VoidCallback? onReply;
   final VoidCallback? onCopy;
+  final VoidCallback? onUnsend;
+  final VoidCallback? onSaveThread;
+  final VoidCallback? onBlockUser;
+  final bool isBlockedUser;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
 
@@ -1681,6 +2553,10 @@ class _ChatBubble extends StatelessWidget {
     this.onReact,
     this.onReply,
     this.onCopy,
+    this.onUnsend,
+    this.onSaveThread,
+    this.onBlockUser,
+    this.isBlockedUser = false,
     this.reactions = const {},
     this.onTapReaction,
   });
@@ -1984,6 +2860,43 @@ class _ChatBubble extends StatelessWidget {
                   onForward?.call();
                 },
               ),
+              if (onUnsend != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
+                  title: Text('Unsend message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onUnsend?.call();
+                  },
+                ),
+              if (onSaveThread != null)
+                ListTile(
+                  leading: const Icon(Icons.topic_outlined, color: HuddlColors.teal),
+                  title: Text('Save reply thread',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onSaveThread?.call();
+                  },
+                ),
+              if (onBlockUser != null)
+                ListTile(
+                  leading: Icon(
+                    isBlockedUser ? Icons.check_circle_outline : Icons.block,
+                    color: Colors.red,
+                  ),
+                  title: Text(
+                    isBlockedUser ? 'Unblock ${message.senderName}' : 'Block ${message.senderName}',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onBlockUser?.call();
+                  },
+                ),
               const SizedBox(height: 8),
             ],
           ),
@@ -2030,6 +2943,73 @@ class _ChatBubble extends StatelessWidget {
   }
 
   String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+/// Deleted message bubble — shown when message is unsent for everyone
+class _GroupDeletedMessageBubble extends StatelessWidget {
+  final bool isMe;
+  final DateTime timestamp;
+
+  const _GroupDeletedMessageBubble({
+    required this.isMe,
+    required this.timestamp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 4, bottom: 4,
+        left: isMe ? 60 : 48,
+        right: isMe ? 0 : 60,
+      ),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: HuddlColors.background,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 16),
+            ),
+            border: Border.all(color: HuddlColors.divider, width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.block, size: 14, color: HuddlColors.textHint),
+              const SizedBox(width: 6),
+              Text(
+                'This message was deleted',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _fmtTime(timestamp),
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _fmtTime(DateTime dt) {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';

@@ -8,6 +8,7 @@ import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
+import '../../services/block_service.dart';
 import 'forward_message_sheet.dart';
 import '../../widgets/attach_bottom_sheet.dart';
 import '../../widgets/document_bubble.dart';
@@ -70,6 +71,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final DMService _dmService = DMService();
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
+  final BlockService _blockService = BlockService();
 
   List<DirectMessage> _messages = [];
   bool _isLoading = true;
@@ -80,8 +82,13 @@ class _DMChatScreenState extends State<DMChatScreen> {
   List<int> _searchMatches = []; // indices of matching messages
   int _currentMatchIndex = -1;
   Timer? _refreshTimer;
-  bool _isBlocked = false;
   final MediaAttachService _mediaService = MediaAttachService();
+
+  /// IDs of messages unsent "just for me" (hidden locally)
+  final Set<String> _hiddenMessageIds = {};
+
+  /// IDs of messages unsent "for everyone" (shown as "This message was deleted")
+  final Set<String> _deletedForEveryoneIds = {};
 
   /// Reply state
   DirectMessage? _replyingTo;
@@ -102,6 +109,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _loadData();
     _dmService.addListener(_onServiceUpdate);
     _savedMessageService.initialize();
+    _blockService.initialize();
     // Periodic refresh for status changes
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) _refreshMessages();
@@ -258,6 +266,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
   }
 
+  /// Whether the current recipient is blocked
+  bool get _isBlocked => _blockService.isUserBlocked(widget.recipientId);
+
   // ── Get typing state ────────────────────────────────────────────────────
   bool get _isRecipientTyping {
     if (_conversationId == null) return false;
@@ -399,6 +410,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
                           // Text message
                           final msgIndex = item.textIndex!;
                           final msg = _messages[msgIndex];
+
+                          // Skip messages unsent "just for me"
+                          if (_hiddenMessageIds.contains(msg.id)) {
+                            return const SizedBox.shrink();
+                          }
+
                           final showTimestamp = msgIndex == 0 ||
                               msg.timestamp
                                       .difference(
@@ -411,35 +428,45 @@ class _DMChatScreenState extends State<DMChatScreen> {
                               _currentMatchIndex >= 0 &&
                               _searchMatches[_currentMatchIndex] == msgIndex;
 
+                          // Check if unsent for everyone
+                          final isDeletedForEveryone = _deletedForEveryoneIds.contains(msg.id);
+
                           return Column(
                             children: [
                               if (showTimestamp)
                                 _TimestampDivider(timestamp: msg.timestamp),
-                              _DMBubble(
-                                message: msg,
-                                recipientName: widget.recipientName,
-                                recipientAvatarColor:
-                                    widget.recipientAvatarColor,
-                                recipientId: widget.recipientId,
-                                isHighlighted: isHighlighted,
-                                searchQuery: _searchQuery,
-                                isSaved: _savedMessageService.isMessageSaved(msg.id),
-                                onSave: () => _saveMessage(msg),
-                                onForward: () {
-                                  showForwardSheet(
-                                    context: context,
-                                    messageText: msg.message,
-                                  );
-                                },
-                                onReact: () => _showEmojiPicker(msg.id),
-                                reactions: _reactions[msg.id] ?? {},
-                                onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
-                                onReply: () => _startReply(msg),
-                                onCopy: () => _copyMessage(msg.message),
-                                onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
-                                replyTo: msg.replyToText,
-                                replyToSender: msg.replyToSender,
-                              ),
+                              if (isDeletedForEveryone)
+                                _DeletedMessageBubble(
+                                  isMe: msg.isMe,
+                                  timestamp: msg.timestamp,
+                                )
+                              else
+                                _DMBubble(
+                                  message: msg,
+                                  recipientName: widget.recipientName,
+                                  recipientAvatarColor:
+                                      widget.recipientAvatarColor,
+                                  recipientId: widget.recipientId,
+                                  isHighlighted: isHighlighted,
+                                  searchQuery: _searchQuery,
+                                  isSaved: _savedMessageService.isMessageSaved(msg.id),
+                                  onSave: () => _saveMessage(msg),
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: msg.message,
+                                    );
+                                  },
+                                  onReact: () => _showEmojiPicker(msg.id),
+                                  reactions: _reactions[msg.id] ?? {},
+                                  onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
+                                  onReply: () => _startReply(msg),
+                                  onCopy: () => _copyMessage(msg.message),
+                                  onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
+                                  onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
+                                  replyTo: msg.replyToText,
+                                  replyToSender: msg.replyToSender,
+                                ),
                             ],
                           );
                         },
@@ -833,6 +860,57 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   Widget _buildInputBar() {
+    // Show blocked banner instead of input bar when user is blocked
+    if (_isBlocked) {
+      return Container(
+        padding: EdgeInsets.fromLTRB(
+            16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+        decoration: const BoxDecoration(
+          color: HuddlColors.white,
+          border: Border(top: BorderSide(color: HuddlColors.divider, width: 0.5)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.block, size: 20, color: Colors.red),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'You have blocked ${widget.recipientName}. Unblock to send messages.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: HuddlColors.textSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                await _blockService.unblockUser(widget.recipientId);
+                setState(() {});
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${widget.recipientName} has been unblocked'),
+                      backgroundColor: HuddlColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  );
+                }
+              },
+              child: Text(
+                'Unblock',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -945,6 +1023,134 @@ class _DMChatScreenState extends State<DMChatScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  // ── Unsend message ──────────────────────────────────────────────────
+  void _showUnsendDialog(DirectMessage msg) {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_sweep_outlined, size: 32, color: HuddlColors.primary),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Unsend message?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Choose how you want to unsend this message.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              // Unsend for everyone
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(c);
+                    setState(() {
+                      _deletedForEveryoneIds.add(msg.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('Message unsent for everyone'),
+                          ],
+                        ),
+                        backgroundColor: HuddlColors.primary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.group_outlined, size: 20),
+                  label: Text('Unsend for everyone',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Unsend just for me
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(c);
+                    setState(() {
+                      _hiddenMessageIds.add(msg.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 18),
+                            SizedBox(width: 8),
+                            Text('Message unsent for you'),
+                          ],
+                        ),
+                        backgroundColor: HuddlColors.textSecondary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.person_outline, size: 20),
+                  label: Text('Unsend just for me',
+                      style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: HuddlColors.textDark,
+                    side: const BorderSide(color: HuddlColors.divider),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              // Cancel
+              TextButton(
+                onPressed: () => Navigator.pop(c),
+                child: Text('Cancel',
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1078,20 +1284,24 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(c);
-                        setState(() => _isBlocked = !_isBlocked);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(_isBlocked
-                                ? '${widget.recipientName} has been blocked'
-                                : '${widget.recipientName} has been unblocked'),
-                            backgroundColor: HuddlColors.primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
+                        final wasBlocked = _isBlocked;
+                        await _blockService.toggleBlock(widget.recipientId);
+                        setState(() {});
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(wasBlocked
+                                  ? '${widget.recipientName} has been unblocked'
+                                  : '${widget.recipientName} has been blocked'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
@@ -1453,6 +1663,7 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onReact;
   final VoidCallback? onReply;
   final VoidCallback? onCopy;
+  final VoidCallback? onUnsend;
   final VoidCallback? onAvatarTap;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
@@ -1472,6 +1683,7 @@ class _DMBubble extends StatelessWidget {
     this.onReact,
     this.onReply,
     this.onCopy,
+    this.onUnsend,
     this.onAvatarTap,
     this.reactions = const {},
     this.onTapReaction,
@@ -1752,6 +1964,17 @@ class _DMBubble extends StatelessWidget {
                   onForward?.call();
                 },
               ),
+              if (onUnsend != null)
+                ListTile(
+                  leading: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
+                  title: Text('Unsend message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onUnsend?.call();
+                  },
+                ),
               const SizedBox(height: 8),
             ],
           ),
@@ -1793,6 +2016,76 @@ class _DMBubble extends StatelessWidget {
         style: GoogleFonts.poppins(
             fontSize: 14, color: HuddlColors.textDark, height: 1.4),
         children: spans,
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DELETED MESSAGE BUBBLE — shown when message is unsent for everyone
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _DeletedMessageBubble extends StatelessWidget {
+  final bool isMe;
+  final DateTime timestamp;
+
+  const _DeletedMessageBubble({
+    required this.isMe,
+    required this.timestamp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 4, bottom: 4,
+        left: isMe ? 60 : 48,
+        right: isMe ? 0 : 60,
+      ),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: HuddlColors.background,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 16),
+            ),
+            border: Border.all(color: HuddlColors.divider, width: 0.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.block, size: 14, color: HuddlColors.textHint),
+              const SizedBox(width: 6),
+              Text(
+                'This message was deleted',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _formatTime(timestamp),
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

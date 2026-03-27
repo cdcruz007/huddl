@@ -4,6 +4,7 @@ import '../models/saved_message.dart';
 import 'browser_storage.dart';
 
 const String _savedMessagesKey = 'saved_messages_v1';
+const String _savedThreadsKey = 'saved_threads_v1';
 
 /// Service to manage saved/bookmarked messages from groups and DMs.
 class SavedMessageService extends ChangeNotifier {
@@ -13,9 +14,11 @@ class SavedMessageService extends ChangeNotifier {
   SavedMessageService._internal();
 
   List<SavedMessage> _savedMessages = [];
+  List<SavedThread> _savedThreads = [];
   bool _initialized = false;
 
   List<SavedMessage> get savedMessages => List.unmodifiable(_savedMessages);
+  List<SavedThread> get savedThreads => List.unmodifiable(_savedThreads);
 
   Future<void> initialize() async {
     if (_initialized) return;
@@ -37,12 +40,34 @@ class SavedMessageService extends ChangeNotifier {
     } catch (_) {
       _savedMessages = [];
     }
+    // Load saved threads
+    try {
+      final raw = await BrowserStorage.getString(_savedThreadsKey);
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        _savedThreads = decoded
+            .map((j) => SavedThread.fromJson(j as Map<String, dynamic>))
+            .toList();
+        _savedThreads.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+      }
+    } catch (_) {
+      _savedThreads = [];
+    }
   }
 
   Future<void> _save() async {
     try {
       final encoded = json.encode(_savedMessages.map((m) => m.toJson()).toList());
       await BrowserStorage.setString(_savedMessagesKey, encoded);
+    } catch (_) {
+      // silently fail
+    }
+  }
+
+  Future<void> _saveThreads() async {
+    try {
+      final encoded = json.encode(_savedThreads.map((t) => t.toJson()).toList());
+      await BrowserStorage.setString(_savedThreadsKey, encoded);
     } catch (_) {
       // silently fail
     }
@@ -136,5 +161,50 @@ class SavedMessageService extends ChangeNotifier {
   /// Get saved messages for a specific DM.
   List<SavedMessage> getSavedForDM(String recipientId) {
     return _savedMessages.where((m) => m.dmRecipientId == recipientId).toList();
+  }
+
+  // ── Thread Saving ──────────────────────────────────────────────────────
+
+  /// Save an entire reply thread under a topic name.
+  Future<void> saveThread({
+    required String topicName,
+    required String rootMessageId,
+    required String rootMessageText,
+    required String rootSenderName,
+    required DateTime rootTimestamp,
+    required List<SavedThreadMessage> replies,
+    required String groupId,
+    required String groupName,
+    required String groupImageUrl,
+  }) async {
+    final thread = SavedThread(
+      id: 'thread_${DateTime.now().millisecondsSinceEpoch}',
+      topicName: topicName,
+      savedAt: DateTime.now(),
+      rootMessageId: rootMessageId,
+      rootMessageText: rootMessageText,
+      rootSenderName: rootSenderName,
+      rootTimestamp: rootTimestamp,
+      replies: replies,
+      groupId: groupId,
+      groupName: groupName,
+      groupImageUrl: groupImageUrl,
+    );
+
+    _savedThreads.insert(0, thread);
+    await _saveThreads();
+    notifyListeners();
+  }
+
+  /// Remove a saved thread.
+  Future<void> unsaveThread(String threadId) async {
+    _savedThreads.removeWhere((t) => t.id == threadId);
+    await _saveThreads();
+    notifyListeners();
+  }
+
+  /// Get all saved threads for a specific group.
+  List<SavedThread> getSavedThreadsForGroup(String groupId) {
+    return _savedThreads.where((t) => t.groupId == groupId).toList();
   }
 }
