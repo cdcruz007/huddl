@@ -397,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── See All: Upcoming Events ──────────────────────────────────────────────
   void _openAllEvents() {
-    _switchToTab(2); // Go to What's On tab
+    _switchToTab(2); // Go to Mingle tab
   }
 
   @override
@@ -537,7 +537,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 12),
                       _QuickAction(
                         icon: Icons.storefront,
-                        label: 'Pass It On',
+                        label: 'Rehome',
                         color: HuddlColors.teal,
                         bgColor: const Color(0xFFE6F5F3),
                         onTap: () => _switchToTab(3),
@@ -1448,7 +1448,7 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'New Event';
       case FeedItemType.newMarketplaceItem:
-        return 'Pass It On';
+        return 'Rehome';
       case FeedItemType.milestone:
         return 'Milestone';
     }
@@ -2261,7 +2261,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'View Events';
       case FeedItemType.newMarketplaceItem:
-        return 'View in Pass It On';
+        return 'View in Rehome';
       case FeedItemType.newParent:
         return 'Say Welcome';
       case FeedItemType.milestone:
@@ -2323,7 +2323,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'New Event';
       case FeedItemType.newMarketplaceItem:
-        return 'Pass It On';
+        return 'Rehome';
       case FeedItemType.milestone:
         return 'Milestone';
     }

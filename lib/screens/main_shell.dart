@@ -29,7 +29,7 @@ class MainShellState extends State<MainShell> {
     ProfileScreen(),
   ];
 
-  /// Switch to a specific tab by index (0=Village, 1=MyHuddl, 2=What's On, 3=Pass It On, 4=Profile)
+  /// Switch to a specific tab by index (0=MyHuddl, 1=Local, 2=Mingle, 3=Rehome, 4=Profile)
   void switchTab(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
@@ -75,28 +75,28 @@ class MainShellState extends State<MainShell> {
                   _NavItem(
                     icon: Icons.home_outlined,
                     activeIcon: Icons.home,
-                    label: 'Your Village',
+                    label: 'MyHuddl',
                     isActive: _currentIndex == 0,
                     onTap: () => setState(() => _currentIndex = 0),
                   ),
                   _NavItem(
                     icon: Icons.people_outline,
                     activeIcon: Icons.people,
-                    label: 'MyHuddl',
+                    label: 'Local',
                     isActive: _currentIndex == 1,
                     onTap: () => setState(() => _currentIndex = 1),
                   ),
                   _NavItem(
                     icon: Icons.explore_outlined,
                     activeIcon: Icons.explore,
-                    label: "What's On",
+                    label: 'Mingle',
                     isActive: _currentIndex == 2,
                     onTap: () => setState(() => _currentIndex = 2),
                   ),
                   _NavItem(
                     icon: Icons.storefront_outlined,
                     activeIcon: Icons.storefront,
-                    label: 'Pass It On',
+                    label: 'Rehome',
                     isActive: _currentIndex == 3,
                     onTap: () => setState(() => _currentIndex = 3),
                   ),

@@ -45,7 +45,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Pass It On',
+                        'Rehome',
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,

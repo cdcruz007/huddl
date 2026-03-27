@@ -90,7 +90,7 @@ class _EventsScreenState extends State<EventsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "What's On",
+                        "Mingle",
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
