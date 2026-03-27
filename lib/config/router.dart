@@ -115,6 +115,7 @@ class AppRouter {
                     .toList() ??
                 const [],
             groupCategory: args['groupCategory'] as String? ?? '',
+            openThreadForMessageId: args['openThreadForMessageId'] as String?,
           ),
         );
 

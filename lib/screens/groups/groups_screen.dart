@@ -3676,6 +3676,18 @@ class _DiscoverGroupCard extends StatelessWidget {
 // SAVED TAB
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/// Unified wrapper for displaying both SavedMessage and SavedThread in the Saved tab.
+class _SavedItem {
+  final SavedMessage? message;
+  final SavedThread? thread;
+  _SavedItem.fromMessage(this.message) : thread = null;
+  _SavedItem.fromThread(this.thread) : message = null;
+
+  bool get isThread => thread != null;
+  String get id => isThread ? thread!.id : message!.id;
+  DateTime get savedAt => isThread ? thread!.savedAt : message!.savedAt;
+}
+
 class _SavedTab extends StatefulWidget {
   @override
   State<_SavedTab> createState() => _SavedTabState();
@@ -3710,16 +3722,35 @@ class _SavedTabState extends State<_SavedTab> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  /// Filter saved messages by search query — matches message text, sender name, or source name.
-  List<SavedMessage> _filteredSaved() {
-    final all = _savedMessageService.savedMessages;
-    if (_searchQuery.isEmpty) return all;
+  /// Build a unified list of saved messages + saved threads, sorted newest first.
+  List<_SavedItem> _filteredSaved() {
     final q = _searchQuery.toLowerCase();
-    return all.where((m) =>
-      m.message.toLowerCase().contains(q) ||
-      m.senderName.toLowerCase().contains(q) ||
-      m.sourceName.toLowerCase().contains(q)
-    ).toList();
+    final items = <_SavedItem>[];
+
+    // Add saved messages
+    for (final m in _savedMessageService.savedMessages) {
+      if (q.isEmpty ||
+          m.message.toLowerCase().contains(q) ||
+          m.senderName.toLowerCase().contains(q) ||
+          m.sourceName.toLowerCase().contains(q)) {
+        items.add(_SavedItem.fromMessage(m));
+      }
+    }
+
+    // Add saved threads
+    for (final t in _savedMessageService.savedThreads) {
+      if (q.isEmpty ||
+          t.topicName.toLowerCase().contains(q) ||
+          t.rootMessageText.toLowerCase().contains(q) ||
+          t.rootSenderName.toLowerCase().contains(q) ||
+          t.groupName.toLowerCase().contains(q)) {
+        items.add(_SavedItem.fromThread(t));
+      }
+    }
+
+    // Sort by savedAt descending (newest first)
+    items.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+    return items;
   }
 
   /// Show delete confirmation dialog matching the Messages tab pattern.
@@ -3812,10 +3843,11 @@ class _SavedTabState extends State<_SavedTab> {
       );
     }
 
-    final allSaved = _savedMessageService.savedMessages;
+    final allMessages = _savedMessageService.savedMessages;
+    final allThreads = _savedMessageService.savedThreads;
 
-    // No saved messages at all — show empty state (no search bar needed)
-    if (allSaved.isEmpty) {
+    // No saved items at all — show empty state (no search bar needed)
+    if (allMessages.isEmpty && allThreads.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -3835,7 +3867,7 @@ class _SavedTabState extends State<_SavedTab> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No saved messages yet',
+              'No saved items yet',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -3844,7 +3876,7 @@ class _SavedTabState extends State<_SavedTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Long-press a message in any group or DM\nto save it here for later.',
+              'Long-press a message to save it, or save\nan entire reply thread from a group.',
               style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
               textAlign: TextAlign.center,
             ),
@@ -3932,18 +3964,30 @@ class _SavedTabState extends State<_SavedTab> {
                   padding: const EdgeInsets.only(top: 4, bottom: 100),
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
-                    final msg = filtered[index];
+                    final item = filtered[index];
+                    Widget card;
+                    VoidCallback onDelete;
+                    if (item.isThread) {
+                      card = _SavedThreadCard(
+                        savedThread: item.thread!,
+                        onTap: () => _navigateToThread(item.thread!),
+                      );
+                      onDelete = () => _confirmDeleteSavedThread(item.thread!);
+                    } else {
+                      card = _SavedMessageCard(
+                        savedMessage: item.message!,
+                        onTap: () => _navigateToSource(item.message!),
+                      );
+                      onDelete = () => _confirmDeleteSavedMessage(item.message!);
+                    }
                     return Column(
                       children: [
                         _SwipeActionRow(
-                          key: ValueKey('saved_swipe_${msg.id}'),
-                          isUnread: false, // saved items don't have read/unread
-                          onDelete: () => _confirmDeleteSavedMessage(msg),
-                          onToggleRead: () {}, // no-op for saved tab
-                          child: _SavedMessageCard(
-                            savedMessage: msg,
-                            onTap: () => _navigateToSource(msg),
-                          ),
+                          key: ValueKey('saved_swipe_${item.id}'),
+                          isUnread: false,
+                          onDelete: onDelete,
+                          onToggleRead: () {},
+                          child: card,
                         ),
                         if (index < filtered.length - 1)
                           const Divider(
@@ -3976,6 +4020,98 @@ class _SavedTabState extends State<_SavedTab> {
         'conversationId': msg.dmConversationId,
       });
     }
+  }
+
+  /// Navigate to the group chat and auto-open the thread panel for the saved thread.
+  void _navigateToThread(SavedThread thread) {
+    Navigator.pushNamed(context, '/group_chat', arguments: {
+      'groupId': thread.groupId,
+      'groupName': thread.groupName,
+      'groupImageUrl': thread.groupImageUrl,
+      'openThreadForMessageId': thread.rootMessageId,
+    });
+  }
+
+  /// Confirm deletion of a saved thread.
+  void _confirmDeleteSavedThread(SavedThread thread) {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Are you sure you want to permanently delete this saved thread?',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.textDark,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: HuddlColors.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        await _savedMessageService.unsaveThread(thread.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Saved thread deleted'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -4158,6 +4294,192 @@ Color _savedColorFromHex(String hex) {
     return Color(int.parse('FF$clean', radix: 16));
   }
   return HuddlColors.primary;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAVED THREAD CARD — shows thread topic, root message, reply count, and tap hint
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _SavedThreadCard extends StatelessWidget {
+  final SavedThread savedThread;
+  final VoidCallback onTap;
+
+  const _SavedThreadCard({
+    required this.savedThread,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: HuddlColors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Source info row
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.teal.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.topic, size: 14, color: HuddlColors.teal),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.forum, size: 12, color: HuddlColors.teal),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              savedThread.topicName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: HuddlColors.teal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        'Thread from ${savedThread.groupName}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.textHint,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _formatSavedTime(savedThread.savedAt),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Root message
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuddlColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border(
+                  left: BorderSide(color: HuddlColors.teal, width: 3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        savedThread.rootSenderName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatMessageTime(savedThread.rootTimestamp),
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    savedThread.rootMessageText,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: HuddlColors.textDark,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Reply count badge
+                  Row(
+                    children: [
+                      Icon(Icons.reply, size: 14, color: HuddlColors.teal),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${savedThread.replies.length} ${savedThread.replies.length == 1 ? 'reply' : 'replies'}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Tap hint
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.open_in_new, size: 12, color: HuddlColors.textHint),
+                const SizedBox(width: 4),
+                Text(
+                  'Tap to open thread in group',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatSavedTime(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${dt.day}/${dt.month}';
+  }
+
+  String _formatMessageTime(DateTime dt) {
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

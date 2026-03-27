@@ -32,6 +32,9 @@ class GroupChatScreen extends StatefulWidget {
   final String? creatorId;
   final List<String> targetAudience;
   final String groupCategory;
+  /// When non-null, the chat screen will auto-open the thread panel for this
+  /// root message ID immediately after loading.
+  final String? openThreadForMessageId;
 
   const GroupChatScreen({
     super.key,
@@ -43,6 +46,7 @@ class GroupChatScreen extends StatefulWidget {
     this.creatorId,
     this.targetAudience = const [],
     this.groupCategory = '',
+    this.openThreadForMessageId,
   });
 
   @override
@@ -173,7 +177,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
+      // Auto-open thread panel if navigated from Saved tab with a thread target
+      _autoOpenThreadIfNeeded();
     });
+  }
+
+  /// If the screen was opened with [openThreadForMessageId], find that message
+  /// in the loaded messages list and automatically open its thread panel.
+  void _autoOpenThreadIfNeeded() {
+    final targetId = widget.openThreadForMessageId;
+    if (targetId == null || targetId.isEmpty) return;
+
+    // Find the root message in the loaded messages
+    final rootMsg = _messages.cast<ChatMessage?>().firstWhere(
+      (m) => m!.id == targetId,
+      orElse: () => null,
+    );
+    if (rootMsg != null) {
+      _openThread(rootMsg);
+    }
   }
 
   void _sendMessage() {
