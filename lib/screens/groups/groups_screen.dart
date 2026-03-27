@@ -88,7 +88,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Groups',
+                    'MyHuddl',
                     style: GoogleFonts.poppins(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
