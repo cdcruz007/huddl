@@ -287,7 +287,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                     style: GoogleFonts.poppins(
                         fontSize: 14, color: HuddlColors.textDark),
                     decoration: InputDecoration(
-                      hintText: 'Search chat',
+                      hintText: 'Search list',
                       hintStyle: GoogleFonts.poppins(
                           fontSize: 14, color: HuddlColors.textHint),
                       border: InputBorder.none,

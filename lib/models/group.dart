@@ -143,6 +143,8 @@ class ChatMessage {
   final DateTime timestamp;
   final bool isMe;
   final bool isSystem; // for join/leave system messages
+  final String? replyToText;
+  final String? replyToSender;
 
   ChatMessage({
     required this.id,
@@ -153,5 +155,7 @@ class ChatMessage {
     required this.timestamp,
     this.isMe = false,
     this.isSystem = false,
+    this.replyToText,
+    this.replyToSender,
   });
 }

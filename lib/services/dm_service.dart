@@ -124,6 +124,8 @@ class DMService {
     required String conversationId,
     required String message,
     required String senderName,
+    String? replyToText,
+    String? replyToSender,
   }) async {
     await initialize();
 
@@ -136,6 +138,8 @@ class DMService {
       timestamp: DateTime.now(),
       isMe: true,
       status: MessageStatus.sending,
+      replyToText: replyToText,
+      replyToSender: replyToSender,
     );
 
     // Save message

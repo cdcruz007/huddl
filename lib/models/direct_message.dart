@@ -25,6 +25,8 @@ class DirectMessage {
   final DateTime timestamp;
   final bool isMe;
   final MessageStatus status;
+  final String? replyToText;
+  final String? replyToSender;
 
   DirectMessage({
     required this.id,
@@ -34,6 +36,8 @@ class DirectMessage {
     required this.timestamp,
     this.isMe = false,
     this.status = MessageStatus.sent,
+    this.replyToText,
+    this.replyToSender,
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +48,8 @@ class DirectMessage {
         'timestamp': timestamp.toIso8601String(),
         'isMe': isMe,
         'status': status.name,
+        'replyToText': replyToText,
+        'replyToSender': replyToSender,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -58,6 +64,8 @@ class DirectMessage {
         (e) => e.name == (json['status'] as String? ?? 'sent'),
         orElse: () => MessageStatus.sent,
       ),
+      replyToText: json['replyToText'] as String?,
+      replyToSender: json['replyToSender'] as String?,
     );
   }
 
@@ -70,6 +78,8 @@ class DirectMessage {
       timestamp: timestamp,
       isMe: isMe,
       status: status ?? this.status,
+      replyToText: replyToText,
+      replyToSender: replyToSender,
     );
   }
 }

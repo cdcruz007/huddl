@@ -1,6 +1,6 @@
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
@@ -65,6 +65,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   /// Emoji reactions: messageId → { emoji → count }
   final Map<String, Map<String, int>> _reactions = {};
+
+  /// Reply state
+  ChatMessage? _replyingTo;
 
   @override
   void initState() {
@@ -139,6 +142,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (text.isEmpty) return;
 
     final msgId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+    final replyText = _replyingTo?.message;
+    final replySender = _replyingTo != null ? (_replyingTo!.isMe ? 'You' : _replyingTo!.senderName) : null;
 
     setState(() {
       _messages.add(ChatMessage(
@@ -149,8 +154,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         message: text,
         timestamp: DateTime.now(),
         isMe: true,
+        replyToText: replyText,
+        replyToSender: replySender,
       ));
       _messageStatuses[msgId] = MessageStatus.sending;
+      _replyingTo = null;
     });
 
     _messageController.clear();
@@ -251,8 +259,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final msgReactions = _reactions[messageId] ?? {};
       final current = msgReactions[emoji] ?? 0;
       if (current > 0) {
+        // Same emoji tapped again - remove it
         msgReactions.remove(emoji);
       } else {
+        // New emoji - clear all previous reactions (replace behavior) and set new one
+        msgReactions.clear();
         msgReactions[emoji] = 1;
       }
       if (msgReactions.isEmpty) {
@@ -261,6 +272,167 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         _reactions[messageId] = msgReactions;
       }
     });
+  }
+
+  void _startReply(ChatMessage msg) {
+    setState(() => _replyingTo = msg);
+    _focusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() => _replyingTo = null);
+  }
+
+  void _copyMessage(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Message copied to clipboard'),
+          ],
+        ),
+        backgroundColor: HuddlColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showSavedMessagesForGroup() {
+    final saved = _savedMessageService.getSavedForGroup(widget.groupId);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.bookmark, color: HuddlColors.primary, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saved Messages',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${saved.length}',
+                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: HuddlColors.divider),
+              if (saved.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72, height: 72,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.primary),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No saved messages',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48),
+                          child: Text(
+                            'You have no saved messages currently. Long press on any message to save it.',
+                            style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: saved.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
+                    itemBuilder: (_, i) {
+                      final msg = saved[i];
+                      return ListTile(
+                        leading: const Icon(Icons.bookmark, color: HuddlColors.primary, size: 20),
+                        title: Text(
+                          msg.message,
+                          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${msg.senderName} - ${_formatSavedDate(msg.timestamp)}',
+                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: HuddlColors.textHint),
+                          onPressed: () {
+                            _savedMessageService.unsaveMessage(msg.id);
+                            Navigator.pop(c);
+                            _showSavedMessagesForGroup();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatSavedDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays == 0) return 'Today';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   // ── Save message ──────────────────────────────────────────────────────
@@ -685,6 +857,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 onReact: () => _showEmojiPicker(msg.id),
                                 reactions: _reactions[msg.id] ?? {},
                                 onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
+                                onReply: () => _startReply(msg),
+                                onCopy: () => _copyMessage(msg.message),
                               ),
                             ],
                           );
@@ -821,13 +995,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 });
                 break;
               case 'saved':
-                // Navigate to Groups screen, Saved tab
-                Navigator.pop(context);
-                // We'll signal the parent to switch to saved tab
-                Navigator.pushReplacementNamed(context, '/home', arguments: {
-                  'initialTab': 2, // Groups tab
-                  'groupsSubTab': 2, // Saved sub-tab
-                });
+                _showSavedMessagesForGroup();
                 break;
               case 'report':
                 _showReportGroupDialog();
@@ -964,6 +1132,52 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Reply preview bar
+        if (_replyingTo != null)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            decoration: BoxDecoration(
+              color: HuddlColors.white,
+              border: Border(
+                top: BorderSide(color: HuddlColors.divider, width: 0.5),
+                left: BorderSide(color: HuddlColors.primary, width: 3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.reply, size: 18, color: HuddlColors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _replyingTo!.isMe ? 'You' : _replyingTo!.senderName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                      Text(
+                        _replyingTo!.message,
+                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                  onPressed: _cancelReply,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
         // Attach menu now handled via bottom sheet (WhatsApp-style)
         // ── Main input row ─────────────────────────────────────────
         Container(
@@ -1449,6 +1663,8 @@ class _ChatBubble extends StatelessWidget {
   final VoidCallback? onSave;
   final VoidCallback? onForward;
   final VoidCallback? onReact;
+  final VoidCallback? onReply;
+  final VoidCallback? onCopy;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
 
@@ -1463,6 +1679,8 @@ class _ChatBubble extends StatelessWidget {
     this.onSave,
     this.onForward,
     this.onReact,
+    this.onReply,
+    this.onCopy,
     this.reactions = const {},
     this.onTapReaction,
   });
@@ -1548,8 +1766,45 @@ class _ChatBubble extends StatelessWidget {
                           ],
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Reply preview
+                            if (message.replyToText != null && message.replyToText!.isNotEmpty)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 6),
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: isMe
+                                      ? HuddlColors.primary.withValues(alpha: 0.08)
+                                      : HuddlColors.background,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border(
+                                    left: BorderSide(color: HuddlColors.primary, width: 3),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      message.replyToSender ?? '',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.primary,
+                                      ),
+                                    ),
+                                    Text(
+                                      message.replyToText!,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: HuddlColors.textSecondary,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             searchQuery.isNotEmpty
                                 ? _buildHighlightedText(message.message, searchQuery)
                                 : Text(
@@ -1706,13 +1961,19 @@ class _ChatBubble extends StatelessWidget {
                 leading: const Icon(Icons.copy_outlined, color: HuddlColors.textDark),
                 title: Text('Copy text',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () => Navigator.pop(c),
+                onTap: () {
+                  Navigator.pop(c);
+                  onCopy?.call();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.reply_outlined, color: HuddlColors.textDark),
                 title: Text('Reply',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () => Navigator.pop(c),
+                onTap: () {
+                  Navigator.pop(c);
+                  onReply?.call();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.forward_outlined, color: HuddlColors.textDark),

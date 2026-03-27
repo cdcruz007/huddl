@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
@@ -82,6 +82,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Timer? _refreshTimer;
   bool _isBlocked = false;
   final MediaAttachService _mediaService = MediaAttachService();
+
+  /// Reply state
+  DirectMessage? _replyingTo;
 
   /// Locally added image messages
   final List<_ImageChatMessage> _imageMessages = [];
@@ -190,9 +193,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
       conversationId: _conversationId!,
       message: text,
       senderName: _userName,
+      replyToText: _replyingTo?.message,
+      replyToSender: _replyingTo != null ? (_replyingTo!.isMe ? 'You' : widget.recipientName) : null,
     );
 
-    setState(() => _messages.add(msg));
+    setState(() {
+      _messages.add(msg);
+      _replyingTo = null;
+    });
     _scrollToBottom(animate: true);
   }
 
@@ -426,6 +434,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                 onReact: () => _showEmojiPicker(msg.id),
                                 reactions: _reactions[msg.id] ?? {},
                                 onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
+                                onReply: () => _startReply(msg),
+                                onCopy: () => _copyMessage(msg.message),
+                                onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
+                                replyTo: msg.replyToText,
+                                replyToSender: msg.replyToSender,
                               ),
                             ],
                           );
@@ -507,10 +520,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 _showBlockUserDialog();
                 break;
               case 'user_details':
-                _showUserDetailsSheet();
+                _showMemberProfileSheet(context);
                 break;
               case 'saved':
-                Navigator.pop(context);
+                _showSavedMessagesForDM();
                 break;
               case 'search':
                 setState(() => _isSearching = true);
@@ -519,9 +532,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Notifications muted')),
                 );
-                break;
-              case 'report':
-                _showReportUserDialog();
                 break;
               case 'delete':
                 _confirmDeleteConversation();
@@ -586,17 +596,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
             ),
             PopupMenuItem<String>(
-              value: 'report',
-              child: Row(
-                children: [
-                  const Icon(Icons.report_outlined, size: 20, color: Colors.red),
-                  const SizedBox(width: 12),
-                  Text('Report user',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
-                ],
-              ),
-            ),
-            PopupMenuItem<String>(
               value: 'delete',
               child: Row(
                 children: [
@@ -653,10 +652,236 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
+  // ── Reply helpers ──────────────────────────────────────────────────
+  void _startReply(DirectMessage msg) {
+    setState(() => _replyingTo = msg);
+    _focusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() => _replyingTo = null);
+  }
+
+  // ── Copy message ──────────────────────────────────────────────────
+  void _copyMessage(String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Message copied to clipboard'),
+          ],
+        ),
+        backgroundColor: HuddlColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  // ── Member profile bottom sheet ────────────────────────────────
+  void _showMemberProfileSheet(BuildContext context) {
+    final photoUrl = getProfilePhotoForMember(widget.recipientId);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Large profile photo
+              CircleAvatar(
+                radius: 52,
+                backgroundColor: _colorFromHex(widget.recipientAvatarColor).withValues(alpha: 0.15),
+                backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
+                child: photoUrl == null
+                    ? Text(
+                        widget.recipientName.isNotEmpty ? widget.recipientName[0].toUpperCase() : '?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w600,
+                          color: _colorFromHex(widget.recipientAvatarColor),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                widget.recipientName,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 8, height: 8,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF34C759),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Online',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: HuddlColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Info cards
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: HuddlColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    _profileInfoRow(Icons.person_outline, 'Parent type', 'Mum'),
+                    const Divider(height: 20, color: HuddlColors.divider),
+                    _profileInfoRow(Icons.location_on_outlined, 'Area', 'Cambridge'),
+                    const Divider(height: 20, color: HuddlColors.divider),
+                    _profileInfoRow(Icons.child_care_outlined, 'Stage', 'Toddler (1-3 years)'),
+                    const Divider(height: 20, color: HuddlColors.divider),
+                    _profileInfoRow(Icons.calendar_today_outlined, 'Member since', 'January 2024'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        _focusNode.requestFocus();
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: Text('Message', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: HuddlColors.primary,
+                        side: const BorderSide(color: HuddlColors.primary),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(c);
+                        _showBlockUserDialog();
+                      },
+                      icon: const Icon(Icons.block, size: 18),
+                      label: Text(_isBlocked ? 'Unblock' : 'Block', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.withValues(alpha: 0.1),
+                        foregroundColor: Colors.red,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _profileInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: HuddlColors.primary),
+        const SizedBox(width: 12),
+        Text(label, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+        const Spacer(),
+        Text(value, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+      ],
+    );
+  }
+
   Widget _buildInputBar() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Reply preview bar
+        if (_replyingTo != null)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+            decoration: BoxDecoration(
+              color: HuddlColors.white,
+              border: Border(
+                top: BorderSide(color: HuddlColors.divider, width: 0.5),
+                left: BorderSide(color: HuddlColors.primary, width: 3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.reply, size: 18, color: HuddlColors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _replyingTo!.isMe ? 'You' : widget.recipientName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                      Text(
+                        _replyingTo!.message,
+                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                  onPressed: _cancelReply,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  padding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
         // Attach menu now handled via bottom sheet (WhatsApp-style)
         // ── Main input row ─────────────────────────────────────────
         Container(
@@ -894,124 +1119,25 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
-  // ── Report user dialog ──────────────────────────────────────────────
-  void _showReportUserDialog() {
-    showDialog(
-      context: context,
-      builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.report_outlined, size: 32, color: Colors.red),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'Report this user?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Do you want to report ${widget.recipientName} for bad content directly to Huddl support?',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: HuddlColors.textSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(c),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.primary),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(c);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Report submitted. Our team will review it.'),
-                            backgroundColor: HuddlColors.primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Confirm',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── User details bottom sheet ───────────────────────────────────────
-  void _showUserDetailsSheet() {
-    final photoUrl = getProfilePhotoForMember(widget.recipientId);
+  // ── Saved messages for this DM ───────────────────────────────────
+  void _showSavedMessagesForDM() {
+    final saved = _savedMessageService.getSavedForDM(widget.recipientId);
     showModalBottomSheet(
       context: context,
       backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (c) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const SizedBox(height: 10),
               Container(
                 width: 40, height: 4,
                 decoration: BoxDecoration(
@@ -1019,90 +1145,115 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Profile photo
-              CircleAvatar(
-                radius: 44,
-                backgroundColor: _colorFromHex(widget.recipientAvatarColor).withValues(alpha: 0.15),
-                backgroundImage: photoUrl != null ? NetworkImage(photoUrl) : null,
-                child: photoUrl == null
-                    ? Text(
-                        widget.recipientName.isNotEmpty ? widget.recipientName[0].toUpperCase() : '?',
-                        style: GoogleFonts.poppins(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
-                          color: _colorFromHex(widget.recipientAvatarColor),
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                widget.recipientName,
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.bookmark, color: HuddlColors.primary, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saved Messages',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${saved.length}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 8, height: 8,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF34C759),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Online',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: HuddlColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               const Divider(height: 1, color: HuddlColors.divider),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: const Icon(Icons.message_outlined, color: HuddlColors.primary),
-                title: Text('Send message',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _focusNode.requestFocus();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.block, color: HuddlColors.textDark),
-                title: Text(_isBlocked ? 'Unblock user' : 'Block user',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _showBlockUserDialog();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.report_outlined, color: Colors.red),
-                title: Text('Report user',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _showReportUserDialog();
-                },
-              ),
-              const SizedBox(height: 8),
+              if (saved.isEmpty)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 72, height: 72,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.primary),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No saved messages',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 48),
+                          child: Text(
+                            'You have no saved messages currently. Long press on any message to save it.',
+                            style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: saved.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
+                    itemBuilder: (_, i) {
+                      final msg = saved[i];
+                      return ListTile(
+                        leading: const Icon(Icons.bookmark, color: HuddlColors.primary, size: 20),
+                        title: Text(
+                          msg.message,
+                          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${msg.senderName} - ${_formatSavedDate(msg.timestamp)}',
+                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 18, color: HuddlColors.textHint),
+                          onPressed: () {
+                            _savedMessageService.unsaveMessage(msg.id);
+                            Navigator.pop(c);
+                            _showSavedMessagesForDM();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _formatSavedDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays == 0) return 'Today';
+    if (diff.inDays == 1) return 'Yesterday';
+    return '${dt.day}/${dt.month}/${dt.year}';
   }
 
   // ── Media permission prompt ────────────────────────────────────────────
@@ -1227,8 +1378,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
       final msgReactions = _reactions[messageId] ?? {};
       final current = msgReactions[emoji] ?? 0;
       if (current > 0) {
+        // Same emoji tapped again - remove it
         msgReactions.remove(emoji);
       } else {
+        // New emoji - clear all previous reactions (replace behavior) and set new one
+        msgReactions.clear();
         msgReactions[emoji] = 1;
       }
       if (msgReactions.isEmpty) {
@@ -1297,8 +1451,13 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onSave;
   final VoidCallback? onForward;
   final VoidCallback? onReact;
+  final VoidCallback? onReply;
+  final VoidCallback? onCopy;
+  final VoidCallback? onAvatarTap;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
+  final String? replyTo;
+  final String? replyToSender;
 
   const _DMBubble({
     required this.message,
@@ -1311,8 +1470,13 @@ class _DMBubble extends StatelessWidget {
     this.onSave,
     this.onForward,
     this.onReact,
+    this.onReply,
+    this.onCopy,
+    this.onAvatarTap,
     this.reactions = const {},
     this.onTapReaction,
+    this.replyTo,
+    this.replyToSender,
   });
 
   @override
@@ -1339,11 +1503,14 @@ class _DMBubble extends StatelessWidget {
                   isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
               children: [
                 if (!isMe)
-                  _RecipientAvatar(
-                    name: recipientName,
-                    colorHex: recipientAvatarColor,
-                    memberId: recipientId,
-                    size: 32,
+                  GestureDetector(
+                    onTap: onAvatarTap,
+                    child: _RecipientAvatar(
+                      name: recipientName,
+                      colorHex: recipientAvatarColor,
+                      memberId: recipientId,
+                      size: 32,
+                    ),
                   ),
                 if (!isMe) const SizedBox(width: 8),
                 Flexible(
@@ -1371,8 +1538,45 @@ class _DMBubble extends StatelessWidget {
                       ],
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Reply preview
+                        if (replyTo != null && replyTo!.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isMe
+                                  ? HuddlColors.primary.withValues(alpha: 0.08)
+                                  : HuddlColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border(
+                                left: BorderSide(color: HuddlColors.primary, width: 3),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  replyToSender ?? '',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.primary,
+                                  ),
+                                ),
+                                Text(
+                                  replyTo!,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: HuddlColors.textSecondary,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
                         // Message text (with search highlighting)
                         searchQuery.isNotEmpty
                             ? _buildHighlightedText(message.message, searchQuery)
@@ -1525,13 +1729,19 @@ class _DMBubble extends StatelessWidget {
                 leading: const Icon(Icons.copy_outlined, color: HuddlColors.textDark),
                 title: Text('Copy text',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () => Navigator.pop(c),
+                onTap: () {
+                  Navigator.pop(c);
+                  onCopy?.call();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.reply_outlined, color: HuddlColors.textDark),
                 title: Text('Reply',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () => Navigator.pop(c),
+                onTap: () {
+                  Navigator.pop(c);
+                  onReply?.call();
+                },
               ),
               ListTile(
                 leading: const Icon(Icons.forward_outlined, color: HuddlColors.textDark),
