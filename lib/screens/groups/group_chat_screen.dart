@@ -15,7 +15,6 @@ import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
 import 'poll_detail_screen.dart';
 import 'forward_message_sheet.dart';
-import '../../widgets/attach_bottom_sheet.dart';
 import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
 
@@ -26,12 +25,18 @@ class GroupChatScreen extends StatefulWidget {
   final String groupId;
   final String groupName;
   final String groupImageUrl;
+  final bool isDefaultGroup;
+  final List<String> targetAudience;
+  final String groupCategory;
 
   const GroupChatScreen({
     super.key,
     required this.groupId,
     required this.groupName,
     required this.groupImageUrl,
+    this.isDefaultGroup = false,
+    this.targetAudience = const [],
+    this.groupCategory = '',
   });
 
   @override
@@ -47,6 +52,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   final BlockService _blockService = BlockService();
+
+  /// Whether the user has changed borough and this is an old-borough default group
+  bool _canLeaveGroup = false;
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
@@ -83,6 +91,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     super.initState();
     _loadMessages();
     _blockService.initialize();
+    _checkLeaveGroupEligibility();
+  }
+
+  /// Determine whether the 'Leave group' option should be shown.
+  /// Only for default groups when the user has changed their postcode/borough.
+  Future<void> _checkLeaveGroupEligibility() async {
+    await _onboardingService.initialize();
+    if (!widget.isDefaultGroup) {
+      // Non-default groups (joined from Discover, user-created, etc.) — can always leave
+      setState(() => _canLeaveGroup = true);
+      return;
+    }
+    // Default group — only show leave if user has changed borough
+    final hasChanged = _onboardingService.hasChangedBorough;
+    if (mounted) {
+      setState(() => _canLeaveGroup = hasChanged);
+    }
   }
 
   @override
@@ -308,131 +333,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _showSavedMessagesForGroup() {
-    final saved = _savedMessageService.getSavedForGroup(widget.groupId);
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: HuddlColors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (c) => SafeArea(
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.75,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: HuddlColors.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.bookmark, color: HuddlColors.primary, size: 22),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Saved Messages',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${saved.length}',
-                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Divider(height: 1, color: HuddlColors.divider),
-              if (saved.isEmpty)
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 72, height: 72,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.primary),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No saved messages',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 48),
-                          child: Text(
-                            'You have no saved messages currently. Long press on any message to save it.',
-                            style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    itemCount: saved.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
-                    itemBuilder: (_, i) {
-                      final msg = saved[i];
-                      return ListTile(
-                        leading: const Icon(Icons.bookmark, color: HuddlColors.primary, size: 20),
-                        title: Text(
-                          msg.message,
-                          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          '${msg.senderName} - ${_formatSavedDate(msg.timestamp)}',
-                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 18, color: HuddlColors.textHint),
-                          onPressed: () {
-                            _savedMessageService.unsaveMessage(msg.id);
-                            Navigator.pop(c);
-                            _showSavedMessagesForGroup();
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -1407,8 +1307,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  // ── Report group dialog ──────────────────────────────────────────────────
-  void _showReportGroupDialog() {
+  // ── Share group logic ──────────────────────────────────────────────────
+  void _handleShareGroup() {
+    // Default groups cannot be shared — they are created only via onboarding
+    if (widget.isDefaultGroup) {
+      _showCannotShareDefaultDialog();
+      return;
+    }
+    // Non-default (public/discover) groups can be shared
+    _showShareGroupSheet();
+  }
+
+  void _showCannotShareDefaultDialog() {
     showDialog(
       context: context,
       builder: (c) => Dialog(
@@ -1422,14 +1332,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.report_outlined, size: 32, color: Colors.red),
+                child: const Icon(Icons.lock_outline, size: 32, color: HuddlColors.primary),
               ),
               const SizedBox(height: 18),
               Text(
-                'Report this group?',
+                'Cannot share this group',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -1439,7 +1349,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Do you want to report this group for bad content directly to Huddl support?',
+                'Default community groups are automatically assigned based on each member\'s onboarding journey. They cannot be shared manually.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: HuddlColors.textSecondary,
@@ -1448,66 +1358,293 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(c),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.primary),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(c),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Understood',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.white,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(c);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Report submitted. Our team will review it.'),
-                            backgroundColor: HuddlColors.primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Confirm',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  /// Show share sheet for public/discover groups.
+  /// Validates that the recipient's parent profile fits the group's target audience.
+  void _showShareGroupSheet() {
+    // Demo members in the user's borough that they could share with
+    final demoMembers = [
+      {'id': 'mem_emma', 'name': 'Emma Wilson', 'parentType': 'mum', 'stages': ['parent']},
+      {'id': 'mem_sophie', 'name': 'Sophie Taylor', 'parentType': 'mum', 'stages': ['expecting']},
+      {'id': 'mem_james', 'name': 'James Brown', 'parentType': 'dad', 'stages': ['parent']},
+      {'id': 'mem_olivia', 'name': 'Olivia Davis', 'parentType': 'mum', 'stages': ['aspiring']},
+      {'id': 'mem_luke', 'name': 'Luke Martin', 'parentType': 'dad', 'stages': ['expecting']},
+      {'id': 'mem_anna', 'name': 'Anna Clark', 'parentType': 'mum', 'stages': ['parent']},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.65,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: HuddlColors.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    const Icon(Icons.share, color: HuddlColors.primary, size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Share with members',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Share this group with members in your borough',
+                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: HuddlColors.divider),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: demoMembers.length,
+                  itemBuilder: (_, i) {
+                    final member = demoMembers[i];
+                    final memberName = member['name'] as String;
+                    final memberId = member['id'] as String;
+                    final memberParentType = member['parentType'] as String;
+                    final memberStages = member['stages'] as List<String>;
+                    final photoUrl = getProfilePhotoForMember(memberId);
+
+                    return ListTile(
+                      leading: photoUrl != null
+                          ? CircleAvatar(
+                              radius: 22,
+                              backgroundImage: NetworkImage(photoUrl),
+                            )
+                          : CircleAvatar(
+                              radius: 22,
+                              backgroundColor: HuddlColors.peachLight,
+                              child: Text(
+                                memberName[0],
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary,
+                                ),
+                              ),
+                            ),
+                      title: Text(
+                        memberName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                      subtitle: Text(
+                        memberParentType == 'mum' ? 'Mum' : 'Dad',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.send, size: 20, color: HuddlColors.primary),
+                      onTap: () {
+                        Navigator.pop(c);
+                        _validateAndShareWith(
+                          memberName: memberName,
+                          memberParentType: memberParentType,
+                          memberStages: memberStages,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Validate the target member fits the group's target audience before sharing.
+  void _validateAndShareWith({
+    required String memberName,
+    required String memberParentType,
+    required List<String> memberStages,
+  }) {
+    final audience = widget.targetAudience;
+
+    // If no target audience restrictions, share freely
+    if (audience.isEmpty) {
+      _confirmShareSuccess(memberName);
+      return;
+    }
+
+    // Check each audience restriction
+    for (final label in audience) {
+      switch (label) {
+        case 'Mums':
+          if (memberParentType != 'mum') {
+            _showProfileMismatchDialog(memberName, label);
+            return;
+          }
+        case 'Dads':
+          if (memberParentType != 'dad') {
+            _showProfileMismatchDialog(memberName, label);
+            return;
+          }
+        case 'Parents expecting a baby':
+          if (!memberStages.contains('expecting')) {
+            _showProfileMismatchDialog(memberName, label);
+            return;
+          }
+        case 'Aspiring parents':
+          if (!memberStages.contains('aspiring')) {
+            _showProfileMismatchDialog(memberName, label);
+            return;
+          }
+      }
+    }
+
+    // All checks passed
+    _confirmShareSuccess(memberName);
+  }
+
+  void _showProfileMismatchDialog(String memberName, String requiredProfile) {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.person_off_outlined, size: 32, color: Colors.orange),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Cannot share with $memberName',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'This group is set up for "$requiredProfile" profiles. $memberName does not match this parent profile and cannot be added to the group.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(c),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'OK',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmShareSuccess(String memberName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Group shared with $memberName!'),
+        backgroundColor: HuddlColors.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
+  // ── Navigate to Saved messages screen filtered by this group ─────────────
+  void _navigateToSavedForGroup() {
+    Navigator.pushNamed(context, '/saved_messages_for_group', arguments: {
+      'groupId': widget.groupId,
+      'groupName': widget.groupName,
+    });
   }
 
   @override
@@ -1823,7 +1960,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           icon: const Icon(Icons.search, color: HuddlColors.textDark),
           onPressed: () => setState(() => _isSearching = true),
         ),
-        // 3-dot popup menu matching the screenshot design
+        // 3-dot popup menu
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert, color: HuddlColors.textDark),
           offset: const Offset(0, 46),
@@ -1832,8 +1969,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           elevation: 8,
           onSelected: (value) {
             switch (value) {
-              case 'leave':
-                _showLeaveGroupDialog();
+              case 'share':
+                _handleShareGroup();
                 break;
               case 'details':
                 Navigator.pushNamed(context, '/group_details', arguments: {
@@ -1843,25 +1980,26 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 });
                 break;
               case 'saved':
-                _showSavedMessagesForGroup();
+                _navigateToSavedForGroup();
                 break;
               case 'saved_threads':
                 _showSavedThreadsForGroup();
                 break;
-              case 'report':
-                _showReportGroupDialog();
+              case 'leave':
+                _showLeaveGroupDialog();
                 break;
             }
           },
           itemBuilder: (context) => [
+            // Share group
             PopupMenuItem<String>(
-              value: 'leave',
+              value: 'share',
               child: Row(
                 children: [
-                  const Icon(Icons.exit_to_app, size: 20, color: HuddlColors.textDark),
+                  const Icon(Icons.share_outlined, size: 20, color: HuddlColors.textDark),
                   const SizedBox(width: 12),
                   Text(
-                    'Leave group',
+                    'Share group',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -1871,6 +2009,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ),
+            // Group details
             PopupMenuItem<String>(
               value: 'details',
               child: Row(
@@ -1888,6 +2027,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ),
+            // Saved messages
             PopupMenuItem<String>(
               value: 'saved',
               child: Row(
@@ -1905,6 +2045,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ),
+            // Saved threads
             PopupMenuItem<String>(
               value: 'saved_threads',
               child: Row(
@@ -1922,23 +2063,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ),
-            PopupMenuItem<String>(
-              value: 'report',
-              child: Row(
-                children: [
-                  const Icon(Icons.report_outlined, size: 20, color: Colors.red),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Report group',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red,
+            // Leave group — only shown if eligible
+            if (_canLeaveGroup)
+              PopupMenuItem<String>(
+                value: 'leave',
+                child: Row(
+                  children: [
+                    const Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Leave group',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ],

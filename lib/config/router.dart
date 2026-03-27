@@ -25,6 +25,7 @@ import '../screens/groups/group_members_screen.dart';
 import '../screens/groups/create_group_screen.dart';
 import '../screens/groups/dm_chat_screen.dart';
 import '../screens/groups/new_dm_screen.dart';
+import '../screens/groups/saved_messages_for_group_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -106,6 +107,12 @@ class AppRouter {
             groupId: args['groupId'] as String? ?? '',
             groupName: args['groupName'] as String? ?? 'Group Chat',
             groupImageUrl: args['groupImageUrl'] as String? ?? '',
+            isDefaultGroup: args['isDefaultGroup'] as bool? ?? false,
+            targetAudience: (args['targetAudience'] as List<dynamic>?)
+                    ?.map((e) => e as String)
+                    .toList() ??
+                const [],
+            groupCategory: args['groupCategory'] as String? ?? '',
           ),
         );
 
@@ -155,6 +162,15 @@ class AppRouter {
         return SlidePageRoute(
           page: const NewDMScreen(),
           direction: SlideDirection.up,
+        );
+
+      case '/saved_messages_for_group':
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return SlidePageRoute(
+          page: SavedMessagesForGroupScreen(
+            groupId: args['groupId'] as String? ?? '',
+            groupName: args['groupName'] as String? ?? 'Group',
+          ),
         );
 
       default:

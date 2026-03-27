@@ -1,0 +1,237 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../theme/huddl_colors.dart';
+import '../../services/saved_message_service.dart';
+
+/// A full-screen page showing saved messages filtered for a specific group.
+/// Accessible from the 3-dot menu → "Saved messages" in a group chat.
+class SavedMessagesForGroupScreen extends StatefulWidget {
+  final String groupId;
+  final String groupName;
+
+  const SavedMessagesForGroupScreen({
+    super.key,
+    required this.groupId,
+    required this.groupName,
+  });
+
+  @override
+  State<SavedMessagesForGroupScreen> createState() =>
+      _SavedMessagesForGroupScreenState();
+}
+
+class _SavedMessagesForGroupScreenState
+    extends State<SavedMessagesForGroupScreen> {
+  final SavedMessageService _savedMessageService = SavedMessageService();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+    _savedMessageService.addListener(_onUpdate);
+  }
+
+  @override
+  void dispose() {
+    _savedMessageService.removeListener(_onUpdate);
+    super.dispose();
+  }
+
+  void _onUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _init() async {
+    await _savedMessageService.initialize();
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  String _formatDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays} days ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: HuddlColors.background,
+      appBar: AppBar(
+        backgroundColor: HuddlColors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Saved Messages',
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.textDark,
+              ),
+            ),
+            Text(
+              widget.groupName,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: HuddlColors.textHint,
+              ),
+            ),
+          ],
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(height: 1, color: HuddlColors.divider),
+        ),
+      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: HuddlColors.primary))
+          : _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    final saved = _savedMessageService.getSavedForGroup(widget.groupId);
+
+    if (saved.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: HuddlColors.peachLight,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.bookmark_outline,
+                    size: 40, color: HuddlColors.primary),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'No saved messages',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'You have no saved messages currently.\nLong press on any message in this group to save it.',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: saved.length,
+      separatorBuilder: (_, __) => const Divider(
+          height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
+      itemBuilder: (_, i) {
+        final msg = saved[i];
+        return Dismissible(
+          key: Key(msg.id),
+          direction: DismissDirection.endToStart,
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 24),
+            color: Colors.red.withValues(alpha: 0.1),
+            child: const Icon(Icons.delete_outline, color: Colors.red),
+          ),
+          onDismissed: (_) async {
+            await _savedMessageService.unsaveMessage(msg.id);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Message removed from saved'),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            }
+          },
+          child: Container(
+            color: HuddlColors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sender + time
+                Row(
+                  children: [
+                    const Icon(Icons.bookmark,
+                        size: 16, color: HuddlColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        msg.senderName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      _formatDate(msg.savedAt),
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Message text
+                Text(
+                  msg.message,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: HuddlColors.textSecondary,
+                    height: 1.4,
+                  ),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                // Original timestamp
+                Text(
+                  'Sent ${_formatDate(msg.timestamp)}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

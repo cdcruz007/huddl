@@ -757,6 +757,9 @@ class _MessagesTabState extends State<_MessagesTab> {
         'groupId': group.id,
         'groupName': group.name,
         'groupImageUrl': group.imageUrl,
+        'isDefaultGroup': group.isDefault,
+        'targetAudience': group.targetAudience,
+        'groupCategory': group.category,
         'searchQuery': _searchQuery, // pass query so chat can highlight
       });
     } else {
@@ -985,6 +988,9 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupId': item.groupItem!.id,
                     'groupName': item.groupItem!.name,
                     'groupImageUrl': item.groupItem!.imageUrl,
+                    'isDefaultGroup': item.groupItem!.isDefault,
+                    'targetAudience': item.groupItem!.targetAudience,
+                    'groupCategory': item.groupItem!.category,
                   });
                 },
                 onLongPress: () =>
@@ -1116,6 +1122,9 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'groupId': item.groupItem!.id,
                     'groupName': item.groupItem!.name,
                     'groupImageUrl': item.groupItem!.imageUrl,
+                    'isDefaultGroup': item.groupItem!.isDefault,
+                    'targetAudience': item.groupItem!.targetAudience,
+                    'groupCategory': item.groupItem!.category,
                   });
                 },
                 onLongPress: () =>

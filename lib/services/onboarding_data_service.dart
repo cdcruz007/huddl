@@ -25,6 +25,8 @@ class OnboardingDataService {
   String? _profilePhotoPath; // local file path or web file name
   String? _bio; // "About you" free-text from onboarding
   String? _profilePhotoObjectUrl; // Web Object URL for display (blob:...)
+  String? _previousPostcode; // Previous postcode before a change
+  String? _previousBorough; // Previous borough (derived from previous postcode)
 
   // ── Provider-specific fields ──────────────────────────────────────────────
   List<String> _serviceTypes = [];      // e.g. ['doula', 'babysitter']
@@ -54,6 +56,11 @@ class OnboardingDataService {
   String? get profilePhotoPath => _profilePhotoPath;
   String? get bio => _bio;
   String? get profilePhotoObjectUrl => _profilePhotoObjectUrl;
+  String? get previousPostcode => _previousPostcode;
+  String? get previousBorough => _previousBorough;
+
+  /// Whether the user has changed their postcode (moved to a different borough)
+  bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
 
   // Provider getters
   List<String> get serviceTypes => _serviceTypes;
@@ -85,8 +92,20 @@ class OnboardingDataService {
   }
 
   void setPostcode(String postcode) {
+    // If we already have a postcode and it's different, record the old one
+    if (_postcode != null && _postcode != postcode && _postcode!.isNotEmpty) {
+      _previousPostcode = _postcode;
+      _log('Previous postcode saved: $_previousPostcode');
+    }
     _postcode = postcode;
     _log('Postcode set: $postcode');
+    _saveToStorage();
+  }
+
+  /// Explicitly set the previous borough (called when borough is resolved from previous postcode)
+  void setPreviousBorough(String borough) {
+    _previousBorough = borough;
+    _log('Previous borough set: $borough');
     _saveToStorage();
   }
 
@@ -245,6 +264,8 @@ class OnboardingDataService {
     _profilePhotoPath = null;
     _bio = null;
     _profilePhotoObjectUrl = null;
+    _previousPostcode = null;
+    _previousBorough = null;
     _serviceTypes = [];
     _businessName = null;
     _qualifications = null;
@@ -291,6 +312,8 @@ class OnboardingDataService {
         _profilePhotoPath = data['profile_photo_path'] as String?;
         _bio = data['bio'] as String?;
         _profilePhotoObjectUrl = data['profile_photo_object_url'] as String?;
+        _previousPostcode = data['previous_postcode'] as String?;
+        _previousBorough = data['previous_borough'] as String?;
         _serviceTypes = List<String>.from(data['service_types'] ?? []);
         _businessName = data['business_name'] as String?;
         _qualifications = data['qualifications'] as String?;
@@ -335,6 +358,8 @@ class OnboardingDataService {
         'profile_photo_path': _profilePhotoPath,
         'bio': _bio,
         'profile_photo_object_url': _profilePhotoObjectUrl,
+        'previous_postcode': _previousPostcode,
+        'previous_borough': _previousBorough,
         'service_types': _serviceTypes,
         'business_name': _businessName,
         'qualifications': _qualifications,
