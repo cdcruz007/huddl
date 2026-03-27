@@ -178,8 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const HuddlBottomSheetHandle(),
-              if (announcement.isPinned || isOwnPost)
-                _menuItem(
+              _menuItem(
                   icon: announcement.isPinned
                       ? Icons.push_pin
                       : Icons.push_pin_outlined,

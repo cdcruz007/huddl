@@ -2145,7 +2145,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                             msg.senderName,
                                             msg.senderAvatar,
                                           ),
-                                  onSave: () => _saveMessage(msg),
+                                  onSave: () {
+                                    // If message has thread replies, redirect to Save Thread dialog
+                                    if (_threadReplies[msg.id] != null && _threadReplies[msg.id]!.isNotEmpty) {
+                                      _showSaveThreadDialog(msg);
+                                    } else {
+                                      _saveMessage(msg);
+                                    }
+                                  },
                                   onForward: () {
                                     showForwardSheet(
                                       context: context,

@@ -91,7 +91,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'MyHuddl',
+                    'Local',
                     style: GoogleFonts.poppins(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -585,15 +585,17 @@ class _MessagesTabState extends State<_MessagesTab> {
                     _confirmDeleteConversation(ctx, listItem);
                   },
                 ),
-              _ActionTile(
-                icon: Icons.exit_to_app,
-                label: 'Leave group',
-                color: Colors.red,
-                onTap: () {
-                  Navigator.pop(c);
-                  _confirmLeaveGroup(ctx, group);
-                },
-              ),
+              // Leave group — hidden for default groups unless user has changed postcode
+              if (!group.isDefault || _onboardingService.hasChangedBorough)
+                _ActionTile(
+                  icon: Icons.exit_to_app,
+                  label: 'Leave group',
+                  color: Colors.red,
+                  onTap: () {
+                    Navigator.pop(c);
+                    _confirmLeaveGroup(ctx, group);
+                  },
+                ),
               const SizedBox(height: 4),
               const Divider(height: 1, color: HuddlColors.divider),
               _ActionTile(
@@ -1067,6 +1069,18 @@ class _MessagesTabState extends State<_MessagesTab> {
                   onDelete: () {
                     // All groups (public & private): swipe triggers leave, not delete
                     if (item.isGroup && item.groupItem != null) {
+                      // Default groups cannot be left unless postcode changed
+                      if (item.groupItem!.isDefault && !_onboardingService.hasChangedBorough) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Default borough groups can only be left after a postcode change.'),
+                            backgroundColor: HuddlColors.textDark,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                        return;
+                      }
                       _confirmLeaveGroup(context, item.groupItem!);
                     } else {
                       _confirmDeleteConversation(context, item);
