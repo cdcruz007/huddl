@@ -168,6 +168,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   List<DMConversation> _filteredDMs = [];
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
+  final Set<String> _favouriteIds = {};
   bool _isLoading = true;
   String _searchQuery = '';
   bool _showSearch = false;
@@ -182,6 +183,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   void initState() {
     super.initState();
     _loadGroups();
+    _loadFavourites();
     _dmService.addListener(_onDMUpdate);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
@@ -197,6 +199,35 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   void _onGroupsChanged() {
     _loadGroups();
+  }
+
+  // ── Favourites persistence ────────────────────────────────────────
+  static const String _favouritesKey = 'huddl_favourite_ids';
+
+  Future<void> _loadFavourites() async {
+    final stored = await BrowserStorage.getString(_favouritesKey);
+    if (stored != null && stored.isNotEmpty) {
+      final List<dynamic> decoded = json.decode(stored);
+      setState(() {
+        _favouriteIds.addAll(decoded.cast<String>());
+      });
+    }
+  }
+
+  Future<void> _saveFavourites() async {
+    await BrowserStorage.setString(
+        _favouritesKey, json.encode(_favouriteIds.toList()));
+  }
+
+  void _toggleFavourite(String id) {
+    setState(() {
+      if (_favouriteIds.contains(id)) {
+        _favouriteIds.remove(id);
+      } else {
+        _favouriteIds.add(id);
+      }
+    });
+    _saveFavourites();
   }
 
   void _onDMUpdate() {
@@ -984,6 +1015,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 group: item.groupItem!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
+                isFavourite: _favouriteIds.contains(item.id),
                 onTap: () {
                   Navigator.pushNamed(context, '/group_chat', arguments: {
                     'groupId': item.groupItem!.id,
@@ -996,12 +1028,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showGroupActions(context, item.groupItem!),
+                onToggleFavourite: () => _toggleFavourite(item.id),
               );
             } else {
               rowWidget = _DMMessageRow(
                 conversation: item.dmConversation!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
+                isFavourite: _favouriteIds.contains(item.id),
                 onTap: () {
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
@@ -1013,6 +1047,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showDMActions(context, item.dmConversation!),
+                onToggleFavourite: () => _toggleFavourite(item.id),
               );
             }
 
@@ -1118,6 +1153,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 group: item.groupItem!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
+                isFavourite: _favouriteIds.contains(item.id),
                 onTap: () {
                   Navigator.pushNamed(context, '/group_chat', arguments: {
                     'groupId': item.groupItem!.id,
@@ -1130,12 +1166,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showGroupActions(context, item.groupItem!),
+                onToggleFavourite: () => _toggleFavourite(item.id),
               );
             } else {
               rowWidget = _DMMessageRow(
                 conversation: item.dmConversation!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
+                isFavourite: _favouriteIds.contains(item.id),
                 onTap: () {
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
@@ -1147,6 +1185,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showDMActions(context, item.dmConversation!),
+                onToggleFavourite: () => _toggleFavourite(item.id),
               );
             }
 
@@ -1670,15 +1709,19 @@ class _GroupMessageRow extends StatelessWidget {
   final _GroupItem group;
   final bool isPinned;
   final bool isMuted;
+  final bool isFavourite;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback? onToggleFavourite;
 
   const _GroupMessageRow({
     required this.group,
     required this.isPinned,
     required this.isMuted,
+    this.isFavourite = false,
     required this.onTap,
     required this.onLongPress,
+    this.onToggleFavourite,
   });
 
   @override
@@ -1809,6 +1852,20 @@ class _GroupMessageRow extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+            ),
+            // ── Favourite heart icon ──────────────────────────────
+            GestureDetector(
+              onTap: onToggleFavourite,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Icon(
+                  isFavourite ? Icons.favorite : Icons.favorite_border,
+                  size: 20,
+                  color: isFavourite
+                      ? const Color(0xFFE57373)
+                      : HuddlColors.textHint.withValues(alpha: 0.5),
+                ),
               ),
             ),
           ],
@@ -2004,15 +2061,19 @@ class _DMMessageRow extends StatelessWidget {
   final DMConversation conversation;
   final bool isPinned;
   final bool isMuted;
+  final bool isFavourite;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
+  final VoidCallback? onToggleFavourite;
 
   const _DMMessageRow({
     required this.conversation,
     required this.isPinned,
     required this.isMuted,
+    this.isFavourite = false,
     required this.onTap,
     required this.onLongPress,
+    this.onToggleFavourite,
   });
 
   @override
@@ -2135,6 +2196,20 @@ class _DMMessageRow extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
+            ),
+            // ── Favourite heart icon ──────────────────────────────
+            GestureDetector(
+              onTap: onToggleFavourite,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Icon(
+                  isFavourite ? Icons.favorite : Icons.favorite_border,
+                  size: 20,
+                  color: isFavourite
+                      ? const Color(0xFFE57373)
+                      : HuddlColors.textHint.withValues(alpha: 0.5),
+                ),
               ),
             ),
           ],
