@@ -2746,7 +2746,7 @@ class _ChatBubble extends StatelessWidget {
                           children: [
                             // Message text (with search highlighting)
                             searchQuery.isNotEmpty
-                                ? _buildHighlightedText(message.message, searchQuery)
+                                ? _buildHighlightedText(message.message, searchQuery, isMe: isMe)
                                 : Text(
                                     message.message,
                                     style: GoogleFonts.poppins(
@@ -2969,7 +2969,7 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 
-  Widget _buildHighlightedText(String text, String query) {
+  Widget _buildHighlightedText(String text, String query, {bool isMe = false}) {
     if (query.isEmpty) {
       return Text(text,
           style: GoogleFonts.poppins(
@@ -2990,9 +2990,14 @@ class _ChatBubble extends StatelessWidget {
       }
       spans.add(TextSpan(
         text: text.substring(idx, idx + query.length),
-        style: const TextStyle(
-          backgroundColor: Color(0xFFFFEB3B),
-          fontWeight: FontWeight.w600,
+        style: TextStyle(
+          // Sent (my) bubbles: deeper orange background highlight
+          // Received bubbles: bold text with subtle background
+          backgroundColor: isMe
+              ? const Color(0xFFE8845A) // deeper coral for sent bubbles
+              : const Color(0xFFFFF176), // light yellow for received bubbles
+          fontWeight: FontWeight.w700,
+          color: isMe ? Colors.white : HuddlColors.textDark,
         ),
       ));
       start = idx + query.length;
