@@ -2595,7 +2595,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
   }
 
-  // ── Filter & Sort bottom sheet ─────────────────────────────────────────
+  // ── Filter bottom sheet ────────────────────────────────────────────────
   void _showFilterSortSheet() {
     String tempFilter = _selectedFilter;
     String tempSort = _selectedSort;
@@ -2632,7 +2632,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Filter & Sort',
+                        'Filter',
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -2918,7 +2918,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 child: Text(
                                   hasActiveFilters
                                       ? 'Filtered: $_selectedFilter \u00B7 $_selectedSort'
-                                      : 'Filter and sort!',
+                                      : 'Filter',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
                                     color: hasActiveFilters
