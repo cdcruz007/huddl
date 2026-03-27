@@ -3430,6 +3430,8 @@ class _SavedTab extends StatefulWidget {
 class _SavedTabState extends State<_SavedTab> {
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isLoading = true;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -3441,6 +3443,7 @@ class _SavedTabState extends State<_SavedTab> {
   @override
   void dispose() {
     _savedMessageService.removeListener(_onUpdate);
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -3453,6 +3456,100 @@ class _SavedTabState extends State<_SavedTab> {
     if (mounted) setState(() => _isLoading = false);
   }
 
+  /// Filter saved messages by search query — matches message text, sender name, or source name.
+  List<SavedMessage> _filteredSaved() {
+    final all = _savedMessageService.savedMessages;
+    if (_searchQuery.isEmpty) return all;
+    final q = _searchQuery.toLowerCase();
+    return all.where((m) =>
+      m.message.toLowerCase().contains(q) ||
+      m.senderName.toLowerCase().contains(q) ||
+      m.sourceName.toLowerCase().contains(q)
+    ).toList();
+  }
+
+  /// Show delete confirmation dialog matching the Messages tab pattern.
+  void _confirmDeleteSavedMessage(SavedMessage msg) {
+    showDialog(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Are you sure you want to permanently delete this saved message?',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.textDark,
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: HuddlColors.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        await _savedMessageService.unsaveMessage(msg.id);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Saved message deleted'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Delete',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -3461,9 +3558,10 @@ class _SavedTabState extends State<_SavedTab> {
       );
     }
 
-    final saved = _savedMessageService.savedMessages;
+    final allSaved = _savedMessageService.savedMessages;
 
-    if (saved.isEmpty) {
+    // No saved messages at all — show empty state (no search bar needed)
+    if (allSaved.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -3501,26 +3599,111 @@ class _SavedTabState extends State<_SavedTab> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 8, bottom: 100),
-      itemCount: saved.length,
-      itemBuilder: (context, index) {
-        final msg = saved[index];
-        return _SavedMessageCard(
-          savedMessage: msg,
-          onTap: () => _navigateToSource(msg),
-          onDelete: () async {
-            await _savedMessageService.unsaveMessage(msg.id);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Message removed from saved'),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            );
-          },
-        );
-      },
+    final filtered = _filteredSaved();
+
+    return Column(
+      children: [
+        // ── Search bar ─────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: HuddlColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _searchQuery = v.trim()),
+                    style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                    decoration: InputDecoration(
+                      hintText: 'Search saved messages\u2026',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() => _searchQuery = '');
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10),
+                      child: Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Results list ───────────────────────────────────────────
+        Expanded(
+          child: filtered.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.search_off, size: 48, color: HuddlColors.textHint),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No results for "$_searchQuery"',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Try a different keyword',
+                        style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(top: 4, bottom: 100),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final msg = filtered[index];
+                    return Column(
+                      children: [
+                        _SwipeActionRow(
+                          key: ValueKey('saved_swipe_${msg.id}'),
+                          isUnread: false, // saved items don't have read/unread
+                          onDelete: () => _confirmDeleteSavedMessage(msg),
+                          onToggleRead: () {}, // no-op for saved tab
+                          child: _SavedMessageCard(
+                            savedMessage: msg,
+                            onTap: () => _navigateToSource(msg),
+                          ),
+                        ),
+                        if (index < filtered.length - 1)
+                          const Divider(
+                            height: 1,
+                            indent: 16,
+                            endIndent: 16,
+                            color: HuddlColors.divider,
+                          ),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
@@ -3549,163 +3732,150 @@ class _SavedTabState extends State<_SavedTab> {
 class _SavedMessageCard extends StatelessWidget {
   final SavedMessage savedMessage;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   const _SavedMessageCard({
     required this.savedMessage,
     required this.onTap,
-    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     final isGroup = savedMessage.isFromGroup;
 
-    return Dismissible(
-      key: Key(savedMessage.id),
-      direction: DismissDirection.endToStart,
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        color: Colors.red.withValues(alpha: 0.1),
-        child: const Icon(Icons.delete_outline, color: Colors.red),
-      ),
-      onDismissed: (_) => onDelete(),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          color: HuddlColors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Source info row
-              Row(
-                children: [
-                  isGroup
-                      ? Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.people, size: 14, color: HuddlColors.primary),
-                          ),
-                        )
-                      : MemberAvatar(
-                          name: savedMessage.dmRecipientName ?? '?',
-                          size: 28,
-                          accentColor: _savedColorFromHex(
-                              savedMessage.dmRecipientAvatarColor ?? '#FF975C'),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: HuddlColors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Source info row
+            Row(
+              children: [
+                isGroup
+                    ? Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.peachLight,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              isGroup ? Icons.group : Icons.person,
-                              size: 12,
-                              color: HuddlColors.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                'From ${savedMessage.sourceName}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        child: const Center(
+                          child: Icon(Icons.people, size: 14, color: HuddlColors.primary),
                         ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatSavedTime(savedMessage.savedAt),
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              // Message content
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: HuddlColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: HuddlColors.divider.withValues(alpha: 0.5),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          savedMessage.senderName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          _formatMessageTime(savedMessage.timestamp),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: HuddlColors.textHint,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      savedMessage.message,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: HuddlColors.textDark,
-                        height: 1.4,
+                      )
+                    : MemberAvatar(
+                        name: savedMessage.dmRecipientName ?? '?',
+                        size: 28,
+                        accentColor: _savedColorFromHex(
+                            savedMessage.dmRecipientAvatarColor ?? '#FF975C'),
                       ),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            isGroup ? Icons.group : Icons.person,
+                            size: 12,
+                            color: HuddlColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'From ${savedMessage.sourceName}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  _formatSavedTime(savedMessage.savedAt),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Message content
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuddlColors.background,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: HuddlColors.divider.withValues(alpha: 0.5),
                 ),
               ),
-              const SizedBox(height: 8),
-              // Tap hint
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.open_in_new, size: 12, color: HuddlColors.textHint),
-                  const SizedBox(width: 4),
+                  Row(
+                    children: [
+                      Text(
+                        savedMessage.senderName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatMessageTime(savedMessage.timestamp),
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    'Tap to go to ${isGroup ? 'group' : 'conversation'}',
+                    savedMessage.message,
                     style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.textHint,
+                      fontSize: 14,
+                      color: HuddlColors.textDark,
+                      height: 1.4,
                     ),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            // Tap hint
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Icon(Icons.open_in_new, size: 12, color: HuddlColors.textHint),
+                const SizedBox(width: 4),
+                Text(
+                  'Tap to go to ${isGroup ? 'group' : 'conversation'}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
