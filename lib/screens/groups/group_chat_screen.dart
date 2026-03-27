@@ -495,21 +495,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               tooltip: 'Go to group',
                               onPressed: () {
                                 Navigator.pop(c);
-                                // Navigate to this group chat (scroll to thread)
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(Icons.topic, color: Colors.white, size: 18),
-                                        const SizedBox(width: 8),
-                                        Expanded(child: Text('Viewing "${thread.topicName}" in ${thread.groupName}')),
-                                      ],
-                                    ),
-                                    backgroundColor: HuddlColors.teal,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                );
+                                Navigator.pushNamed(context, '/group_chat', arguments: {
+                                  'groupId': thread.groupId,
+                                  'groupName': thread.groupName,
+                                  'groupImageUrl': thread.groupImageUrl,
+                                });
                               },
                             ),
                             // Delete
@@ -583,21 +573,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pop(c);
-                        // Navigate directly back to this group's chat
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(Icons.group, color: Colors.white, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text('You are in ${thread.groupName}')),
-                              ],
-                            ),
-                            backgroundColor: HuddlColors.primary,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
+                        Navigator.pushNamed(context, '/group_chat', arguments: {
+                          'groupId': thread.groupId,
+                          'groupName': thread.groupName,
+                          'groupImageUrl': thread.groupImageUrl,
+                        });
                       },
                       icon: const Icon(Icons.open_in_new, size: 16),
                       label: Text('Go to group',
