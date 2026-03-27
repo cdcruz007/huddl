@@ -15,6 +15,7 @@ import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
 import 'poll_detail_screen.dart';
 import 'forward_message_sheet.dart';
+import 'thread_reply_screen.dart';
 import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
 
@@ -77,8 +78,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Emoji reactions: messageId → { emoji → count }
   final Map<String, Map<String, int>> _reactions = {};
 
-  /// Reply state
-  ChatMessage? _replyingTo;
+  /// Thread replies: rootMessageId → list of thread replies
+  final Map<String, List<ThreadReply>> _threadReplies = {};
 
   /// IDs of messages unsent "just for me" (hidden locally)
   final Set<String> _hiddenMessageIds = {};
@@ -158,8 +159,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (text.isEmpty) return;
 
     final msgId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
-    final replyText = _replyingTo?.message;
-    final replySender = _replyingTo != null ? (_replyingTo!.isMe ? 'You' : _replyingTo!.senderName) : null;
 
     setState(() {
       _messages.add(ChatMessage(
@@ -170,11 +169,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         message: text,
         timestamp: DateTime.now(),
         isMe: true,
-        replyToText: replyText,
-        replyToSender: replySender,
       ));
       _messageStatuses[msgId] = MessageStatus.sending;
-      _replyingTo = null;
     });
 
     _messageController.clear();
@@ -290,13 +286,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     });
   }
 
-  void _startReply(ChatMessage msg) {
-    setState(() => _replyingTo = msg);
-    _focusNode.requestFocus();
-  }
-
-  void _cancelReply() {
-    setState(() => _replyingTo = null);
+  void _openThread(ChatMessage msg) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ThreadReplyScreen(
+          rootMessage: msg,
+          groupId: widget.groupId,
+          groupName: widget.groupName,
+          existingReplies: _threadReplies[msg.id] ?? [],
+          onReplySent: (reply) {
+            setState(() {
+              _threadReplies.putIfAbsent(msg.id, () => []);
+              _threadReplies[msg.id]!.add(reply);
+            });
+          },
+        ),
+      ),
+    );
   }
 
   void _copyMessage(String text) {
@@ -855,15 +862,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Save entire reply thread ──────────────────────────────────────
   void _showSaveThreadDialog(ChatMessage rootMsg) {
-    // Collect all messages that replied to this root message
-    final replies = _messages
-        .where((m) =>
-            m.replyToText != null &&
-            m.replyToText == rootMsg.message &&
-            !m.isSystem)
-        .toList();
+    // Collect thread replies from the _threadReplies map
+    final threadReplies = _threadReplies[rootMsg.id] ?? [];
 
-    if (replies.isEmpty) {
+    if (threadReplies.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('No replies found for this message'),
@@ -907,7 +909,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '${replies.length + 1} messages in this thread',
+                '${threadReplies.length + 1} messages in this thread',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   color: HuddlColors.textSecondary,
@@ -944,7 +946,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '+ ${replies.length} ${replies.length == 1 ? 'reply' : 'replies'}',
+                      '+ ${threadReplies.length} ${threadReplies.length == 1 ? 'reply' : 'replies'}',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -1000,7 +1002,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         final topic = topicController.text.trim();
                         if (topic.isEmpty) return;
                         Navigator.pop(c);
-                        _saveThread(rootMsg, replies, topic);
+                        _saveThread(rootMsg, threadReplies, topic);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HuddlColors.teal,
@@ -1022,7 +1024,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  void _saveThread(ChatMessage rootMsg, List<ChatMessage> replies, String topicName) {
+  void _saveThread(ChatMessage rootMsg, List<ThreadReply> replies, String topicName) {
     _savedMessageService.saveThread(
       topicName: topicName,
       rootMessageId: rootMsg.id,
@@ -1795,16 +1797,56 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   onReact: () => _showEmojiPicker(msg.id),
                                   reactions: _reactions[msg.id] ?? {},
                                   onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
-                                  onReply: () => _startReply(msg),
+                                  onReply: () => _openThread(msg),
                                   onCopy: () => _copyMessage(msg.message),
                                   onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
-                                  onSaveThread: (msg.replyToText != null || _messages.any((m) => m.replyToText == msg.message))
+                                  onSaveThread: (_threadReplies[msg.id] != null && _threadReplies[msg.id]!.isNotEmpty)
                                       ? () => _showSaveThreadDialog(msg)
                                       : null,
                                   onBlockUser: (!msg.isMe && msg.senderId != 'system')
                                       ? () => _showBlockMemberDialog(msg.senderId, msg.senderName)
                                       : null,
                                   isBlockedUser: !msg.isMe && _blockService.isUserBlocked(msg.senderId),
+                                ),
+                              // ── Thread reply count badge ────────────────
+                              if (_threadReplies.containsKey(msg.id) && _threadReplies[msg.id]!.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () => _openThread(msg),
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      left: msg.isMe ? 60 : 40,
+                                      right: msg.isMe ? 0 : 60,
+                                      top: 2,
+                                      bottom: 4,
+                                    ),
+                                    child: Align(
+                                      alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: HuddlColors.primary.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.forum_outlined, size: 13, color: HuddlColors.primary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${_threadReplies[msg.id]!.length} ${_threadReplies[msg.id]!.length == 1 ? 'reply' : 'replies'}',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: HuddlColors.primary,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Icon(Icons.chevron_right, size: 14, color: HuddlColors.primary),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
                             ],
                           );
@@ -2104,52 +2146,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Reply preview bar
-        if (_replyingTo != null)
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-            decoration: BoxDecoration(
-              color: HuddlColors.white,
-              border: Border(
-                top: BorderSide(color: HuddlColors.divider, width: 0.5),
-                left: BorderSide(color: HuddlColors.primary, width: 3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.reply, size: 18, color: HuddlColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _replyingTo!.isMe ? 'You' : _replyingTo!.senderName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                      Text(
-                        _replyingTo!.message,
-                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
-                  onPressed: _cancelReply,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-          ),
         // Attach menu now handled via bottom sheet (WhatsApp-style)
         // ── Main input row ─────────────────────────────────────────
         Container(
@@ -2748,43 +2744,7 @@ class _ChatBubble extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Reply preview
-                            if (message.replyToText != null && message.replyToText!.isNotEmpty)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 6),
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: isMe
-                                      ? HuddlColors.primary.withValues(alpha: 0.08)
-                                      : HuddlColors.background,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border(
-                                    left: BorderSide(color: HuddlColors.primary, width: 3),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      message.replyToSender ?? '',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.primary,
-                                      ),
-                                    ),
-                                    Text(
-                                      message.replyToText!,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: HuddlColors.textSecondary,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            // Message text (with search highlighting)
                             searchQuery.isNotEmpty
                                 ? _buildHighlightedText(message.message, searchQuery)
                                 : Text(
@@ -2947,8 +2907,8 @@ class _ChatBubble extends StatelessWidget {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.reply_outlined, color: HuddlColors.textDark),
-                title: Text('Reply',
+                leading: const Icon(Icons.forum_outlined, color: HuddlColors.textDark),
+                title: Text('Reply in thread',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(c);

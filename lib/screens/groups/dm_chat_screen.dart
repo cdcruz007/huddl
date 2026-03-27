@@ -90,8 +90,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
   /// IDs of messages unsent "for everyone" (shown as "This message was deleted")
   final Set<String> _deletedForEveryoneIds = {};
 
-  /// Reply state
-  DirectMessage? _replyingTo;
 
   /// Locally added image messages
   final List<_ImageChatMessage> _imageMessages = [];
@@ -201,13 +199,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
       conversationId: _conversationId!,
       message: text,
       senderName: _userName,
-      replyToText: _replyingTo?.message,
-      replyToSender: _replyingTo != null ? (_replyingTo!.isMe ? 'You' : widget.recipientName) : null,
+
     );
 
     setState(() {
       _messages.add(msg);
-      _replyingTo = null;
     });
     _scrollToBottom(animate: true);
   }
@@ -460,12 +456,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   onReact: () => _showEmojiPicker(msg.id),
                                   reactions: _reactions[msg.id] ?? {},
                                   onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
-                                  onReply: () => _startReply(msg),
                                   onCopy: () => _copyMessage(msg.message),
                                   onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
                                   onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
-                                  replyTo: msg.replyToText,
-                                  replyToSender: msg.replyToSender,
                                 ),
                             ],
                           );
@@ -677,16 +670,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
         child: Container(height: 1, color: HuddlColors.divider),
       ),
     );
-  }
-
-  // ── Reply helpers ──────────────────────────────────────────────────
-  void _startReply(DirectMessage msg) {
-    setState(() => _replyingTo = msg);
-    _focusNode.requestFocus();
-  }
-
-  void _cancelReply() {
-    setState(() => _replyingTo = null);
   }
 
   // ── Copy message ──────────────────────────────────────────────────
@@ -914,52 +897,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Reply preview bar
-        if (_replyingTo != null)
-          Container(
-            padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
-            decoration: BoxDecoration(
-              color: HuddlColors.white,
-              border: Border(
-                top: BorderSide(color: HuddlColors.divider, width: 0.5),
-                left: BorderSide(color: HuddlColors.primary, width: 3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.reply, size: 18, color: HuddlColors.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _replyingTo!.isMe ? 'You' : widget.recipientName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                      Text(
-                        _replyingTo!.message,
-                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
-                  onPressed: _cancelReply,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  padding: EdgeInsets.zero,
-                ),
-              ],
-            ),
-          ),
         // Attach menu now handled via bottom sheet (WhatsApp-style)
         // ── Main input row ─────────────────────────────────────────
         Container(
@@ -1661,14 +1598,11 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onSave;
   final VoidCallback? onForward;
   final VoidCallback? onReact;
-  final VoidCallback? onReply;
   final VoidCallback? onCopy;
   final VoidCallback? onUnsend;
   final VoidCallback? onAvatarTap;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
-  final String? replyTo;
-  final String? replyToSender;
 
   const _DMBubble({
     required this.message,
@@ -1681,14 +1615,11 @@ class _DMBubble extends StatelessWidget {
     this.onSave,
     this.onForward,
     this.onReact,
-    this.onReply,
     this.onCopy,
     this.onUnsend,
     this.onAvatarTap,
     this.reactions = const {},
     this.onTapReaction,
-    this.replyTo,
-    this.replyToSender,
   });
 
   @override
@@ -1752,43 +1683,6 @@ class _DMBubble extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Reply preview
-                        if (replyTo != null && replyTo!.isNotEmpty)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 6),
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: isMe
-                                  ? HuddlColors.primary.withValues(alpha: 0.08)
-                                  : HuddlColors.background,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border(
-                                left: BorderSide(color: HuddlColors.primary, width: 3),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  replyToSender ?? '',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.primary,
-                                  ),
-                                ),
-                                Text(
-                                  replyTo!,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: HuddlColors.textSecondary,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
                         // Message text (with search highlighting)
                         searchQuery.isNotEmpty
                             ? _buildHighlightedText(message.message, searchQuery)
@@ -1944,15 +1838,6 @@ class _DMBubble extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(c);
                   onCopy?.call();
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.reply_outlined, color: HuddlColors.textDark),
-                title: Text('Reply',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onReply?.call();
                 },
               ),
               ListTile(
