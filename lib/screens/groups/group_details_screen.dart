@@ -44,7 +44,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isCreator = false;
 
-  /// Public groups cannot be edited or deleted by anyone.
+  /// Public groups are immutable — details cannot be changed by anyone.
   bool get _isPublicGroup => !widget.isPrivate;
 
   /// Editing is only allowed for private group creators.
@@ -842,7 +842,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'This is a public group. Group details cannot be changed or deleted by any member.',
+                        'This is a public group. Group details cannot be changed by any member.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: HuddlColors.textSecondary,

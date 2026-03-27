@@ -1060,9 +1060,16 @@ class _MessagesTabState extends State<_MessagesTab> {
                 _SwipeActionRow(
                   key: ValueKey('swipe_${item.id}'),
                   isUnread: isUnread,
-                  canDelete: !item.isGroup || item.isPrivate,
-                  onDelete: () =>
-                      _confirmDeleteConversation(context, item),
+                  swipeLeftLabel: (item.isGroup && !item.isPrivate) ? 'Leave' : 'Delete',
+                  swipeLeftIcon: (item.isGroup && !item.isPrivate) ? Icons.exit_to_app : Icons.delete,
+                  onDelete: () {
+                    // Public groups: swipe triggers leave, not delete
+                    if (item.isGroup && !item.isPrivate) {
+                      _confirmLeaveGroup(context, item.groupItem!);
+                    } else {
+                      _confirmDeleteConversation(context, item);
+                    }
+                  },
                   onToggleRead: () => _toggleReadStatus(item),
                   child: rowWidget,
                 ),
@@ -1410,16 +1417,9 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   // ── Delete conversation confirmation dialog ──────────────────────────
   void _confirmDeleteConversation(BuildContext ctx, _MessageListItem item) {
-    // Public groups cannot be deleted by anyone
-    if (item.isGroup && !item.isPrivate) {
-      ScaffoldMessenger.of(ctx).showSnackBar(
-        SnackBar(
-          content: const Text('Public groups cannot be deleted.'),
-          backgroundColor: HuddlColors.textSecondary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
+    // Public groups cannot be deleted — redirect to leave flow
+    if (item.isGroup && !item.isPrivate && item.groupItem != null) {
+      _confirmLeaveGroup(ctx, item.groupItem!);
       return;
     }
     showDialog(
@@ -4166,7 +4166,8 @@ class _SwipeActionRow extends StatefulWidget {
   final bool isUnread;
   final VoidCallback onDelete;
   final VoidCallback onToggleRead;
-  final bool canDelete;
+  final String swipeLeftLabel;
+  final IconData swipeLeftIcon;
 
   const _SwipeActionRow({
     super.key,
@@ -4174,7 +4175,8 @@ class _SwipeActionRow extends StatefulWidget {
     required this.isUnread,
     required this.onDelete,
     required this.onToggleRead,
-    this.canDelete = true,
+    this.swipeLeftLabel = 'Delete',
+    this.swipeLeftIcon = Icons.delete,
   });
 
   @override
@@ -4228,14 +4230,12 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
       onHorizontalDragUpdate: (details) {
         setState(() {
           _dragExtent += details.delta.dx;
-          // If delete is disabled, prevent left swipe
-          final double minDrag = widget.canDelete ? -_actionThreshold - 20 : 0;
-          _dragExtent = _dragExtent.clamp(minDrag, _actionThreshold + 20);
+          _dragExtent = _dragExtent.clamp(-_actionThreshold - 20, _actionThreshold + 20);
         });
       },
       onHorizontalDragEnd: (details) {
-        if (widget.canDelete && _dragExtent < -_actionThreshold * 0.6) {
-          // Swiped left enough — trigger delete
+        if (_dragExtent < -_actionThreshold * 0.6) {
+          // Swiped left enough — trigger delete/leave
           _snapBack();
           widget.onDelete();
         } else if (_dragExtent > _actionThreshold * 0.6) {
@@ -4297,10 +4297,10 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.delete, color: Colors.white, size: 22),
+                          Icon(widget.swipeLeftIcon, color: Colors.white, size: 22),
                           const SizedBox(height: 2),
                           Text(
-                            'Delete',
+                            widget.swipeLeftLabel,
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontSize: 10,
