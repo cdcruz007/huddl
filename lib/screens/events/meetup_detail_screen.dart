@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 import '../../services/meetup_service.dart';
 
 class MeetupDetailScreen extends StatefulWidget {
@@ -202,6 +203,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
+                          MemberAvatar(
+                            name: _meetup.organiserName,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 8),
                           Text(
                             'Organised by ',
                             style: GoogleFonts.poppins(
@@ -209,12 +215,15 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                               color: HuddlColors.textHint,
                             ),
                           ),
-                          Text(
-                            _meetup.organiserName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
+                          Flexible(
+                            child: Text(
+                              _meetup.organiserName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -506,17 +515,9 @@ class _AttendeeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircleAvatar(
-            radius: 10,
-            backgroundColor: HuddlColors.primary.withValues(alpha: 0.15),
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: GoogleFonts.poppins(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: HuddlColors.primary,
-              ),
-            ),
+          MemberAvatar(
+            name: name,
+            size: 22,
           ),
           const SizedBox(width: 6),
           Text(

@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
+import '../services/member_photo_service.dart';
 
 /// Primary gradient button matching Figma design
 class HuddlPrimaryButton extends StatelessWidget {
@@ -460,6 +462,133 @@ class HuddlImageCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Universal member avatar that resolves profile photos from:
+/// 1. Explicit imageUrl (data-URI, http, blob, asset)
+/// 2. Member name lookup via MemberPhotoService
+/// 3. Falls back to coloured circle with initial letter
+class MemberAvatar extends StatelessWidget {
+  final String name;
+  final String? imageUrl; // explicit override
+  final double size;
+  final Color? accentColor;
+  final bool showOnlineDot;
+  final bool isOnline;
+
+  const MemberAvatar({
+    super.key,
+    required this.name,
+    this.imageUrl,
+    this.size = 40,
+    this.accentColor,
+    this.showOnlineDot = false,
+    this.isOnline = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Resolve photo: explicit url > name lookup
+    final resolvedUrl = imageUrl ?? MemberPhotoService.getPhotoByName(name);
+    final color = accentColor ?? HuddlColors.primary;
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+
+    Widget avatar;
+
+    if (resolvedUrl != null && resolvedUrl.isNotEmpty) {
+      if (resolvedUrl.startsWith('data:')) {
+        // Base64 data-URI (user-uploaded photos)
+        try {
+          final parts = resolvedUrl.split(',');
+          if (parts.length > 1) {
+            final bytes = base64Decode(parts[1]);
+            avatar = ClipOval(
+              child: Image.memory(
+                bytes,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _fallback(color, initial),
+              ),
+            );
+          } else {
+            avatar = _fallback(color, initial);
+          }
+        } catch (_) {
+          avatar = _fallback(color, initial);
+        }
+      } else if (resolvedUrl.startsWith('http') ||
+          resolvedUrl.startsWith('blob:')) {
+        // Network or blob URL
+        avatar = ClipOval(
+          child: Image.network(
+            resolvedUrl,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallback(color, initial),
+          ),
+        );
+      } else if (resolvedUrl.startsWith('assets/')) {
+        avatar = ClipOval(
+          child: Image.asset(
+            resolvedUrl,
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _fallback(color, initial),
+          ),
+        );
+      } else {
+        avatar = _fallback(color, initial);
+      }
+    } else {
+      avatar = _fallback(color, initial);
+    }
+
+    if (!showOnlineDot) return avatar;
+
+    return Stack(
+      children: [
+        avatar,
+        if (isOnline)
+          Positioned(
+            right: 0,
+            bottom: 0,
+            child: Container(
+              width: size * 0.28,
+              height: size * 0.28,
+              decoration: BoxDecoration(
+                color: const Color(0xFF34C759),
+                shape: BoxShape.circle,
+                border: Border.all(color: HuddlColors.white, width: 2),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _fallback(Color color, String initial) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color.withValues(alpha: 0.15),
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.poppins(
+            fontSize: size * 0.42,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
         ),
       ),
     );

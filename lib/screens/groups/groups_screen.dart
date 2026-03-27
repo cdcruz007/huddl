@@ -1569,43 +1569,13 @@ class _DMMessageRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            // ── Person avatar ──────────────────────────────────
-            Stack(
-              children: [
-                Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      conversation.recipientName.isNotEmpty
-                          ? conversation.recipientName[0].toUpperCase()
-                          : '?',
-                      style: GoogleFonts.poppins(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: _kOnline,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: HuddlColors.white, width: 2),
-                    ),
-                  ),
-                ),
-              ],
+            // ── Person avatar with profile photo ──────────────
+            MemberAvatar(
+              name: conversation.recipientName,
+              size: 54,
+              accentColor: color,
+              showOnlineDot: true,
+              isOnline: true,
             ),
             const SizedBox(width: 12),
 
@@ -3154,33 +3124,24 @@ class _SavedMessageCard extends StatelessWidget {
               // Source info row
               Row(
                 children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: isGroup
-                          ? HuddlColors.peachLight
-                          : _savedColorFromHex(
-                                  savedMessage.dmRecipientAvatarColor ?? '#FF975C')
-                              .withValues(alpha: 0.15),
-                      borderRadius: isGroup
-                          ? BorderRadius.circular(8)
-                          : BorderRadius.circular(14),
-                    ),
-                    child: Center(
-                      child: isGroup
-                          ? const Icon(Icons.people, size: 14, color: HuddlColors.primary)
-                          : Text(
-                              (savedMessage.dmRecipientName ?? '?')[0].toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _savedColorFromHex(
-                                    savedMessage.dmRecipientAvatarColor ?? '#FF975C'),
-                              ),
-                            ),
-                    ),
-                  ),
+                  isGroup
+                      ? Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.people, size: 14, color: HuddlColors.primary),
+                          ),
+                        )
+                      : MemberAvatar(
+                          name: savedMessage.dmRecipientName ?? '?',
+                          size: 28,
+                          accentColor: _savedColorFromHex(
+                              savedMessage.dmRecipientAvatarColor ?? '#FF975C'),
+                        ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

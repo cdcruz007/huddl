@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -199,14 +200,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(height: 8),
                       Row(
                         children: [
-                          Container(
-                            width: 28,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(Icons.business, size: 14, color: color),
+                          MemberAvatar(
+                            name: organiser,
+                            size: 28,
                           ),
                           const SizedBox(width: 8),
                           Column(
@@ -308,6 +304,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
+
+                // Who's going section
+                _buildAttendeesSection(e, color),
                 const SizedBox(height: 8),
 
                 // What to expect
@@ -442,6 +442,124 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Attendees section with profile photos ─────────────────────────────
+  Widget _buildAttendeesSection(Map<String, dynamic> e, Color color) {
+    final int attendeeCount = e['attendees'] as int? ?? 0;
+    // Generate sample attendee names for the event
+    final attendeeNames = <String>[
+      'Sarah Mitchell', 'Emma Collins', 'James Whitfield',
+      'Lucy Brennan', 'Oliver Chen', 'Priya Sharma',
+      'Kate Nguyen', 'Fatima Hassan', 'Liam O\'Brien', 'Sophie Andrews',
+    ];
+
+    return Container(
+      color: HuddlColors.white,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Who\'s going',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              Text(
+                '$attendeeCount people',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Stacked avatar row
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                ...attendeeNames.take(6).toList().asMap().entries.map((entry) {
+                  return Align(
+                    widthFactor: entry.key == 0 ? 1.0 : 0.65,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: HuddlColors.white, width: 2),
+                      ),
+                      child: MemberAvatar(
+                        name: entry.value,
+                        size: 36,
+                      ),
+                    ),
+                  );
+                }),
+                if (attendeeCount > 6)
+                  Align(
+                    widthFactor: 0.65,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color.withValues(alpha: 0.15),
+                        border: Border.all(color: HuddlColors.white, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '+${attendeeCount - 6}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Named attendee chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: attendeeNames.take(8).map((name) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: HuddlColors.background,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MemberAvatar(name: name, size: 22),
+                    const SizedBox(width: 6),
+                    Text(
+                      name.split(' ').first,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

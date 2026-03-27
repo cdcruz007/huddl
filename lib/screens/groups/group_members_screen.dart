@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 
-// ── Design tokens — use HuddlColors as single source of truth ────────
+// ── Design tokens ────────────────────────────────────────────────────────
 const Color _kOnline = Color(0xFF34C759);
 
 class GroupMembersScreen extends StatefulWidget {
@@ -24,82 +25,90 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Admins', 'Members'];
 
-  // ── Sample members ─────────────────────────────────────────────────────
+  // ── Sample members with profile photos ─────────────────────────────────
   static final List<_Member> _members = [
     _Member(
-        name: 'Emma Watson',
-        role: 'admin',
-        avatarColor: HuddlColors.primary,
-        isOnline: true),
+      name: 'Emma Watson',
+      role: 'admin',
+      accentColor: HuddlColors.primary,
+      isOnline: true,
+    ),
     _Member(
-        name: 'Sophie Turner',
-        role: 'admin',
-        avatarColor: const Color(0xFF3580F0),
-        isOnline: true),
+      name: 'Sophie Turner',
+      role: 'admin',
+      accentColor: const Color(0xFF3580F0),
+      isOnline: true,
+    ),
     _Member(
-        name: 'Kate Middleton',
-        role: 'member',
-        avatarColor: const Color(0xFF199A85),
-        isOnline: true),
+      name: 'Kate Middleton',
+      role: 'member',
+      accentColor: const Color(0xFF199A85),
+      isOnline: true,
+    ),
     _Member(
-        name: 'Lucy Chen',
-        role: 'member',
-        avatarColor: const Color(0xFFA16AE9),
-        isOnline: false),
+      name: 'Lucy Chen',
+      role: 'member',
+      accentColor: const Color(0xFFA16AE9),
+      isOnline: false,
+    ),
     _Member(
-        name: 'James Smith',
-        role: 'member',
-        avatarColor: const Color(0xFF5B9DFF),
-        isOnline: true),
+      name: 'James Smith',
+      role: 'member',
+      accentColor: const Color(0xFF5B9DFF),
+      isOnline: true,
+    ),
     _Member(
-        name: 'Anna Taylor',
-        role: 'member',
-        avatarColor: const Color(0xFFE8A838),
-        isOnline: false),
+      name: 'Anna Taylor',
+      role: 'member',
+      accentColor: const Color(0xFFE8A838),
+      isOnline: false,
+    ),
     _Member(
-        name: 'Mia Johnson',
-        role: 'member',
-        avatarColor: const Color(0xFFFF7575),
-        isOnline: false),
+      name: 'Mia Johnson',
+      role: 'member',
+      accentColor: const Color(0xFFFF7575),
+      isOnline: false,
+    ),
     _Member(
-        name: 'Oliver Brown',
-        role: 'member',
-        avatarColor: const Color(0xFF199A85),
-        isOnline: true),
+      name: 'Oliver Brown',
+      role: 'member',
+      accentColor: const Color(0xFF199A85),
+      isOnline: true,
+    ),
     _Member(
-        name: 'Isabella Davis',
-        role: 'member',
-        avatarColor: const Color(0xFF3580F0),
-        isOnline: false),
+      name: 'Isabella Davis',
+      role: 'member',
+      accentColor: const Color(0xFF3580F0),
+      isOnline: false,
+    ),
     _Member(
-        name: 'Charlotte Wilson',
-        role: 'member',
-        avatarColor: const Color(0xFFA16AE9),
-        isOnline: true),
+      name: 'Charlotte Wilson',
+      role: 'member',
+      accentColor: const Color(0xFFA16AE9),
+      isOnline: true,
+    ),
     _Member(
-        name: 'You',
-        role: 'member',
-        avatarColor: HuddlColors.teal,
-        isOnline: true),
+      name: 'You',
+      role: 'member',
+      accentColor: HuddlColors.teal,
+      isOnline: true,
+    ),
   ];
 
   List<_Member> get _filteredMembers {
     var list = List<_Member>.from(_members);
 
-    // Filter by role
     if (_selectedFilter == 'Admins') {
       list = list.where((m) => m.role == 'admin').toList();
     } else if (_selectedFilter == 'Members') {
       list = list.where((m) => m.role == 'member').toList();
     }
 
-    // Filter by search
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       list = list.where((m) => m.name.toLowerCase().contains(q)).toList();
     }
 
-    // Sort: admins first, then online, then alphabetical
     list.sort((a, b) {
       if (a.role == 'admin' && b.role != 'admin') return -1;
       if (a.role != 'admin' && b.role == 'admin') return 1;
@@ -138,7 +147,8 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
             ),
             Text(
               '${_members.length} members',
-              style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+              style:
+                  GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
             ),
           ],
         ),
@@ -202,10 +212,13 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? HuddlColors.primary : HuddlColors.white,
+                        color:
+                            isSelected ? HuddlColors.primary : HuddlColors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: isSelected ? HuddlColors.primary : HuddlColors.divider),
+                            color: isSelected
+                                ? HuddlColors.primary
+                                : HuddlColors.divider),
                       ),
                       child: Text(
                         f,
@@ -213,7 +226,9 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                           fontSize: 13,
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? HuddlColors.white : HuddlColors.textSecondary,
+                          color: isSelected
+                              ? HuddlColors.white
+                              : HuddlColors.textSecondary,
                         ),
                       ),
                     ),
@@ -234,8 +249,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                     ),
                   )
                 : ListView.separated(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: filtered.length,
                     separatorBuilder: (_, __) => const Divider(
                       height: 1,
@@ -265,41 +279,12 @@ class _MemberTile extends StatelessWidget {
       child: ListTile(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Stack(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: member.avatarColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  member.name[0].toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: member.avatarColor,
-                  ),
-                ),
-              ),
-            ),
-            if (member.isOnline)
-              Positioned(
-                right: 0,
-                bottom: 0,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _kOnline,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: HuddlColors.white, width: 2),
-                  ),
-                ),
-              ),
-          ],
+        leading: MemberAvatar(
+          name: member.name,
+          size: 44,
+          accentColor: member.accentColor,
+          showOnlineDot: true,
+          isOnline: member.isOnline,
         ),
         title: Row(
           children: [
@@ -339,7 +324,8 @@ class _MemberTile extends StatelessWidget {
             color: member.isOnline ? _kOnline : HuddlColors.textHint,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+        trailing:
+            const Icon(Icons.chevron_right, color: HuddlColors.textHint),
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -356,13 +342,13 @@ class _MemberTile extends StatelessWidget {
 class _Member {
   final String name;
   final String role;
-  final Color avatarColor;
+  final Color accentColor;
   final bool isOnline;
 
   const _Member({
     required this.name,
     required this.role,
-    required this.avatarColor,
+    required this.accentColor,
     required this.isOnline,
   });
 }

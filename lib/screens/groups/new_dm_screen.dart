@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
@@ -259,26 +260,13 @@ class _MemberTile extends StatelessWidget {
         color: HuddlColors.white,
         child: Row(
           children: [
-            // Avatar
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  member.name.isNotEmpty
-                      ? member.name[0].toUpperCase()
-                      : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ),
+            // Avatar with profile photo
+            MemberAvatar(
+              name: member.name,
+              size: 48,
+              accentColor: color,
+              showOnlineDot: true,
+              isOnline: true,
             ),
             const SizedBox(width: 14),
             // Name and parent type

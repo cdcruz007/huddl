@@ -1184,26 +1184,11 @@ class _AnnouncementCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Author avatar
-              Container(
-                width: 40,
-                height: 40,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: HuddlColors.peachLight,
-                ),
-                child: Center(
-                  child: Text(
-                    announcement.authorName.isNotEmpty
-                        ? announcement.authorName[0].toUpperCase()
-                        : 'U',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
-                    ),
-                  ),
-                ),
+              // Author avatar with profile photo
+              MemberAvatar(
+                name: announcement.authorName,
+                imageUrl: announcement.authorPhotoUrl,
+                size: 40,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1698,25 +1683,10 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: HuddlColors.peachLight,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  c.authorName.isNotEmpty
-                                      ? c.authorName[0].toUpperCase()
-                                      : 'U',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.primary,
-                                  ),
-                                ),
-                              ),
+                            MemberAvatar(
+                              name: c.authorName,
+                              imageUrl: c.authorPhotoUrl,
+                              size: 36,
                             ),
                             const SizedBox(width: 10),
                             Expanded(

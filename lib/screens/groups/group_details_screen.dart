@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
+import '../../widgets/huddl_widgets.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
@@ -532,23 +533,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         ];
                         return Column(
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: colors[index].withValues(alpha: 0.15),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  names[index][0],
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: colors[index],
-                                  ),
-                                ),
-                              ),
+                            MemberAvatar(
+                              name: names[index],
+                              size: 48,
+                              accentColor: colors[index],
                             ),
                             const SizedBox(height: 4),
                             Text(
