@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,6 +14,7 @@ import '../../services/invitation_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/saved_message_service.dart';
+import '../../services/message_search_service.dart';
 import '../../models/saved_message.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
@@ -156,6 +158,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
+  final MessageSearchService _searchService = MessageSearchService();
 
   List<_GroupItem> _allGroups = [];
   List<_GroupItem> _filteredGroups = [];
@@ -169,6 +172,11 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
 
+  // ── Deep search state ─────────────────────────────────────────────────
+  List<MessageSearchResult> _deepSearchResults = [];
+  bool _isDeepSearching = false;
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -179,6 +187,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _searchController.dispose();
     _dmService.removeListener(_onDMUpdate);
@@ -305,6 +314,8 @@ class _MessagesTabState extends State<_MessagesTab> {
     if (_searchQuery.isEmpty) {
       _filteredGroups = List.from(_allGroups);
       _filteredDMs = List.from(_dmConversations);
+      _deepSearchResults = [];
+      _isDeepSearching = false;
     } else {
       final q = _searchQuery.toLowerCase();
       _filteredGroups = _allGroups
@@ -317,6 +328,12 @@ class _MessagesTabState extends State<_MessagesTab> {
               d.recipientName.toLowerCase().contains(q) ||
               (d.lastMessage ?? '').toLowerCase().contains(q))
           .toList();
+
+      // Trigger deep search with debounce
+      _searchDebounce?.cancel();
+      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+        _performDeepSearch(q);
+      });
     }
     // Sort: pinned first, then by last message time descending
     _filteredGroups.sort((a, b) {
@@ -327,6 +344,39 @@ class _MessagesTabState extends State<_MessagesTab> {
       return (b.lastMessageTime ?? DateTime(2000))
           .compareTo(a.lastMessageTime ?? DateTime(2000));
     });
+  }
+
+  /// Perform deep search within all DM and group chat messages.
+  Future<void> _performDeepSearch(String query) async {
+    if (!mounted) return;
+    setState(() => _isDeepSearching = true);
+
+    try {
+      final groupMaps = _allGroups
+          .map((g) => {
+                'id': g.id,
+                'name': g.name,
+                'imageUrl': g.imageUrl,
+              })
+          .toList();
+
+      final results = await _searchService.searchAll(
+        query: query,
+        groups: groupMaps,
+        dmConversations: _dmConversations,
+      );
+
+      if (mounted && _searchQuery.toLowerCase() == query) {
+        setState(() {
+          _deepSearchResults = results;
+          _isDeepSearching = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isDeepSearching = false);
+      }
+    }
   }
 
   /// Build a unified list of items (groups + DMs) sorted by most recent
@@ -686,6 +736,53 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
   }
 
+  /// Navigate to a search result (opens the relevant chat).
+  void _navigateToSearchResult(MessageSearchResult result) {
+    if (result.isGroup) {
+      // Find the group item to get imageUrl
+      final group = _allGroups.firstWhere(
+        (g) => g.id == result.targetId,
+        orElse: () => _GroupItem(
+          id: result.targetId,
+          name: result.conversationName,
+          description: '',
+          imageUrl: result.imageUrl,
+          memberCount: 0,
+          category: '',
+          isDefault: false,
+          isImageLocked: false,
+        ),
+      );
+      Navigator.pushNamed(context, '/group_chat', arguments: {
+        'groupId': group.id,
+        'groupName': group.name,
+        'groupImageUrl': group.imageUrl,
+        'searchQuery': _searchQuery, // pass query so chat can highlight
+      });
+    } else {
+      Navigator.pushNamed(context, '/dm_chat', arguments: {
+        'recipientId': result.targetId,
+        'recipientName': result.conversationName,
+        'recipientAvatarColor':
+            result.recipientAvatarColor ?? '#FF975C',
+        'conversationId': result.conversationId,
+        'searchQuery': _searchQuery, // pass query so chat can highlight
+      });
+    }
+  }
+
+  /// Format a timestamp for display in search results.
+  String _searchTimeFormat(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inMinutes < 1) return 'now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays == 1) return 'Yesterday';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${dt.day}/${dt.month}/${dt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -695,29 +792,89 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
 
     final unified = _unifiedMessageList;
+    final bool hasDeepResults =
+        _searchQuery.isNotEmpty && _deepSearchResults.isNotEmpty;
+    final bool isSearchActive = _showSearch && _searchQuery.isNotEmpty;
 
     return Stack(
       children: [
         Column(
           children: [
-            // ── Collapsible search bar ──────────────────────────────────
-            if (_showSearch)
-              Container(
-                color: HuddlColors.white,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: HuddlSearchBar(
-                        hint: 'Search messages & DMs...',
-                        onChanged: (val) {
-                          setState(() {
-                            _searchQuery = val;
-                            _applyFilter();
-                          });
-                        },
+            // ── Always-visible search bar at top ──────────────────────
+            Container(
+              color: HuddlColors.white,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 12),
+                          const Icon(Icons.search,
+                              size: 20, color: HuddlColors.textHint),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (val) {
+                                setState(() {
+                                  _searchQuery = val;
+                                  _showSearch = val.isNotEmpty;
+                                  _applyFilter();
+                                });
+                              },
+                              onTap: () {
+                                if (!_showSearch) {
+                                  setState(() => _showSearch = true);
+                                }
+                              },
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: HuddlColors.textDark,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Search messages, groups & DMs...',
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                isDense: true,
+                                hintStyle: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: HuddlColors.textHint,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty) ...[
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                  _showSearch = false;
+                                  _applyFilter();
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                child: const Icon(Icons.close,
+                                    size: 18, color: HuddlColors.textHint),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                        ],
                       ),
                     ),
+                  ),
+                  if (_showSearch) ...[
                     const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () {
@@ -727,6 +884,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           _searchController.clear();
                           _applyFilter();
                         });
+                        FocusScope.of(context).unfocus();
                       },
                       child: Text('Cancel',
                           style: GoogleFonts.poppins(
@@ -735,132 +893,423 @@ class _MessagesTabState extends State<_MessagesTab> {
                               fontWeight: FontWeight.w500)),
                     ),
                   ],
-                ),
+                ],
               ),
+            ),
 
-            // ── Unified message list (groups + DMs) ──────────────────
+            // ── Content area ──────────────────────────────────────────
             Expanded(
-              child: (unified.isEmpty && _pendingInvitations.isEmpty)
-                  ? _EmptyMessagesState(onSearch: () {
-                      setState(() => _showSearch = true);
-                    })
-                  : RefreshIndicator(
-                      onRefresh: _loadGroups,
-                      color: HuddlColors.primary,
-                      child: ListView(
-                        padding: const EdgeInsets.only(top: 4, bottom: 100),
-                        children: [
-                          // ── Pending invitation cards ──────────────────────
-                          if (_pendingInvitations.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                              child: Text(
-                                'Group invitations',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textHint,
-                                  letterSpacing: 0.3,
-                                ),
-                              ),
-                            ),
-                            ..._pendingInvitations.map((inv) => _InvitationCard(
-                                  invitation: inv,
-                                  onAccept: () => _handleAccept(inv),
-                                  onDecline: () => _handleDecline(inv),
-                                )),
-                            const Divider(height: 1, color: HuddlColors.divider),
-                            const SizedBox(height: 4),
-                          ],
-                          // ── Unified rows (groups + DMs, sorted by recent) ──
-                          ...unified.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final item = entry.value;
-
-                            final bool isUnread = item.unreadCount > 0;
-
-                            Widget rowWidget;
-                            if (item.isGroup) {
-                              rowWidget = _GroupMessageRow(
-                                group: item.groupItem!,
-                                isPinned: item.isPinned,
-                                isMuted: item.isMuted,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/group_chat',
-                                      arguments: {
-                                        'groupId': item.groupItem!.id,
-                                        'groupName': item.groupItem!.name,
-                                        'groupImageUrl': item.groupItem!.imageUrl,
-                                      });
-                                },
-                                onLongPress: () =>
-                                    _showGroupActions(context, item.groupItem!),
-                              );
-                            } else {
-                              rowWidget = _DMMessageRow(
-                                conversation: item.dmConversation!,
-                                isPinned: item.isPinned,
-                                isMuted: item.isMuted,
-                                onTap: () {
-                                  Navigator.pushNamed(context, '/dm_chat',
-                                      arguments: {
-                                        'recipientId': item.dmConversation!.recipientId,
-                                        'recipientName': item.dmConversation!.recipientName,
-                                        'recipientAvatarColor':
-                                            item.dmConversation!.recipientAvatarColor,
-                                        'conversationId': item.dmConversation!.id,
-                                      });
-                                },
-                                onLongPress: () =>
-                                    _showDMActions(context, item.dmConversation!),
-                              );
-                            }
-
-                            return Column(
-                              children: [
-                                _SwipeActionRow(
-                                  key: ValueKey('swipe_${item.id}'),
-                                  isUnread: isUnread,
-                                  onDelete: () => _confirmDeleteConversation(context, item),
-                                  onToggleRead: () => _toggleReadStatus(item),
-                                  child: rowWidget,
-                                ),
-                                if (index < unified.length - 1)
-                                  const Divider(
-                                    height: 1,
-                                    indent: 80,
-                                    color: HuddlColors.divider,
-                                  ),
-                              ],
-                            );
-                          }),
-                        ],
-                      ),
-                    ),
+              child: isSearchActive
+                  ? _buildSearchResults(unified, hasDeepResults)
+                  : _buildConversationList(unified),
             ),
           ],
         ),
 
-        // ── FAB for new DM ──────────────────────────────────────────
-        Positioned(
-          bottom: 24,
-          right: 16,
-          child: Material(
-            elevation: 6,
-            shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-            shape: const CircleBorder(),
-            color: HuddlColors.primary,
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, '/new_dm'),
-              customBorder: const CircleBorder(),
-              child: const SizedBox(
-                width: 56,
-                height: 56,
-                child: Icon(Icons.add, color: Colors.white, size: 28),
+        // ── FAB for new DM (hidden during search) ─────────────────────
+        if (!isSearchActive)
+          Positioned(
+            bottom: 24,
+            right: 16,
+            child: Material(
+              elevation: 6,
+              shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
+              shape: const CircleBorder(),
+              color: HuddlColors.primary,
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(context, '/new_dm'),
+                customBorder: const CircleBorder(),
+                child: const SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Icon(Icons.add, color: Colors.white, size: 28),
+                ),
               ),
             ),
           ),
+      ],
+    );
+  }
+
+  /// Build the normal conversation list (no search active).
+  Widget _buildConversationList(List<_MessageListItem> unified) {
+    if (unified.isEmpty && _pendingInvitations.isEmpty) {
+      return _EmptyMessagesState(onSearch: () {
+        setState(() => _showSearch = true);
+      });
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadGroups,
+      color: HuddlColors.primary,
+      child: ListView(
+        padding: const EdgeInsets.only(top: 4, bottom: 100),
+        children: [
+          // ── Pending invitation cards ──────────────────────
+          if (_pendingInvitations.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+              child: Text(
+                'Group invitations',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textHint,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+            ..._pendingInvitations.map((inv) => _InvitationCard(
+                  invitation: inv,
+                  onAccept: () => _handleAccept(inv),
+                  onDecline: () => _handleDecline(inv),
+                )),
+            const Divider(height: 1, color: HuddlColors.divider),
+            const SizedBox(height: 4),
+          ],
+          // ── Unified rows (groups + DMs, sorted by recent) ──
+          ...unified.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+
+            final bool isUnread = item.unreadCount > 0;
+
+            Widget rowWidget;
+            if (item.isGroup) {
+              rowWidget = _GroupMessageRow(
+                group: item.groupItem!,
+                isPinned: item.isPinned,
+                isMuted: item.isMuted,
+                onTap: () {
+                  Navigator.pushNamed(context, '/group_chat', arguments: {
+                    'groupId': item.groupItem!.id,
+                    'groupName': item.groupItem!.name,
+                    'groupImageUrl': item.groupItem!.imageUrl,
+                  });
+                },
+                onLongPress: () =>
+                    _showGroupActions(context, item.groupItem!),
+              );
+            } else {
+              rowWidget = _DMMessageRow(
+                conversation: item.dmConversation!,
+                isPinned: item.isPinned,
+                isMuted: item.isMuted,
+                onTap: () {
+                  Navigator.pushNamed(context, '/dm_chat', arguments: {
+                    'recipientId': item.dmConversation!.recipientId,
+                    'recipientName': item.dmConversation!.recipientName,
+                    'recipientAvatarColor':
+                        item.dmConversation!.recipientAvatarColor,
+                    'conversationId': item.dmConversation!.id,
+                  });
+                },
+                onLongPress: () =>
+                    _showDMActions(context, item.dmConversation!),
+              );
+            }
+
+            return Column(
+              children: [
+                _SwipeActionRow(
+                  key: ValueKey('swipe_${item.id}'),
+                  isUnread: isUnread,
+                  onDelete: () =>
+                      _confirmDeleteConversation(context, item),
+                  onToggleRead: () => _toggleReadStatus(item),
+                  child: rowWidget,
+                ),
+                if (index < unified.length - 1)
+                  const Divider(
+                    height: 1,
+                    indent: 80,
+                    color: HuddlColors.divider,
+                  ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  /// Build search results view with conversation matches + deep message matches.
+  Widget _buildSearchResults(
+      List<_MessageListItem> conversationMatches, bool hasDeepResults) {
+    // Group deep results by conversation
+    final Map<String, List<MessageSearchResult>> groupedDeep = {};
+    for (final r in _deepSearchResults) {
+      groupedDeep.putIfAbsent(r.conversationId, () => []).add(r);
+    }
+
+    // Determine which conversations matched by name (already in conversationMatches)
+    final matchedConvIds =
+        conversationMatches.map((m) => m.id).toSet();
+
+    // Deep-only conversations: have message matches but not in name matches
+    final deepOnlyConvIds = groupedDeep.keys
+        .where((id) => !matchedConvIds.contains(id))
+        .toList();
+
+    final bool noResults = conversationMatches.isEmpty &&
+        !hasDeepResults &&
+        !_isDeepSearching;
+
+    if (noResults) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: HuddlColors.peachLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(Icons.search_off,
+                    size: 32, color: HuddlColors.primary),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No results found',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Try a different search term',
+                style: GoogleFonts.poppins(
+                    fontSize: 14, color: HuddlColors.textHint),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.only(top: 4, bottom: 100),
+      children: [
+        // ── Section: Conversations matching by name ──────────────
+        if (conversationMatches.isNotEmpty) ...[
+          _SearchSectionHeader(
+            title: 'Chats',
+            count: conversationMatches.length,
+          ),
+          ...conversationMatches.asMap().entries.map((entry) {
+            final item = entry.value;
+            Widget rowWidget;
+            if (item.isGroup) {
+              rowWidget = _GroupMessageRow(
+                group: item.groupItem!,
+                isPinned: item.isPinned,
+                isMuted: item.isMuted,
+                onTap: () {
+                  Navigator.pushNamed(context, '/group_chat', arguments: {
+                    'groupId': item.groupItem!.id,
+                    'groupName': item.groupItem!.name,
+                    'groupImageUrl': item.groupItem!.imageUrl,
+                  });
+                },
+                onLongPress: () =>
+                    _showGroupActions(context, item.groupItem!),
+              );
+            } else {
+              rowWidget = _DMMessageRow(
+                conversation: item.dmConversation!,
+                isPinned: item.isPinned,
+                isMuted: item.isMuted,
+                onTap: () {
+                  Navigator.pushNamed(context, '/dm_chat', arguments: {
+                    'recipientId': item.dmConversation!.recipientId,
+                    'recipientName': item.dmConversation!.recipientName,
+                    'recipientAvatarColor':
+                        item.dmConversation!.recipientAvatarColor,
+                    'conversationId': item.dmConversation!.id,
+                  });
+                },
+                onLongPress: () =>
+                    _showDMActions(context, item.dmConversation!),
+              );
+            }
+
+            // Show deep message matches under this conversation
+            final convDeepResults = groupedDeep[item.id];
+            return Column(
+              children: [
+                rowWidget,
+                if (convDeepResults != null && convDeepResults.isNotEmpty)
+                  ...convDeepResults.take(3).map((r) =>
+                      _DeepSearchResultRow(
+                        result: r,
+                        query: _searchQuery,
+                        timeFormat: _searchTimeFormat,
+                        onTap: () => _navigateToSearchResult(r),
+                      )),
+                if (convDeepResults != null && convDeepResults.length > 3)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 80, right: 16, bottom: 8),
+                    child: GestureDetector(
+                      onTap: () => _navigateToSearchResult(
+                          convDeepResults.first),
+                      child: Text(
+                        '${convDeepResults.length - 3} more results in this chat',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                const Divider(
+                    height: 1, indent: 80, color: HuddlColors.divider),
+              ],
+            );
+          }),
+        ],
+
+        // ── Section: Messages matching within other conversations ──
+        if (deepOnlyConvIds.isNotEmpty) ...[
+          _SearchSectionHeader(
+            title: 'Messages',
+            count: deepOnlyConvIds.fold<int>(
+                0, (s, id) => s + (groupedDeep[id]?.length ?? 0)),
+          ),
+          ...deepOnlyConvIds.map((convId) {
+            final results = groupedDeep[convId]!;
+            final first = results.first;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Conversation header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Row(
+                    children: [
+                      if (first.isGroup)
+                        _GroupAvatar(
+                            imageUrl: first.imageUrl, size: 28)
+                      else
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor:
+                              _dmColorFromHex(first.avatarColor),
+                          child: Text(
+                            first.conversationName.isNotEmpty
+                                ? first.conversationName[0].toUpperCase()
+                                : '?',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          first.conversationName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.peachLight,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${results.length}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ...results.take(3).map((r) => _DeepSearchResultRow(
+                      result: r,
+                      query: _searchQuery,
+                      timeFormat: _searchTimeFormat,
+                      onTap: () => _navigateToSearchResult(r),
+                    )),
+                if (results.length > 3)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: 80, right: 16, bottom: 8),
+                    child: GestureDetector(
+                      onTap: () =>
+                          _navigateToSearchResult(results.first),
+                      child: Text(
+                        '${results.length - 3} more results',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                const Divider(
+                    height: 1, indent: 16, color: HuddlColors.divider),
+              ],
+            );
+          }),
+        ],
+
+        // ── Loading indicator for deep search ──────────────────────
+        if (_isDeepSearching)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Searching within messages...',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: HuddlColors.textHint,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+        // ── No conversation matches but deep search still running ──
+        if (conversationMatches.isEmpty &&
+            !hasDeepResults &&
+            _isDeepSearching)
+          const SizedBox(height: 40),
       ],
     );
   }
@@ -3473,6 +3922,188 @@ class _ActionTile extends StatelessWidget {
         ),
       ),
       onTap: onTap,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SEARCH SECTION HEADER — "Chats (3)" or "Messages (12)"
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _SearchSectionHeader extends StatelessWidget {
+  final String title;
+  final int count;
+
+  const _SearchSectionHeader({required this.title, required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: HuddlColors.textHint,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+            decoration: BoxDecoration(
+              color: HuddlColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$count',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEEP SEARCH RESULT ROW — shows a matching message within a conversation
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _DeepSearchResultRow extends StatelessWidget {
+  final MessageSearchResult result;
+  final String query;
+  final String Function(DateTime) timeFormat;
+  final VoidCallback onTap;
+
+  const _DeepSearchResultRow({
+    required this.result,
+    required this.query,
+    required this.timeFormat,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(52, 4, 16, 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Search icon
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Icon(
+                Icons.subdirectory_arrow_right,
+                size: 16,
+                color: HuddlColors.textHint.withValues(alpha: 0.6),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Sender name + time
+                  Row(
+                    children: [
+                      Text(
+                        result.senderName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        timeFormat(result.timestamp),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  // Message text with highlighted query
+                  _HighlightedText(
+                    text: result.messageText,
+                    query: query,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Highlights matching portions of text.
+class _HighlightedText extends StatelessWidget {
+  final String text;
+  final String query;
+
+  const _HighlightedText({required this.text, required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    if (query.isEmpty) {
+      return Text(
+        text,
+        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final spans = <TextSpan>[];
+    int start = 0;
+
+    while (true) {
+      final idx = lowerText.indexOf(lowerQuery, start);
+      if (idx == -1) {
+        spans.add(TextSpan(
+          text: text.substring(start),
+          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+        ));
+        break;
+      }
+      if (idx > start) {
+        spans.add(TextSpan(
+          text: text.substring(start, idx),
+          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+        ));
+      }
+      spans.add(TextSpan(
+        text: text.substring(idx, idx + query.length),
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: HuddlColors.primary,
+          backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
+        ),
+      ));
+      start = idx + query.length;
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
