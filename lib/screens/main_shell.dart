@@ -10,11 +10,15 @@ import 'profile/profile_screen.dart';
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
+  /// Global key to allow switching tabs from child screens.
+  static final GlobalKey<MainShellState> shellKey =
+      GlobalKey<MainShellState>();
+
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
@@ -24,6 +28,13 @@ class _MainShellState extends State<MainShell> {
     MarketplaceScreen(),
     ProfileScreen(),
   ];
+
+  /// Switch to a specific tab by index (0=Village, 1=MyHuddl, 2=What's On, 3=Pass It On, 4=Profile)
+  void switchTab(int index) {
+    if (index >= 0 && index < _screens.length) {
+      setState(() => _currentIndex = index);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

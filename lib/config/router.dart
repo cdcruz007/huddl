@@ -94,7 +94,9 @@ class AppRouter {
         );
 
       case '/home':
-        return FadePageRoute(page: const MainShell());
+        return FadePageRoute(
+          page: MainShell(key: MainShell.shellKey),
+        );
 
       // ── Group feature routes ──────────────────────────────────────
       case '/group_chat':
