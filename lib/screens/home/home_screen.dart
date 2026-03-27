@@ -227,16 +227,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     _confirmDeletePost(announcement);
                   },
                 ),
-              if (!isOwnPost)
-                _menuItem(
-                  icon: Icons.flag_outlined,
-                  label: 'Report post',
-                  color: HuddlColors.error,
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _confirmReportPost(announcement);
-                  },
-                ),
               const SizedBox(height: 8),
             ],
           ),
@@ -299,48 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             child: Text('Delete',
-                style: GoogleFonts.poppins(color: HuddlColors.error)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _confirmReportPost(Announcement announcement) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Report this post?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: Text(
-            'This post will be reported and hidden from your feed.',
-            style: GoogleFonts.poppins(fontSize: 14)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: GoogleFonts.poppins(color: HuddlColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _announcementService.report(announcement.id);
-              setState(() {
-                _announcements = _announcementService.boroughAnnouncements;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Post reported. Thank you.',
-                      style: GoogleFonts.poppins(fontSize: 13)),
-                  backgroundColor: HuddlColors.textDark,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              );
-            },
-            child: Text('Report',
                 style: GoogleFonts.poppins(color: HuddlColors.error)),
           ),
         ],

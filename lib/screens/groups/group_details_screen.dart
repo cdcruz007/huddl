@@ -948,53 +948,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   _confirmDeleteGroup(ctx);
                 },
               ),
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: Colors.red),
-              title: Text('Report group',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.red)),
-              onTap: () {
-                Navigator.pop(c);
-                _confirmReport(ctx);
-              },
-            ),
             const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
-  }
-
-  void _confirmReport(BuildContext ctx) {
-    showDialog(
-      context: ctx,
-      builder: (c) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Report group?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: Text(
-          'Our team will review this group for any policy violations.',
-          style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('Cancel',
-                style: GoogleFonts.poppins(color: HuddlColors.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(c);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Report submitted. Thank you.')),
-              );
-            },
-            child:
-                Text('Report', style: GoogleFonts.poppins(color: Colors.red)),
-          ),
-        ],
       ),
     );
   }

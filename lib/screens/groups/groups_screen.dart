@@ -1062,11 +1062,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                 _SwipeActionRow(
                   key: ValueKey('swipe_${item.id}'),
                   isUnread: isUnread,
-                  swipeLeftLabel: (item.isGroup && !item.isPrivate) ? 'Leave' : 'Delete',
-                  swipeLeftIcon: (item.isGroup && !item.isPrivate) ? Icons.exit_to_app : Icons.delete,
+                  swipeLeftLabel: item.isGroup ? 'Leave' : 'Delete',
+                  swipeLeftIcon: item.isGroup ? Icons.exit_to_app : Icons.delete,
                   onDelete: () {
-                    // Public groups: swipe triggers leave, not delete
-                    if (item.isGroup && !item.isPrivate) {
+                    // All groups (public & private): swipe triggers leave, not delete
+                    if (item.isGroup && item.groupItem != null) {
                       _confirmLeaveGroup(context, item.groupItem!);
                     } else {
                       _confirmDeleteConversation(context, item);
