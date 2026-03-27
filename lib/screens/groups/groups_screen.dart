@@ -16,6 +16,7 @@ import '../../services/dm_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/message_search_service.dart';
 import '../../models/saved_message.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF34C759);
@@ -3236,126 +3237,273 @@ class _DiscoverGroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = _discoverCardStyles[group.id] ??
         {'icon': Icons.people, 'color': HuddlColors.primary};
-    final Color iconColor = style['color'] as Color;
-    final IconData iconData = style['icon'] as IconData;
+    final Color catColor = style['color'] as Color;
+    final IconData catIcon = style['icon'] as IconData;
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Icon thumbnail or group image ─────────────────────
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: _buildGroupImage(iconData, iconColor),
-            ),
-            const SizedBox(width: 12),
-            // ── Name + member count ──────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          group.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+            // ── Cover image with badges ─────────────────────────────
+            Stack(
+              children: [
+                SizedBox(
+                  height: 150,
+                  width: double.infinity,
+                  child: _buildCoverImage(
+                    imageUrl: group.imageUrl,
+                    fallbackIcon: catIcon,
+                    fallbackColor: catColor,
+                  ),
+                ),
+                // Gradient overlay at bottom for readability
+                Positioned(
+                  bottom: 0, left: 0, right: 0,
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.4),
+                        ],
                       ),
-                      if (group.creatorId == 'current_user') ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.teal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'Your group',
-                            style: GoogleFonts.poppins(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.teal,
-                            ),
+                    ),
+                  ),
+                ),
+                // Category badge (top-left)
+                Positioned(
+                  top: 10, left: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: catColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(catIcon, size: 13, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          group.category,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 2),
+                ),
+                // "Your group" badge or privacy badge (top-right)
+                if (group.creatorId == 'current_user')
+                  Positioned(
+                    top: 10, right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.teal,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Your group',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                else if (group.isPrivate)
+                  Positioned(
+                    top: 10, right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.lock_outline, size: 12, color: Colors.white),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Private',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                // Member count overlay (bottom-right)
+                Positioned(
+                  bottom: 8, right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.people, size: 13, color: Colors.white),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${group.memberCount} members',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            // ── Card body ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
                   Text(
-                    group.description.isNotEmpty
-                        ? group.description
-                        : '${group.memberCount} members',
+                    group.name,
                     style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.textHint,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (group.description.isNotEmpty) ...[
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 4),
                     Text(
-                      '${group.memberCount} members${group.creatorBorough != null && group.creatorBorough!.isNotEmpty && group.creatorBorough != 'Unknown Borough' ? ' \u00B7 ${group.creatorBorough}' : ''}',
+                      group.description,
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: HuddlColors.textHint.withValues(alpha: 0.7),
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ],
-              ),
-            ),
-            // ── Join / Joined button ─────────────────────────────
-            GestureDetector(
-              onTap: isJoined ? null : onJoinTap,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isJoined ? HuddlColors.background : null,
-                  gradient: isJoined ? null : HuddlColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(20),
-                  border: isJoined
-                      ? Border.all(color: HuddlColors.divider)
-                      : null,
-                ),
-                child: Text(
-                  isJoined ? 'Joined' : 'Join',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color:
-                        isJoined ? HuddlColors.textSecondary : HuddlColors.white,
+                  // Borough info
+                  if (group.creatorBorough != null &&
+                      group.creatorBorough!.isNotEmpty &&
+                      group.creatorBorough != 'Unknown Borough') ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 13, color: catColor),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            group.creatorBorough!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: HuddlColors.textHint,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  // Bottom row: creator avatar + Join/Joined button
+                  Row(
+                    children: [
+                      // Creator / group avatar
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundColor: catColor.withValues(alpha: 0.15),
+                        child: Text(
+                          group.name.isNotEmpty
+                              ? group.name[0].toUpperCase()
+                              : '?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: catColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          group.creatorName != null && group.creatorName!.isNotEmpty
+                              ? 'Created by ${group.creatorName}'
+                              : 'Community group',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Join / Joined button
+                      GestureDetector(
+                        onTap: isJoined ? null : onJoinTap,
+                        child: Container(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isJoined ? HuddlColors.background : null,
+                            gradient: isJoined ? null : HuddlColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(20),
+                            border: isJoined
+                                ? Border.all(color: HuddlColors.divider)
+                                : null,
+                          ),
+                          child: Text(
+                            isJoined ? 'Joined' : 'Join',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isJoined ? HuddlColors.textSecondary : HuddlColors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -3364,57 +3512,67 @@ class _DiscoverGroupCard extends StatelessWidget {
     );
   }
 
-  /// Renders the group thumbnail from any source: asset path, http URL,
-  /// or base64 data-URI. Falls back to the category icon when the image
-  /// is empty or fails to load.
-  Widget _buildGroupImage(IconData fallbackIcon, Color fallbackColor) {
-    final url = group.imageUrl;
-    if (url.isEmpty) {
-      return Icon(fallbackIcon, color: fallbackColor, size: 28);
-    }
+  /// Builds the cover image from various sources: asset, http URL, base64,
+  /// or falls back to a coloured icon container.
+  Widget _buildCoverImage({
+    required String imageUrl,
+    required IconData fallbackIcon,
+    required Color fallbackColor,
+  }) {
+    Widget fallback() => Container(
+          color: fallbackColor.withValues(alpha: 0.12),
+          child: Center(
+            child: Icon(fallbackIcon, size: 40, color: fallbackColor),
+          ),
+        );
 
-    if (url.startsWith('assets/')) {
-      return Image.asset(
-        url,
-        fit: BoxFit.cover,
-        width: 56,
-        height: 56,
-        errorBuilder: (_, __, ___) =>
-            Icon(fallbackIcon, color: fallbackColor, size: 28),
-      );
-    }
+    Widget placeholder() => Container(
+          color: fallbackColor.withValues(alpha: 0.12),
+          child: Center(
+            child: Icon(fallbackIcon, size: 40,
+                color: fallbackColor.withValues(alpha: 0.4)),
+          ),
+        );
 
-    if (url.startsWith('http')) {
-      return Image.network(
-        url,
-        fit: BoxFit.cover,
-        width: 56,
-        height: 56,
-        errorBuilder: (_, __, ___) =>
-            Icon(fallbackIcon, color: fallbackColor, size: 28),
-      );
-    }
+    if (imageUrl.isEmpty) return fallback();
 
-    if (url.startsWith('data:')) {
+    if (imageUrl.startsWith('data:')) {
       try {
-        final dataUri = Uri.parse(url);
+        final dataUri = Uri.parse(imageUrl);
         final bytes = dataUri.data?.contentAsBytes();
         if (bytes != null) {
           return Image.memory(
             Uint8List.fromList(bytes),
             fit: BoxFit.cover,
-            width: 56,
-            height: 56,
-            errorBuilder: (_, __, ___) =>
-                Icon(fallbackIcon, color: fallbackColor, size: 28),
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => fallback(),
           );
         }
-      } catch (_) {
-        // fall through
-      }
+      } catch (_) {}
+      return fallback();
     }
 
-    return Icon(fallbackIcon, color: fallbackColor, size: 28);
+    if (imageUrl.startsWith('http')) {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => placeholder(),
+        errorWidget: (_, __, ___) => fallback(),
+      );
+    }
+
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => fallback(),
+      );
+    }
+
+    return fallback();
   }
 }
 
