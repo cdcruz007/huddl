@@ -28,6 +28,9 @@ import '../screens/groups/new_dm_screen.dart';
 import '../screens/groups/saved_messages_for_group_screen.dart';
 import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
+import '../screens/marketplace/item_detail_screen.dart';
+import '../screens/rehome/create_listing_screen.dart';
+import '../services/rehome_service.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -183,6 +186,19 @@ class AppRouter {
 
       case '/privacy':
         return SlidePageRoute(page: const PrivacyPolicyDetailScreen());
+
+      // ── Rehome feature routes ────────────────────────────────────────
+      case '/create_listing':
+        return SlidePageRoute(
+          page: const CreateListingScreen(),
+          direction: SlideDirection.up,
+        );
+
+      case '/item_detail':
+        final item = settings.arguments as RehomeItem;
+        return SlidePageRoute(
+          page: ItemDetailScreen(item: item),
+        );
 
       default:
         return MaterialPageRoute(
