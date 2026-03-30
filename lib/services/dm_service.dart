@@ -88,6 +88,17 @@ class DMService {
   }
 
   // ── Get or create a conversation ────────────────────────────────────────
+  /// Find an existing conversation by recipientId without creating one.
+  /// Returns null if no conversation exists yet.
+  Future<DMConversation?> findConversation(String recipientId) async {
+    await initialize();
+    try {
+      return _conversations.firstWhere((c) => c.recipientId == recipientId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<DMConversation> getOrCreateConversation({
     required String recipientId,
     required String recipientName,

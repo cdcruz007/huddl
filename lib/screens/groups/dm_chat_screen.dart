@@ -136,19 +136,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
     await _dmService.initialize();
     _userName = _onboardingService.name ?? 'You';
 
-    // Get or create conversation
-    final conv = await _dmService.getOrCreateConversation(
-      recipientId: widget.recipientId,
-      recipientName: widget.recipientName,
-      avatarColor: widget.recipientAvatarColor,
-    );
-    _conversationId = conv.id;
-
-    // Mark as read
-    await _dmService.markConversationRead(conv.id);
-
-    // Load messages
-    _messages = await _dmService.getMessages(conv.id);
+    // Check if conversation already exists (don't create one yet)
+    final existing = await _dmService.findConversation(widget.recipientId);
+    if (existing != null) {
+      _conversationId = existing.id;
+      // Mark as read
+      await _dmService.markConversationRead(existing.id);
+      // Load messages
+      _messages = await _dmService.getMessages(existing.id);
+    }
+    // If no existing conversation, _conversationId stays null.
+    // It will be created on the first sent message.
 
     setState(() => _isLoading = false);
     _scrollToBottom();
@@ -191,9 +189,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _conversationId == null) return;
+    if (text.isEmpty) return;
 
     _messageController.clear();
+
+    // Create conversation on first message if it doesn't exist yet
+    if (_conversationId == null) {
+      final conv = await _dmService.getOrCreateConversation(
+        recipientId: widget.recipientId,
+        recipientName: widget.recipientName,
+        avatarColor: widget.recipientAvatarColor,
+      );
+      _conversationId = conv.id;
+    }
 
     final msg = await _dmService.sendMessage(
       conversationId: _conversationId!,
