@@ -26,6 +26,8 @@ import '../screens/groups/create_group_screen.dart';
 import '../screens/groups/dm_chat_screen.dart';
 import '../screens/groups/new_dm_screen.dart';
 import '../screens/groups/saved_messages_for_group_screen.dart';
+import '../screens/legal/terms_of_service_screen.dart';
+import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -175,6 +177,12 @@ class AppRouter {
             groupName: args['groupName'] as String? ?? 'Group',
           ),
         );
+
+      case '/terms':
+        return SlidePageRoute(page: const TermsOfServiceScreen());
+
+      case '/privacy':
+        return SlidePageRoute(page: const PrivacyPolicyDetailScreen());
 
       default:
         return MaterialPageRoute(
