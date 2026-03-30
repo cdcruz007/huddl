@@ -228,6 +228,43 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     }
     if (!_isValid) return;
 
+    // ── Duplicate public group name check ─────────────────────────────
+    if (!_isPrivate) {
+      final newName = _nameController.text.trim().toLowerCase();
+
+      // Check user-created groups
+      final existing = await BrowserStorage.getString(_userGroupsKey);
+      if (existing != null) {
+        final groups = json.decode(existing) as List<dynamic>;
+        final hasDupe = groups.any((g) {
+          final name = (g as Map<String, dynamic>)['name'] as String? ?? '';
+          return name.toLowerCase() == newName;
+        });
+        if (hasDupe) {
+          if (mounted) {
+            _showDuplicateNameDialog();
+          }
+          return;
+        }
+      }
+
+      // Check default/system groups
+      final defaultRaw = await BrowserStorage.getString('default_groups_v3');
+      if (defaultRaw != null) {
+        final defaultGroups = json.decode(defaultRaw) as List<dynamic>;
+        final hasDupe = defaultGroups.any((g) {
+          final name = (g as Map<String, dynamic>)['name'] as String? ?? '';
+          return name.toLowerCase() == newName;
+        });
+        if (hasDupe) {
+          if (mounted) {
+            _showDuplicateNameDialog();
+          }
+          return;
+        }
+      }
+    }
+
     setState(() => _isCreating = true);
 
     try {
@@ -312,6 +349,51 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     } finally {
       if (mounted) setState(() => _isCreating = false);
     }
+  }
+
+  void _showDuplicateNameDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: HuddlColors.primary, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Group Name Taken',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'A group with this name already exists. Please use an alternative name.',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: HuddlColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'OK',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Filtered list for the member search ─────────────────────────────────

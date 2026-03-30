@@ -21,19 +21,26 @@ class EventsScreen extends StatefulWidget {
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen> {
+class _EventsScreenState extends State<EventsScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) setState(() {});
+    });
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
   }
 
   @override
   void dispose() {
+    _tabController.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     super.dispose();
@@ -103,30 +110,44 @@ class _EventsScreenState extends State<EventsScreen> {
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // ── Single Meet-ups heading (Events & All tabs hidden) ──
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.only(bottom: 10),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: HuddlColors.divider)),
+                  // ── Tabs: Meet-ups | I'm Going ──────────────────────
+                  TabBar(
+                    controller: _tabController,
+                    tabs: const [
+                      Tab(text: 'Meet-ups'),
+                      Tab(text: "I'm Going"),
+                    ],
+                    labelColor: HuddlColors.primary,
+                    unselectedLabelColor: HuddlColors.textHint,
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Text(
-                      'Meet-ups',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
-                      ),
+                    unselectedLabelStyle: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
                     ),
+                    indicatorColor: HuddlColors.primary,
+                    indicatorWeight: 3,
+                    indicatorSize: TabBarIndicatorSize.label,
+                    dividerColor: HuddlColors.divider,
                   ),
                 ],
               ),
             ),
-            // ── Meet-ups content only (Events & All hidden) ────────
+            // ── Tab content ─────────────────────────────────────────
             Expanded(
-              child: _MeetupsTab(
-                meetupService: _meetupService,
-                onCreateMeetup: _navigateToCreateMeetup,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  _MeetupsTab(
+                    meetupService: _meetupService,
+                    onCreateMeetup: _navigateToCreateMeetup,
+                  ),
+                  _ImGoingTab(
+                    meetupService: _meetupService,
+                  ),
+                ],
               ),
             ),
           ],
@@ -317,6 +338,236 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 // ═══════════════════════════════════════════════════════════════════════════════
 // EVENTS TAB — 3rd party / company advertised events (mostly paid)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// I'M GOING TAB — shows meetups the user has confirmed attendance for
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _ImGoingTab extends StatelessWidget {
+  final MeetupService meetupService;
+
+  const _ImGoingTab({required this.meetupService});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final goingMeetups = meetupService.meetups
+        .where((m) => m.isGoing)
+        .toList();
+
+    final upcoming = goingMeetups.where((m) => m.dateTime.isAfter(now)).toList();
+    final past = goingMeetups.where((m) => !m.dateTime.isAfter(now)).toList();
+
+    if (goingMeetups.isEmpty) {
+      return _EmptyState(
+        icon: Icons.event_available_outlined,
+        title: "You're not going to any meet-ups yet",
+        subtitle: "Tap 'Count Me In' on a meet-up to add it here!",
+        actionLabel: 'Browse Meet-ups',
+        onAction: () {},
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        if (upcoming.isNotEmpty) ...[
+          _SectionLabel(
+            icon: Icons.upcoming_outlined,
+            label: 'Upcoming',
+            color: HuddlColors.teal,
+          ),
+          const SizedBox(height: 8),
+          ...upcoming.map((m) => _ImGoingCard(
+                meetup: m,
+                onCancel: () => meetupService.toggleGoing(m.id),
+              )),
+        ],
+        if (past.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _SectionLabel(
+            icon: Icons.history,
+            label: 'Past',
+            color: HuddlColors.textHint,
+          ),
+          const SizedBox(height: 8),
+          ...past.map((m) => _ImGoingCard(
+                meetup: m,
+                isPast: true,
+                onCancel: () => meetupService.toggleGoing(m.id),
+              )),
+        ],
+      ],
+    );
+  }
+}
+
+class _ImGoingCard extends StatelessWidget {
+  final Meetup meetup;
+  final bool isPast;
+  final VoidCallback onCancel;
+
+  const _ImGoingCard({
+    required this.meetup,
+    this.isPast = false,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: isPast ? 0.55 : 1.0,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: HuddlColors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => MeetupDetailScreen(meetup: meetup),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: HuddlColors.primary.withValues(alpha: 0.1),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: meetup.imageUrl.isNotEmpty &&
+                          meetup.imageUrl.startsWith('http')
+                      ? Image.network(
+                          meetup.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Center(
+                            child: Icon(Icons.groups,
+                                color: HuddlColors.primary, size: 28),
+                          ),
+                        )
+                      : Center(
+                          child: Icon(Icons.groups,
+                              color: HuddlColors.primary, size: 28),
+                        ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        meetup.title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined,
+                              size: 12, color: HuddlColors.textHint),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '${meetup.dateDisplay} · ${meetup.timeDisplay}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: HuddlColors.textHint,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 12, color: HuddlColors.textHint),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              meetup.location,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: HuddlColors.textHint,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  children: [
+                    if (isPast)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.textHint.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Past',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                      )
+                    else
+                      Icon(Icons.check_circle,
+                          color: HuddlColors.teal, size: 24),
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: onCancel,
+                      child: Text(
+                        isPast ? 'Clear' : 'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isPast ? HuddlColors.textHint : Colors.red,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _EventsTab extends StatefulWidget {
   final EventService eventService;

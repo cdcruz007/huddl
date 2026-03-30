@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
 import '../../services/dm_service.dart';
@@ -2425,6 +2426,32 @@ class _LocationBubble extends StatelessWidget {
     this.recipientId,
   });
 
+  Future<void> _openInMaps(BuildContext context) async {
+    const label = 'Shared Location';
+    final googleUrl = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(label)}');
+    try {
+      await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      final geoUrl = Uri.parse('geo:0,0?q=${Uri.encodeComponent(label)}');
+      try {
+        await launchUrl(geoUrl);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Could not open maps'),
+              backgroundColor: Colors.red.shade400,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -2446,78 +2473,99 @@ class _LocationBubble extends StatelessWidget {
             ),
           if (!isMe) const SizedBox(width: 8),
           Flexible(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 240),
-              decoration: BoxDecoration(
-                color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
+            child: GestureDetector(
+              onTap: () => _openInMaps(context),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 240),
+                decoration: BoxDecoration(
+                  color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(isMe ? 16 : 4),
+                    bottomRight: Radius.circular(isMe ? 4 : 16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Map-like header
-                  Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Grid lines to simulate map
-                        Opacity(
-                          opacity: 0.15,
-                          child: Column(
-                            children: List.generate(6, (_) => Expanded(
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Map-like header
+                    Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Grid lines to simulate map
+                          Opacity(
+                            opacity: 0.15,
+                            child: Column(
+                              children: List.generate(6, (_) => Expanded(
+                                child: Container(
+                                  decoration: const BoxDecoration(
+                                    border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                                  ),
                                 ),
-                              ),
-                            )),
-                          ),
-                        ),
-                        const Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.location_on_outlined, size: 16, color: HuddlColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Shared location',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: HuddlColors.textDark,
+                              )),
                             ),
                           ),
-                        ),
-                        Text(
-                          _formatTime(timestamp),
-                          style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
-                        ),
-                      ],
+                          const Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 16, color: HuddlColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Shared location',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            _formatTime(timestamp),
+                            style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Open in Maps link
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.open_in_new, size: 13, color: HuddlColors.primary),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Open in Maps',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

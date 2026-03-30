@@ -1,10 +1,17 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/meetup_service.dart';
+import '../../services/member_photo_service.dart';
+import '../../services/browser_storage.dart';
+import '../../models/group.dart';
+import '../groups/forward_message_sheet.dart';
+import '../groups/dm_chat_screen.dart';
+import '../groups/group_chat_screen.dart';
 
 class MeetupDetailScreen extends StatefulWidget {
   final Meetup meetup;
@@ -43,7 +50,96 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   }
 
   void _toggleGoing() {
+    final wasGoing = _meetup.isGoing;
     _meetupService.toggleGoing(_meetup.id);
+
+    // If user just said "Count Me In", create a meetup group chat
+    if (!wasGoing) {
+      _createMeetupGroupChat();
+    }
+  }
+
+  /// Creates a group chat under Messages tab for this meetup attendees
+  Future<void> _createMeetupGroupChat() async {
+    final groupKey = 'user_created_groups_v1';
+    final meetupGroupId = 'meetup_group_${_meetup.id}';
+
+    // Check if group already exists
+    final existing = await BrowserStorage.getString(groupKey);
+    List<dynamic> groups = [];
+    if (existing != null) {
+      groups = json.decode(existing) as List<dynamic>;
+      final alreadyExists = groups.any((g) =>
+          (g as Map<String, dynamic>)['id'] == meetupGroupId);
+      if (alreadyExists) return; // Don't create duplicate
+    }
+
+    final newGroup = Group(
+      id: meetupGroupId,
+      name: _meetup.title,
+      description:
+          'Group chat for "${_meetup.title}" meetup on ${_meetup.dateDisplay} at ${_meetup.location}',
+      imageUrl: _meetup.imageUrl,
+      memberCount: _meetup.attendeeCount + 1,
+      category: 'MEETUP',
+      isJoined: true,
+      isImageLocked: false,
+      targetAudience: const [],
+      isPrivate: true,
+      creatorId: _meetup.organiserId,
+      creatorName: _meetup.organiserName,
+      creatorBorough: '',
+      lastMessage: 'Meetup group created',
+      lastSenderName: 'System',
+      lastMessageTime: DateTime.now(),
+    );
+
+    groups.add(newGroup.toJson());
+    await BrowserStorage.setString(groupKey, json.encode(groups));
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.group, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                    'Meetup group chat created under Messages tab'),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
+  }
+
+  /// Open a DM with the organiser
+  void _chatWithOrganiser() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DMChatScreen(
+          recipientId: _meetup.organiserId,
+          recipientName: _meetup.organiserName,
+          recipientAvatarColor: '#FF975C',
+        ),
+      ),
+    );
+  }
+
+  /// Share meetup via forward sheet
+  void _shareMeetup() {
+    showForwardSheet(
+      context: context,
+      messageText:
+          'Check out this meetup: "${_meetup.title}" on ${_meetup.dateDisplay} ${_meetup.timeDisplay} at ${_meetup.location}',
+    );
   }
 
   @override
@@ -66,7 +162,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                icon: const Icon(Icons.arrow_back,
+                    color: Colors.white, size: 20),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -78,18 +175,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Share link copied!'),
-                        backgroundColor: HuddlColors.teal,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                      ),
-                    );
-                  },
+                  icon: const Icon(Icons.share_outlined,
+                      color: Colors.white, size: 20),
+                  onPressed: _shareMeetup,
                 ),
               ),
               Container(
@@ -99,7 +187,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.more_vert,
+                      color: Colors.white, size: 20),
                   onPressed: () {},
                 ),
               ),
@@ -108,13 +197,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Cover image — supports data-URI, http, and asset paths
                   _buildDetailCoverImage(
                     imageUrl: _meetup.imageUrl,
                     fallbackIcon: catStyle.icon,
                     fallbackColor: catStyle.color,
                   ),
-                  // Dark gradient overlay for readability
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -127,13 +214,14 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       ),
                     ),
                   ),
-                  // Category badge + Free badge at bottom
                   Positioned(
-                    bottom: 16, left: 16,
+                    bottom: 16,
+                    left: 16,
                     child: Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
                             color: catStyle.color,
                             borderRadius: BorderRadius.circular(12),
@@ -141,7 +229,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(catStyle.icon, size: 14, color: Colors.white),
+                              Icon(catStyle.icon,
+                                  size: 14, color: Colors.white),
                               const SizedBox(width: 4),
                               Text(
                                 _meetup.category,
@@ -156,7 +245,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
                             color: HuddlColors.teal,
                             borderRadius: BorderRadius.circular(12),
@@ -203,10 +293,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          MemberAvatar(
-                            name: _meetup.organiserName,
-                            size: 24,
-                          ),
+                          _buildAttendeePhoto(_meetup.organiserName, 24),
                           const SizedBox(width: 8),
                           Text(
                             'Organised by ',
@@ -304,7 +391,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Attendees
+                // Attendees with profile pictures
                 Container(
                   color: HuddlColors.white,
                   padding: const EdgeInsets.all(20),
@@ -315,7 +402,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Who\'s going',
+                            "Who's going",
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -337,7 +424,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         runSpacing: 8,
                         children: _meetup.attendeeNames
                             .take(8)
-                            .map((name) => _AttendeeChip(name: name))
+                            .map((name) =>
+                                _AttendeeChipWithPhoto(name: name))
                             .toList(),
                       ),
                       if (_meetup.attendeeCount > 8)
@@ -378,21 +466,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         ),
         child: Row(
           children: [
-            // Message organiser button
+            // Message organiser button — opens DM
             Expanded(
               flex: 1,
               child: OutlinedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Message ${_meetup.organiserName}'),
-                      backgroundColor: HuddlColors.teal,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  );
-                },
+                onPressed: _chatWithOrganiser,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: HuddlColors.primary),
                   shape: RoundedRectangleBorder(
@@ -424,8 +502,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      _meetup.isGoing ? HuddlColors.teal : HuddlColors.primary,
+                  backgroundColor: _meetup.isGoing
+                      ? HuddlColors.teal
+                      : HuddlColors.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(26),
                   ),
@@ -438,6 +517,27 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         ),
       ),
     );
+  }
+
+  /// Build attendee photo from MemberPhotoService
+  Widget _buildAttendeePhoto(String name, double size) {
+    final photoUrl = MemberPhotoService.getPhotoByName(name);
+    if (photoUrl != null) {
+      return Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(shape: BoxShape.circle),
+        clipBehavior: Clip.antiAlias,
+        child: Image.network(
+          photoUrl,
+          fit: BoxFit.cover,
+          width: size,
+          height: size,
+          errorBuilder: (_, __, ___) => MemberAvatar(name: name, size: size),
+        ),
+      );
+    }
+    return MemberAvatar(name: name, size: size);
   }
 }
 
@@ -497,15 +597,17 @@ class _DetailRow extends StatelessWidget {
   }
 }
 
-// ── Attendee chip ──────────────────────────────────────────────────────────
+// ── Attendee chip with profile photo ──────────────────────────────────────
 
-class _AttendeeChip extends StatelessWidget {
+class _AttendeeChipWithPhoto extends StatelessWidget {
   final String name;
 
-  const _AttendeeChip({required this.name});
+  const _AttendeeChipWithPhoto({required this.name});
 
   @override
   Widget build(BuildContext context) {
+    final photoUrl = MemberPhotoService.getPhotoByName(name);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
@@ -515,10 +617,23 @@ class _AttendeeChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          MemberAvatar(
-            name: name,
-            size: 22,
-          ),
+          if (photoUrl != null)
+            Container(
+              width: 24,
+              height: 24,
+              decoration: const BoxDecoration(shape: BoxShape.circle),
+              clipBehavior: Clip.antiAlias,
+              child: Image.network(
+                photoUrl,
+                fit: BoxFit.cover,
+                width: 24,
+                height: 24,
+                errorBuilder: (_, __, ___) =>
+                    MemberAvatar(name: name, size: 24),
+              ),
+            )
+          else
+            MemberAvatar(name: name, size: 24),
           const SizedBox(width: 6),
           Text(
             name,
@@ -574,7 +689,9 @@ Widget _buildDetailCoverImage({
           ),
         ),
         child: showIcon
-            ? Center(child: Icon(fallbackIcon, size: 48, color: Colors.white))
+            ? Center(
+                child:
+                    Icon(fallbackIcon, size: 48, color: Colors.white))
             : null,
       );
 

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
@@ -4030,6 +4031,7 @@ class _GroupLocationBubble extends StatelessWidget {
   final String senderName;
   final String senderAvatar;
   final String? senderId;
+  final String? locationName;
 
   const _GroupLocationBubble({
     required this.isMe,
@@ -4037,7 +4039,34 @@ class _GroupLocationBubble extends StatelessWidget {
     required this.senderName,
     required this.senderAvatar,
     this.senderId,
+    this.locationName,
   });
+
+  Future<void> _openInMaps(BuildContext context) async {
+    final label = locationName ?? 'Shared Location';
+    // Try Google Maps first, then fall back to generic geo URI (works on iOS → Apple Maps)
+    final googleUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(label)}');
+    try {
+      await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Fallback: geo URI (opens default maps on Android, Apple Maps on iOS)
+      final geoUrl = Uri.parse('geo:0,0?q=${Uri.encodeComponent(label)}');
+      try {
+        await launchUrl(geoUrl);
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Could not open maps'),
+              backgroundColor: Colors.red.shade400,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -4089,7 +4118,9 @@ class _GroupLocationBubble extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Column(
+                  child: GestureDetector(
+                    onTap: () => _openInMaps(context),
+                    child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Container(
@@ -4140,7 +4171,26 @@ class _GroupLocationBubble extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Open in Maps link
+                      Container(
+                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.open_in_new, size: 13, color: HuddlColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Open in Maps',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
+                  ),
                   ),
                 ),
               ],
