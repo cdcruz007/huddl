@@ -1966,7 +1966,8 @@ class _InvitationCard extends StatelessWidget {
                   color: HuddlColors.peachLight,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+                clipBehavior: Clip.antiAlias,
+                child: _buildGroupImage(invitation.groupImageUrl),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2085,6 +2086,58 @@ class _InvitationCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Build group image — handles data:base64, http/https URLs, asset paths
+  Widget _buildGroupImage(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
+    }
+
+    // Data URL (base64 image from image picker)
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final dataUri = Uri.parse(imageUrl);
+        final bytes = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover,
+            width: 48,
+            height: 48,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+          );
+        }
+      } catch (_) {}
+      return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
+    }
+
+    // Network URL
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+      );
+    }
+
+    // Asset path
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: 48,
+        height: 48,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.group_add, size: 24, color: HuddlColors.primary),
+      );
+    }
+
+    return const Icon(Icons.group_add, size: 24, color: HuddlColors.primary);
   }
 }
 

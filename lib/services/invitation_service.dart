@@ -11,6 +11,8 @@ class GroupInvitation {
   final String groupDescription;
   final String groupImageUrl;
   final String invitedByName;
+  final String invitedById; // ID of the person who sent the invite
+  final String targetMemberId; // ID of the person invited (recipient)
   final DateTime sentAt;
   final String status; // 'pending', 'accepted', 'declined'
 
@@ -21,6 +23,8 @@ class GroupInvitation {
     required this.groupDescription,
     required this.groupImageUrl,
     required this.invitedByName,
+    this.invitedById = 'current_user',
+    this.targetMemberId = '',
     required this.sentAt,
     this.status = 'pending',
   });
@@ -32,6 +36,8 @@ class GroupInvitation {
         'groupDescription': groupDescription,
         'groupImageUrl': groupImageUrl,
         'invitedByName': invitedByName,
+        'invitedById': invitedById,
+        'targetMemberId': targetMemberId,
         'sentAt': sentAt.toIso8601String(),
         'status': status,
       };
@@ -44,6 +50,8 @@ class GroupInvitation {
       groupDescription: json['groupDescription'] as String? ?? '',
       groupImageUrl: json['groupImageUrl'] as String? ?? '',
       invitedByName: json['invitedByName'] as String? ?? 'Someone',
+      invitedById: json['invitedById'] as String? ?? 'current_user',
+      targetMemberId: json['targetMemberId'] as String? ?? '',
       sentAt: DateTime.parse(json['sentAt'] as String),
       status: json['status'] as String? ?? 'pending',
     );
@@ -57,6 +65,8 @@ class GroupInvitation {
       groupDescription: groupDescription,
       groupImageUrl: groupImageUrl,
       invitedByName: invitedByName,
+      invitedById: invitedById,
+      targetMemberId: targetMemberId,
       sentAt: sentAt,
       status: status ?? this.status,
     );
@@ -149,10 +159,18 @@ class InvitationService {
   List<GroupSystemMessage> _systemMessages = [];
 
   List<GroupInvitation> get invitations => List.unmodifiable(_invitations);
+
+  /// Pending invitations that are meant FOR the current user (not by the current user)
   List<GroupInvitation> get pendingInvitations =>
-      _invitations.where((i) => i.status == 'pending').toList();
+      _invitations.where((i) => i.status == 'pending' && i.invitedById != 'current_user').toList();
+
+  /// Accepted invitations that are meant FOR the current user
   List<GroupInvitation> get acceptedInvitations =>
-      _invitations.where((i) => i.status == 'accepted').toList();
+      _invitations.where((i) => i.status == 'accepted' && i.invitedById != 'current_user').toList();
+
+  /// Invitations sent BY the current user (for display as "sent" confirmations)
+  List<GroupInvitation> get sentByCurrentUser =>
+      _invitations.where((i) => i.invitedById == 'current_user').toList();
   List<Group> get joinedGroups => List.unmodifiable(_joinedGroups);
   List<GroupSystemMessage> get systemMessages => List.unmodifiable(_systemMessages);
 
@@ -214,6 +232,8 @@ class InvitationService {
   }
 
   /// Send invitations for a newly-created private group.
+  /// These invitations are directed at specific members (targetMemberId),
+  /// created by the current user (invitedById = 'current_user').
   Future<void> sendInvitations({
     required Group group,
     required List<String> invitedMemberIds,
@@ -228,6 +248,8 @@ class InvitationService {
         groupDescription: group.description,
         groupImageUrl: group.imageUrl,
         invitedByName: creatorName,
+        invitedById: 'current_user',
+        targetMemberId: memberId,
         sentAt: DateTime.now(),
         status: 'pending',
       );

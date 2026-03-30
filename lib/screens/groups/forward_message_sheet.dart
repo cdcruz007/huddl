@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/invitation_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/browser_storage.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 
 /// Represents a forwarding target — either a DM contact or a group.
@@ -97,15 +99,22 @@ class _ForwardSheetState extends State<_ForwardSheet> {
     super.dispose();
   }
 
+  /// Separate lists for members and groups, for sectioned display.
+  List<_ForwardTarget> _memberTargets = [];
+  List<_ForwardTarget> _groupTargets = [];
+  List<_ForwardTarget> _filteredMembers = [];
+  List<_ForwardTarget> _filteredGroupsList = [];
+
   Future<void> _load() async {
     await _dmService.initialize();
     await _onboarding.initialize();
 
-    final targets = <_ForwardTarget>[];
+    final memberList = <_ForwardTarget>[];
+    final groupList = <_ForwardTarget>[];
 
     // Recent DM conversations first
     for (final conv in _dmService.conversations) {
-      targets.add(_ForwardTarget(
+      memberList.add(_ForwardTarget(
         id: conv.recipientId,
         name: conv.recipientName,
         avatarUrl: getProfilePhotoForMember(conv.recipientId),
@@ -114,11 +123,11 @@ class _ForwardSheetState extends State<_ForwardSheet> {
     }
 
     // Borough members that aren't already in conversations
-    final existingIds = targets.map((t) => t.id).toSet();
-    final members = InvitationService.getBoroughMembers(null);
-    for (final m in members) {
+    final existingIds = memberList.map((t) => t.id).toSet();
+    final boroughMembers = InvitationService.getBoroughMembers(null);
+    for (final m in boroughMembers) {
       if (!existingIds.contains(m.id)) {
-        targets.add(_ForwardTarget(
+        memberList.add(_ForwardTarget(
           id: m.id,
           name: m.name,
           avatarUrl: getProfilePhotoForMember(m.id),
@@ -126,11 +135,11 @@ class _ForwardSheetState extends State<_ForwardSheet> {
       }
     }
 
-    // Joined groups
+    // Joined groups (from InvitationService)
     final invService = InvitationService();
     await invService.initialize();
     for (final g in invService.joinedGroups) {
-      targets.add(_ForwardTarget(
+      groupList.add(_ForwardTarget(
         id: g.id,
         name: g.name,
         isGroup: true,
@@ -138,9 +147,58 @@ class _ForwardSheetState extends State<_ForwardSheet> {
       ));
     }
 
+    // Also include user-created groups from local storage
+    try {
+      final raw = await BrowserStorage.getString('user_created_groups_v1');
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        for (final j in decoded) {
+          final g = j as Map<String, dynamic>;
+          final gId = g['id'] as String;
+          if (!groupList.any((t) => t.id == gId)) {
+            groupList.add(_ForwardTarget(
+              id: gId,
+              name: g['name'] as String? ?? 'Group',
+              isGroup: true,
+              groupImageUrl: g['imageUrl'] as String?,
+            ));
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Also include default groups the user is in
+    try {
+      final membershipsRaw = await BrowserStorage.getString('user_memberships_v3');
+      if (membershipsRaw != null) {
+        final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
+        final groupIds = (membershipsMap['current_user'] as List<dynamic>?)?.cast<String>() ?? [];
+        final groupsRaw = await BrowserStorage.getString('default_groups_v3');
+        if (groupsRaw != null && groupIds.isNotEmpty) {
+          final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
+          for (final entry in groupsMap.entries) {
+            final g = entry.value as Map<String, dynamic>;
+            final gId = g['id'] as String;
+            if (groupIds.contains(gId) && !groupList.any((t) => t.id == gId)) {
+              groupList.add(_ForwardTarget(
+                id: gId,
+                name: g['name'] as String? ?? 'Group',
+                isGroup: true,
+                groupImageUrl: g['imageUrl'] as String?,
+              ));
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
     setState(() {
-      _allTargets = targets;
-      _filtered = List.from(targets);
+      _memberTargets = memberList;
+      _groupTargets = groupList;
+      _allTargets = [...memberList, ...groupList];
+      _filteredMembers = List.from(memberList);
+      _filteredGroupsList = List.from(groupList);
+      _filtered = List.from(_allTargets);
       _loading = false;
     });
   }
@@ -150,9 +208,17 @@ class _ForwardSheetState extends State<_ForwardSheet> {
       _query = q;
       if (q.isEmpty) {
         _filtered = List.from(_allTargets);
+        _filteredMembers = List.from(_memberTargets);
+        _filteredGroupsList = List.from(_groupTargets);
       } else {
         final lower = q.toLowerCase();
         _filtered = _allTargets
+            .where((t) => t.name.toLowerCase().contains(lower))
+            .toList();
+        _filteredMembers = _memberTargets
+            .where((t) => t.name.toLowerCase().contains(lower))
+            .toList();
+        _filteredGroupsList = _groupTargets
             .where((t) => t.name.toLowerCase().contains(lower))
             .toList();
       }
@@ -313,56 +379,94 @@ class _ForwardSheetState extends State<_ForwardSheet> {
           ),
           const SizedBox(height: 8),
 
-          // ── "RECENTS" label ────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'RECENTS',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.textHint,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Contact/group list ─────────────────────────
+          // ── Sectioned contact/group list ─────────────
           Expanded(
             child: _loading
                 ? const Center(
                     child:
                         CircularProgressIndicator(color: HuddlColors.primary))
-                : _filtered.isEmpty
+                : (_filteredMembers.isEmpty && _filteredGroupsList.isEmpty)
                     ? Center(
                         child: Text(
-                          'No contacts found',
+                          'No contacts or groups found',
                           style: GoogleFonts.poppins(
                               fontSize: 14, color: HuddlColors.textHint),
                         ),
                       )
-                    : ListView.separated(
+                    : ListView(
                         padding: EdgeInsets.only(bottom: bottomPad + 20),
-                        itemCount: _filtered.length,
-                        separatorBuilder: (_, __) => const Divider(
-                          height: 1,
-                          indent: 72,
-                          color: HuddlColors.divider,
-                        ),
-                        itemBuilder: (context, index) {
-                          final target = _filtered[index];
-                          final state =
-                              _sendStates[target.id] ?? _SendState.idle;
-                          return _ForwardContactTile(
-                            target: target,
-                            sendState: state,
-                            onSend: () => _onSend(target),
-                            onUndo: () => _onUndo(target),
-                          );
-                        },
+                        children: [
+                          // ── MEMBERS section ──────────────────
+                          if (_filteredMembers.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
+                              child: Text(
+                                'MEMBERS',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.textHint,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            ..._filteredMembers.map((target) {
+                              final state =
+                                  _sendStates[target.id] ?? _SendState.idle;
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _ForwardContactTile(
+                                    target: target,
+                                    sendState: state,
+                                    onSend: () => _onSend(target),
+                                    onUndo: () => _onUndo(target),
+                                  ),
+                                  const Divider(
+                                    height: 1,
+                                    indent: 72,
+                                    color: HuddlColors.divider,
+                                  ),
+                                ],
+                              );
+                            }),
+                          ],
+                          // ── GROUPS section ──────────────────
+                          if (_filteredGroupsList.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+                              child: Text(
+                                'GROUPS',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.textHint,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                            ..._filteredGroupsList.map((target) {
+                              final state =
+                                  _sendStates[target.id] ?? _SendState.idle;
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _ForwardContactTile(
+                                    target: target,
+                                    sendState: state,
+                                    onSend: () => _onSend(target),
+                                    onUndo: () => _onUndo(target),
+                                  ),
+                                  const Divider(
+                                    height: 1,
+                                    indent: 72,
+                                    color: HuddlColors.divider,
+                                  ),
+                                ],
+                              );
+                            }),
+                          ],
+                        ],
                       ),
           ),
         ],
