@@ -21,26 +21,19 @@ class EventsScreen extends StatefulWidget {
   State<EventsScreen> createState() => _EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _EventsScreenState extends State<EventsScreen> {
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) setState(() {});
-    });
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     super.dispose();
@@ -65,11 +58,7 @@ class _EventsScreenState extends State<EventsScreen>
   }
 
   void _navigateToCreate() {
-    if (_tabController.index == 2) {
-      _navigateToCreateEvent();
-    } else {
-      _navigateToCreateMeetup();
-    }
+    _navigateToCreateMeetup();
   }
 
   @override
@@ -114,52 +103,30 @@ class _EventsScreenState extends State<EventsScreen>
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // ── Tabs ──────────────────────────────────────────
-                  TabBar(
-                    controller: _tabController,
-                    tabs: const [
-                      Tab(text: 'All'),
-                      Tab(text: 'Meet-ups'),
-                      Tab(text: 'Events'),
-                    ],
-                    labelColor: HuddlColors.primary,
-                    unselectedLabelColor: HuddlColors.textHint,
-                    labelStyle: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                  // ── Single Meet-ups heading (Events & All tabs hidden) ──
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.only(bottom: 10),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: HuddlColors.divider)),
                     ),
-                    unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
+                    child: Text(
+                      'Meet-ups',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary,
+                      ),
                     ),
-                    indicatorColor: HuddlColors.primary,
-                    indicatorWeight: 3,
-                    indicatorSize: TabBarIndicatorSize.label,
-                    dividerColor: HuddlColors.divider,
                   ),
                 ],
               ),
             ),
-            // ── Tab content ────────────────────────────────────────
+            // ── Meet-ups content only (Events & All hidden) ────────
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _AllTab(
-                    meetupService: _meetupService,
-                    eventService: _eventService,
-                    onCreateMeetup: _navigateToCreateMeetup,
-                    onCreateEvent: _navigateToCreateEvent,
-                  ),
-                  _MeetupsTab(
-                    meetupService: _meetupService,
-                    onCreateMeetup: _navigateToCreateMeetup,
-                  ),
-                  _EventsTab(
-                    eventService: _eventService,
-                    onCreateEvent: _navigateToCreateEvent,
-                  ),
-                ],
+              child: _MeetupsTab(
+                meetupService: _meetupService,
+                onCreateMeetup: _navigateToCreateMeetup,
               ),
             ),
           ],
@@ -184,7 +151,7 @@ class _EventsScreenState extends State<EventsScreen>
           elevation: 0,
           icon: const Icon(Icons.add, color: HuddlColors.white),
           label: Text(
-            _tabController.index == 2 ? 'Create Event' : 'Create Meet-up',
+            'Create Meet-up',
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,

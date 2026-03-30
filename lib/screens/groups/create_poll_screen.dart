@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 
@@ -8,12 +9,14 @@ class PollData {
   final List<String> options;
   final DateTime? expiresAt;
   final bool allowMultiple;
+  final bool isCalendarMode;
 
   PollData({
     required this.question,
     required this.options,
     this.expiresAt,
     this.allowMultiple = false,
+    this.isCalendarMode = false,
   });
 }
 
@@ -35,7 +38,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     TextEditingController(),
   ];
   bool _allowMultiple = false;
+  bool _isCalendarMode = false;
   DateTime? _expiresAt;
+
+  /// Selected date/time for each option (calendar mode)
+  final List<DateTime?> _optionDates = [null, null];
 
   @override
   void dispose() {
@@ -48,13 +55,22 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
   bool get _canCreate {
     if (_questionCtrl.text.trim().isEmpty) return false;
-    final filled = _optionCtrls.where((c) => c.text.trim().isNotEmpty).length;
-    return filled >= 2;
+    if (_isCalendarMode) {
+      final filled = _optionDates.where((d) => d != null).length;
+      return filled >= 2;
+    } else {
+      final filled =
+          _optionCtrls.where((c) => c.text.trim().isNotEmpty).length;
+      return filled >= 2;
+    }
   }
 
   void _addOption() {
     if (_optionCtrls.length >= 8) return;
-    setState(() => _optionCtrls.add(TextEditingController()));
+    setState(() {
+      _optionCtrls.add(TextEditingController());
+      _optionDates.add(null);
+    });
   }
 
   void _removeOption(int index) {
@@ -62,6 +78,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     setState(() {
       _optionCtrls[index].dispose();
       _optionCtrls.removeAt(index);
+      _optionDates.removeAt(index);
     });
   }
 
@@ -109,15 +126,109 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     if (time == null || !mounted) return;
 
     setState(() {
-      _expiresAt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _expiresAt =
+          DateTime(date.year, date.month, date.day, time.hour, time.minute);
     });
   }
 
+  /// Show a Cupertino-style date/time picker for a specific option index
+  void _pickOptionDate(int index) {
+    final initial = _optionDates[index] ?? DateTime.now().add(const Duration(hours: 1));
+    DateTime tempDate = initial;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: HuddlColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header with Done button
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: HuddlColors.divider)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(ctx),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          color: HuddlColors.textHint,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      'Choose date and time',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _optionDates[index] = tempDate;
+                        });
+                        Navigator.pop(ctx);
+                      },
+                      child: Text(
+                        'Done',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Cupertino date picker
+              SizedBox(
+                height: 220,
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.dateAndTime,
+                  initialDateTime: initial,
+                  minimumDate: DateTime.now(),
+                  use24hFormat: true,
+                  onDateTimeChanged: (DateTime newDate) {
+                    tempDate = newDate;
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _create() {
-    final options = _optionCtrls
-        .map((c) => c.text.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
+    List<String> options;
+
+    if (_isCalendarMode) {
+      options = _optionDates
+          .where((d) => d != null)
+          .map((d) => _formatDateTime(d!))
+          .toList();
+    } else {
+      options = _optionCtrls
+          .map((c) => c.text.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
 
     if (_questionCtrl.text.trim().isEmpty || options.length < 2) return;
 
@@ -128,6 +239,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         options: options,
         expiresAt: _expiresAt,
         allowMultiple: _allowMultiple,
+        isCalendarMode: _isCalendarMode,
       ),
     );
   }
@@ -159,11 +271,12 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             child: TextButton(
               onPressed: _canCreate ? _create : null,
               child: Text(
-                'Create',
+                'POST',
                 style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: _canCreate ? HuddlColors.primary : HuddlColors.textHint,
+                  color:
+                      _canCreate ? HuddlColors.primary : HuddlColors.textHint,
                 ),
               ),
             ),
@@ -186,7 +299,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.people_outline, size: 18, color: HuddlColors.primary),
+                const Icon(Icons.people_outline,
+                    size: 18, color: HuddlColors.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -215,10 +329,48 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           const SizedBox(height: 8),
           _buildField(
             controller: _questionCtrl,
-            hint: 'e.g. What time works best?',
+            hint: 'e.g. When do we meet?',
             maxLines: 3,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
+
+          // ── Calendar toggle ──────────────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: HuddlColors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: HuddlColors.divider),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.calendar_today_outlined,
+                  size: 20,
+                  color: _isCalendarMode
+                      ? HuddlColors.primary
+                      : HuddlColors.textHint,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Calendar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: _isCalendarMode,
+                  onChanged: (v) => setState(() => _isCalendarMode = v),
+                  activeColor: HuddlColors.primary,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
 
           // Options
           Text(
@@ -255,14 +407,17 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildField(
-                      controller: _optionCtrls[i],
-                      hint: 'Option ${i + 1}',
-                    ),
+                    child: _isCalendarMode
+                        ? _buildCalendarOptionField(i)
+                        : _buildField(
+                            controller: _optionCtrls[i],
+                            hint: 'Option ${i + 1}',
+                          ),
                   ),
                   if (_optionCtrls.length > 2)
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 22, color: Colors.red),
+                      icon: const Icon(Icons.remove_circle_outline,
+                          size: 22, color: Colors.red),
                       onPressed: () => _removeOption(i),
                     ),
                 ],
@@ -272,9 +427,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           if (_optionCtrls.length < 8)
             TextButton.icon(
               onPressed: _addOption,
-              icon: const Icon(Icons.add_circle_outline, size: 20, color: HuddlColors.primary),
+              icon: const Icon(Icons.add_circle_outline,
+                  size: 20, color: HuddlColors.primary),
               label: Text(
-                'Add option',
+                'Add poll option',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -298,7 +454,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           GestureDetector(
             onTap: _pickExpiry,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: HuddlColors.white,
                 borderRadius: BorderRadius.circular(14),
@@ -309,21 +466,28 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   Icon(
                     Icons.calendar_today_outlined,
                     size: 20,
-                    color: _expiresAt != null ? HuddlColors.primary : HuddlColors.textHint,
+                    color: _expiresAt != null
+                        ? HuddlColors.primary
+                        : HuddlColors.textHint,
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    _expiresAt != null ? _formatExpiry(_expiresAt!) : 'Set expiration (optional)',
+                    _expiresAt != null
+                        ? _formatExpiry(_expiresAt!)
+                        : 'Choose date and time',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: _expiresAt != null ? HuddlColors.textDark : HuddlColors.textHint,
+                      color: _expiresAt != null
+                          ? HuddlColors.textDark
+                          : HuddlColors.textHint,
                     ),
                   ),
                   const Spacer(),
                   if (_expiresAt != null)
                     GestureDetector(
                       onTap: () => setState(() => _expiresAt = null),
-                      child: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                      child: const Icon(Icons.close,
+                          size: 18, color: HuddlColors.textHint),
                     ),
                 ],
               ),
@@ -341,12 +505,14 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_box_outlined, size: 20, color: HuddlColors.textHint),
+                const Icon(Icons.check_box_outlined,
+                    size: 20, color: HuddlColors.textHint),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Allow multiple answers',
-                    style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, color: HuddlColors.textDark),
                   ),
                 ),
                 Switch(
@@ -367,8 +533,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               onPressed: _canCreate ? _create : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: HuddlColors.primary,
-                disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.35),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                disabledBackgroundColor:
+                    HuddlColors.primary.withValues(alpha: 0.35),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
                 elevation: 0,
               ),
               child: Text(
@@ -387,6 +555,44 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     );
   }
 
+  /// Calendar option field — tappable date/time selector
+  Widget _buildCalendarOptionField(int index) {
+    final date = _optionDates[index];
+    return GestureDetector(
+      onTap: () => _pickOptionDate(index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: HuddlColors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: HuddlColors.divider),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                date != null
+                    ? _formatDateTime(date)
+                    : 'Choose date and time',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: date != null
+                      ? HuddlColors.textDark
+                      : HuddlColors.textHint,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 20,
+              color: date != null ? HuddlColors.primary : HuddlColors.textHint,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildField({
     required TextEditingController controller,
     required String hint,
@@ -401,23 +607,40 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+        style:
+            GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+          hintStyle:
+              GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
   }
 
   String _formatExpiry(DateTime dt) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}, $h:$m';
+  }
+
+  String _formatDateTime(DateTime dt) {
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    final dayName = days[dt.weekday - 1];
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '$dayName ${dt.day} ${months[dt.month - 1]} ${dt.year}, $h:$m';
   }
 }

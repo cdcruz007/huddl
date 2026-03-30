@@ -95,6 +95,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final Map<String, MessageStatus> _messageStatuses = {};
   // ── Poll state ──────────────────────────────────────────────────────
   final List<ActivePoll> _polls = [];
+
+  /// Returns only non-deleted pinned polls (shown at top of chat)
+  List<ActivePoll> get _pinnedPolls =>
+      _polls.where((p) => p.isPinned && !p.isDeleted).toList();
+
+  /// Returns only non-deleted unpinned polls (shown in message flow)
+  List<ActivePoll> get _unpinnedPolls =>
+      _polls.where((p) => !p.isPinned && !p.isDeleted).toList();
   final MediaAttachService _mediaService = MediaAttachService();
 
   /// Locally added image messages
@@ -2260,15 +2268,36 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
           ),
 
-          // ── Poll cards ──────────────────────────────────────────
-          if (_polls.isNotEmpty)
+          // ── Pinned poll cards (always visible at top) ──────────────
+          if (_pinnedPolls.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
-                children: _polls.map((poll) => PollCard(
+                children: _pinnedPolls.map((poll) => PollCard(
                   poll: poll,
                   onSelectOption: (i) => _votePoll(poll.id, i),
                   onViewDetails: () => _viewPollDetails(poll),
+                  onTogglePin: () => _togglePollPin(poll.id),
+                  onDeletePoll: () => _deletePoll(poll.id),
+                  onSeeResults: () => _viewPollDetails(poll),
+                  onChangeVote: () => _scrollToPoll(poll),
+                )).toList(),
+              ),
+            ),
+
+          // ── Unpinned poll cards (flow with messages) ────────────
+          if (_unpinnedPolls.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: _unpinnedPolls.map((poll) => PollCard(
+                  poll: poll,
+                  onSelectOption: (i) => _votePoll(poll.id, i),
+                  onViewDetails: () => _viewPollDetails(poll),
+                  onTogglePin: () => _togglePollPin(poll.id),
+                  onDeletePoll: () => _deletePoll(poll.id),
+                  onSeeResults: () => _viewPollDetails(poll),
+                  onChangeVote: () => _scrollToPoll(poll),
                 )).toList(),
               ),
             ),
@@ -2701,7 +2730,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
         data: result,
         creatorName: userName,
+        creatorId: 'current_user',
         createdAt: DateTime.now(),
+        isPinned: true, // pinned by default
       ));
       // Add a system message about the poll
       _messages.add(ChatMessage(
@@ -2763,13 +2794,84 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           optionIndex: optionIndex,
         ));
       }
+
+      // Auto-unpin after voting
+      if (poll.myVotes.isNotEmpty) {
+        poll.isPinned = false;
+      }
     });
+  }
+
+  void _togglePollPin(String pollId) {
+    setState(() {
+      final idx = _polls.indexWhere((p) => p.id == pollId);
+      if (idx == -1) return;
+      _polls[idx].isPinned = !_polls[idx].isPinned;
+    });
+  }
+
+  void _deletePoll(String pollId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Delete Poll',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          'Are you sure you want to delete this poll? All votes will be lost and no users will be able to see or update the poll.',
+          style: GoogleFonts.poppins(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() {
+                final idx = _polls.indexWhere((p) => p.id == pollId);
+                if (idx != -1) {
+                  _polls[idx].isDeleted = true;
+                }
+              });
+            },
+            child: Text('Delete',
+                style: GoogleFonts.poppins(
+                    color: Colors.red, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _scrollToPoll(ActivePoll poll) {
+    // For "See Active Poll" — re-pin the poll so user can see and change vote
+    setState(() {
+      poll.isPinned = true;
+    });
+    // Scroll to top
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   void _viewPollDetails(ActivePoll poll) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => PollDetailScreen(poll: poll)),
+      MaterialPageRoute(
+        builder: (_) => PollDetailScreen(
+          poll: poll,
+          onDeletePoll: poll.isCreatedByMe ? () => _deletePoll(poll.id) : null,
+        ),
+      ),
     );
   }
 

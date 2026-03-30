@@ -22,17 +22,23 @@ class ActivePoll {
   final String id;
   final PollData data;
   final String creatorName;
+  final String creatorId;
   final DateTime createdAt;
   final List<PollVote> votes;
   final Set<int> myVotes; // option indices the current user voted for
+  bool isPinned; // whether this poll is pinned at the top
+  bool isDeleted; // soft-deleted by creator
 
   ActivePoll({
     required this.id,
     required this.data,
     required this.creatorName,
+    this.creatorId = 'current_user',
     required this.createdAt,
     List<PollVote>? votes,
     Set<int>? myVotes,
+    this.isPinned = true, // pinned by default
+    this.isDeleted = false,
   })  : votes = votes ?? [],
         myVotes = myVotes ?? {};
 
@@ -43,6 +49,8 @@ class ActivePoll {
       votes.where((v) => v.optionIndex == optionIndex).length;
 
   int get totalVotes => votes.length;
+
+  bool get isCreatedByMe => creatorId == 'current_user';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -54,6 +62,10 @@ class PollCard extends StatelessWidget {
   final VoidCallback? onVote;
   final void Function(int optionIndex)? onSelectOption;
   final VoidCallback? onViewDetails;
+  final VoidCallback? onTogglePin;
+  final VoidCallback? onDeletePoll;
+  final VoidCallback? onSeeResults;
+  final VoidCallback? onChangeVote;
 
   const PollCard({
     super.key,
@@ -61,215 +73,446 @@ class PollCard extends StatelessWidget {
     this.onVote,
     this.onSelectOption,
     this.onViewDetails,
+    this.onTogglePin,
+    this.onDeletePoll,
+    this.onSeeResults,
+    this.onChangeVote,
   });
 
   @override
   Widget build(BuildContext context) {
     final expired = poll.isExpired;
 
-    return GestureDetector(
-      onTap: onViewDetails,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: expired ? HuddlColors.background : HuddlColors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: expired ? HuddlColors.divider : HuddlColors.primary.withValues(alpha: 0.25),
-          ),
-          boxShadow: expired
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: expired ? HuddlColors.background : HuddlColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: expired
+              ? HuddlColors.divider
+              : poll.isPinned
+                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                  : HuddlColors.primary.withValues(alpha: 0.25),
+          width: poll.isPinned && !expired ? 1.5 : 1.0,
         ),
-        child: Opacity(
-          opacity: expired ? 0.55 : 1.0,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header row — poll icon + creator
-              Row(
-                children: [
+        boxShadow: expired
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+      ),
+      child: Opacity(
+        opacity: expired ? 0.55 : 1.0,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row — poll icon + creator + pin + 3-dot menu
+            Row(
+              children: [
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.poll_outlined,
+                      size: 16, color: HuddlColors.primary),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Poll by ${poll.creatorName}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textHint,
+                    ),
+                  ),
+                ),
+                // Pin indicator
+                if (poll.isPinned && !expired)
+                  GestureDetector(
+                    onTap: onTogglePin,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.push_pin,
+                              size: 12, color: HuddlColors.primary),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Pinned',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(Icons.close,
+                              size: 11,
+                              color:
+                                  HuddlColors.primary.withValues(alpha: 0.6)),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (expired)
                   Container(
-                    width: 28,
-                    height: 28,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.poll_outlined, size: 16, color: HuddlColors.primary),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
                     child: Text(
-                      'Poll by ${poll.creatorName}',
+                      'Expired',
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.textHint,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red,
                       ),
                     ),
                   ),
-                  if (expired)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Expired',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
-                ],
+                // 3-dot menu
+                _buildPollMenu(context),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Question
+            Text(
+              poll.data.question,
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.textDark,
               ),
-              const SizedBox(height: 12),
-
-              // Question
-              Text(
-                poll.data.question,
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Options
-              ...List.generate(poll.data.options.length, (i) {
-                final selected = poll.myVotes.contains(i);
-                final count = poll.votesFor(i);
-                final total = poll.totalVotes;
-                final pct = total > 0 ? (count / total * 100).round() : 0;
-                final showResults = poll.myVotes.isNotEmpty || expired;
-
-                return GestureDetector(
-                  onTap: expired ? null : () => onSelectOption?.call(i),
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? HuddlColors.primary.withValues(alpha: 0.1)
-                          : HuddlColors.background,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected
-                            ? HuddlColors.primary
-                            : HuddlColors.divider,
-                        width: selected ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        // Radio / check indicator
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: selected ? HuddlColors.primary : Colors.transparent,
-                            border: Border.all(
-                              color: selected ? HuddlColors.primary : HuddlColors.textHint,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: selected
-                              ? const Icon(Icons.check, size: 13, color: HuddlColors.white)
-                              : null,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            poll.data.options[i],
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                              color: HuddlColors.textDark,
-                            ),
-                          ),
-                        ),
-                        if (showResults) ...[
-                          Text(
-                            '$count',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? HuddlColors.primary : HuddlColors.textSecondary,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '($pct%)',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.textHint,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              }),
-
-              const SizedBox(height: 8),
-
-              // Footer — total votes + expiry
-              Row(
-                children: [
-                  Icon(Icons.how_to_vote_outlined, size: 14, color: HuddlColors.textHint),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${poll.totalVotes} vote${poll.totalVotes != 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
-                  ),
-                  if (poll.data.expiresAt != null) ...[
-                    const SizedBox(width: 12),
-                    Icon(Icons.access_time, size: 14,
-                        color: expired ? Colors.red : HuddlColors.textHint),
+            ),
+            if (poll.data.isCalendarMode)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_today_outlined,
+                        size: 12,
+                        color: HuddlColors.primary.withValues(alpha: 0.7)),
                     const SizedBox(width: 4),
                     Text(
-                      expired
-                          ? 'Poll expired'
-                          : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
+                      'Calendar poll',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: expired ? Colors.red : HuddlColors.textHint,
+                        color: HuddlColors.primary.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
-                  const Spacer(),
-                  if (poll.myVotes.isNotEmpty || expired)
-                    GestureDetector(
-                      onTap: onViewDetails,
-                      child: Text(
-                        'View details',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
+                ),
+              ),
+            const SizedBox(height: 12),
+
+            // Options
+            ...List.generate(poll.data.options.length, (i) {
+              final selected = poll.myVotes.contains(i);
+              final count = poll.votesFor(i);
+              final total = poll.totalVotes;
+              final pct = total > 0 ? (count / total * 100).round() : 0;
+              final showResults = poll.myVotes.isNotEmpty || expired;
+
+              return GestureDetector(
+                onTap: expired ? null : () => onSelectOption?.call(i),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? HuddlColors.primary.withValues(alpha: 0.1)
+                        : HuddlColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color:
+                          selected ? HuddlColors.primary : HuddlColors.divider,
+                      width: selected ? 1.5 : 1.0,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Radio / check indicator
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: selected
+                              ? HuddlColors.primary
+                              : Colors.transparent,
+                          border: Border.all(
+                            color: selected
+                                ? HuddlColors.primary
+                                : HuddlColors.textHint,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: selected
+                            ? const Icon(Icons.check,
+                                size: 13, color: HuddlColors.white)
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (poll.data.isCalendarMode)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 6),
+                                child: Icon(
+                                  Icons.calendar_today_outlined,
+                                  size: 14,
+                                  color: selected
+                                      ? HuddlColors.primary
+                                      : HuddlColors.textHint,
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                poll.data.options[i],
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: selected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: HuddlColors.textDark,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      if (showResults) ...[
+                        Text(
+                          '$count',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: selected
+                                ? HuddlColors.primary
+                                : HuddlColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '($pct%)',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 8),
+
+            // Footer — total votes + expiry
+            Row(
+              children: [
+                Icon(Icons.how_to_vote_outlined,
+                    size: 14, color: HuddlColors.textHint),
+                const SizedBox(width: 4),
+                Text(
+                  '${poll.totalVotes} vote${poll.totalVotes != 1 ? 's' : ''}',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.textHint),
+                ),
+                if (poll.data.expiresAt != null) ...[
+                  const SizedBox(width: 12),
+                  Icon(Icons.access_time,
+                      size: 14,
+                      color: expired ? Colors.red : HuddlColors.textHint),
+                  const SizedBox(width: 4),
+                  Text(
+                    expired
+                        ? 'Poll expired'
+                        : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: expired ? Colors.red : HuddlColors.textHint,
                     ),
+                  ),
                 ],
+                const Spacer(),
+                if (poll.myVotes.isNotEmpty || expired)
+                  GestureDetector(
+                    onTap: onViewDetails,
+                    child: Text(
+                      'View details',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPollMenu(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: Icon(Icons.more_vert,
+          size: 20,
+          color: HuddlColors.textHint.withValues(alpha: 0.7)),
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
+      offset: const Offset(0, 32),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: HuddlColors.white,
+      elevation: 8,
+      onSelected: (value) {
+        switch (value) {
+          case 'pin':
+            onTogglePin?.call();
+            break;
+          case 'results':
+            onSeeResults?.call();
+            break;
+          case 'change_vote':
+            onChangeVote?.call();
+            break;
+          case 'delete':
+            onDeletePoll?.call();
+            break;
+        }
+      },
+      itemBuilder: (ctx) {
+        final items = <PopupMenuEntry<String>>[];
+
+        // Pin / Unpin — available to everyone
+        items.add(PopupMenuItem<String>(
+          value: 'pin',
+          child: Row(
+            children: [
+              Icon(
+                poll.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                size: 20,
+                color: HuddlColors.textDark,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                poll.isPinned ? 'Unpin poll' : 'Pin poll',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: HuddlColors.textDark,
+                ),
               ),
             ],
           ),
-        ),
-      ),
+        ));
+
+        if (poll.isCreatedByMe) {
+          // Creator options: See Results, Delete Poll
+          items.add(PopupMenuItem<String>(
+            value: 'results',
+            child: Row(
+              children: [
+                const Icon(Icons.bar_chart_outlined,
+                    size: 20, color: HuddlColors.textDark),
+                const SizedBox(width: 12),
+                Text(
+                  'See Results',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ));
+          items.add(PopupMenuItem<String>(
+            value: 'delete',
+            child: Row(
+              children: [
+                const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                const SizedBox(width: 12),
+                Text(
+                  'Delete Poll',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ));
+        } else {
+          // Recipient options: See Active Poll (to change vote)
+          if (poll.myVotes.isNotEmpty && !poll.isExpired) {
+            items.add(PopupMenuItem<String>(
+              value: 'change_vote',
+              child: Row(
+                children: [
+                  const Icon(Icons.how_to_vote_outlined,
+                      size: 20, color: HuddlColors.textDark),
+                  const SizedBox(width: 12),
+                  Text(
+                    'See Active Poll',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+            ));
+          }
+          // Recipient can also see results
+          items.add(PopupMenuItem<String>(
+            value: 'results',
+            child: Row(
+              children: [
+                const Icon(Icons.bar_chart_outlined,
+                    size: 20, color: HuddlColors.textDark),
+                const SizedBox(width: 12),
+                Text(
+                  'See Results',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ));
+        }
+
+        return items;
+      },
     );
   }
 
@@ -288,8 +531,13 @@ class PollCard extends StatelessWidget {
 
 class PollDetailScreen extends StatelessWidget {
   final ActivePoll poll;
+  final VoidCallback? onDeletePoll;
 
-  const PollDetailScreen({super.key, required this.poll});
+  const PollDetailScreen({
+    super.key,
+    required this.poll,
+    this.onDeletePoll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -306,7 +554,7 @@ class PollDetailScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Poll Details',
+          'Poll Results',
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
@@ -314,6 +562,17 @@ class PollDetailScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          if (poll.isCreatedByMe && onDeletePoll != null)
+            IconButton(
+              icon:
+                  const Icon(Icons.delete_outline, color: Colors.red, size: 22),
+              onPressed: () {
+                Navigator.pop(context);
+                onDeletePoll?.call();
+              },
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: HuddlColors.divider),
@@ -322,7 +581,7 @@ class PollDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Question
+          // Question header
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -341,7 +600,8 @@ class PollDetailScreen extends StatelessWidget {
                         color: HuddlColors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.poll_outlined, size: 18, color: HuddlColors.primary),
+                      child: const Icon(Icons.poll_outlined,
+                          size: 18, color: HuddlColors.primary),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -386,6 +646,24 @@ class PollDetailScreen extends StatelessWidget {
                     color: HuddlColors.textDark,
                   ),
                 ),
+                if (poll.data.isCalendarMode)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: HuddlColors.primary.withValues(alpha: 0.7)),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Calendar poll',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.primary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -395,7 +673,8 @@ class PollDetailScreen extends StatelessWidget {
           ...List.generate(poll.data.options.length, (i) {
             final count = poll.votesFor(i);
             final pct = total > 0 ? (count / total * 100).round() : 0;
-            final voters = poll.votes.where((v) => v.optionIndex == i).toList();
+            final voters =
+                poll.votes.where((v) => v.optionIndex == i).toList();
             final isMyVote = poll.myVotes.contains(i);
 
             return Container(
@@ -414,6 +693,15 @@ class PollDetailScreen extends StatelessWidget {
                   // Option text + percentage
                   Row(
                     children: [
+                      if (poll.data.isCalendarMode)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Icon(Icons.calendar_today_outlined,
+                              size: 16,
+                              color: isMyVote
+                                  ? HuddlColors.primary
+                                  : HuddlColors.textHint),
+                        ),
                       Expanded(
                         child: Text(
                           poll.data.options[i],
@@ -429,7 +717,9 @@ class PollDetailScreen extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: isMyVote ? HuddlColors.primary : HuddlColors.textDark,
+                          color: isMyVote
+                              ? HuddlColors.primary
+                              : HuddlColors.textDark,
                         ),
                       ),
                     ],
@@ -441,14 +731,17 @@ class PollDetailScreen extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: total > 0 ? count / total : 0,
                       backgroundColor: HuddlColors.divider,
-                      color: isMyVote ? HuddlColors.primary : HuddlColors.textHint,
+                      color: isMyVote
+                          ? HuddlColors.primary
+                          : HuddlColors.textHint,
                       minHeight: 6,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '$count vote${count != 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: HuddlColors.textHint),
                   ),
                   if (voters.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -475,6 +768,37 @@ class PollDetailScreen extends StatelessWidget {
               ),
             );
           }),
+
+          // Delete button for creator on expired polls
+          if (poll.isCreatedByMe && poll.isExpired && onDeletePoll != null) ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onDeletePoll?.call();
+                },
+                icon: const Icon(Icons.delete_outline,
+                    color: HuddlColors.white, size: 20),
+                label: Text(
+                  'Delete Poll',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -498,7 +822,9 @@ class PollDetailScreen extends StatelessWidget {
               height: 28,
               errorBuilder: (_, __, ___) => Center(
                 child: Text(
-                  vote.memberName.isNotEmpty ? vote.memberName[0].toUpperCase() : '?',
+                  vote.memberName.isNotEmpty
+                      ? vote.memberName[0].toUpperCase()
+                      : '?',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -509,7 +835,9 @@ class PollDetailScreen extends StatelessWidget {
             )
           : Center(
               child: Text(
-                vote.memberName.isNotEmpty ? vote.memberName[0].toUpperCase() : '?',
+                vote.memberName.isNotEmpty
+                    ? vote.memberName[0].toUpperCase()
+                    : '?',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
