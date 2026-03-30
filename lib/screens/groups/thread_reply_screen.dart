@@ -24,6 +24,26 @@ class ThreadReply {
     required this.timestamp,
     this.isMe = false,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'senderId': senderId,
+    'senderName': senderName,
+    'senderAvatar': senderAvatar,
+    'message': message,
+    'timestamp': timestamp.toIso8601String(),
+    'isMe': isMe,
+  };
+
+  factory ThreadReply.fromJson(Map<String, dynamic> json) => ThreadReply(
+    id: json['id'] as String? ?? '',
+    senderId: json['senderId'] as String? ?? '',
+    senderName: json['senderName'] as String? ?? '',
+    senderAvatar: json['senderAvatar'] as String? ?? '',
+    message: json['message'] as String? ?? '',
+    timestamp: DateTime.tryParse(json['timestamp'] as String? ?? '') ?? DateTime.now(),
+    isMe: json['isMe'] as bool? ?? false,
+  );
 }
 
 // ── Thread reply screen ─────────────────────────────────────────────────────

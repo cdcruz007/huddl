@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,6 +11,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
+import '../../services/browser_storage.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
@@ -107,6 +109,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Thread replies: rootMessageId → list of thread replies
   final Map<String, List<ThreadReply>> _threadReplies = {};
 
+  /// Storage key for persisting thread replies per group
+  String get _threadStorageKey => 'thread_replies_${widget.groupId}';
+
   /// IDs of messages unsent "just for me" (hidden locally)
   final Set<String> _hiddenMessageIds = {};
 
@@ -172,6 +177,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // Sort by timestamp
     _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
+    // Load persisted thread replies for this group
+    await _loadPersistedThreadReplies();
+
     setState(() => _isLoading = false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -195,6 +203,38 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
     if (rootMsg != null) {
       _openThread(rootMsg);
+    }
+  }
+
+  // ── Thread reply persistence ─────────────────────────────────────────
+  Future<void> _loadPersistedThreadReplies() async {
+    try {
+      final raw = await BrowserStorage.getString(_threadStorageKey);
+      if (raw != null) {
+        final Map<String, dynamic> decoded = json.decode(raw);
+        decoded.forEach((msgId, repliesJson) {
+          final List<dynamic> list = repliesJson as List<dynamic>;
+          _threadReplies[msgId] = list
+              .map((e) => ThreadReply.fromJson(e as Map<String, dynamic>))
+              .toList();
+        });
+      }
+    } catch (_) {
+      // Silently handle — first launch or corrupt data
+    }
+  }
+
+  Future<void> _persistThreadReplies() async {
+    try {
+      final Map<String, dynamic> data = {};
+      _threadReplies.forEach((msgId, replies) {
+        if (replies.isNotEmpty) {
+          data[msgId] = replies.map((r) => r.toJson()).toList();
+        }
+      });
+      await BrowserStorage.setString(_threadStorageKey, json.encode(data));
+    } catch (_) {
+      // Silently handle
     }
   }
 
@@ -344,6 +384,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               _threadReplies.putIfAbsent(msg.id, () => []);
               _threadReplies[msg.id]!.add(reply);
             });
+            _persistThreadReplies();
           },
         ),
       ),
@@ -3317,11 +3358,11 @@ class _ChatBubble extends StatelessWidget {
               const Divider(height: 1, color: HuddlColors.divider),
               ListTile(
                 leading: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_outline,
+                  isSaved ? Icons.bookmark : (onSaveThread != null ? Icons.bookmark_add_outlined : Icons.bookmark_outline),
                   color: isSaved ? HuddlColors.primary : HuddlColors.textDark,
                 ),
                 title: Text(
-                  isSaved ? 'Unsave message' : 'Save message',
+                  isSaved ? 'Unsave message' : (onSaveThread != null ? 'Save message & thread' : 'Save message'),
                   style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
                 onTap: () {
