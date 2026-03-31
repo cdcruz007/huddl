@@ -19,9 +19,9 @@ class DefaultGroupService {
   // Store user group memberships
   final Map<String, List<String>> _userGroupMemberships = {};
   
-  // Persistence keys — bump version to force re-migration of group images
-  static const String _groupsKey = 'default_groups_v3';
-  static const String _membershipsKey = 'user_memberships_v3';
+  // Persistence keys — bump version to force re-creation with year-based naming
+  static const String _groupsKey = 'default_groups_v4';
+  static const String _membershipsKey = 'user_memberships_v4';
   
   bool _isInitialized = false;
 
@@ -31,7 +31,7 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  static const String _countersKey = 'borough_image_counters_v2';
+  static const String _countersKey = 'borough_image_counters_v3';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -494,6 +494,13 @@ class DefaultGroupService {
         groupSpecs.add((year: dueYear, category: 'Expecting Parents'));
         _log('   ℹ️  Also adding Expecting group (due year: ${dueYear ?? 'none'})');
       }
+
+      // ── Also add an Aspiring group if the user is also aspiring ──
+      if (stagesOfLife.contains('aspiring')) {
+        final currentYear = DateTime.now().year.toString();
+        groupSpecs.add((year: currentYear, category: 'Aspiring Parents'));
+        _log('   ℹ️  Also adding Aspiring group (year: $currentYear)');
+      }
     } else if (stagesOfLife.contains('expecting')) {
       // ── Expecting only (no existing children) ──────────────────────
       final dueDate = _onboardingService.dueDate;
@@ -502,8 +509,9 @@ class DefaultGroupService {
           : null;
       groupSpecs.add((year: dueYear, category: 'Expecting Parents'));
     } else if (stagesOfLife.contains('aspiring')) {
-      // ── Aspiring only — no year ────────────────────────────────────
-      groupSpecs.add((year: null, category: 'Aspiring Parents'));
+      // ── Aspiring only — use current year ────────────────────────────
+      final currentYear = DateTime.now().year.toString();
+      groupSpecs.add((year: currentYear, category: 'Aspiring Parents'));
     } else {
       // ── Generic parents fallback ───────────────────────────────────
       groupSpecs.add((year: null, category: 'Parents'));
