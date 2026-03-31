@@ -1,6 +1,6 @@
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
@@ -11,7 +11,7 @@ import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import '../groups/dm_chat_screen.dart';
-import '../groups/group_chat_screen.dart';
+
 
 class MeetupDetailScreen extends StatefulWidget {
   final Meetup meetup;
@@ -142,6 +142,282 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     );
   }
 
+  bool get _isOrganiser => _meetup.organiserId == 'current_user';
+
+  /// Show the more options bottom sheet (organiser controls)
+  void _showMoreOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Meet-up Options',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16, fontWeight: FontWeight.w700,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ListTile(
+                  leading: Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.peachLight,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.share_outlined, color: HuddlColors.primary, size: 20),
+                  ),
+                  title: Text('Share Meet-up', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _shareMeetup();
+                  },
+                ),
+                ListTile(
+                  leading: Container(
+                    width: 40, height: 40,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.blueBackground,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.copy_outlined, color: HuddlColors.blue, size: 20),
+                  ),
+                  title: Text('Copy Link', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    Clipboard.setData(ClipboardData(
+                      text: 'Join "${_meetup.title}" on ${_meetup.dateDisplay} at ${_meetup.location}',
+                    ));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Link copied to clipboard'),
+                        backgroundColor: HuddlColors.teal,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
+                ),
+                if (_isOrganiser) ...[
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.peachLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.people_outline, color: HuddlColors.primary, size: 20),
+                    ),
+                    title: Text('Manage Attendees', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showManageAttendees();
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.errorLight,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                    ),
+                    title: Text('Cancel Meet-up', style: GoogleFonts.poppins(
+                      fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _confirmDelete();
+                    },
+                  ),
+                ],
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Show manage attendees bottom sheet
+  void _showManageAttendees() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          maxChildSize: 0.85,
+          minChildSize: 0.4,
+          expand: false,
+          builder: (_, scrollCtrl) {
+            return Column(
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 16),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  'Attendees (${_meetup.attendeeCount})',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18, fontWeight: FontWeight.w700,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (_meetup.maxAttendees != null)
+                  Text(
+                    '${_meetup.maxAttendees! - _meetup.attendeeCount} spots remaining',
+                    style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                  ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _meetup.attendeeNames.length,
+                    itemBuilder: (_, i) {
+                      final name = _meetup.attendeeNames[i];
+                      final isOrganiser = i == 0;
+                      final photoUrl = MemberPhotoService.getPhotoByName(name);
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        leading: photoUrl != null
+                            ? Container(
+                                width: 40, height: 40,
+                                decoration: const BoxDecoration(shape: BoxShape.circle),
+                                clipBehavior: Clip.antiAlias,
+                                child: Image.network(photoUrl, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => MemberAvatar(name: name, size: 40)),
+                              )
+                            : MemberAvatar(name: name, size: 40),
+                        title: Row(
+                          children: [
+                            Flexible(
+                              child: Text(name, style: GoogleFonts.poppins(
+                                fontSize: 15, fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark)),
+                            ),
+                            if (isOrganiser) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text('Organiser', style: GoogleFonts.poppins(
+                                  fontSize: 10, fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary)),
+                              ),
+                            ],
+                          ],
+                        ),
+                        subtitle: Text(
+                          isOrganiser ? 'Host' : 'Going',
+                          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                        ),
+                        trailing: !isOrganiser
+                            ? IconButton(
+                                icon: const Icon(Icons.chat_bubble_outline, size: 20, color: HuddlColors.primary),
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  Navigator.push(context, MaterialPageRoute(
+                                    builder: (_) => DMChatScreen(
+                                      recipientId: 'mem_${name.toLowerCase().replaceAll(' ', '_')}',
+                                      recipientName: name,
+                                      recipientAvatarColor: '#FF975C',
+                                    ),
+                                  ));
+                                },
+                              )
+                            : null,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// Confirm delete dialog
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Cancel Meet-up?', style: GoogleFonts.poppins(
+          fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+        content: Text(
+          'This will permanently remove "${_meetup.title}" and notify all attendees. This action cannot be undone.',
+          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Keep', style: GoogleFonts.poppins(
+              fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _meetupService.deleteMeetup(_meetup.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Meet-up cancelled'),
+                  backgroundColor: Colors.red.shade400,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red, elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Cancel Meet-up', style: GoogleFonts.poppins(
+              fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final catStyle = _getCatStyle(_meetup.category);
@@ -189,7 +465,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 child: IconButton(
                   icon: const Icon(Icons.more_vert,
                       color: Colors.white, size: 20),
-                  onPressed: () {},
+                  onPressed: _showMoreOptions,
                 ),
               ),
             ],
@@ -361,6 +637,79 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 ),
                 const SizedBox(height: 8),
 
+                // Repeat & Privacy info (if applicable)
+                if (_meetup.repeat != MeetupRepeat.none || _meetup.privacy != MeetupPrivacy.public) ...[
+                  Container(
+                    color: HuddlColors.white,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        if (_meetup.repeat != MeetupRepeat.none)
+                          Row(
+                            children: [
+                              Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.repeat, size: 20, color: HuddlColors.primary),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Repeating', style: GoogleFonts.poppins(
+                                      fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                                    Text(_meetup.repeatDisplay ?? 'Recurring', style: GoogleFonts.poppins(
+                                      fontSize: 12, color: HuddlColors.textHint)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (_meetup.repeat != MeetupRepeat.none && _meetup.privacy != MeetupPrivacy.public)
+                          const Divider(height: 24),
+                        if (_meetup.privacy != MeetupPrivacy.public)
+                          Row(
+                            children: [
+                              Container(
+                                width: 40, height: 40,
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.purple.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  _meetup.privacy == MeetupPrivacy.group ? Icons.group : Icons.lock_outline,
+                                  size: 20, color: HuddlColors.purple,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _meetup.privacy == MeetupPrivacy.group ? 'Group Meet-up' : 'Private Meet-up',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                                    ),
+                                    Text(
+                                      _meetup.groupName ?? 'Invite only',
+                                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 // Description
                 Container(
                   color: HuddlColors.white,
@@ -390,6 +739,71 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
+
+                // Invitees section (if any)
+                if (_meetup.invitees.isNotEmpty) ...[
+                  Container(
+                    color: HuddlColors.white,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Invited', style: GoogleFonts.poppins(
+                              fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                            Text('${_meetup.invitees.length} people', style: GoogleFonts.poppins(
+                              fontSize: 13, color: HuddlColors.textHint)),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ..._meetup.invitees.take(6).map((inv) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              MemberAvatar(name: inv.name, size: 32),
+                              const SizedBox(width: 10),
+                              Expanded(child: Text(inv.name, style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark))),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: inv.status == 'going'
+                                      ? HuddlColors.teal.withValues(alpha: 0.1)
+                                      : inv.status == 'declined'
+                                          ? Colors.red.withValues(alpha: 0.1)
+                                          : HuddlColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  inv.status == 'going' ? 'Going'
+                                      : inv.status == 'declined' ? 'Declined'
+                                      : 'Invited',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11, fontWeight: FontWeight.w600,
+                                    color: inv.status == 'going'
+                                        ? HuddlColors.teal
+                                        : inv.status == 'declined'
+                                            ? Colors.red
+                                            : HuddlColors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                        if (_meetup.invitees.length > 6)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text('+${_meetup.invitees.length - 6} more invited',
+                              style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.primary, fontWeight: FontWeight.w500)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
 
                 // Attendees with profile pictures
                 Container(

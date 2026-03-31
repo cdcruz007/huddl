@@ -16,6 +16,15 @@ enum MessageStatus {
   error,
 }
 
+/// The type of content a message carries.
+enum MessageType {
+  text,
+  image,
+  document,
+  location,
+  contact,
+}
+
 /// A single direct message between two users.
 class DirectMessage {
   final String id;
@@ -28,6 +37,18 @@ class DirectMessage {
   final String? replyToText;
   final String? replyToSender;
 
+  /// Extended fields for rich message types
+  final MessageType type;
+  final String? imageUrl;       // for image messages
+  final String? documentName;   // for document messages
+  final int? documentSize;      // bytes
+  final double? latitude;       // for location messages
+  final double? longitude;
+  final String? locationLabel;
+  final String? contactName;    // for contact sharing
+  final String? contactPhone;
+  final Map<String, int> reactions; // emoji → count
+
   DirectMessage({
     required this.id,
     required this.senderId,
@@ -38,6 +59,16 @@ class DirectMessage {
     this.status = MessageStatus.sent,
     this.replyToText,
     this.replyToSender,
+    this.type = MessageType.text,
+    this.imageUrl,
+    this.documentName,
+    this.documentSize,
+    this.latitude,
+    this.longitude,
+    this.locationLabel,
+    this.contactName,
+    this.contactPhone,
+    this.reactions = const {},
   });
 
   Map<String, dynamic> toJson() => {
@@ -50,9 +81,25 @@ class DirectMessage {
         'status': status.name,
         'replyToText': replyToText,
         'replyToSender': replyToSender,
+        'type': type.name,
+        'imageUrl': imageUrl,
+        'documentName': documentName,
+        'documentSize': documentSize,
+        'latitude': latitude,
+        'longitude': longitude,
+        'locationLabel': locationLabel,
+        'contactName': contactName,
+        'contactPhone': contactPhone,
+        'reactions': reactions,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
+    Map<String, int> rxn = {};
+    if (json['reactions'] != null) {
+      (json['reactions'] as Map<String, dynamic>).forEach((k, v) {
+        rxn[k] = v as int;
+      });
+    }
     return DirectMessage(
       id: json['id'] as String,
       senderId: json['senderId'] as String,
@@ -66,20 +113,47 @@ class DirectMessage {
       ),
       replyToText: json['replyToText'] as String?,
       replyToSender: json['replyToSender'] as String?,
+      type: MessageType.values.firstWhere(
+        (e) => e.name == (json['type'] as String? ?? 'text'),
+        orElse: () => MessageType.text,
+      ),
+      imageUrl: json['imageUrl'] as String?,
+      documentName: json['documentName'] as String?,
+      documentSize: json['documentSize'] as int?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      locationLabel: json['locationLabel'] as String?,
+      contactName: json['contactName'] as String?,
+      contactPhone: json['contactPhone'] as String?,
+      reactions: rxn,
     );
   }
 
-  DirectMessage copyWith({MessageStatus? status}) {
+  DirectMessage copyWith({
+    MessageStatus? status,
+    Map<String, int>? reactions,
+    String? message,
+  }) {
     return DirectMessage(
       id: id,
       senderId: senderId,
       senderName: senderName,
-      message: message,
+      message: message ?? this.message,
       timestamp: timestamp,
       isMe: isMe,
       status: status ?? this.status,
       replyToText: replyToText,
       replyToSender: replyToSender,
+      type: type,
+      imageUrl: imageUrl,
+      documentName: documentName,
+      documentSize: documentSize,
+      latitude: latitude,
+      longitude: longitude,
+      locationLabel: locationLabel,
+      contactName: contactName,
+      contactPhone: contactPhone,
+      reactions: reactions ?? this.reactions,
     );
   }
 }
@@ -95,6 +169,8 @@ class DMConversation {
   final DateTime? lastMessageTime;
   final int unreadCount;
   final bool isTyping; // whether the recipient is typing
+  final bool isMuted;
+  final bool isOnline;
 
   DMConversation({
     required this.id,
@@ -106,6 +182,8 @@ class DMConversation {
     this.lastMessageTime,
     this.unreadCount = 0,
     this.isTyping = false,
+    this.isMuted = false,
+    this.isOnline = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -117,6 +195,7 @@ class DMConversation {
         'lastSenderName': lastSenderName,
         'lastMessageTime': lastMessageTime?.toIso8601String(),
         'unreadCount': unreadCount,
+        'isMuted': isMuted,
       };
 
   factory DMConversation.fromJson(Map<String, dynamic> json) {
@@ -131,6 +210,7 @@ class DMConversation {
           ? DateTime.parse(json['lastMessageTime'] as String)
           : null,
       unreadCount: json['unreadCount'] as int? ?? 0,
+      isMuted: json['isMuted'] as bool? ?? false,
     );
   }
 
@@ -140,6 +220,8 @@ class DMConversation {
     DateTime? lastMessageTime,
     int? unreadCount,
     bool? isTyping,
+    bool? isMuted,
+    bool? isOnline,
   }) {
     return DMConversation(
       id: id,
@@ -151,6 +233,8 @@ class DMConversation {
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       unreadCount: unreadCount ?? this.unreadCount,
       isTyping: isTyping ?? this.isTyping,
+      isMuted: isMuted ?? this.isMuted,
+      isOnline: isOnline ?? this.isOnline,
     );
   }
 }

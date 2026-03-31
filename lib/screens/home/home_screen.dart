@@ -344,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── See All: Upcoming Events ──────────────────────────────────────────────
   void _openAllEvents() {
-    _switchToTab(2); // Go to Mingle tab
+    _switchToTab(2); // Go to Meetups tab
   }
 
   @override
@@ -484,7 +484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 12),
                       _QuickAction(
                         icon: Icons.storefront,
-                        label: 'Rehome',
+                        label: 'Preloved',
                         color: HuddlColors.teal,
                         bgColor: const Color(0xFFE6F5F3),
                         onTap: () => _switchToTab(3),
@@ -1395,7 +1395,7 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'New Event';
       case FeedItemType.newMarketplaceItem:
-        return 'Rehome';
+        return 'Preloved';
       case FeedItemType.milestone:
         return 'Milestone';
     }
@@ -2208,7 +2208,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'View Events';
       case FeedItemType.newMarketplaceItem:
-        return 'View in Rehome';
+        return 'View in Preloved';
       case FeedItemType.newParent:
         return 'Say Welcome';
       case FeedItemType.milestone:
@@ -2270,7 +2270,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return 'New Event';
       case FeedItemType.newMarketplaceItem:
-        return 'Rehome';
+        return 'Preloved';
       case FeedItemType.milestone:
         return 'Milestone';
     }

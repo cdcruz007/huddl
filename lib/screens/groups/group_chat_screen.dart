@@ -121,6 +121,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Storage key for persisting thread replies per group
   String get _threadStorageKey => 'thread_replies_${widget.groupId}';
 
+  /// Storage keys for persisting unsend states per group
+  String get _hiddenMsgKey => 'hidden_msgs_${widget.groupId}';
+  String get _deletedEveryoneKey => 'deleted_everyone_${widget.groupId}';
+
   /// IDs of messages unsent "just for me" (hidden locally)
   final Set<String> _hiddenMessageIds = {};
 
@@ -189,6 +193,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // Load persisted thread replies for this group
     await _loadPersistedThreadReplies();
 
+    // Load persisted unsend states
+    await _loadPersistedUnsendStates();
+
+    // Load persisted user messages (text, images, docs, reactions)
+    await _loadPersistedUserMessages();
+
+    // Load forwarded messages from other screens (via forward_message_sheet)
+    await _loadForwardedMessages();
+
+    // Re-sort everything
+    _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
     setState(() => _isLoading = false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -247,6 +263,35 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
   }
 
+  // ── Unsend state persistence ──────────────────────────────────────────
+  Future<void> _loadPersistedUnsendStates() async {
+    try {
+      final hiddenRaw = await BrowserStorage.getString(_hiddenMsgKey);
+      if (hiddenRaw != null) {
+        final List<dynamic> decoded = json.decode(hiddenRaw);
+        _hiddenMessageIds.addAll(decoded.cast<String>());
+      }
+      final deletedRaw = await BrowserStorage.getString(_deletedEveryoneKey);
+      if (deletedRaw != null) {
+        final List<dynamic> decoded = json.decode(deletedRaw);
+        _deletedForEveryoneIds.addAll(decoded.cast<String>());
+      }
+    } catch (_) {
+      // Silently handle — first launch or corrupt data
+    }
+  }
+
+  Future<void> _persistUnsendStates() async {
+    try {
+      await BrowserStorage.setString(
+          _hiddenMsgKey, json.encode(_hiddenMessageIds.toList()));
+      await BrowserStorage.setString(
+          _deletedEveryoneKey, json.encode(_deletedForEveryoneIds.toList()));
+    } catch (_) {
+      // Silently handle
+    }
+  }
+
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
@@ -267,6 +312,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     });
 
     _messageController.clear();
+    _persistUserTextMessages();
 
     // Simulate status progression: sending -> sent -> delivered -> read
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -377,6 +423,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         _reactions[messageId] = msgReactions;
       }
     });
+    _persistReactions();
   }
 
   void _openThread(ChatMessage msg) {
@@ -876,6 +923,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     setState(() {
                       _deletedForEveryoneIds.add(msg.id);
                     });
+                    _persistUnsendStates();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Row(
@@ -913,6 +961,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     setState(() {
                       _hiddenMessageIds.add(msg.id);
                     });
+                    _persistUnsendStates();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: const Row(
@@ -2953,6 +3002,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         bytes: att.bytes,
       ));
     });
+    _persistUserMediaMessages();
     _scrollToEnd();
   }
 
@@ -2971,36 +3021,272 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         senderId: 'current_user',
       ));
     });
+    _persistUserMediaMessages();
     _scrollToEnd();
   }
 
   void _handleLocationShare() {
     if (!mounted) return;
     final userName = _onboardingService.name ?? 'You';
+    final msg = _GroupImageMessage(
+      imageUrl: 'location_pin',
+      isMe: true,
+      timestamp: DateTime.now(),
+      senderName: userName,
+      senderAvatar: '#FF975C',
+      senderId: 'current_user',
+      isLocationPin: true,
+    );
     setState(() {
-      _imageMessages.add(_GroupImageMessage(
-        imageUrl: 'location_pin',
-        isMe: true,
-        timestamp: DateTime.now(),
-        senderName: userName,
-        senderAvatar: '#FF975C',
-        senderId: 'current_user',
-        isLocationPin: true,
-      ));
+      _imageMessages.add(msg);
     });
+    _persistUserMediaMessages();
     _scrollToEnd();
   }
 
-  void _handleContactShare() {
+  void _handleContactShare() async {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Contact sharing coming soon'),
-        backgroundColor: HuddlColors.textSecondary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    final userName = _onboardingService.name ?? 'You';
+    // Show a contact picker dialog
+    final members = [
+      {'name': 'Emma Wilson', 'phone': '+44 7700 900001'},
+      {'name': 'Sophie Brown', 'phone': '+44 7700 900002'},
+      {'name': 'James Taylor', 'phone': '+44 7700 900003'},
+      {'name': 'Olivia Davis', 'phone': '+44 7700 900004'},
+      {'name': 'Luke Harris', 'phone': '+44 7700 900005'},
+      {'name': 'Anna Clark', 'phone': '+44 7700 900006'},
+      {'name': 'Kate Miller', 'phone': '+44 7700 900007'},
+    ];
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: HuddlColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.divider, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text('Share Contact', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+              const SizedBox(height: 8),
+              ...members.map((m) => ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
+                  child: Text(m['name']![0], style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                ),
+                title: Text(m['name']!, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                subtitle: Text(m['phone']!, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+                onTap: () => Navigator.pop(ctx, m),
+              )),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
     );
+    if (result != null && mounted) {
+      // Add as a text message with contact info
+      setState(() {
+        _messages.add(ChatMessage(
+          id: 'gm_contact_${DateTime.now().millisecondsSinceEpoch}',
+          senderId: 'current_user',
+          senderName: userName,
+          senderAvatar: '#FF975C',
+          message: '\u{1F464} Contact: ${result['name']} - ${result['phone']}',
+          timestamp: DateTime.now(),
+          isMe: true,
+        ));
+      });
+      _persistUserTextMessages();
+      _scrollToEnd();
+    }
+  }
+
+  // ── Persistence for user-created messages in group chat ────────────────
+  String get _userTextMsgKey => 'gc_user_texts_${widget.groupId}';
+  String get _userMediaMsgKey => 'gc_user_media_${widget.groupId}';
+  String get _userReactionsKey => 'gc_reactions_${widget.groupId}';
+
+  Future<void> _persistUserTextMessages() async {
+    try {
+      final userMsgs = _messages
+          .where((m) => m.isMe && m.senderId == 'current_user')
+          .map((m) => {
+                'id': m.id,
+                'senderId': m.senderId,
+                'senderName': m.senderName,
+                'senderAvatar': m.senderAvatar,
+                'message': m.message,
+                'timestamp': m.timestamp.toIso8601String(),
+                'isMe': true,
+              })
+          .toList();
+      await BrowserStorage.setString(_userTextMsgKey, json.encode(userMsgs));
+    } catch (_) {}
+  }
+
+  Future<void> _persistUserMediaMessages() async {
+    try {
+      final imgs = _imageMessages
+          .where((m) => m.isMe && m.senderId == 'current_user')
+          .map((m) => {
+                'imageUrl': m.imageUrl,
+                'isMe': true,
+                'timestamp': m.timestamp.toIso8601String(),
+                'senderName': m.senderName,
+                'senderAvatar': m.senderAvatar,
+                'senderId': m.senderId,
+                'isLocationPin': m.isLocationPin,
+              })
+          .toList();
+      final docs = _documentMessages
+          .where((m) => m.isMe && m.senderId == 'current_user')
+          .map((m) => {
+                'fileName': m.fileName,
+                'fileSize': m.fileSize,
+                'isMe': true,
+                'timestamp': m.timestamp.toIso8601String(),
+                'senderName': m.senderName,
+                'senderAvatar': m.senderAvatar,
+                'senderId': m.senderId,
+              })
+          .toList();
+      await BrowserStorage.setString(
+          _userMediaMsgKey, json.encode({'images': imgs, 'documents': docs}));
+    } catch (_) {}
+  }
+
+  Future<void> _persistReactions() async {
+    try {
+      final data = <String, dynamic>{};
+      _reactions.forEach((key, value) {
+        data[key] = value;
+      });
+      await BrowserStorage.setString(_userReactionsKey, json.encode(data));
+    } catch (_) {}
+  }
+
+  Future<void> _loadPersistedUserMessages() async {
+    try {
+      // Load user text messages
+      final textRaw = await BrowserStorage.getString(_userTextMsgKey);
+      if (textRaw != null) {
+        final List<dynamic> decoded = json.decode(textRaw);
+        for (final j in decoded) {
+          final m = j as Map<String, dynamic>;
+          final id = m['id'] as String;
+          if (!_messages.any((msg) => msg.id == id)) {
+            _messages.add(ChatMessage(
+              id: id,
+              senderId: m['senderId'] as String,
+              senderName: m['senderName'] as String,
+              senderAvatar: m['senderAvatar'] as String? ?? '#FF975C',
+              message: m['message'] as String,
+              timestamp: DateTime.parse(m['timestamp'] as String),
+              isMe: true,
+            ));
+          }
+        }
+      }
+
+      // Load user media messages
+      final mediaRaw = await BrowserStorage.getString(_userMediaMsgKey);
+      if (mediaRaw != null) {
+        final Map<String, dynamic> decoded = json.decode(mediaRaw);
+        final imgs = (decoded['images'] as List<dynamic>?) ?? [];
+        for (final j in imgs) {
+          final m = j as Map<String, dynamic>;
+          _imageMessages.add(_GroupImageMessage(
+            imageUrl: m['imageUrl'] as String,
+            isMe: true,
+            timestamp: DateTime.parse(m['timestamp'] as String),
+            senderName: m['senderName'] as String,
+            senderAvatar: m['senderAvatar'] as String? ?? '#FF975C',
+            senderId: m['senderId'] as String,
+            isLocationPin: m['isLocationPin'] as bool? ?? false,
+          ));
+        }
+        final docs = (decoded['documents'] as List<dynamic>?) ?? [];
+        for (final j in docs) {
+          final m = j as Map<String, dynamic>;
+          _documentMessages.add(_GroupDocumentMessage(
+            fileName: m['fileName'] as String,
+            fileSize: m['fileSize'] as int?,
+            isMe: true,
+            timestamp: DateTime.parse(m['timestamp'] as String),
+            senderName: m['senderName'] as String,
+            senderAvatar: m['senderAvatar'] as String? ?? '#FF975C',
+            senderId: m['senderId'] as String,
+          ));
+        }
+      }
+
+      // Load reactions
+      final rxnRaw = await BrowserStorage.getString(_userReactionsKey);
+      if (rxnRaw != null) {
+        final Map<String, dynamic> decoded = json.decode(rxnRaw);
+        decoded.forEach((key, value) {
+          final rxnMap = <String, int>{};
+          (value as Map<String, dynamic>).forEach((k, v) {
+            rxnMap[k] = v as int;
+          });
+          _reactions[key] = rxnMap;
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Load messages that were forwarded to this group via forward_message_sheet
+  Future<void> _loadForwardedMessages() async {
+    try {
+      final key = 'group_messages_${widget.groupId}';
+      final raw = await BrowserStorage.getString(key);
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        for (final j in decoded) {
+          final m = j as Map<String, dynamic>;
+          final id = m['id'] as String;
+          if (!_messages.any((msg) => msg.id == id)) {
+            final msgType = m['type'] as String? ?? 'text';
+            if (msgType == 'image' && m['imageUrl'] != null) {
+              _imageMessages.add(_GroupImageMessage(
+                imageUrl: m['imageUrl'] as String,
+                isMe: true,
+                timestamp: DateTime.parse(m['timestamp'] as String),
+                senderName: m['senderName'] as String? ?? 'You',
+                senderAvatar: '#FF975C',
+                senderId: 'current_user',
+              ));
+            } else if (msgType == 'location') {
+              _imageMessages.add(_GroupImageMessage(
+                imageUrl: 'location_pin',
+                isMe: true,
+                timestamp: DateTime.parse(m['timestamp'] as String),
+                senderName: m['senderName'] as String? ?? 'You',
+                senderAvatar: '#FF975C',
+                senderId: 'current_user',
+                isLocationPin: true,
+              ));
+            } else {
+              _messages.add(ChatMessage(
+                id: id,
+                senderId: m['senderId'] as String? ?? 'current_user',
+                senderName: m['senderName'] as String? ?? 'You',
+                senderAvatar: '#FF975C',
+                message: m['message'] as String? ?? '',
+                timestamp: DateTime.parse(m['timestamp'] as String),
+                isMe: true,
+              ));
+            }
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   void _scrollToEnd() {
@@ -4043,26 +4329,34 @@ class _GroupLocationBubble extends StatelessWidget {
   });
 
   Future<void> _openInMaps(BuildContext context) async {
-    final label = locationName ?? 'Shared Location';
-    // Try Google Maps first, then fall back to generic geo URI (works on iOS → Apple Maps)
-    final googleUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(label)}');
+    // Use coordinates directly for reliable map opening (Cambridge UK defaults)
+    const lat = 52.2053;
+    const lng = 0.1218;
+    final label = locationName ?? 'Cambridge, UK';
+    final googleUrl = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
     try {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } catch (_) {
-      // Fallback: geo URI (opens default maps on Android, Apple Maps on iOS)
-      final geoUrl = Uri.parse('geo:0,0?q=${Uri.encodeComponent(label)}');
+      // Fallback: try geo: URI
+      final geoUrl = Uri.parse('geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})');
       try {
         await launchUrl(geoUrl);
       } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Could not open maps'),
-              backgroundColor: Colors.red.shade400,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+        // Last resort: open in browser tab
+        try {
+          await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Could not open maps'),
+                backgroundColor: Colors.red.shade400,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            );
+          }
         }
       }
     }

@@ -7,6 +7,7 @@ import '../../services/invitation_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/browser_storage.dart';
+import '../../models/direct_message.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 
 /// Represents a forwarding target — either a DM contact or a group.
@@ -42,6 +43,11 @@ Future<void> showForwardSheet({
   required String messageText,
   String? imageUrl,
   String? documentName,
+  double? latitude,
+  double? longitude,
+  String? locationLabel,
+  String? contactName,
+  String? contactPhone,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -51,6 +57,11 @@ Future<void> showForwardSheet({
       messageText: messageText,
       imageUrl: imageUrl,
       documentName: documentName,
+      latitude: latitude,
+      longitude: longitude,
+      locationLabel: locationLabel,
+      contactName: contactName,
+      contactPhone: contactPhone,
     ),
   );
 }
@@ -59,11 +70,21 @@ class _ForwardSheet extends StatefulWidget {
   final String messageText;
   final String? imageUrl;
   final String? documentName;
+  final double? latitude;
+  final double? longitude;
+  final String? locationLabel;
+  final String? contactName;
+  final String? contactPhone;
 
   const _ForwardSheet({
     required this.messageText,
     this.imageUrl,
     this.documentName,
+    this.latitude,
+    this.longitude,
+    this.locationLabel,
+    this.contactName,
+    this.contactPhone,
   });
 
   @override
@@ -169,11 +190,11 @@ class _ForwardSheetState extends State<_ForwardSheet> {
 
     // Also include default groups the user is in
     try {
-      final membershipsRaw = await BrowserStorage.getString('user_memberships_v3');
+      final membershipsRaw = await BrowserStorage.getString('user_memberships_v4');
       if (membershipsRaw != null) {
         final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
         final groupIds = (membershipsMap['current_user'] as List<dynamic>?)?.cast<String>() ?? [];
-        final groupsRaw = await BrowserStorage.getString('default_groups_v3');
+        final groupsRaw = await BrowserStorage.getString('default_groups_v4');
         if (groupsRaw != null && groupIds.isNotEmpty) {
           final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
           for (final entry in groupsMap.entries) {
@@ -251,26 +272,103 @@ class _ForwardSheetState extends State<_ForwardSheet> {
   }
 
   Future<void> _doForward(_ForwardTarget target) async {
-    if (target.isGroup) return; // Group forwarding is simulated
+    final userName = _onboarding.name ?? 'You';
+
+    if (target.isGroup) {
+      // Forward to group chat — store in group messages
+      try {
+        final key = 'group_messages_${target.id}';
+        List<Map<String, dynamic>> msgs = [];
+        final raw = await BrowserStorage.getString(key);
+        if (raw != null) {
+          msgs = (json.decode(raw) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+        }
+        String fwdText = widget.messageText;
+        String msgType = 'text';
+        if (widget.imageUrl != null) {
+          fwdText = widget.messageText.isNotEmpty ? widget.messageText : 'Photo';
+          msgType = 'image';
+        } else if (widget.documentName != null) {
+          fwdText = widget.documentName!;
+          msgType = 'document';
+        } else if (widget.latitude != null) {
+          fwdText = widget.locationLabel ?? 'Location';
+          msgType = 'location';
+        } else if (widget.contactName != null) {
+          fwdText = '\u{1F464} Contact: ${widget.contactName} - ${widget.contactPhone ?? ''}';
+          msgType = 'contact';
+        }
+        msgs.add({
+          'id': 'gm_fwd_${DateTime.now().millisecondsSinceEpoch}',
+          'senderId': 'current_user',
+          'senderName': userName,
+          'message': fwdText,
+          'timestamp': DateTime.now().toIso8601String(),
+          'isForwarded': true,
+          'type': msgType,
+          'imageUrl': widget.imageUrl,
+          'documentName': widget.documentName,
+          'latitude': widget.latitude,
+          'longitude': widget.longitude,
+          'locationLabel': widget.locationLabel,
+          'contactName': widget.contactName,
+          'contactPhone': widget.contactPhone,
+        });
+        await BrowserStorage.setString(key, json.encode(msgs));
+      } catch (_) {}
+      return;
+    }
+
     // Forward to DM
     final conv = await _dmService.getOrCreateConversation(
       recipientId: target.id,
       recipientName: target.name,
       avatarColor: target.avatarColor,
     );
-    final userName = _onboarding.name ?? 'You';
-    String fwdText = widget.messageText;
+
     if (widget.imageUrl != null) {
-      fwdText = '[Forwarded image] ${widget.messageText}';
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.messageText.isNotEmpty ? widget.messageText : 'Photo',
+        senderName: userName,
+        type: MessageType.image,
+        imageUrl: widget.imageUrl,
+      );
     } else if (widget.documentName != null) {
-      fwdText =
-          '[Forwarded document: ${widget.documentName}] ${widget.messageText}';
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.documentName!,
+        senderName: userName,
+        type: MessageType.document,
+        documentName: widget.documentName,
+      );
+    } else if (widget.latitude != null) {
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.locationLabel ?? 'Location',
+        senderName: userName,
+        type: MessageType.location,
+        latitude: widget.latitude,
+        longitude: widget.longitude,
+        locationLabel: widget.locationLabel,
+      );
+    } else if (widget.contactName != null) {
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.contactName!,
+        senderName: userName,
+        type: MessageType.contact,
+        contactName: widget.contactName,
+        contactPhone: widget.contactPhone,
+      );
+    } else {
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.messageText,
+        senderName: userName,
+      );
     }
-    await _dmService.sendMessage(
-      conversationId: conv.id,
-      message: fwdText,
-      senderName: userName,
-    );
   }
 
   @override
@@ -526,6 +624,94 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // If forwarding a location
+    if (widget.latitude != null) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: HuddlColors.background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F5E9),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.location_on,
+                  size: 20, color: Color(0xFFE53935)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                widget.locationLabel ?? 'Shared location',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: HuddlColors.textSecondary,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // If forwarding a contact
+    if (widget.contactName != null) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: HuddlColors.background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.person,
+                  size: 20, color: HuddlColors.primary),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.contactName!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                  if (widget.contactPhone != null)
+                    Text(
+                      widget.contactPhone!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
+                      ),
                     ),
                 ],
               ),

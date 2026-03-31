@@ -91,7 +91,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Local',
+                    'Chat',
                     style: GoogleFonts.poppins(
                       fontSize: 24,
                       fontWeight: FontWeight.w600,
@@ -203,6 +203,8 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   // ── Favourites persistence ────────────────────────────────────────
   static const String _favouritesKey = 'huddl_favourite_ids';
+  static const String _mutedKey = 'huddl_muted_ids';
+  static const String _pinnedKey = 'huddl_pinned_ids';
 
   Future<void> _loadFavourites() async {
     final stored = await BrowserStorage.getString(_favouritesKey);
@@ -212,6 +214,21 @@ class _MessagesTabState extends State<_MessagesTab> {
         _favouriteIds.addAll(decoded.cast<String>());
       });
     }
+    // Also load muted and pinned
+    final mutedStored = await BrowserStorage.getString(_mutedKey);
+    if (mutedStored != null && mutedStored.isNotEmpty) {
+      final List<dynamic> decoded = json.decode(mutedStored);
+      setState(() {
+        _mutedGroupIds.addAll(decoded.cast<String>());
+      });
+    }
+    final pinnedStored = await BrowserStorage.getString(_pinnedKey);
+    if (pinnedStored != null && pinnedStored.isNotEmpty) {
+      final List<dynamic> decoded = json.decode(pinnedStored);
+      setState(() {
+        _pinnedGroupIds.addAll(decoded.cast<String>());
+      });
+    }
   }
 
   Future<void> _saveFavourites() async {
@@ -219,15 +236,26 @@ class _MessagesTabState extends State<_MessagesTab> {
         _favouritesKey, json.encode(_favouriteIds.toList()));
   }
 
+  Future<void> _saveMutedAndPinned() async {
+    await BrowserStorage.setString(
+        _mutedKey, json.encode(_mutedGroupIds.toList()));
+    await BrowserStorage.setString(
+        _pinnedKey, json.encode(_pinnedGroupIds.toList()));
+  }
+
   void _toggleFavourite(String id) {
     setState(() {
       if (_favouriteIds.contains(id)) {
         _favouriteIds.remove(id);
+        _pinnedGroupIds.remove(id); // Unfavourite also unpins
       } else {
         _favouriteIds.add(id);
+        _pinnedGroupIds.add(id); // Favourite also pins
       }
+      _applyFilter(); // Re-sort to move pinned items to top
     });
     _saveFavourites();
+    _saveMutedAndPinned();
   }
 
   void _onDMUpdate() {
@@ -352,20 +380,16 @@ class _MessagesTabState extends State<_MessagesTab> {
       final q = _searchQuery.toLowerCase();
       _filteredGroups = _allGroups
           .where((g) =>
-              g.name.toLowerCase().contains(q) ||
-              (g.lastMessage ?? '').toLowerCase().contains(q))
+              g.name.toLowerCase().contains(q))
           .toList();
       _filteredDMs = _dmConversations
           .where((d) =>
-              d.recipientName.toLowerCase().contains(q) ||
-              (d.lastMessage ?? '').toLowerCase().contains(q))
+              d.recipientName.toLowerCase().contains(q))
           .toList();
 
-      // Trigger deep search with debounce
-      _searchDebounce?.cancel();
-      _searchDebounce = Timer(const Duration(milliseconds: 300), () {
-        _performDeepSearch(q);
-      });
+      // Deep search within messages is disabled — search only titles
+      _deepSearchResults = [];
+      _isDeepSearching = false;
     }
     // Sort: pinned first, then by last message time descending
     _filteredGroups.sort((a, b) {
@@ -503,6 +527,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     }
                     _applyFilter();
                   });
+                  _saveMutedAndPinned();
                 },
               ),
               _ActionTile(
@@ -519,6 +544,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                       _mutedGroupIds.add(group.id);
                     }
                   });
+                  _saveMutedAndPinned();
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -1571,6 +1597,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     }
                     _applyFilter();
                   });
+                  _saveMutedAndPinned();
                 },
               ),
               _ActionTile(
@@ -1587,6 +1614,15 @@ class _MessagesTabState extends State<_MessagesTab> {
                       _mutedGroupIds.add(dm.id);
                     }
                   });
+                  _saveMutedAndPinned();
+                  // Also sync with DMService
+                  _dmService.toggleMute(dm.id);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text(isMuted ? '${dm.recipientName} unmuted' : '${dm.recipientName} muted'),
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
                 },
               ),
               _ActionTile(
@@ -2183,7 +2219,7 @@ class _DMMessageRow extends StatelessWidget {
               size: 54,
               accentColor: color,
               showOnlineDot: true,
-              isOnline: true,
+              isOnline: DMService().isUserOnline(conversation.recipientId),
             ),
             const SizedBox(width: 12),
 
@@ -2479,10 +2515,14 @@ class _DiscoverTab extends StatefulWidget {
 
 class _DiscoverTabState extends State<_DiscoverTab> {
   String _searchQuery = '';
-  String _selectedFilter = 'All';
   String _selectedSort = 'Recommended';
   final TextEditingController _searchController = TextEditingController();
   bool _showSearchField = false;
+
+  // ── New filter states ─────────────────────────────────────────────────
+  bool _showFavouritesOnly = false;
+  Set<String> _selectedAudiences = {}; // multi-select: 'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads'
+  Set<String> _favouriteIds = {};
 
   // Onboarding profile — used for audience-based filtering and borough matching
   final OnboardingDataService _onboardingService = OnboardingDataService();
@@ -2507,8 +2547,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
   void _onGroupsChanged() {
-    // Reload user-created groups when notified (e.g. after creating a group)
+    // Reload user-created groups and favourites when notified
     _reloadUserCreatedGroups();
+    _loadFavouriteIds().then((_) {
+      if (mounted) setState(() {});
+    });
   }
 
   /// Reload only user-created public groups from storage and rebuild
@@ -2524,6 +2567,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     await _invitationService.initialize();
     // Also load any user-created public groups from local storage
     await _loadUserCreatedGroups();
+    // Load favourites from BrowserStorage (shared with Messages tab)
+    await _loadFavouriteIds();
     if (mounted) {
       setState(() {
         _userParentType = _onboardingService.parentType;
@@ -2533,6 +2578,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         _profileLoaded = true;
       });
     }
+  }
+
+  Future<void> _loadFavouriteIds() async {
+    try {
+      final stored = await BrowserStorage.getString('huddl_favourite_ids');
+      if (stored != null) {
+        final List<dynamic> decoded = json.decode(stored);
+        _favouriteIds = decoded.cast<String>().toSet();
+      }
+    } catch (_) {}
   }
 
   /// Load user-created groups from local storage and add public ones to
@@ -2556,17 +2611,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       // Silently ignore storage read failures
     }
   }
-
-  final List<String> _filterLabels = [
-    'All',
-    'Parenting',
-    'Health',
-    'Activities',
-    'Fitness',
-    'Food',
-    'Work-Life',
-    'Sleep',
-  ];
 
   final List<String> _sortOptions = [
     'Recommended',
@@ -2671,15 +2715,22 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       }
       return true;
     }).toList();
-    // Apply category filter
-    if (_selectedFilter != 'All') {
-      final f = _selectedFilter.toLowerCase();
-      results = results
-          .where((g) =>
-              g.category.toLowerCase().contains(f) ||
-              g.name.toLowerCase().contains(f))
-          .toList();
+
+    // ── Apply "Show favourite groups" filter ────────────────────────────
+    if (_showFavouritesOnly) {
+      results = results.where((g) => _favouriteIds.contains(g.id)).toList();
     }
+
+    // ── Apply "Show groups for" audience filter (multi-select) ─────────
+    if (_selectedAudiences.isNotEmpty) {
+      results = results.where((g) {
+        // Groups with no targetAudience are visible to everyone
+        if (g.targetAudience.isEmpty) return true;
+        // Group must have at least one matching audience
+        return g.targetAudience.any((a) => _selectedAudiences.contains(a));
+      }).toList();
+    }
+
     // Apply search query
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
@@ -2759,9 +2810,18 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
   }
 
-  // ── Filter bottom sheet ────────────────────────────────────────────────
+  // ── Audience filter labels for "Show groups for" ──────────────────────
+  static const List<String> _audienceLabels = [
+    'Aspiring parents',
+    'Parents expecting a baby',
+    'Mums',
+    'Dads',
+  ];
+
+  // ── Filter and sort bottom sheet (matches provided design) ──────────
   void _showFilterSortSheet() {
-    String tempFilter = _selectedFilter;
+    bool tempFavourites = _showFavouritesOnly;
+    Set<String> tempAudiences = Set<String>.from(_selectedAudiences);
     String tempSort = _selectedSort;
 
     showModalBottomSheet(
@@ -2776,104 +2836,138 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 color: HuddlColors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.divider,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                  // ── Header: X  |  "Filter and sort"  |  RESET ──────
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Filter',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
+                      GestureDetector(
+                        onTap: () => Navigator.pop(ctx),
+                        child: const Icon(Icons.close, size: 24, color: HuddlColors.textDark),
+                      ),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Filter and sort',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.textDark,
+                            ),
+                          ),
                         ),
                       ),
                       GestureDetector(
                         onTap: () {
                           setSheetState(() {
-                            tempFilter = 'All';
+                            tempFavourites = false;
+                            tempAudiences = {};
                             tempSort = 'Recommended';
                           });
                         },
                         child: Text(
-                          'Reset',
+                          'RESET',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             color: HuddlColors.primary,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 28),
+
+                  // ── "Show favourite groups" toggle ─────────────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Show favourite groups',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                      Switch(
+                        value: tempFavourites,
+                        onChanged: (val) => setSheetState(() => tempFavourites = val),
+                        activeThumbColor: HuddlColors.white,
+                        activeTrackColor: HuddlColors.primary,
+                        inactiveThumbColor: HuddlColors.white,
+                        inactiveTrackColor: const Color(0xFFE0E0E0),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── "Show groups for" multi-select checkboxes ──────
                   Text(
-                    'Category',
+                    'Show groups for',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.textDark,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _filterLabels.map((label) {
-                      final isActive = tempFilter == label;
-                      return GestureDetector(
-                        onTap: () =>
-                            setSheetState(() => tempFilter = label),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? HuddlColors.primary
-                                : HuddlColors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isActive
-                                  ? HuddlColors.primary
-                                  : HuddlColors.divider,
+                  const SizedBox(height: 12),
+                  ..._audienceLabels.map((label) {
+                    final isChecked = tempAudiences.contains(label);
+                    return GestureDetector(
+                      onTap: () {
+                        setSheetState(() {
+                          if (isChecked) {
+                            tempAudiences.remove(label);
+                          } else {
+                            tempAudiences.add(label);
+                          }
+                        });
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 26,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: isChecked ? HuddlColors.primary : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isChecked ? HuddlColors.primary : const Color(0xFFCCCCCC),
+                                  width: 2,
+                                ),
+                              ),
+                              child: isChecked
+                                  ? const Icon(Icons.check, size: 18, color: HuddlColors.white)
+                                  : null,
                             ),
-                          ),
-                          child: Text(
-                            label,
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.w400,
-                              color: isActive
-                                  ? HuddlColors.white
-                                  : HuddlColors.textSecondary,
+                            const SizedBox(width: 14),
+                            Text(
+                              label,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                                color: HuddlColors.textDark,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
-                      );
-                    }).toList(),
-                  ),
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 24),
+
+                  // ── Sort by section (kept from existing) ──────────
                   Text(
                     'Sort by',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.textDark,
                     ),
@@ -2932,6 +3026,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     );
                   })),
                   const SizedBox(height: 20),
+
+                  // ── Apply button ───────────────────────────────────
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -2939,7 +3035,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       onPressed: () {
                         Navigator.pop(ctx);
                         setState(() {
-                          _selectedFilter = tempFilter;
+                          _showFavouritesOnly = tempFavourites;
+                          _selectedAudiences = tempAudiences;
                           _selectedSort = tempSort;
                         });
                       },
@@ -2987,7 +3084,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     final groups = _filteredGroups;
 
     final bool hasActiveFilters =
-        _selectedFilter != 'All' || _selectedSort != 'Recommended';
+        _showFavouritesOnly || _selectedAudiences.isNotEmpty || _selectedSort != 'Recommended';
 
     return Stack(
       children: [
@@ -3081,8 +3178,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               Expanded(
                                 child: Text(
                                   hasActiveFilters
-                                      ? 'Filtered: $_selectedFilter \u00B7 $_selectedSort'
-                                      : 'Filter',
+                                      ? 'Filtered${_showFavouritesOnly ? ' \u00B7 Favourites' : ''}${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
+                                      : 'Filter and sort',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
                                     color: hasActiveFilters

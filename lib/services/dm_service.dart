@@ -13,7 +13,7 @@ class DMService {
   factory DMService() => _instance;
   DMService._internal();
 
-  static const String _conversationsKey = 'dm_conversations_v1';
+  static const String _conversationsKey = 'dm_conversations_v2';
   static const String _messagesKeyPrefix = 'dm_messages_'; // + conversationId
   bool _isInitialized = false;
 
@@ -35,6 +35,13 @@ class DMService {
     }
   }
 
+  // ── Online status simulation ────────────────────────────────────────────
+  /// Simulated online status — some members are "online" based on their name hash
+  bool isUserOnline(String recipientId) {
+    // Simulate ~40% of users being online
+    return recipientId.hashCode.abs() % 5 < 2;
+  }
+
   // ── Initialisation ──────────────────────────────────────────────────────
   Future<void> initialize() async {
     if (_isInitialized) return;
@@ -45,6 +52,17 @@ class DMService {
         _conversations = decoded
             .map((j) => DMConversation.fromJson(j as Map<String, dynamic>))
             .toList();
+      }
+      // Migrate from old key if empty
+      if (_conversations.isEmpty) {
+        final oldRaw = await BrowserStorage.getString('dm_conversations_v1');
+        if (oldRaw != null) {
+          final List<dynamic> decoded = json.decode(oldRaw);
+          _conversations = decoded
+              .map((j) => DMConversation.fromJson(j as Map<String, dynamic>))
+              .toList();
+          await _saveConversations();
+        }
       }
       _isInitialized = true;
       _log('Loaded ${_conversations.length} DM conversation(s)');
@@ -123,6 +141,7 @@ class DMService {
       recipientId: recipientId,
       recipientName: recipientName,
       recipientAvatarColor: color,
+      isOnline: isUserOnline(recipientId),
     );
     _conversations.add(conv);
     await _saveConversations();
@@ -130,13 +149,22 @@ class DMService {
     return conv;
   }
 
-  // ── Send a message ──────────────────────────────────────────────────────
+  // ── Send a message (text or rich type) ──────────────────────────────────
   Future<DirectMessage> sendMessage({
     required String conversationId,
     required String message,
     required String senderName,
     String? replyToText,
     String? replyToSender,
+    MessageType type = MessageType.text,
+    String? imageUrl,
+    String? documentName,
+    int? documentSize,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
+    String? contactName,
+    String? contactPhone,
   }) async {
     await initialize();
 
@@ -151,6 +179,15 @@ class DMService {
       status: MessageStatus.sending,
       replyToText: replyToText,
       replyToSender: replyToSender,
+      type: type,
+      imageUrl: imageUrl,
+      documentName: documentName,
+      documentSize: documentSize,
+      latitude: latitude,
+      longitude: longitude,
+      locationLabel: locationLabel,
+      contactName: contactName,
+      contactPhone: contactPhone,
     );
 
     // Save message
@@ -158,16 +195,76 @@ class DMService {
     messages.add(msg);
     await _saveMessages(conversationId, messages);
 
+    // Determine display text for conversation list
+    String displayText = message;
+    switch (type) {
+      case MessageType.image:
+        displayText = '\u{1F4F7} Photo';
+        break;
+      case MessageType.document:
+        displayText = '\u{1F4C4} ${documentName ?? 'Document'}';
+        break;
+      case MessageType.location:
+        displayText = '\u{1F4CD} Location';
+        break;
+      case MessageType.contact:
+        displayText = '\u{1F464} ${contactName ?? 'Contact'}';
+        break;
+      case MessageType.text:
+        break;
+    }
+
     // Update conversation
-    _updateConversationLastMessage(conversationId, message, senderName);
+    _updateConversationLastMessage(conversationId, displayText, senderName);
 
     // 2. Simulate sent status after brief delay
     _simulateMessageStatusProgression(conversationId, msg.id);
 
-    // 3. Simulate typing + reply from recipient
-    _simulateRecipientReply(conversationId);
+    // 3. Only simulate reply for text messages
+    if (type == MessageType.text) {
+      _simulateRecipientReply(conversationId);
+    }
 
     return msg;
+  }
+
+  // ── Toggle emoji reaction on a message ──────────────────────────────────
+  Future<void> toggleReaction(
+      String conversationId, String messageId, String emoji) async {
+    final messages = await getMessages(conversationId);
+    final idx = messages.indexWhere((m) => m.id == messageId);
+    if (idx != -1) {
+      final msg = messages[idx];
+      final rxn = Map<String, int>.from(msg.reactions);
+      if (rxn.containsKey(emoji) && rxn[emoji]! > 0) {
+        rxn.remove(emoji);
+      } else {
+        rxn[emoji] = (rxn[emoji] ?? 0) + 1;
+      }
+      messages[idx] = msg.copyWith(reactions: rxn);
+      await _saveMessages(conversationId, messages);
+      _notify();
+    }
+  }
+
+  // ── Toggle mute on a conversation ───────────────────────────────────────
+  Future<void> toggleMute(String conversationId) async {
+    await initialize();
+    final idx = _conversations.indexWhere((c) => c.id == conversationId);
+    if (idx != -1) {
+      _conversations[idx] =
+          _conversations[idx].copyWith(isMuted: !_conversations[idx].isMuted);
+      await _saveConversations();
+      _notify();
+    }
+  }
+
+  bool isMuted(String conversationId) {
+    try {
+      return _conversations.firstWhere((c) => c.id == conversationId).isMuted;
+    } catch (_) {
+      return false;
+    }
   }
 
   // ── Update message status ───────────────────────────────────────────────

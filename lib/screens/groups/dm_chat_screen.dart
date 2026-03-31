@@ -92,14 +92,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final Set<String> _deletedForEveryoneIds = {};
 
 
-  /// Locally added image messages
-  final List<_ImageChatMessage> _imageMessages = [];
-
-  /// Locally added document messages
-  final List<_DocumentChatMessage> _documentMessages = [];
-
-  /// Emoji reactions: messageId → { emoji → count }
-  final Map<String, Map<String, int>> _reactions = {};
+  /// Emoji reactions are now persisted in DirectMessage.reactions via DMService
 
   @override
   void initState() {
@@ -143,7 +136,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       _conversationId = existing.id;
       // Mark as read
       await _dmService.markConversationRead(existing.id);
-      // Load messages
+      // Load all messages (text, image, doc, location, contact — all persisted)
       _messages = await _dmService.getMessages(existing.id);
     }
     // If no existing conversation, _conversationId stays null.
@@ -337,104 +330,145 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ? const Center(
                     child:
                         CircularProgressIndicator(color: HuddlColors.primary))
-                : (_messages.isEmpty && _imageMessages.isEmpty)
+                : (_messages.isEmpty)
                     ? _emptyState()
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        itemCount: _sortedItems.length + (_isRecipientTyping ? 1 : 0),
+                        itemCount: _messages.length + (_isRecipientTyping ? 1 : 0),
                         itemBuilder: (context, index) {
-                          final items = _sortedItems;
                           // Typing indicator as last item
-                          if (index == items.length && _isRecipientTyping) {
+                          if (index == _messages.length && _isRecipientTyping) {
                             return _TypingIndicator(
                                 name: widget.recipientName,
                                 color: widget.recipientAvatarColor,
                                 memberId: widget.recipientId);
                           }
-                          if (index >= items.length) return const SizedBox.shrink();
-                          final item = items[index];
+                          if (index >= _messages.length) return const SizedBox.shrink();
 
-                          // Image / location message
-                          if (item.type == _ChatItemType.image) {
-                            final imgMsg = _imageMessages[item.imageIndex!];
-                            if (imgMsg.isLocationPin) {
-                              return _LocationBubble(
-                                isMe: imgMsg.isMe,
-                                timestamp: imgMsg.timestamp,
-                                recipientName: widget.recipientName,
-                                recipientAvatarColor: widget.recipientAvatarColor,
-                                recipientId: widget.recipientId,
-                              );
-                            }
-                            return _ImageBubble(
-                              imageUrl: imgMsg.imageUrl,
-                              isMe: imgMsg.isMe,
-                              timestamp: imgMsg.timestamp,
-                              recipientName: widget.recipientName,
-                              recipientAvatarColor: widget.recipientAvatarColor,
-                              recipientId: widget.recipientId,
-                              bytes: imgMsg.bytes,
-                              onForward: () {
-                                showForwardSheet(
-                                  context: context,
-                                  messageText: 'Photo',
-                                  imageUrl: imgMsg.imageUrl,
-                                );
-                              },
-                            );
-                          }
-
-                          // Document message
-                          if (item.type == _ChatItemType.document) {
-                            final docMsg = _documentMessages[item.docIndex!];
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                top: 4, bottom: 4,
-                                left: docMsg.isMe ? 60 : 48, right: docMsg.isMe ? 0 : 60,
-                              ),
-                              child: Align(
-                                alignment: docMsg.isMe ? Alignment.centerRight : Alignment.centerLeft,
-                                child: DocumentBubble(
-                                  fileName: docMsg.fileName,
-                                  fileSize: docMsg.fileSize,
-                                  isMe: docMsg.isMe,
-                                  timestamp: docMsg.timestamp,
-                                  onForward: () {
-                                    showForwardSheet(
-                                      context: context,
-                                      messageText: docMsg.fileName,
-                                      documentName: docMsg.fileName,
-                                    );
-                                  },
-                                ),
-                              ),
-                            );
-                          }
-
-                          // Text message
-                          final msgIndex = item.textIndex!;
-                          final msg = _messages[msgIndex];
+                          final msg = _messages[index];
 
                           // Skip messages unsent "just for me"
                           if (_hiddenMessageIds.contains(msg.id)) {
                             return const SizedBox.shrink();
                           }
 
-                          final showTimestamp = msgIndex == 0 ||
+                          final showTimestamp = index == 0 ||
                               msg.timestamp
-                                      .difference(
-                                          _messages[msgIndex - 1].timestamp)
+                                      .difference(_messages[index - 1].timestamp)
                                       .inMinutes >
                                   5;
+
+                          // Check if unsent for everyone
+                          final isDeletedForEveryone = _deletedForEveryoneIds.contains(msg.id);
+
+                          // Location message
+                          if (msg.type == MessageType.location) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                _LocationBubble(
+                                  isMe: msg.isMe,
+                                  timestamp: msg.timestamp,
+                                  recipientName: widget.recipientName,
+                                  recipientAvatarColor: widget.recipientAvatarColor,
+                                  recipientId: widget.recipientId,
+                                  latitude: msg.latitude,
+                                  longitude: msg.longitude,
+                                  locationLabel: msg.locationLabel,
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: '\u{1F4CD} ${msg.locationLabel ?? 'Location'}',
+                                      latitude: msg.latitude,
+                                      longitude: msg.longitude,
+                                      locationLabel: msg.locationLabel,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Image message
+                          if (msg.type == MessageType.image) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                _ImageBubble(
+                                  imageUrl: msg.imageUrl ?? '',
+                                  isMe: msg.isMe,
+                                  timestamp: msg.timestamp,
+                                  recipientName: widget.recipientName,
+                                  recipientAvatarColor: widget.recipientAvatarColor,
+                                  recipientId: widget.recipientId,
+                                  onForward: () {
+                                    showForwardSheet(context: context, messageText: 'Photo', imageUrl: msg.imageUrl);
+                                  },
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Document message
+                          if (msg.type == MessageType.document) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: 4, bottom: 4,
+                                    left: msg.isMe ? 60 : 48, right: msg.isMe ? 0 : 60,
+                                  ),
+                                  child: Align(
+                                    alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: DocumentBubble(
+                                      fileName: msg.documentName ?? 'Document',
+                                      fileSize: msg.documentSize,
+                                      isMe: msg.isMe,
+                                      timestamp: msg.timestamp,
+                                      onForward: () {
+                                        showForwardSheet(
+                                          context: context,
+                                          messageText: msg.documentName ?? 'Document',
+                                          documentName: msg.documentName,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Contact message
+                          if (msg.type == MessageType.contact) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                _ContactBubble(
+                                  isMe: msg.isMe,
+                                  contactName: msg.contactName ?? 'Unknown',
+                                  contactPhone: msg.contactPhone ?? '',
+                                  timestamp: msg.timestamp,
+                                  onForward: () {
+                                    showForwardSheet(
+                                      context: context,
+                                      messageText: '\u{1F464} ${msg.contactName}',
+                                      contactName: msg.contactName,
+                                      contactPhone: msg.contactPhone,
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          }
 
                           final isHighlighted = _isSearching &&
                               _searchMatches.isNotEmpty &&
                               _currentMatchIndex >= 0 &&
-                              _searchMatches[_currentMatchIndex] == msgIndex;
-
-                          // Check if unsent for everyone
-                          final isDeletedForEveryone = _deletedForEveryoneIds.contains(msg.id);
+                              _currentMatchIndex < _searchMatches.length &&
+                              _searchMatches[_currentMatchIndex] == index;
 
                           return Column(
                             children: [
@@ -463,7 +497,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                     );
                                   },
                                   onReact: () => _showEmojiPicker(msg.id),
-                                  reactions: _reactions[msg.id] ?? {},
+                                  reactions: msg.reactions,
                                   onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
                                   onCopy: () => _copyMessage(msg.message),
                                   onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
@@ -516,12 +550,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  _isRecipientTyping ? 'typing...' : 'Online',
+                  _isRecipientTyping ? 'typing...' : (_dmService.isUserOnline(widget.recipientId) ? 'Online' : 'Offline'),
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: _isRecipientTyping
                         ? HuddlColors.teal
-                        : HuddlColors.textHint,
+                        : _dmService.isUserOnline(widget.recipientId) ? const Color(0xFF34C759) : HuddlColors.textHint,
                     fontWeight: _isRecipientTyping
                         ? FontWeight.w500
                         : FontWeight.w400,
@@ -543,7 +577,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           color: HuddlColors.white,
           elevation: 8,
-          onSelected: (value) {
+          onSelected: (value) async {
             switch (value) {
               case 'block':
                 _showBlockUserDialog();
@@ -558,9 +592,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 setState(() => _isSearching = true);
                 break;
               case 'mute':
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Notifications muted')),
-                );
+                if (_conversationId != null) {
+                  await _dmService.toggleMute(_conversationId!);
+                  final muted = _dmService.isMuted(_conversationId!);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(muted ? 'Notifications muted' : 'Notifications unmuted')),
+                    );
+                    setState(() {});
+                  }
+                }
                 break;
               case 'delete':
                 _confirmDeleteConversation();
@@ -617,9 +658,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'mute',
               child: Row(
                 children: [
-                  const Icon(Icons.notifications_off_outlined, size: 20, color: HuddlColors.textDark),
+                  Icon(_conversationId != null && _dmService.isMuted(_conversationId!) ? Icons.notifications_active : Icons.notifications_off_outlined, size: 20, color: HuddlColors.textDark),
                   const SizedBox(width: 12),
-                  Text('Mute notifications',
+                  Text(_conversationId != null && _dmService.isMuted(_conversationId!) ? 'Unmute notifications' : 'Mute notifications',
                       style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 ],
               ),
@@ -1413,17 +1454,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   // ── Media permission prompt ────────────────────────────────────────────
-  // ── Interleaved list helpers ────────────────────────────────────────
+  // ── Interleaved list helpers (all message types now unified in _messages) ──
   List<_ChatItem> get _sortedItems {
     final items = <_ChatItem>[];
     for (int i = 0; i < _messages.length; i++) {
       items.add(_ChatItem(type: _ChatItemType.text, textIndex: i, timestamp: _messages[i].timestamp));
-    }
-    for (int i = 0; i < _imageMessages.length; i++) {
-      items.add(_ChatItem(type: _ChatItemType.image, imageIndex: i, timestamp: _imageMessages[i].timestamp));
-    }
-    for (int i = 0; i < _documentMessages.length; i++) {
-      items.add(_ChatItem(type: _ChatItemType.document, docIndex: i, timestamp: _documentMessages[i].timestamp));
     }
     items.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return items;
@@ -1456,69 +1491,137 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Future<void> _handleCameraCapture() async {
     final attachment = await _mediaService.takePhoto();
     if (attachment == null || !mounted) return;
-    _addImageMessage(attachment);
+    await _sendRichMessage(type: MessageType.image, imageUrl: attachment.filePath ?? 'camera_photo_${DateTime.now().millisecondsSinceEpoch}');
   }
 
   Future<void> _handleGalleryPick() async {
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
     for (final att in attachments) {
-      _addImageMessage(att);
+      await _sendRichMessage(type: MessageType.image, imageUrl: att.filePath ?? 'gallery_photo_${DateTime.now().millisecondsSinceEpoch}');
     }
-  }
-
-  void _addImageMessage(MediaAttachment att) {
-    // Use the file path or object URL for display
-    final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
-    setState(() {
-      _imageMessages.add(_ImageChatMessage(
-        imageUrl: url,
-        isMe: true,
-        timestamp: DateTime.now(),
-        bytes: att.bytes,
-      ));
-    });
-    _scrollToBottom(animate: true);
   }
 
   Future<void> _handleDocumentPick() async {
     final attachment = await _mediaService.pickDocument();
     if (attachment == null || !mounted) return;
-    setState(() {
-      _documentMessages.add(_DocumentChatMessage(
-        fileName: attachment.fileName ?? 'Unknown file',
-        fileSize: attachment.fileSize,
-        isMe: true,
-        timestamp: DateTime.now(),
-      ));
-    });
-    _scrollToBottom(animate: true);
-  }
-
-  void _handleLocationShare() {
-    if (!mounted) return;
-    // Show a styled location-sharing preview
-    setState(() {
-      _imageMessages.add(_ImageChatMessage(
-        imageUrl: 'location_pin',
-        isMe: true,
-        timestamp: DateTime.now(),
-        isLocationPin: true,
-      ));
-    });
-    _scrollToBottom(animate: true);
-  }
-
-  void _handleContactShare() {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Contact sharing coming soon'),
-        backgroundColor: HuddlColors.textSecondary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    await _sendRichMessage(
+      type: MessageType.document,
+      documentName: attachment.fileName ?? 'Unknown file',
+      documentSize: attachment.fileSize,
     );
+  }
+
+  void _handleLocationShare() async {
+    if (!mounted) return;
+    // Use realistic Cambridge coordinates for demo
+    await _sendRichMessage(
+      type: MessageType.location,
+      latitude: 52.2053,
+      longitude: 0.1218,
+      locationLabel: 'Cambridge, UK',
+    );
+  }
+
+  void _handleContactShare() async {
+    if (!mounted) return;
+    // Show a contact picker dialog
+    final members = [
+      {'name': 'Emma Wilson', 'phone': '+44 7700 900001'},
+      {'name': 'Sophie Brown', 'phone': '+44 7700 900002'},
+      {'name': 'James Taylor', 'phone': '+44 7700 900003'},
+      {'name': 'Olivia Davis', 'phone': '+44 7700 900004'},
+      {'name': 'Luke Harris', 'phone': '+44 7700 900005'},
+      {'name': 'Anna Clark', 'phone': '+44 7700 900006'},
+      {'name': 'Kate Miller', 'phone': '+44 7700 900007'},
+    ];
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: HuddlColors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.divider, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text('Share Contact', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+              const SizedBox(height: 8),
+              ...members.map((m) => ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
+                  child: Text(m['name']![0], style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                ),
+                title: Text(m['name']!, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                subtitle: Text(m['phone']!, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+                onTap: () => Navigator.pop(ctx, m),
+              )),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+    if (result != null && mounted) {
+      await _sendRichMessage(
+        type: MessageType.contact,
+        contactName: result['name'],
+        contactPhone: result['phone'],
+      );
+    }
+  }
+
+  /// Helper to send a rich (non-text) message through DMService for persistence
+  Future<void> _sendRichMessage({
+    required MessageType type,
+    String? imageUrl,
+    String? documentName,
+    int? documentSize,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
+    String? contactName,
+    String? contactPhone,
+  }) async {
+    if (_conversationId == null) {
+      final conv = await _dmService.getOrCreateConversation(
+        recipientId: widget.recipientId,
+        recipientName: widget.recipientName,
+        avatarColor: widget.recipientAvatarColor,
+      );
+      _conversationId = conv.id;
+    }
+    String displayMsg = '';
+    switch (type) {
+      case MessageType.image: displayMsg = 'Photo'; break;
+      case MessageType.document: displayMsg = documentName ?? 'Document'; break;
+      case MessageType.location: displayMsg = locationLabel ?? 'Location'; break;
+      case MessageType.contact: displayMsg = contactName ?? 'Contact'; break;
+      case MessageType.text: break;
+    }
+    await _dmService.sendMessage(
+      conversationId: _conversationId!,
+      message: displayMsg,
+      senderName: _userName,
+      type: type,
+      imageUrl: imageUrl,
+      documentName: documentName,
+      documentSize: documentSize,
+      latitude: latitude,
+      longitude: longitude,
+      locationLabel: locationLabel,
+      contactName: contactName,
+      contactPhone: contactPhone,
+    );
+    // Refresh messages
+    _messages = await _dmService.getMessages(_conversationId!);
+    setState(() {});
+    _scrollToBottom(animate: true);
   }
 
   // ── Emoji reactions ────────────────────────────────────────────────────
@@ -1529,24 +1632,12 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
   }
 
-  void _toggleReaction(String messageId, String emoji) {
-    setState(() {
-      final msgReactions = _reactions[messageId] ?? {};
-      final current = msgReactions[emoji] ?? 0;
-      if (current > 0) {
-        // Same emoji tapped again - remove it
-        msgReactions.remove(emoji);
-      } else {
-        // New emoji - clear all previous reactions (replace behavior) and set new one
-        msgReactions.clear();
-        msgReactions[emoji] = 1;
-      }
-      if (msgReactions.isEmpty) {
-        _reactions.remove(messageId);
-      } else {
-        _reactions[messageId] = msgReactions;
-      }
-    });
+  void _toggleReaction(String messageId, String emoji) async {
+    if (_conversationId == null) return;
+    await _dmService.toggleReaction(_conversationId!, messageId, emoji);
+    // Refresh messages to get updated reactions
+    _messages = await _dmService.getMessages(_conversationId!);
+    if (mounted) setState(() {});
   }
 
   void _saveMessage(DirectMessage msg) {
@@ -2417,6 +2508,10 @@ class _LocationBubble extends StatelessWidget {
   final String recipientName;
   final String recipientAvatarColor;
   final String? recipientId;
+  final double? latitude;
+  final double? longitude;
+  final String? locationLabel;
+  final VoidCallback? onForward;
 
   const _LocationBubble({
     required this.isMe,
@@ -2424,29 +2519,42 @@ class _LocationBubble extends StatelessWidget {
     required this.recipientName,
     required this.recipientAvatarColor,
     this.recipientId,
+    this.latitude,
+    this.longitude,
+    this.locationLabel,
+    this.onForward,
   });
 
   Future<void> _openInMaps(BuildContext context) async {
-    const label = 'Shared Location';
+    final lat = latitude ?? 52.2053;
+    final lng = longitude ?? 0.1218;
+    final label = locationLabel ?? 'Shared Location';
+    // Use coordinates directly for reliable map opening
     final googleUrl = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(label)}');
+        'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
     try {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } catch (_) {
-      final geoUrl = Uri.parse('geo:0,0?q=${Uri.encodeComponent(label)}');
+      // Fallback: try geo: URI
+      final geoUrl = Uri.parse('geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})');
       try {
         await launchUrl(geoUrl);
       } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Could not open maps'),
-              backgroundColor: Colors.red.shade400,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
+        // Last resort: open in browser tab
+        try {
+          await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
+        } catch (_) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Could not open maps'),
+                backgroundColor: Colors.red.shade400,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+            );
+          }
         }
       }
     }
@@ -2531,7 +2639,7 @@ class _LocationBubble extends StatelessWidget {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              'Shared location',
+                              locationLabel ?? 'Shared location',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
@@ -2578,6 +2686,116 @@ class _LocationBubble extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONTACT BUBBLE — shows a shared contact card
+// ═══════════════════════════════════════════════════════════════════════════════
+class _ContactBubble extends StatelessWidget {
+  final bool isMe;
+  final String contactName;
+  final String contactPhone;
+  final DateTime timestamp;
+  final VoidCallback? onForward;
+
+  const _ContactBubble({
+    required this.isMe,
+    required this.contactName,
+    required this.contactPhone,
+    required this.timestamp,
+    this.onForward,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        top: 8, bottom: 4,
+        left: isMe ? 60 : 48, right: isMe ? 0 : 60,
+      ),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 260),
+          decoration: BoxDecoration(
+            color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, color: HuddlColors.primary, size: 24),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(contactName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                          Text(contactPhone, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+                        ],
+                      ),
+                    ),
+                    if (onForward != null)
+                      GestureDetector(
+                        onTap: onForward,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.forward, size: 14, color: HuddlColors.textSecondary),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.phone, size: 13, color: HuddlColors.primary),
+                    const SizedBox(width: 4),
+                    Text('Call', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.primary)),
+                    const Spacer(),
+                    Text(
+                      '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}',
+                      style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

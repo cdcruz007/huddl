@@ -86,7 +86,7 @@ class _EventsScreenState extends State<EventsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Mingle",
+                        "Meetups",
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -110,11 +110,11 @@ class _EventsScreenState extends State<EventsScreen>
                     ],
                   ),
                   const SizedBox(height: 4),
-                  // ── Tabs: Meet-ups | I'm Going ──────────────────────
+                  // ── Tabs: Nearby | I'm Going ──────────────────────
                   TabBar(
                     controller: _tabController,
                     tabs: const [
-                      Tab(text: 'Meet-ups'),
+                      Tab(text: 'Nearby'),
                       Tab(text: "I'm Going"),
                     ],
                     labelColor: HuddlColors.primary,
@@ -155,30 +155,25 @@ class _EventsScreenState extends State<EventsScreen>
       ),
       // ── FAB ──────────────────────────────────────────────────────
       floatingActionButton: Container(
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
           gradient: HuddlColors.primaryGradient,
-          borderRadius: BorderRadius.circular(28),
+          shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: HuddlColors.primary.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              color: HuddlColors.primary.withValues(alpha: 0.35),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
-        child: FloatingActionButton.extended(
+        child: FloatingActionButton(
           onPressed: _navigateToCreate,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          icon: const Icon(Icons.add, color: HuddlColors.white),
-          label: Text(
-            'Create Meet-up',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.white,
-            ),
-          ),
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
         ),
       ),
     );

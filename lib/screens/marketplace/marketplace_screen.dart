@@ -134,7 +134,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 child: _showSearch
                     ? _buildSearchField()
                     : Text(
-                        'Rehome',
+                        'Preloved',
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,

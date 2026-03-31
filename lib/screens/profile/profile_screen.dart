@@ -1148,13 +1148,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _emptyState(Icons.storefront_outlined, 'No listings yet',
-              'Items you list on Rehome will appear here.'),
+              'Items you list on Preloved will appear here.'),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: Text('Go to Rehome',
+              label: Text('Go to Preloved',
                   style: GoogleFonts.poppins(
                       fontSize: 14, fontWeight: FontWeight.w500)),
               style: OutlinedButton.styleFrom(
@@ -1167,7 +1167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               onPressed: () {
                 Navigator.pop(c);
-                // Switch to Rehome tab (index 3)
+                // Switch to Preloved tab (index 3)
                 MainShell.shellKey.currentState?.switchTab(3);
               },
             ),

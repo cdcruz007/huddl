@@ -1,4 +1,44 @@
+import 'dart:convert';
+import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
+import 'browser_storage.dart';
+
+/// Privacy level for a meetup
+enum MeetupPrivacy { public, group, private_ }
+
+/// Repeat frequency for a meetup
+enum MeetupRepeat { none, daily, weekly, monthly, custom }
+
+/// Represents an invitee / attendee
+class MeetupAttendee {
+  final String id;
+  final String name;
+  final String? avatarUrl;
+  final Color? accentColor;
+  final String status; // 'going', 'maybe', 'invited', 'declined'
+
+  MeetupAttendee({
+    required this.id,
+    required this.name,
+    this.avatarUrl,
+    this.accentColor,
+    this.status = 'invited',
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'avatarUrl': avatarUrl,
+    'status': status,
+  };
+
+  factory MeetupAttendee.fromJson(Map<String, dynamic> j) => MeetupAttendee(
+    id: j['id'] ?? '',
+    name: j['name'] ?? '',
+    avatarUrl: j['avatarUrl'],
+    status: j['status'] ?? 'invited',
+  );
+}
 
 /// Represents a casual parent-organised meet-up (free, informal).
 class Meetup {
@@ -18,6 +58,17 @@ class Meetup {
   final List<String> attendeeNames;
   final String imageUrl;
 
+  // New fields from wireframe
+  final MeetupPrivacy privacy;
+  final MeetupRepeat repeat;
+  final String? repeatDisplay; // e.g. "Every Monday", "Monthly on the 15th"
+  final List<int>? repeatDays; // For weekly: 0=Mon...6=Sun; for custom: specific dates
+  final DateTime? repeatEndDate;
+  final String? groupId; // When privacy=group, which group this belongs to
+  final String? groupName;
+  final List<MeetupAttendee> invitees;
+  final DateTime createdAt;
+
   Meetup({
     required this.id,
     required this.title,
@@ -34,12 +85,22 @@ class Meetup {
     this.isGoing = false,
     this.attendeeNames = const [],
     this.imageUrl = '',
-  });
+    this.privacy = MeetupPrivacy.public,
+    this.repeat = MeetupRepeat.none,
+    this.repeatDisplay,
+    this.repeatDays,
+    this.repeatEndDate,
+    this.groupId,
+    this.groupName,
+    this.invitees = const [],
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   Meetup copyWith({
     int? attendeeCount,
     bool? isGoing,
     List<String>? attendeeNames,
+    List<MeetupAttendee>? invitees,
   }) {
     return Meetup(
       id: id,
@@ -57,8 +118,73 @@ class Meetup {
       isGoing: isGoing ?? this.isGoing,
       attendeeNames: attendeeNames ?? this.attendeeNames,
       imageUrl: imageUrl,
+      privacy: privacy,
+      repeat: repeat,
+      repeatDisplay: repeatDisplay,
+      repeatDays: repeatDays,
+      repeatEndDate: repeatEndDate,
+      groupId: groupId,
+      groupName: groupName,
+      invitees: invitees ?? this.invitees,
+      createdAt: createdAt,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'category': category,
+    'dateDisplay': dateDisplay,
+    'timeDisplay': timeDisplay,
+    'dateTime': dateTime.toIso8601String(),
+    'location': location,
+    'organiserName': organiserName,
+    'organiserId': organiserId,
+    'attendeeCount': attendeeCount,
+    'maxAttendees': maxAttendees,
+    'isGoing': isGoing,
+    'attendeeNames': attendeeNames,
+    'imageUrl': imageUrl.startsWith('data:') ? '' : imageUrl, // Don't persist base64
+    'privacy': privacy.index,
+    'repeat': repeat.index,
+    'repeatDisplay': repeatDisplay,
+    'repeatDays': repeatDays,
+    'repeatEndDate': repeatEndDate?.toIso8601String(),
+    'groupId': groupId,
+    'groupName': groupName,
+    'invitees': invitees.map((i) => i.toJson()).toList(),
+    'createdAt': createdAt.toIso8601String(),
+  };
+
+  factory Meetup.fromJson(Map<String, dynamic> j) => Meetup(
+    id: j['id'] ?? '',
+    title: j['title'] ?? '',
+    description: j['description'] ?? '',
+    category: j['category'] ?? 'Other',
+    dateDisplay: j['dateDisplay'] ?? '',
+    timeDisplay: j['timeDisplay'] ?? '',
+    dateTime: DateTime.tryParse(j['dateTime'] ?? '') ?? DateTime.now(),
+    location: j['location'] ?? '',
+    organiserName: j['organiserName'] ?? '',
+    organiserId: j['organiserId'] ?? 'current_user',
+    attendeeCount: j['attendeeCount'] ?? 1,
+    maxAttendees: j['maxAttendees'],
+    isGoing: j['isGoing'] ?? false,
+    attendeeNames: List<String>.from(j['attendeeNames'] ?? []),
+    imageUrl: j['imageUrl'] ?? '',
+    privacy: MeetupPrivacy.values[j['privacy'] ?? 0],
+    repeat: MeetupRepeat.values[j['repeat'] ?? 0],
+    repeatDisplay: j['repeatDisplay'],
+    repeatDays: j['repeatDays'] != null ? List<int>.from(j['repeatDays']) : null,
+    repeatEndDate: j['repeatEndDate'] != null ? DateTime.tryParse(j['repeatEndDate']) : null,
+    groupId: j['groupId'],
+    groupName: j['groupName'],
+    invitees: (j['invitees'] as List<dynamic>?)
+        ?.map((i) => MeetupAttendee.fromJson(i as Map<String, dynamic>))
+        .toList() ?? [],
+    createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
+  );
 }
 
 /// Manages the list of meet-ups. Singleton with ChangeNotifier.
@@ -67,8 +193,10 @@ class MeetupService extends ChangeNotifier {
   factory MeetupService() => _instance;
   MeetupService._internal() {
     _loadSampleMeetups();
+    _loadPersistedMeetups();
   }
 
+  static const String _storageKey = 'huddl_user_meetups';
   final List<Meetup> _meetups = [];
 
   List<Meetup> get meetups => List.unmodifiable(_meetups);
@@ -77,6 +205,7 @@ class MeetupService extends ChangeNotifier {
   void createMeetup(Meetup meetup) {
     _meetups.insert(0, meetup);
     notifyListeners();
+    _persistUserMeetups();
   }
 
   /// Toggle "going" status for a meetup.
@@ -93,12 +222,60 @@ class MeetupService extends ChangeNotifier {
           : [...m.attendeeNames, 'You'],
     );
     notifyListeners();
+    _persistUserMeetups();
   }
 
   /// Delete a meetup (organiser only).
   void deleteMeetup(String meetupId) {
     _meetups.removeWhere((m) => m.id == meetupId);
     notifyListeners();
+    _persistUserMeetups();
+  }
+
+  /// Update RSVP for an invitee
+  void updateInviteeStatus(String meetupId, String inviteeId, String status) {
+    final index = _meetups.indexWhere((m) => m.id == meetupId);
+    if (index < 0) return;
+    final m = _meetups[index];
+    final updatedInvitees = m.invitees.map((inv) {
+      if (inv.id == inviteeId) {
+        return MeetupAttendee(
+          id: inv.id,
+          name: inv.name,
+          avatarUrl: inv.avatarUrl,
+          status: status,
+        );
+      }
+      return inv;
+    }).toList();
+    _meetups[index] = m.copyWith(invitees: updatedInvitees);
+    notifyListeners();
+  }
+
+  // ── Persistence ──────────────────────────────────────────────────────
+
+  Future<void> _persistUserMeetups() async {
+    try {
+      final userMeetups = _meetups.where((m) => m.organiserId == 'current_user').toList();
+      final encoded = json.encode(userMeetups.map((m) => m.toJson()).toList());
+      await BrowserStorage.setString(_storageKey, encoded);
+    } catch (_) {}
+  }
+
+  Future<void> _loadPersistedMeetups() async {
+    try {
+      final raw = await BrowserStorage.getString(_storageKey);
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        for (final j in decoded) {
+          final meetup = Meetup.fromJson(j as Map<String, dynamic>);
+          if (!_meetups.any((m) => m.id == meetup.id)) {
+            _meetups.insert(0, meetup);
+          }
+        }
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   // ── Sample data ─────────────────────────────────────────────────────────
@@ -122,6 +299,9 @@ class MeetupService extends ChangeNotifier {
         maxAttendees: 12,
         isGoing: false,
         attendeeNames: ['Sophie M.', 'Emma W.', 'Anna K.', 'Lucy R.', 'Kate P.', 'Sarah T.', 'Olivia L.', 'James D.'],
+        privacy: MeetupPrivacy.public,
+        repeat: MeetupRepeat.weekly,
+        repeatDisplay: 'Every Monday',
       ),
       Meetup(
         id: 'mu_2',
@@ -140,6 +320,8 @@ class MeetupService extends ChangeNotifier {
         maxAttendees: 8,
         isGoing: false,
         attendeeNames: ['James D.', 'Mark T.', 'Luke W.', 'David S.', 'Tom R.'],
+        privacy: MeetupPrivacy.group,
+        groupName: 'Dads Connect',
       ),
       Meetup(
         id: 'mu_3',
@@ -157,6 +339,7 @@ class MeetupService extends ChangeNotifier {
         attendeeCount: 15,
         isGoing: false,
         attendeeNames: ['Emma W.', 'Sophie M.', 'Anna K.', 'Kate P.', 'Lucy R.'],
+        privacy: MeetupPrivacy.public,
       ),
       Meetup(
         id: 'mu_4',
@@ -174,6 +357,7 @@ class MeetupService extends ChangeNotifier {
         attendeeCount: 10,
         isGoing: false,
         attendeeNames: ['Anna K.', 'Emma W.', 'Sophie M.', 'Olivia L.'],
+        privacy: MeetupPrivacy.public,
       ),
       Meetup(
         id: 'mu_5',
@@ -192,6 +376,7 @@ class MeetupService extends ChangeNotifier {
         maxAttendees: 10,
         isGoing: false,
         attendeeNames: ['Luke W.', 'Kate P.', 'Mark T.', 'Sarah T.', 'David S.', 'Tom R.'],
+        privacy: MeetupPrivacy.private_,
       ),
     ]);
   }
