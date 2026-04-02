@@ -8,28 +8,35 @@ class PrivacyPolicyDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: HuddlColors.white,
       appBar: AppBar(
-        backgroundColor: HuddlColors.primary,
+        backgroundColor: HuddlColors.white,
+        elevation: 0,
+        surfaceTintColor: HuddlColors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left,
+              size: 30, color: HuddlColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
         title: Text(
           'Privacy Policy',
           style: GoogleFonts.poppins(
-              fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.textDark,
+          ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLastUpdated(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             _buildGDPRNotice(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             _buildIntroduction(),
             const SizedBox(height: 24),
             _buildSection(
@@ -184,7 +191,7 @@ UK Information Commissioner\u2019s Office:
 Website: https://ico.org.uk
 Phone: 0303 123 1113''',
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 8),
             _buildDataProtectionSummary(),
             const SizedBox(height: 24),
           ],
@@ -195,11 +202,11 @@ Phone: 0303 123 1113''',
 
   Widget _buildLastUpdated() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.peachLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -212,15 +219,15 @@ Phone: 0303 123 1113''',
                 Text(
                   'Last Updated: January 2025',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.primaryDark,
                   ),
                 ),
                 Text(
                   'Version 1.0 \u2013 GDPR Compliant',
                   style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary),
+                      fontSize: 11, color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -232,16 +239,16 @@ Phone: 0303 123 1113''',
 
   Widget _buildGDPRNotice() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.success.withValues(alpha: 0.08),
+        color: HuddlColors.teal.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.success.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.verified_user, color: HuddlColors.success, size: 24),
+          const Icon(Icons.verified_user, color: HuddlColors.teal, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -252,7 +259,7 @@ Phone: 0303 123 1113''',
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.success,
+                    color: HuddlColors.teal,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -271,9 +278,9 @@ Phone: 0303 123 1113''',
 
   Widget _buildIntroduction() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.surfaceLight,
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -282,22 +289,22 @@ Phone: 0303 123 1113''',
         children: [
           Row(
             children: [
-              const Icon(Icons.privacy_tip, color: HuddlColors.primary, size: 24),
-              const SizedBox(width: 12),
+              const Icon(Icons.privacy_tip, color: HuddlColors.primary, size: 22),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Your Privacy Matters',
                   style: GoogleFonts.poppins(
-                      fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             'Huddl (\u201cwe\u201d, \u201cus\u201d, \u201cour\u201d) operated by Cruzen Ltd is committed to protecting your privacy. This Privacy Policy explains how we collect, use, share, and protect your personal information when you use our Service.',
             style: GoogleFonts.poppins(
-                fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
+                fontSize: 13, color: HuddlColors.textSecondary, height: 1.55),
           ),
         ],
       ),
@@ -316,13 +323,15 @@ Phone: 0303 123 1113''',
             color: HuddlColors.textDark,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
           content,
           style: GoogleFonts.poppins(
               fontSize: 13, color: HuddlColors.textSecondary, height: 1.6),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+        Divider(color: HuddlColors.divider, height: 1),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -331,24 +340,24 @@ Phone: 0303 123 1113''',
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.peachVeryLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.shield, color: HuddlColors.primary, size: 24),
-              const SizedBox(width: 12),
+              const Icon(Icons.shield, color: HuddlColors.primary, size: 22),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Quick Summary \u2013 Your Rights',
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.primaryDark,
                   ),
                 ),
               ),
@@ -364,7 +373,7 @@ Phone: 0303 123 1113''',
           _buildRightItem('\u2713 Lodge complaint with ICO'),
           const SizedBox(height: 12),
           Text(
-            'Exercise your rights: Profile \u2192 Privacy & Security \u2192 Data Rights\nOr email: privacy@huddl.app',
+            'Exercise your rights: Profile \u2192 Privacy \u2192 Export / Delete\nOr email: privacy@huddl.app',
             style: GoogleFonts.poppins(
               fontSize: 12,
               color: HuddlColors.textSecondary,
@@ -378,7 +387,7 @@ Phone: 0303 123 1113''',
 
   Widget _buildRightItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         text,
         style: GoogleFonts.poppins(

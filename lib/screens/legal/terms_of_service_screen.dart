@@ -8,26 +8,33 @@ class TermsOfServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: HuddlColors.white,
       appBar: AppBar(
-        backgroundColor: HuddlColors.primary,
+        backgroundColor: HuddlColors.white,
+        elevation: 0,
+        surfaceTintColor: HuddlColors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left,
+              size: 30, color: HuddlColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        centerTitle: true,
         title: Text(
           'Terms of Service',
           style: GoogleFonts.poppins(
-              fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.textDark,
+          ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildLastUpdated(),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             _buildIntroduction(),
             const SizedBox(height: 24),
             _buildSection(
@@ -215,7 +222,7 @@ Cruzen Ltd
 Email: legal@huddl.app
 Support: support@huddl.app''',
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 8),
             _buildAcceptanceNotice(),
             const SizedBox(height: 24),
           ],
@@ -226,11 +233,11 @@ Support: support@huddl.app''',
 
   Widget _buildLastUpdated() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.primary.withValues(alpha: 0.08),
+        color: HuddlColors.peachLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -243,15 +250,15 @@ Support: support@huddl.app''',
                 Text(
                   'Last Updated: January 2025',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.primaryDark,
                   ),
                 ),
                 Text(
                   'Version 1.0',
                   style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary),
+                      fontSize: 11, color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -263,9 +270,9 @@ Support: support@huddl.app''',
 
   Widget _buildIntroduction() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.surfaceLight,
+        color: HuddlColors.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.divider),
       ),
@@ -274,22 +281,22 @@ Support: support@huddl.app''',
         children: [
           Row(
             children: [
-              const Icon(Icons.description, color: HuddlColors.primary, size: 24),
-              const SizedBox(width: 12),
+              const Icon(Icons.description, color: HuddlColors.primary, size: 22),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'Important Notice',
                   style: GoogleFonts.poppins(
-                      fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                      fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             'Please read these Terms of Service carefully before using Huddl. By creating an account or using our Service, you acknowledge that you have read, understood, and agree to be bound by these Terms.',
             style: GoogleFonts.poppins(
-                fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
+                fontSize: 13, color: HuddlColors.textSecondary, height: 1.55),
           ),
         ],
       ),
@@ -308,13 +315,15 @@ Support: support@huddl.app''',
             color: HuddlColors.textDark,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Text(
           content,
           style: GoogleFonts.poppins(
               fontSize: 13, color: HuddlColors.textSecondary, height: 1.6),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
+        Divider(color: HuddlColors.divider, height: 1),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -323,39 +332,49 @@ Support: support@huddl.app''',
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.error.withValues(alpha: 0.08),
+        color: HuddlColors.peachVeryLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.error.withValues(alpha: 0.25)),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.warning_amber, color: HuddlColors.error, size: 24),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              const Icon(Icons.info_outline, color: HuddlColors.primary, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
                   'By using Huddl, you agree to:',
                   style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.error),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primaryDark,
+                  ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '\u2022 All limitations of liability\n'
-                  '\u2022 No refund policy\n'
-                  '\u2022 Binding arbitration for disputes\n'
-                  '\u2022 All other terms stated above',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: 10),
+          _buildAcceptanceItem('\u2022 All limitations of liability'),
+          _buildAcceptanceItem('\u2022 No refund policy'),
+          _buildAcceptanceItem('\u2022 Binding arbitration for disputes'),
+          _buildAcceptanceItem('\u2022 All other terms stated above'),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAcceptanceItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: HuddlColors.textDark,
+        ),
       ),
     );
   }
