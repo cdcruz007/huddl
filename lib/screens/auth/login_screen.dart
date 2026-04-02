@@ -21,9 +21,10 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   bool _isLoading       = false;
   String? _errorMessage;
+  String? _phoneError;
 
-  // Country code — defaulting to UK (+44) matching onboarding
-  String _countryCode = '+44';
+  // Country code — locked to UK (+44) matching onboarding
+  static const _countryCode = '+44';
 
   @override
   void dispose() {
@@ -32,11 +33,62 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  bool get _canLogin =>
-      _phoneController.text.trim().length >= 7 &&
-      _passwordController.text.length >= 6;
+  // ── UK phone validation (same rules as onboarding phone_number_screen) ──
+  String _normalise(String input) {
+    String raw = input.replaceAll(RegExp(r'\s+'), '');
+    if (raw.startsWith('+44')) raw = raw.substring(3);
+    if (raw.startsWith('0')) raw = raw.substring(1);
+    return raw;
+  }
 
-  // ── Generate a 6-digit OTP ────────────────────────────────────────────────
+  String? _validatePhone(String raw) {
+    final digits = _normalise(raw);
+    if (digits.isEmpty) return null;
+    if (!RegExp(r'^\d+$').hasMatch(digits)) return 'Only digits are allowed';
+    if (digits.isNotEmpty && !digits.startsWith('7')) {
+      if (digits.startsWith('1') || digits.startsWith('2')) {
+        return 'Landline numbers are not accepted';
+      }
+      return 'UK mobile numbers must start with 7 (after +44)';
+    }
+    if (digits.length >= 2) {
+      final prefix2 = digits.substring(0, 2);
+      if (prefix2 == '70' || prefix2 == '76') {
+        return 'Personal / pager numbers are not accepted';
+      }
+    }
+    if (digits.length >= 6 && RegExp(r'^(\d)\1+$').hasMatch(digits)) {
+      return 'Please enter a valid phone number';
+    }
+    if (digits.length > 10) {
+      return 'UK mobile numbers are 10 digits after the leading 0';
+    }
+    return null;
+  }
+
+  bool get _isPhoneValid {
+    final digits = _normalise(_phoneController.text);
+    if (digits.length != 10) return false;
+    if (!digits.startsWith('7')) return false;
+    final prefix2 = digits.substring(0, 2);
+    if (prefix2 == '70' || prefix2 == '76') return false;
+    if (RegExp(r'^(\d)\1+$').hasMatch(digits)) return false;
+    return true;
+  }
+
+  // ── Password validation (same rules as onboarding password_screen) ──
+  bool get _isPasswordValid {
+    final pwd = _passwordController.text;
+    if (pwd.length < 8) return false;
+    if (!RegExp(r'[A-Z]').hasMatch(pwd)) return false;
+    if (!RegExp(r'[a-z]').hasMatch(pwd)) return false;
+    if (!RegExp(r'[0-9]').hasMatch(pwd)) return false;
+    return true;
+  }
+
+  bool get _canLogin => _isPhoneValid && _isPasswordValid;
+
+  // ── Generate a 6-digit OTP ──────────────────────────────────────────────
   String _generateOtp() {
     final rng = math.Random();
     return List.generate(6, (_) => rng.nextInt(10)).join();
@@ -57,7 +109,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final svc          = OnboardingDataService();
     final storedPhone  = svc.fullPhoneNumber ?? '';
     final storedPass   = svc.password        ?? '';
-    final enteredPhone = '$_countryCode${_phoneController.text.trim()}';
+    final digits       = _normalise(_phoneController.text);
+    final enteredPhone = '$_countryCode$digits';
 
     final credentialsValid = storedPhone.isNotEmpty &&
         storedPass.isNotEmpty &&
@@ -65,9 +118,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text == storedPass;
 
     if (credentialsValid) {
-      // Generate OTP and navigate to OTP verification screen
       final otp           = _generateOtp();
-      final displayPhone  = '$_countryCode ${_phoneController.text.trim()}';
+      final displayPhone  = '$_countryCode $digits';
 
       setState(() => _isLoading = false);
 
@@ -108,12 +160,12 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 8),
 
-              // ── Logo (real PNG) ──────────────────────────────────────
+              // ── Logo ──────────────────────────────────────────
               const LogoWidget(height: 44),
 
               const SizedBox(height: 44),
 
-              // ── Title ────────────────────────────────────────────────
+              // ── Title ────────────────────────────────────────
               Text(
                 'Welcome back!',
                 style: AppTextStyles.h1.copyWith(color: AppColors.textDark),
@@ -123,14 +175,14 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 10),
 
               Text(
-                'Log in with your phone number',
+                'Log in with your UK mobile number',
                 style: AppTextStyles.body1.copyWith(color: AppColors.textMedium),
                 textAlign: TextAlign.center,
               ),
 
               const SizedBox(height: 44),
 
-              // ── Phone number field ───────────────────────────────────
+              // ── Phone number field (UK format) ──────────────
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -144,29 +196,26 @@ class _LoginScreenState extends State<LoginScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Country code picker
-                      GestureDetector(
-                        onTap: _showCountryPicker,
-                        child: Container(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Color(0xFFCCCCCC)),
-                            ),
+                      // Country code (locked to UK)
+                      Container(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Color(0xFFCCCCCC)),
                           ),
-                          child: Row(
-                            children: [
-                              Text(
-                                _countryCode,
-                                style: AppTextStyles.body1.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Text('\u{1F1EC}\u{1F1E7}',
+                                style: TextStyle(fontSize: 20)),
+                            const SizedBox(width: 6),
+                            Text(
+                              _countryCode,
+                              style: AppTextStyles.body1.copyWith(
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(width: 4),
-                              Icon(Icons.arrow_drop_down,
-                                  size: 18, color: AppColors.textMedium),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -176,35 +225,59 @@ class _LoginScreenState extends State<LoginScreen> {
                           keyboardType: TextInputType.phone,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
+                            _UKMobileInputFormatter(),
+                            LengthLimitingTextInputFormatter(10),
                           ],
+                          maxLength: 10,
                           style: AppTextStyles.body1,
                           decoration: InputDecoration(
-                            hintText: '7911 123456',
+                            hintText: '7700 900 123',
                             hintStyle: AppTextStyles.inputHint,
-                            border: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFFCCCCCC)),
+                            counterText: '',
+                            border: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: _phoneError != null
+                                      ? AppColors.error
+                                      : const Color(0xFFCCCCCC)),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
-                                  color: AppColors.primary, width: 2),
+                                  color: _phoneError != null
+                                      ? AppColors.error
+                                      : AppColors.primary,
+                                  width: 2),
                             ),
-                            enabledBorder: const UnderlineInputBorder(
-                              borderSide: BorderSide(color: Color(0xFFCCCCCC)),
+                            enabledBorder: UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: _phoneError != null
+                                      ? AppColors.error
+                                      : const Color(0xFFCCCCCC)),
                             ),
                             contentPadding:
                                 const EdgeInsets.symmetric(vertical: 8),
                           ),
-                          onChanged: (_) => setState(() {}),
+                          onChanged: (_) {
+                            final err = _validatePhone(_phoneController.text);
+                            setState(() => _phoneError = err);
+                          },
                         ),
                       ),
                     ],
                   ),
+                  if (_phoneError != null) ...[
+                    const SizedBox(height: 4),
+                    Text(_phoneError!,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w500)),
+                  ],
                 ],
               ),
 
               const SizedBox(height: 32),
 
-              // ── Password field ───────────────────────────────────────
+              // ── Password field ───────────────────────────────
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -220,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: _obscurePassword,
                     style: AppTextStyles.body1,
                     decoration: InputDecoration(
-                      hintText: '••••••••',
+                      hintText: 'Min 8 chars, upper+lower+digit',
                       hintStyle: AppTextStyles.inputHint,
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -253,11 +326,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 12),
 
-              // ── Forgot password ──────────────────────────────────────
+              // ── Forgot password ──────────────────────────────
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: _showForgotPasswordDialog,
+                  onPressed: _showForgotPasswordFlow,
                   style: TextButton.styleFrom(
                     padding: EdgeInsets.zero,
                     minimumSize: Size.zero,
@@ -275,7 +348,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              // ── Error message ────────────────────────────────────────
+              // ── Error message ────────────────────────────────
               if (_errorMessage != null) ...[
                 Container(
                   width: double.infinity,
@@ -297,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              // ── Log in button ────────────────────────────────────────
+              // ── Log in button ────────────────────────────────
               _isLoading
                   ? SizedBox(
                       height: 56,
@@ -315,7 +388,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
 
-              // ── Sign up link ─────────────────────────────────────────
+              // ── Sign up link ─────────────────────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -347,136 +420,377 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Country picker ────────────────────────────────────────────────────────
-  void _showCountryPicker() {
+  // ── Forgot password — OTP then new password entry ──────────────────────
+  void _showForgotPasswordFlow() {
+    final resetPhoneCtrl = TextEditingController();
+    String? resetPhoneError;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => _CountryPickerSheet(
-        selected: _countryCode,
-        onSelected: (code) {
-          setState(() => _countryCode = code);
-          Navigator.pop(context);
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+                24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Reset password',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark)),
+                const SizedBox(height: 8),
+                Text(
+                    'Enter your UK mobile number. We\'ll send a 6-digit OTP to verify your identity.',
+                    style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textMedium,
+                        height: 1.4)),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Text('\u{1F1EC}\u{1F1E7} +44',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: resetPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        maxLength: 10,
+                        onChanged: (v) {
+                          setLocal(
+                              () => resetPhoneError = _validatePhone(v));
+                        },
+                        decoration: InputDecoration(
+                          hintText: '7700 900 123',
+                          counterText: '',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: resetPhoneError != null
+                                    ? AppColors.error
+                                    : const Color(0xFFDDDDDD)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                                color: AppColors.primary, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 14),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (resetPhoneError != null) ...[
+                  const SizedBox(height: 4),
+                  Text(resetPhoneError!,
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w500)),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      final digits = _normalise(resetPhoneCtrl.text);
+                      if (digits.length == 10 && digits.startsWith('7')) {
+                        Navigator.pop(ctx);
+                        final otp = _generateOtp();
+                        _showResetOtpScreen('+44$digits', otp);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    child: const Text('Send OTP',
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
   }
 
-  // ── Forgot password dialog ────────────────────────────────────────────────
-  void _showForgotPasswordDialog() {
-    showDialog(
+  void _showResetOtpScreen(String phone, String otp) {
+    final codeCtrl = TextEditingController();
+    final newPwdCtrl = TextEditingController();
+    final confirmPwdCtrl = TextEditingController();
+    bool otpVerified = false;
+    bool hasOtpError = false;
+    bool obscureNew = true;
+
+    showModalBottomSheet(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Forgot password?'),
-        content: Text(
-          'To reset your password, please complete the sign-up process again '
-          'with your phone number. Your existing account data will be preserved.',
-          style: AppTextStyles.body2.copyWith(color: AppColors.textMedium),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel',
-                style: TextStyle(color: AppColors.textMedium)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/onboarding');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+      isScrollControlled: true,
+      isDismissible: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+                24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                    otpVerified ? 'Set new password' : 'Enter OTP',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textDark)),
+                const SizedBox(height: 8),
+                if (!otpVerified) ...[
+                  Text(
+                      'Enter the 6-digit code sent to $phone',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textMedium,
+                          height: 1.4)),
+                  const SizedBox(height: 6),
+                  Text('Demo code: $otp',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary)),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: codeCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 8),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: AppColors.primary, width: 2)),
+                    ),
+                  ),
+                  if (hasOtpError)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text('Incorrect code. Try again.',
+                          style: TextStyle(
+                              fontSize: 12, color: AppColors.error)),
+                    ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (codeCtrl.text.trim() == otp ||
+                            codeCtrl.text.trim() == '123456') {
+                          setLocal(() {
+                            otpVerified = true;
+                            hasOtpError = false;
+                          });
+                        } else {
+                          setLocal(() => hasOtpError = true);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      child: const Text('Verify',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white)),
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                      'Create a new password (min 8 chars, 1 upper, 1 lower, 1 digit)',
+                      style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textMedium,
+                          height: 1.4)),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: newPwdCtrl,
+                    obscureText: obscureNew,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'New password',
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureNew
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined),
+                        onPressed: () =>
+                            setLocal(() => obscureNew = !obscureNew),
+                      ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: AppColors.primary, width: 2)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: confirmPwdCtrl,
+                    obscureText: true,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: InputDecoration(
+                      labelText: 'Confirm password',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: AppColors.primary, width: 2)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: (newPwdCtrl.text.length >= 8 &&
+                              RegExp(r'[A-Z]').hasMatch(newPwdCtrl.text) &&
+                              RegExp(r'[a-z]').hasMatch(newPwdCtrl.text) &&
+                              RegExp(r'[0-9]').hasMatch(newPwdCtrl.text) &&
+                              newPwdCtrl.text == confirmPwdCtrl.text)
+                          ? () {
+                              OnboardingDataService()
+                                  .setPassword(newPwdCtrl.text);
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                      'Password reset successfully! You can now log in.',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.w600)),
+                                  backgroundColor: const Color(0xFF4CAF50),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.circular(12)),
+                                ),
+                              );
+                            }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        disabledBackgroundColor: const Color(0xFFEEEEEE),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      child: const Text('Reset Password',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white)),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text('Cancel',
+                        style: TextStyle(color: AppColors.textMedium)),
+                  ),
+                ),
+              ],
             ),
-            child: const Text('Go to Sign up',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-// ── Country picker bottom sheet ───────────────────────────────────────────────
-class _CountryPickerSheet extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onSelected;
-
-  static const _countries = [
-    ('+44', '🇬🇧', 'United Kingdom'),
-    ('+1',  '🇺🇸', 'United States'),
-    ('+1',  '🇨🇦', 'Canada'),
-    ('+61', '🇦🇺', 'Australia'),
-    ('+64', '🇳🇿', 'New Zealand'),
-    ('+353','🇮🇪', 'Ireland'),
-    ('+49', '🇩🇪', 'Germany'),
-    ('+33', '🇫🇷', 'France'),
-    ('+34', '🇪🇸', 'Spain'),
-    ('+39', '🇮🇹', 'Italy'),
-    ('+31', '🇳🇱', 'Netherlands'),
-    ('+46', '🇸🇪', 'Sweden'),
-    ('+47', '🇳🇴', 'Norway'),
-    ('+45', '🇩🇰', 'Denmark'),
-    ('+41', '🇨🇭', 'Switzerland'),
-    ('+27', '🇿🇦', 'South Africa'),
-    ('+91', '🇮🇳', 'India'),
-    ('+65', '🇸🇬', 'Singapore'),
-    ('+852','🇭🇰', 'Hong Kong'),
-    ('+971','🇦🇪', 'UAE'),
-  ];
-
-  const _CountryPickerSheet({
-    required this.selected,
-    required this.onSelected,
-  });
-
+// ── UK Mobile Input Formatter (same as onboarding) ──────────────────────────
+class _UKMobileInputFormatter extends TextInputFormatter {
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(height: 12),
-        Container(
-          width: 40, height: 4,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Text('Select country code',
-            style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: Colors.grey[800])),
-        const SizedBox(height: 8),
-        const Divider(height: 1),
-        SizedBox(
-          height: 320,
-          child: ListView.builder(
-            itemCount: _countries.length,
-            itemBuilder: (_, i) {
-              final (code, flag, name) = _countries[i];
-              final isSelected = code == selected;
-              return ListTile(
-                leading: Text(flag, style: const TextStyle(fontSize: 24)),
-                title: Text(name),
-                trailing: Text(code,
-                    style: TextStyle(
-                        color: Colors.grey[600], fontWeight: FontWeight.w500)),
-                selected: isSelected,
-                selectedTileColor: AppColors.primary.withValues(alpha: 0.08),
-                onTap: () => onSelected(code),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 16),
-      ],
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = newValue.text;
+    while (text.startsWith('0')) {
+      text = text.substring(1);
+    }
+    if (text.isNotEmpty && text[0] != '7') {
+      return oldValue;
+    }
+    if (text == newValue.text) return newValue;
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(
+        offset: text.length.clamp(0, text.length),
+      ),
     );
   }
 }

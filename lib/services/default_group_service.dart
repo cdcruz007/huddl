@@ -667,6 +667,31 @@ class DefaultGroupService {
     print('👥 DefaultGroupService: $message');
   }
 
+  /// Recreate default groups when the user changes their stage of life
+  /// in the profile. Removes old group memberships and creates new groups
+  /// based on the updated stages.
+  Future<void> recreateGroupsForStages({
+    required String userId,
+    required List<String> stages,
+    String? postcode,
+  }) async {
+    await initialize();
+    // Remove existing group memberships for this user
+    final existing = _userGroupMemberships[userId] ?? [];
+    for (final gId in existing) {
+      final g = _defaultGroups[gId];
+      if (g != null && g.memberCount > 0) {
+        _defaultGroups[gId] = g.copyWith(memberCount: g.memberCount - 1);
+      }
+    }
+    _userGroupMemberships[userId] = [];
+    await _saveToStorage();
+    _log('🔄 Cleared old memberships for $userId (had ${existing.length} groups)');
+
+    // Re-assign using updated onboarding data (already saved by profile)
+    await assignUserToDefaultGroups(userId);
+  }
+
   /// Clear all data (for testing)
   void clear() {
     _defaultGroups.clear();

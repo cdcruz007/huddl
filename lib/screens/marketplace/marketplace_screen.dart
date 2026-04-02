@@ -880,7 +880,7 @@ class _ProductCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: HuddlColors.yellow,
+                          color: HuddlColors.accentAmber,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

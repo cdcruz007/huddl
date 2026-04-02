@@ -3585,7 +3585,7 @@ class _ChatBubble extends StatelessWidget {
                             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: isHighlighted
-                              ? HuddlColors.yellowLight
+                              ? const Color(0xFFFFF7C9)
                               : isMe
                                   ? _kMyBubble
                                   : HuddlColors.white,
@@ -4548,7 +4548,7 @@ class _GroupAttachSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _gAttachIcon(context, Icons.location_on_rounded, 'Location',
-                      HuddlColors.accentAmber, HuddlColors.yellowLight, 'location'),
+                      HuddlColors.accentAmber, const Color(0xFFFFF7C9), 'location'),
                   _gAttachIcon(context, Icons.person_rounded, 'Contact',
                       HuddlColors.primary, HuddlColors.peachLight, 'contact'),
                   _gAttachIcon(context, Icons.poll_rounded, 'Poll',

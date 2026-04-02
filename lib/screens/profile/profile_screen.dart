@@ -422,13 +422,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   items: [
                     _MenuItem(
                       icon: Icons.people_outline,
-                      title: 'My groups',
+                      title: 'My Groups',
                       trailing: _CountBadge(count: _totalGroupCount),
                       onTap: _showMyGroupsSheet,
                     ),
                     _MenuItem(
                       icon: Icons.event_outlined,
-                      title: 'My events',
+                      title: 'My Events',
                       trailing: _CountBadge(count: _userEvents.length + _userMeetups.length),
                       onTap: _showMyEventsSheet,
                     ),
@@ -769,7 +769,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       .toList();
                 });
                 Navigator.pop(c);
-                _snack('Stage of life updated');
+                // Recreate default groups for the updated stages
+                _groupService.recreateGroupsForStages(
+                  userId: 'current_user',
+                  stages: selected.toList(),
+                  postcode: _postcode,
+                );
+                _loadProfileData();
+                _snack('Stage of life updated — groups refreshed');
               }),
             ),
             const SizedBox(height: 16),
@@ -833,12 +840,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sheetButton('Update Location', () {
+              child: _sheetButton('Update Location', () async {
                 final newPc = postcodeCtrl.text.trim().toUpperCase();
                 if (newPc.isEmpty) return;
 
                 if (!_postcodeService.isCambridgePostcode(newPc)) {
-                  _snack('Sorry, Huddl is currently only available in the Cambridge area.');
+                  _snack('We are not in your area yet. Huddl is currently only available in the Cambridge area.');
+                  return;
+                }
+
+                // OTP verification for postcode change
+                Navigator.pop(c);
+                final verified = await _verifyWithOtp('change your postcode');
+                if (!verified) {
+                  _snack('Postcode change cancelled');
                   return;
                 }
 
@@ -855,7 +870,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _postcode = newPc;
                   _borough = newBorough;
                 });
-                Navigator.pop(c);
                 _snack('Location updated to $newBorough');
                 // Reload groups for new borough
                 _loadProfileData();
@@ -927,14 +941,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _sheetButton('Update Phone', () {
+            child: _sheetButton('Update Phone', () async {
               final newPhone = phoneCtrl.text.trim();
               if (newPhone.isNotEmpty) {
+                // OTP verification for phone change
+                Navigator.pop(c);
+                final verified = await _verifyWithOtp('change your phone number');
+                if (!verified) {
+                  _snack('Phone update cancelled');
+                  return;
+                }
                 _onboarding.setPhoneNumber(newPhone);
                 setState(() => _phone = '+44$newPhone');
+                _snack('Phone number updated');
               }
-              Navigator.pop(c);
-              _snack('Phone number updated');
             }),
           ),
           const SizedBox(height: 16),
@@ -969,10 +989,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       color: HuddlColors.peachLight,
                       borderRadius: BorderRadius.circular(12),
+                      image: g.imageUrl.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(g.imageUrl),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                     ),
-                    child: const Center(
-                        child:
-                            Icon(Icons.people, size: 22, color: HuddlColors.primary)),
+                    child: g.imageUrl.isEmpty
+                        ? const Center(
+                            child: Icon(Icons.people,
+                                size: 22, color: HuddlColors.primary))
+                        : null,
                   ),
                   title: Text(g.name,
                       style: GoogleFonts.poppins(
@@ -1392,6 +1420,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const Divider(indent: 16, endIndent: 16),
             const SizedBox(height: 8),
+            // GDPR Data Export
+            ListTile(
+              leading: const Icon(Icons.download_outlined, color: HuddlColors.blue, size: 22),
+              title: Text('Export my data',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark)),
+              subtitle: Text('Download a copy of your personal data (GDPR)',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: HuddlColors.textHint)),
+              trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+              onTap: () {
+                Navigator.pop(c);
+                _showExportDataSheet();
+              },
+            ),
+            const Divider(indent: 16, endIndent: 16),
+            const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.delete_forever, color: HuddlColors.error, size: 22),
               title: Text('Delete account',
@@ -1493,6 +1540,304 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // GDPR DATA EXPORT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showExportDataSheet() {
+    bool exporting = false;
+    bool exported = false;
+    _showSheet(
+      title: 'Export My Data',
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.blueBackground,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              size: 20, color: HuddlColors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text('Your right to data portability',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.blue)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Under GDPR, you have the right to request a copy of all personal data we hold about you. This includes:',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.textSecondary,
+                            height: 1.4),
+                      ),
+                      const SizedBox(height: 8),
+                      ...[
+                        'Profile information (name, phone, postcode)',
+                        'Group memberships and activity',
+                        'Messages and saved items',
+                        'Events and meetups',
+                        'Preferences and settings',
+                      ].map((item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 3),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('\u2022 ',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: HuddlColors.textSecondary)),
+                                Expanded(
+                                  child: Text(item,
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: HuddlColors.textSecondary,
+                                          height: 1.3)),
+                                ),
+                              ],
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: exporting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : exported
+                            ? const Icon(Icons.check, size: 20)
+                            : const Icon(Icons.download, size: 20),
+                    label: Text(
+                        exporting
+                            ? 'Preparing export...'
+                            : exported
+                                ? 'Export ready!'
+                                : 'Request data export',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w600)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          exported ? HuddlColors.success : HuddlColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    onPressed: exporting
+                        ? null
+                        : () async {
+                            setLocal(() => exporting = true);
+                            await Future.delayed(
+                                const Duration(milliseconds: 1500));
+                            if (ctx.mounted) {
+                              setLocal(() {
+                                exporting = false;
+                                exported = true;
+                              });
+                              _snack(
+                                  'Data export prepared. In production, this would be sent to your email.');
+                            }
+                          },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Your data will be compiled and sent to your registered email within 24 hours.',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.textHint,
+                      height: 1.4),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OTP VERIFICATION FOR PROFILE CHANGES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Shows an OTP verification dialog before applying sensitive profile changes.
+  /// Returns true if verified, false if cancelled.
+  Future<bool> _verifyWithOtp(String changeDescription) async {
+    final phone = _onboarding.fullPhoneNumber ?? '+44 xxxxxxxx';
+    final otp = '123456'; // Demo OTP
+    final codeCtrl = TextEditingController();
+    bool verified = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          bool hasError = false;
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.security,
+                        size: 28, color: HuddlColors.primary),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Verify your identity',
+                      style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.textDark)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'To $changeDescription, please enter the 6-digit code sent to $phone',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: HuddlColors.textSecondary,
+                        height: 1.4),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 6),
+                  Text('Demo code: $otp',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary)),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: codeCtrl,
+                    keyboardType: TextInputType.number,
+                    maxLength: 6,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 8),
+                    decoration: InputDecoration(
+                      hintText: '------',
+                      counterText: '',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: hasError
+                                  ? HuddlColors.error
+                                  : HuddlColors.divider)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                              color: hasError
+                                  ? HuddlColors.error
+                                  : HuddlColors.primary,
+                              width: 2)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                  if (hasError) ...[
+                    const SizedBox(height: 8),
+                    Text('Incorrect code. Please try again.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.error)),
+                  ],
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(c),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: HuddlColors.textSecondary,
+                            side: const BorderSide(color: HuddlColors.divider),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          child: Text('Cancel',
+                              style: GoogleFonts.poppins(fontSize: 14)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (codeCtrl.text.trim() == otp ||
+                                codeCtrl.text.trim() == '123456') {
+                              verified = true;
+                              Navigator.pop(c);
+                            } else {
+                              setLocal(() => hasError = true);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HuddlColors.primary,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 0,
+                          ),
+                          child: Text('Verify',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+    return verified;
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

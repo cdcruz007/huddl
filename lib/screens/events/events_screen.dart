@@ -973,7 +973,7 @@ class _EventListCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isFree ? HuddlColors.yellow : eventColor,
+                      color: isFree ? HuddlColors.accentAmber : eventColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1288,9 +1288,9 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.yellowDark, Icons.directions_walk);
+      return const _CatStyle(Color(0xFFD4A017), Icons.directions_walk);
     case 'Social':
-      return const _CatStyle(HuddlColors.yellow, Icons.celebration);
+      return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
     default:
       return const _CatStyle(HuddlColors.blue, Icons.groups);
   }

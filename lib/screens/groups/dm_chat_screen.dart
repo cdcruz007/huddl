@@ -1762,7 +1762,7 @@ class _DMBubble extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: isHighlighted
-                          ? HuddlColors.yellowLight
+                          ? const Color(0xFFFFF7C9)
                           : isMe
                               ? _kMyBubble
                               : HuddlColors.white,

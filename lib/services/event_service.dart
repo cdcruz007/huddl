@@ -185,7 +185,7 @@ class EventService extends ChangeNotifier {
         isFree: true,
         price: '',
         isOnline: false,
-        color: HuddlColors.yellow,
+        color: HuddlColors.accentAmber,
         icon: Icons.celebration,
         organiser: 'Carlton Community Assoc.',
         imageUrl:

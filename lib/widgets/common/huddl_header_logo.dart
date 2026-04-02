@@ -14,7 +14,7 @@ class HuddlHeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/images/logo_huddl.png',
+      'assets/images/logo_huddl_splash.png',
       height: height,
       fit: BoxFit.contain,
     );
