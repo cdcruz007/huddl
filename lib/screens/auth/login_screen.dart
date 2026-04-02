@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
-import '../../constants/app_colors.dart';
+import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/onboarding_data_service.dart';
 import 'login_otp_screen.dart';
+import '../../theme/huddl_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -143,12 +144,12 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: HuddlColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: HuddlColors.primary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -168,7 +169,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // ── Title ────────────────────────────────────────
               Text(
                 'Welcome back!',
-                style: AppTextStyles.h1.copyWith(color: AppColors.textDark),
+                style: AppTextStyles.h1.copyWith(color: HuddlColors.textDark),
                 textAlign: TextAlign.center,
               ),
 
@@ -176,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               Text(
                 'Log in with your UK mobile number',
-                style: AppTextStyles.body1.copyWith(color: AppColors.textMedium),
+                style: AppTextStyles.body1.copyWith(color: HuddlColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
 
@@ -189,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Phone number',
                     style: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.textMedium,
+                      color: HuddlColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -201,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.only(bottom: 10),
                         decoration: const BoxDecoration(
                           border: Border(
-                            bottom: BorderSide(color: Color(0xFFCCCCCC)),
+                            bottom: BorderSide(color: HuddlColors.gray300),
                           ),
                         ),
                         child: Row(
@@ -237,21 +238,21 @@ class _LoginScreenState extends State<LoginScreen> {
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: _phoneError != null
-                                      ? AppColors.error
-                                      : const Color(0xFFCCCCCC)),
+                                      ? HuddlColors.error
+                                      : HuddlColors.gray300),
                             ),
                             focusedBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: _phoneError != null
-                                      ? AppColors.error
-                                      : AppColors.primary,
+                                      ? HuddlColors.error
+                                      : HuddlColors.primary,
                                   width: 2),
                             ),
                             enabledBorder: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: _phoneError != null
-                                      ? AppColors.error
-                                      : const Color(0xFFCCCCCC)),
+                                      ? HuddlColors.error
+                                      : HuddlColors.gray300),
                             ),
                             contentPadding:
                                 const EdgeInsets.symmetric(vertical: 8),
@@ -269,7 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Text(_phoneError!,
                         style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.error,
+                            color: HuddlColors.error,
                             fontWeight: FontWeight.w500)),
                   ],
                 ],
@@ -284,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Password',
                     style: AppTextStyles.inputLabel.copyWith(
-                      color: AppColors.textMedium,
+                      color: HuddlColors.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -300,20 +301,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           _obscurePassword
                               ? Icons.visibility_off_outlined
                               : Icons.visibility_outlined,
-                          color: AppColors.textMedium,
+                          color: HuddlColors.textSecondary,
                         ),
                         onPressed: () => setState(
                             () => _obscurePassword = !_obscurePassword),
                       ),
                       border: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFCCCCCC)),
+                        borderSide: BorderSide(color: HuddlColors.gray300),
                       ),
                       focusedBorder: UnderlineInputBorder(
                         borderSide:
-                            BorderSide(color: AppColors.primary, width: 2),
+                            BorderSide(color: HuddlColors.primary, width: 2),
                       ),
                       enabledBorder: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: Color(0xFFCCCCCC)),
+                        borderSide: BorderSide(color: HuddlColors.gray300),
                       ),
                       contentPadding:
                           const EdgeInsets.symmetric(vertical: 8),
@@ -339,7 +340,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     'Forgot password?',
                     style: AppTextStyles.body2.copyWith(
-                      color: AppColors.primary,
+                      color: HuddlColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -354,13 +355,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.08),
+                    color: HuddlColors.error.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     _errorMessage!,
                     style: AppTextStyles.body2.copyWith(
-                      color: AppColors.error,
+                      color: HuddlColors.error,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -376,7 +377,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       height: 56,
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: HuddlColors.primary,
                           strokeWidth: 2.5,
                         ),
                       ),
@@ -395,7 +396,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     "Don't have an account? ",
                     style: AppTextStyles.body2.copyWith(
-                      color: AppColors.textMedium,
+                      color: HuddlColors.textSecondary,
                     ),
                   ),
                   GestureDetector(
@@ -404,7 +405,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'Sign up',
                       style: AppTextStyles.body2.copyWith(
-                        color: AppColors.primary,
+                        color: HuddlColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -445,7 +446,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: HuddlColors.gray300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -455,13 +456,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark)),
+                        color: HuddlColors.textDark)),
                 const SizedBox(height: 8),
                 Text(
                     'Enter your UK mobile number. We\'ll send a 6-digit OTP to verify your identity.',
                     style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textMedium,
+                        color: HuddlColors.textSecondary,
                         height: 1.4)),
                 const SizedBox(height: 24),
                 Row(
@@ -470,7 +471,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
+                        color: HuddlColors.inputBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text('\u{1F1EC}\u{1F1E7} +44',
@@ -498,13 +499,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(
                                 color: resetPhoneError != null
-                                    ? AppColors.error
-                                    : const Color(0xFFDDDDDD)),
+                                    ? HuddlColors.error
+                                    : HuddlColors.inputBorder),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(
-                                color: AppColors.primary, width: 2),
+                                color: HuddlColors.primary, width: 2),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 14),
@@ -518,7 +519,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(resetPhoneError!,
                       style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.error,
+                          color: HuddlColors.error,
                           fontWeight: FontWeight.w500)),
                 ],
                 const SizedBox(height: 24),
@@ -534,7 +535,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: HuddlColors.primary,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -584,7 +585,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: HuddlColors.gray300,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -595,21 +596,21 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textDark)),
+                        color: HuddlColors.textDark)),
                 const SizedBox(height: 8),
                 if (!otpVerified) ...[
                   Text(
                       'Enter the 6-digit code sent to $phone',
                       style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textMedium,
+                          color: HuddlColors.textSecondary,
                           height: 1.4)),
                   const SizedBox(height: 6),
                   Text('Demo code: $otp',
                       style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.primary)),
+                          color: HuddlColors.primary)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: codeCtrl,
@@ -627,7 +628,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: AppColors.primary, width: 2)),
+                              color: HuddlColors.primary, width: 2)),
                     ),
                   ),
                   if (hasOtpError)
@@ -635,7 +636,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.only(top: 8),
                       child: Text('Incorrect code. Try again.',
                           style: TextStyle(
-                              fontSize: 12, color: AppColors.error)),
+                              fontSize: 12, color: HuddlColors.error)),
                     ),
                   const SizedBox(height: 20),
                   SizedBox(
@@ -653,7 +654,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: HuddlColors.primary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -671,7 +672,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Create a new password (min 8 chars, 1 upper, 1 lower, 1 digit)',
                       style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textMedium,
+                          color: HuddlColors.textSecondary,
                           height: 1.4)),
                   const SizedBox(height: 20),
                   TextField(
@@ -692,7 +693,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: AppColors.primary, width: 2)),
+                              color: HuddlColors.primary, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -707,7 +708,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                              color: AppColors.primary, width: 2)),
+                              color: HuddlColors.primary, width: 2)),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -729,7 +730,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       'Password reset successfully! You can now log in.',
                                       style: TextStyle(
                                           fontWeight: FontWeight.w600)),
-                                  backgroundColor: const Color(0xFF4CAF50),
+                                  backgroundColor: HuddlColors.successGreen,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
                                       borderRadius:
@@ -739,8 +740,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             }
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        disabledBackgroundColor: const Color(0xFFEEEEEE),
+                        backgroundColor: HuddlColors.primary,
+                        disabledBackgroundColor: HuddlColors.disabled,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -759,7 +760,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx),
                     child: Text('Cancel',
-                        style: TextStyle(color: AppColors.textMedium)),
+                        style: TextStyle(color: HuddlColors.textSecondary)),
                   ),
                 ),
               ],

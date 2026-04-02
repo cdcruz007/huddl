@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../constants/app_colors.dart';
+import '../../../theme/huddl_colors.dart';
 
 class ProviderOnboardingScreen extends StatefulWidget {
   const ProviderOnboardingScreen({super.key});
@@ -43,7 +43,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: HuddlColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -70,11 +70,11 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                           width: 100,
                           height: 100,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.15),
+                            color: HuddlColors.primary.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(p['icon'] as IconData,
-                              color: AppColors.primary, size: 48),
+                              color: HuddlColors.primary, size: 48),
                         ),
                         const SizedBox(height: 32),
                         Text(p['title'] as String,
@@ -104,7 +104,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                   width: _currentPage == i ? 20 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _currentPage == i ? AppColors.primary : Colors.white24,
+                    color: _currentPage == i ? HuddlColors.primary : Colors.white24,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -126,7 +126,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: HuddlColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),

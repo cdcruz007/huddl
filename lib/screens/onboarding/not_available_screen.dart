@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_colors.dart';
 
-// ── Design tokens ──────────────────────────────────────────────────────────
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1E);
-const _kTextGray = Color(0xFF6E6E73);
 
 /// Shown when a user enters a postcode outside the Cambridge launch area.
 /// Follows the same visual language as all onboarding screens:
@@ -34,7 +31,7 @@ class NotAvailableScreen extends StatelessWidget {
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.campaign_outlined,
                       size: 120,
-                      color: _kOrange.withValues(alpha: 0.6),
+                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.6),
                     ),
                   ),
                 ),
@@ -48,7 +45,7 @@ class NotAvailableScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
-                  color: _kTextDark,
+                  color: HuddlColors.textDark,
                   height: 1.25,
                 ),
                 textAlign: TextAlign.center,
@@ -62,7 +59,7 @@ class NotAvailableScreen extends StatelessWidget {
                 text: const TextSpan(
                   style: TextStyle(
                     fontSize: 15,
-                    color: _kTextGray,
+                    color: HuddlColors.disabledText,
                     height: 1.6,
                   ),
                   children: [
@@ -75,10 +72,10 @@ class NotAvailableScreen extends StatelessWidget {
                     TextSpan(
                       text: 'www.huddlparents.com',
                       style: TextStyle(
-                        color: _kOrange,
+                        color: HuddlColors.onboardingOrange,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
-                        decorationColor: _kOrange,
+                        decorationColor: HuddlColors.onboardingOrange,
                       ),
                     ),
                     TextSpan(
@@ -105,7 +102,7 @@ class NotAvailableScreen extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kOrange,
+                    backgroundColor: HuddlColors.onboardingOrange,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),

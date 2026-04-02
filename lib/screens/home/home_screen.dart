@@ -428,7 +428,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)],
+                      colors: [HuddlColors.peachLight, HuddlColors.peachVeryLight],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -486,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: Icons.storefront,
                         label: 'Preloved',
                         color: HuddlColors.accentAmber,
-                        bgColor: const Color(0xFFFFF7C9),
+                        bgColor: HuddlColors.yellowBackground,
                         onTap: () => _switchToTab(3),
                       ),
                     ],
@@ -940,7 +940,7 @@ class _EventCard extends StatelessWidget {
       case 'Toddler':
         return HuddlColors.accentAmber;
       case 'Outdoors':
-        return const Color(0xFFD4A017);
+        return HuddlColors.yellowDark;
       default:
         return HuddlColors.primary;
     }
@@ -1365,7 +1365,7 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFD4A017);
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
     }
@@ -1374,15 +1374,15 @@ class _FeedCard extends StatelessWidget {
   Color get _iconBg {
     switch (item.type) {
       case FeedItemType.newParent:
-        return const Color(0xFFE6F5F3);
+        return HuddlColors.successBg;
       case FeedItemType.newGroup:
         return HuddlColors.peachLight;
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFFFF7C9);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return const Color(0xFFFBE8A6);
+        return HuddlColors.yellowSoft;
     }
   }
 
@@ -1989,7 +1989,7 @@ class _NotificationsSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFD4A017);
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
     }
@@ -1998,15 +1998,15 @@ class _NotificationsSheet extends StatelessWidget {
   Color _bgForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return const Color(0xFFE6F5F3);
+        return HuddlColors.successBg;
       case FeedItemType.newGroup:
         return HuddlColors.peachLight;
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFFFF7C9);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return const Color(0xFFFBE8A6);
+        return HuddlColors.yellowSoft;
     }
   }
 }
@@ -2240,7 +2240,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFD4A017);
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
     }
@@ -2249,15 +2249,15 @@ class _ActivityDetailSheet extends StatelessWidget {
   Color _bgForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return const Color(0xFFE6F5F3);
+        return HuddlColors.successBg;
       case FeedItemType.newGroup:
         return HuddlColors.peachLight;
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFFFF7C9);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return const Color(0xFFFBE8A6);
+        return HuddlColors.yellowSoft;
     }
   }
 

@@ -51,9 +51,29 @@ class HuddlColors {
   static const Color surfaceLight = Color(0xFFFAFAFA);
 
   // Status
-  static const Color error = Color(0xFFFF7575);
-  static const Color errorLight = Color(0xFFFFE9E9);
-  static const Color success = Color(0xFF199A85);
+  static const Color error = Color(0xFFE53935);          // destructive actions, error states
+  static const Color errorSoft = Color(0xFFFF7575);      // softer red for icons / warnings
+  static const Color errorLight = Color(0xFFFFE9E9);     // error backgrounds
+  static const Color success = Color(0xFF199A85);        // teal – success, positive actions
+  static const Color successGreen = Color(0xFF22C55E);   // vivid green – online dots, strong success
+  static const Color successBg = Color(0xFFE6F5F3);      // teal-tinted success background
+  static const Color warning = Color(0xFFF59E0B);        // amber – warning icons
+  static const Color warningBg = Color(0xFFFEF3C7);      // warning banners
+  static const Color warningDark = Color(0xFF78350F);    // dark warning text
+
+  // Interactive / Disabled
+  static const Color disabled = Color(0xFFEEEEEE);       // disabled button bg
+  static const Color disabledText = Color(0xFF9E9E9E);   // disabled text / hint
+
+  // Input fields
+  static const Color inputBg = Color(0xFFF5F5F5);        // text-field fill
+  static const Color inputBorder = Color(0xFFDDDDDD);    // text-field border
+  static const Color inputBorderLight = Color(0xFFE0E0E0); // subtle field border
+
+  // Onboarding accent (warm soft orange used in progress / buttons)
+  static const Color onboardingOrange = Color(0xFFFCA878);
+  static const Color avatarBg = Color(0xFFFFF9D6);       // photo placeholder bg
+  static const Color avatarIcon = Color(0xFFE8A87C);     // person icon in avatar
 
   // Grayscale
   static const Color gray100 = Color(0xFFF6F6F6);

@@ -159,8 +159,8 @@ class _SavedMessagesForGroupScreenState
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 24),
-            color: Colors.red.withValues(alpha: 0.1),
-            child: const Icon(Icons.delete_outline, color: Colors.red),
+            color: HuddlColors.error.withValues(alpha: 0.1),
+            child: const Icon(Icons.delete_outline, color: HuddlColors.error),
           ),
           onDismissed: (_) async {
             await _savedMessageService.unsaveMessage(msg.id);

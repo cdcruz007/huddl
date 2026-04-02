@@ -1200,7 +1200,7 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(Color(0xFFD4A017), Icons.directions_walk);
+      return const _CatStyle(HuddlColors.yellowDark, Icons.directions_walk);
     case 'Social':
       return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
     default:

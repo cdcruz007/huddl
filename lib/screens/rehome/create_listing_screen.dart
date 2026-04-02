@@ -591,7 +591,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.red),
+        borderSide: const BorderSide(color: HuddlColors.error),
       ),
     );
   }

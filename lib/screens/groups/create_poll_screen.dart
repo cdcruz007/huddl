@@ -417,7 +417,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   if (_optionCtrls.length > 2)
                     IconButton(
                       icon: const Icon(Icons.remove_circle_outline,
-                          size: 22, color: Colors.red),
+                          size: 22, color: HuddlColors.error),
                       onPressed: () => _removeOption(i),
                     ),
                 ],

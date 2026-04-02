@@ -16,7 +16,7 @@ import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-const Color _kMyBubble = Color(0xFFFFF3ED);
+const Color _kMyBubble = HuddlColors.peachLight;
 
 /// Maps borough member IDs to realistic profile photo URLs
 const Map<String, String> _kMemberProfilePhotos = {
@@ -669,10 +669,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
               value: 'delete',
               child: Row(
                 children: [
-                  const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                  const Icon(Icons.delete_outline, size: 20, color: HuddlColors.error),
                   const SizedBox(width: 12),
                   Text('Delete conversation',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
                 ],
               ),
             ),
@@ -862,8 +862,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       icon: const Icon(Icons.block, size: 18),
                       label: Text(_isBlocked ? 'Unblock' : 'Block', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(alpha: 0.1),
-                        foregroundColor: Colors.red,
+                        backgroundColor: HuddlColors.error.withValues(alpha: 0.1),
+                        foregroundColor: HuddlColors.error,
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -904,7 +904,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.block, size: 20, color: Colors.red),
+            const Icon(Icons.block, size: 20, color: HuddlColors.error),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -1082,7 +1082,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   label: Text('Unsend for everyone',
                       style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: HuddlColors.error,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1197,7 +1197,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 if (context.mounted) Navigator.pop(context);
               }
             },
-            child: Text('Delete', style: GoogleFonts.poppins(color: Colors.red)),
+            child: Text('Delete', style: GoogleFonts.poppins(color: HuddlColors.error)),
           ),
         ],
       ),
@@ -1219,10 +1219,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.block, size: 32, color: Colors.red),
+                child: const Icon(Icons.block, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1291,7 +1291,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: HuddlColors.error,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1752,7 +1752,7 @@ class _DMBubble extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: isHighlighted
-                          ? const Color(0xFFFFF7C9)
+                          ? HuddlColors.yellowBackground
                           : isMe
                               ? _kMyBubble
                               : HuddlColors.white,
@@ -1941,10 +1941,10 @@ class _DMBubble extends StatelessWidget {
               ),
               if (onUnsend != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
+                  leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
                   title: Text('Unsend message',
                       style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
                   onTap: () {
                     Navigator.pop(c);
                     onUnsend?.call();
@@ -2097,7 +2097,7 @@ class _MessageStatusIcon extends StatelessWidget {
       case MessageStatus.read:
         return const Icon(Icons.done_all, size: 14, color: HuddlColors.blue);
       case MessageStatus.error:
-        return const Icon(Icons.error_outline, size: 14, color: Colors.red);
+        return const Icon(Icons.error_outline, size: 14, color: HuddlColors.error);
     }
   }
 }
@@ -2476,7 +2476,7 @@ class _LocationBubble extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Could not open maps'),
-                backgroundColor: Colors.red.shade400,
+                backgroundColor: HuddlColors.error,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -2514,7 +2514,7 @@ class _LocationBubble extends StatelessWidget {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 240),
                 decoration: BoxDecoration(
-                  color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                  color: isMe ? HuddlColors.peachLight : HuddlColors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -2549,7 +2549,7 @@ class _LocationBubble extends StatelessWidget {
                               children: List.generate(6, (_) => Expanded(
                                 child: Container(
                                   decoration: const BoxDecoration(
-                                    border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                                    border: Border(bottom: BorderSide(color: HuddlColors.gray400, width: 0.5)),
                                   ),
                                 ),
                               )),
@@ -2647,7 +2647,7 @@ class _ContactBubble extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 260),
           decoration: BoxDecoration(
-            color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+            color: isMe ? HuddlColors.peachLight : HuddlColors.white,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../theme/huddl_colors.dart';
 
-const _kOrange = Color(0xFFFCA878);
-const _kBlue = Color(0xFF5B8DEF);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kBtnDisabled = Color(0xFFEEEEEE);
-const _kCardBorder = Color(0xFFE8E8E8);
 
 class ParentTypeScreen extends StatefulWidget {
   const ParentTypeScreen({super.key});
@@ -56,7 +51,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
-                          color: _kTextDark,
+                          color: HuddlColors.textDark,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -67,7 +62,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                         'Find other Dads and Mums from your local community.',
                         style: TextStyle(
                           fontSize: 14,
-                          color: _kTextGray,
+                          color: HuddlColors.disabledText,
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -80,7 +75,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                       label: 'Mum',
                       subtitle: 'Join as a parent',
                       icon: Icons.face,
-                      accentColor: _kOrange,
+                      accentColor: HuddlColors.onboardingOrange,
                       selected: _selected == 'Mum',
                       onTap: () => setState(() => _selected = 'Mum'),
                     ),
@@ -90,7 +85,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                       label: 'Dad',
                       subtitle: 'Join as a parent',
                       icon: Icons.face_2,
-                      accentColor: _kOrange,
+                      accentColor: HuddlColors.onboardingOrange,
                       selected: _selected == 'Dad',
                       onTap: () => setState(() => _selected = 'Dad'),
                     ),
@@ -101,17 +96,17 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     // replace the surrounding comment markers to re-enable.
                     //
                     // Row(children: [
-                    //   Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
+                    //   Expanded(child: Divider(color: HuddlColors.divider, thickness: 1)),
                     //   Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-                    //     child: Text('or', style: TextStyle(fontSize: 13, color: _kTextGray, fontWeight: FontWeight.w500))),
-                    //   Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
+                    //     child: Text('or', style: TextStyle(fontSize: 13, color: HuddlColors.disabledText, fontWeight: FontWeight.w500))),
+                    //   Expanded(child: Divider(color: HuddlColors.divider, thickness: 1)),
                     // ]),
                     // const SizedBox(height: 14),
                     // _ParentTypeCard(
                     //   label: 'Provide Local Help',
                     //   subtitle: 'Doula, Nanny, Babysitter, Tutor & more',
                     //   icon: Icons.handshake_outlined,
-                    //   accentColor: _kBlue,
+                    //   accentColor: HuddlColors.lightBlue,
                     //   selected: _selected == 'provider',
                     //   onTap: () => setState(() => _selected = 'provider'),
                     // ),
@@ -141,7 +136,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                 label: _selected == 'provider' ? 'Set Up My Profile' : 'Continue',
                 enabled: _selected != null,
                 onTap: _continue,
-                color: _selected == 'provider' ? _kBlue : _kOrange,
+                color: _selected == 'provider' ? HuddlColors.lightBlue : HuddlColors.onboardingOrange,
               ),
             ),
           ],
@@ -179,7 +174,7 @@ class _ParentTypeCard extends StatelessWidget {
           color: selected ? accentColor.withValues(alpha: 0.04) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? accentColor : _kCardBorder,
+            color: selected ? accentColor : HuddlColors.divider,
             width: selected ? 1.8 : 1.2,
           ),
           boxShadow: [
@@ -213,13 +208,13 @@ class _ParentTypeCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: selected ? accentColor : _kTextDark,
+                      color: selected ? accentColor : HuddlColors.textDark,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: _kTextGray),
+                    style: const TextStyle(fontSize: 12, color: HuddlColors.disabledText),
                   ),
                 ],
               ),
@@ -245,7 +240,7 @@ class _OnboardingAppBar extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: _kOrange),
+            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
             onPressed: onBack,
             padding: EdgeInsets.zero,
           ),
@@ -279,7 +274,7 @@ class _OrangeButton extends StatelessWidget {
     required this.label,
     required this.enabled,
     required this.onTap,
-    this.color = _kOrange,
+    this.color = HuddlColors.onboardingOrange,
   });
 
   @override
@@ -290,7 +285,7 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          color: enabled ? color : _kBtnDisabled,
+          color: enabled ? color : HuddlColors.disabled,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -299,7 +294,7 @@ class _OrangeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: enabled ? Colors.white : _kTextGray,
+            color: enabled ? Colors.white : HuddlColors.disabledText,
           ),
         ),
       ),

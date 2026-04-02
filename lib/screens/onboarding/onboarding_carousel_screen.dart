@@ -1,13 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../theme/huddl_colors.dart';
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
 // Soft salmon/peach matching the supplied screenshots: light warm coral.
-// 0xFFFCA878 == AppColors.primary (inlined to keep this file self-contained).
-const _kOrange     = Color(0xFFFCA878);   // button & active dot: soft salmon
-const _kOrangeBtn  = Color(0xFFFCA878);   // same shade for button bg
-const _kTextDark   = Color(0xFF1C1C1E);   // titles
-const _kTextGray   = Color(0xFF9E9E9E);   // body / subtitles
-const _kDotInactive = Color(0xFFDCDCDC); // inactive dots
+// 0xFFFCA878 == HuddlColors.primary (inlined to keep this file self-contained).
 
 class OnboardingCarouselScreen extends StatefulWidget {
   const OnboardingCarouselScreen({super.key});
@@ -96,7 +91,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: active ? _kOrange : _kDotInactive,
+                    color: active ? HuddlColors.onboardingOrange : HuddlColors.gray300,
                     shape: BoxShape.circle,
                   ),
                 );
@@ -114,7 +109,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                 child: ElevatedButton(
                   onPressed: _next,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kOrangeBtn,
+                    backgroundColor: HuddlColors.onboardingOrange,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -140,7 +135,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
               children: [
                 const Text(
                   'Already have an account? ',
-                  style: TextStyle(fontSize: 14, color: _kTextGray),
+                  style: TextStyle(fontSize: 14, color: HuddlColors.disabledText),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/login'),
@@ -148,7 +143,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                     'Login',
                     style: TextStyle(
                       fontSize: 14,
-                      color: _kOrange,
+                      color: HuddlColors.onboardingOrange,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -192,7 +187,7 @@ class _CarouselPage extends StatelessWidget {
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: _kTextDark,
+              color: HuddlColors.textDark,
               height: 1.3,
             ),
             textAlign: TextAlign.center,
@@ -205,7 +200,7 @@ class _CarouselPage extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: _kTextDark,
+                color: HuddlColors.textDark,
               ),
               textAlign: TextAlign.center,
             ),
@@ -218,7 +213,7 @@ class _CarouselPage extends StatelessWidget {
             data.body,
             style: const TextStyle(
               fontSize: 14,
-              color: _kTextGray,
+              color: HuddlColors.disabledText,
               height: 1.55,
             ),
             textAlign: TextAlign.center,

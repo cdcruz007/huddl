@@ -176,7 +176,7 @@ class PollCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.red.withValues(alpha: 0.1),
+                      color: HuddlColors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -184,7 +184,7 @@ class PollCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Colors.red,
+                        color: HuddlColors.error,
                       ),
                     ),
                   ),
@@ -345,7 +345,7 @@ class PollCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   Icon(Icons.access_time,
                       size: 14,
-                      color: expired ? Colors.red : HuddlColors.textHint),
+                      color: expired ? HuddlColors.error : HuddlColors.textHint),
                   const SizedBox(width: 4),
                   Text(
                     expired
@@ -353,7 +353,7 @@ class PollCard extends StatelessWidget {
                         : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: expired ? Colors.red : HuddlColors.textHint,
+                      color: expired ? HuddlColors.error : HuddlColors.textHint,
                     ),
                   ),
                 ],
@@ -455,14 +455,14 @@ class PollCard extends StatelessWidget {
             value: 'delete',
             child: Row(
               children: [
-                const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                const Icon(Icons.delete_outline, size: 20, color: HuddlColors.error),
                 const SizedBox(width: 12),
                 Text(
                   'Delete Poll',
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.red,
+                    color: HuddlColors.error,
                   ),
                 ),
               ],
@@ -566,7 +566,7 @@ class PollDetailScreen extends StatelessWidget {
           if (poll.isCreatedByMe && onDeletePoll != null)
             IconButton(
               icon:
-                  const Icon(Icons.delete_outline, color: Colors.red, size: 22),
+                  const Icon(Icons.delete_outline, color: HuddlColors.error, size: 22),
               onPressed: () {
                 Navigator.pop(context);
                 onDeletePoll?.call();
@@ -621,7 +621,7 @@ class PollDetailScreen extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.red,
+                                color: HuddlColors.error,
                               ),
                             ),
                         ],
@@ -791,7 +791,7 @@ class PollDetailScreen extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: HuddlColors.error,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 0,

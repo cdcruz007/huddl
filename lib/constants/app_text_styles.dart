@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_colors.dart';
+import '../theme/huddl_colors.dart';
 
 /// Huddl Design System - Typography
 /// Based on approved style guide with system default fonts (SF Pro/Roboto)
@@ -14,7 +14,7 @@ class AppTextStyles {
   static const TextStyle h1 = TextStyle(
     fontSize: 36.0,
     fontWeight: FontWeight.w700, // Bold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.2,
     letterSpacing: -0.5,
   );
@@ -24,7 +24,7 @@ class AppTextStyles {
   static const TextStyle h2 = TextStyle(
     fontSize: 32.0,
     fontWeight: FontWeight.w700, // Bold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.25,
     letterSpacing: -0.5,
   );
@@ -34,7 +34,7 @@ class AppTextStyles {
   static const TextStyle h3 = TextStyle(
     fontSize: 24.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.3,
     letterSpacing: 0,
   );
@@ -44,7 +44,7 @@ class AppTextStyles {
   static const TextStyle h4 = TextStyle(
     fontSize: 20.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.4,
     letterSpacing: 0,
   );
@@ -54,7 +54,7 @@ class AppTextStyles {
   static const TextStyle h5 = TextStyle(
     fontSize: 18.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.text,
+    color: HuddlColors.textDark,
     height: 1.4,
     letterSpacing: 0,
   );
@@ -64,7 +64,7 @@ class AppTextStyles {
   static const TextStyle h6 = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.text,
+    color: HuddlColors.textDark,
     height: 1.5,
     letterSpacing: 0.15,
   );
@@ -78,7 +78,7 @@ class AppTextStyles {
   static const TextStyle bodyLarge = TextStyle(
     fontSize: 18.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.text,
+    color: HuddlColors.textDark,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -88,7 +88,7 @@ class AppTextStyles {
   static const TextStyle body = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.text,
+    color: HuddlColors.textDark,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -101,7 +101,7 @@ class AppTextStyles {
   static const TextStyle bodySmall = TextStyle(
     fontSize: 14.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.textSecondary,
+    color: HuddlColors.textSecondary,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -118,7 +118,7 @@ class AppTextStyles {
   static const TextStyle caption = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.textTertiary,
+    color: HuddlColors.textHint,
     height: 1.4,
     letterSpacing: 0.15,
   );
@@ -128,7 +128,7 @@ class AppTextStyles {
   static const TextStyle overline = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.textTertiary,
+    color: HuddlColors.textHint,
     height: 1.3,
     letterSpacing: 1.5,
   );
@@ -142,7 +142,7 @@ class AppTextStyles {
   static const TextStyle buttonLarge = TextStyle(
     fontSize: 18.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.white,
+    color: HuddlColors.white,
     height: 1.2,
     letterSpacing: 0.5,
   );
@@ -152,7 +152,7 @@ class AppTextStyles {
   static const TextStyle button = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.white,
+    color: HuddlColors.white,
     height: 1.2,
     letterSpacing: 0.5,
   );
@@ -162,7 +162,7 @@ class AppTextStyles {
   static const TextStyle buttonSmall = TextStyle(
     fontSize: 14.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.white,
+    color: HuddlColors.white,
     height: 1.2,
     letterSpacing: 0.5,
   );
@@ -172,7 +172,7 @@ class AppTextStyles {
   static const TextStyle link = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.info,
+    color: HuddlColors.blue,
     height: 1.5,
     letterSpacing: 0,
     decoration: TextDecoration.underline,
@@ -183,7 +183,7 @@ class AppTextStyles {
   static const TextStyle linkSmall = TextStyle(
     fontSize: 14.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.info,
+    color: HuddlColors.blue,
     height: 1.5,
     letterSpacing: 0,
     decoration: TextDecoration.underline,
@@ -198,7 +198,7 @@ class AppTextStyles {
   static const TextStyle inputLabel = TextStyle(
     fontSize: 14.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.4,
     letterSpacing: 0.15,
   );
@@ -208,7 +208,7 @@ class AppTextStyles {
   static const TextStyle inputText = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -218,7 +218,7 @@ class AppTextStyles {
   static const TextStyle inputHint = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.textTertiary,
+    color: HuddlColors.textHint,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -228,7 +228,7 @@ class AppTextStyles {
   static const TextStyle inputHelper = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.textSecondary,
+    color: HuddlColors.textSecondary,
     height: 1.4,
     letterSpacing: 0.15,
   );
@@ -238,7 +238,7 @@ class AppTextStyles {
   static const TextStyle inputError = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w400, // Regular
-    color: AppColors.error,
+    color: HuddlColors.error,
     height: 1.4,
     letterSpacing: 0.15,
   );
@@ -252,7 +252,7 @@ class AppTextStyles {
   static const TextStyle subtitle = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.textSecondary,
+    color: HuddlColors.textSecondary,
     height: 1.5,
     letterSpacing: 0.15,
   );
@@ -262,7 +262,7 @@ class AppTextStyles {
   static const TextStyle emphasis = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -272,7 +272,7 @@ class AppTextStyles {
   static const TextStyle badge = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w500, // Medium
-    color: AppColors.white,
+    color: HuddlColors.white,
     height: 1.2,
     letterSpacing: 0.5,
   );
@@ -282,7 +282,7 @@ class AppTextStyles {
   static const TextStyle price = TextStyle(
     fontSize: 20.0,
     fontWeight: FontWeight.w700, // Bold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.2,
     letterSpacing: 0,
   );
@@ -292,7 +292,7 @@ class AppTextStyles {
   static const TextStyle priceSmall = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w600, // SemiBold
-    color: AppColors.textDark,
+    color: HuddlColors.textDark,
     height: 1.2,
     letterSpacing: 0,
   );
@@ -305,7 +305,7 @@ class AppTextStyles {
   static const TextStyle darkH1 = TextStyle(
     fontSize: 36.0,
     fontWeight: FontWeight.w700,
-    color: AppColors.darkTextPrimary,
+    color: HuddlColors.white,
     height: 1.2,
     letterSpacing: -0.5,
   );
@@ -314,7 +314,7 @@ class AppTextStyles {
   static const TextStyle darkH2 = TextStyle(
     fontSize: 32.0,
     fontWeight: FontWeight.w700,
-    color: AppColors.darkTextPrimary,
+    color: HuddlColors.white,
     height: 1.25,
     letterSpacing: -0.5,
   );
@@ -323,7 +323,7 @@ class AppTextStyles {
   static const TextStyle darkH3 = TextStyle(
     fontSize: 24.0,
     fontWeight: FontWeight.w600,
-    color: AppColors.darkTextPrimary,
+    color: HuddlColors.white,
     height: 1.3,
     letterSpacing: 0,
   );
@@ -332,7 +332,7 @@ class AppTextStyles {
   static const TextStyle darkBody = TextStyle(
     fontSize: 16.0,
     fontWeight: FontWeight.w400,
-    color: AppColors.darkTextPrimary,
+    color: HuddlColors.white,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -341,7 +341,7 @@ class AppTextStyles {
   static const TextStyle darkBodySmall = TextStyle(
     fontSize: 14.0,
     fontWeight: FontWeight.w400,
-    color: AppColors.darkTextSecondary,
+    color: HuddlColors.gray400,
     height: 1.5,
     letterSpacing: 0,
   );
@@ -350,7 +350,7 @@ class AppTextStyles {
   static const TextStyle darkCaption = TextStyle(
     fontSize: 12.0,
     fontWeight: FontWeight.w400,
-    color: AppColors.darkTextTertiary,
+    color: HuddlColors.gray500,
     height: 1.4,
     letterSpacing: 0.15,
   );
@@ -404,22 +404,22 @@ class AppTextStyles {
 /// Typography Helper Extensions
 extension TextStyleExtensions on TextStyle {
   /// Create a copy with primary color
-  TextStyle get primary => copyWith(color: AppColors.primary);
+  TextStyle get primary => copyWith(color: HuddlColors.primary);
   
   /// Create a copy with info color
-  TextStyle get info => copyWith(color: AppColors.info);
+  TextStyle get info => copyWith(color: HuddlColors.blue);
   
   /// Create a copy with success color
-  TextStyle get success => copyWith(color: AppColors.success);
+  TextStyle get success => copyWith(color: HuddlColors.success);
   
   /// Create a copy with error color
-  TextStyle get error => copyWith(color: AppColors.error);
+  TextStyle get error => copyWith(color: HuddlColors.error);
   
   /// Create a copy with warning color
-  TextStyle get warning => copyWith(color: AppColors.warning);
+  TextStyle get warning => copyWith(color: HuddlColors.warning);
   
   /// Create a copy with white color
-  TextStyle get white => copyWith(color: AppColors.white);
+  TextStyle get white => copyWith(color: HuddlColors.white);
   
   /// Create a copy with bold weight
   TextStyle get bold => copyWith(fontWeight: FontWeight.w700);

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../theme/huddl_colors.dart';
 
-const _kOrange   = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
 
 class DueDateScreen extends StatefulWidget {
   const DueDateScreen({super.key});
@@ -74,7 +72,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: _kTextDark,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -85,7 +83,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
                       'Select the year your baby is expected. This helps us connect you with other expecting parents.',
                       style: TextStyle(
                         fontSize: 14,
-                        color: _kTextGray,
+                        color: HuddlColors.disabledText,
                         height: 1.6,
                       ),
                       textAlign: TextAlign.center,
@@ -115,7 +113,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: _kOrange,
+                        color: HuddlColors.onboardingOrange,
                       ),
                     ),
 
@@ -174,9 +172,9 @@ class _DrumPicker extends StatelessWidget {
         Container(
           height: 52,
           decoration: BoxDecoration(
-            color: _kOrange.withValues(alpha: 0.10),
+            color: HuddlColors.onboardingOrange.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _kOrange.withValues(alpha: 0.30), width: 1.5),
+            border: Border.all(color: HuddlColors.onboardingOrange.withValues(alpha: 0.30), width: 1.5),
           ),
         ),
         ListWheelScrollView.useDelegate(
@@ -198,7 +196,7 @@ class _DrumPicker extends StatelessWidget {
                     fontSize: selected ? 28 : 20,
                     fontWeight:
                         selected ? FontWeight.w800 : FontWeight.w400,
-                    color: selected ? _kOrange : _kTextGray,
+                    color: selected ? HuddlColors.onboardingOrange : HuddlColors.disabledText,
                   ),
                 ),
               );
@@ -222,7 +220,7 @@ class _OnboardingAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(children: [
         IconButton(
-          icon: const Icon(Icons.chevron_left, size: 30, color: _kOrange),
+          icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
           onPressed: onBack,
           padding: EdgeInsets.zero,
         ),
@@ -261,7 +259,7 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          color: enabled ? _kOrange : const Color(0xFFEEEEEE),
+          color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -270,7 +268,7 @@ class _OrangeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: enabled ? Colors.white : _kTextGray,
+            color: enabled ? Colors.white : HuddlColors.disabledText,
           ),
         ),
       ),

@@ -23,7 +23,7 @@ import '../../widgets/emoji_reaction_picker.dart';
 import '../../widgets/huddl_widgets.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
-const Color _kMyBubble = Color(0xFFFFF3ED);
+const Color _kMyBubble = HuddlColors.peachLight;
 
 class GroupChatScreen extends StatefulWidget {
   final String groupId;
@@ -782,7 +782,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           margin: const EdgeInsets.only(left: 16, bottom: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: reply.isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                            color: reply.isMe ? HuddlColors.peachLight : HuddlColors.white,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -942,7 +942,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   label: Text('Unsend for everyone',
                       style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
+                    backgroundColor: HuddlColors.error,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1219,10 +1219,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.block, size: 32, color: Colors.red),
+                child: const Icon(Icons.block, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1284,7 +1284,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: HuddlColors.error,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
@@ -1439,9 +1439,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             Navigator.pop(c);
                             _confirmRemoveMember(m);
                           },
-                          style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), padding: EdgeInsets.zero,
+                          style: OutlinedButton.styleFrom(side: const BorderSide(color: HuddlColors.error), padding: EdgeInsets.zero,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-                          child: Text('Remove', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.red)),
+                          child: Text('Remove', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.error)),
                         ),
                       ),
                     );
@@ -1474,7 +1474,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
               );
             },
-            child: Text('Remove', style: GoogleFonts.poppins(color: Colors.red, fontWeight: FontWeight.w600)),
+            child: Text('Remove', style: GoogleFonts.poppins(color: HuddlColors.error, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -1633,11 +1633,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.sentiment_dissatisfied_outlined,
-                    size: 32, color: Colors.red),
+                    size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1712,7 +1712,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.red,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -1993,10 +1993,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.orange.withValues(alpha: 0.1),
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person_off_outlined, size: 32, color: Colors.orange),
+                child: const Icon(Icons.person_off_outlined, size: 32, color: HuddlColors.primary),
               ),
               const SizedBox(height: 18),
               Text(
@@ -2587,14 +2587,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'remove_member',
                 child: Row(
                   children: [
-                    const Icon(Icons.person_remove_outlined, size: 20, color: Colors.red),
+                    const Icon(Icons.person_remove_outlined, size: 20, color: HuddlColors.error),
                     const SizedBox(width: 12),
                     Text(
                       'Remove member',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Colors.red,
+                        color: HuddlColors.error,
                       ),
                     ),
                   ],
@@ -2624,14 +2624,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'leave',
                 child: Row(
                   children: [
-                    const Icon(Icons.exit_to_app, size: 20, color: Colors.red),
+                    const Icon(Icons.exit_to_app, size: 20, color: HuddlColors.error),
                     const SizedBox(width: 12),
                     Text(
                       'Leave group',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Colors.red,
+                        color: HuddlColors.error,
                       ),
                     ),
                   ],
@@ -2891,7 +2891,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             },
             child: Text('Delete',
                 style: GoogleFonts.poppins(
-                    color: Colors.red, fontWeight: FontWeight.w600)),
+                    color: HuddlColors.error, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -3585,7 +3585,7 @@ class _ChatBubble extends StatelessWidget {
                             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: isHighlighted
-                              ? const Color(0xFFFFF7C9)
+                              ? HuddlColors.yellowBackground
                               : isMe
                                   ? _kMyBubble
                                   : HuddlColors.white,
@@ -3788,10 +3788,10 @@ class _ChatBubble extends StatelessWidget {
               ),
               if (onUnsend != null)
                 ListTile(
-                  leading: const Icon(Icons.delete_sweep_outlined, color: Colors.red),
+                  leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
                   title: Text('Unsend message',
                       style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
                   onTap: () {
                     Navigator.pop(c);
                     onUnsend?.call();
@@ -3811,12 +3811,12 @@ class _ChatBubble extends StatelessWidget {
                 ListTile(
                   leading: Icon(
                     isBlockedUser ? Icons.check_circle_outline : Icons.block,
-                    color: Colors.red,
+                    color: HuddlColors.error,
                   ),
                   title: Text(
                     isBlockedUser ? 'Unblock ${message.senderName}' : 'Block ${message.senderName}',
                     style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red),
+                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
                   ),
                   onTap: () {
                     Navigator.pop(c);
@@ -3964,7 +3964,7 @@ class _GroupMessageStatusIcon extends StatelessWidget {
       case MessageStatus.read:
         return const Icon(Icons.done_all, size: 14, color: HuddlColors.blue);
       case MessageStatus.error:
-        return const Icon(Icons.error_outline, size: 14, color: Colors.red);
+        return const Icon(Icons.error_outline, size: 14, color: HuddlColors.error);
     }
   }
 }
@@ -4351,7 +4351,7 @@ class _GroupLocationBubble extends StatelessWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Could not open maps'),
-                backgroundColor: Colors.red.shade400,
+                backgroundColor: HuddlColors.error,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -4397,7 +4397,7 @@ class _GroupLocationBubble extends StatelessWidget {
                 Container(
                   constraints: const BoxConstraints(maxWidth: 240),
                   decoration: BoxDecoration(
-                    color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                    color: isMe ? HuddlColors.peachLight : HuddlColors.white,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -4432,7 +4432,7 @@ class _GroupLocationBubble extends StatelessWidget {
                                 children: List.generate(6, (_) => Expanded(
                                   child: Container(
                                     decoration: const BoxDecoration(
-                                      border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5)),
+                                      border: Border(bottom: BorderSide(color: HuddlColors.gray400, width: 0.5)),
                                     ),
                                   ),
                                 )),
@@ -4548,7 +4548,7 @@ class _GroupAttachSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _gAttachIcon(context, Icons.location_on_rounded, 'Location',
-                      HuddlColors.accentAmber, const Color(0xFFFFF7C9), 'location'),
+                      HuddlColors.accentAmber, HuddlColors.yellowBackground, 'location'),
                   _gAttachIcon(context, Icons.person_rounded, 'Contact',
                       HuddlColors.primary, HuddlColors.peachLight, 'contact'),
                   _gAttachIcon(context, Icons.poll_rounded, 'Poll',

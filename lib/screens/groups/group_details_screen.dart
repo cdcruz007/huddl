@@ -171,11 +171,11 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.sentiment_dissatisfied_outlined,
-                    size: 32, color: Colors.red),
+                    size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -242,7 +242,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.red,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -923,12 +923,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             ),
             if (_isJoined)
               ListTile(
-                leading: const Icon(Icons.exit_to_app, color: Colors.red),
+                leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
                 title: Text('Leave group',
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Colors.red)),
+                        color: HuddlColors.error)),
                 onTap: () {
                   Navigator.pop(c);
                   _showLeaveGroupDialog();
@@ -937,12 +937,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             // Delete group — only for private group admins/creator
             if (widget.isPrivate && _isAdmin)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
                 title: Text('Delete group',
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Colors.red)),
+                        color: HuddlColors.error)),
                 onTap: () {
                   Navigator.pop(c);
                   _confirmDeleteGroup(ctx);
@@ -969,10 +969,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_outline, size: 32, color: Colors.red),
+                child: const Icon(Icons.delete_outline, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -1025,7 +1025,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         }
                       },
                       child: Text('Delete',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.red)),
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],

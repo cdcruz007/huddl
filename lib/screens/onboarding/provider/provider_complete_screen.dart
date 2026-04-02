@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../constants/app_colors.dart';
+import '../../../theme/huddl_colors.dart';
 
 class ProviderCompleteScreen extends StatelessWidget {
   const ProviderCompleteScreen({super.key});
@@ -7,7 +7,7 @@ class ProviderCompleteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: HuddlColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -19,11 +19,11 @@ class ProviderCompleteScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                  color: HuddlColors.successGreen.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check_circle_rounded,
-                    color: Color(0xFF22C55E), size: 64),
+                    color: HuddlColors.successGreen, size: 64),
               ),
               const SizedBox(height: 32),
               const Text("You're all set!",
@@ -44,7 +44,7 @@ class ProviderCompleteScreen extends StatelessWidget {
                   onPressed: () =>
                       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: HuddlColors.primary,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),

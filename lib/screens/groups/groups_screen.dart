@@ -547,7 +547,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 _ActionTile(
                   icon: Icons.delete_outline,
                   label: 'Delete',
-                  color: Colors.red,
+                  color: HuddlColors.error,
                   onTap: () {
                     Navigator.pop(c);
                     final listItem = _MessageListItem(
@@ -573,7 +573,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 _ActionTile(
                   icon: Icons.exit_to_app,
                   label: 'Leave group',
-                  color: Colors.red,
+                  color: HuddlColors.error,
                   onTap: () {
                     Navigator.pop(c);
                     _confirmLeaveGroup(ctx, group);
@@ -609,11 +609,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
+                  color: HuddlColors.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.sentiment_dissatisfied_outlined,
-                    size: 32, color: Colors.red),
+                    size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
               Text(
@@ -696,7 +696,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.red,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -1599,7 +1599,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               _ActionTile(
                 icon: Icons.delete_outline,
                 label: 'Delete',
-                color: Colors.red,
+                color: HuddlColors.error,
                 onTap: () {
                   Navigator.pop(c);
                   final listItem = _MessageListItem(
@@ -1760,7 +1760,7 @@ class _GroupMessageRow extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        color: isPinned ? const Color(0xFFFFF8F0) : HuddlColors.white,
+        color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
@@ -2166,7 +2166,7 @@ class _DMMessageRow extends StatelessWidget {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
-        color: isPinned ? const Color(0xFFFFF8F0) : HuddlColors.white,
+        color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
@@ -2894,7 +2894,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 color: isChecked ? HuddlColors.primary : Colors.transparent,
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(
-                                  color: isChecked ? HuddlColors.primary : const Color(0xFFCCCCCC),
+                                  color: isChecked ? HuddlColors.primary : HuddlColors.gray300,
                                   width: 2,
                                 ),
                               ),
@@ -3429,10 +3429,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_first_time_mums': {'icon': Icons.child_friendly, 'color': HuddlColors.primary},
   'disc_dads_connect': {'icon': Icons.man, 'color': HuddlColors.blue},
-  'disc_baby_sleep': {'icon': Icons.bedtime, 'color': Color(0xFFF7D97C)},
+  'disc_baby_sleep': {'icon': Icons.bedtime, 'color': HuddlColors.yellowMedium},
   'disc_healthy_meals': {'icon': Icons.restaurant, 'color': HuddlColors.accentAmber},
   'disc_postnatal_fitness': {'icon': Icons.fitness_center, 'color': HuddlColors.accentCoral},
-  'disc_working_parents': {'icon': Icons.work_outline, 'color': Color(0xFFD4A017)},
+  'disc_working_parents': {'icon': Icons.work_outline, 'color': HuddlColors.yellowDark},
 };
 
 class _DiscoverGroupCard extends StatelessWidget {

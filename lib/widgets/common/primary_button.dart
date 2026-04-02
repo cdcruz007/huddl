@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -34,8 +34,8 @@ class PrimaryButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: (enabled && !isLoading) ? onPressed : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppColors.primary,
-          disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.5),
+          backgroundColor: backgroundColor ?? HuddlColors.primary,
+          disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.5),
           foregroundColor: textColor ?? Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(

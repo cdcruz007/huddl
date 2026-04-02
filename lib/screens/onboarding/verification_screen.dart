@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import '../../constants/app_colors.dart';
+import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_header_logo.dart';
 import '../../services/otp_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -205,7 +205,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('New code sent to $countryCode$phoneNumber'),
-            backgroundColor: AppColors.success,
+            backgroundColor: HuddlColors.success,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -215,7 +215,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to resend code. Please try again.'),
-            backgroundColor: AppColors.error,
+            backgroundColor: HuddlColors.error,
             duration: Duration(seconds: 2),
           ),
         );
@@ -227,12 +227,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const kOrange = Color(0xFFFCA878);
-    const kTextDark = Color(0xFF1C1C1C);
-    const kTextGray = Color(0xFF9E9E9E);
-    const kInputBg = Color(0xFFF5F5F5);
-    const kInputBorder = Color(0xFFDDDDDD);
-    const kBtnDisabled = Color(0xFFEEEEEE);
+    const kOrange = HuddlColors.onboardingOrange;
+    const kTextDark = HuddlColors.textDark;
+    const kTextGray = HuddlColors.disabledText;
+    const kInputBg = HuddlColors.inputBg;
+    const kInputBorder = HuddlColors.inputBorder;
+    const kBtnDisabled = HuddlColors.disabled;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -312,7 +312,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       Text(
                         _errorMessage!,
                         style: const TextStyle(
-                            fontSize: 13, color: Color(0xFFE53E3E)),
+                            fontSize: 13, color: HuddlColors.error),
                       ),
                     ],
 
@@ -328,7 +328,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           color: kInputBg,
                           borderRadius: BorderRadius.circular(12),
                           border:
-                              Border.all(color: const Color(0xFFE0E0E0), width: 1),
+                              Border.all(color: HuddlColors.inputBorderLight, width: 1),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -381,17 +381,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
+                            color: HuddlColors.warningBg,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                                color: const Color(0xFFF59E0B), width: 1),
+                                color: HuddlColors.warning, width: 1),
                           ),
                           child: Text(
                             'Test code: $_debugOTP  (tap to fill)',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF78350F),
+                              color: HuddlColors.warningDark,
                             ),
                           ),
                         ),

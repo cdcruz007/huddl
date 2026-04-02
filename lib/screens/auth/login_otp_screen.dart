@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import '../../theme/huddl_colors.dart';
 
-// ── Design tokens (matches onboarding OTP screen) ────────────────────────────
-const _kOrange      = Color(0xFFFCA878);
-const _kTextDark    = Color(0xFF1C1C1C);
-const _kTextGray    = Color(0xFF9E9E9E);
-const _kBtnDisabled = Color(0xFFEEEEEE);
 
 /// OTP verification screen shown after successful phone+password login.
 /// Accepts [phoneNumber] (display) and [generatedOtp] (the 6-digit code
@@ -82,7 +78,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
           'Demo OTP: $_currentOtp  (sent to ${widget.phoneNumber})',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        backgroundColor: _kOrange,
+        backgroundColor: HuddlColors.onboardingOrange,
         duration: const Duration(seconds: 6),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -137,7 +133,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
               child: Row(children: [
                 IconButton(
                   icon: const Icon(Icons.chevron_left,
-                      size: 30, color: _kOrange),
+                      size: 30, color: HuddlColors.onboardingOrange),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                 ),
@@ -167,11 +163,11 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       width: 64,
                       height: 64,
                       decoration: BoxDecoration(
-                        color: _kOrange.withValues(alpha: 0.12),
+                        color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.lock_outline_rounded,
-                          size: 32, color: _kOrange),
+                          size: 32, color: HuddlColors.onboardingOrange),
                     ),
 
                     const SizedBox(height: 24),
@@ -182,7 +178,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: _kTextDark,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -194,7 +190,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       'We\'ve sent a 6-digit code to\n${widget.phoneNumber}',
                       style: const TextStyle(
                         fontSize: 15,
-                        color: _kTextGray,
+                        color: HuddlColors.disabledText,
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -214,7 +210,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                         'Incorrect code. Please try again.',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Color(0xFFE53935),
+                          color: HuddlColors.error,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -230,10 +226,10 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                         padding:
                             const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF5F5F5),
+                          color: HuddlColors.inputBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: const Color(0xFFE0E0E0), width: 1),
+                              color: HuddlColors.inputBorderLight, width: 1),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -243,8 +239,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                           style: TextStyle(
                             fontSize: 15,
                             color: _resendTimer > 0
-                                ? _kTextGray
-                                : _kOrange,
+                                ? HuddlColors.disabledText
+                                : HuddlColors.onboardingOrange,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -259,7 +255,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                             height: 54,
                             child: Center(
                               child: CircularProgressIndicator(
-                                color: _kOrange,
+                                color: HuddlColors.onboardingOrange,
                                 strokeWidth: 2.5,
                               ),
                             ),
@@ -278,7 +274,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       'This keeps your Huddl account secure.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: _kTextGray.withValues(alpha: 0.8),
+                        color: HuddlColors.disabledText.withValues(alpha: 0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -332,17 +328,17 @@ class _OtpBoxRow extends StatelessWidget {
                     height: 56,
                     decoration: BoxDecoration(
                       color: hasError
-                          ? const Color(0xFFFFEBEB)
+                          ? HuddlColors.errorLight
                           : filled
-                              ? _kOrange.withValues(alpha: 0.08)
-                              : const Color(0xFFF5F5F5),
+                              ? HuddlColors.onboardingOrange.withValues(alpha: 0.08)
+                              : HuddlColors.inputBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: hasError
-                            ? const Color(0xFFE53935)
+                            ? HuddlColors.error
                             : filled
-                                ? _kOrange
-                                : const Color(0xFFE0E0E0),
+                                ? HuddlColors.onboardingOrange
+                                : HuddlColors.inputBorderLight,
                         width: filled ? 1.8 : 1.2,
                       ),
                     ),
@@ -353,14 +349,14 @@ class _OtpBoxRow extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: _kTextDark,
+                              color: HuddlColors.textDark,
                             ),
                           )
                         : i == controller.text.length
                             ? Container(
                                 width: 2,
                                 height: 24,
-                                color: _kOrange,
+                                color: HuddlColors.onboardingOrange,
                               )
                             : null,
                   );
@@ -390,7 +386,7 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-          color: enabled ? _kOrange : _kBtnDisabled,
+          color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
           borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.center,
@@ -399,7 +395,7 @@ class _OrangeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: enabled ? Colors.white : _kTextGray,
+            color: enabled ? Colors.white : HuddlColors.disabledText,
           ),
         ),
       ),

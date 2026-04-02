@@ -3,12 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../theme/huddl_colors.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────────
-const _kOrange     = Color(0xFFFCA878);
-const _kTextDark   = Color(0xFF1C1C1C);
-const _kTextGray   = Color(0xFF9E9E9E);
-const _kAvatarBg   = Color(0xFFFFF9D6);
 
 // ── Default avatar illustrations (gender-matched) ────────────────────────────
 // Used when the user skips uploading a profile photo.
@@ -57,7 +54,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFDDDDDD),
+                  color: HuddlColors.inputBorder,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -66,7 +63,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: _kTextDark,
+                  color: HuddlColors.textDark,
                 ),
               ),
               const SizedBox(height: 16),
@@ -75,10 +72,10 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.12),
+                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.photo_library_outlined, color: _kOrange),
+                  child: const Icon(Icons.photo_library_outlined, color: HuddlColors.onboardingOrange),
                 ),
                 title: const Text('Choose from gallery',
                     style: TextStyle(fontWeight: FontWeight.w500)),
@@ -92,10 +89,10 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: _kOrange.withValues(alpha: 0.12),
+                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: _kOrange),
+                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
                 ),
                 title: const Text('Take a photo',
                     style: TextStyle(fontWeight: FontWeight.w500)),
@@ -141,7 +138,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Could not access photos: $e'),
-            backgroundColor: Colors.red.shade400,
+            backgroundColor: HuddlColors.error,
           ),
         );
       }
@@ -174,7 +171,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   GestureDetector(
                     onTap: () => Navigator.maybePop(context),
                     child: const Icon(Icons.chevron_left,
-                        size: 30, color: _kOrange),
+                        size: 30, color: HuddlColors.onboardingOrange),
                   ),
                   const Spacer(),
                   // Huddl logo centred
@@ -198,7 +195,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: _kTextDark,
+                color: HuddlColors.textDark,
               ),
               textAlign: TextAlign.center,
             ),
@@ -212,7 +209,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                 'Don\'t be just a name – share your smile with us too.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: _kTextGray,
+                  color: HuddlColors.disabledText,
                   height: 1.55,
                 ),
                 textAlign: TextAlign.center,
@@ -232,17 +229,17 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                     width: 160,
                     height: 160,
                     decoration: BoxDecoration(
-                      color: _kAvatarBg,
+                      color: HuddlColors.avatarBg,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: hasPhoto ? _kOrange : _kOrange.withValues(alpha: 0.4),
+                        color: hasPhoto ? HuddlColors.onboardingOrange : HuddlColors.onboardingOrange.withValues(alpha: 0.4),
                         width: hasPhoto ? 3 : 2,
                       ),
                     ),
                     child: _isLoading
                         ? const Center(
                             child: CircularProgressIndicator(
-                              color: _kOrange,
+                              color: HuddlColors.onboardingOrange,
                               strokeWidth: 2.5,
                             ),
                           )
@@ -254,7 +251,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: _kOrange,
+                        color: HuddlColors.onboardingOrange,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2.5),
                       ),
@@ -290,8 +287,8 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: _kOrange,
-                        side: const BorderSide(color: _kOrange, width: 1.5),
+                        foregroundColor: HuddlColors.onboardingOrange,
+                        side: const BorderSide(color: HuddlColors.onboardingOrange, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -309,9 +306,9 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _continue,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _kOrange,
+                        backgroundColor: HuddlColors.onboardingOrange,
                         disabledBackgroundColor:
-                            const Color(0xFFEEEEEE),
+                            HuddlColors.disabled,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -377,8 +374,8 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
         errorBuilder: (_, __, ___) => Container(
           width: 160,
           height: 160,
-          color: _kAvatarBg,
-          child: const Icon(Icons.person, size: 64, color: Color(0xFFE8A87C)),
+          color: HuddlColors.avatarBg,
+          child: const Icon(Icons.person, size: 64, color: HuddlColors.avatarIcon),
         ),
       ),
     );

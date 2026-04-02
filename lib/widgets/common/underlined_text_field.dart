@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
 class UnderlinedTextField extends StatelessWidget {
@@ -35,7 +35,7 @@ class UnderlinedTextField extends StatelessWidget {
           Text(
             label!,
             style: AppTextStyles.inputLabel.copyWith(
-              color: AppColors.primaryOrange,
+              color: HuddlColors.primary,
               fontSize: 14,
             ),
           ),
@@ -54,18 +54,18 @@ class UnderlinedTextField extends StatelessWidget {
             suffixIcon: suffixIcon,
             errorText: errorText,
             filled: true,
-            fillColor: const Color(0xFFF7F7F7), // Light gray background
+            fillColor: HuddlColors.inputBg, // Light gray background
             enabledBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryOrange, width: 2),
+              borderSide: BorderSide(color: HuddlColors.primary, width: 2),
             ),
             focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.primaryOrange, width: 2),
+              borderSide: BorderSide(color: HuddlColors.primary, width: 2),
             ),
             errorBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.error, width: 1),
+              borderSide: BorderSide(color: HuddlColors.error, width: 1),
             ),
             focusedErrorBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: AppColors.error, width: 2),
+              borderSide: BorderSide(color: HuddlColors.error, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 0),
           ),

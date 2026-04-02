@@ -3478,7 +3478,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Could not access photos: $e'),
-            backgroundColor: Colors.red.shade400));
+            backgroundColor: HuddlColors.error));
       }
     }
   }

@@ -168,7 +168,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not access photos: $e'),
-              backgroundColor: Colors.red.shade400),
+              backgroundColor: HuddlColors.error),
         );
       }
     }
@@ -219,7 +219,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please add a group image before creating'),
-          backgroundColor: Colors.red,
+          backgroundColor: HuddlColors.error,
         ),
       );
       return;
@@ -708,7 +708,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           color: HuddlColors.peachLight,
                           borderRadius: BorderRadius.circular(24),
                           border: _showImageError
-                              ? Border.all(color: Colors.red, width: 2)
+                              ? Border.all(color: HuddlColors.error, width: 2)
                               : null,
                         ),
                         clipBehavior: Clip.antiAlias,
@@ -744,7 +744,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           : 'Add group photo *',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
-                        color: _showImageError ? Colors.red : HuddlColors.primary,
+                        color: _showImageError ? HuddlColors.error : HuddlColors.primary,
                         fontWeight: _showImageError ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
@@ -754,7 +754,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                         'A group image is required',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: Colors.red,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ],

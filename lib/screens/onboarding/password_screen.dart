@@ -3,14 +3,8 @@ import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../legal/terms_of_service_screen.dart';
 import '../legal/privacy_policy_detail_screen.dart';
+import '../../theme/huddl_colors.dart';
 
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kInputBg = Color(0xFFF5F5F5);
-const _kInputBorder = Color(0xFFDDDDDD);
-const _kErrorRed = Color(0xFFE53935);
-const _kGreen = Color(0xFF27AE60); // Style guide success green
 
 // ── Password strength helpers ─────────────────────────────────────────────────
 
@@ -129,7 +123,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: _kTextDark,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -137,7 +131,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                     const Text(
                       'Choose a strong password to keep your account secure.',
                       style: TextStyle(
-                          fontSize: 14, color: _kTextGray, height: 1.5),
+                          fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 32),
@@ -182,7 +176,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           _errorMsg!,
                           style: const TextStyle(
                               fontSize: 13,
-                              color: _kErrorRed,
+                              color: HuddlColors.error,
                               fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -202,7 +196,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                             child: Checkbox(
                               value: _agreedToTerms,
                               onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
-                              activeColor: _kOrange,
+                              activeColor: HuddlColors.onboardingOrange,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
                               ),
@@ -213,14 +207,14 @@ class _PasswordScreenState extends State<PasswordScreen> {
                             child: RichText(
                               text: TextSpan(
                                 style: const TextStyle(
-                                    fontSize: 13, color: _kTextGray, height: 1.5),
+                                    fontSize: 13, color: HuddlColors.disabledText, height: 1.5),
                                 children: [
                                   const TextSpan(
                                       text: "I agree to Huddl's "),
                                   TextSpan(
                                     text: 'Terms of Service',
                                     style: const TextStyle(
-                                      color: _kOrange,
+                                      color: HuddlColors.onboardingOrange,
                                       fontWeight: FontWeight.w600,
                                       decoration: TextDecoration.underline,
                                     ),
@@ -239,7 +233,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                                   TextSpan(
                                     text: 'Privacy Policy',
                                     style: const TextStyle(
-                                      color: _kOrange,
+                                      color: HuddlColors.onboardingOrange,
                                       fontWeight: FontWeight.w600,
                                       decoration: TextDecoration.underline,
                                     ),
@@ -304,7 +298,7 @@ class _StrengthBar extends StatelessWidget {
                 margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
                 height: 4,
                 decoration: BoxDecoration(
-                  color: filled ? data.color : const Color(0xFFE0E0E0),
+                  color: filled ? data.color : HuddlColors.inputBorderLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -327,15 +321,15 @@ class _StrengthBar extends StatelessWidget {
   ({int segments, Color color, String label}) _strengthData(_Strength s) {
     switch (s) {
       case _Strength.weak:
-        return (segments: 1, color: _kErrorRed, label: 'Weak');
+        return (segments: 1, color: HuddlColors.error, label: 'Weak');
       case _Strength.fair:
-        return (segments: 2, color: const Color(0xFFFF9800), label: 'Fair');
+        return (segments: 2, color: HuddlColors.warning, label: 'Fair');
       case _Strength.good:
-        return (segments: 3, color: const Color(0xFF2196F3), label: 'Good');
+        return (segments: 3, color: HuddlColors.blue, label: 'Good');
       case _Strength.strong:
-        return (segments: 4, color: _kGreen, label: 'Strong');
+        return (segments: 4, color: HuddlColors.success, label: 'Strong');
       case _Strength.empty:
-        return (segments: 0, color: const Color(0xFFE0E0E0), label: '');
+        return (segments: 0, color: HuddlColors.inputBorderLight, label: '');
     }
   }
 }
@@ -352,9 +346,9 @@ class _RequirementsPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8F8F8),
+        color: HuddlColors.surfaceLight,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFEEEEEE)),
+        border: Border.all(color: HuddlColors.disabled),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,7 +358,7 @@ class _RequirementsPanel extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: _kTextDark,
+              color: HuddlColors.textDark,
             ),
           ),
           const SizedBox(height: 8),
@@ -398,7 +392,7 @@ class _Req extends StatelessWidget {
           Icon(
             met ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
             size: 14,
-            color: met ? _kGreen : _kTextGray,
+            color: met ? HuddlColors.success : HuddlColors.disabledText,
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -406,7 +400,7 @@ class _Req extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: met ? _kTextDark : _kTextGray,
+                color: met ? HuddlColors.textDark : HuddlColors.disabledText,
                 fontWeight: met ? FontWeight.w500 : FontWeight.w400,
               ),
             ),
@@ -438,8 +432,8 @@ class _PasswordInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: _kInputBg,
-        border: Border(bottom: BorderSide(color: _kInputBorder, width: 1.2)),
+        color: HuddlColors.inputBg,
+        border: Border(bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,14 +442,14 @@ class _PasswordInput extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16, top: 8),
             child: Text(
               hint,
-              style: const TextStyle(fontSize: 11, color: _kTextGray),
+              style: const TextStyle(fontSize: 11, color: HuddlColors.disabledText),
             ),
           ),
           TextField(
             controller: controller,
             obscureText: obscure,
             onChanged: onChanged,
-            style: const TextStyle(fontSize: 16, color: _kTextDark),
+            style: const TextStyle(fontSize: 16, color: HuddlColors.textDark),
             decoration: InputDecoration(
               border: InputBorder.none,
               contentPadding:
@@ -465,7 +459,7 @@ class _PasswordInput extends StatelessWidget {
                   obscure
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: _kTextGray,
+                  color: HuddlColors.disabledText,
                   size: 22,
                 ),
                 onPressed: onToggle,
@@ -489,7 +483,7 @@ class _OnboardingAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(children: [
         IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: _kOrange),
+            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
             onPressed: onBack,
             padding: EdgeInsets.zero),
         const Expanded(child: _HuddlLogo()),
@@ -526,7 +520,7 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-            color: enabled ? _kOrange : const Color(0xFFEEEEEE),
+            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
             borderRadius: BorderRadius.circular(12)),
         alignment: Alignment.center,
         child: Text(
@@ -534,7 +528,7 @@ class _OrangeButton extends StatelessWidget {
           style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: enabled ? Colors.white : _kTextGray),
+              color: enabled ? Colors.white : HuddlColors.disabledText),
         ),
       ),
     );

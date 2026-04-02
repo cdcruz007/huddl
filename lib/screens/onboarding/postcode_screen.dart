@@ -2,12 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
+import '../../theme/huddl_colors.dart';
 
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kInputBg = Color(0xFFF5F5F5);
-const _kInputBorder = Color(0xFFDDDDDD);
 
 class PostcodeScreen extends StatefulWidget {
   const PostcodeScreen({super.key});
@@ -75,7 +71,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: _kTextDark,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -83,7 +79,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                     const Text(
                       "We will connect you with other local parents. Your postcode won't be shared anywhere.",
                       style: TextStyle(
-                          fontSize: 14, color: _kTextGray, height: 1.5),
+                          fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
@@ -105,8 +101,8 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             color: _canContinue
-                                ? const Color(0xFF27AE60)
-                                : _kTextGray,
+                                ? HuddlColors.success
+                                : HuddlColors.disabledText,
                           ),
                         ),
                       ),
@@ -137,7 +133,7 @@ class _OnboardingAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(children: [
         IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: _kOrange),
+            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
             onPressed: onBack,
             padding: EdgeInsets.zero),
         const Expanded(child: _HuddlLogo()),
@@ -176,8 +172,8 @@ class _UnderlineInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: _kInputBg,
-        border: Border(bottom: BorderSide(color: _kInputBorder, width: 1.2)),
+        color: HuddlColors.inputBg,
+        border: Border(bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2)),
       ),
       child: TextField(
         controller: controller,
@@ -188,10 +184,10 @@ class _UnderlineInput extends StatelessWidget {
           LengthLimitingTextInputFormatter(8),
           _UpperCaseTextFormatter(),
         ],
-        style: const TextStyle(fontSize: 16, color: _kTextDark),
+        style: const TextStyle(fontSize: 16, color: HuddlColors.textDark),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(fontSize: 16, color: _kTextGray),
+          hintStyle: const TextStyle(fontSize: 16, color: HuddlColors.disabledText),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -215,14 +211,14 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-            color: enabled ? _kOrange : const Color(0xFFEEEEEE),
+            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
             borderRadius: BorderRadius.circular(12)),
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: enabled ? Colors.white : _kTextGray)),
+                color: enabled ? Colors.white : HuddlColors.disabledText)),
       ),
     );
   }

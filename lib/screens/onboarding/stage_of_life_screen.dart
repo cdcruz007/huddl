@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../theme/huddl_colors.dart';
 
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kBtnDisabled = Color(0xFFEEEEEE);
-const _kCardBorder = Color(0xFFE8E8E8);
 
 class StageOfLifeScreen extends StatefulWidget {
   const StageOfLifeScreen({super.key});
@@ -87,7 +83,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: _kTextDark,
+                        color: HuddlColors.textDark,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -96,7 +92,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
                       'Connect with others who are at the same stage of life as you. You can choose more than one option.',
                       style: TextStyle(
                         fontSize: 14,
-                        color: _kTextGray,
+                        color: HuddlColors.disabledText,
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -148,10 +144,10 @@ class _StageCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: selected ? _kOrange.withValues(alpha: 0.06) : Colors.white,
+          color: selected ? HuddlColors.onboardingOrange.withValues(alpha: 0.06) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected ? _kOrange : _kCardBorder,
+            color: selected ? HuddlColors.onboardingOrange : HuddlColors.divider,
             width: selected ? 1.8 : 1.2,
           ),
           boxShadow: [
@@ -169,11 +165,11 @@ class _StageCard extends StatelessWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: _kOrange.withValues(alpha: selected ? 0.18 : 0.1),
+                color: HuddlColors.onboardingOrange.withValues(alpha: selected ? 0.18 : 0.1),
                 shape: BoxShape.circle,
-                border: Border.all(color: _kOrange, width: 1.5),
+                border: Border.all(color: HuddlColors.onboardingOrange, width: 1.5),
               ),
-              child: Icon(item.icon, color: _kOrange, size: 20),
+              child: Icon(item.icon, color: HuddlColors.onboardingOrange, size: 20),
             ),
             const SizedBox(width: 18),
             // Label
@@ -184,7 +180,7 @@ class _StageCard extends StatelessWidget {
                   fontSize: 17,
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.w500,
-                  color: _kTextDark,
+                  color: HuddlColors.textDark,
                 ),
               ),
             ),
@@ -194,7 +190,7 @@ class _StageCard extends StatelessWidget {
                 width: 24,
                 height: 24,
                 decoration: const BoxDecoration(
-                  color: _kOrange,
+                  color: HuddlColors.onboardingOrange,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -227,7 +223,7 @@ class _OnboardingAppBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       child: Row(children: [
         IconButton(
-            icon: const Icon(Icons.chevron_left, size: 30, color: _kOrange),
+            icon: const Icon(Icons.chevron_left, size: 30, color: HuddlColors.onboardingOrange),
             onPressed: onBack,
             padding: EdgeInsets.zero),
         const Expanded(child: _HuddlLogo()),
@@ -264,14 +260,14 @@ class _OrangeButton extends StatelessWidget {
         width: double.infinity,
         height: 54,
         decoration: BoxDecoration(
-            color: enabled ? _kOrange : _kBtnDisabled,
+            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
             borderRadius: BorderRadius.circular(12)),
         alignment: Alignment.center,
         child: Text(label,
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: enabled ? Colors.white : _kTextGray)),
+                color: enabled ? Colors.white : HuddlColors.disabledText)),
       ),
     );
   }

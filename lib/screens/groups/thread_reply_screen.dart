@@ -255,7 +255,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+              color: isMe ? HuddlColors.peachLight : HuddlColors.white,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -334,7 +334,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isMe ? const Color(0xFFFFF3ED) : HuddlColors.white,
+                  color: isMe ? HuddlColors.peachLight : HuddlColors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),

@@ -506,7 +506,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)],
+                colors: [HuddlColors.peachLight, HuddlColors.peachVeryLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),

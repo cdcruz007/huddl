@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
+import '../../theme/huddl_colors.dart';
 
 /// ── Huddl Splash Screen ────────────────────────────────────────────────────
 /// Design:
@@ -11,14 +12,13 @@ import 'dart:math' as math;
 ///   • Auto-advances to /onboarding after ≈ 2 s
 /// ──────────────────────────────────────────────────────────────────────────
 
-// ── Brand palette (sampled directly from style guide illustration assets) ──
-const _kPrimary        = Color(0xFFFCA878); // warm peach – main brand orange
-const _kPrimaryLight   = Color(0xFFFFBFA3); // lighter peach
-const _kPrimaryLighter = Color(0xFFFFD9C2); // soft blush
-const _kPrimaryPale    = Color(0xFFFFECDF); // barely-there blush
-const _kBlue           = Color(0xFF2878F0); // style-guide blue
-const _kBlueLight      = Color(0xFF508CF0); // lighter style-guide blue
-const _kYellow         = Color(0xFFF3C54F); // style-guide yellow (#F3C54F)
+// ── Brand palette (mapped to HuddlColors) ──
+const _kPrimaryLighter = Color(0xFFFFCCBC);  // soft blush
+const _kPrimaryLight = HuddlColors.primaryLight;
+const _kPrimary = HuddlColors.primary;
+const _kPrimaryPale = HuddlColors.peachVeryLight;
+const _kYellow = HuddlColors.yellow;
+const _kBlueLight = HuddlColors.lightBlue;
 
 // ── Blob definitions ─────────────────────────────────────────────────────
 // Each blob has a start position (edge) and an end position (closer to centre).
@@ -51,7 +51,7 @@ const _kBlobs = [
            radiusFrac: 0.32, color: _kPrimaryLighter, opacity: 0.90, phaseOffset: 0.00),
   // Top-right: medium blue — bounces toward upper-centre
   _BlobDef(startX: 1.10,  startY: 0.03,  endX: 0.85, endY: 0.12,
-           radiusFrac: 0.24, color: _kBlue,           opacity: 0.55, phaseOffset: 0.15),
+           radiusFrac: 0.24, color: HuddlColors.lightBlue,           opacity: 0.55, phaseOffset: 0.15),
   // Top-center-right: small yellow — dips down toward centre
   _BlobDef(startX: 0.82,  startY: -0.07, endX: 0.75, endY: 0.08,
            radiusFrac: 0.13, color: _kYellow,         opacity: 0.75, phaseOffset: 0.30),
@@ -75,7 +75,7 @@ const _kBlobs = [
            radiusFrac: 0.09, color: _kPrimaryLighter, opacity: 0.65, phaseOffset: 0.20),
   // Mid-right: tiny blue — moves left toward centre
   _BlobDef(startX: 1.03,  startY: 0.58,  endX: 0.92, endY: 0.56,
-           radiusFrac: 0.07, color: _kBlue,           opacity: 0.40, phaseOffset: 0.35),
+           radiusFrac: 0.07, color: HuddlColors.lightBlue,           opacity: 0.40, phaseOffset: 0.35),
 ];
 
 // ── Main screen ──────────────────────────────────────────────────────────────

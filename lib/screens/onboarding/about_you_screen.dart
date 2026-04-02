@@ -1,15 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
+import '../../theme/huddl_colors.dart';
 
-// Design tokens from screenshot 16
-// Note: Screen 16 has NO huddl logo — just back arrow, left-aligned title,
 // large textarea filling most of screen, orange "Continue" button at bottom.
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kInputBg = Color(0xFFF5F5F5);
-const _kInputBorder = Color(0xFFDDDDDD);
 
 class AboutYouScreen extends StatefulWidget {
   const AboutYouScreen({super.key});
@@ -89,7 +83,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
               padding: const EdgeInsets.fromLTRB(4, 8, 8, 0),
               child: IconButton(
                 icon: const Icon(Icons.chevron_left,
-                    size: 30, color: _kOrange),
+                    size: 30, color: HuddlColors.onboardingOrange),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
               ),
@@ -105,7 +99,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w700,
-                  color: _kTextDark,
+                  color: HuddlColors.textDark,
                   height: 1.2,
                 ),
               ),
@@ -120,7 +114,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 'Adding a short bio will make it easier for you to connect with other parents.',
                 style: TextStyle(
                   fontSize: 14,
-                  color: _kTextGray,
+                  color: HuddlColors.disabledText,
                   height: 1.5,
                 ),
               ),
@@ -134,9 +128,9 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
                   decoration: const BoxDecoration(
-                    color: _kInputBg,
+                    color: HuddlColors.inputBg,
                     border: Border(
-                      bottom: BorderSide(color: _kInputBorder, width: 1.2),
+                      bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2),
                     ),
                   ),
                   child: TextField(
@@ -146,20 +140,20 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                     textAlignVertical: TextAlignVertical.top,
                     style: const TextStyle(
                       fontSize: 15,
-                      color: _kTextDark,
+                      color: HuddlColors.textDark,
                       height: 1.55,
                     ),
                     decoration: const InputDecoration(
                       labelText: 'About',
                       labelStyle: TextStyle(
                         fontSize: 13,
-                        color: _kTextGray,
+                        color: HuddlColors.disabledText,
                       ),
                       hintText:
                           'E.g. tell other about your children or interests',
                       hintStyle: TextStyle(
                         fontSize: 15,
-                        color: _kTextGray,
+                        color: HuddlColors.disabledText,
                       ),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -180,7 +174,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 child: ElevatedButton(
                   onPressed: _finish,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kOrange,
+                    backgroundColor: HuddlColors.onboardingOrange,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -207,7 +201,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 child: TextButton(
                   onPressed: _finish,
                   style: TextButton.styleFrom(
-                    foregroundColor: _kTextGray,
+                    foregroundColor: HuddlColors.disabledText,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -217,7 +211,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: _kTextGray,
+                      color: HuddlColors.disabledText,
                     ),
                   ),
                 ),

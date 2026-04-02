@@ -28,7 +28,7 @@ class HuddlPrimaryButton extends StatelessWidget {
         gradient: onPressed != null
             ? HuddlColors.primaryGradient
             : const LinearGradient(
-                colors: [Color(0xFFCCCCCC), Color(0xFFCCCCCC)]),
+                colors: [HuddlColors.gray300, HuddlColors.gray300]),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Material(
