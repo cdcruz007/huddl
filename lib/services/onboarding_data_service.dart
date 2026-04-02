@@ -28,6 +28,7 @@ class OnboardingDataService {
   String? _previousPostcode; // Previous postcode before a change
   String? _previousBorough; // Previous borough (derived from previous postcode)
   int _assignedGroupCount = 0; // Number of groups assigned during onboarding
+  List<String> _assignedGroupNames = []; // Names of groups assigned during onboarding
 
   // ── Provider-specific fields ──────────────────────────────────────────────
   List<String> _serviceTypes = [];      // e.g. ['doula', 'babysitter']
@@ -60,6 +61,7 @@ class OnboardingDataService {
   String? get previousPostcode => _previousPostcode;
   String? get previousBorough => _previousBorough;
   int get assignedGroupCount => _assignedGroupCount;
+  List<String> get assignedGroupNames => _assignedGroupNames;
 
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
@@ -163,6 +165,12 @@ class OnboardingDataService {
   void setAssignedGroupCount(int count) {
     _assignedGroupCount = count;
     _log('Assigned group count set: $count');
+    _saveToStorage();
+  }
+
+  void setAssignedGroupNames(List<String> names) {
+    _assignedGroupNames = names;
+    _log('Assigned group names set: $names');
     _saveToStorage();
   }
 
@@ -275,6 +283,7 @@ class OnboardingDataService {
     _previousPostcode = null;
     _previousBorough = null;
     _assignedGroupCount = 0;
+    _assignedGroupNames = [];
     _serviceTypes = [];
     _businessName = null;
     _qualifications = null;
@@ -324,6 +333,7 @@ class OnboardingDataService {
         _previousPostcode = data['previous_postcode'] as String?;
         _previousBorough = data['previous_borough'] as String?;
         _assignedGroupCount = data['assigned_group_count'] as int? ?? 0;
+        _assignedGroupNames = List<String>.from(data['assigned_group_names'] ?? []);
         _serviceTypes = List<String>.from(data['service_types'] ?? []);
         _businessName = data['business_name'] as String?;
         _qualifications = data['qualifications'] as String?;
@@ -371,6 +381,7 @@ class OnboardingDataService {
         'previous_postcode': _previousPostcode,
         'previous_borough': _previousBorough,
         'assigned_group_count': _assignedGroupCount,
+        'assigned_group_names': _assignedGroupNames,
         'service_types': _serviceTypes,
         'business_name': _businessName,
         'qualifications': _qualifications,

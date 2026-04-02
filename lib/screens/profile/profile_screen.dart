@@ -885,6 +885,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final newBorough =
                     _postcodeService.getBoroughFromPostcode(newPc) ?? 'Unknown';
 
+                // Capture current borough BEFORE updating
+                final previousBorough = _borough;
+
                 // Store current as previous for hasChangedBorough
                 if (_postcode != null && _postcode != newPc) {
                   _onboarding.setPreviousBorough(_borough);
@@ -897,12 +900,149 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 });
                 _snack('Location updated to $newBorough');
                 // Reload groups for new borough
-                _loadProfileData();
+                await _loadProfileData();
+                // Show leave-group option for previous borough groups
+                if (previousBorough.isNotEmpty &&
+                    previousBorough.toLowerCase() != newBorough.toLowerCase()) {
+                  if (mounted) _showLeavePreviousBoroughGroupsSheet(previousBorough);
+                }
               }),
             ),
             const SizedBox(height: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LEAVE PREVIOUS BOROUGH DEFAULT GROUPS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Shows a sheet listing the user's default groups from their previous
+  /// borough. The user can choose to leave each one individually. This is
+  /// the ONLY way a user can leave a default group.
+  void _showLeavePreviousBoroughGroupsSheet(String previousBorough) async {
+    final oldGroups = await _groupService.getUserGroupsForBorough(
+        'current_user', previousBorough);
+
+    if (oldGroups.isEmpty) return; // Nothing to show
+
+    if (!mounted) return;
+
+    _showSheet(
+      title: 'Previous Borough Groups',
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.peachLight,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline,
+                          size: 18, color: HuddlColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'You\'ve moved from $previousBorough. You can opt to leave your previous borough default groups below.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: HuddlColors.primary,
+                              height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...oldGroups.map((g) => Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                              child: Icon(Icons.people,
+                                  size: 20, color: HuddlColors.primary)),
+                        ),
+                        title: Text(g.name,
+                            style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark)),
+                        subtitle: Text('${g.memberCount} members',
+                            style: GoogleFonts.poppins(
+                                fontSize: 11, color: HuddlColors.textHint)),
+                        trailing: TextButton(
+                          onPressed: () async {
+                            final left = await _groupService.leaveGroup(
+                                'current_user', g.id);
+                            if (left) {
+                              setLocal(() {
+                                oldGroups.remove(g);
+                              });
+                              _snack('Left ${g.name}');
+                              _loadProfileData();
+                              if (oldGroups.isEmpty && mounted) {
+                                Navigator.pop(c);
+                              }
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: HuddlColors.error,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
+                          ),
+                          child: Text('Leave',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ),
+                  )),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(c),
+                    style: TextButton.styleFrom(
+                      foregroundColor: HuddlColors.textSecondary,
+                    ),
+                    child: Text('Keep all groups',
+                        style: GoogleFonts.poppins(
+                            fontSize: 14, fontWeight: FontWeight.w500)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
       ),
     );
   }

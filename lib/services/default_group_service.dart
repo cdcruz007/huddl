@@ -596,6 +596,45 @@ class DefaultGroupService {
     }
   }
 
+  /// Leave a default group. Only allowed for groups from a previous borough
+  /// (i.e. the user changed postcode/borough and wants to leave old groups).
+  /// Returns true if the user was removed from the group.
+  Future<bool> leaveGroup(String userId, String groupId) async {
+    await initialize();
+    final userGroups = _userGroupMemberships[userId] ?? [];
+    if (!userGroups.contains(groupId)) return false;
+
+    userGroups.remove(groupId);
+    _userGroupMemberships[userId] = userGroups;
+
+    // Decrement member count
+    final group = _defaultGroups[groupId];
+    if (group != null && group.memberCount > 0) {
+      _defaultGroups[groupId] = group.copyWith(
+        memberCount: group.memberCount - 1,
+        isJoined: false,
+      );
+    }
+
+    await _saveToStorage();
+    _log('User $userId left group: ${group?.name ?? groupId}');
+    return true;
+  }
+
+  /// Get default groups belonging to a specific borough for a user.
+  /// Used after a borough change to show which old groups can be left.
+  Future<List<Group>> getUserGroupsForBorough(
+      String userId, String borough) async {
+    await initialize();
+    final groupIds = _userGroupMemberships[userId] ?? [];
+    final boroughLower = borough.toLowerCase();
+    return groupIds
+        .map((id) => _defaultGroups[id])
+        .whereType<Group>()
+        .where((g) => g.name.toLowerCase().contains(boroughLower))
+        .toList();
+  }
+
   /// Get group statistics
   Map<String, dynamic> getGroupStatistics() {
     return {

@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
-
-// Design tokens
-const _kOrange = Color(0xFFFCA878);
-const _kTextDark = Color(0xFF1C1C1C);
-const _kTextGray = Color(0xFF9E9E9E);
-const _kSuccessGreen = Color(0xFF4CAF50);
-const _kSuccessBg = Color(0xFFE8F5E9);
+import '../../theme/huddl_colors.dart';
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final groupCount = OnboardingDataService().assignedGroupCount;
+    final onboarding = OnboardingDataService();
+    final groupCount = onboarding.assignedGroupCount;
+    final groupNames = onboarding.assignedGroupNames;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: HuddlColors.white,
       body: SafeArea(
         child: Column(
           children: [
@@ -29,45 +26,46 @@ class WelcomeCompleteScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // -- Title --
-            const Text(
+            Text(
               'Welcome to Huddl!',
-              style: TextStyle(
+              style: GoogleFonts.poppins(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: _kTextDark,
+                color: HuddlColors.textDark,
               ),
               textAlign: TextAlign.center,
             ),
 
             const SizedBox(height: 20),
 
-            // -- GREEN success popup (before grey text) --
+            // -- SUCCESS banner (green) --
             if (groupCount > 0)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: _kSuccessBg,
+                    color: HuddlColors.success.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: _kSuccessGreen.withValues(alpha: 0.4),
+                      color: HuddlColors.success.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
                   child: Row(
                     children: [
                       const Icon(Icons.check_circle,
-                          color: _kSuccessGreen, size: 22),
+                          color: HuddlColors.success, size: 22),
                       const SizedBox(width: 12),
                       Expanded(
                         child: RichText(
                           text: TextSpan(
-                            style: const TextStyle(
+                            style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: _kSuccessGreen,
+                              color: HuddlColors.success,
                               height: 1.4,
                             ),
                             children: [
@@ -95,37 +93,121 @@ class WelcomeCompleteScreen extends StatelessWidget {
 
             if (groupCount > 0) const SizedBox(height: 16),
 
-            // -- Large dynamic group count box (black background) --
-            if (groupCount > 0)
+            // -- Group list (replaces old black box) --
+            if (groupNames.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: _kTextDark,
-                    borderRadius: BorderRadius.circular(16),
+                    color: HuddlColors.peachLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: HuddlColors.primary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '$groupCount',
-                        style: const TextStyle(
-                          fontSize: 52,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          height: 1.0,
+                        'Your groups',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primaryDark,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        groupCount == 1
-                            ? 'community group'
-                            : 'community groups',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white70,
+                      const SizedBox(height: 10),
+                      ...groupNames.map(
+                        (name) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary
+                                      .withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.people_alt_rounded,
+                                      size: 16, color: HuddlColors.primary),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  name,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: HuddlColors.textDark,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (groupCount > 0)
+              // Fallback: show count if names aren't available yet
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.peachLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: HuddlColors.primary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color:
+                              HuddlColors.primary.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '$groupCount',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          groupCount == 1
+                              ? 'community group ready for you'
+                              : 'community groups ready for you',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.textDark,
+                          ),
                         ),
                       ),
                     ],
@@ -135,14 +217,14 @@ class WelcomeCompleteScreen extends StatelessWidget {
 
             if (groupCount > 0) const SizedBox(height: 16),
 
-            // -- Subtitle (grey text AFTER green popup) --
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
+            // -- Subtitle --
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
                 'Before we start, let your neighbours know you!',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: _kTextGray,
+                  color: HuddlColors.textSecondary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -177,18 +259,18 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   onPressed: () =>
                       Navigator.pushNamed(context, '/add_photo'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _kOrange,
+                    backgroundColor: HuddlColors.primary,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Let\'s go!',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: HuddlColors.white,
                     ),
                   ),
                 ),

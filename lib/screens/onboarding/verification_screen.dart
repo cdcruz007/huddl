@@ -165,8 +165,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
       // ignore: avoid_print
       print('');
       
-      // Store the assigned group count so the Welcome screen can display it
+      // Store the assigned group count and names so the Welcome screen can display them
       _onboardingData.setAssignedGroupCount(assignedGroups.length);
+      _onboardingData.setAssignedGroupNames(assignedGroups.map((g) => g.name).toList());
       
       // Navigate to welcome/home screen
       if (mounted) {
