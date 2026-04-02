@@ -428,7 +428,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     _MenuItem(
                       icon: Icons.event_outlined,
-                      title: 'My Events',
+                      title: 'My Meetups',
                       trailing: _CountBadge(count: _userEvents.length + _userMeetups.length),
                       onTap: _showMyEventsSheet,
                     ),
@@ -460,6 +460,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.lock_outline,
                       title: 'Privacy',
                       onTap: _showPrivacySheet,
+                    ),
+                    _MenuItem(
+                      icon: Icons.password_outlined,
+                      title: 'Change password',
+                      onTap: _showChangePasswordSheet,
                     ),
                     _MenuItem(
                       icon: Icons.help_outline,
@@ -643,7 +648,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             if (selected.contains('expecting')) ...[
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: _sheetField(dueDateCtrl, 'Due date (YYYY-MM)', Icons.calendar_today),
+                child: _sheetField(dueDateCtrl, 'Due date (YYYY)', Icons.calendar_today),
               ),
             ],
             // Children
@@ -1038,10 +1043,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final totalCount = allEvents.length + goingMeetups.length;
 
     _showSheet(
-      title: 'My Events ($totalCount)',
+      title: 'My Meetups ($totalCount)',
       builder: (c) => totalCount == 0
-          ? _emptyState(Icons.event_outlined, 'No events yet',
-              'Events you create or RSVP to will appear here.')
+          ? _emptyState(Icons.event_outlined, 'No meetups yet',
+              'Meetups you create or attend will appear here.')
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -1681,6 +1686,115 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       height: 1.4),
                   textAlign: TextAlign.center,
                 ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CHANGE PASSWORD (with OTP verification)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  void _showChangePasswordSheet() {
+    final currentCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+
+    _showSheet(
+      title: 'Change Password',
+      builder: (c) => StatefulBuilder(
+        builder: (ctx, setLocal) {
+          bool obscureCurrent = true;
+          bool obscureNew = true;
+          bool obscureConfirm = true;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'You will need to verify via OTP before your password is changed.',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, color: HuddlColors.textSecondary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _sheetField(
+                    currentCtrl, 'Current password', Icons.lock_outline),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _sheetField(
+                    newCtrl, 'New password', Icons.lock_reset),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'Min 8 characters, 1 uppercase, 1 number, 1 special character',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.textHint),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _sheetField(
+                    confirmCtrl, 'Confirm new password', Icons.lock_outline),
+              ),
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: _sheetButton('Change Password', () async {
+                  final current = currentCtrl.text.trim();
+                  final newPw = newCtrl.text.trim();
+                  final confirm = confirmCtrl.text.trim();
+
+                  if (current.isEmpty || newPw.isEmpty || confirm.isEmpty) {
+                    _snack('Please fill in all fields');
+                    return;
+                  }
+                  if (newPw.length < 8) {
+                    _snack('Password must be at least 8 characters');
+                    return;
+                  }
+                  if (!RegExp(r'[A-Z]').hasMatch(newPw)) {
+                    _snack('Password must contain at least 1 uppercase letter');
+                    return;
+                  }
+                  if (!RegExp(r'[0-9]').hasMatch(newPw)) {
+                    _snack('Password must contain at least 1 number');
+                    return;
+                  }
+                  if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(newPw)) {
+                    _snack('Password must contain at least 1 special character');
+                    return;
+                  }
+                  if (newPw != confirm) {
+                    _snack('Passwords do not match');
+                    return;
+                  }
+
+                  Navigator.pop(c);
+                  final verified =
+                      await _verifyWithOtp('change your password');
+                  if (!verified) {
+                    _snack('Password change cancelled');
+                    return;
+                  }
+
+                  // Demo: password change succeeds
+                  _snack('Password changed successfully');
+                }),
               ),
               const SizedBox(height: 16),
             ],
