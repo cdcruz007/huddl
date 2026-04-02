@@ -18,7 +18,7 @@ const _kPrimaryLighter = Color(0xFFFFD9C2); // soft blush
 const _kPrimaryPale    = Color(0xFFFFECDF); // barely-there blush
 const _kBlue           = Color(0xFF2878F0); // style-guide blue
 const _kBlueLight      = Color(0xFF508CF0); // lighter style-guide blue
-const _kYellow         = Color(0xFFF0DC64); // style-guide yellow
+const _kYellow         = Color(0xFFF3C54F); // style-guide yellow (#F3C54F)
 
 // ── Blob definitions ─────────────────────────────────────────────────────
 // Each blob has a start position (edge) and an end position (closer to centre).

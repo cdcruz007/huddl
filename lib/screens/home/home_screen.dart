@@ -485,8 +485,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       _QuickAction(
                         icon: Icons.storefront,
                         label: 'Preloved',
-                        color: HuddlColors.blue,
-                        bgColor: const Color(0xFFEDF4FF),
+                        color: HuddlColors.yellowDark,
+                        bgColor: HuddlColors.yellowBackground,
                         onTap: () => _switchToTab(3),
                       ),
                     ],
@@ -938,9 +938,9 @@ class _EventCard extends StatelessWidget {
       case 'Social':
         return HuddlColors.blue;
       case 'Toddler':
-        return HuddlColors.paleBlue;
+        return HuddlColors.yellow;
       case 'Outdoors':
-        return HuddlColors.lightBlue;
+        return HuddlColors.yellowDark;
       default:
         return HuddlColors.primary;
     }
@@ -1365,9 +1365,9 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.lightBlue;
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
-        return const Color(0xFFE8A838);
+        return HuddlColors.yellow;
     }
   }
 
@@ -1380,9 +1380,9 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFF5F0FF);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return HuddlColors.yellowLight;
+        return HuddlColors.yellowSoft;
     }
   }
 
@@ -1989,9 +1989,9 @@ class _NotificationsSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.lightBlue;
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
-        return const Color(0xFFE8A838);
+        return HuddlColors.yellow;
     }
   }
 
@@ -2004,9 +2004,9 @@ class _NotificationsSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFF5F0FF);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return HuddlColors.yellowLight;
+        return HuddlColors.yellowSoft;
     }
   }
 }
@@ -2240,9 +2240,9 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.lightBlue;
+        return HuddlColors.yellowDark;
       case FeedItemType.milestone:
-        return const Color(0xFFE8A838);
+        return HuddlColors.yellow;
     }
   }
 
@@ -2255,9 +2255,9 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return const Color(0xFFF5F0FF);
+        return HuddlColors.yellowBackground;
       case FeedItemType.milestone:
-        return HuddlColors.yellowLight;
+        return HuddlColors.yellowSoft;
     }
   }
 

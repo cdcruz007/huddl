@@ -3474,10 +3474,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_first_time_mums': {'icon': Icons.child_friendly, 'color': HuddlColors.primary},
   'disc_dads_connect': {'icon': Icons.man, 'color': HuddlColors.blue},
-  'disc_baby_sleep': {'icon': Icons.bedtime, 'color': HuddlColors.paleBlue},
+  'disc_baby_sleep': {'icon': Icons.bedtime, 'color': HuddlColors.yellowMedium},
   'disc_healthy_meals': {'icon': Icons.restaurant, 'color': HuddlColors.accentAmber},
   'disc_postnatal_fitness': {'icon': Icons.fitness_center, 'color': HuddlColors.accentCoral},
-  'disc_working_parents': {'icon': Icons.work_outline, 'color': HuddlColors.lightBlue},
+  'disc_working_parents': {'icon': Icons.work_outline, 'color': HuddlColors.yellowDark},
 };
 
 class _DiscoverGroupCard extends StatelessWidget {

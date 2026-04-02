@@ -14,10 +14,26 @@ class HuddlColors {
   static const Color blueBackground = Color(0xFFEDF4FF);
 
   // Category accent palette (non-status, for tags / badges / avatars)
-  static const Color accentAmber = Color(0xFFF3C54F);       // yellow family – warm gold
+  static const Color accentAmber = Color(0xFFF3C54F);       // yellow family – warm gold (style-guide primary yellow)
   static const Color accentCoral = Color(0xFFF69F72);       // orange-pink family
   static const Color accentSky   = Color(0xFF78B0FF);       // blue gradient end
   static const Color accentSlate = Color(0xFF7C7C7C);       // neutral secondary text
+
+  // Yellow / Amber family (from style guide — #FFF3C54F)
+  // Use these tokens consistently for: Free badges, date cards, food/nutrition tags,
+  // marketplace "Preloved" items, milestone celebrations, Walk/Social meetup categories.
+  static const Color yellowDark = Color(0xFFD4A017);        // darkest yellow — strong icon tints, active text
+  static const Color yellow = Color(0xFFF3C54F);            // primary yellow — badges, toggles, active dots (= accentAmber)
+  static const Color yellowMedium = Color(0xFFF7D97C);      // medium yellow — softer badges, avatar accents
+  static const Color yellowSoft = Color(0xFFFBE8A6);        // light yellow — card backgrounds, icon bgs
+  static const Color yellowBackground = Color(0xFFFFF7C9);  // yellow bg — highlight backgrounds, banners
+
+  // Yellow gradient
+  static const LinearGradient yellowGradient = LinearGradient(
+    colors: [Color(0xFFF3C54F), Color(0xFFF7D97C)],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
 
   // Text
   static const Color textDark = Color(0xFF43464D);
