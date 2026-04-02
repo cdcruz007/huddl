@@ -476,4 +476,11 @@ class InvitationService {
       debugPrint('InvitationService: $message');
     }
   }
+
+  /// Clear all invitation data — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    await BrowserStorage.remove(_invitationsKey);
+    await BrowserStorage.remove(_joinedGroupsKey);
+    await BrowserStorage.remove(_systemMessagesKey);
+  }
 }

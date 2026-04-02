@@ -443,6 +443,17 @@ class DMService {
     }
   }
 
+  /// Clear all DM data — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    // Remove each conversation's messages
+    for (final conv in _conversations) {
+      await BrowserStorage.remove('$_messagesKeyPrefix${conv.id}');
+    }
+    _conversations.clear();
+    await BrowserStorage.remove(_conversationsKey);
+    _notify();
+  }
+
   void dispose() {
     for (final t in _typingTimers.values) {
       t?.cancel();

@@ -292,6 +292,12 @@ class AnnouncementService {
     }
   }
 
+  /// Clear all announcement data — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    _announcements.clear();
+    await BrowserStorage.remove(_storageKey);
+  }
+
   /// Seed realistic sample announcements for the user's borough.
   void _seedSampleAnnouncements() {
     final borough = _userBorough ?? 'Cambridge';

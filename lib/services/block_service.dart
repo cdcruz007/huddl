@@ -69,4 +69,11 @@ class BlockService extends ChangeNotifier {
 
   /// Get all blocked user IDs.
   List<String> get blockedUserIds => _blockedUserIds.toList();
+
+  /// Clear all blocked users — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    _blockedUserIds.clear();
+    await _save();
+    notifyListeners();
+  }
 }

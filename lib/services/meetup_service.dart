@@ -264,6 +264,13 @@ class MeetupService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clear all user-created meetups — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    _meetups.removeWhere((m) => m.organiserId == 'current_user');
+    await BrowserStorage.remove(_storageKey);
+    notifyListeners();
+  }
+
   // ── Persistence ──────────────────────────────────────────────────────
 
   Future<void> _persistUserMeetups() async {

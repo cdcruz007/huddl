@@ -342,4 +342,10 @@ class CommunityFeedService {
     await BrowserStorage.setString(
         _lastLoginKey, DateTime.now().toIso8601String());
   }
+
+  /// Clear all community feed data — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    await BrowserStorage.remove(_storageKey);
+    await BrowserStorage.remove(_lastLoginKey);
+  }
 }

@@ -12,6 +12,10 @@ import '../../services/saved_message_service.dart';
 import '../../services/event_service.dart';
 import '../../services/meetup_service.dart';
 import '../../services/block_service.dart';
+import '../../services/dm_service.dart';
+import '../../services/invitation_service.dart';
+import '../../services/community_feed_service.dart';
+import '../../services/announcement_service.dart';
 import '../../models/group.dart';
 import '../main_shell.dart';
 
@@ -1067,6 +1071,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (c) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: HuddlColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 20, color: HuddlColors.primaryDark),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Changing your phone number will also update your login credentials. You will need to use the new number to sign in.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.primaryDark,
+                          height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1774,6 +1807,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
       'Saved Items': {
         'Total saved messages': savedService.allSavedMessages.length,
+        'Total saved threads': savedService.savedThreads.length,
+      },
+      'Direct Messages': {
+        'Total conversations': DMService().conversations.length,
       },
       'Settings & Preferences': {
         'Push notifications': _pushEnabled,
@@ -2572,18 +2609,52 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: () async {
                     Navigator.pop(c);
                     // Clear ALL user data — GDPR-compliant full deletion
+                    // 1. Core profile & onboarding data
                     _onboarding.clear();
+
+                    // 2. Groups (default + user-created)
                     _groupService.clear();
-                    final savedService = SavedMessageService();
-                    savedService.clearAll();
                     await BrowserStorage.remove('user_created_groups_v1');
+
+                    // 3. Saved messages & threads
+                    final savedService = SavedMessageService();
+                    await savedService.clearAll();
+
+                    // 4. Meetups (user-created)
+                    await _meetupService.clearAll();
+
+                    // 5. Block list
+                    await _blockService.clearAll();
+
+                    // 6. Direct messages & conversations
+                    final dmService = DMService();
+                    await dmService.clearAll();
+
+                    // 7. Group invitations & joined groups
+                    final invitationService = InvitationService();
+                    await invitationService.clearAll();
+
+                    // 8. Community feed
+                    final feedService = CommunityFeedService();
+                    await feedService.clearAll();
+
+                    // 9. Announcements
+                    final announcementService = AnnouncementService();
+                    await announcementService.clearAll();
+
+                    // 10. Favourites
+                    await BrowserStorage.remove('huddl_favourite_ids');
+
+                    // 11. All notification preferences
                     await BrowserStorage.remove('pref_push_enabled');
                     await BrowserStorage.remove('pref_group_messages');
                     await BrowserStorage.remove('pref_dm_messages');
                     await BrowserStorage.remove('pref_event_reminders');
                     await BrowserStorage.remove('pref_community_updates');
-                    await BrowserStorage.remove('pref_online_visibility');
-                    await BrowserStorage.remove('pref_profile_visible');
+
+                    // 12. All privacy preferences
+                    await BrowserStorage.remove('pref_show_online');
+                    await BrowserStorage.remove('pref_show_profile');
                     await BrowserStorage.remove('pref_show_groups');
                     await BrowserStorage.remove('pref_read_receipts');
                     if (mounted) {
