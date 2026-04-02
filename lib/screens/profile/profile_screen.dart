@@ -841,7 +841,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Changing your postcode will update your borough and default groups. This may remove you from current borough groups.',
+                        'Changing your postcode will update your borough and default groups. You can opt to remove yourself from your previous borough groups.',
                         style: GoogleFonts.poppins(
                             fontSize: 12, color: HuddlColors.primary, height: 1.4),
                       ),
