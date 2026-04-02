@@ -4,7 +4,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
-const Color _kOnline = Color(0xFF34C759);
+const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
 
 class GroupMembersScreen extends StatefulWidget {
   final String groupName;
@@ -36,61 +36,61 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
     _Member(
       name: 'Sophie Turner',
       role: 'admin',
-      accentColor: const Color(0xFF3580F0),
+      accentColor: HuddlColors.blue,
       isOnline: true,
     ),
     _Member(
       name: 'Kate Middleton',
       role: 'member',
-      accentColor: const Color(0xFF199A85),
+      accentColor: HuddlColors.accentAmber,
       isOnline: true,
     ),
     _Member(
       name: 'Lucy Chen',
       role: 'member',
-      accentColor: const Color(0xFFA16AE9),
+      accentColor: HuddlColors.paleBlue,
       isOnline: false,
     ),
     _Member(
       name: 'James Smith',
       role: 'member',
-      accentColor: const Color(0xFF5B9DFF),
+      accentColor: HuddlColors.lightBlue,
       isOnline: true,
     ),
     _Member(
       name: 'Anna Taylor',
       role: 'member',
-      accentColor: const Color(0xFFE8A838),
+      accentColor: HuddlColors.accentCoral,
       isOnline: false,
     ),
     _Member(
       name: 'Mia Johnson',
       role: 'member',
-      accentColor: const Color(0xFFFF7575),
+      accentColor: HuddlColors.primaryDark,
       isOnline: false,
     ),
     _Member(
       name: 'Oliver Brown',
       role: 'member',
-      accentColor: const Color(0xFF199A85),
+      accentColor: HuddlColors.accentAmber,
       isOnline: true,
     ),
     _Member(
       name: 'Isabella Davis',
       role: 'member',
-      accentColor: const Color(0xFF3580F0),
+      accentColor: HuddlColors.blue,
       isOnline: false,
     ),
     _Member(
       name: 'Charlotte Wilson',
       role: 'member',
-      accentColor: const Color(0xFFA16AE9),
+      accentColor: HuddlColors.paleBlue,
       isOnline: true,
     ),
     _Member(
       name: 'You',
       role: 'member',
-      accentColor: HuddlColors.teal,
+      accentColor: HuddlColors.blue,
       isOnline: true,
     ),
   ];

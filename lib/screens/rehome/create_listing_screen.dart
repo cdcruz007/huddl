@@ -511,12 +511,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                                   horizontal: 20, vertical: 14),
                               decoration: BoxDecoration(
                                 color: _isFree
-                                    ? HuddlColors.teal
+                                    ? HuddlColors.blue
                                     : HuddlColors.white,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: _isFree
-                                      ? HuddlColors.teal
+                                      ? HuddlColors.blue
                                       : HuddlColors.divider,
                                 ),
                               ),

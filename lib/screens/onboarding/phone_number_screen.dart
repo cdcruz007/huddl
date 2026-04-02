@@ -7,6 +7,7 @@ const _kTextDark = Color(0xFF1C1C1C);
 const _kTextGray = Color(0xFF9E9E9E);
 const _kInputBg = Color(0xFFF5F5F5);
 const _kInputBorder = Color(0xFFDDDDDD);
+const _kErrorRed = Color(0xFFE53935);
 
 class PhoneNumberScreen extends StatefulWidget {
   const PhoneNumberScreen({super.key});
@@ -17,9 +18,10 @@ class PhoneNumberScreen extends StatefulWidget {
 
 class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   final _ctrl = TextEditingController();
-  final String _countryCode = '+44';
-  // Flag emoji for UK
-  static const _flagUK = '🇬🇧';
+  static const _countryCode = '+44';
+  static const _flagUK = '\u{1F1EC}\u{1F1E7}';
+
+  String? _errorText;
 
   @override
   void dispose() {
@@ -27,23 +29,126 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     super.dispose();
   }
 
-  // UK numbers are always 10 digits (e.g. 07575888888 → enter 7575888888,
-  // or with leading 0: 07575888888). We accept exactly 10 or 11 digits.
-  // Standard: subscriber number entered without country code = 10 digits
-  // (07xxx xxxxxx → 10 digits including the leading 0, or
-  //  7xxx xxxxxx  → 10 digits without the leading 0)
-  // We enforce exactly 10 digits to match the UK mobile/landline standard.
-  bool get _canContinue => _ctrl.text.trim().length == 10;
+  // ── Validation helpers ────────────────────────────────────────────────────
+
+  /// Strips spaces and leading 0/+44 to get raw digits.
+  String _normalise(String input) {
+    String raw = input.replaceAll(RegExp(r'\s+'), '');
+    // Strip +44 prefix if user pastes full international format
+    if (raw.startsWith('+44')) raw = raw.substring(3);
+    // Strip leading 0 (local format)
+    if (raw.startsWith('0')) raw = raw.substring(1);
+    return raw;
+  }
+
+  /// Returns null if valid, or an error message string.
+  String? _validate(String raw) {
+    final digits = _normalise(raw);
+
+    if (digits.isEmpty) return null; // no error while empty
+
+    // Must be digits only after normalisation
+    if (!RegExp(r'^\d+$').hasMatch(digits)) {
+      return 'Only digits are allowed';
+    }
+
+    // Must start with 7 (UK mobile subscriber numbers all start 7)
+    if (digits.isNotEmpty && !digits.startsWith('7')) {
+      if (digits.startsWith('1') || digits.startsWith('2')) {
+        return 'Landline numbers are not accepted. Please enter a mobile number';
+      }
+      if (digits.startsWith('3') || digits.startsWith('8') || digits.startsWith('9')) {
+        return 'This is not a UK mobile number';
+      }
+      return 'UK mobile numbers must start with 7 (after +44)';
+    }
+
+    // Reject premium / non-mobile 07x ranges
+    if (digits.length >= 2) {
+      final prefix2 = digits.substring(0, 2);
+      // 70 = personal numbering, 76 = pager
+      if (prefix2 == '70' || prefix2 == '76') {
+        return 'Personal / pager numbers are not accepted';
+      }
+    }
+
+    // Reject obviously fake numbers (all same digit)
+    if (digits.length >= 6 && RegExp(r'^(\d)\1+$').hasMatch(digits)) {
+      return 'Please enter a valid phone number';
+    }
+
+    // Reject sequential patterns like 1234567890
+    if (digits.length >= 6 && _isSequential(digits)) {
+      return 'Please enter a valid phone number';
+    }
+
+    // Length check
+    if (digits.length < 10) {
+      return null; // not an error yet, still typing
+    }
+
+    if (digits.length > 10) {
+      return 'UK mobile numbers are 10 digits after the leading 0';
+    }
+
+    return null; // valid
+  }
+
+  bool _isSequential(String s) {
+    bool ascending = true;
+    bool descending = true;
+    for (int i = 1; i < s.length; i++) {
+      if (s.codeUnitAt(i) != s.codeUnitAt(i - 1) + 1) ascending = false;
+      if (s.codeUnitAt(i) != s.codeUnitAt(i - 1) - 1) descending = false;
+    }
+    return ascending || descending;
+  }
+
+  /// True only when we have exactly 10 valid UK mobile digits.
+  bool get _canContinue {
+    final digits = _normalise(_ctrl.text);
+    if (digits.length != 10) return false;
+    if (!digits.startsWith('7')) return false;
+    // Reject premium / non-mobile 07x ranges
+    final prefix2 = digits.substring(0, 2);
+    if (prefix2 == '70' || prefix2 == '76') return false;
+    if (RegExp(r'^(\d)\1+$').hasMatch(digits)) return false;
+    if (_isSequential(digits)) return false;
+    if (_errorText != null) return false;
+    return true;
+  }
+
+  /// Display-format the number as the user types: 07xxx xxx xxx
+  String get _displayFormatted {
+    final d = _normalise(_ctrl.text);
+    if (d.isEmpty) return '';
+    // Show in UK local format: 07xxx xxx xxx
+    final local = '0$d';
+    if (local.length <= 5) return local;
+    if (local.length <= 8) return '${local.substring(0, 5)} ${local.substring(5)}';
+    return '${local.substring(0, 5)} ${local.substring(5, 8)} ${local.substring(8)}';
+  }
+
+  void _onChanged(String _) {
+    final error = _validate(_ctrl.text);
+    setState(() => _errorText = error);
+  }
 
   void _continue() {
     if (!_canContinue) return;
-    final full = '$_countryCode${_ctrl.text.trim()}';
+    final digits = _normalise(_ctrl.text);
+    // Store as +447xxxxxxxxx
+    final full = '$_countryCode$digits';
     OnboardingDataService().setPhoneNumber(full);
     Navigator.pushNamed(context, '/password');
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    final digits = _normalise(_ctrl.text);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -68,7 +173,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Create your account using phone number',
+                      'Enter your UK mobile number to create your account.',
                       style: TextStyle(
                           fontSize: 14, color: _kTextGray, height: 1.5),
                       textAlign: TextAlign.center,
@@ -77,28 +182,35 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
                     // Phone input row
                     Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _kInputBg,
                         border: Border(
-                            bottom:
-                                BorderSide(color: _kInputBorder, width: 1.2)),
+                          bottom: BorderSide(
+                            color: _errorText != null ? _kErrorRed : _kInputBorder,
+                            width: _errorText != null ? 1.8 : 1.2,
+                          ),
+                        ),
                       ),
                       child: Row(
                         children: [
-                          // Country picker
-                          GestureDetector(
-                            onTap: () {},
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 16),
-                              child: Row(
-                                children: [
-                                  const Text(_flagUK, style: TextStyle(fontSize: 22)),
-                                  const SizedBox(width: 6),
-                                  const Icon(Icons.keyboard_arrow_down,
-                                      size: 20, color: _kTextGray),
-                                ],
-                              ),
+                          // Country picker (locked to UK)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 16),
+                            child: Row(
+                              children: [
+                                const Text(_flagUK,
+                                    style: TextStyle(fontSize: 22)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  _countryCode,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: _kTextDark,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           // Divider
@@ -115,7 +227,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                   padding: const EdgeInsets.only(
                                       left: 14, top: 8),
                                   child: Text(
-                                    'Phone number',
+                                    'Mobile number',
                                     style: TextStyle(
                                         fontSize: 11,
                                         color:
@@ -124,22 +236,23 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                 ),
                                 TextField(
                                   controller: _ctrl,
-                                  onChanged: (_) => setState(() {}),
+                                  onChanged: _onChanged,
                                   keyboardType: TextInputType.phone,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
+                                    _UKMobileInputFormatter(),
                                     LengthLimitingTextInputFormatter(10),
                                   ],
                                   maxLength: 10,
                                   style: const TextStyle(
                                       fontSize: 16, color: _kTextDark),
-                                  decoration: InputDecoration(
-                                    hintText: 'e.g. 7700900123',
-                                    hintStyle: const TextStyle(
+                                  decoration: const InputDecoration(
+                                    hintText: '7700 900 123',
+                                    hintStyle: TextStyle(
                                         fontSize: 16, color: _kTextGray),
                                     border: InputBorder.none,
                                     counterText: '',
-                                    contentPadding: const EdgeInsets.fromLTRB(
+                                    contentPadding: EdgeInsets.fromLTRB(
                                         14, 2, 14, 12),
                                   ),
                                 ),
@@ -150,20 +263,49 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 6),
-                    // Digit counter hint
+                    const SizedBox(height: 8),
+
+                    // Error / validation feedback row
+                    if (_errorText != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            _errorText!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: _kErrorRed,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // Info / counter row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Enter 10-digit UK number (without +44)',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: _kTextGray.withValues(alpha: 0.8),
+                        // Live formatted preview
+                        if (digits.isNotEmpty)
+                          Text(
+                            _displayFormatted,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: _canContinue ? _kOrange : _kTextGray,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          )
+                        else
+                          Text(
+                            'UK mobile only (e.g. 07xxx xxx xxx)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _kTextGray.withValues(alpha: 0.8),
+                            ),
                           ),
-                        ),
                         Text(
-                          '${_ctrl.text.trim().length}/10',
+                          '${digits.length}/10',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -192,7 +334,39 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   }
 }
 
-// ── Shared widgets ────────────────────────────────────────────────────────────
+// ── UK Mobile Input Formatter ────────────────────────────────────────────────
+/// Enforces that the first digit must be 7 (UK mobile subscriber prefix).
+/// Strips any leading 0 the user types and rejects non-7 first digits.
+class _UKMobileInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    String text = newValue.text;
+
+    // Strip any leading zeros (user habit from typing 07...)
+    while (text.startsWith('0')) {
+      text = text.substring(1);
+    }
+
+    // If first digit is not 7, reject the input (keep old value)
+    if (text.isNotEmpty && text[0] != '7') {
+      return oldValue;
+    }
+
+    if (text == newValue.text) return newValue;
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(
+        offset: text.length.clamp(0, text.length),
+      ),
+    );
+  }
+}
+
+// ── Shared widgets ───────────────────────────────────────────────────────────
 class _OnboardingAppBar extends StatelessWidget {
   final VoidCallback onBack;
   const _OnboardingAppBar({required this.onBack});

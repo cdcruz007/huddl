@@ -231,7 +231,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               fontSize: 28,
                               fontWeight: FontWeight.w700,
                               color: item.isFree
-                                  ? HuddlColors.teal
+                                  ? HuddlColors.blue
                                   : HuddlColors.primary,
                             ),
                           ),

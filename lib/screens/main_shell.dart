@@ -4,6 +4,7 @@ import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
 import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
+import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 
@@ -36,6 +37,13 @@ class MainShellState extends State<MainShell> {
     }
   }
 
+  void _navigateToCreateMeetup() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CreateMeetupScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,6 +52,32 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
+      // ── FAB — visible only on Meetups tab ─────────────────────────
+      floatingActionButton: _currentIndex == 2
+          ? Container(
+              width: 60,
+              height: 60,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                gradient: HuddlColors.primaryGradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: HuddlColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton(
+                onPressed: _navigateToCreateMeetup,
+                backgroundColor: HuddlColors.white.withValues(alpha: 0.0),
+                elevation: 0,
+                shape: const CircleBorder(),
+                child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
+              ),
+            )
+          : null,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -54,13 +88,13 @@ class MainShellState extends State<MainShell> {
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
+                  color: HuddlColors.gray900.withValues(alpha: 0.10),
                   blurRadius: 24,
                   spreadRadius: 0,
                   offset: const Offset(0, 4),
                 ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
+                  color: HuddlColors.gray900.withValues(alpha: 0.04),
                   blurRadius: 8,
                   spreadRadius: 0,
                   offset: const Offset(0, 1),

@@ -153,29 +153,6 @@ class _EventsScreenState extends State<EventsScreen>
           ],
         ),
       ),
-      // ── FAB ──────────────────────────────────────────────────────
-      floatingActionButton: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: HuddlColors.primaryGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: HuddlColors.primary.withValues(alpha: 0.35),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: _navigateToCreate,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
-        ),
-      ),
     );
   }
 }
@@ -227,7 +204,7 @@ class _AllTab extends StatelessWidget {
                 _SectionLabel(
                   icon: Icons.groups_outlined,
                   label: 'Meet-ups',
-                  color: HuddlColors.teal,
+                  color: HuddlColors.primaryDark,
                 ),
                 const SizedBox(height: 8),
                 _MeetupCard(meetup: meetup),
@@ -370,7 +347,7 @@ class _ImGoingTab extends StatelessWidget {
           _SectionLabel(
             icon: Icons.upcoming_outlined,
             label: 'Upcoming',
-            color: HuddlColors.teal,
+            color: HuddlColors.primaryDark,
           ),
           const SizedBox(height: 8),
           ...upcoming.map((m) => _ImGoingCard(
@@ -419,7 +396,7 @@ class _ImGoingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: HuddlColors.gray900.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -540,7 +517,7 @@ class _ImGoingCard extends StatelessWidget {
                       )
                     else
                       Icon(Icons.check_circle,
-                          color: HuddlColors.teal, size: 24),
+                          color: HuddlColors.blue, size: 24),
                     const SizedBox(height: 4),
                     GestureDetector(
                       onTap: onCancel,
@@ -549,7 +526,7 @@ class _ImGoingCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: isPast ? HuddlColors.textHint : Colors.red,
+                          color: isPast ? HuddlColors.textHint : HuddlColors.error,
                         ),
                       ),
                     ),
@@ -706,7 +683,7 @@ class _MeetupCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -738,8 +715,8 @@ class _MeetupCard extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
+                          HuddlColors.white.withValues(alpha: 0.0),
+                          HuddlColors.gray900.withValues(alpha: 0.4),
                         ],
                       ),
                     ),
@@ -757,14 +734,14 @@ class _MeetupCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(catStyle.icon, size: 13, color: Colors.white),
+                        Icon(catStyle.icon, size: 13, color: HuddlColors.white),
                         const SizedBox(width: 4),
                         Text(
                           meetup.category,
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                            color: HuddlColors.white,
                           ),
                         ),
                       ],
@@ -777,7 +754,7 @@ class _MeetupCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: HuddlColors.teal,
+                      color: HuddlColors.blue,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -785,7 +762,7 @@ class _MeetupCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: HuddlColors.white,
                       ),
                     ),
                   ),
@@ -796,20 +773,20 @@ class _MeetupCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
+                      color: HuddlColors.gray900.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.people, size: 13, color: Colors.white),
+                        const Icon(Icons.people, size: 13, color: HuddlColors.white),
                         const SizedBox(width: 4),
                         Text(
                           '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: HuddlColors.white,
                           ),
                         ),
                       ],
@@ -951,7 +928,7 @@ class _EventListCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -983,8 +960,8 @@ class _EventListCard extends StatelessWidget {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
+                          HuddlColors.white.withValues(alpha: 0.0),
+                          HuddlColors.gray900.withValues(alpha: 0.4),
                         ],
                       ),
                     ),
@@ -996,7 +973,7 @@ class _EventListCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isFree ? HuddlColors.teal : eventColor,
+                      color: isFree ? HuddlColors.blue : eventColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -1004,7 +981,7 @@ class _EventListCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: HuddlColors.white,
                       ),
                     ),
                   ),
@@ -1022,14 +999,14 @@ class _EventListCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.videocam, size: 13, color: Colors.white),
+                          const Icon(Icons.videocam, size: 13, color: HuddlColors.white),
                           const SizedBox(width: 4),
                           Text(
                             'Online',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: HuddlColors.white,
                             ),
                           ),
                         ],
@@ -1044,20 +1021,20 @@ class _EventListCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
+                          color: HuddlColors.gray900.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.people, size: 13, color: Colors.white),
+                            const Icon(Icons.people, size: 13, color: HuddlColors.white),
                             const SizedBox(width: 4),
                             Text(
                               '${event['attendees']} going',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white,
+                                color: HuddlColors.white,
                               ),
                             ),
                           ],
@@ -1068,10 +1045,10 @@ class _EventListCard extends StatelessWidget {
                         width: 30,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: HuddlColors.gray900.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.bookmark_border, size: 16, color: Colors.white),
+                        child: const Icon(Icons.bookmark_border, size: 16, color: HuddlColors.white),
                       ),
                     ],
                   ),
@@ -1305,17 +1282,17 @@ class _CatStyle {
 _CatStyle _meetupCategoryStyle(String category) {
   switch (category) {
     case 'Coffee':
-      return const _CatStyle(Color(0xFF8D6E63), Icons.coffee);
+      return const _CatStyle(HuddlColors.primaryDark, Icons.coffee);
     case 'Playdate':
-      return _CatStyle(HuddlColors.primary, Icons.child_care);
+      return const _CatStyle(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyle(Color(0xFF43A047), Icons.sports_golf);
+      return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(Color(0xFF00897B), Icons.directions_walk);
+      return const _CatStyle(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
-      return _CatStyle(HuddlColors.purple, Icons.celebration);
+      return const _CatStyle(HuddlColors.lightBlue, Icons.celebration);
     default:
-      return _CatStyle(HuddlColors.blue, Icons.groups);
+      return const _CatStyle(HuddlColors.blue, Icons.groups);
   }
 }
 

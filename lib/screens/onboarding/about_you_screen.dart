@@ -117,7 +117,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                'Adding a short bio will make it easier for you to connect\nwith other parents.',
+                'Adding a short bio will make it easier for you to connect with other parents.',
                 style: TextStyle(
                   fontSize: 14,
                   color: _kTextGray,

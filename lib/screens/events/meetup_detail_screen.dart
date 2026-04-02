@@ -102,7 +102,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.group, color: Colors.white, size: 18),
+              const Icon(Icons.group, color: HuddlColors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -148,7 +148,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   void _showMoreOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: HuddlColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -240,10 +240,10 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         color: HuddlColors.errorLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+                      child: const Icon(Icons.delete_outline, color: HuddlColors.error, size: 20),
                     ),
                     title: Text('Cancel Meet-up', style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500, color: Colors.red)),
+                      fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
                     onTap: () {
                       Navigator.pop(ctx);
                       _confirmDelete();
@@ -263,7 +263,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   void _showManageAttendees() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: HuddlColors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -378,7 +378,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: HuddlColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Cancel Meet-up?', style: GoogleFonts.poppins(
           fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
@@ -400,18 +400,18 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Meet-up cancelled'),
-                  backgroundColor: Colors.red.shade400,
+                  backgroundColor: HuddlColors.error,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red, elevation: 0,
+              backgroundColor: HuddlColors.error, elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: Text('Cancel Meet-up', style: GoogleFonts.poppins(
-              fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+              fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.white)),
           ),
         ],
       ),
@@ -434,12 +434,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
             leading: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: HuddlColors.gray900.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back,
-                    color: Colors.white, size: 20),
+                    color: HuddlColors.white, size: 20),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -447,24 +447,24 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: HuddlColors.gray900.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.share_outlined,
-                      color: Colors.white, size: 20),
+                      color: HuddlColors.white, size: 20),
                   onPressed: _shareMeetup,
                 ),
               ),
               Container(
                 margin: const EdgeInsets.fromLTRB(0, 8, 8, 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: HuddlColors.gray900.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.more_vert,
-                      color: Colors.white, size: 20),
+                      color: HuddlColors.white, size: 20),
                   onPressed: _showMoreOptions,
                 ),
               ),
@@ -484,8 +484,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.black.withValues(alpha: 0.5),
+                          HuddlColors.gray900.withValues(alpha: 0.1),
+                          HuddlColors.gray900.withValues(alpha: 0.5),
                         ],
                       ),
                     ),
@@ -506,14 +506,14 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(catStyle.icon,
-                                  size: 14, color: Colors.white),
+                                  size: 14, color: HuddlColors.white),
                               const SizedBox(width: 4),
                               Text(
                                 _meetup.category,
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  color: HuddlColors.white,
                                 ),
                               ),
                             ],
@@ -524,7 +524,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: HuddlColors.teal,
+                            color: HuddlColors.blue,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -532,7 +532,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: HuddlColors.white,
                             ),
                           ),
                         ),
@@ -628,7 +628,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: Icons.attach_money_outlined,
-                        iconColor: HuddlColors.teal,
+                        iconColor: HuddlColors.blue,
                         title: 'Free',
                         subtitle: 'No cost to attend',
                       ),
@@ -677,12 +677,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                               Container(
                                 width: 40, height: 40,
                                 decoration: BoxDecoration(
-                                  color: HuddlColors.purple.withValues(alpha: 0.1),
+                                  color: HuddlColors.lightBlue.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Icon(
                                   _meetup.privacy == MeetupPrivacy.group ? Icons.group : Icons.lock_outline,
-                                  size: 20, color: HuddlColors.purple,
+                                  size: 20, color: HuddlColors.lightBlue,
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -772,7 +772,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   color: inv.status == 'going'
                                       ? HuddlColors.teal.withValues(alpha: 0.1)
                                       : inv.status == 'declined'
-                                          ? Colors.red.withValues(alpha: 0.1)
+                                          ? HuddlColors.error.withValues(alpha: 0.1)
                                           : HuddlColors.primary.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
@@ -785,7 +785,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                     color: inv.status == 'going'
                                         ? HuddlColors.teal
                                         : inv.status == 'declined'
-                                            ? Colors.red
+                                            ? HuddlColors.error
                                             : HuddlColors.primary,
                                   ),
                                 ),
@@ -872,7 +872,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           color: HuddlColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -904,7 +904,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 onPressed: _toggleGoing,
                 icon: Icon(
                   _meetup.isGoing ? Icons.check_circle : Icons.groups,
-                  color: Colors.white,
+                  color: HuddlColors.white,
                   size: 20,
                 ),
                 label: Text(
@@ -1074,17 +1074,17 @@ class _CatStyleInfo {
 _CatStyleInfo _getCatStyle(String category) {
   switch (category) {
     case 'Coffee':
-      return const _CatStyleInfo(Color(0xFF8D6E63), Icons.coffee);
+      return const _CatStyleInfo(HuddlColors.primaryDark, Icons.coffee);
     case 'Playdate':
-      return _CatStyleInfo(HuddlColors.primary, Icons.child_care);
+      return const _CatStyleInfo(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyleInfo(Color(0xFF43A047), Icons.sports_golf);
+      return const _CatStyleInfo(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyleInfo(Color(0xFF00897B), Icons.directions_walk);
+      return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
-      return _CatStyleInfo(HuddlColors.purple, Icons.celebration);
+      return const _CatStyleInfo(HuddlColors.lightBlue, Icons.celebration);
     default:
-      return _CatStyleInfo(HuddlColors.blue, Icons.groups);
+      return const _CatStyleInfo(HuddlColors.blue, Icons.groups);
   }
 }
 
@@ -1105,7 +1105,7 @@ Widget _buildDetailCoverImage({
         child: showIcon
             ? Center(
                 child:
-                    Icon(fallbackIcon, size: 48, color: Colors.white))
+                    Icon(fallbackIcon, size: 48, color: HuddlColors.white))
             : null,
       );
 

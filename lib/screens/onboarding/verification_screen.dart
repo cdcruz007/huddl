@@ -165,16 +165,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
       // ignore: avoid_print
       print('');
       
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome! You\'ve been added to ${assignedGroups.length} community groups'),
-            backgroundColor: AppColors.success,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
+      // Store the assigned group count so the Welcome screen can display it
+      _onboardingData.setAssignedGroupCount(assignedGroups.length);
       
       // Navigate to welcome/home screen
       if (mounted) {

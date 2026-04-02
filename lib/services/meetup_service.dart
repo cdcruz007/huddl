@@ -66,6 +66,8 @@ class Meetup {
   final DateTime? repeatEndDate;
   final String? groupId; // When privacy=group, which group this belongs to
   final String? groupName;
+  final bool isFree;
+  final double? price;
   final List<MeetupAttendee> invitees;
   final DateTime createdAt;
 
@@ -83,6 +85,8 @@ class Meetup {
     this.attendeeCount = 1,
     this.maxAttendees,
     this.isGoing = false,
+    this.isFree = true,
+    this.price,
     this.attendeeNames = const [],
     this.imageUrl = '',
     this.privacy = MeetupPrivacy.public,
@@ -99,6 +103,8 @@ class Meetup {
   Meetup copyWith({
     int? attendeeCount,
     bool? isGoing,
+    bool? isFree,
+    double? price,
     List<String>? attendeeNames,
     List<MeetupAttendee>? invitees,
   }) {
@@ -116,6 +122,8 @@ class Meetup {
       attendeeCount: attendeeCount ?? this.attendeeCount,
       maxAttendees: maxAttendees,
       isGoing: isGoing ?? this.isGoing,
+      isFree: isFree ?? this.isFree,
+      price: price ?? this.price,
       attendeeNames: attendeeNames ?? this.attendeeNames,
       imageUrl: imageUrl,
       privacy: privacy,
@@ -146,6 +154,8 @@ class Meetup {
     'isGoing': isGoing,
     'attendeeNames': attendeeNames,
     'imageUrl': imageUrl.startsWith('data:') ? '' : imageUrl, // Don't persist base64
+    'isFree': isFree,
+    'price': price,
     'privacy': privacy.index,
     'repeat': repeat.index,
     'repeatDisplay': repeatDisplay,
@@ -173,6 +183,8 @@ class Meetup {
     isGoing: j['isGoing'] ?? false,
     attendeeNames: List<String>.from(j['attendeeNames'] ?? []),
     imageUrl: j['imageUrl'] ?? '',
+    isFree: j['isFree'] ?? true,
+    price: j['price'] != null ? (j['price'] as num).toDouble() : null,
     privacy: MeetupPrivacy.values[j['privacy'] ?? 0],
     repeat: MeetupRepeat.values[j['repeat'] ?? 0],
     repeatDisplay: j['repeatDisplay'],
@@ -302,6 +314,7 @@ class MeetupService extends ChangeNotifier {
         privacy: MeetupPrivacy.public,
         repeat: MeetupRepeat.weekly,
         repeatDisplay: 'Every Monday',
+        isFree: true,
       ),
       Meetup(
         id: 'mu_2',
@@ -322,6 +335,8 @@ class MeetupService extends ChangeNotifier {
         attendeeNames: ['James D.', 'Mark T.', 'Luke W.', 'David S.', 'Tom R.'],
         privacy: MeetupPrivacy.group,
         groupName: 'Dads Connect',
+        isFree: false,
+        price: 15.0,
       ),
       Meetup(
         id: 'mu_3',
@@ -340,6 +355,7 @@ class MeetupService extends ChangeNotifier {
         isGoing: false,
         attendeeNames: ['Emma W.', 'Sophie M.', 'Anna K.', 'Kate P.', 'Lucy R.'],
         privacy: MeetupPrivacy.public,
+        isFree: true,
       ),
       Meetup(
         id: 'mu_4',
@@ -358,6 +374,7 @@ class MeetupService extends ChangeNotifier {
         isGoing: false,
         attendeeNames: ['Anna K.', 'Emma W.', 'Sophie M.', 'Olivia L.'],
         privacy: MeetupPrivacy.public,
+        isFree: true,
       ),
       Meetup(
         id: 'mu_5',
@@ -377,6 +394,8 @@ class MeetupService extends ChangeNotifier {
         isGoing: false,
         attendeeNames: ['Luke W.', 'Kate P.', 'Mark T.', 'Sarah T.', 'David S.', 'Tom R.'],
         privacy: MeetupPrivacy.private_,
+        isFree: false,
+        price: 35.0,
       ),
     ]);
   }

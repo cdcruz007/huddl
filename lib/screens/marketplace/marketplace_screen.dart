@@ -880,7 +880,7 @@ class _ProductCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal,
+                          color: HuddlColors.blue,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -945,7 +945,7 @@ class _ProductCard extends StatelessWidget {
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: item.isFree
-                            ? HuddlColors.teal
+                            ? HuddlColors.blue
                             : HuddlColors.primary,
                       ),
                     ),
@@ -1066,13 +1066,13 @@ class _MyListingTile extends StatelessWidget {
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color:
-                              item.isFree ? HuddlColors.teal : HuddlColors.primary,
+                              item.isFree ? HuddlColors.blue : HuddlColors.primary,
                         ),
                       ),
                       const Spacer(),
                       _TinyButton(
                         text: item.isSold ? 'Sold' : 'Mark sold',
-                        color: item.isSold ? HuddlColors.textHint : HuddlColors.teal,
+                        color: item.isSold ? HuddlColors.textHint : HuddlColors.blue,
                         onTap: item.isSold ? () {} : onMarkSold,
                       ),
                       const SizedBox(width: 6),

@@ -554,8 +554,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: _isRecipientTyping
-                        ? HuddlColors.teal
-                        : _dmService.isUserOnline(widget.recipientId) ? const Color(0xFF34C759) : HuddlColors.textHint,
+                        ? HuddlColors.blue
+                        : _dmService.isUserOnline(widget.recipientId) ? HuddlColors.teal : HuddlColors.textHint,
                     fontWeight: _isRecipientTyping
                         ? FontWeight.w500
                         : FontWeight.w400,
@@ -798,7 +798,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                   Container(
                     width: 8, height: 8,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF34C759),
+                      color: HuddlColors.teal,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -2608,7 +2608,7 @@ class _LocationBubble extends StatelessWidget {
                     Container(
                       height: 120,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: HuddlColors.blueBackground,
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                       ),
                       child: Stack(
@@ -2627,7 +2627,7 @@ class _LocationBubble extends StatelessWidget {
                               )),
                             ),
                           ),
-                          const Icon(Icons.location_on, size: 40, color: Color(0xFFE53935)),
+                          const Icon(Icons.location_on, size: 40, color: HuddlColors.error),
                         ],
                       ),
                     ),

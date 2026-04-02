@@ -81,7 +81,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      "We will connect you with other local parents. Your\npostcode won't be shared anywhere.",
+                      "We will connect you with other local parents. Your postcode won't be shared anywhere.",
                       style: TextStyle(
                           fontSize: 14, color: _kTextGray, height: 1.5),
                       textAlign: TextAlign.center,

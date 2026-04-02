@@ -209,7 +209,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Don\'t be just a name – share your smile\nwith us too.',
+                'Don\'t be just a name – share your smile with us too.',
                 style: TextStyle(
                   fontSize: 14,
                   color: _kTextGray,

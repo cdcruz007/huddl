@@ -93,7 +93,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Connect with others who are at the same stage of life as\nyou. You can choose more than one option.',
+                      'Connect with others who are at the same stage of life as you. You can choose more than one option.',
                       style: TextStyle(
                         fontSize: 14,
                         color: _kTextGray,

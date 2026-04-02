@@ -307,20 +307,20 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: HuddlColors.teal.withValues(alpha: 0.1),
+                        color: HuddlColors.blue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.star, size: 14, color: HuddlColors.teal),
+                          const Icon(Icons.star, size: 14, color: HuddlColors.blue),
                           const SizedBox(width: 4),
                           Text(
                             'You created this group',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.teal,
+                              color: HuddlColors.blue,
                             ),
                           ),
                         ],
@@ -533,13 +533,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         ];
                         final colors = [
                           HuddlColors.primary,
-                          const Color(0xFF3580F0),
-                          const Color(0xFF199A85),
-                          const Color(0xFFA16AE9),
-                          const Color(0xFF5B9DFF),
-                          const Color(0xFFE8A838),
-                          const Color(0xFFFF7575),
-                          HuddlColors.teal,
+                          HuddlColors.blue,
+                          HuddlColors.accentAmber,
+                          HuddlColors.paleBlue,
+                          HuddlColors.lightBlue,
+                          HuddlColors.accentCoral,
+                          HuddlColors.primaryDark,
+                          HuddlColors.blue,
                         ];
                         return Column(
                           children: [
@@ -1069,8 +1069,8 @@ class _CircleButton extends StatelessWidget {
 class _TwoPeoplePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintPrimary = Paint()..color = const Color(0xFFFF975C);
-    final paintSecondary = Paint()..color = const Color(0xFFFFAD7F);
+    final paintPrimary = Paint()..color = HuddlColors.primary;
+    final paintSecondary = Paint()..color = HuddlColors.primaryLight;
 
     canvas.drawCircle(
         Offset(size.width * 0.35, size.height * 0.45), 30, paintPrimary);

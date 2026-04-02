@@ -221,7 +221,7 @@ class _CreatePasswordScreenState extends State<CreatePasswordScreen> {
                                 );
                               },
                           ),
-                          const TextSpan(text: ' and\n'),
+                          const TextSpan(text: ' and '),
                           TextSpan(
                             text: 'Privacy Policy',
                             style: const TextStyle(

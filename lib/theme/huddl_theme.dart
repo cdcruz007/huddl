@@ -10,7 +10,7 @@ class HuddlTheme {
       scaffoldBackgroundColor: HuddlColors.white,
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
-        secondary: HuddlColors.teal,
+        secondary: HuddlColors.blue,
         surface: HuddlColors.white,
         error: HuddlColors.error,
         onPrimary: HuddlColors.white,

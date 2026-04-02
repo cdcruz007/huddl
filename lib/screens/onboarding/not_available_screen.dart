@@ -44,7 +44,7 @@ class NotAvailableScreen extends StatelessWidget {
 
               // ── Heading ────────────────────────────────────────────────
               const Text(
-                'Coming soon to\nyour area!',
+                'Coming soon to your area!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
@@ -70,7 +70,7 @@ class NotAvailableScreen extends StatelessWidget {
                       text:
                           'Hi, we are excited you want to be part of the community! '
                           'We have not launched in your borough yet, so please go to '
-                          'our website and join our waiting list:\n',
+                          'our website and join our waiting list:',
                     ),
                     TextSpan(
                       text: 'www.huddlparents.com',
@@ -83,7 +83,7 @@ class NotAvailableScreen extends StatelessWidget {
                     ),
                     TextSpan(
                       text:
-                          '\n\nWe are working hard to get to your area and will '
+                          ' We are working hard to get to your area and will '
                           'reach out to let you know when we have. Stay tuned!',
                     ),
                   ],

@@ -128,7 +128,7 @@ class EventService extends ChangeNotifier {
         isFree: false,
         price: '\$15',
         isOnline: false,
-        color: HuddlColors.teal,
+        color: HuddlColors.blue,
         icon: Icons.music_note,
         organiser: 'Tiny Tunes Academy',
         imageUrl:
@@ -147,7 +147,7 @@ class EventService extends ChangeNotifier {
         isFree: false,
         price: '\$45',
         isOnline: false,
-        color: const Color(0xFFE8A838),
+        color: HuddlColors.primaryDark,
         icon: Icons.school,
         organiser: 'Parent Pro Australia',
         imageUrl:
@@ -185,7 +185,7 @@ class EventService extends ChangeNotifier {
         isFree: true,
         price: '',
         isOnline: false,
-        color: HuddlColors.purple,
+        color: HuddlColors.lightBlue,
         icon: Icons.celebration,
         organiser: 'Carlton Community Assoc.',
         imageUrl:
@@ -204,7 +204,7 @@ class EventService extends ChangeNotifier {
         isFree: false,
         price: '\$65',
         isOnline: false,
-        color: const Color(0xFFE53935),
+        color: HuddlColors.error,
         icon: Icons.medical_services_outlined,
         organiser: 'Red Cross Australia',
         imageUrl:

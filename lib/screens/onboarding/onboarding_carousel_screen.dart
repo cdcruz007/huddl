@@ -27,24 +27,21 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
           'assets/images/illustrations/onboarding_welcome_illustration.png',
       title: 'Welcome to Huddl!',
       subtitle: 'The app for ALL parents,',
-      body: 'Connect with parents who are at the same stage\n'
-          'of their parenting journey as you.',
+      body: 'Connect with parents who are at the same stage of their parenting journey as you.',
     ),
     _PageData(
       illustration:
           'assets/images/illustrations/onboarding_chat_illustration.png',
-      title: 'Join local community groups and build\ntrusted networks',
+      title: 'Join local community groups and build trusted networks',
       subtitle: null,
-      body: 'Connect with like-minded people. Others are\n'
-          'here to share their story.',
+      body: 'Connect with like-minded people. Others are here to share their story.',
     ),
     _PageData(
       illustration:
           'assets/images/illustrations/onboarding_two_people_illustration.png',
       title: 'You are the Mum and Dad next door',
       subtitle: null,
-      body: "At Huddl, you're not just another person on a\n"
-          'forum filled with strangers.',
+      body: "At Huddl, you're not just another person on a forum filled with strangers.",
     ),
   ];
 

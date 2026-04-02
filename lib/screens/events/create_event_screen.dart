@@ -35,11 +35,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   final _onboardingService = OnboardingDataService();
 
   final _categories = [
-    {'label': 'Workshop', 'icon': Icons.school, 'color': const Color(0xFFE8A838)},
-    {'label': 'Class', 'icon': Icons.music_note, 'color': HuddlColors.teal},
+    {'label': 'Workshop', 'icon': Icons.school, 'color': HuddlColors.primaryDark},
+    {'label': 'Class', 'icon': Icons.music_note, 'color': HuddlColors.blue},
     {'label': 'Play', 'icon': Icons.child_care, 'color': HuddlColors.primary},
-    {'label': 'Health', 'icon': Icons.medical_services_outlined, 'color': const Color(0xFFE53935)},
-    {'label': 'Community', 'icon': Icons.celebration, 'color': HuddlColors.purple},
+    {'label': 'Health', 'icon': Icons.medical_services_outlined, 'color': HuddlColors.error},
+    {'label': 'Community', 'icon': Icons.celebration, 'color': HuddlColors.lightBlue},
     {'label': 'Other', 'icon': Icons.event, 'color': HuddlColors.blue},
   ];
 
@@ -73,7 +73,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: HuddlColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -153,7 +153,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not access photos: $e'),
-              backgroundColor: Colors.red.shade400),
+              backgroundColor: HuddlColors.error),
         );
       }
     }
@@ -354,21 +354,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.5),
+                                color: HuddlColors.gray900.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const Icon(Icons.edit, size: 14,
-                                      color: Colors.white),
+                                      color: HuddlColors.white),
                                   const SizedBox(width: 4),
                                   Text(
                                     'Change',
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                      color: HuddlColors.white,
                                     ),
                                   ),
                                 ],

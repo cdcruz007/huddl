@@ -82,7 +82,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
                     const SizedBox(height: 10),
 
                     const Text(
-                      'Select the year your baby is expected.\nThis helps us connect you with other\nexpecting parents.',
+                      'Select the year your baby is expected. This helps us connect you with other expecting parents.',
                       style: TextStyle(
                         fontSize: 14,
                         color: _kTextGray,

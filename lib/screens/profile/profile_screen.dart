@@ -1077,13 +1077,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: HuddlColors.teal.withValues(alpha: 0.15),
+                          color: HuddlColors.blue.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
                           _meetupCategoryIcon(m.category),
                           size: 22,
-                          color: HuddlColors.teal,
+                          color: HuddlColors.blue,
                         ),
                       ),
                       title: Text(m.title,
@@ -1240,7 +1240,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 ...threads.take(10).map((t) => ListTile(
                       leading: const Icon(Icons.topic,
-                          color: HuddlColors.teal, size: 20),
+                          color: HuddlColors.blue, size: 20),
                       title: Text(t.topicName,
                           style: GoogleFonts.poppins(
                               fontSize: 13,

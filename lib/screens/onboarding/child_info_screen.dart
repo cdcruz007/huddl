@@ -72,7 +72,7 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
                     ),
                     const SizedBox(height: 10),
                     const Text(
-                      'Meet parents with children the same age as yours. Date\nof birth won\'t be shared.',
+                      'Meet parents with children the same age as yours. Date of birth won\'t be shared.',
                       style: TextStyle(
                           fontSize: 14, color: _kTextGray, height: 1.5),
                       textAlign: TextAlign.center,

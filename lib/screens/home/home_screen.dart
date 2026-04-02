@@ -485,8 +485,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       _QuickAction(
                         icon: Icons.storefront,
                         label: 'Preloved',
-                        color: HuddlColors.teal,
-                        bgColor: const Color(0xFFE6F5F3),
+                        color: HuddlColors.blue,
+                        bgColor: const Color(0xFFEDF4FF),
                         onTap: () => _switchToTab(3),
                       ),
                     ],
@@ -938,9 +938,9 @@ class _EventCard extends StatelessWidget {
       case 'Social':
         return HuddlColors.blue;
       case 'Toddler':
-        return HuddlColors.teal;
+        return HuddlColors.paleBlue;
       case 'Outdoors':
-        return HuddlColors.purple;
+        return HuddlColors.lightBlue;
       default:
         return HuddlColors.primary;
     }
@@ -1359,13 +1359,13 @@ class _FeedCard extends StatelessWidget {
   Color get _iconColor {
     switch (item.type) {
       case FeedItemType.newParent:
-        return HuddlColors.teal;
+        return HuddlColors.blue;
       case FeedItemType.newGroup:
         return HuddlColors.primary;
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.purple;
+        return HuddlColors.lightBlue;
       case FeedItemType.milestone:
         return const Color(0xFFE8A838);
     }
@@ -1983,13 +1983,13 @@ class _NotificationsSheet extends StatelessWidget {
   Color _colorForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.teal;
+        return HuddlColors.blue;
       case FeedItemType.newGroup:
         return HuddlColors.primary;
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.purple;
+        return HuddlColors.lightBlue;
       case FeedItemType.milestone:
         return const Color(0xFFE8A838);
     }
@@ -2234,13 +2234,13 @@ class _ActivityDetailSheet extends StatelessWidget {
   Color _colorForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.teal;
+        return HuddlColors.blue;
       case FeedItemType.newGroup:
         return HuddlColors.primary;
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.purple;
+        return HuddlColors.lightBlue;
       case FeedItemType.milestone:
         return const Color(0xFFE8A838);
     }

@@ -38,11 +38,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             leading: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: HuddlColors.gray900.withValues(alpha: 0.3),
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                icon: const Icon(Icons.arrow_back, color: HuddlColors.white, size: 20),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -50,13 +50,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: HuddlColors.gray900.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: Icon(
                     _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: Colors.white, size: 20,
+                    color: HuddlColors.white, size: 20,
                   ),
                   onPressed: () => setState(() => _isBookmarked = !_isBookmarked),
                 ),
@@ -64,11 +64,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 margin: const EdgeInsets.fromLTRB(0, 8, 8, 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: HuddlColors.gray900.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.share_outlined, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.share_outlined, color: HuddlColors.white, size: 20),
                   onPressed: () {},
                 ),
               ),
@@ -90,8 +90,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.black.withValues(alpha: 0.55),
+                          HuddlColors.gray900.withValues(alpha: 0.1),
+                          HuddlColors.gray900.withValues(alpha: 0.55),
                         ],
                       ),
                     ),
@@ -104,7 +104,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: isFree ? HuddlColors.teal : color,
+                            color: isFree ? HuddlColors.blue : color,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -112,7 +112,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: HuddlColors.white,
                             ),
                           ),
                         ),
@@ -127,14 +127,14 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.videocam, size: 14, color: Colors.white),
+                                const Icon(Icons.videocam, size: 14, color: HuddlColors.white),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Online',
                                   style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.white,
+                                    color: HuddlColors.white,
                                   ),
                                 ),
                               ],
@@ -150,20 +150,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: HuddlColors.gray900.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.business, size: 13, color: Colors.white),
+                          const Icon(Icons.business, size: 13, color: HuddlColors.white),
                           const SizedBox(width: 4),
                           Text(
                             organiser,
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white,
+                              color: HuddlColors.white,
                             ),
                           ),
                         ],
@@ -265,7 +265,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: Icons.attach_money,
-                        iconColor: isFree ? HuddlColors.teal : color,
+                        iconColor: isFree ? HuddlColors.blue : color,
                         title: isFree ? 'Free' : e['price'] as String,
                         subtitle: isFree
                             ? 'No cost to attend'
@@ -329,24 +329,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(height: 12),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.blue,
                         text: 'Professional facilitators',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.blue,
                         text: 'All materials provided',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.blue,
                         text: isOnline
                             ? 'Interactive online session'
                             : 'Safe, family-friendly venue',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.blue,
                         text: 'Certificate of attendance',
                       ),
                     ],
@@ -367,7 +367,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           color: HuddlColors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, -2),
             ),
@@ -668,7 +668,7 @@ Widget _buildEventDetailCover({
           ),
         ),
         child: showIcon
-            ? Center(child: Icon(fallbackIcon, size: 48, color: Colors.white))
+            ? Center(child: Icon(fallbackIcon, size: 48, color: HuddlColors.white))
             : null,
       );
 

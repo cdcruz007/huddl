@@ -12,7 +12,12 @@ class HuddlColors {
   static const Color lightBlue = Color(0xFF5B9DFF);
   static const Color paleBlue = Color(0xFF82B4FF);
   static const Color blueBackground = Color(0xFFEDF4FF);
-  static const Color purple = Color(0xFFA16AE9);
+
+  // Category accent palette (non-status, for tags / badges / avatars)
+  static const Color accentAmber = Color(0xFFF3C54F);       // yellow family – warm gold
+  static const Color accentCoral = Color(0xFFF69F72);       // orange-pink family
+  static const Color accentSky   = Color(0xFF78B0FF);       // blue gradient end
+  static const Color accentSlate = Color(0xFF7C7C7C);       // neutral secondary text
 
   // Text
   static const Color textDark = Color(0xFF43464D);

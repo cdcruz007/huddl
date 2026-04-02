@@ -64,7 +64,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     const SizedBox(height: 8),
                     const Center(
                       child: Text(
-                        'Find other Dads and Mums from your local\ncommunity.',
+                        'Find other Dads and Mums from your local community.',
                         style: TextStyle(
                           fontSize: 14,
                           color: _kTextGray,

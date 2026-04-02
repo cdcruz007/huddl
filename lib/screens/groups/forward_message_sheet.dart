@@ -648,11 +648,11 @@ class _ForwardSheetState extends State<_ForwardSheet> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8F5E9),
+                color: HuddlColors.blueBackground,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.location_on,
-                  size: 20, color: Color(0xFFE53935)),
+                  size: 20, color: HuddlColors.error),
             ),
             const SizedBox(width: 10),
             Expanded(

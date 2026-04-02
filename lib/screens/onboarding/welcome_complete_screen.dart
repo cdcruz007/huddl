@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../services/onboarding_data_service.dart';
 
-// Design tokens from screenshot 14
+// Design tokens
 const _kOrange = Color(0xFFFCA878);
 const _kTextDark = Color(0xFF1C1C1C);
 const _kTextGray = Color(0xFF9E9E9E);
+const _kPeachBg = Color(0xFFFFF3ED); // soft peach from palette
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final groupCount = OnboardingDataService().assignedGroupCount;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Huddl logo centered at top ─────────────────────────────
+            // -- Huddl logo centered at top --
             const Padding(
               padding: EdgeInsets.only(top: 32),
               child: _HuddlLogo(),
@@ -23,7 +27,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // ── Title ──────────────────────────────────────────────────
+            // -- Title --
             const Text(
               'Welcome to Huddl!',
               style: TextStyle(
@@ -34,13 +38,68 @@ class WelcomeCompleteScreen extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
 
-            // ── Subtitle ───────────────────────────────────────────────
+            // -- Dynamic group assignment info box --
+            if (groupCount > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: _kPeachBg,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: _kOrange.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Large dynamic number
+                      Text(
+                        '$groupCount',
+                        style: const TextStyle(
+                          fontSize: 40,
+                          fontWeight: FontWeight.w800,
+                          color: _kTextDark,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        groupCount == 1
+                            ? 'community group'
+                            : 'community groups',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _kOrange,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'You\'ve been added to your local community groups based on your selections.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _kTextGray,
+                          height: 1.45,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            if (groupCount > 0) const SizedBox(height: 16),
+
+            // -- Subtitle --
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Before we start, let your neighbors know you!',
+                'Before we start, let your neighbours know you!',
                 style: TextStyle(
                   fontSize: 14,
                   color: _kTextGray,
@@ -50,7 +109,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Illustration: community group celebrating together ─────
+            // -- Illustration --
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -68,7 +127,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // ── Let's go! button ───────────────────────────────────────
+            // -- Let's go! button --
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
               child: SizedBox(
@@ -102,7 +161,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
   }
 }
 
-// ── Shared Huddl logo ─────────────────────────────────────────────────────────
+// -- Shared Huddl logo --
 class _HuddlLogo extends StatelessWidget {
   const _HuddlLogo();
 
