@@ -581,242 +581,501 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showStageOfLifeSheet() {
     final selected = Set<String>.from(_stagesOfLife);
-    final dueDateCtrl = TextEditingController(text: _dueDate ?? '');
     final childrenList = List<Map<String, String>>.from(
         _children.map((c) => Map<String, String>.from(c)));
-    final parentTypeValue = ValueNotifier<String>(_parentType);
+    // Due date is year-only
+    String selectedDueYear = _dueDate ?? '';
+
+    // Parent type is LOCKED once set during onboarding
+    final bool parentTypeLocked = _parentType.isNotEmpty;
 
     _showSheet(
       title: 'Stage of Life',
       builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            // Parent type
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('I am a...',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Wrap(
-                spacing: 10,
-                children: ['mum', 'dad'].map((t) {
-                  final isSelected = parentTypeValue.value == t;
-                  return ChoiceChip(
-                    label: Text(t[0].toUpperCase() + t.substring(1)),
-                    selected: isSelected,
-                    labelStyle: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : HuddlColors.textDark),
-                    selectedColor: HuddlColors.primary,
-                    backgroundColor: HuddlColors.background,
-                    onSelected: (_) {
-                      setLocal(() => parentTypeValue.value = t);
-                    },
-                  );
-                }).toList(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Divider(indent: 20, endIndent: 20),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text('My journey',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
-            ),
-            const SizedBox(height: 8),
-            ...[
-              ('aspiring', 'Trying for a baby', Icons.favorite_outline),
-              ('expecting', 'Expecting', Icons.pregnant_woman),
-              ('parent', 'Already a parent', Icons.child_care),
-            ].map((entry) {
-              final isOn = selected.contains(entry.$1);
-              return CheckboxListTile(
-                value: isOn,
-                title: Row(
-                  children: [
-                    Icon(entry.$3, size: 20, color: HuddlColors.primary),
-                    const SizedBox(width: 10),
-                    Text(entry.$2,
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, color: HuddlColors.textDark)),
-                  ],
-                ),
-                activeColor: HuddlColors.primary,
-                controlAffinity: ListTileControlAffinity.trailing,
-                onChanged: (v) {
-                  setLocal(() {
-                    if (v == true) {
-                      selected.add(entry.$1);
-                    } else {
-                      selected.remove(entry.$1);
-                    }
-                  });
-                },
-              );
-            }),
-            // Expecting due date
-            if (selected.contains('expecting')) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: _sheetField(dueDateCtrl, 'Due date (YYYY)', Icons.calendar_today),
-              ),
-            ],
-            // Children
-            if (selected.contains('parent')) ...[
-              const SizedBox(height: 8),
+        builder: (ctx, setLocal) => SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+
+              // ── Parent type (locked after onboarding) ──────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Text('Children',
-                        style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark)),
-                    const Spacer(),
-                    TextButton.icon(
-                      icon: const Icon(Icons.add, size: 18),
-                      label: Text('Add child',
-                          style: GoogleFonts.poppins(fontSize: 12)),
-                      style: TextButton.styleFrom(
-                          foregroundColor: HuddlColors.primary),
-                      onPressed: () {
-                        setLocal(() {
-                          childrenList.add({'name': '', 'birthday': ''});
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              ...childrenList.asMap().entries.map((e) {
-                final i = e.key;
-                final nameC = TextEditingController(text: e.value['name'] ?? '');
-                final yearC = TextEditingController(text: e.value['birthday'] ?? '');
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: parentTypeLocked
+                        ? HuddlColors.background
+                        : HuddlColors.peachVeryLight,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: HuddlColors.divider),
+                  ),
                   child: Row(
                     children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.primary.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          _parentType == 'dad' ? Icons.face : Icons.face_3,
+                          size: 22,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
                       Expanded(
-                        child: TextField(
-                          controller: nameC,
-                          onChanged: (v) => childrenList[i]['name'] = v,
-                          style: GoogleFonts.poppins(fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Name',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14, color: HuddlColors.textHint),
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: HuddlColors.divider)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: HuddlColors.primary, width: 2)),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _parentType.isNotEmpty
+                                  ? 'I am a ${_parentType[0].toUpperCase()}${_parentType.substring(1)}'
+                                  : 'Parent type not set',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.textDark),
+                            ),
+                            if (parentTypeLocked)
+                              Text(
+                                'Set during sign-up and cannot be changed',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11, color: HuddlColors.textHint),
+                              ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: 100,
-                        child: TextField(
-                          controller: yearC,
-                          onChanged: (v) => childrenList[i]['birthday'] = v,
-                          style: GoogleFonts.poppins(fontSize: 14),
-                          decoration: InputDecoration(
-                            hintText: 'Birth year',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14, color: HuddlColors.textHint),
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 10),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide:
-                                    const BorderSide(color: HuddlColors.divider)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                borderSide: const BorderSide(
-                                    color: HuddlColors.primary, width: 2)),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline,
-                            size: 20, color: HuddlColors.error),
-                        onPressed: () {
-                          setLocal(() => childrenList.removeAt(i));
-                        },
-                      ),
+                      if (parentTypeLocked)
+                        const Icon(Icons.lock_outline,
+                            size: 18, color: HuddlColors.textHint),
                     ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── My journey section ─────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text('My journey',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.textDark)),
+              ),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text('Select all that apply to you',
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: HuddlColors.textHint)),
+              ),
+              const SizedBox(height: 12),
+
+              ...[
+                ('aspiring', 'Trying for a baby', Icons.favorite_outline, HuddlColors.accentCoral),
+                ('expecting', 'Expecting', Icons.pregnant_woman, HuddlColors.primary),
+                ('parent', 'Already a parent', Icons.child_care, HuddlColors.teal),
+              ].map((entry) {
+                final isOn = selected.contains(entry.$1);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                  child: GestureDetector(
+                    onTap: () {
+                      setLocal(() {
+                        if (isOn) {
+                          selected.remove(entry.$1);
+                        } else {
+                          selected.add(entry.$1);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: isOn
+                            ? entry.$4.withValues(alpha: 0.08)
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isOn ? entry.$4 : HuddlColors.divider,
+                          width: isOn ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: entry.$4.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(entry.$3,
+                                size: 20, color: entry.$4),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(entry.$2,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: isOn ? FontWeight.w600 : FontWeight.w500,
+                                    color: HuddlColors.textDark)),
+                          ),
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: isOn ? entry.$4 : Colors.transparent,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isOn ? entry.$4 : HuddlColors.gray300,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: isOn
+                                ? const Icon(Icons.check,
+                                    size: 16, color: Colors.white)
+                                : null,
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               }),
-            ],
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sheetButton('Save', () async {
-                // OTP verification for stage of life changes
-                Navigator.pop(c);
-                final verified = await _verifyWithOtp('update your stage of life');
-                if (!verified) {
-                  _snack('Stage of life change cancelled');
-                  return;
-                }
 
-                _onboarding.setParentType(parentTypeValue.value);
-                _onboarding.setStagesOfLife(selected.toList());
-                if (dueDateCtrl.text.trim().isNotEmpty) {
-                  _onboarding.setDueDate(dueDateCtrl.text.trim());
-                }
-                _onboarding.setChildren(childrenList
-                    .where((c) =>
-                        (c['name'] ?? '').isNotEmpty ||
-                        (c['birthday'] ?? '').isNotEmpty)
-                    .toList());
-                setState(() {
-                  _parentType = parentTypeValue.value;
-                  _stagesOfLife = selected.toList();
-                  _dueDate = dueDateCtrl.text.trim().isEmpty
-                      ? null
-                      : dueDateCtrl.text.trim();
-                  _children = childrenList
-                      .where((c) =>
-                          (c['name'] ?? '').isNotEmpty ||
-                          (c['birthday'] ?? '').isNotEmpty)
-                      .toList();
-                });
-                // Recreate default groups for the updated stages
-                _groupService.recreateGroupsForStages(
-                  userId: 'current_user',
-                  stages: selected.toList(),
-                  postcode: _postcode,
-                );
-                _loadProfileData();
-                _snack('Stage of life updated — groups refreshed');
-              }),
-            ),
-            const SizedBox(height: 16),
-          ],
+              // ── Expecting: due year picker ─────────────────────
+              if (selected.contains('expecting')) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text('Expected due year',
+                      style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textDark)),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: GestureDetector(
+                    onTap: () {
+                      final currentYear = DateTime.now().year;
+                      final years = List.generate(4, (i) => currentYear + i);
+                      showModalBottomSheet(
+                        context: ctx,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20)),
+                        ),
+                        builder: (yCtx) => SizedBox(
+                          height: 220,
+                          child: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text('Select due year',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: HuddlColors.textDark)),
+                              ),
+                              Expanded(
+                                child: ListView.separated(
+                                  itemCount: years.length,
+                                  separatorBuilder: (_, __) =>
+                                      const Divider(height: 1),
+                                  itemBuilder: (_, i) {
+                                    final y = years[i].toString();
+                                    final isSel = selectedDueYear == y;
+                                    return ListTile(
+                                      title: Text(y,
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: isSel
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: isSel
+                                                  ? HuddlColors.primary
+                                                  : HuddlColors.textDark)),
+                                      trailing: isSel
+                                          ? const Icon(Icons.check_circle,
+                                              color: HuddlColors.primary)
+                                          : null,
+                                      onTap: () {
+                                        Navigator.pop(yCtx);
+                                        setLocal(
+                                            () => selectedDueYear = y);
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HuddlColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today,
+                              size: 18, color: HuddlColors.primary),
+                          const SizedBox(width: 12),
+                          Text(
+                            selectedDueYear.isNotEmpty
+                                ? selectedDueYear
+                                : 'Select year',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: selectedDueYear.isNotEmpty
+                                    ? HuddlColors.textDark
+                                    : HuddlColors.textHint),
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.keyboard_arrow_down,
+                              size: 20, color: HuddlColors.textHint),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+
+              // ── Children section ───────────────────────────────
+              if (selected.contains('parent')) ...[
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Text('Children',
+                          style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.textDark)),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () {
+                          setLocal(() {
+                            childrenList.add({'name': '', 'birthday': ''});
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.add,
+                                  size: 16, color: HuddlColors.primary),
+                              const SizedBox(width: 4),
+                              Text('Add child',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: HuddlColors.primary)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ...childrenList.asMap().entries.map((e) {
+                  final i = e.key;
+                  final nameC =
+                      TextEditingController(text: e.value['name'] ?? '');
+                  final yearC =
+                      TextEditingController(text: e.value['birthday'] ?? '');
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: HuddlColors.teal.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              child: Text('${i + 1}',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: HuddlColors.teal)),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: TextField(
+                              controller: nameC,
+                              onChanged: (v) => childrenList[i]['name'] = v,
+                              style: GoogleFonts.poppins(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: 'Name',
+                                hintStyle: GoogleFonts.poppins(
+                                    fontSize: 13, color: HuddlColors.textHint),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 10),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.divider)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.primary, width: 2)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 80,
+                            child: TextField(
+                              controller: yearC,
+                              keyboardType: TextInputType.number,
+                              onChanged: (v) =>
+                                  childrenList[i]['birthday'] = v,
+                              style: GoogleFonts.poppins(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: 'Year',
+                                hintStyle: GoogleFonts.poppins(
+                                    fontSize: 13, color: HuddlColors.textHint),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 10),
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.divider)),
+                                focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.primary, width: 2)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          GestureDetector(
+                            onTap: () {
+                              setLocal(() => childrenList.removeAt(i));
+                            },
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: HuddlColors.error.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.close,
+                                  size: 16, color: HuddlColors.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+
+              const SizedBox(height: 28),
+
+              // ── Save button ────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: selected.isEmpty
+                        ? null
+                        : () async {
+                            // OTP verification for stage of life changes
+                            Navigator.pop(c);
+                            final verified = await _verifyWithOtp(
+                                'update your stage of life');
+                            if (!verified) {
+                              _snack('Stage of life change cancelled');
+                              return;
+                            }
+
+                            // Save to onboarding (parent type stays locked)
+                            _onboarding.setStagesOfLife(selected.toList());
+                            if (selectedDueYear.isNotEmpty) {
+                              _onboarding.setDueDate(selectedDueYear);
+                            }
+                            final validChildren = childrenList
+                                .where((ch) =>
+                                    (ch['name'] ?? '').isNotEmpty ||
+                                    (ch['birthday'] ?? '').isNotEmpty)
+                                .toList();
+                            _onboarding.setChildren(validChildren);
+
+                            setState(() {
+                              _stagesOfLife = selected.toList();
+                              _dueDate = selectedDueYear.isEmpty
+                                  ? null
+                                  : selectedDueYear;
+                              _children = validChildren;
+                            });
+
+                            // Recreate default groups for updated stages
+                            // This ensures new groups appear in the Messages tab
+                            await _groupService.recreateGroupsForStages(
+                              userId: 'current_user',
+                              stages: selected.toList(),
+                              postcode: _postcode,
+                            );
+                            await _loadProfileData();
+                            _snack(
+                                'Stage of life updated \u2014 your groups have been refreshed');
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      disabledBackgroundColor:
+                          HuddlColors.primary.withValues(alpha: 0.3),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      elevation: 0,
+                    ),
+                    child: Text('Save Changes',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
       ),
     );
@@ -852,7 +1111,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Changing your postcode will update your borough and default groups. You can opt to remove yourself from your previous borough groups.',
+                        'Changing your postcode will update your borough and default groups. Only Cambridge postcodes are accepted.',
                         style: GoogleFonts.poppins(
                             fontSize: 12, color: HuddlColors.primary, height: 1.4),
                       ),
@@ -881,7 +1140,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (newPc.isEmpty) return;
 
                 if (!_postcodeService.isCambridgePostcode(newPc)) {
-                  _snack('We are not in your area yet. Huddl is currently only available in the Cambridge area.');
+                  if (!ctx.mounted) return;
+                  showDialog(
+                    context: ctx,
+                    builder: (dCtx) => Dialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.location_off,
+                                  size: 28, color: HuddlColors.primary),
+                            ),
+                            const SizedBox(height: 16),
+                            Text('We\u2019re not in your area yet',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: HuddlColors.textDark)),
+                            const SizedBox(height: 10),
+                            Text(
+                              'Huddl is currently only available in the Cambridge area. We\u2019re expanding soon \u2014 stay tuned!',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: HuddlColors.textSecondary,
+                                  height: 1.5),
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: () => Navigator.pop(dCtx),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: HuddlColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  elevation: 0,
+                                ),
+                                child: Text('OK',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white)),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
                   return;
                 }
 
@@ -909,6 +1229,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _postcode = newPc;
                   _borough = newBorough;
                 });
+                // Recreate default groups for the new borough
+                // based on user's current stage of life
+                await _groupService.recreateGroupsForStages(
+                  userId: 'current_user',
+                  stages: _stagesOfLife,
+                  postcode: newPc,
+                );
                 _snack('Location updated to $newBorough');
                 // Reload groups for new borough
                 await _loadProfileData();
@@ -965,7 +1292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'You\'ve moved from $previousBorough. You can opt to leave your previous borough default groups below.',
+                          'You can opt to remove yourself from your previous $previousBorough borough groups below.',
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               color: HuddlColors.primary,
@@ -2846,22 +3173,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 16),
-          Container(
-            width: 72,
-            height: 72,
-            decoration: BoxDecoration(
-              color: HuddlColors.peachLight,
-              borderRadius: BorderRadius.circular(20),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Image.asset(
+              'assets/images/logo_huddl_icon.png',
+              width: 72,
+              height: 72,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: HuddlColors.peachLight,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Center(
+                    child: Icon(Icons.people, size: 36, color: HuddlColors.primary)),
+              ),
             ),
-            child: const Center(
-                child: Icon(Icons.people, size: 36, color: HuddlColors.primary)),
           ),
-          const SizedBox(height: 16),
-          Text('Huddl',
-              style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark)),
+          const SizedBox(height: 12),
+          Image.asset(
+            'assets/images/logo_huddl_splash.png',
+            height: 30,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => Text('huddl',
+                style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: HuddlColors.primary)),
+          ),
           const SizedBox(height: 4),
           Text('Version 1.0.0',
               style: GoogleFonts.poppins(
