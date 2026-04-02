@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -524,7 +523,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 Switch(
                   value: _isOnline,
                   onChanged: (v) => setState(() => _isOnline = v),
-                  activeColor: HuddlColors.primary,
+                  activeThumbColor: HuddlColors.primary,
                 ),
               ],
             ),
@@ -553,7 +552,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 Switch(
                   value: _isFree,
                   onChanged: (v) => setState(() => _isFree = v),
-                  activeColor: HuddlColors.primary,
+                  activeThumbColor: HuddlColors.primary,
                 ),
               ],
             ),

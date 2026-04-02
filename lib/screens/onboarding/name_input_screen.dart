@@ -177,17 +177,11 @@ class _UnderlineInput extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String>? onChanged;
-  final TextInputType keyboardType;
-  final bool obscureText;
-  final Widget? suffixIcon;
 
   const _UnderlineInput({
     required this.controller,
     required this.hint,
     this.onChanged,
-    this.keyboardType = TextInputType.text,
-    this.obscureText = false,
-    this.suffixIcon,
   });
 
   @override
@@ -200,8 +194,6 @@ class _UnderlineInput extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
         style: const TextStyle(fontSize: 16, color: _kTextDark),
         decoration: InputDecoration(
           hintText: hint,
@@ -209,7 +201,6 @@ class _UnderlineInput extends StatelessWidget {
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          suffixIcon: suffixIcon,
         ),
       ),
     );

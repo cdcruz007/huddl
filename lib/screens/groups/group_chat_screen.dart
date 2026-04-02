@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -2135,6 +2134,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 senderName: imgMsg.senderName,
                                 senderAvatar: imgMsg.senderAvatar,
                                 senderId: imgMsg.senderId,
+                                locationName: 'Cambridge, UK',
                               );
                             }
                             return _GroupImageBubble(

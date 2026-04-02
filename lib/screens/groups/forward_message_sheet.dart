@@ -96,8 +96,6 @@ class _ForwardSheetState extends State<_ForwardSheet> {
   final DMService _dmService = DMService();
   final OnboardingDataService _onboarding = OnboardingDataService();
 
-  List<_ForwardTarget> _allTargets = [];
-  List<_ForwardTarget> _filtered = [];
   String _query = '';
   bool _loading = true;
 
@@ -216,10 +214,8 @@ class _ForwardSheetState extends State<_ForwardSheet> {
     setState(() {
       _memberTargets = memberList;
       _groupTargets = groupList;
-      _allTargets = [...memberList, ...groupList];
       _filteredMembers = List.from(memberList);
       _filteredGroupsList = List.from(groupList);
-      _filtered = List.from(_allTargets);
       _loading = false;
     });
   }
@@ -228,14 +224,10 @@ class _ForwardSheetState extends State<_ForwardSheet> {
     setState(() {
       _query = q;
       if (q.isEmpty) {
-        _filtered = List.from(_allTargets);
         _filteredMembers = List.from(_memberTargets);
         _filteredGroupsList = List.from(_groupTargets);
       } else {
         final lower = q.toLowerCase();
-        _filtered = _allTargets
-            .where((t) => t.name.toLowerCase().contains(lower))
-            .toList();
         _filteredMembers = _memberTargets
             .where((t) => t.name.toLowerCase().contains(lower))
             .toList();

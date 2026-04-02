@@ -6,7 +6,6 @@ import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import 'create_meetup_screen.dart';
-import 'create_event_screen.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
 
@@ -57,16 +56,7 @@ class _EventsScreenState extends State<EventsScreen>
     );
   }
 
-  void _navigateToCreateEvent() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CreateEventScreen()),
-    );
-  }
-
-  void _navigateToCreate() {
-    _navigateToCreateMeetup();
-  }
+  // _navigateToCreateEvent and _navigateToCreate removed — only _navigateToCreateMeetup is used
 
   @override
   Widget build(BuildContext context) {
@@ -157,85 +147,7 @@ class _EventsScreenState extends State<EventsScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ALL TAB — combined feed of meet-ups and events, sorted by date
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _AllTab extends StatelessWidget {
-  final MeetupService meetupService;
-  final EventService eventService;
-  final VoidCallback onCreateMeetup;
-  final VoidCallback onCreateEvent;
-
-  const _AllTab({
-    required this.meetupService,
-    required this.eventService,
-    required this.onCreateMeetup,
-    required this.onCreateEvent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final meetups = meetupService.meetups;
-    final eventMaps = eventService.eventMaps;
-    final totalItems = meetups.length + eventMaps.length;
-
-    if (totalItems == 0) {
-      return _EmptyState(
-        icon: Icons.explore_outlined,
-        title: 'Nothing here yet',
-        subtitle: 'Be the first to create a meet-up\nor check back for upcoming events!',
-        actionLabel: 'Create Meet-up',
-        onAction: onCreateMeetup,
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: totalItems + 1, // +1 for section divider
-      itemBuilder: (context, index) {
-        // Meet-ups section
-        if (index < meetups.length) {
-          final meetup = meetups[index];
-          if (index == 0) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _SectionLabel(
-                  icon: Icons.groups_outlined,
-                  label: 'Meet-ups',
-                  color: HuddlColors.primaryDark,
-                ),
-                const SizedBox(height: 8),
-                _MeetupCard(meetup: meetup),
-              ],
-            );
-          }
-          return _MeetupCard(meetup: meetup);
-        }
-
-        // Section divider
-        if (index == meetups.length) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 16, bottom: 8),
-            child: _SectionLabel(
-              icon: Icons.event_outlined,
-              label: 'Events',
-              color: HuddlColors.blue,
-            ),
-          );
-        }
-
-        // Events section (now from EventService)
-        final eventIdx = index - meetups.length - 1;
-        if (eventIdx >= 0 && eventIdx < eventMaps.length) {
-          return _EventListCard(event: eventMaps[eventIdx]);
-        }
-        return const SizedBox.shrink();
-      },
-    );
-  }
-}
+// _AllTab removed — no longer used (Meetups screen has only Nearby + I'm Going tabs)
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEET-UPS TAB — parent-organized casual gatherings

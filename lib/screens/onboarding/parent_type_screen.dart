@@ -97,81 +97,36 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     const SizedBox(height: 14),
 
                     // ── Provide Local Help — HIDDEN for now (will be used later) ──
-                    // The divider, card, and info box below are kept in code
-                    // but wrapped in `if (false)` so they don't render.
-                    if (false) ...[
-                      // ── Divider with "or" ────────────────────────────────────
-                      Row(
-                        children: [
-                          Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text('or',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: _kTextGray,
-                                  fontWeight: FontWeight.w500,
-                                )),
-                          ),
-                          Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      // Provide Local Help option
-                      _ParentTypeCard(
-                        label: 'Provide Local Help',
-                        subtitle: 'Doula, Nanny, Babysitter, Tutor & more',
-                        icon: Icons.handshake_outlined,
-                        accentColor: _kBlue,
-                        selected: _selected == 'provider',
-                        onTap: () => setState(() => _selected = 'provider'),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Info box for provider option
-                      if (_selected == 'provider')
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: _kBlue.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _kBlue.withValues(alpha: 0.2)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(Icons.info_outline, color: _kBlue, size: 18),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  'As a Local Help provider you\'ll create a service profile that parents in your area can find and contact. '
-                                  'You\'ll be listed in the Local Help section.',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: _kTextDark,
-                                      height: 1.45),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ], // end of hidden provider section
+                    // Commented out to avoid dead-code warnings.  Uncomment and
+                    // replace the surrounding comment markers to re-enable.
+                    //
+                    // Row(children: [
+                    //   Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
+                    //   Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+                    //     child: Text('or', style: TextStyle(fontSize: 13, color: _kTextGray, fontWeight: FontWeight.w500))),
+                    //   Expanded(child: Divider(color: _kCardBorder, thickness: 1)),
+                    // ]),
+                    // const SizedBox(height: 14),
+                    // _ParentTypeCard(
+                    //   label: 'Provide Local Help',
+                    //   subtitle: 'Doula, Nanny, Babysitter, Tutor & more',
+                    //   icon: Icons.handshake_outlined,
+                    //   accentColor: _kBlue,
+                    //   selected: _selected == 'provider',
+                    //   onTap: () => setState(() => _selected = 'provider'),
+                    // ),
 
                     // Illustration at bottom
-                    if (_selected != 'provider') ...[
-                      const SizedBox(height: 12),
-                      Center(
-                        child: Image.asset(
-                          'assets/images/illustrations/parent_type_illustration.png',
-                          height: 140,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) =>
-                              const SizedBox(height: 140),
-                        ),
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Image.asset(
+                        'assets/images/illustrations/parent_type_illustration.png',
+                        height: 140,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            const SizedBox(height: 140),
                       ),
-                    ],
+                    ),
 
                     const SizedBox(height: 24),
                   ],

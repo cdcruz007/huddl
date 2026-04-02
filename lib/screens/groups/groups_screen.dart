@@ -67,15 +67,6 @@ class _GroupsScreenState extends State<GroupsScreen>
     super.dispose();
   }
 
-  /// Navigate to Create Group, and when the user returns, signal both tabs.
-  Future<void> _openCreateGroup() async {
-    final result = await Navigator.pushNamed(context, '/create_group');
-    // If a group was created (result is non-null), notify tabs to reload
-    if (result != null) {
-      _groupsChangedNotifier.value++;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -159,7 +150,6 @@ class _MessagesTabState extends State<_MessagesTab> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
-  final MessageSearchService _searchService = MessageSearchService();
 
   List<_GroupItem> _allGroups = [];
   List<_GroupItem> _filteredGroups = [];
@@ -400,39 +390,6 @@ class _MessagesTabState extends State<_MessagesTab> {
       return (b.lastMessageTime ?? DateTime(2000))
           .compareTo(a.lastMessageTime ?? DateTime(2000));
     });
-  }
-
-  /// Perform deep search within all DM and group chat messages.
-  Future<void> _performDeepSearch(String query) async {
-    if (!mounted) return;
-    setState(() => _isDeepSearching = true);
-
-    try {
-      final groupMaps = _allGroups
-          .map((g) => {
-                'id': g.id,
-                'name': g.name,
-                'imageUrl': g.imageUrl,
-              })
-          .toList();
-
-      final results = await _searchService.searchAll(
-        query: query,
-        groups: groupMaps,
-        dmConversations: _dmConversations,
-      );
-
-      if (mounted && _searchQuery.toLowerCase() == query) {
-        setState(() {
-          _deepSearchResults = results;
-          _isDeepSearching = false;
-        });
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isDeepSearching = false);
-      }
-    }
   }
 
   /// Build a unified list of items (groups + DMs) sorted by most recent
@@ -2530,7 +2487,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   String? _userParentType;
   List<String> _userStagesOfLife = [];
   String? _userBorough;
-  bool _profileLoaded = false;
 
   @override
   void initState() {
@@ -2575,7 +2531,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         _userStagesOfLife = _onboardingService.stagesOfLife;
         final postcode = _onboardingService.postcode;
         _userBorough = PostcodeService().getBoroughFromPostcode(postcode);
-        _profileLoaded = true;
       });
     }
   }

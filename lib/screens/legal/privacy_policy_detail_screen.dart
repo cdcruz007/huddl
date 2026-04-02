@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
-import '../../theme/app_typography.dart';
 import '../../constants/app_text_styles.dart';
 
 class PrivacyPolicyDetailScreen extends StatelessWidget {

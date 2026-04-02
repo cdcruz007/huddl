@@ -1701,13 +1701,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final otp = '123456'; // Demo OTP
     final codeCtrl = TextEditingController();
     bool verified = false;
+    bool hasError = false;
 
     await showDialog(
       context: context,
       barrierDismissible: false,
       builder: (c) => StatefulBuilder(
         builder: (ctx, setLocal) {
-          bool hasError = false;
           return Dialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

@@ -46,7 +46,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final Set<String> _selectedMemberIds = {};
   String _memberSearchQuery = '';
   String? _userBorough;
-  String? _userName;
 
   @override
   void initState() {
@@ -63,7 +62,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     if (mounted) {
       setState(() {
         _userBorough = borough;
-        _userName = onboarding.name;
         _boroughMembers = members;
       });
     }
@@ -929,97 +927,102 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // Public
-                  InkWell(
-                    onTap: () => setState(() => _isPrivate = false),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Radio<bool>(
-                            value: false,
-                            groupValue: _isPrivate,
-                            onChanged: (v) => setState(() => _isPrivate = v!),
-                            activeColor: HuddlColors.primary,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
+                  // Public / Private radio group
+                  RadioGroup<bool>(
+                    groupValue: _isPrivate,
+                    onChanged: (v) => setState(() { if (v != null) _isPrivate = v; }),
+                    child: Column(
+                      children: [
+                        // Public
+                        InkWell(
+                          onTap: () => setState(() => _isPrivate = false),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Public',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: HuddlColors.textDark,
-                                  ),
+                                Radio<bool>(
+                                  value: false,
+                                  activeColor: HuddlColors.primary,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'All users within your Borough can see the group listed under the Discover tab and click to join.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: HuddlColors.textHint,
-                                    height: 1.4,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Public',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: HuddlColors.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'All users within your Borough can see the group listed under the Discover tab and click to join.',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: HuddlColors.textHint,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Private
-                  InkWell(
-                    onTap: () => setState(() => _isPrivate = true),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Radio<bool>(
-                            value: true,
-                            groupValue: _isPrivate,
-                            onChanged: (v) => setState(() => _isPrivate = v!),
-                            activeColor: HuddlColors.primary,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Column(
+                        ),
+                        const SizedBox(height: 4),
+                        // Private
+                        InkWell(
+                          onTap: () => setState(() => _isPrivate = true),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Private',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: HuddlColors.textDark,
-                                  ),
+                                Radio<bool>(
+                                  value: true,
+                                  activeColor: HuddlColors.primary,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'These groups will not be listed under the Discover tab. Members invited will need to accept the invite to join the group. Once they accept, this group will be listed under the Messages tab with a \u201CPrivate Group\u201D tag.',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: HuddlColors.textHint,
-                                    height: 1.4,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Private',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: HuddlColors.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'These groups will not be listed under the Discover tab. Members invited will need to accept the invite to join the group. Once they accept, this group will be listed under the Messages tab with a \u201CPrivate Group\u201D tag.',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: HuddlColors.textHint,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

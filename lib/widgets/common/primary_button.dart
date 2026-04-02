@@ -14,7 +14,7 @@ class PrimaryButton extends StatelessWidget {
   final double borderRadius;
 
   const PrimaryButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
@@ -24,7 +24,7 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height = 56,
     this.borderRadius = 16,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

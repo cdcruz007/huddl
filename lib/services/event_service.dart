@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
 
@@ -42,7 +41,7 @@ class Event {
     this.isUserCreated = false,
   });
 
-  /// Convert to the Map<String, dynamic> expected by existing card widgets.
+  /// Convert to the map expected by existing card widgets.
   Map<String, dynamic> toMap() {
     return {
       'id': id,

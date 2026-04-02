@@ -365,7 +365,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 Switch(
                   value: _isCalendarMode,
                   onChanged: (v) => setState(() => _isCalendarMode = v),
-                  activeColor: HuddlColors.primary,
+                  activeThumbColor: HuddlColors.primary,
                 ),
               ],
             ),
@@ -518,7 +518,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 Switch(
                   value: _allowMultiple,
                   onChanged: (v) => setState(() => _allowMultiple = v),
-                  activeColor: HuddlColors.primary,
+                  activeThumbColor: HuddlColors.primary,
                 ),
               ],
             ),

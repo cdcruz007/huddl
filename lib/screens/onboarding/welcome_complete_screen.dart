@@ -7,7 +7,6 @@ const _kTextDark = Color(0xFF1C1C1C);
 const _kTextGray = Color(0xFF9E9E9E);
 const _kSuccessGreen = Color(0xFF4CAF50);
 const _kSuccessBg = Color(0xFFE8F5E9);
-const _kErrorRed = Color(0xFFE53935);
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});

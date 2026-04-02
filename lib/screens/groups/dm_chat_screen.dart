@@ -1454,16 +1454,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   // ── Media permission prompt ────────────────────────────────────────────
-  // ── Interleaved list helpers (all message types now unified in _messages) ──
-  List<_ChatItem> get _sortedItems {
-    final items = <_ChatItem>[];
-    for (int i = 0; i < _messages.length; i++) {
-      items.add(_ChatItem(type: _ChatItemType.text, textIndex: i, timestamp: _messages[i].timestamp));
-    }
-    items.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-    return items;
-  }
-
   // ── WhatsApp-style attach handler ────────────────────────────────────
   Future<void> _openAttachSheet() async {
     final action = await showAttachBottomSheet(context);
@@ -2303,58 +2293,6 @@ class _TimestampDivider extends StatelessWidget {
 // _AttachMenuOption removed — replaced by WhatsApp-style attach_bottom_sheet.dart
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// IMAGE CHAT MESSAGE — lightweight model for locally-added images
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _ImageChatMessage {
-  final String imageUrl;
-  final bool isMe;
-  final DateTime timestamp;
-  final Uint8List? bytes;
-  final bool isLocationPin;
-
-  const _ImageChatMessage({
-    required this.imageUrl,
-    required this.isMe,
-    required this.timestamp,
-    this.bytes,
-    this.isLocationPin = false,
-  });
-}
-
-class _DocumentChatMessage {
-  final String fileName;
-  final int? fileSize;
-  final bool isMe;
-  final DateTime timestamp;
-
-  const _DocumentChatMessage({
-    required this.fileName,
-    this.fileSize,
-    required this.isMe,
-    required this.timestamp,
-  });
-}
-
-enum _ChatItemType { text, image, document }
-
-class _ChatItem {
-  final _ChatItemType type;
-  final int? textIndex;
-  final int? imageIndex;
-  final int? docIndex;
-  final DateTime timestamp;
-
-  const _ChatItem({
-    required this.type,
-    this.textIndex,
-    this.imageIndex,
-    this.docIndex,
-    required this.timestamp,
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // IMAGE BUBBLE — shows an image in the chat with a forward overlay icon
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2366,7 +2304,6 @@ class _ImageBubble extends StatelessWidget {
   final String recipientAvatarColor;
   final String? recipientId;
   final VoidCallback? onForward;
-  final Uint8List? bytes;
 
   const _ImageBubble({
     required this.imageUrl,
@@ -2376,7 +2313,6 @@ class _ImageBubble extends StatelessWidget {
     required this.recipientAvatarColor,
     this.recipientId,
     this.onForward,
-    this.bytes,
   });
 
   @override
@@ -2423,15 +2359,7 @@ class _ImageBubble extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: bytes != null
-                        ? Image.memory(
-                            bytes!,
-                            fit: BoxFit.cover,
-                            width: 240,
-                            height: 240,
-                            errorBuilder: (_, __, ___) => _brokenImage(),
-                          )
-                        : Image.network(
+                    child: Image.network(
                             imageUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => _brokenImage(),

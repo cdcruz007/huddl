@@ -14,7 +14,7 @@ class UnderlinedTextField extends StatelessWidget {
   final int maxLines;
 
   const UnderlinedTextField({
-    Key? key,
+    super.key,
     this.label,
     this.hintText,
     this.controller,
@@ -24,7 +24,7 @@ class UnderlinedTextField extends StatelessWidget {
     this.errorText,
     this.onChanged,
     this.maxLines = 1,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
