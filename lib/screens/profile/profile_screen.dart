@@ -1315,17 +1315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: ListTile(
                         contentPadding:
                             const EdgeInsets.symmetric(horizontal: 12),
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Center(
-                              child: Icon(Icons.people,
-                                  size: 20, color: HuddlColors.primary)),
-                        ),
+                        leading: _groupAvatar(g.imageUrl, 40),
                         title: Text(g.name,
                             style: GoogleFonts.poppins(
                                 fontSize: 13,
@@ -1516,25 +1506,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               itemBuilder: (_, i) {
                 final g = all[i];
                 return ListTile(
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
-                      borderRadius: BorderRadius.circular(12),
-                      image: g.imageUrl.isNotEmpty
-                          ? DecorationImage(
-                              image: NetworkImage(g.imageUrl),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: g.imageUrl.isEmpty
-                        ? const Center(
-                            child: Icon(Icons.people,
-                                size: 22, color: HuddlColors.primary))
-                        : null,
-                  ),
+                  leading: _groupAvatar(g.imageUrl, 44),
                   title: Text(g.name,
                       style: GoogleFonts.poppins(
                           fontSize: 14,
@@ -1556,6 +1528,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 );
               },
             ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HELPERS — IMAGE RESOLUTION
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Builds a rounded-rect group avatar that handles:
+  ///   • asset paths  (assets/images/groups/…)
+  ///   • network URLs (https://…)
+  ///   • empty / missing images → falls back to a people icon
+  Widget _groupAvatar(String imageUrl, double size) {
+    final hasImage = imageUrl.isNotEmpty;
+    final isAsset = imageUrl.startsWith('assets/');
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.27),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: hasImage
+            ? (isAsset
+                ? Image.asset(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    width: size,
+                    height: size,
+                    errorBuilder: (_, __, ___) => _avatarFallback(size),
+                  )
+                : Image.network(
+                    imageUrl,
+                    fit: BoxFit.cover,
+                    width: size,
+                    height: size,
+                    errorBuilder: (_, __, ___) => _avatarFallback(size),
+                  ))
+            : _avatarFallback(size),
+      ),
+    );
+  }
+
+  Widget _avatarFallback(double size) {
+    return Container(
+      width: size,
+      height: size,
+      color: HuddlColors.peachLight,
+      child: Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary),
+    );
+  }
+
+  /// Builds a rounded-rect meetup avatar with the category icon.
+  Widget _meetupAvatar(String category, double size, {String imageUrl = ''}) {
+    final hasImage = imageUrl.isNotEmpty;
+    final isAsset = imageUrl.startsWith('assets/');
+
+    if (hasImage) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.27),
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: isAsset
+              ? Image.asset(imageUrl, fit: BoxFit.cover, width: size, height: size,
+                  errorBuilder: (_, __, ___) => _meetupIconFallback(category, size))
+              : Image.network(imageUrl, fit: BoxFit.cover, width: size, height: size,
+                  errorBuilder: (_, __, ___) => _meetupIconFallback(category, size)),
+        ),
+      );
+    }
+    return _meetupIconFallback(category, size);
+  }
+
+  Widget _meetupIconFallback(String category, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: HuddlColors.blue.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(size * 0.27),
+      ),
+      child: Icon(_meetupCategoryIcon(category), size: size * 0.5, color: HuddlColors.blue),
     );
   }
 
@@ -1634,19 +1687,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ...goingMeetups.map((m) {
                     final isOrganiser = m.organiserId == 'current_user';
                     return ListTile(
-                      leading: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.blue.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          _meetupCategoryIcon(m.category),
-                          size: 22,
-                          color: HuddlColors.blue,
-                        ),
-                      ),
+                      leading: _meetupAvatar(m.category, 44, imageUrl: m.imageUrl),
                       title: Text(m.title,
                           style: GoogleFonts.poppins(
                               fontSize: 14,
