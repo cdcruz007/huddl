@@ -429,6 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.event_outlined,
                       title: 'My Meetups',
+                      iconColor: HuddlColors.accentAmber,
                       trailing: _CountBadge(count: _userEvents.length + _userMeetups.length),
                       onTap: _showMyEventsSheet,
                     ),
@@ -441,6 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.bookmark_border,
                       title: 'Saved',
+                      iconColor: HuddlColors.accentAmber,
                       onTap: _showSavedSheet,
                     ),
                   ],
@@ -475,6 +477,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.info_outline,
                       title: 'About Huddl',
                       onTap: _showAboutSheet,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 8),
+
+                _MenuSection(
+                  title: 'Legal',
+                  items: [
+                    _MenuItem(
+                      icon: Icons.description_outlined,
+                      title: 'Terms of Service',
+                      onTap: () => Navigator.pushNamed(context, '/terms'),
+                    ),
+                    _MenuItem(
+                      icon: Icons.privacy_tip_outlined,
+                      title: 'Privacy Policy',
+                      onTap: () => Navigator.pushNamed(context, '/privacy'),
                     ),
                   ],
                 ),
@@ -1708,10 +1728,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: 'Change Password',
       builder: (c) => StatefulBuilder(
         builder: (ctx, setLocal) {
-          bool obscureCurrent = true;
-          bool obscureNew = true;
-          bool obscureConfirm = true;
-
           return Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2993,6 +3009,7 @@ class _MenuItem extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback onTap;
+  final Color? iconColor;
 
   const _MenuItem({
     required this.icon,
@@ -3000,6 +3017,7 @@ class _MenuItem extends StatelessWidget {
     this.subtitle,
     this.trailing,
     required this.onTap,
+    this.iconColor,
   });
 
   @override
@@ -3012,7 +3030,7 @@ class _MenuItem extends StatelessWidget {
         decoration: BoxDecoration(
             color: HuddlColors.background,
             borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, size: 20, color: HuddlColors.textDark),
+        child: Icon(icon, size: 20, color: iconColor ?? HuddlColors.textDark),
       ),
       title: Text(title,
           style: GoogleFonts.poppins(

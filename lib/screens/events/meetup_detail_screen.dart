@@ -1082,7 +1082,9 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Walk':
       return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
-      return const _CatStyleInfo(HuddlColors.lightBlue, Icons.celebration);
+      return const _CatStyleInfo(HuddlColors.accentAmber, Icons.celebration);
+    case 'Food':
+      return const _CatStyleInfo(HuddlColors.accentAmber, Icons.restaurant);
     default:
       return const _CatStyleInfo(HuddlColors.blue, Icons.groups);
   }

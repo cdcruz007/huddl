@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
-import '../../constants/app_text_styles.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../theme/huddl_colors.dart';
 
 class TermsOfServiceScreen extends StatelessWidget {
   const TermsOfServiceScreen({super.key});
@@ -8,12 +8,13 @@ class TermsOfServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: HuddlColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: HuddlColors.primary,
         title: Text(
           'Terms of Service',
-          style: AppTextStyles.h2.copyWith(color: Colors.white),
+          style: GoogleFonts.poppins(
+              fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -38,24 +39,24 @@ These Terms constitute a legally binding agreement between you and Cruzen Ltd ("
             _buildSection(
               '2. Description of Service',
               '''Huddl is a community platform that enables parents and families to:
-• Connect with other parents in their local area
-• Join and create local parenting groups
-• Organize and attend meetups and events
-• Share advice, tips, and experiences
-• Access local childcare services and service providers
-• Buy and sell children's items through the marketplace
-• Communicate via direct messaging
+\u2022 Connect with other parents in their local area
+\u2022 Join and create local parenting groups
+\u2022 Organize and attend meetups and events
+\u2022 Share advice, tips, and experiences
+\u2022 Access local childcare services and service providers
+\u2022 Buy and sell children\u2019s items through the marketplace
+\u2022 Communicate via direct messaging
 
 The Service is provided "as is" without warranties of any kind. We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time.''',
             ),
             _buildSection(
               '3. User Eligibility',
               '''You must:
-• Be at least 18 years of age
-• Have the legal capacity to enter into binding contracts
-• Provide accurate and complete registration information
-• Maintain the security of your account credentials
-• Be a parent, guardian, or caregiver to use the Service
+\u2022 Be at least 18 years of age
+\u2022 Have the legal capacity to enter into binding contracts
+\u2022 Provide accurate and complete registration information
+\u2022 Maintain the security of your account credentials
+\u2022 Be a parent, guardian, or caregiver to use the Service
 
 Users who violate these eligibility requirements will have their accounts terminated immediately.''',
             ),
@@ -64,29 +65,29 @@ Users who violate these eligibility requirements will have their accounts termin
               '''You agree to:
 
 a) Respectful Behavior:
-• Treat all users with respect and courtesy
-• Refrain from harassment, bullying, or abusive behavior
-• Report inappropriate conduct to our moderation team
-• Foster a safe, inclusive community environment
+\u2022 Treat all users with respect and courtesy
+\u2022 Refrain from harassment, bullying, or abusive behavior
+\u2022 Report inappropriate conduct to our moderation team
+\u2022 Foster a safe, inclusive community environment
 
 b) Prohibited Activities:
 You must NOT:
-• Post false, misleading, or defamatory content
-• Share inappropriate, explicit, or harmful content
-• Harass, threaten, or intimidate other users
-• Impersonate others or create fake accounts
-• Spam or engage in commercial solicitation
-• Share personal contact information of minors publicly
-• Violate any applicable laws or regulations
-• Attempt to hack, disrupt, or compromise the Service
-• Use automated systems to access the Service
-• Collect user data without consent
+\u2022 Post false, misleading, or defamatory content
+\u2022 Share inappropriate, explicit, or harmful content
+\u2022 Harass, threaten, or intimidate other users
+\u2022 Impersonate others or create fake accounts
+\u2022 Spam or engage in commercial solicitation
+\u2022 Share personal contact information of minors publicly
+\u2022 Violate any applicable laws or regulations
+\u2022 Attempt to hack, disrupt, or compromise the Service
+\u2022 Use automated systems to access the Service
+\u2022 Collect user data without consent
 
 c) Content Responsibility:
-• You are solely responsible for all content you post
-• You must have rights to any content you share
-• You grant us license to use, display, and distribute your content
-• You must not post copyrighted material without permission
+\u2022 You are solely responsible for all content you post
+\u2022 You must have rights to any content you share
+\u2022 You grant us license to use, display, and distribute your content
+\u2022 You must not post copyrighted material without permission
 
 Violation of these terms may result in immediate account suspension or termination without refund.''',
             ),
@@ -95,210 +96,124 @@ Violation of these terms may result in immediate account suspension or terminati
               '''TO THE MAXIMUM EXTENT PERMITTED BY LAW:
 
 a) Cruzen Ltd, its directors, officers, employees, and agents SHALL NOT BE LIABLE FOR:
-• Any direct, indirect, incidental, special, or consequential damages
-• Loss of profits, data, or business opportunities
-• Personal injury or property damage arising from use of the Service
-• User-generated content or interactions between users
-• Third-party services, links, or integrations
-• Service interruptions, errors, or security breaches
-• Decisions made based on information found on the Service
+\u2022 Any direct, indirect, incidental, special, or consequential damages
+\u2022 Loss of profits, data, or business opportunities
+\u2022 Personal injury or property damage arising from use of the Service
+\u2022 User-generated content or interactions between users
+\u2022 Third-party services, links, or integrations
+\u2022 Service interruptions, errors, or security breaches
+\u2022 Decisions made based on information found on the Service
 
 b) Disclaimer of Warranties:
-THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
-• Warranties of merchantability
-• Fitness for a particular purpose
-• Non-infringement
-• Accuracy or reliability of content
-• Uninterrupted or error-free service
+THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED.
 
 c) Maximum Liability:
-In no event shall our total liability exceed the amount you paid for the Service in the 12 months preceding the claim, or £100, whichever is less.
+In no event shall our total liability exceed the amount you paid for the Service in the 12 months preceding the claim, or \u00a3100, whichever is less.
 
 d) User Interactions:
-• You use the Service at your own risk
-• We are not responsible for user conduct or safety
-• You are responsible for verifying information and identities
-• Meet other users in public places and exercise caution
-• Report suspicious behavior to our support team''',
+\u2022 You use the Service at your own risk
+\u2022 We are not responsible for user conduct or safety
+\u2022 You are responsible for verifying information and identities
+\u2022 Meet other users in public places and exercise caution
+\u2022 Report suspicious behavior to our support team''',
             ),
             _buildSection(
               '6. Indemnification',
               '''You agree to indemnify, defend, and hold harmless Cruzen Ltd, its affiliates, officers, directors, employees, agents, and partners from any claims, damages, losses, liabilities, and expenses (including legal fees) arising from:
 
-• Your use or misuse of the Service
-• Your violation of these Terms
-• Your violation of any rights of another person or entity
-• Your content or conduct on the Service
-• Any dispute between you and other users
+\u2022 Your use or misuse of the Service
+\u2022 Your violation of these Terms
+\u2022 Your violation of any rights of another person or entity
+\u2022 Your content or conduct on the Service
+\u2022 Any dispute between you and other users
 
 This indemnification obligation survives termination of your account and these Terms.''',
             ),
             _buildSection(
               '7. Payment Terms',
               '''a) Subscription Plans:
-• Free tier: Basic access to community features
-• Premium tier: Full access to all features (pricing displayed in-app)
+\u2022 Free tier: Basic access to community features
+\u2022 Premium tier: Full access to all features (pricing displayed in-app)
 
 b) Payment Processing:
-• Payments are processed securely via Stripe
-• All prices are in GBP and include applicable VAT
-• Subscription automatically renews unless cancelled
+\u2022 Payments are processed securely via Stripe
+\u2022 All prices are in GBP and include applicable VAT
+\u2022 Subscription automatically renews unless cancelled
 
 c) Billing Cycle:
-• Monthly subscriptions: Billed every 30 days
-• Annual subscriptions: Billed every 365 days
-• Billing occurs on the same day of each period
-• You authorize automatic charges to your payment method
+\u2022 Monthly subscriptions: Billed every 30 days
+\u2022 Annual subscriptions: Billed every 365 days
 
-d) Price Changes:
-• We reserve the right to change subscription prices
-• Price changes apply from the next billing cycle
-• You will be notified 30 days before any price increase
-• Continued use after price change constitutes acceptance
-
-e) Payment Failures:
-• Failed payments may result in service suspension
-• We will attempt to process payment multiple times
-• Update payment information to restore access
-• Unpaid accounts may be permanently deleted after 60 days''',
+d) Cancellation Policy:
+\u2022 You may cancel your subscription at any time
+\u2022 Cancel through: Profile \u2192 Settings \u2192 Subscription Management
+\u2022 Cancellation takes effect at the end of the current billing period
+\u2022 No partial refunds for unused time''',
             ),
             _buildSection(
-              '8. Cancellation and Refunds',
-              '''a) Cancellation Policy:
-• You may cancel your subscription at any time
-• Cancel through: Profile → Settings → Subscription Management
-• Cancellation takes effect at the end of the current billing period
-• You retain access until the end of the paid period
-• No partial refunds for unused time
-
-b) NO REFUND POLICY:
-• All subscription fees are NON-REFUNDABLE
-• No refunds for unused portion of subscription period
-• No refunds for accounts terminated for Terms violations
-• No refunds for dissatisfaction with the Service
-• Payment disputes must be submitted within 7 days
-
-c) Free Trial:
-• New users may receive a free trial period
-• Trial period ends automatically and converts to paid subscription
-• Cancel before trial ends to avoid charges
-• One free trial per user/payment method
-
-d) Account Deletion:
-• Deleting your account does NOT cancel active subscriptions
-• You must cancel subscription separately before deleting account
-• Deleted accounts cannot be recovered
-• Unpaid balances remain due after account deletion''',
-            ),
-            _buildSection(
-              '9. Intellectual Property',
-              '''a) Our Rights:
-• The Huddl name, logo, and branding are trademarks of Cruzen Ltd
-• All Service content, features, and functionality are owned by us
-• Protected by copyright, trademark, and other intellectual property laws
-• You may not copy, modify, or distribute our intellectual property
-
-b) User Content License:
-By posting content, you grant us:
-• Worldwide, non-exclusive, royalty-free license
-• Right to use, reproduce, modify, and distribute your content
-• Right to sublicense your content to third parties
-• License survives termination of your account
-
-c) Content Removal:
-• We reserve the right to remove any content without notice
-• Content that violates Terms or community guidelines will be removed
-• Repeated violations may result in account termination''',
-            ),
-            _buildSection(
-              '10. Privacy and Data Protection',
+              '8. Privacy and Data Protection',
               '''a) GDPR Compliance:
-• We comply with UK GDPR and Data Protection Act 2018
-• Read our Privacy Policy for detailed data practices
-• You have rights to access, correct, and delete your data
-• Contact privacy@huddl.app for data requests
+\u2022 We comply with UK GDPR and Data Protection Act 2018
+\u2022 Read our Privacy Policy for detailed data practices
+\u2022 You have rights to access, correct, and delete your data
+\u2022 Contact privacy@huddl.app for data requests
 
 b) Data Collection:
-• We collect data as described in our Privacy Policy
-• Location data is used to connect you with local parents
-• Communications may be monitored for safety and quality
-• We may share data as required by law
+\u2022 We collect data as described in our Privacy Policy
+\u2022 Location data is used to connect you with local parents
+\u2022 Communications may be monitored for safety and quality
+\u2022 We may share data as required by law
 
 c) Child Safety:
-• Do NOT share personal information about children publicly
-• Do NOT post photos of other people's children without consent
-• Report any child safety concerns immediately''',
+\u2022 Do NOT share personal information about children publicly
+\u2022 Do NOT post photos of other people\u2019s children without consent
+\u2022 Report any child safety concerns immediately''',
             ),
             _buildSection(
-              '11. Termination',
+              '9. Termination',
               '''a) By You:
-• You may delete your account at any time
-• Must cancel subscription separately
-• Account deletion is permanent and irreversible
+\u2022 You may delete your account at any time
+\u2022 Must cancel subscription separately
+\u2022 Account deletion is permanent and irreversible
 
 b) By Us:
 We may suspend or terminate your account immediately if you:
-• Violate these Terms or community guidelines
-• Engage in fraudulent or illegal activity
-• Pose a safety risk to other users
-• Fail to pay subscription fees
-• Are subject to legal proceedings
+\u2022 Violate these Terms or community guidelines
+\u2022 Engage in fraudulent or illegal activity
+\u2022 Pose a safety risk to other users
+\u2022 Fail to pay subscription fees
 
 c) Effect of Termination:
-• Access to Service is immediately revoked
-• No refunds for paid subscriptions
-• All user data may be deleted
-• Indemnification obligations survive termination''',
+\u2022 Access to Service is immediately revoked
+\u2022 No refunds for paid subscriptions
+\u2022 All user data may be deleted
+\u2022 Indemnification obligations survive termination''',
             ),
             _buildSection(
-              '12. Dispute Resolution',
+              '10. Dispute Resolution',
               '''a) Governing Law:
-• These Terms are governed by the laws of England and Wales
-• Disputes subject to exclusive jurisdiction of English courts
+\u2022 These Terms are governed by the laws of England and Wales
+\u2022 Disputes subject to exclusive jurisdiction of English courts
 
 b) Informal Resolution:
-• Contact support@huddl.app to resolve disputes informally
-• We will attempt good faith resolution before legal proceedings
+\u2022 Contact support@huddl.app to resolve disputes informally
+\u2022 We will attempt good faith resolution before legal proceedings
 
-c) Arbitration:
-• Disputes may be resolved through binding arbitration
-• Arbitration conducted under rules of London Court of International Arbitration
-• Each party bears own costs unless arbitrator orders otherwise
-
-d) Class Action Waiver:
-• You agree to resolve disputes individually, not as class actions
-• You waive right to participate in class action lawsuits''',
+c) Class Action Waiver:
+\u2022 You agree to resolve disputes individually, not as class actions''',
             ),
             _buildSection(
-              '13. Changes to Terms',
-              '''• We may modify these Terms at any time
-• Material changes will be notified via email and in-app notification
-• Continued use after changes constitutes acceptance
-• Your only remedy for disagreement is to stop using the Service
-• Review Terms periodically for updates''',
-            ),
-            _buildSection(
-              '14. Miscellaneous',
+              '11. Miscellaneous',
               '''a) Entire Agreement:
 These Terms constitute the entire agreement between you and Cruzen Ltd.
 
 b) Severability:
 If any provision is found unenforceable, remaining provisions remain in effect.
 
-c) No Waiver:
-Failure to enforce any provision does not constitute waiver of that provision.
-
-d) Assignment:
-You may not assign these Terms. We may assign without restriction.
-
-e) Force Majeure:
-We are not liable for delays caused by circumstances beyond our control.
-
-f) Contact Information:
+c) Contact Information:
 Cruzen Ltd
 Email: legal@huddl.app
-Support: support@huddl.app
-Address: [Company Registered Address]''',
+Support: support@huddl.app''',
             ),
             const SizedBox(height: 32),
             _buildAcceptanceNotice(),
@@ -313,13 +228,13 @@ Address: [Company Registered Address]''',
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
       ),
       child: Row(
         children: [
-          Icon(Icons.update, color: AppColors.primary, size: 20),
+          const Icon(Icons.update, color: HuddlColors.primary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -327,16 +242,16 @@ Address: [Company Registered Address]''',
               children: [
                 Text(
                   'Last Updated: January 2025',
-                  style: AppTextStyles.body1.copyWith(
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
+                    color: HuddlColors.primary,
                   ),
                 ),
                 Text(
                   'Version 1.0',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.text2,
-                  ),
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: HuddlColors.textSecondary),
                 ),
               ],
             ),
@@ -350,21 +265,22 @@ Address: [Company Registered Address]''',
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: HuddlColors.surfaceLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: HuddlColors.divider),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.description, color: AppColors.primary, size: 24),
+              const Icon(Icons.description, color: HuddlColors.primary, size: 24),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   'Important Notice',
-                  style: AppTextStyles.h3,
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
                 ),
               ),
             ],
@@ -372,10 +288,8 @@ Address: [Company Registered Address]''',
           const SizedBox(height: 12),
           Text(
             'Please read these Terms of Service carefully before using Huddl. By creating an account or using our Service, you acknowledge that you have read, understood, and agree to be bound by these Terms.',
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.text2,
-              height: 1.5,
-            ),
+            style: GoogleFonts.poppins(
+                fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
           ),
         ],
       ),
@@ -388,18 +302,17 @@ Address: [Company Registered Address]''',
       children: [
         Text(
           title,
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.text,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
             fontWeight: FontWeight.w700,
+            color: HuddlColors.textDark,
           ),
         ),
         const SizedBox(height: 12),
         Text(
           content,
-          style: AppTextStyles.body2.copyWith(
-            color: AppColors.text2,
-            height: 1.6,
-          ),
+          style: GoogleFonts.poppins(
+              fontSize: 13, color: HuddlColors.textSecondary, height: 1.6),
         ),
         const SizedBox(height: 24),
       ],
@@ -410,14 +323,14 @@ Address: [Company Registered Address]''',
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.1),
+        color: HuddlColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: HuddlColors.error.withValues(alpha: 0.25)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber, color: AppColors.error, size: 24),
+          const Icon(Icons.warning_amber, color: HuddlColors.error, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -425,21 +338,19 @@ Address: [Company Registered Address]''',
               children: [
                 Text(
                   'By using Huddl, you agree to:',
-                  style: AppTextStyles.body1.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.error,
-                  ),
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.error),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '• All limitations of liability\n'
-                  '• No refund policy\n'
-                  '• Binding arbitration for disputes\n'
-                  '• All other terms stated above',
-                  style: AppTextStyles.body2.copyWith(
-                    color: AppColors.text2,
-                    height: 1.5,
-                  ),
+                  '\u2022 All limitations of liability\n'
+                  '\u2022 No refund policy\n'
+                  '\u2022 Binding arbitration for disputes\n'
+                  '\u2022 All other terms stated above',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
                 ),
               ],
             ),

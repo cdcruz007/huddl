@@ -60,6 +60,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     {'label': 'Sports & exercise', 'icon': Icons.fitness_center},
     {'label': 'Coffee & tea', 'icon': Icons.coffee},
     {'label': 'Parks & Walks', 'icon': Icons.park},
+    {'label': 'Food & nutrition', 'icon': Icons.restaurant},
     {'label': 'Performance & shows', 'icon': Icons.theater_comedy},
   ];
 
@@ -346,6 +347,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       mappedCategory = 'Social';
     } else if (_category == 'Pregnancy') {
       mappedCategory = 'Social';
+    } else if (_category == 'Food & nutrition') {
+      mappedCategory = 'Food';
     } else if (_category == 'Performance & shows') {
       mappedCategory = 'Social';
     }
@@ -1132,6 +1135,16 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    // Use yellow accent for food/nutrition category per style guide
+    final isYellowCategory = label == 'Food & nutrition';
+    final activeColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.blue;
+    final inactiveColor = isYellowCategory
+        ? HuddlColors.accentAmber.withValues(alpha: 0.5)
+        : HuddlColors.lightBlue.withValues(alpha: 0.5);
+    final inactiveTextColor = isYellowCategory
+        ? HuddlColors.accentAmber
+        : HuddlColors.lightBlue;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -1139,12 +1152,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? HuddlColors.blue : Colors.white,
+          color: isSelected ? activeColor : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected
-                ? HuddlColors.blue
-                : HuddlColors.lightBlue.withValues(alpha: 0.5),
+            color: isSelected ? activeColor : inactiveColor,
             width: 1.5,
           ),
         ),
@@ -1155,7 +1166,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 size: 16,
                 color: isSelected
                     ? Colors.white
-                    : HuddlColors.lightBlue),
+                    : inactiveTextColor),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1164,7 +1175,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 fontWeight: FontWeight.w500,
                 color: isSelected
                     ? Colors.white
-                    : HuddlColors.lightBlue,
+                    : inactiveTextColor,
               ),
             ),
           ],
