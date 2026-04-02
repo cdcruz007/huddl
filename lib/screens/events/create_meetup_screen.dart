@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/default_group_service.dart';
+import '../../services/browser_storage.dart';
+import '../../models/group.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE MEETUP — single-page scrollable form matching design screenshots
@@ -51,6 +54,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Privacy ──
   String _privacy = '';
+  String? _selectedGroupId;
+  String? _selectedGroupName;
+  List<Group> _userGroups = [];
 
   // ── Categories matching screenshots ──
   static const _categories = [
@@ -73,11 +79,32 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   final _meetupService = MeetupService();
   final _onboardingService = OnboardingDataService();
+  final _groupService = DefaultGroupService();
 
   @override
   void initState() {
     super.initState();
     _onboardingService.initialize();
+    _loadUserGroups();
+  }
+
+  Future<void> _loadUserGroups() async {
+    await _groupService.initialize();
+    final defaultGroups = await _groupService.getUserGroups('current_user');
+    List<Group> discovered = [];
+    try {
+      final discoveredJson =
+          await BrowserStorage.getString('user_created_groups_v1');
+      if (discoveredJson != null) {
+        final List<dynamic> decoded = json.decode(discoveredJson);
+        discovered = decoded
+            .map((e) => Group.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _userGroups = [...defaultGroups, ...discovered]);
+    }
   }
 
   @override
@@ -393,6 +420,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       repeatDisplay: _repeatOn ? _repeatFrequency : null,
       repeatEndDate:
           _repeatOn && _repeatEndOption == 'by_date' ? _repeatEndDate : null,
+      groupId: _selectedGroupId,
+      groupName: _selectedGroupName,
     );
 
     _meetupService.createMeetup(meetup);
@@ -805,6 +834,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                           description:
                               'Everyone in your local community can see and join your event.',
                           value: 'public',
+                          icon: Icons.public,
                         ),
                         const SizedBox(height: 10),
                         _privacyRadio(
@@ -812,12 +842,18 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                           description:
                               'Only members of a specific group can see and join your event.',
                           value: 'group',
+                          icon: Icons.group,
                         ),
+                        if (_privacy == 'group') ...[                          const SizedBox(height: 12),
+                          _buildGroupPicker(),
+                        ],
                         const SizedBox(height: 10),
                         _privacyRadio(
                           label: 'Private',
-                          description: 'Invite specific friends.',
+                          description:
+                              'Invite only — choose specific friends to invite.',
                           value: 'private',
+                          icon: Icons.lock_outline,
                         ),
                       ],
                     ),
@@ -1247,66 +1283,194 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     );
   }
 
-  /// Privacy radio with description text
+  /// Group picker — shown when privacy = 'group'
+  Widget _buildGroupPicker() {
+    if (_userGroups.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.only(left: 32),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: HuddlColors.peachLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline,
+                size: 16, color: HuddlColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'You don\'t belong to any groups yet. Join a group first to create group meetups.',
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.primary,
+                    height: 1.3),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: _selectedGroupId != null
+              ? HuddlColors.primary
+              : HuddlColors.gray300,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedGroupId,
+          isExpanded: true,
+          hint: Text('Select a group',
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: HuddlColors.textHint)),
+          icon: Icon(Icons.keyboard_arrow_down,
+              color: _selectedGroupId != null
+                  ? HuddlColors.primary
+                  : HuddlColors.textHint),
+          style:
+              GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+          items: _userGroups.map((g) {
+            return DropdownMenuItem(
+              value: g.id,
+              child: Row(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.peachLight,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.people,
+                          size: 14, color: HuddlColors.primary),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(g.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, color: HuddlColors.textDark)),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (v) {
+            final group = _userGroups.firstWhere((g) => g.id == v,
+                orElse: () => _userGroups.first);
+            setState(() {
+              _selectedGroupId = v;
+              _selectedGroupName = group.name;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Privacy radio with description text and icon
   Widget _privacyRadio({
     required String label,
     required String description,
     required String value,
+    IconData? icon,
   }) {
     final selected = _privacy == value;
     return GestureDetector(
-      onTap: () => setState(() => _privacy = value),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
+      onTap: () {
+        setState(() {
+          _privacy = value;
+          // Clear group selection when switching away from group
+          if (value != 'group') {
+            _selectedGroupId = null;
+            _selectedGroupName = null;
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: selected
+              ? HuddlColors.primary.withValues(alpha: 0.06)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? HuddlColors.primary.withValues(alpha: 0.3)
+                : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected
+                        ? HuddlColors.primary
+                        : HuddlColors.gray300,
+                    width: 2,
+                  ),
+                ),
+                child: selected
+                    ? Center(
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: HuddlColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (icon != null) ...[
+              Icon(icon,
+                  size: 18,
                   color: selected
                       ? HuddlColors.primary
-                      : HuddlColors.gray300,
-                  width: 2,
-                ),
+                      : HuddlColors.textHint),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: selected
+                              ? HuddlColors.primaryDark
+                              : HuddlColors.textDark)),
+                  const SizedBox(height: 2),
+                  Text(description,
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.textHint,
+                          height: 1.3)),
+                ],
               ),
-              child: selected
-                  ? Center(
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: HuddlColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    )
-                  : null,
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label,
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark)),
-                const SizedBox(height: 2),
-                Text(description,
-                    style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: HuddlColors.textHint,
-                        height: 1.3)),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

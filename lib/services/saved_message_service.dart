@@ -20,6 +20,19 @@ class SavedMessageService extends ChangeNotifier {
   List<SavedMessage> get savedMessages => List.unmodifiable(_savedMessages);
   List<SavedThread> get savedThreads => List.unmodifiable(_savedThreads);
 
+  /// All saved messages (messages + threads combined count).
+  /// Used by GDPR data compilation.
+  List<SavedMessage> get allSavedMessages => _savedMessages;
+
+  /// Clear all saved data — used for GDPR account deletion.
+  Future<void> clearAll() async {
+    _savedMessages.clear();
+    _savedThreads.clear();
+    await _save();
+    await _saveThreads();
+    notifyListeners();
+  }
+
   Future<void> initialize() async {
     if (_initialized) return;
     await _load();

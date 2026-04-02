@@ -770,7 +770,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sheetButton('Save', () {
+              child: _sheetButton('Save', () async {
+                // OTP verification for stage of life changes
+                Navigator.pop(c);
+                final verified = await _verifyWithOtp('update your stage of life');
+                if (!verified) {
+                  _snack('Stage of life change cancelled');
+                  return;
+                }
+
                 _onboarding.setParentType(parentTypeValue.value);
                 _onboarding.setStagesOfLife(selected.toList());
                 if (dueDateCtrl.text.trim().isNotEmpty) {
@@ -793,7 +801,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           (c['birthday'] ?? '').isNotEmpty)
                       .toList();
                 });
-                Navigator.pop(c);
                 // Recreate default groups for the updated stages
                 _groupService.recreateGroupsForStages(
                   userId: 'current_user',
@@ -1116,9 +1123,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _snack('Phone update cancelled');
                   return;
                 }
+                // Update phone number — this also changes login credentials
                 _onboarding.setPhoneNumber(newPhone);
                 setState(() => _phone = '+44$newPhone');
-                _snack('Phone number updated');
+                _snack('Phone number updated. Your login credentials have been updated to +44$newPhone.');
               }
             }),
           ),
@@ -1584,8 +1592,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             const Divider(indent: 16, endIndent: 16),
-            const SizedBox(height: 8),
-            // GDPR Data Export
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Text('GDPR \u2014 Your Data Rights',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: HuddlColors.primaryDark)),
+            ),
+            // GDPR — View My Data
+            ListTile(
+              leading: const Icon(Icons.visibility_outlined, color: HuddlColors.blue, size: 22),
+              title: Text('View my data',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark)),
+              subtitle: Text('See all personal data Huddl holds about you (Article 15)',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: HuddlColors.textHint)),
+              trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+              onTap: () {
+                Navigator.pop(c);
+                _showViewMyDataSheet();
+              },
+            ),
+            const Divider(indent: 16, endIndent: 16),
+            // GDPR — Export My Data
             ListTile(
               leading: const Icon(Icons.download_outlined, color: HuddlColors.blue, size: 22),
               title: Text('Export my data',
@@ -1593,7 +1626,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: HuddlColors.textDark)),
-              subtitle: Text('Download a copy of your personal data (GDPR)',
+              subtitle: Text('Download a portable copy of your data (Article 20)',
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textHint)),
               trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
@@ -1603,15 +1636,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               },
             ),
             const Divider(indent: 16, endIndent: 16),
-            const SizedBox(height: 8),
+            // GDPR — Delete Account
             ListTile(
               leading: const Icon(Icons.delete_forever, color: HuddlColors.error, size: 22),
-              title: Text('Delete account',
+              title: Text('Delete my account & data',
                   style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: HuddlColors.error)),
-              subtitle: Text('Permanently delete your account and all data',
+              subtitle: Text('Permanently erase all data (Article 17 \u2014 Right to Erasure)',
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textHint)),
               trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
@@ -1708,12 +1741,197 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // GDPR — VIEW MY DATA
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Compiles all personal data held for the user and returns it as a
+  /// human-readable map. Used by both "View My Data" and "Export My Data".
+  Map<String, dynamic> _compileUserData() {
+    final allGroups = [..._userGroups, ..._discoveredGroups];
+    final savedService = SavedMessageService();
+    return {
+      'Profile': {
+        'Name': _name,
+        'Borough': _borough,
+        'Postcode': _postcode ?? 'Not set',
+        'Phone': _phone ?? 'Not set',
+        'Bio': _bio ?? 'Not set',
+        'Parent type': _parentType.isNotEmpty ? _parentType : 'Not set',
+        'Stage of life': _stagesOfLife.isEmpty ? 'Not set' : _stagesOfLife.join(', '),
+        'Due date': _dueDate ?? 'N/A',
+        'Children': _children.isEmpty
+            ? 'None'
+            : _children
+                .map((c) => '${c['name'] ?? 'Unnamed'} (${c['birthday'] ?? '?'})')
+                .join(', '),
+      },
+      'Groups': allGroups.isEmpty
+          ? 'No group memberships'
+          : allGroups.map((g) => '${g.name} (${g.memberCount} members)').toList(),
+      'Events & Meetups': {
+        'Events created': _userEvents.length,
+        'Meetups attending': _userMeetups.length,
+      },
+      'Saved Items': {
+        'Total saved messages': savedService.allSavedMessages.length,
+      },
+      'Settings & Preferences': {
+        'Push notifications': _pushEnabled,
+        'Group messages': _groupMessages,
+        'DM notifications': _dmMessages,
+        'Event reminders': _eventReminders,
+        'Community updates': _communityUpdates,
+        'Online visibility': _showOnline,
+        'Profile visibility': _showProfile,
+        'Show groups': _showGroups,
+        'Read receipts': _readReceipts,
+      },
+      'Blocked Users': _blockService.blockedUserIds.isEmpty
+          ? 'None'
+          : _blockService.blockedUserIds.toList(),
+    };
+  }
+
+  void _showViewMyDataSheet() {
+    final data = _compileUserData();
+    _showSheet(
+      title: 'My Personal Data',
+      builder: (c) => SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HuddlColors.blueBackground,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline,
+                        size: 18, color: HuddlColors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Under GDPR Article 15, you have the right to access all personal data we hold about you.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: HuddlColors.blue,
+                            height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...data.entries.map((section) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(section.key,
+                        style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: HuddlColors.primaryDark)),
+                  ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: _buildDataContent(section.value),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                ],
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataContent(dynamic value) {
+    if (value is Map) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: value.entries.map<Widget>((e) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 130,
+                  child: Text('${e.key}:',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textSecondary)),
+                ),
+                Expanded(
+                  child: Text('${e.value}',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, color: HuddlColors.textDark)),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    } else if (value is List) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: value.map<Widget>((item) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 3),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('\u2022 ',
+                    style: TextStyle(
+                        fontSize: 12, color: HuddlColors.textSecondary)),
+                Expanded(
+                  child: Text('$item',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textDark,
+                          height: 1.3)),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      );
+    } else {
+      return Text('$value',
+          style: GoogleFonts.poppins(
+              fontSize: 12, color: HuddlColors.textDark));
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // GDPR DATA EXPORT
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showExportDataSheet() {
     bool exporting = false;
     bool exported = false;
+    String? exportedText;
+
     _showSheet(
       title: 'Export My Data',
       builder: (c) => StatefulBuilder(
@@ -1749,43 +1967,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        'Under GDPR, you have the right to request a copy of all personal data we hold about you. This includes:',
+                        'Under GDPR Article 20, you can request a copy of all personal data we hold about you in a portable format.',
                         style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: HuddlColors.textSecondary,
                             height: 1.4),
                       ),
-                      const SizedBox(height: 8),
-                      ...[
-                        'Profile information (name, phone, postcode)',
-                        'Group memberships and activity',
-                        'Messages and saved items',
-                        'Events and meetups',
-                        'Preferences and settings',
-                      ].map((item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 3),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('\u2022 ',
-                                    style: TextStyle(
-                                        fontSize: 12,
-                                        color: HuddlColors.textSecondary)),
-                                Expanded(
-                                  child: Text(item,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: HuddlColors.textSecondary,
-                                          height: 1.3)),
-                                ),
-                              ],
-                            ),
-                          )),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
+              if (exported && exportedText != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: HuddlColors.divider),
+                    ),
+                    child: SingleChildScrollView(
+                      child: SelectableText(
+                        exportedText!,
+                        style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: HuddlColors.textDark,
+                            height: 1.5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          size: 16, color: HuddlColors.success),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Your data has been compiled. You can select and copy the text above.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: HuddlColors.success,
+                              height: 1.3),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: SizedBox(
@@ -1802,10 +2039,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : const Icon(Icons.download, size: 20),
                     label: Text(
                         exporting
-                            ? 'Preparing export...'
+                            ? 'Compiling your data...'
                             : exported
-                                ? 'Export ready!'
-                                : 'Request data export',
+                                ? 'Export complete'
+                                : 'Export my data',
                         style: GoogleFonts.poppins(
                             fontSize: 15, fontWeight: FontWeight.w600)),
                     style: ElevatedButton.styleFrom(
@@ -1817,34 +2054,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                     ),
-                    onPressed: exporting
+                    onPressed: exporting || exported
                         ? null
                         : () async {
                             setLocal(() => exporting = true);
+                            // Actually compile user data
+                            final data = _compileUserData();
+                            final buffer = StringBuffer();
+                            buffer.writeln('=== HUDDL — YOUR PERSONAL DATA EXPORT ===');
+                            buffer.writeln('Generated: ${DateTime.now().toString().substring(0, 19)}');
+                            buffer.writeln('');
+                            for (final section in data.entries) {
+                              buffer.writeln('--- ${section.key.toUpperCase()} ---');
+                              if (section.value is Map) {
+                                for (final field in (section.value as Map).entries) {
+                                  buffer.writeln('  ${field.key}: ${field.value}');
+                                }
+                              } else if (section.value is List) {
+                                for (final item in section.value as List) {
+                                  buffer.writeln('  \u2022 $item');
+                                }
+                              } else {
+                                buffer.writeln('  ${section.value}');
+                              }
+                              buffer.writeln('');
+                            }
+                            buffer.writeln('=== END OF EXPORT ===');
                             await Future.delayed(
-                                const Duration(milliseconds: 1500));
+                                const Duration(milliseconds: 800));
                             if (ctx.mounted) {
                               setLocal(() {
                                 exporting = false;
                                 exported = true;
+                                exportedText = buffer.toString();
                               });
-                              _snack(
-                                  'Data export prepared. In production, this would be sent to your email.');
                             }
                           },
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Your data will be compiled and sent to your registered email within 24 hours.',
-                  style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: HuddlColors.textHint,
-                      height: 1.4),
-                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(height: 16),
@@ -1948,7 +2194,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     return;
                   }
 
-                  // Demo: password change succeeds
+                  // Persist the new password to login credentials
+                  _onboarding.setPassword(newPw);
                   _snack('Password changed successfully');
                 }),
               ),
@@ -2215,8 +2462,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: confirmCtrl.text.trim() == 'DELETE'
-                      ? () {
+                      ? () async {
                           Navigator.pop(c);
+                          // OTP verification before account deletion
+                          final verified = await _verifyWithOtp('permanently delete your account');
+                          if (!verified) {
+                            _snack('Account deletion cancelled');
+                            return;
+                          }
                           _confirmAccountDeletion();
                         }
                       : null,
@@ -2316,11 +2569,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(c);
+                    // Clear ALL user data — GDPR-compliant full deletion
                     _onboarding.clear();
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/splash', (r) => false);
+                    _groupService.clear();
+                    final savedService = SavedMessageService();
+                    savedService.clearAll();
+                    await BrowserStorage.remove('user_created_groups_v1');
+                    await BrowserStorage.remove('pref_push_enabled');
+                    await BrowserStorage.remove('pref_group_messages');
+                    await BrowserStorage.remove('pref_dm_messages');
+                    await BrowserStorage.remove('pref_event_reminders');
+                    await BrowserStorage.remove('pref_community_updates');
+                    await BrowserStorage.remove('pref_online_visibility');
+                    await BrowserStorage.remove('pref_profile_visible');
+                    await BrowserStorage.remove('pref_show_groups');
+                    await BrowserStorage.remove('pref_read_receipts');
+                    if (mounted) {
+                      Navigator.of(context)
+                          .pushNamedAndRemoveUntil('/splash', (r) => false);
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,
