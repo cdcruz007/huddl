@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
+import '../../services/dm_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ITEM DETAIL SCREEN — full product view
@@ -19,8 +20,10 @@ class ItemDetailScreen extends StatefulWidget {
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
   final _service = RehomeService();
+  final _dmService = DMService();
   int _currentImage = 0;
   bool _showFullDescription = false;
+  bool _openingChat = false;
 
   RehomeItem get item => widget.item;
 
@@ -38,6 +41,49 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   void dispose() {
     _service.removeListener(_refresh);
     super.dispose();
+  }
+
+  /// Open (or create) a DM conversation with the item seller and navigate.
+  Future<void> _openSellerChat() async {
+    if (_openingChat) return; // prevent double-tap
+    setState(() => _openingChat = true);
+
+    try {
+      // Ensure the DM service is ready
+      await _dmService.initialize();
+
+      // Get or create a conversation with the seller
+      final conversation = await _dmService.getOrCreateConversation(
+        recipientId: item.sellerId,
+        recipientName: item.sellerName,
+      );
+
+      if (!mounted) return;
+
+      // Navigate to the DM chat screen
+      Navigator.pushNamed(
+        context,
+        '/dm_chat',
+        arguments: {
+          'recipientId': item.sellerId,
+          'recipientName': item.sellerName,
+          'recipientAvatarColor': conversation.recipientAvatarColor,
+          'conversationId': conversation.id,
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open chat: $e'),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _openingChat = false);
+    }
   }
 
   void _toggleSave() {
@@ -471,17 +517,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             child: IconButton(
               icon: const Icon(Icons.chat_bubble_outline,
                   color: HuddlColors.primary, size: 20),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Opening chat with ${item.sellerName}...'),
-                    backgroundColor: HuddlColors.primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
-              },
+              onPressed: _openSellerChat,
             ),
           ),
         ],
@@ -590,17 +626,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           // Message seller button
           Expanded(
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Opening chat with ${item.sellerName}...'),
-                    backgroundColor: HuddlColors.primary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
-              },
+              onPressed: _openingChat ? null : _openSellerChat,
               style: ElevatedButton.styleFrom(
                 backgroundColor: HuddlColors.primary,
                 shape: RoundedRectangleBorder(
