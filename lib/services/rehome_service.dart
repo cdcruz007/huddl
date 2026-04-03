@@ -115,45 +115,39 @@ extension AgeStageExt on AgeStage {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 enum ItemCategory {
-  clothing,
-  shoes,
-  toys,
+  boysClothes,
+  girlsClothes,
+  toysAndGames,
+  pushchairsAndPrams,
+  forTheCar,
+  furniture,
   books,
-  babyGear,
-  feeding,
-  nursery,
-  travel,
-  healthCare,
   maternity,
-  bundles,
+  babyCareAndAccessories,
   other,
 }
 
 extension ItemCategoryExt on ItemCategory {
   String get label {
     switch (this) {
-      case ItemCategory.clothing:
-        return 'Clothing';
-      case ItemCategory.shoes:
-        return 'Shoes';
-      case ItemCategory.toys:
-        return 'Toys';
+      case ItemCategory.boysClothes:
+        return 'Boys clothes';
+      case ItemCategory.girlsClothes:
+        return 'Girls clothes';
+      case ItemCategory.toysAndGames:
+        return 'Toys & games';
+      case ItemCategory.pushchairsAndPrams:
+        return 'Pushchairs & prams';
+      case ItemCategory.forTheCar:
+        return 'For the car';
+      case ItemCategory.furniture:
+        return 'Furniture';
       case ItemCategory.books:
         return 'Books';
-      case ItemCategory.babyGear:
-        return 'Baby Gear';
-      case ItemCategory.feeding:
-        return 'Feeding';
-      case ItemCategory.nursery:
-        return 'Nursery';
-      case ItemCategory.travel:
-        return 'Travel';
-      case ItemCategory.healthCare:
-        return 'Health & Care';
       case ItemCategory.maternity:
         return 'Maternity';
-      case ItemCategory.bundles:
-        return 'Bundles';
+      case ItemCategory.babyCareAndAccessories:
+        return 'Baby care & accessories';
       case ItemCategory.other:
         return 'Other';
     }
@@ -161,28 +155,24 @@ extension ItemCategoryExt on ItemCategory {
 
   IconData get icon {
     switch (this) {
-      case ItemCategory.clothing:
+      case ItemCategory.boysClothes:
         return Icons.checkroom;
-      case ItemCategory.shoes:
-        return Icons.ice_skating;
-      case ItemCategory.toys:
+      case ItemCategory.girlsClothes:
+        return Icons.checkroom;
+      case ItemCategory.toysAndGames:
         return Icons.extension;
+      case ItemCategory.pushchairsAndPrams:
+        return Icons.child_friendly;
+      case ItemCategory.forTheCar:
+        return Icons.directions_car;
+      case ItemCategory.furniture:
+        return Icons.chair;
       case ItemCategory.books:
         return Icons.auto_stories;
-      case ItemCategory.babyGear:
-        return Icons.child_friendly;
-      case ItemCategory.feeding:
-        return Icons.restaurant;
-      case ItemCategory.nursery:
-        return Icons.crib;
-      case ItemCategory.travel:
-        return Icons.airline_seat_recline_normal;
-      case ItemCategory.healthCare:
-        return Icons.health_and_safety;
       case ItemCategory.maternity:
         return Icons.pregnant_woman;
-      case ItemCategory.bundles:
-        return Icons.inventory_2;
+      case ItemCategory.babyCareAndAccessories:
+        return Icons.baby_changing_station;
       case ItemCategory.other:
         return Icons.more_horiz;
     }
@@ -190,28 +180,24 @@ extension ItemCategoryExt on ItemCategory {
 
   Color get color {
     switch (this) {
-      case ItemCategory.clothing:
-        return const Color(0xFFFF975C);
-      case ItemCategory.shoes:
-        return const Color(0xFFA16AE9);
-      case ItemCategory.toys:
+      case ItemCategory.boysClothes:
         return const Color(0xFF3580F0);
+      case ItemCategory.girlsClothes:
+        return const Color(0xFFFF69B4);
+      case ItemCategory.toysAndGames:
+        return const Color(0xFFFF975C);
+      case ItemCategory.pushchairsAndPrams:
+        return const Color(0xFFE8A838);
+      case ItemCategory.forTheCar:
+        return const Color(0xFF6C6C6C);
+      case ItemCategory.furniture:
+        return const Color(0xFFA16AE9);
       case ItemCategory.books:
         return const Color(0xFF199A85);
-      case ItemCategory.babyGear:
-        return const Color(0xFFE8A838);
-      case ItemCategory.feeding:
-        return const Color(0xFFFF7575);
-      case ItemCategory.nursery:
-        return const Color(0xFF5B9DFF);
-      case ItemCategory.travel:
-        return const Color(0xFF6C6C6C);
-      case ItemCategory.healthCare:
-        return const Color(0xFF34C759);
       case ItemCategory.maternity:
         return const Color(0xFFFF69B4);
-      case ItemCategory.bundles:
-        return const Color(0xFFE8A838);
+      case ItemCategory.babyCareAndAccessories:
+        return const Color(0xFF34C759);
       case ItemCategory.other:
         return const Color(0xFF949494);
     }
@@ -425,6 +411,14 @@ class RehomeService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateListing(RehomeItem updated) {
+    final idx = _items.indexWhere((i) => i.id == updated.id);
+    if (idx >= 0) _items[idx] = updated;
+    final myIdx = _myListings.indexWhere((i) => i.id == updated.id);
+    if (myIdx >= 0) _myListings[myIdx] = updated;
+    notifyListeners();
+  }
+
   void acceptOffer(String offerId) {
     final idx = _offers.indexWhere((o) => o.id == offerId);
     if (idx >= 0) {
@@ -461,7 +455,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Beautiful bundle of 15+ newborn outfits including sleepsuits, vests, and hats. All from Next and M&S. Washed in non-bio, smoke-free home. Perfect starter pack for your little one.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.bundles,
+        category: ItemCategory.boysClothes,
         condition: ItemCondition.likeNew,
         price: 25,
         imageUrls: [
@@ -480,7 +474,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Barely used Ergobaby Embrace carrier in soft navy. Perfect for newborns from day one \u2014 no insert needed. Machine washable. Comes with original box and instructions.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.babyGear,
+        category: ItemCategory.babyCareAndAccessories,
         condition: ItemCondition.likeNew,
         price: 45,
         imageUrls: [
@@ -498,7 +492,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Brand new Tommee Tippee closer to nature feeding set. Includes 6 bottles, steriliser, bottle warmer, and milk storage pots. Never opened \u2014 received as duplicate gift.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.feeding,
+        category: ItemCategory.babyCareAndAccessories,
         condition: ItemCondition.brandNew,
         price: 35,
         imageUrls: [
@@ -517,7 +511,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Snuzpod 4 in white. Includes mattress, fitted sheets x2, and rocking stand. Mesh sides for airflow. Can be used as standalone crib or attached to bed. Immaculate condition.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.nursery,
+        category: ItemCategory.furniture,
         condition: ItemCondition.likeNew,
         price: 95,
         imageUrls: [
@@ -536,7 +530,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Shnuggle baby bath in white/grey plus matching changing mat with raised sides. Both in great condition. Bath has built-in bum support. Sold together only.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.healthCare,
+        category: ItemCategory.babyCareAndAccessories,
         condition: ItemCondition.good,
         price: 18,
         imageUrls: [
@@ -556,7 +550,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Bright Starts 3-in-1 Around We Go activity centre. Adjustable height, 360 rotating seat. Loads of activities and toys built in. Battery compartment clean. Great condition.',
         ageStage: AgeStage.baby0to12,
-        category: ItemCategory.toys,
+        category: ItemCategory.toysAndGames,
         condition: ItemCondition.good,
         price: 30,
         imageUrls: [
@@ -574,7 +568,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Classic Stokke Tripp Trapp in natural beech. Includes baby set and harness for smaller ones. A few scuff marks on the legs but solid as a rock. Grows with your child.',
         ageStage: AgeStage.baby0to12,
-        category: ItemCategory.feeding,
+        category: ItemCategory.furniture,
         condition: ItemCondition.good,
         price: 85,
         imageUrls: [
@@ -593,7 +587,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Collection of 5 pairs of soft-sole baby shoes, sizes 3\u20134.5. Mix of leather and fabric. Brands include Dotty Fish and Inch Blue. Perfect for early walkers.',
         ageStage: AgeStage.baby0to12,
-        category: ItemCategory.shoes,
+        category: ItemCategory.boysClothes,
         condition: ItemCondition.good,
         price: 15,
         imageUrls: [
@@ -613,7 +607,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Silver Cross Pioneer complete travel system in silver/black. Includes bassinet, pushchair seat, rain cover and cup holder. Used for 18 months, excellent condition. Recently cleaned.',
         ageStage: AgeStage.baby1to2,
-        category: ItemCategory.babyGear,
+        category: ItemCategory.pushchairsAndPrams,
         condition: ItemCondition.good,
         price: 180,
         imageUrls: [
@@ -653,7 +647,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'LEGO DUPLO Town Animals of the World set plus extra animal packs. Over 100 pieces including all the animals, trees, and base plates. Hours of entertainment. Complete set.',
         ageStage: AgeStage.toddler,
-        category: ItemCategory.toys,
+        category: ItemCategory.toysAndGames,
         condition: ItemCondition.likeNew,
         price: 40,
         imageUrls: [
@@ -672,7 +666,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Matching JoJo Maman Bebe raincoat and Hunter First Classic wellies. Size 2\u20133 years and size 6. Both in excellent condition \u2014 barely worn last winter. Bright yellow.',
         ageStage: AgeStage.toddler,
-        category: ItemCategory.clothing,
+        category: ItemCategory.boysClothes,
         condition: ItemCondition.likeNew,
         price: 20,
         imageUrls: [
@@ -690,7 +684,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Strider 12 Sport balance bike in red. Adjustable seat and handlebars. Lightweight aluminium frame. Teaches balance naturally before pedal bikes. Small scratch on frame.',
         ageStage: AgeStage.toddler,
-        category: ItemCategory.toys,
+        category: ItemCategory.toysAndGames,
         condition: ItemCondition.good,
         price: 35,
         imageUrls: [
@@ -710,7 +704,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Full school uniform bundle for age 4\u20135. Includes 3 polo shirts, 2 jumpers, 2 trousers, and PE kit. All labelled but name easily removed. John Lewis quality.',
         ageStage: AgeStage.earlyYears,
-        category: ItemCategory.clothing,
+        category: ItemCategory.girlsClothes,
         condition: ItemCondition.good,
         price: 15,
         imageUrls: [
@@ -731,7 +725,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Frog 48 kids bike with stabilisers included. Lightweight aluminium frame. Suit age 6\u20138. Serviced recently \u2014 new brake pads and tyres pumped. Ready to ride!',
         ageStage: AgeStage.kids,
-        category: ItemCategory.toys,
+        category: ItemCategory.toysAndGames,
         condition: ItemCondition.good,
         price: 65,
         imageUrls: [
@@ -752,7 +746,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'White IKEA Kallax 4x2 shelving unit. Perfect for nursery or kids room storage. Comes with 4 fabric inserts in grey. Good condition \u2014 a few minor marks. Collection only.',
         ageStage: AgeStage.allAges,
-        category: ItemCategory.nursery,
+        category: ItemCategory.furniture,
         condition: ItemCondition.good,
         price: 40,
         imageUrls: [
@@ -770,7 +764,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Maxi-Cosi Pebble Plus i-Size car seat in black. ISOFIX base included. No accidents. Expiry date 2028. Clean, non-smoking home. All padding washable and freshly cleaned.',
         ageStage: AgeStage.allAges,
-        category: ItemCategory.travel,
+        category: ItemCategory.forTheCar,
         condition: ItemCondition.good,
         price: 75,
         imageUrls: [
@@ -813,7 +807,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Bugaboo Fox 3 in midnight black. Includes bassinet, seat, rain cover, and car seat adaptors. Used for 14 months. Recently serviced. Small mark on hood fabric.',
         ageStage: AgeStage.newborn,
-        category: ItemCategory.babyGear,
+        category: ItemCategory.pushchairsAndPrams,
         condition: ItemCondition.good,
         price: 350,
         imageUrls: [
@@ -832,7 +826,7 @@ class RehomeService extends ChangeNotifier {
         description:
             'Beautiful wooden play kitchen from Kidkraft. Includes all accessories \u2014 pots, pans, utensils, and play food. Assembly intact. One hinge slightly loose but still works.',
         ageStage: AgeStage.toddler,
-        category: ItemCategory.toys,
+        category: ItemCategory.toysAndGames,
         condition: ItemCondition.good,
         price: 55,
         imageUrls: [

@@ -93,6 +93,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
+  void _openEditListing(RehomeItem item) async {
+    final result = await Navigator.push<RehomeItem>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateListingScreen(existingItem: item),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {}); // refresh to show updated listing
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -576,6 +588,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ..._service.myListings.map((item) => _MyListingTile(
                   item: item,
                   onTap: () => _openItemDetail(item),
+                  onEdit: () => _openEditListing(item),
                   onMarkSold: () {
                     _service.markSold(item.id);
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -996,12 +1009,14 @@ class _MyListingTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onMarkSold;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
 
   const _MyListingTile({
     required this.item,
     required this.onTap,
     required this.onMarkSold,
     required this.onDelete,
+    this.onEdit,
   });
 
   @override
@@ -1077,6 +1092,14 @@ class _MyListingTile extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
+                      if (onEdit != null && !item.isSold)
+                        _TinyButton(
+                          text: 'Edit',
+                          color: HuddlColors.primary,
+                          onTap: onEdit!,
+                        ),
+                      if (onEdit != null && !item.isSold)
+                        const SizedBox(width: 6),
                       _TinyButton(
                         text: item.isSold ? 'Sold' : 'Mark sold',
                         color: item.isSold ? HuddlColors.textHint : HuddlColors.blue,
