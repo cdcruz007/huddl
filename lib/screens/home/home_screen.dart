@@ -10,6 +10,7 @@ import '../../services/default_group_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/announcement_service.dart';
 import '../../services/community_feed_service.dart';
+import '../../services/member_photo_service.dart';
 import '../main_shell.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -305,6 +306,21 @@ class _HomeScreenState extends State<HomeScreen> {
         feedItems: _feedItems,
         announcements: _announcements,
         borough: _borough,
+        onNavigate: (int tabIndex) {
+          Navigator.pop(context);
+          _switchToTab(tabIndex);
+        },
+        onNavigateToGroupChat: (String groupId, String groupName, String groupImageUrl) {
+          Navigator.pop(context);
+          Navigator.of(context).pushNamed(
+            '/group_chat',
+            arguments: {
+              'groupId': groupId,
+              'groupName': groupName,
+              'groupImageUrl': groupImageUrl,
+            },
+          );
+        },
       ),
     );
   }
@@ -372,31 +388,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: Row(
                     children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.peachLight,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'H',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.primary,
-                            ),
+                      Image.asset(
+                        'assets/images/logo_huddl.png',
+                        height: 28,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Text(
+                          'huddl',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: HuddlColors.primary,
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'huddl',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.primary,
                         ),
                       ),
                       const Spacer(),
@@ -1791,24 +1793,39 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 }
 
 // ── Notifications Sheet ───────────────────────────────────────────────────
-class _NotificationsSheet extends StatelessWidget {
+class _NotificationsSheet extends StatefulWidget {
   final List<FeedItem> feedItems;
   final List<Announcement> announcements;
   final String borough;
+  final void Function(int tabIndex) onNavigate;
+  final void Function(String groupId, String groupName, String groupImageUrl) onNavigateToGroupChat;
 
   const _NotificationsSheet({
     required this.feedItems,
     required this.announcements,
     required this.borough,
+    required this.onNavigate,
+    required this.onNavigateToGroupChat,
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Build notification items from feed and announcement activity
+  State<_NotificationsSheet> createState() => _NotificationsSheetState();
+}
+
+class _NotificationsSheetState extends State<_NotificationsSheet> {
+  late List<_NotifItem> _notifs;
+
+  @override
+  void initState() {
+    super.initState();
+    _notifs = _buildNotifications();
+  }
+
+  List<_NotifItem> _buildNotifications() {
     final List<_NotifItem> notifs = [];
 
     // Recent community activity as notifications
-    for (final f in feedItems.take(5)) {
+    for (final f in widget.feedItems.take(5)) {
       notifs.add(_NotifItem(
         icon: _iconForType(f.type),
         color: _colorForType(f.type),
@@ -1816,11 +1833,16 @@ class _NotificationsSheet extends StatelessWidget {
         title: f.title,
         subtitle: f.subtitle,
         timeAgo: f.timeAgo,
+        feedType: f.type,
+        imageUrl: f.imageAsset,
+        personName: f.type == FeedItemType.newParent ? f.title : null,
+        meta: f.meta,
+        isRead: false,
       ));
     }
 
     // Announcement interactions as notifications
-    for (final a in announcements.where((a) => a.likes > 0).take(3)) {
+    for (final a in widget.announcements.where((a) => a.likes > 0).take(3)) {
       notifs.add(_NotifItem(
         icon: Icons.favorite,
         color: HuddlColors.primary,
@@ -1828,11 +1850,64 @@ class _NotificationsSheet extends StatelessWidget {
         title: '${a.authorName}\'s post',
         subtitle: '${a.likes} people liked this post',
         timeAgo: a.timeAgo,
+        feedType: null,
+        personName: a.authorName,
+        imageUrl: a.authorPhotoUrl,
+        meta: const {},
+        isRead: false,
       ));
     }
 
-    // Sort by time
+    // Sort by time (newest first)
     notifs.sort((a, b) => a.timeAgo.compareTo(b.timeAgo));
+    return notifs;
+  }
+
+  void _markAllRead() {
+    setState(() {
+      for (final n in _notifs) {
+        n.isRead = true;
+      }
+    });
+  }
+
+  void _onNotifTap(_NotifItem n) {
+    // Mark as read
+    setState(() => n.isRead = true);
+
+    // Navigate based on type
+    if (n.feedType == null) {
+      // Announcement like – go to home (notice board)
+      widget.onNavigate(0);
+      return;
+    }
+    switch (n.feedType!) {
+      case FeedItemType.newGroup:
+        final groupId = n.meta['groupId'] as String?;
+        if (groupId != null) {
+          final groupName = n.title;
+          final groupImage = n.imageUrl ?? '';
+          widget.onNavigateToGroupChat(groupId, groupName, groupImage);
+        } else {
+          widget.onNavigate(1);
+        }
+        break;
+      case FeedItemType.newEvent:
+        widget.onNavigate(2);
+        break;
+      case FeedItemType.newMarketplaceItem:
+        widget.onNavigate(3);
+        break;
+      case FeedItemType.newParent:
+      case FeedItemType.milestone:
+        widget.onNavigate(0);
+        break;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final unreadCount = _notifs.where((n) => !n.isRead).length;
 
     return Container(
       constraints: BoxConstraints(
@@ -1861,14 +1936,34 @@ class _NotificationsSheet extends StatelessWidget {
                     color: HuddlColors.textDark,
                   ),
                 ),
+                if (unreadCount > 0) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$unreadCount',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.white,
+                      ),
+                    ),
+                  ),
+                ],
                 const Spacer(),
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: unreadCount > 0 ? _markAllRead : null,
                   child: Text(
                     'Mark all read',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: HuddlColors.primary,
+                      color: unreadCount > 0
+                          ? HuddlColors.primary
+                          : HuddlColors.textHint,
                     ),
                   ),
                 ),
@@ -1877,7 +1972,7 @@ class _NotificationsSheet extends StatelessWidget {
           ),
           const Divider(height: 1, color: HuddlColors.divider),
           Flexible(
-            child: notifs.isEmpty
+            child: _notifs.isEmpty
                 ? Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32),
@@ -1912,56 +2007,172 @@ class _NotificationsSheet extends StatelessWidget {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shrinkWrap: true,
-                    itemCount: notifs.length,
+                    itemCount: _notifs.length,
                     separatorBuilder: (_, __) =>
                         const Divider(height: 1, indent: 72, color: HuddlColors.divider),
                     itemBuilder: (_, index) {
-                      final n = notifs[index];
-                      return ListTile(
-                        leading: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: n.bgColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(n.icon, color: n.color, size: 22),
-                        ),
-                        title: Text(
-                          n.title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          n.subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: HuddlColors.textHint,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Text(
-                          n.timeAgo,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: HuddlColors.textHint,
-                          ),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      );
+                      final n = _notifs[index];
+                      return _buildNotifTile(n);
                     },
                   ),
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
         ],
       ),
+    );
+  }
+
+  Widget _buildNotifTile(_NotifItem n) {
+    // Resolve photo: personName lookup > imageUrl > icon fallback
+    final resolvedPhoto = n.personName != null
+        ? MemberPhotoService.getPhotoByName(n.personName!)
+        : null;
+    final photoUrl = resolvedPhoto ?? n.imageUrl;
+    final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
+
+    return Material(
+      color: n.isRead ? HuddlColors.white : HuddlColors.peachLight.withValues(alpha: 0.3),
+      child: InkWell(
+        onTap: () => _onNotifTap(n),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              // Leading: Photo or icon
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    if (hasPhoto)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: _buildNotifImage(photoUrl),
+                      )
+                    else
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: n.bgColor,
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Icon(n.icon, color: n.color, size: 24),
+                      ),
+                    // Small type badge at bottom-right
+                    Positioned(
+                      right: -2,
+                      bottom: -2,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: n.bgColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: HuddlColors.white, width: 1.5),
+                        ),
+                        child: Icon(n.icon, size: 11, color: n.color),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      n.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: n.isRead ? FontWeight.w400 : FontWeight.w600,
+                        color: HuddlColors.textDark,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      n.subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Time + unread dot
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    n.timeAgo,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: n.isRead ? HuddlColors.textHint : HuddlColors.primary,
+                      fontWeight: n.isRead ? FontWeight.w400 : FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  if (!n.isRead)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: HuddlColors.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 8, height: 8),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotifImage(String url) {
+    if (url.startsWith('data:')) {
+      try {
+        final parts = url.split(',');
+        if (parts.length > 1) {
+          final bytes = base64Decode(parts[1]);
+          return Image.memory(bytes, width: 48, height: 48, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _notifImageFallback());
+        }
+      } catch (_) {}
+      return _notifImageFallback();
+    }
+    if (url.startsWith('http') || url.startsWith('blob:')) {
+      return Image.network(url, width: 48, height: 48, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _notifImageFallback());
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(url, width: 48, height: 48, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _notifImageFallback());
+    }
+    return _notifImageFallback();
+  }
+
+  Widget _notifImageFallback() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: HuddlColors.peachLight,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: const Icon(Icons.person, color: HuddlColors.primary, size: 24),
     );
   }
 
@@ -2018,14 +2229,24 @@ class _NotifItem {
   final String title;
   final String subtitle;
   final String timeAgo;
+  final FeedItemType? feedType;
+  final String? imageUrl;
+  final String? personName;
+  final Map<String, dynamic> meta;
+  bool isRead;
 
-  const _NotifItem({
+  _NotifItem({
     required this.icon,
     required this.color,
     required this.bgColor,
     required this.title,
     required this.subtitle,
     required this.timeAgo,
+    required this.feedType,
+    this.imageUrl,
+    this.personName,
+    this.meta = const {},
+    this.isRead = false,
   });
 }
 
