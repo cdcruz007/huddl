@@ -2599,10 +2599,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     // 3. User-created public groups: filter by same borough
     List<_GroupItem> results = _allDiscoverGroups.where((g) {
       if (g.isPrivate) return false;
-      if (!g.isVisibleTo(_userParentType, _userStagesOfLife)) return false;
-      // Borough matching for user-created groups
-      if (g.creatorBorough != null && g.creatorBorough!.isNotEmpty && _userBorough != null) {
-        if (g.creatorBorough != _userBorough && g.creatorBorough != 'Unknown Borough') {
+
+      // The creator always sees their own public group on Discover
+      final isOwnGroup = g.creatorId == 'current_user';
+
+      // Audience / visibility filter — skip for the creator
+      if (!isOwnGroup && !g.isVisibleTo(_userParentType, _userStagesOfLife)) {
+        return false;
+      }
+
+      // Borough matching for OTHER users' groups — creator's own groups
+      // always pass (they are in the same borough by definition)
+      if (!isOwnGroup &&
+          g.creatorBorough != null &&
+          g.creatorBorough!.isNotEmpty &&
+          _userBorough != null) {
+        if (g.creatorBorough != _userBorough &&
+            g.creatorBorough != 'Unknown Borough') {
           return false;
         }
       }
@@ -5052,23 +5065,27 @@ class _GroupItem {
 
   bool isVisibleTo(String? parentType, List<String> stagesOfLife) {
     if (targetAudience.isEmpty) return true;
+    // Use OR logic: the user must match AT LEAST ONE audience label
+    // (e.g. a group for ['Mums', 'Parents expecting a baby'] is visible to
+    //  ANY mum OR any expecting parent — not only users who are both)
     for (final label in targetAudience) {
       switch (label) {
         case 'Mums':
-          if (parentType != 'mum') return false;
+          if (parentType == 'mum') return true;
           break;
         case 'Dads':
-          if (parentType != 'dad') return false;
+          if (parentType == 'dad') return true;
           break;
         case 'Parents expecting a baby':
-          if (!stagesOfLife.contains('expecting')) return false;
+          if (stagesOfLife.contains('expecting')) return true;
           break;
         case 'Aspiring parents':
-          if (!stagesOfLife.contains('aspiring')) return false;
+          if (stagesOfLife.contains('aspiring')) return true;
           break;
       }
     }
-    return true;
+    // None of the audience labels matched the current user
+    return false;
   }
 
   _GroupItem copyWith({
