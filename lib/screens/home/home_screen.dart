@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -113,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<Group>> _loadNewPublicGroups() async {
-    // Load user-created public groups from storage
+    // Load ONLY user-created public groups from same borough (exclude defaults)
     final List<Group> result = [];
     try {
       final raw = await BrowserStorage.getString('user_created_groups_v1');
@@ -121,17 +122,19 @@ class _HomeScreenState extends State<HomeScreen> {
         final List<dynamic> decoded = json.decode(raw);
         for (final j in decoded) {
           final g = Group.fromJson(j as Map<String, dynamic>);
-          if (!g.isPrivate) result.add(g);
+          if (!g.isPrivate) {
+            // Only show groups from the same borough or without borough info
+            if (g.creatorBorough == null ||
+                g.creatorBorough!.isEmpty ||
+                g.creatorBorough == 'Unknown Borough' ||
+                g.creatorBorough == _borough) {
+              result.add(g);
+            }
+          }
         }
       }
     } catch (_) {}
-    // Also include default groups that were recently created
-    final allDefault = _groupService.getAllDefaultGroups();
-    for (final g in allDefault) {
-      if (!result.any((r) => r.id == g.id)) {
-        result.add(g);
-      }
-    }
+    // Do NOT include default groups — only user-created ones
     return result.take(6).toList();
   }
 
@@ -421,6 +424,7 @@ class _HomeScreenState extends State<HomeScreen> {
         feedItems: _feedItems,
         announcements: _announcements,
         borough: _borough,
+        meetups: _meetupService.meetups,
         onNavigate: (int tabIndex) {
           Navigator.pop(context);
           _switchToTab(tabIndex);
@@ -435,6 +439,18 @@ class _HomeScreenState extends State<HomeScreen> {
               'groupImageUrl': groupImageUrl,
             },
           );
+        },
+        onNavigateToMeetup: (Meetup meetup) {
+          Navigator.pop(context);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MeetupDetailScreen(meetup: meetup),
+            ),
+          );
+        },
+        onMarkAllRead: () {
+          // Clear the badge count on the bell icon
+          setState(() {});
         },
       ),
     );
@@ -616,38 +632,115 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // ── Quick actions ────────────────────────────────────────
+              // ── Meetups I'm Going ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      _QuickAction(
-                        icon: Icons.people,
-                        label: 'My Groups',
-                        color: HuddlColors.primary,
-                        bgColor: HuddlColors.peachLight,
-                        onTap: () => _switchToTab(1),
-                      ),
-                      const SizedBox(width: 12),
-                      _QuickAction(
-                        icon: Icons.event,
-                        label: 'Events',
-                        color: HuddlColors.blue,
-                        bgColor: HuddlColors.blueBackground,
-                        onTap: () => _switchToTab(2),
-                      ),
-                      const SizedBox(width: 12),
-                      _QuickAction(
-                        icon: Icons.storefront,
-                        label: 'Preloved',
-                        color: HuddlColors.accentAmber,
-                        bgColor: HuddlColors.yellowBackground,
-                        onTap: () => _switchToTab(3),
-                      ),
-                    ],
+                  child: HuddlSectionHeader(
+                    title: "Meetups I'm Going",
+                    actionText: 'See all',
+                    onAction: _openAllEvents,
                   ),
                 ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              SliverToBoxAdapter(
+                child: _upcomingMeetups.where((m) => m.isGoing).isEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.blueBackground,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: const BoxDecoration(
+                                  color: HuddlColors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.event_available,
+                                    color: HuddlColors.blue, size: 24),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'No upcoming meetups yet',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.textDark,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      'Browse meetups and mark yourself as going!',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: HuddlColors.textHint,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _switchToTab(2),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.blue,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    'Browse',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: HuddlColors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : SizedBox(
+                        height: 210,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _upcomingMeetups.where((m) => m.isGoing).length,
+                          itemBuilder: (context, index) {
+                            final goingMeetups = _upcomingMeetups.where((m) => m.isGoing).toList();
+                            final meetup = goingMeetups[index];
+                            return Container(
+                              width: 240,
+                              margin: EdgeInsets.only(
+                                  right: index < goingMeetups.length - 1 ? 12 : 0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          MeetupDetailScreen(meetup: meetup),
+                                    ),
+                                  );
+                                },
+                                child: _MeetupCard(meetup: meetup),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
@@ -986,54 +1079,6 @@ class _HomeScreenState extends State<HomeScreen> {
 // ═══════════════════════════════════════════════════════════════════════════
 // SUBWIDGETS
 // ═══════════════════════════════════════════════════════════════════════════
-
-// ── Quick action tile ─────────────────────────────────────────────────────
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final Color bgColor;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.bgColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color, size: 28),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: color,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ── Meetup card (with real image) ─────────────────────────────────────────
 class _MeetupCard extends StatelessWidget {
@@ -1641,6 +1686,34 @@ class _FeedCard extends StatelessWidget {
     }
   }
 
+  Widget _buildFeedImage(String url, IconData fallbackIcon, Color fallbackColor) {
+    if (url.startsWith('data:')) {
+      try {
+        final parts = url.split(',');
+        if (parts.length > 1) {
+          final bytes = base64Decode(parts[1]);
+          return Image.memory(Uint8List.fromList(bytes), fit: BoxFit.cover,
+              width: 52, height: 52,
+              errorBuilder: (_, __, ___) =>
+                  Center(child: Icon(fallbackIcon, color: fallbackColor, size: 24)));
+        }
+      } catch (_) {}
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(url, fit: BoxFit.cover,
+          width: 52, height: 52,
+          errorBuilder: (_, __, ___) =>
+              Center(child: Icon(fallbackIcon, color: fallbackColor, size: 24)));
+    }
+    if (url.startsWith('http')) {
+      return Image.network(url, fit: BoxFit.cover,
+          width: 52, height: 52,
+          errorBuilder: (_, __, ___) =>
+              Center(child: Icon(fallbackIcon, color: fallbackColor, size: 24)));
+    }
+    return Center(child: Icon(fallbackIcon, color: fallbackColor, size: 24));
+  }
+
   @override
   Widget build(BuildContext context) {
     final imgUrl = _imageUrl;
@@ -1674,13 +1747,7 @@ class _FeedCard extends StatelessWidget {
             ),
             clipBehavior: Clip.antiAlias,
             child: hasImage
-                ? (imgUrl.startsWith('assets/')
-                    ? Image.asset(imgUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Icon(_icon, color: _iconColor, size: 24))
-                    : Image.network(imgUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            Icon(_icon, color: _iconColor, size: 24)))
+                ? _buildFeedImage(imgUrl, _icon, _iconColor)
                 : Center(child: Icon(_icon, color: _iconColor, size: 24)),
           ),
           const SizedBox(width: 12),
@@ -2049,15 +2116,21 @@ class _NotificationsSheet extends StatefulWidget {
   final List<FeedItem> feedItems;
   final List<Announcement> announcements;
   final String borough;
+  final List<Meetup> meetups;
   final void Function(int tabIndex) onNavigate;
   final void Function(String groupId, String groupName, String groupImageUrl) onNavigateToGroupChat;
+  final void Function(Meetup meetup) onNavigateToMeetup;
+  final VoidCallback onMarkAllRead;
 
   const _NotificationsSheet({
     required this.feedItems,
     required this.announcements,
     required this.borough,
+    required this.meetups,
     required this.onNavigate,
     required this.onNavigateToGroupChat,
+    required this.onNavigateToMeetup,
+    required this.onMarkAllRead,
   });
 
   @override
@@ -2121,6 +2194,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         n.isRead = true;
       }
     });
+    widget.onMarkAllRead();
   }
 
   void _onNotifTap(_NotifItem n) {
@@ -2129,7 +2203,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
 
     // Navigate based on type
     if (n.feedType == null) {
-      // Announcement like – go to home (notice board)
+      // Announcement like - go to home (notice board)
       widget.onNavigate(0);
       return;
     }
@@ -2145,7 +2219,15 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         }
         break;
       case FeedItemType.newEvent:
-        widget.onNavigate(2);
+        // Try to find the exact meetup and navigate to its detail screen
+        final match = widget.meetups
+            .where((m) => m.title == n.title)
+            .toList();
+        if (match.isNotEmpty) {
+          widget.onNavigateToMeetup(match.first);
+        } else {
+          widget.onNavigate(2);
+        }
         break;
       case FeedItemType.newMarketplaceItem:
         widget.onNavigate(3);

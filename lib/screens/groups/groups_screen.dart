@@ -4638,71 +4638,77 @@ class _SwipeActionRowState extends State<_SwipeActionRow>
       },
       child: Stack(
         children: [
-          // Background action indicators
+          // Background action indicators — clipped to match card border radius
           Positioned.fill(
-            child: Row(
-              children: [
-                // Left side — teal mark read/unread (revealed on right swipe)
-                Expanded(
-                  child: Container(
-                    color: HuddlColors.teal,
-                    alignment: Alignment.centerLeft,
-                    padding: const EdgeInsets.only(left: 24),
-                    child: AnimatedOpacity(
-                      opacity: showRead ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 150),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            widget.isUnread
-                                ? Icons.mark_chat_read
-                                : Icons.mark_chat_unread,
-                            color: Colors.white,
-                            size: 22,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Row(
+                  children: [
+                    // Left side — teal mark read/unread (revealed on right swipe)
+                    Expanded(
+                      child: Container(
+                        color: showRead ? HuddlColors.teal : Colors.transparent,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(left: 24),
+                        child: AnimatedOpacity(
+                          opacity: showRead ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                widget.isUnread
+                                    ? Icons.mark_chat_read
+                                    : Icons.mark_chat_unread,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.isUnread ? 'Read' : 'Unread',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.isUnread ? 'Read' : 'Unread',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                // Right side — red delete (revealed on left swipe)
-                Expanded(
-                  child: Container(
-                    color: HuddlColors.error,
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.only(right: 24),
-                    child: AnimatedOpacity(
-                      opacity: showDelete ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 150),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(widget.swipeLeftIcon, color: Colors.white, size: 22),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.swipeLeftLabel,
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
+                    // Right side — red delete (revealed on left swipe)
+                    Expanded(
+                      child: Container(
+                        color: showDelete ? HuddlColors.error : Colors.transparent,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        child: AnimatedOpacity(
+                          opacity: showDelete ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(widget.swipeLeftIcon, color: Colors.white, size: 22),
+                              const SizedBox(height: 2),
+                              Text(
+                                widget.swipeLeftLabel,
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
           // Foreground — actual row content, shifted horizontally

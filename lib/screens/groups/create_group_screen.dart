@@ -739,28 +739,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             color: HuddlColors.textDark,
           ),
         ),
-        actions: [
-          GestureDetector(
-            onTap: _isValid && !_isCreating ? _createGroup : null,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: _isCreating
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text('CREATE',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: _isValid && !_isCreating
-                                ? HuddlColors.textDark
-                                : HuddlColors.textHint)),
-              ),
-            ),
-          ),
-        ],
+        actions: const [SizedBox.shrink()],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -923,27 +902,43 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
             const SizedBox(height: 24),
 
-            // ─────────── INVITE MEMBERS BUTTON (gradient) ───────────
+            // ─────────── CREATE GROUP BUTTON (final action) ───────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: GestureDetector(
-                onTap: _showInviteMembersSheet,
+                onTap: _isValid && !_isCreating ? _createGroup : null,
                 child: Container(
                   width: double.infinity,
                   height: 52,
                   decoration: BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
+                    gradient: _isValid && !_isCreating
+                        ? HuddlColors.primaryGradient
+                        : null,
+                    color: _isValid && !_isCreating
+                        ? null
+                        : HuddlColors.divider,
                     borderRadius: BorderRadius.circular(26),
                   ),
                   child: Center(
-                    child: Text(
-                      'Invite members',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.white,
-                      ),
-                    ),
+                    child: _isCreating
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: HuddlColors.white,
+                            ),
+                          )
+                        : Text(
+                            'Create Group',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: _isValid
+                                  ? HuddlColors.white
+                                  : HuddlColors.textHint,
+                            ),
+                          ),
                   ),
                 ),
               ),
