@@ -69,6 +69,8 @@ class Meetup {
   final bool isFree;
   final double? price;
   final List<MeetupAttendee> invitees;
+  final List<String> invitedMemberIds; // For private meetups: IDs of invited members
+  final String? borough; // Borough this meetup belongs to for visibility
   final DateTime createdAt;
 
   Meetup({
@@ -97,6 +99,8 @@ class Meetup {
     this.groupId,
     this.groupName,
     this.invitees = const [],
+    this.invitedMemberIds = const [],
+    this.borough,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -107,6 +111,7 @@ class Meetup {
     double? price,
     List<String>? attendeeNames,
     List<MeetupAttendee>? invitees,
+    List<String>? invitedMemberIds,
   }) {
     return Meetup(
       id: id,
@@ -134,6 +139,8 @@ class Meetup {
       groupId: groupId,
       groupName: groupName,
       invitees: invitees ?? this.invitees,
+      invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
+      borough: borough,
       createdAt: createdAt,
     );
   }
@@ -164,6 +171,8 @@ class Meetup {
     'groupId': groupId,
     'groupName': groupName,
     'invitees': invitees.map((i) => i.toJson()).toList(),
+    'invitedMemberIds': invitedMemberIds,
+    'borough': borough,
     'createdAt': createdAt.toIso8601String(),
   };
 
@@ -195,6 +204,8 @@ class Meetup {
     invitees: (j['invitees'] as List<dynamic>?)
         ?.map((i) => MeetupAttendee.fromJson(i as Map<String, dynamic>))
         .toList() ?? [],
+    invitedMemberIds: List<String>.from(j['invitedMemberIds'] ?? []),
+    borough: j['borough'],
     createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
   );
 }
@@ -300,50 +311,54 @@ class MeetupService extends ChangeNotifier {
   // ── Sample data ─────────────────────────────────────────────────────────
 
   void _loadSampleMeetups() {
+    final now = DateTime.now();
     _meetups.addAll([
       Meetup(
         id: 'mu_1',
-        title: 'Coffee & Chat — New Parents',
+        title: 'Coffee & Chat \u2014 New Parents',
         description:
-            'Grab a coffee and meet other new parents in the area. Bring your little ones — there\'s space for prams and a play area for crawlers. No agenda, just good company and caffeine! We usually grab a table at the back where it\'s quieter.',
+            'Grab a coffee and meet other new parents in the area. Bring your little ones \u2014 there\'s space for prams and a play area for crawlers. No agenda, just good company and caffeine! We usually grab a table at the back where it\'s quieter.',
         category: 'Coffee',
-        dateDisplay: 'MON, MAR 17',
+        dateDisplay: _autoDateDisplay(now.add(const Duration(days: 3))),
         timeDisplay: '9:30 - 11:00 AM',
-        dateTime: DateTime(2025, 3, 17, 9, 30),
-        location: 'Little Bean Cafe, Fitzroy',
-        organiserName: 'Sophie M.',
+        dateTime: DateTime(now.year, now.month, now.day, 9, 30).add(const Duration(days: 3)),
+        location: 'Little Bean Cafe, Cambridge',
+        organiserName: 'Sophie Williams',
         organiserId: 'mem_sophie',
         imageUrl: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 8,
         maxAttendees: 12,
         isGoing: false,
-        attendeeNames: ['Sophie M.', 'Emma W.', 'Anna K.', 'Lucy R.', 'Kate P.', 'Sarah T.', 'Olivia L.', 'James D.'],
+        attendeeNames: ['Sophie Williams', 'Emma Thompson', 'Anna Mitchell', 'Lucy Taylor', 'Kate Rogers', 'Sarah Clarke', 'Olivia Brown', 'James Carter'],
         privacy: MeetupPrivacy.public,
         repeat: MeetupRepeat.weekly,
         repeatDisplay: 'Every Monday',
         isFree: true,
+        borough: 'Cambridge',
       ),
       Meetup(
         id: 'mu_2',
         title: 'Dad\'s Golf Day',
         description:
-            'Calling all dads! Let\'s hit the range for a relaxed 9 holes. All skill levels welcome — it\'s about getting out of the house and having a laugh. We\'ll grab a beer at the clubhouse after. Kids welcome to tag along if needed.',
+            'Calling all dads! Let\'s hit the range for a relaxed 9 holes. All skill levels welcome \u2014 it\'s about getting out of the house and having a laugh. We\'ll grab a beer at the clubhouse after. Kids welcome to tag along if needed.',
         category: 'Sport',
-        dateDisplay: 'SAT, MAR 22',
+        dateDisplay: _autoDateDisplay(now.add(const Duration(days: 6))),
         timeDisplay: '7:30 - 10:30 AM',
-        dateTime: DateTime(2025, 3, 22, 7, 30),
-        location: 'Northcote Golf Course',
-        organiserName: 'James D.',
+        dateTime: DateTime(now.year, now.month, now.day, 7, 30).add(const Duration(days: 6)),
+        location: 'Cambridge Golf Course',
+        organiserName: 'James Carter',
         organiserId: 'mem_james',
         imageUrl: 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 5,
         maxAttendees: 8,
         isGoing: false,
-        attendeeNames: ['James D.', 'Mark T.', 'Luke W.', 'David S.', 'Tom R.'],
+        attendeeNames: ['James Carter', 'Mark Robinson', 'Luke Anderson', 'David Harris', 'Tom Evans'],
         privacy: MeetupPrivacy.group,
+        groupId: 'disc_dads_connect',
         groupName: 'Dads Connect',
         isFree: false,
         price: 15.0,
+        borough: 'Cambridge',
       ),
       Meetup(
         id: 'mu_3',
@@ -351,18 +366,19 @@ class MeetupService extends ChangeNotifier {
         description:
             'Join us for a gentle walk through the park with prams, followed by a BYO picnic on the grass. Great way to get some fresh air and meet other parents. Dogs welcome too! We\'ll meet at the main entrance near the playground.',
         category: 'Walk',
-        dateDisplay: 'FRI, MAR 21',
+        dateDisplay: _autoDateDisplay(now.add(const Duration(days: 5))),
         timeDisplay: '10:00 AM - 12:00 PM',
-        dateTime: DateTime(2025, 3, 21, 10, 0),
-        location: 'Edinburgh Gardens, North Fitzroy',
-        organiserName: 'Emma W.',
+        dateTime: DateTime(now.year, now.month, now.day, 10, 0).add(const Duration(days: 5)),
+        location: 'Jesus Green, Cambridge',
+        organiserName: 'Emma Thompson',
         organiserId: 'mem_emma',
         imageUrl: 'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 15,
         isGoing: false,
-        attendeeNames: ['Emma W.', 'Sophie M.', 'Anna K.', 'Kate P.', 'Lucy R.'],
+        attendeeNames: ['Emma Thompson', 'Sophie Williams', 'Anna Mitchell', 'Kate Rogers', 'Lucy Taylor'],
         privacy: MeetupPrivacy.public,
         isFree: true,
+        borough: 'Cambridge',
       ),
       Meetup(
         id: 'mu_4',
@@ -370,40 +386,50 @@ class MeetupService extends ChangeNotifier {
         description:
             'Bringing the toddlers to the new playground for a playdate! There\'s a great fenced area for little ones with sandpit, swings and climbing frame. BYO snacks and water. See you there!',
         category: 'Playdate',
-        dateDisplay: 'WED, MAR 19',
+        dateDisplay: _autoDateDisplay(now.add(const Duration(days: 4))),
         timeDisplay: '3:00 - 4:30 PM',
-        dateTime: DateTime(2025, 3, 19, 15, 0),
-        location: 'Curtain Square Playground, Carlton',
-        organiserName: 'Anna K.',
+        dateTime: DateTime(now.year, now.month, now.day, 15, 0).add(const Duration(days: 4)),
+        location: 'Cherry Hinton Hall, Cambridge',
+        organiserName: 'Anna Mitchell',
         organiserId: 'mem_anna',
         imageUrl: 'https://images.pexels.com/photos/296301/pexels-photo-296301.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 10,
         isGoing: false,
-        attendeeNames: ['Anna K.', 'Emma W.', 'Sophie M.', 'Olivia L.'],
+        attendeeNames: ['Anna Mitchell', 'Emma Thompson', 'Sophie Williams', 'Olivia Brown'],
         privacy: MeetupPrivacy.public,
         isFree: true,
+        borough: 'Cambridge',
       ),
       Meetup(
         id: 'mu_5',
-        title: 'Friday Night Dinner — Parents Only!',
+        title: 'Friday Night Dinner \u2014 Parents Only!',
         description:
-            'Leave the kids with the babysitter and join us for an adults-only dinner. We\'re trying the new Italian place on Smith St. RSVP so we can book a table. Let\'s be honest, we all need a night out!',
+            'Leave the kids with the babysitter and join us for an adults-only dinner. We\'re trying the new Italian place on Mill Rd. RSVP so we can book a table. Let\'s be honest, we all need a night out!',
         category: 'Social',
-        dateDisplay: 'FRI, MAR 28',
+        dateDisplay: _autoDateDisplay(now.add(const Duration(days: 10))),
         timeDisplay: '7:00 - 10:00 PM',
-        dateTime: DateTime(2025, 3, 28, 19, 0),
-        location: 'Trattoria Roma, Smith St, Collingwood',
-        organiserName: 'Luke W.',
+        dateTime: DateTime(now.year, now.month, now.day, 19, 0).add(const Duration(days: 10)),
+        location: 'Trattoria Roma, Mill Road, Cambridge',
+        organiserName: 'Luke Anderson',
         organiserId: 'mem_luke',
         imageUrl: 'https://images.pexels.com/photos/260922/pexels-photo-260922.jpeg?auto=compress&cs=tinysrgb&w=600',
         attendeeCount: 6,
         maxAttendees: 10,
         isGoing: false,
-        attendeeNames: ['Luke W.', 'Kate P.', 'Mark T.', 'Sarah T.', 'David S.', 'Tom R.'],
+        attendeeNames: ['Luke Anderson', 'Kate Rogers', 'Mark Robinson', 'Sarah Clarke', 'David Harris', 'Tom Evans'],
         privacy: MeetupPrivacy.private_,
+        invitedMemberIds: ['mem_kate', 'mem_mark', 'mem_sarah', 'mem_david', 'mem_tom'],
         isFree: false,
         price: 35.0,
+        borough: 'Cambridge',
       ),
     ]);
+  }
+
+  /// Auto-format a date display string from a DateTime.
+  static String _autoDateDisplay(DateTime d) {
+    const dayAbbr = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    const monthAbbr = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    return '${dayAbbr[d.weekday - 1]}, ${monthAbbr[d.month - 1]} ${d.day}';
   }
 }

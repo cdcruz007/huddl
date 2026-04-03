@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,6 +6,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
+import '../../services/default_group_service.dart';
+import '../../services/browser_storage.dart';
+import '../../models/group.dart';
 import 'create_meetup_screen.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
@@ -333,13 +337,70 @@ class _MeetupsTab extends StatefulWidget {
 
 class _MeetupsTabState extends State<_MeetupsTab> {
   String _filter = 'All';
+  Set<String> _joinedGroupIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserContext();
+  }
+
+  Future<void> _loadUserContext() async {
+    // Load user groups
+    final groupService = DefaultGroupService();
+    await groupService.initialize();
+    final defaultGroups = await groupService.getUserGroups('current_user');
+    List<Group> discovered = [];
+    try {
+      final discoveredJson =
+          await BrowserStorage.getString('user_created_groups_v1');
+      if (discoveredJson != null) {
+        final List<dynamic> decoded = json.decode(discoveredJson);
+        discovered = decoded
+            .map((e) => Group.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _joinedGroupIds = {...defaultGroups.map((g) => g.id), ...discovered.map((g) => g.id)};
+      });
+    }
+  }
+
+  /// Filter meetups by visibility rules:
+  /// - Public: same borough, visible to all
+  /// - Group: same borough, visible only to members of that group
+  /// - Private: visible only to invited members (or organiser)
+  /// - Past meetups are excluded
+  List<Meetup> get _visibleMeetups {
+    final now = DateTime.now();
+    return widget.meetupService.meetups.where((m) {
+      // Exclude past meetups from Nearby
+      if (m.dateTime.isBefore(now)) return false;
+
+      switch (m.privacy) {
+        case MeetupPrivacy.public:
+          // Public: visible to anyone in the same borough (or if no borough set)
+          return true;
+        case MeetupPrivacy.group:
+          // Group: only visible to members of that group
+          if (m.groupId == null) return false;
+          return _joinedGroupIds.contains(m.groupId) || m.organiserId == 'current_user';
+        case MeetupPrivacy.private_:
+          // Private: only visible to invited members or organiser
+          return m.invitedMemberIds.contains('current_user') || m.organiserId == 'current_user';
+      }
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final allMeetups = widget.meetupService.meetups;
+    final visible = _visibleMeetups;
     final meetups = _filter == 'All'
-        ? allMeetups
-        : allMeetups.where((m) => m.category == _filter).toList();
+        ? visible
+        : visible.where((m) => m.category == _filter).toList();
 
     return Column(
       children: [
@@ -353,7 +414,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
-                'All', 'Coffee', 'Playdate', 'Sport', 'Walk', 'Social', 'Other',
+                'All', 'Coffee', 'Playdate', 'Sport', 'Walk', 'Social', 'Food', 'Other',
               ].map((f) => Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: _FilterChip(
@@ -828,23 +889,64 @@ class _MeetupCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Free badge
+                // Price badge
                 Positioned(
                   top: 10, right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.blue,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Free',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.white,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (meetup.privacy != MeetupPrivacy.public)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.gray900.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  meetup.privacy == MeetupPrivacy.group
+                                      ? Icons.group
+                                      : Icons.lock,
+                                  size: 12,
+                                  color: HuddlColors.white,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  meetup.privacy == MeetupPrivacy.group
+                                      ? 'Group'
+                                      : 'Private',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          meetup.isFree
+                              ? 'Free'
+                              : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.white,
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
                 // Attendee count overlay

@@ -9,6 +9,11 @@ import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
+import '../../services/invitation_service.dart';
+import '../../services/postcode_service.dart';
+import '../../services/dm_service.dart';
+import '../../services/member_photo_service.dart';
+import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -32,7 +37,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   final _picker = ImagePicker();
 
   // ── Form state ──
-  String _category = '';
+  final Set<String> _selectedCategories = {};
   DateTime? _selectedDate;
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
@@ -64,6 +69,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   String? _selectedGroupName;
   List<Group> _userGroups = [];
 
+  // ── Private meetup invitees ──
+  final Set<String> _selectedMemberIds = {};
+  List<BoroughMember> _boroughMembers = [];
+  String _memberSearchQuery = '';
+  final TextEditingController _memberSearchController = TextEditingController();
+  String? _userBorough;
+
   // ── Categories matching screenshots ──
   static const _categories = [
     {'label': 'Hanging out', 'icon': Icons.people_outline},
@@ -90,8 +102,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   @override
   void initState() {
     super.initState();
-    _onboardingService.initialize();
+    _initServices();
     _loadUserGroups();
+  }
+
+  Future<void> _initServices() async {
+    await _onboardingService.initialize();
+    final postcode = _onboardingService.postcode;
+    final borough = PostcodeService().getBoroughFromPostcode(postcode);
+    final members = InvitationService.getBoroughMembers(borough);
+    if (mounted) {
+      setState(() {
+        _userBorough = borough;
+        _boroughMembers = members;
+      });
+    }
   }
 
   Future<void> _loadUserGroups() async {
@@ -120,6 +145,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     _locationCtrl.dispose();
     _priceCtrl.dispose();
     _scrollController.dispose();
+    _memberSearchController.dispose();
     super.dispose();
   }
 
@@ -145,7 +171,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       _selectedDate != null &&
       _startTime != null &&
       _endTime != null &&
-      _category.isNotEmpty;
+      _selectedCategories.isNotEmpty;
 
   // ── Pickers ──────────────────────────────────────────────────────────
   void _pickDate() async {
@@ -343,7 +369,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   // ── Create ──────────────────────────────────────────────────────────
-  void _createMeetup() {
+  Future<void> _createMeetup() async {
     if (!_isFormValid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('Please fill in all required fields'),
@@ -384,24 +410,20 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     final date =
         _selectedDate ?? DateTime.now().add(const Duration(days: 3));
 
-    String mappedCategory = 'Social';
-    if (_category == 'Coffee & tea') {
-      mappedCategory = 'Coffee';
-    } else if (_category == 'Playdate') {
-      mappedCategory = 'Playdate';
-    } else if (_category == 'Sports & exercise') {
-      mappedCategory = 'Sport';
-    } else if (_category == 'Parks & Walks') {
-      mappedCategory = 'Walk';
-    } else if (_category == 'Hanging out') {
-      mappedCategory = 'Social';
-    } else if (_category == 'Pregnancy') {
-      mappedCategory = 'Social';
-    } else if (_category == 'Food & nutrition') {
-      mappedCategory = 'Food';
-    } else if (_category == 'Performance & shows') {
-      mappedCategory = 'Social';
-    }
+    // Map selected categories to short codes
+    String mappedCategory = _selectedCategories.map((c) {
+      switch (c) {
+        case 'Coffee & tea': return 'Coffee';
+        case 'Playdate': return 'Playdate';
+        case 'Sports & exercise': return 'Sport';
+        case 'Parks & Walks': return 'Walk';
+        case 'Hanging out': return 'Social';
+        case 'Pregnancy': return 'Social';
+        case 'Food & nutrition': return 'Food';
+        case 'Performance & shows': return 'Social';
+        default: return 'Social';
+      }
+    }).first;
 
     const dayAbbr = [
       'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'
@@ -445,12 +467,18 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           _repeatOn && _repeatEndOption == 'by_date' ? _repeatEndDate : null,
       groupId: _selectedGroupId,
       groupName: _selectedGroupName,
+      invitedMemberIds: _privacy == 'private' ? _selectedMemberIds.toList() : [],
+      borough: _userBorough,
     );
 
     _meetupService.createMeetup(meetup);
 
+    // Send messages for group or private meetups
+    await _sendMeetupNotifications(meetup, organiserName);
+
     setState(() => _isCreating = false);
 
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [
         const Icon(Icons.check_circle, color: Colors.white, size: 18),
@@ -465,6 +493,57 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     ));
 
     Navigator.pop(context, meetup);
+  }
+
+  /// Sends group chat message or DMs when a group/private meetup is created
+  Future<void> _sendMeetupNotifications(Meetup meetup, String organiserName) async {
+    final dmService = DMService();
+    await dmService.initialize();
+
+    if (meetup.privacy == MeetupPrivacy.group && meetup.groupId != null) {
+      // For group meetups: post a message to the group chat
+      // The group chat message is simulated by storing it so it appears in the chat
+      final msgText = 'Hey $organiserName has organised a meetup \u2014 '
+          '${meetup.title} and would like you to know if you are interested in attending. '
+          'Please click on this meetup for more details.';
+      await BrowserStorage.setString(
+        'meetup_notification_${meetup.groupId}',
+        json.encode({
+          'meetupId': meetup.id,
+          'message': msgText,
+          'organiser': organiserName,
+          'meetupTitle': meetup.title,
+          'dateDisplay': meetup.dateDisplay,
+          'timeDisplay': meetup.timeDisplay,
+          'location': meetup.location,
+          'imageUrl': meetup.imageUrl,
+          'timestamp': DateTime.now().toIso8601String(),
+        }),
+      );
+    } else if (meetup.privacy == MeetupPrivacy.private_) {
+      // For private meetups: send a DM to each invited member
+      for (final memberId in meetup.invitedMemberIds) {
+        final member = _boroughMembers.firstWhere(
+          (m) => m.id == memberId,
+          orElse: () => const BoroughMember(
+            id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
+          ),
+        );
+        if (member.id.isEmpty) continue;
+
+        final msgText = 'Hey $organiserName has organised a meetup \u2014 '
+            '${meetup.title} and would like you to know if you are interested in attending. '
+            'Please click on this meetup for more details.';
+
+        await dmService.sendMeetupInvite(
+          recipientId: member.id,
+          recipientName: member.name,
+          message: msgText,
+          meetupId: meetup.id,
+          meetupTitle: meetup.title,
+        );
+      }
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -868,13 +947,18 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       children: _categories.map((cat) {
                         final label = cat['label'] as String;
                         final icon = cat['icon'] as IconData;
-                        final isSelected = _category == label;
+                        final isSelected = _selectedCategories.contains(label);
                         return _categoryChip(
                           label: label,
                           icon: icon,
                           isSelected: isSelected,
-                          onTap: () =>
-                              setState(() => _category = label),
+                          onTap: () => setState(() {
+                            if (isSelected) {
+                              _selectedCategories.remove(label);
+                            } else {
+                              _selectedCategories.add(label);
+                            }
+                          }),
                         );
                       }).toList(),
                     ),
@@ -978,7 +1062,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                         _privacyRadio(
                           label: 'Public',
                           description:
-                              'Everyone in your local community can see and join your event.',
+                              'Everyone in your local community can see and join your meetup.',
                           value: 'public',
                           icon: Icons.public,
                         ),
@@ -986,7 +1070,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                         _privacyRadio(
                           label: 'Group',
                           description:
-                              'Only members of a specific group can see and join your event.',
+                              'Only members of a specific group can see and join your meetup.',
                           value: 'group',
                           icon: Icons.group,
                         ),
@@ -1001,6 +1085,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                           value: 'private',
                           icon: Icons.lock_outline,
                         ),
+                        if (_privacy == 'private') ...[                          const SizedBox(height: 12),
+                          _buildInviteMembersWidget(),
+                        ],
                       ],
                     ),
                   ),
@@ -1445,6 +1532,367 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           },
         ),
       ),
+    );
+  }
+
+  /// Widget to show invited members for private meetups
+  Widget _buildInviteMembersWidget() {
+    return Container(
+      margin: const EdgeInsets.only(left: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Selected members chips
+          if (_selectedMemberIds.isNotEmpty) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _selectedMemberIds.map((id) {
+                final member = _boroughMembers.firstWhere(
+                  (m) => m.id == id,
+                  orElse: () => const BoroughMember(
+                    id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
+                  ),
+                );
+                final photoUrl = MemberPhotoService.getPhotoByName(member.name);
+                return Chip(
+                  avatar: photoUrl != null
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(photoUrl),
+                        radius: 14,
+                      )
+                    : MemberAvatar(name: member.name, size: 28),
+                  label: Text(
+                    member.name,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                  deleteIcon: const Icon(Icons.close, size: 16),
+                  onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
+                  backgroundColor: HuddlColors.peachLight,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+          ],
+          // Add members button
+          GestureDetector(
+            onTap: _showInviteMembersSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedMemberIds.isNotEmpty
+                      ? HuddlColors.primary
+                      : HuddlColors.gray300,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_add_outlined,
+                    size: 20,
+                    color: _selectedMemberIds.isNotEmpty
+                        ? HuddlColors.primary
+                        : HuddlColors.textHint,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedMemberIds.isEmpty
+                          ? 'Select members to invite'
+                          : '${_selectedMemberIds.length} member${_selectedMemberIds.length == 1 ? '' : 's'} selected',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: _selectedMemberIds.isNotEmpty
+                            ? HuddlColors.textDark
+                            : HuddlColors.textHint,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: _selectedMemberIds.isNotEmpty
+                        ? HuddlColors.primary
+                        : HuddlColors.textHint,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_userBorough != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Members from ${_userBorough!}',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: HuddlColors.textHint,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Show bottom sheet to invite members for private meetups
+  void _showInviteMembersSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            final query = _memberSearchQuery.toLowerCase();
+            final filtered = query.isEmpty
+                ? _boroughMembers
+                : _boroughMembers.where((m) =>
+                    m.name.toLowerCase().contains(query) ||
+                    m.parentType.toLowerCase().contains(query)).toList();
+
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              maxChildSize: 0.9,
+              minChildSize: 0.5,
+              expand: false,
+              builder: (_, scrollCtrl) {
+                return Column(
+                  children: [
+                    // Handle bar
+                    Container(
+                      width: 40, height: 4,
+                      margin: const EdgeInsets.only(top: 12, bottom: 8),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.divider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    // Title
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Invite members',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.textDark,
+                            ),
+                          ),
+                          if (_selectedMemberIds.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${_selectedMemberIds.length}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.white,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (_userBorough != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, top: 2, bottom: 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Members in ${_userBorough!}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Selected chips
+                    if (_selectedMemberIds.isNotEmpty) ...[
+                      SizedBox(
+                        height: 40,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          children: _selectedMemberIds.map((id) {
+                            final m = _boroughMembers.firstWhere(
+                              (b) => b.id == id,
+                              orElse: () => const BoroughMember(
+                                id: '', name: '?', parentType: 'mum', stagesOfLife: [],
+                              ),
+                            );
+                            final photoUrl = MemberPhotoService.getPhotoByName(m.name);
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Chip(
+                                avatar: photoUrl != null
+                                  ? CircleAvatar(
+                                      backgroundImage: NetworkImage(photoUrl),
+                                      radius: 12,
+                                    )
+                                  : MemberAvatar(name: m.name, size: 24),
+                                label: Text(m.name.split(' ').first,
+                                    style: GoogleFonts.poppins(fontSize: 12)),
+                                deleteIcon: const Icon(Icons.close, size: 14),
+                                onDeleted: () {
+                                  setSheetState(() => _selectedMemberIds.remove(id));
+                                  setState(() {});
+                                },
+                                backgroundColor: HuddlColors.peachLight,
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    // Search field
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: _memberSearchController,
+                        onChanged: (v) {
+                          setSheetState(() => _memberSearchQuery = v);
+                        },
+                        style: GoogleFonts.poppins(fontSize: 14),
+                        decoration: InputDecoration(
+                          hintText: 'Search members...',
+                          hintStyle: GoogleFonts.poppins(
+                              fontSize: 14, color: HuddlColors.textHint),
+                          prefixIcon: const Icon(Icons.search,
+                              color: HuddlColors.textHint, size: 20),
+                          filled: true,
+                          fillColor: HuddlColors.background,
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Divider(height: 1),
+                    // Member list
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollCtrl,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        itemCount: filtered.length,
+                        itemBuilder: (_, i) {
+                          final member = filtered[i];
+                          final isSelected = _selectedMemberIds.contains(member.id);
+                          final photoUrl = MemberPhotoService.getPhotoByName(member.name);
+                          return ListTile(
+                            leading: photoUrl != null
+                                ? Container(
+                                    width: 40, height: 40,
+                                    decoration: const BoxDecoration(shape: BoxShape.circle),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Image.network(photoUrl, fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          MemberAvatar(name: member.name, size: 40)),
+                                  )
+                                : MemberAvatar(name: member.name, size: 40),
+                            title: Text(
+                              member.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark,
+                              ),
+                            ),
+                            subtitle: Text(
+                              member.parentType == 'mum' ? 'Mum' : 'Dad',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: HuddlColors.textHint,
+                              ),
+                            ),
+                            trailing: Icon(
+                              isSelected
+                                  ? Icons.check_circle
+                                  : Icons.circle_outlined,
+                              color: isSelected
+                                  ? HuddlColors.primary
+                                  : HuddlColors.gray300,
+                              size: 24,
+                            ),
+                            onTap: () {
+                              setSheetState(() {
+                                if (isSelected) {
+                                  _selectedMemberIds.remove(member.id);
+                                } else {
+                                  _selectedMemberIds.add(member.id);
+                                }
+                              });
+                              setState(() {});
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    // Done button
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          16, 8, 16, MediaQuery.of(sheetCtx).padding.bottom + 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _memberSearchController.clear();
+                            _memberSearchQuery = '';
+                            Navigator.pop(sheetCtx);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HuddlColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Done',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 

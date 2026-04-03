@@ -443,6 +443,39 @@ class DMService {
     }
   }
 
+  /// Send a meetup invite DM to a specific member.
+  /// Creates or finds the conversation and inserts a rich meetup invite message.
+  Future<void> sendMeetupInvite({
+    required String recipientId,
+    required String recipientName,
+    required String message,
+    required String meetupId,
+    required String meetupTitle,
+  }) async {
+    await initialize();
+
+    final conv = await getOrCreateConversation(
+      recipientId: recipientId,
+      recipientName: recipientName,
+    );
+
+    final msg = DirectMessage(
+      id: 'dm_msg_meetup_${DateTime.now().millisecondsSinceEpoch}_$recipientId',
+      senderId: 'current_user',
+      senderName: 'You',
+      message: message,
+      timestamp: DateTime.now(),
+      isMe: true,
+      status: MessageStatus.sent,
+    );
+
+    final messages = await getMessages(conv.id);
+    messages.add(msg);
+    await _saveMessages(conv.id, messages);
+
+    _updateConversationLastMessage(conv.id, message, 'You');
+  }
+
   /// Clear all DM data — used for GDPR account deletion.
   Future<void> clearAll() async {
     // Remove each conversation's messages

@@ -524,11 +524,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue,
+                            color: _meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            'Free',
+                            _meetup.isFree
+                                ? 'Free'
+                                : '\u00A3${_meetup.price?.toStringAsFixed(0) ?? ''}',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -629,8 +631,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       _DetailRow(
                         icon: Icons.attach_money_outlined,
                         iconColor: HuddlColors.blue,
-                        title: 'Free',
-                        subtitle: 'No cost to attend',
+                        title: _meetup.isFree
+                            ? 'Free'
+                            : '\u00A3${_meetup.price?.toStringAsFixed(2) ?? 'TBC'}',
+                        subtitle: _meetup.isFree
+                            ? 'No cost to attend'
+                            : 'Per person',
                       ),
                     ],
                   ),

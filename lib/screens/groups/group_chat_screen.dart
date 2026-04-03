@@ -201,6 +201,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // Load forwarded messages from other screens (via forward_message_sheet)
     await _loadForwardedMessages();
 
+    // Load meetup notification for this group (if any)
+    await _loadMeetupNotification();
+
     // Re-sort everything
     _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
@@ -3284,6 +3287,30 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ));
             }
           }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Load meetup notification message posted by CreateMeetupScreen
+  Future<void> _loadMeetupNotification() async {
+    try {
+      final key = 'meetup_notification_${widget.groupId}';
+      final raw = await BrowserStorage.getString(key);
+      if (raw != null) {
+        final Map<String, dynamic> data = json.decode(raw);
+        final msgId = 'meetup_notif_${data['meetupId']}';
+        if (!_messages.any((msg) => msg.id == msgId)) {
+          final ts = DateTime.tryParse(data['timestamp'] as String? ?? '') ?? DateTime.now();
+          _messages.add(ChatMessage(
+            id: msgId,
+            senderId: 'current_user',
+            senderName: data['organiser'] as String? ?? 'You',
+            senderAvatar: '#FF975C',
+            message: data['message'] as String? ?? '',
+            timestamp: ts,
+            isMe: true,
+          ));
         }
       }
     } catch (_) {}
