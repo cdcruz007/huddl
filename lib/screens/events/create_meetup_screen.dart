@@ -194,31 +194,17 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   void _pickStartTime() async {
-    final time = await showTimePicker(
+    final time = await showSimpleTimePicker(
       context: context,
       initialTime: _startTime ?? const TimeOfDay(hour: 10, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: HuddlColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (time != null) setState(() => _startTime = time);
   }
 
   void _pickEndTime() async {
-    final time = await showTimePicker(
+    final time = await showSimpleTimePicker(
       context: context,
       initialTime: _endTime ?? const TimeOfDay(hour: 15, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: HuddlColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (time != null) setState(() => _endTime = time);
   }

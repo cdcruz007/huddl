@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 
 /// Data model for a created poll
 class PollData {
@@ -105,23 +106,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     );
     if (date == null || !mounted) return;
 
-    final time = await showTimePicker(
+    final time = await showSimpleTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(
           _expiresAt ?? now.add(const Duration(hours: 1))),
-      builder: (ctx, child) {
-        return Theme(
-          data: Theme.of(ctx).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: HuddlColors.primary,
-              onPrimary: HuddlColors.white,
-              surface: HuddlColors.white,
-              onSurface: HuddlColors.textDark,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (time == null || !mounted) return;
 

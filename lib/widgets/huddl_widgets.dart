@@ -4,6 +4,269 @@ import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import '../services/member_photo_service.dart';
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// SIMPLE TIME PICKER — scroll-wheel bottom sheet replacing complex clock dial
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Shows a simple scroll-wheel time picker bottom sheet.
+/// Returns the selected [TimeOfDay] or null if cancelled.
+Future<TimeOfDay?> showSimpleTimePicker({
+  required BuildContext context,
+  required TimeOfDay initialTime,
+}) {
+  return showModalBottomSheet<TimeOfDay>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: false,
+    builder: (ctx) => _SimpleTimePickerSheet(initialTime: initialTime),
+  );
+}
+
+class _SimpleTimePickerSheet extends StatefulWidget {
+  final TimeOfDay initialTime;
+  const _SimpleTimePickerSheet({required this.initialTime});
+
+  @override
+  State<_SimpleTimePickerSheet> createState() => _SimpleTimePickerSheetState();
+}
+
+class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
+  late int _selectedHour;
+  late int _selectedMinute;
+  late bool _isAM;
+
+  late FixedExtentScrollController _hourController;
+  late FixedExtentScrollController _minuteController;
+
+  @override
+  void initState() {
+    super.initState();
+    final h24 = widget.initialTime.hour;
+    _isAM = h24 < 12;
+    _selectedHour = h24 == 0 ? 12 : (h24 > 12 ? h24 - 12 : h24);
+    _selectedMinute = widget.initialTime.minute;
+    _hourController = FixedExtentScrollController(initialItem: _selectedHour - 1);
+    _minuteController = FixedExtentScrollController(initialItem: _selectedMinute);
+  }
+
+  @override
+  void dispose() {
+    _hourController.dispose();
+    _minuteController.dispose();
+    super.dispose();
+  }
+
+  TimeOfDay get _resultTime {
+    int h24 = _selectedHour;
+    if (_isAM) {
+      if (h24 == 12) h24 = 0;
+    } else {
+      if (h24 != 12) h24 += 12;
+    }
+    return TimeOfDay(hour: h24, minute: _selectedMinute);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(top: 12),
+              decoration: BoxDecoration(
+                color: HuddlColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header with Cancel / Done
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Text('Cancel',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  Text('Select time',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context, _resultTime),
+                    child: Text('Done',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Scroll wheels
+            SizedBox(
+              height: 200,
+              child: Row(
+                children: [
+                  // Hour wheel
+                  Expanded(
+                    child: ListWheelScrollView.useDelegate(
+                      controller: _hourController,
+                      itemExtent: 44,
+                      perspective: 0.003,
+                      diameterRatio: 1.5,
+                      physics: const FixedExtentScrollPhysics(),
+                      onSelectedItemChanged: (i) =>
+                          setState(() => _selectedHour = i + 1),
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: 12,
+                        builder: (ctx, i) {
+                          final h = i + 1;
+                          final selected = h == _selectedHour;
+                          return Center(
+                            child: Text(
+                              h.toString(),
+                              style: GoogleFonts.poppins(
+                                fontSize: selected ? 22 : 16,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: selected
+                                    ? HuddlColors.primary
+                                    : HuddlColors.textHint,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Colon separator
+                  Text(':',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
+                  ),
+                  // Minute wheel
+                  Expanded(
+                    child: ListWheelScrollView.useDelegate(
+                      controller: _minuteController,
+                      itemExtent: 44,
+                      perspective: 0.003,
+                      diameterRatio: 1.5,
+                      physics: const FixedExtentScrollPhysics(),
+                      onSelectedItemChanged: (i) =>
+                          setState(() => _selectedMinute = i),
+                      childDelegate: ListWheelChildBuilderDelegate(
+                        childCount: 60,
+                        builder: (ctx, i) {
+                          final selected = i == _selectedMinute;
+                          return Center(
+                            child: Text(
+                              i.toString().padLeft(2, '0'),
+                              style: GoogleFonts.poppins(
+                                fontSize: selected ? 22 : 16,
+                                fontWeight: selected
+                                    ? FontWeight.w600
+                                    : FontWeight.w400,
+                                color: selected
+                                    ? HuddlColors.primary
+                                    : HuddlColors.textHint,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  // AM / PM toggle
+                  SizedBox(
+                    width: 60,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () => setState(() => _isAM = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _isAM
+                                  ? HuddlColors.primary
+                                  : HuddlColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('AM',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: _isAM
+                                    ? Colors.white
+                                    : HuddlColors.textHint,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        GestureDetector(
+                          onTap: () => setState(() => _isAM = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: !_isAM
+                                  ? HuddlColors.primary
+                                  : HuddlColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('PM',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: !_isAM
+                                    ? Colors.white
+                                    : HuddlColors.textHint,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Primary gradient button matching Figma design
 class HuddlPrimaryButton extends StatelessWidget {
   final String text;

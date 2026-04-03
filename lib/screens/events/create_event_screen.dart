@@ -10,6 +10,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
+import '../../widgets/huddl_widgets.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE EVENT — single-page scrollable form matching target design screenshots
@@ -223,31 +224,17 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   void _pickStartTime() async {
-    final time = await showTimePicker(
+    final time = await showSimpleTimePicker(
       context: context,
       initialTime: _startTime ?? const TimeOfDay(hour: 10, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: HuddlColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (time != null) setState(() => _startTime = time);
   }
 
   void _pickEndTime() async {
-    final time = await showTimePicker(
+    final time = await showSimpleTimePicker(
       context: context,
       initialTime: _endTime ?? const TimeOfDay(hour: 15, minute: 0),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme:
-              ColorScheme.light(primary: HuddlColors.primary),
-        ),
-        child: child!,
-      ),
     );
     if (time != null) setState(() => _endTime = time);
   }
