@@ -28,13 +28,9 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
   // ── Photo picker ─────────────────────────────────────────────────────────
 
-  /// Shows bottom sheet with Gallery / Camera options on mobile,
-  /// or goes straight to gallery on web (camera not available via picker).
+  /// Shows bottom sheet with "Choose from photos" / "Take a photo" options.
+  /// On web, camera is not available so only the photo library option is shown.
   Future<void> _showPickerOptions() async {
-    if (kIsWeb) {
-      await _pickFrom(ImageSource.gallery);
-      return;
-    }
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
@@ -77,30 +73,32 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   ),
                   child: const Icon(Icons.photo_library_outlined, color: HuddlColors.onboardingOrange),
                 ),
-                title: const Text('Choose from gallery',
+                title: const Text('Choose from photos',
                     style: TextStyle(fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickFrom(ImageSource.gallery);
                 },
               ),
-              ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
+              // Camera option — only available on mobile devices
+              if (!kIsWeb)
+                ListTile(
+                  leading: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
                   ),
-                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
+                  title: const Text('Take a photo',
+                      style: TextStyle(fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickFrom(ImageSource.camera);
+                  },
                 ),
-                title: const Text('Take a photo',
-                    style: TextStyle(fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _pickFrom(ImageSource.camera);
-                },
-              ),
               const SizedBox(height: 8),
             ],
           ),
@@ -272,15 +270,15 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
               child: Column(
                 children: [
-                  // "Upload photo" / "Change photo" outlined button
+                  // "Add photo" / "Change photo" outlined button
                   SizedBox(
                     width: double.infinity,
                     height: 54,
                     child: OutlinedButton.icon(
                       onPressed: _isLoading ? null : _showPickerOptions,
-                      icon: const Icon(Icons.upload_rounded, size: 20),
+                      icon: const Icon(Icons.camera_alt_outlined, size: 20),
                       label: Text(
-                        hasPhoto ? 'Change photo' : 'Upload photo',
+                        hasPhoto ? 'Change photo' : 'Add photo',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
