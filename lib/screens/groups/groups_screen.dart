@@ -2483,8 +2483,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
 
-  /// Load user-created groups from local storage and add public ones to
-  /// the discover list so other users (in the demo) can see them.
+  /// Load user-created groups from local storage and add them to
+  /// the discover list. Public groups are visible to same-borough users.
+  /// Private groups are visible only to the creator and invited members.
   Future<void> _loadUserCreatedGroups() async {
     try {
       final raw = await BrowserStorage.getString(_userGroupsKey);
@@ -2492,12 +2493,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       final List<dynamic> decoded = json.decode(raw);
       for (final j in decoded) {
         final g = Group.fromJson(j as Map<String, dynamic>);
-        // Only add public groups; private groups never appear on Discover
-        if (!g.isPrivate) {
-          // Avoid duplicates
-          if (!_allDiscoverGroups.any((d) => d.id == g.id)) {
-            _allDiscoverGroups.add(_GroupItem.fromGroup(g, isDefault: false));
-          }
+        // Avoid duplicates
+        if (!_allDiscoverGroups.any((d) => d.id == g.id)) {
+          _allDiscoverGroups.add(_GroupItem.fromGroup(g, isDefault: false));
         }
       }
     } catch (_) {
@@ -2595,13 +2593,18 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
   List<_GroupItem> get _filteredGroups {
     // 1. Private groups are never shown on the Discover tab
-    // 2. Groups with targetAudience are only shown if user matches ALL criteria
-    // 3. User-created public groups: filter by same borough
+    // 1. Private groups: visible only to creator or invited members
+    // 2. Public groups with targetAudience: shown if user matches at least one
+    // 3. User-created groups: filter by same borough
     List<_GroupItem> results = _allDiscoverGroups.where((g) {
-      if (g.isPrivate) return false;
-
-      // The creator always sees their own public group on Discover
+      // The creator always sees their own groups (public & private) on Discover
       final isOwnGroup = g.creatorId == 'current_user';
+
+      // Private group visibility: only creator or invited members can see it
+      if (g.isPrivate) {
+        final isInvited = g.invitedMemberIds.contains('current_user');
+        if (!isOwnGroup && !isInvited) return false;
+      }
 
       // Audience / visibility filter — skip for the creator
       if (!isOwnGroup && !g.isVisibleTo(_userParentType, _userStagesOfLife)) {
@@ -3423,7 +3426,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                 ),
                 // Audience tags (top-left) — only show valid parent-stage tags
                 ..._buildAudienceTags(group, catColor, catIcon),
-                // "Your group" badge or privacy badge (top-right)
+                // "Your group" badge (top-right) — also shows lock for private
                 if (group.creatorId == 'current_user')
                   Positioned(
                     top: 10, right: 10,
@@ -3433,13 +3436,22 @@ class _DiscoverGroupCard extends StatelessWidget {
                         color: HuddlColors.blue,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        'Your group',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (group.isPrivate) ...[
+                            const Icon(Icons.lock_outline, size: 12, color: Colors.white),
+                            const SizedBox(width: 4),
+                          ],
+                          Text(
+                            'Your group',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   )
@@ -5020,6 +5032,7 @@ class _GroupItem {
   final String? creatorId;
   final String? creatorName;
   final String? creatorBorough;
+  final List<String> invitedMemberIds;
 
   _GroupItem({
     required this.id,
@@ -5039,6 +5052,7 @@ class _GroupItem {
     this.creatorId,
     this.creatorName,
     this.creatorBorough,
+    this.invitedMemberIds = const [],
   });
 
   factory _GroupItem.fromGroup(Group g, {required bool isDefault}) {
@@ -5060,6 +5074,7 @@ class _GroupItem {
       creatorId: g.creatorId,
       creatorName: g.creatorName,
       creatorBorough: g.creatorBorough,
+      invitedMemberIds: g.invitedMemberIds,
     );
   }
 
@@ -5106,6 +5121,7 @@ class _GroupItem {
     String? creatorId,
     String? creatorName,
     String? creatorBorough,
+    List<String>? invitedMemberIds,
   }) {
     return _GroupItem(
       id: id ?? this.id,
@@ -5125,6 +5141,7 @@ class _GroupItem {
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
       creatorBorough: creatorBorough ?? this.creatorBorough,
+      invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
     );
   }
 
@@ -5146,5 +5163,6 @@ class _GroupItem {
         'creatorId': creatorId,
         'creatorName': creatorName,
         'creatorBorough': creatorBorough,
+        'invitedMemberIds': invitedMemberIds,
       };
 }

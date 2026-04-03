@@ -706,6 +706,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         creatorId: 'current_user',
         creatorName: creatorName,
         creatorBorough: creatorBorough,
+        invitedMemberIds: _isPrivate ? _selectedMemberIds.toList() : [],
         lastMessage: '$creatorName created this group',
         lastSenderName: 'System',
         lastMessageTime: DateTime.now(),
@@ -978,7 +979,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   _privacyRadio(
                     label: 'Public',
                     description:
-                        'Everyone can check the member list and group events.',
+                        'This group will be listed under the Discover tab so people in ${_userBorough ?? 'your borough'} can join.',
                     isSelected: !_isPrivate,
                     onTap: () => setState(() => _isPrivate = false),
                   ),
@@ -986,7 +987,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   _privacyRadio(
                     label: 'Private',
                     description:
-                        'Only members of the group can check the member list and group events.',
+                        'This group will be listed under the Discover tab but can only be seen by specific people in ${_userBorough ?? 'your borough'} that you invite.',
                     isSelected: _isPrivate,
                     onTap: () => setState(() => _isPrivate = true),
                   ),

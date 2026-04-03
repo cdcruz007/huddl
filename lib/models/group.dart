@@ -26,6 +26,10 @@ class Group {
   final String? creatorName;
   final String? creatorBorough;
 
+  /// IDs of members explicitly invited to a private group.
+  /// Used to show private groups on the Discover tab only to those invitees.
+  final List<String> invitedMemberIds;
+
   Group({
     required this.id,
     required this.name,
@@ -44,6 +48,7 @@ class Group {
     this.creatorId,
     this.creatorName,
     this.creatorBorough,
+    this.invitedMemberIds = const [],
   });
   
   // JSON serialization for persistence
@@ -66,6 +71,7 @@ class Group {
       'creatorId': creatorId,
       'creatorName': creatorName,
       'creatorBorough': creatorBorough,
+      'invitedMemberIds': invitedMemberIds,
     };
   }
   
@@ -90,6 +96,7 @@ class Group {
       creatorId: json['creatorId'] as String?,
       creatorName: json['creatorName'] as String?,
       creatorBorough: json['creatorBorough'] as String?,
+      invitedMemberIds: (json['invitedMemberIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
     );
   }
 
@@ -111,6 +118,7 @@ class Group {
     String? creatorId,
     String? creatorName,
     String? creatorBorough,
+    List<String>? invitedMemberIds,
   }) {
     return Group(
       id: id ?? this.id,
@@ -130,6 +138,7 @@ class Group {
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
       creatorBorough: creatorBorough ?? this.creatorBorough,
+      invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
     );
   }
 }
