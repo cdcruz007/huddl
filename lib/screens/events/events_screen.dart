@@ -246,7 +246,7 @@ class _EventsScreenState extends State<EventsScreen>
                       onChanged: (v) => setState(() => _searchQuery = v),
                       style: GoogleFonts.poppins(fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Search meetups & events...',
+                        hintText: 'Search meetups...',
                         hintStyle: GoogleFonts.poppins(
                             fontSize: 14, color: HuddlColors.textHint),
                         prefixIcon: const Icon(Icons.search,

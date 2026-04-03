@@ -5,7 +5,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
-import '../main_shell.dart';
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REHOME MARKETPLACE SCREEN — age-first, category-second browsing
@@ -29,13 +29,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   PriceType? _selectedPriceType;
   ItemCondition? _selectedCondition;
   String _searchQuery = '';
-  bool _showSearch = false;
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
     _service.addListener(_onServiceChange);
   }
 
@@ -48,7 +48,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     _tabController.dispose();
     _searchController.dispose();
     _service.removeListener(_onServiceChange);
+    _tabController.removeListener(_onTabChanged);
     super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {});
+    }
   }
 
   List<RehomeItem> get _filteredItems => _service.filter(
@@ -136,133 +143,43 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildHeader() {
     return Container(
       color: HuddlColors.white,
-      padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row
-          Row(
-            children: [
-              Expanded(
-                child: _showSearch
-                    ? _buildSearchField()
-                    : Text(
-                        'Preloved',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-              ),
-              IconButton(
-                icon: Icon(
-                  _showSearch ? Icons.close : Icons.search,
-                  color: HuddlColors.textDark,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showSearch = !_showSearch;
-                    if (!_showSearch) {
-                      _searchController.clear();
-                      _searchQuery = '';
-                    }
-                  });
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.chat_bubble_outline,
-                    color: HuddlColors.textDark),
-                onPressed: () {
-                  // Navigate to Messages tab (index 1) in main shell
-                  final shell = MainShell.shellKey.currentState;
-                  if (shell != null) {
-                    shell.switchTab(1);
-                  }
-                },
-              ),
-            ],
+          // Title row — no chat icon, no search icon (search is inline on Buy tab)
+          Text(
+            'Preloved',
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: HuddlColors.textDark,
+            ),
           ),
-          const SizedBox(height: 4),
-          // Tab bar
+          const SizedBox(height: 8),
+          // Tab bar — same style as Messages, Discover, Nearby, I'm Going
           TabBar(
             controller: _tabController,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            tabs: [
-              _buildTabLabel('Buy', _filteredItems.length),
-              _buildTabLabel('Sell', _service.myListings.length),
-              _buildTabLabel('Saved', _service.savedItems.length),
+            tabs: const [
+              Tab(text: 'Buy'),
+              Tab(text: 'Sell'),
+              Tab(text: 'Saved'),
             ],
             labelColor: HuddlColors.primary,
             unselectedLabelColor: HuddlColors.textHint,
             labelStyle: GoogleFonts.poppins(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
             unselectedLabelStyle: GoogleFonts.poppins(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
             indicatorColor: HuddlColors.primary,
+            indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: HuddlColors.divider,
-            padding: EdgeInsets.zero,
-            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchField() {
-    return SizedBox(
-      height: 40,
-      child: TextField(
-        controller: _searchController,
-        autofocus: true,
-        style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
-        decoration: InputDecoration(
-          hintText: 'Search pre-loved items...',
-          hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-          filled: true,
-          fillColor: HuddlColors.background,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          prefixIcon: const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
-        ),
-        onChanged: (v) => setState(() => _searchQuery = v),
-      ),
-    );
-  }
-
-  Widget _buildTabLabel(String text, int count) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(text),
-          if (count > 0) ...[
-            const SizedBox(width: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -478,38 +395,104 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildBuyTab() {
     final items = _filteredItems;
 
-    if (items.isEmpty) {
-      return _buildEmptyState(
-        icon: Icons.search_off,
-        title: 'No items found',
-        subtitle: _hasActiveFilters
-            ? 'Try adjusting your filters to see more results.'
-            : 'Nothing listed yet. Check back soon!',
-        action: _hasActiveFilters
-            ? TextButton.icon(
-                onPressed: _clearAllFilters,
-                icon: const Icon(Icons.filter_list_off, size: 18),
-                label: Text('Clear filters',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
-              )
-            : null,
-      );
-    }
-
-    return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 0.62,
-      ),
-      itemCount: items.length,
-      itemBuilder: (context, index) => _ProductCard(
-        item: items[index],
-        onTap: () => _openItemDetail(items[index]),
-        onToggleSave: () => _service.toggleSaved(items[index].id),
-      ),
+    return Column(
+      children: [
+        // ── Inline search bar (always visible on Buy tab, same style as Messages tab) ──
+        Container(
+          color: HuddlColors.white,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: HuddlColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 12),
+                const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
+                    },
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: HuddlColors.textDark,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Search pre-loved items...',
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: EdgeInsets.zero,
+                      isDense: true,
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty) ...[
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      child: const Icon(Icons.close,
+                          size: 18, color: HuddlColors.textHint),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+              ],
+            ),
+          ),
+        ),
+        // ── Grid or empty state ──
+        Expanded(
+          child: items.isEmpty
+              ? _buildEmptyState(
+                  icon: Icons.search_off,
+                  title: 'No items found',
+                  subtitle: _hasActiveFilters
+                      ? 'Try adjusting your filters to see more results.'
+                      : 'Nothing listed yet. Check back soon!',
+                  action: _hasActiveFilters
+                      ? TextButton.icon(
+                          onPressed: _clearAllFilters,
+                          icon: const Icon(Icons.filter_list_off, size: 18),
+                          label: Text('Clear filters',
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                        )
+                      : null,
+                )
+              : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.62,
+                  ),
+                  itemCount: items.length,
+                  itemBuilder: (context, index) => _ProductCard(
+                    item: items[index],
+                    onTap: () => _openItemDetail(items[index]),
+                    onToggleSave: () => _service.toggleSaved(items[index].id),
+                  ),
+                ),
+        ),
+      ],
     );
   }
 
@@ -520,61 +503,127 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       child: Column(
         children: [
-          // Create listing prompt
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [HuddlColors.peachLight, HuddlColors.peachVeryLight],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          // Create listing CTA card — same size/style as Create New Group CTA
+          GestureDetector(
+            onTap: _openCreateListing,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: HuddlColors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        color: HuddlColors.primary.withValues(alpha: 0.15),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 64,
+                    height: 64,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Positioned(
+                          left: 0, top: 4,
+                          child: Container(
+                            width: 10, height: 10,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.accentAmber,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 0, bottom: 6,
+                          child: Container(
+                            width: 8, height: 8,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.paleBlue,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.sell_outlined,
+                            size: 30, color: HuddlColors.primary),
+                        Positioned(
+                          right: 4, top: 4,
+                          child: Container(
+                            width: 20, height: 20,
+                            decoration: BoxDecoration(
+                              color: HuddlColors.blue,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: HuddlColors.white, width: 2),
+                            ),
+                            child: const Icon(Icons.add,
+                                size: 11, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: const Icon(Icons.camera_alt_outlined,
-                      size: 32, color: HuddlColors.primary),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'List an item',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Got items to pass on?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Give them a new home with families who\'ll love them!',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 38,
+                          child: ElevatedButton(
+                            onPressed: _openCreateListing,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: HuddlColors.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            child: Text(
+                              'List an Item',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Give your pre-loved items a new home\nwith families who\u2019ll love them.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: HuddlColors.textSecondary,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 18),
-                HuddlPrimaryButton(
-                  text: 'Start listing',
-                  onPressed: _openCreateListing,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -706,33 +755,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
-  // ── FAB ───────────────────────────────────────────────────────────────────
+  // ── FAB — circular + button like Discover Groups ─────────────────────────
 
-  Widget _buildFAB() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 60),
-      decoration: BoxDecoration(
-        gradient: HuddlColors.primaryGradient,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: HuddlColors.primary.withValues(alpha: 0.35),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: _openCreateListing,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        icon: const Icon(Icons.add, color: HuddlColors.white),
-        label: Text(
-          'Sell item',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.white,
+  Widget? _buildFAB() {
+    // Only show FAB on Buy tab (index 0)
+    if (_tabController.index != 0) return null;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 60),
+      child: Material(
+        elevation: 6,
+        shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
+        shape: const CircleBorder(),
+        color: HuddlColors.primary,
+        child: InkWell(
+          onTap: _openCreateListing,
+          customBorder: const CircleBorder(),
+          child: const SizedBox(
+            width: 56,
+            height: 56,
+            child: Icon(Icons.add, color: Colors.white, size: 28),
           ),
         ),
       ),
