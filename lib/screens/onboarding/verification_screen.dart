@@ -120,16 +120,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
       // Mark phone as verified
       _onboardingData.setPhoneVerified(true);
       
-      // Force console output even in release mode
-      // ignore: avoid_print
-      print('');
-      // ignore: avoid_print
-      print('🎯 ========== VERIFICATION SUCCESS ==========');
-      // ignore: avoid_print
-      print('📱 Phone verified successfully!');
-      // ignore: avoid_print
-      print('');
-      
       // Ensure onboarding data is initialized and loaded
       await _onboardingData.initialize();
       
@@ -137,33 +127,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       final groupService = DefaultGroupService();
       final userId = _onboardingData.fullPhoneNumber ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
       
-      // ignore: avoid_print
-      print('👥 Starting group assignment for user: $userId');
-      // ignore: avoid_print
-      print('   Postcode: ${_onboardingData.postcode}');
-      // ignore: avoid_print
-      print('   Stages: ${_onboardingData.stagesOfLife}');
-      // ignore: avoid_print
-      print('   Children: ${_onboardingData.children.length}');
-      // ignore: avoid_print
-      print('');
-      
       final assignedGroups = await groupService.assignUserToDefaultGroups(userId);
-      
-      // ignore: avoid_print
-      print('');
-      // ignore: avoid_print
-      print('✅ Group assignment complete!');
-      // ignore: avoid_print
-      print('   Total groups assigned: ${assignedGroups.length}');
-      for (var group in assignedGroups) {
-        // ignore: avoid_print
-        print('   ✓ ${group.name} (${group.memberCount} members)');
-      }
-      // ignore: avoid_print
-      print('🎯 ========================================');
-      // ignore: avoid_print
-      print('');
       
       // Store the assigned group count and names so the Welcome screen can display them
       _onboardingData.setAssignedGroupCount(assignedGroups.length);

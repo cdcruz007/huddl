@@ -5,6 +5,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
+import '../main_shell.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REHOME MARKETPLACE SCREEN — age-first, category-second browsing
@@ -160,7 +161,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               IconButton(
                 icon: const Icon(Icons.chat_bubble_outline,
                     color: HuddlColors.textDark),
-                onPressed: () {},
+                onPressed: () {
+                  // Navigate to Messages tab (index 1) in main shell
+                  final shell = MainShell.shellKey.currentState;
+                  if (shell != null) {
+                    shell.switchTab(1);
+                  }
+                },
               ),
             ],
           ),

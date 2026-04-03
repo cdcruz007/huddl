@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
@@ -7,6 +8,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
+import '../../services/dm_service.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 
@@ -121,6 +123,190 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         ),
       );
     }
+  }
+
+  void _shareGroup() {
+    final shareText =
+        '${_editableName}\n👥 ${widget.memberCount ?? 0} members'
+        '${widget.isPrivate ? ' · Private group' : ''}'
+        '\n\nJoin us on Huddl Connect!';
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Group link copied to clipboard'),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showInviteMembersSheet() {
+    final dmService = DMService();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.85,
+          expand: false,
+          builder: (_, scrollController) {
+            return FutureBuilder(
+              future: dmService.initialize().then((_) => dmService.conversations),
+              builder: (context, snapshot) {
+                final conversations = snapshot.data ?? [];
+                // Build a list of potential members from DM contacts
+                final contacts = conversations
+                    .map((c) => {'id': c.recipientId, 'name': c.recipientName, 'color': c.recipientAvatarColor})
+                    .toList();
+                return Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Container(
+                        width: 36, height: 4,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.divider,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Invite Members',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.textDark,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton.icon(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              _shareGroup();
+                            },
+                            icon: const Icon(Icons.link, size: 18, color: HuddlColors.primary),
+                            label: Text(
+                              'Share link',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 1),
+                    if (contacts.isEmpty)
+                      Expanded(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.people_outline,
+                                  size: 48,
+                                  color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No contacts yet',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: HuddlColors.textHint,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Share the group link to invite members',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: HuddlColors.textHint,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: contacts.length,
+                          itemBuilder: (_, i) {
+                            final contact = contacts[i];
+                            return ListTile(
+                              leading: MemberAvatar(
+                                  name: contact['name'] as String, size: 40),
+                              title: Text(
+                                contact['name'] as String,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              trailing: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Invitation sent to ${contact['name']}'),
+                                      backgroundColor: HuddlColors.teal,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                      color: HuddlColors.primary),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 4),
+                                ),
+                                child: Text(
+                                  'Invite',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: HuddlColors.primary,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   void _toggleEditing() {
@@ -593,8 +779,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ),
                   trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
                   onTap: () {
-                    // Navigate back to home -> Groups -> Saved tab
-                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/saved_messages_for_group', arguments: {
+                      'groupId': widget.groupId,
+                      'groupName': _editableName,
+                    });
                   },
                 ),
               ),
@@ -628,7 +816,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
                 ),
                 trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
-                onTap: () {},
+                onTap: () {
+                  // Navigate to group chat which contains the polls
+                  Navigator.pushNamed(context, '/group_chat', arguments: {
+                    'groupId': widget.groupId,
+                    'groupName': _editableName,
+                    'groupImageUrl': widget.groupImageUrl,
+                    'isPrivate': widget.isPrivate,
+                    'creatorId': widget.creatorId,
+                  });
+                },
               ),
             ),
           ),
@@ -678,11 +875,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         width: double.infinity,
                         height: 48,
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Invite members coming soon')),
-                            );
-                          },
+                          onPressed: _showInviteMembersSheet,
                           icon: const Icon(Icons.person_add_outlined,
                               color: HuddlColors.primary),
                           label: Text(
@@ -919,7 +1112,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               title: Text('Share group',
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w500)),
-              onTap: () => Navigator.pop(c),
+              onTap: () {
+                Navigator.pop(c);
+                _shareGroup();
+              },
             ),
             if (_isJoined)
               ListTile(

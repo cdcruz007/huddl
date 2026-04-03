@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
@@ -17,6 +18,31 @@ class EventDetailScreen extends StatefulWidget {
 class _EventDetailScreenState extends State<EventDetailScreen> {
   bool _isBookmarked = false;
   bool _isRegistered = false;
+
+  void _shareEvent() {
+    final e = widget.event;
+    final title = e['title'] as String? ?? 'Event';
+    final date = e['date'] as String? ?? '';
+    final location = e['location'] as String? ?? '';
+    final organiser = e['organiser'] as String? ?? '';
+    final shareText = '$title\n📅 $date\n📍 $location\nOrganised by $organiser\n\nShared via Huddl Connect';
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Event link copied to clipboard'),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +95,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.share_outlined, color: HuddlColors.white, size: 20),
-                  onPressed: () {},
+                  onPressed: () => _shareEvent(),
                 ),
               ),
             ],

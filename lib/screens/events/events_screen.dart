@@ -25,6 +25,10 @@ class _EventsScreenState extends State<EventsScreen>
   late TabController _tabController;
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   @override
   void initState() {
@@ -40,6 +44,8 @@ class _EventsScreenState extends State<EventsScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     super.dispose();
@@ -56,7 +62,121 @@ class _EventsScreenState extends State<EventsScreen>
     );
   }
 
-  // _navigateToCreateEvent and _navigateToCreate removed — only _navigateToCreateMeetup is used
+  void _showNotificationsSheet() {
+    final goingMeetups = _meetupService.meetups
+        .where((m) => m.isGoing)
+        .toList();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36, height: 4,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.divider,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Upcoming Reminders',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                if (goingMeetups.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(Icons.notifications_off_outlined,
+                              size: 48,
+                              color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No upcoming reminders',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'RSVP to meetups to receive reminders',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ...goingMeetups.take(5).map((meetup) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.event,
+                              color: HuddlColors.primary, size: 22),
+                        ),
+                        title: Text(
+                          meetup.title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${meetup.dateDisplay} · ${meetup.timeDisplay}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right,
+                            color: HuddlColors.textHint, size: 20),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  MeetupDetailScreen(meetup: meetup),
+                            ),
+                          );
+                        },
+                      )),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,19 +206,67 @@ class _EventsScreenState extends State<EventsScreen>
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.search,
-                                color: HuddlColors.textDark),
-                            onPressed: () {},
+                            icon: Icon(
+                              _isSearching ? Icons.close : Icons.search,
+                              color: HuddlColors.textDark,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isSearching = !_isSearching;
+                                if (!_isSearching) {
+                                  _searchQuery = '';
+                                  _searchController.clear();
+                                } else {
+                                  _searchFocusNode.requestFocus();
+                                }
+                              });
+                            },
                           ),
                           IconButton(
                             icon: const Icon(Icons.notifications_outlined,
                                 color: HuddlColors.textDark),
-                            onPressed: () {},
+                            onPressed: () {
+                              _showNotificationsSheet();
+                            },
                           ),
                         ],
                       ),
                     ],
                   ),
+                  // ── Search bar (collapsible) ──────────────────────
+                  if (_isSearching) ...[
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: 'Search meetups & events...',
+                        hintStyle: GoogleFonts.poppins(
+                            fontSize: 14, color: HuddlColors.textHint),
+                        prefixIcon: const Icon(Icons.search,
+                            color: HuddlColors.textHint, size: 20),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear, size: 18),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: HuddlColors.background,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 4),
                   // ── Tabs: Nearby | I'm Going ──────────────────────
                   TabBar(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -41,6 +42,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   void dispose() {
     _service.removeListener(_refresh);
     super.dispose();
+  }
+
+  void _shareItem() {
+    final shareText =
+        '${item.title}\n${item.priceDisplay} · ${item.condition.label}'
+        '\n📍 ${item.sellerLocation}'
+        '\nSold by ${item.sellerName}'
+        '\n\nCheck it out on Huddl Connect Preloved!';
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text('Listing link copied to clipboard'),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   /// Open (or create) a DM conversation with the item seller and navigate.
@@ -246,7 +271,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 actions: [
                   _circleButton(
                     icon: Icons.share_outlined,
-                    onTap: () {},
+                    onTap: _shareItem,
                   ),
                   _circleButton(
                     icon: item.isSaved ? Icons.favorite : Icons.favorite_border,

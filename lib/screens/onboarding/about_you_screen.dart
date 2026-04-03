@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
@@ -49,13 +50,14 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
       await groupService.initialize();
       final assigned =
           await groupService.assignUserToDefaultGroups('current_user');
-      // ignore: avoid_print
-      print('✅ Assigned ${assigned.length} default group(s) at onboarding completion');
-      groupService.printGroupAssignmentSummary();
+      if (kDebugMode) {
+        debugPrint('Assigned ${assigned.length} default group(s) at onboarding completion');
+      }
     } catch (e) {
       // Non-fatal — groups will be assigned lazily when the Messages tab loads
-      // ignore: avoid_print
-      print('⚠️ Could not assign default groups at onboarding: $e');
+      if (kDebugMode) {
+        debugPrint('Could not assign default groups at onboarding: $e');
+      }
     }
 
     if (!mounted) return;
