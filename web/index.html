@@ -34,21 +34,21 @@
 </head>
 <body>
   <script>
-    // Unregister service workers to prevent caching issues
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
-      });
-      // Clear all caches
-      if ('caches' in window) {
-        caches.keys().then(function(names) {
-          for (let name of names) caches.delete(name);
-        });
+    // Force unregister all service workers and clear all caches BEFORE loading Flutter
+    (async function() {
+      if ('serviceWorker' in navigator) {
+        var registrations = await navigator.serviceWorker.getRegistrations();
+        for (var reg of registrations) { await reg.unregister(); }
       }
-    }
+      if ('caches' in window) {
+        var names = await caches.keys();
+        for (var name of names) { await caches.delete(name); }
+      }
+      // Now load Flutter bootstrap WITHOUT service worker
+      var script = document.createElement('script');
+      script.src = 'flutter_bootstrap.js?v=' + Date.now();
+      document.body.appendChild(script);
+    })();
   </script>
-  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
