@@ -37,10 +37,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
   bool _isFree = false;
+  bool _isOnline = false;
   bool _repeatOn = false;
   String _repeatFrequency = 'Every week';
   String _repeatEndOption = 'no_end';
   DateTime? _repeatEndDate;
+  DateTime? _endDate;
+  bool _showEndDate = false;
+  bool _showEndTime = false;
   String? _pickedImageUrl;
   bool _isCreating = false;
   int? _maxAttendees;
@@ -119,57 +123,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     super.dispose();
   }
 
-  // ── More options menu ──────────────────────────────────────────────
-  void _showMoreOptions() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: HuddlColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 40, height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: HuddlColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.save_outlined,
-                  color: HuddlColors.textDark),
-              title: Text('Save as draft',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(ctx);
-                if (_isFormValid) _createMeetup();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline,
-                  color: HuddlColors.error),
-              title: Text('Discard',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.error)),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-              },
-            ),
-            const SizedBox(height: 8),
-          ]),
-        ),
-      ),
-    );
-  }
-
   // ── Helpers ──────────────────────────────────────────────────────────
   String _formatDate(DateTime d) {
     const months = [
@@ -241,6 +194,23 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       ),
     );
     if (time != null) setState(() => _endTime = time);
+  }
+
+  void _pickEndDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? _selectedDate ?? DateTime.now().add(const Duration(days: 3)),
+      firstDate: _selectedDate ?? DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (ctx, child) => Theme(
+        data: Theme.of(ctx).copyWith(
+          colorScheme:
+              ColorScheme.light(primary: HuddlColors.primary),
+        ),
+        child: child!,
+      ),
+    );
+    if (date != null) setState(() => _endDate = date);
   }
 
   void _pickRepeatEndDate() async {
@@ -508,24 +478,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
+        automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
           child: Center(
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: HuddlColors.gray100,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.chevron_left,
-                    size: 26, color: HuddlColors.blue),
-              ),
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark)),
             ),
           ),
         ),
+        leadingWidth: 80,
         centerTitle: true,
         title: Text(
           'Create meetup',
@@ -536,34 +503,32 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Center(
-              child: GestureDetector(
-                onTap: () => _showMoreOptions(),
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.gray100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.more_horiz,
-                      size: 22, color: HuddlColors.blue),
-                ),
+          GestureDetector(
+            onTap: _isFormValid ? _createMeetup : null,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: _isCreating
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text('Save',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: _isFormValid
+                                ? HuddlColors.textDark
+                                : HuddlColors.textHint)),
               ),
             ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _scrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
                   // ─────────── PHOTO UPLOAD ───────────
                   _buildPhotoUpload(),
                   const SizedBox(height: 16),
@@ -585,62 +550,116 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   // ─────────── LOCATION ───────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                    child: _sectionLabel('Location'),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _sectionLabel('Location'),
+                        Row(
+                          children: [
+                            Text('Online event',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: HuddlColors.textSecondary)),
+                            const SizedBox(width: 8),
+                            Transform.scale(
+                              scale: 0.8,
+                              child: CupertinoSwitch(
+                                value: _isOnline,
+                                onChanged: (v) => setState(() => _isOnline = v),
+                                activeTrackColor: HuddlColors.teal,
+                                inactiveTrackColor: const Color(0xFFE9E9EA),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _underlineTextField(
                       controller: _locationCtrl,
-                      hint: 'Location',
+                      hint: _isOnline ? 'Link or platform' : 'Location',
                     ),
                   ),
                   const SizedBox(height: 8),
 
-                  // ─────────── DATE ───────────
+                  // ─────────── DATE / TIME ───────────
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-                    child: _sectionLabel('Date'),
+                    child: _sectionLabel('Date / time'),
                   ),
+                  const SizedBox(height: 4),
+
+                  // Start date row
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _dateTapField(
                       value: _selectedDate != null
                           ? _formatDate(_selectedDate!)
                           : null,
-                      hint: 'Date',
+                      hint: 'Start date',
                       icon: Icons.calendar_today_outlined,
                       onTap: _pickDate,
                     ),
                   ),
 
-                  // ─────────── FROM / TO ───────────
+                  // Start time row
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _timeTapField(
-                            value: _startTime != null
-                                ? _formatTime(_startTime!)
-                                : null,
-                            hint: 'From',
-                            onTap: _pickStartTime,
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: _timeTapField(
-                            value: _endTime != null
-                                ? _formatTime(_endTime!)
-                                : null,
-                            hint: 'To',
-                            onTap: _pickEndTime,
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _dateTapField(
+                      value: _startTime != null
+                          ? _formatTime(_startTime!)
+                          : null,
+                      hint: 'Start time',
+                      icon: Icons.access_time,
+                      onTap: _pickStartTime,
                     ),
                   ),
+
+                  // Add end date (expandable)
+                  if (!_showEndDate)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _addRowButton(
+                        label: 'Add end date',
+                        onTap: () => setState(() => _showEndDate = true),
+                      ),
+                    ),
+                  if (_showEndDate)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _dateTapField(
+                        value: _endDate != null
+                            ? _formatDate(_endDate!)
+                            : null,
+                        hint: 'End date',
+                        icon: Icons.calendar_today_outlined,
+                        onTap: _pickEndDate,
+                      ),
+                    ),
+
+                  // Add end time (expandable)
+                  if (!_showEndTime)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _addRowButton(
+                        label: 'Add end time',
+                        onTap: () => setState(() => _showEndTime = true),
+                      ),
+                    ),
+                  if (_showEndTime)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _dateTapField(
+                        value: _endTime != null
+                            ? _formatTime(_endTime!)
+                            : null,
+                        hint: 'End time',
+                        icon: Icons.access_time,
+                        onTap: _pickEndTime,
+                      ),
+                    ),
 
                   const SizedBox(height: 16),
 
@@ -986,57 +1005,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
-                ],
-              ),
-            ),
-          ),
-
-          // ─────────── CREATE MEETUP BUTTON ───────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isFormValid ? _createMeetup : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  disabledBackgroundColor:
-                      HuddlColors.primary.withValues(alpha: 0.4),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                ),
-                child: _isCreating
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5))
-                    : Text(
-                        'Create meetup',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
-            ),
-          ),
-        ],
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }
@@ -1200,13 +1171,17 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     );
   }
 
-  /// Tappable date field with underline and calendar icon
+  /// Tappable date/time field with underline and plain icon (matching target)
   Widget _dateTapField({
     String? value,
     required String hint,
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    // Calendar icons orange, clock icons gray — matching target design
+    final Color iconColor = icon == Icons.calendar_today_outlined
+        ? HuddlColors.primary
+        : HuddlColors.textHint;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1230,17 +1205,16 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 ),
               ),
             ),
-            Icon(icon, size: 20, color: HuddlColors.primary),
+            Icon(icon, size: 20, color: iconColor),
           ],
         ),
       ),
     );
   }
 
-  /// Tappable time field with orange circle clock icon matching screenshot
-  Widget _timeTapField({
-    String? value,
-    required String hint,
+  /// "Add end date" / "Add end time" button row (orange + icon)
+  Widget _addRowButton({
+    required String label,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -1257,25 +1231,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           children: [
             Expanded(
               child: Text(
-                value ?? hint,
+                label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: value != null
-                      ? HuddlColors.textDark
-                      : HuddlColors.textHint,
+                  color: HuddlColors.textHint,
                 ),
               ),
             ),
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.access_time,
-                  size: 16, color: HuddlColors.primary),
-            ),
+            const Icon(Icons.add, size: 20, color: HuddlColors.primary),
           ],
         ),
       ),
