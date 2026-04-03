@@ -775,32 +775,27 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               final isOn = _participants[key]!;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(key,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: HuddlColors.textDark)),
-                          Transform.scale(
-                            scale: 0.8,
-                            child: CupertinoSwitch(
-                              value: isOn,
-                              onChanged: (v) =>
-                                  setState(() => _participants[key] = v),
-                              activeTrackColor: HuddlColors.teal,
-                              inactiveTrackColor: const Color(0xFFE9E9EA),
-                            ),
-                          ),
-                        ],
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(key,
+                          style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: HuddlColors.textDark)),
+                      Transform.scale(
+                        scale: 0.8,
+                        child: CupertinoSwitch(
+                          value: isOn,
+                          onChanged: (v) =>
+                              setState(() => _participants[key] = v),
+                          activeTrackColor: HuddlColors.teal,
+                          inactiveTrackColor: const Color(0xFFE9E9EA),
+                        ),
                       ),
-                    ),
-                    const Divider(height: 1, color: HuddlColors.gray200),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }),
