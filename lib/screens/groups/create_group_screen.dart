@@ -178,11 +178,314 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     final hasName = _nameController.text.trim().isNotEmpty;
     final hasDesc = _descriptionController.text.trim().isNotEmpty;
     final hasImage = _pickedImageUrl != null;
-    if (_isPrivate) {
-      // Private groups must have at least one invited member + image
-      return hasName && hasDesc && hasImage && _selectedMemberIds.isNotEmpty;
-    }
     return hasName && hasDesc && hasImage;
+  }
+
+  // ── Show invite members bottom sheet ──────────────────────────────────
+  void _showInviteMembersSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        builder: (_, scrollCtrl) => StatefulBuilder(
+          builder: (context, setSheetState) {
+            final q = _memberSearchQuery.toLowerCase();
+            final filtered = q.isEmpty
+                ? _boroughMembers
+                : _boroughMembers.where((m) => m.name.toLowerCase().contains(q)).toList();
+
+            return Column(
+              children: [
+                // Handle bar
+                Container(
+                  width: 40, height: 4,
+                  margin: const EdgeInsets.only(top: 12, bottom: 8),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                // Title
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Invite members',
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                      ),
+                      if (_selectedMemberIds.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${_selectedMemberIds.length} selected',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Select members in ${_userBorough ?? 'your borough'} to invite.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.textHint,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Selected chips
+                if (_selectedMemberIds.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _selectedMemberIds.map((id) {
+                          final member = _boroughMembers.firstWhere(
+                            (m) => m.id == id,
+                            orElse: () => const BoroughMember(
+                              id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
+                            ),
+                          );
+                          return Container(
+                            padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4, right: 4),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.peachLight,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  member.name,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: HuddlColors.textDark,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() => _selectedMemberIds.remove(id));
+                                    setSheetState(() {});
+                                  },
+                                  child: Container(
+                                    width: 22, height: 22,
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.primary.withValues(alpha: 0.15),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, size: 14, color: HuddlColors.primary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                if (_selectedMemberIds.isNotEmpty)
+                  const SizedBox(height: 12),
+
+                // Search
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Container(
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.background,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: TextField(
+                      controller: _memberSearchController,
+                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                      decoration: InputDecoration(
+                        hintText: 'Search members...',
+                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                        prefixIcon: const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                        suffixIcon: _memberSearchQuery.isNotEmpty
+                            ? GestureDetector(
+                                onTap: () {
+                                  _memberSearchController.clear();
+                                  setState(() => _memberSearchQuery = '');
+                                  setSheetState(() {});
+                                },
+                                child: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                      ),
+                      onChanged: (val) {
+                        setState(() => _memberSearchQuery = val);
+                        setSheetState(() {});
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Member list
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, index) {
+                      final member = filtered[index];
+                      final isSelected = _selectedMemberIds.contains(member.id);
+                      final initials = member.name.split(' ').map((w) => w[0]).take(2).join();
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedMemberIds.remove(member.id);
+                            } else {
+                              _selectedMemberIds.add(member.id);
+                            }
+                          });
+                          setSheetState(() {});
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 42, height: 42,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? HuddlColors.primary.withValues(alpha: 0.15)
+                                      : HuddlColors.background,
+                                  shape: BoxShape.circle,
+                                  border: isSelected
+                                      ? Border.all(color: HuddlColors.primary, width: 2)
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    initials,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected
+                                          ? HuddlColors.primary
+                                          : HuddlColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      member.name,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: HuddlColors.textDark,
+                                      ),
+                                    ),
+                                    Text(
+                                      member.parentType == 'mum' ? 'Mum' : 'Dad',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: HuddlColors.textHint,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 26, height: 26,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? HuddlColors.primary
+                                      : Colors.transparent,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? HuddlColors.primary
+                                        : HuddlColors.divider,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(Icons.check, size: 16, color: Colors.white)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // Done button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Done',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
   }
 
   Widget _buildPickedImage() {
@@ -387,249 +690,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 fontWeight: FontWeight.w600,
                 color: HuddlColors.primary,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Filtered list for the member search ─────────────────────────────────
-  List<BoroughMember> get _filteredMembers {
-    if (_memberSearchQuery.isEmpty) return _boroughMembers;
-    final q = _memberSearchQuery.toLowerCase();
-    return _boroughMembers
-        .where((m) => m.name.toLowerCase().contains(q))
-        .toList();
-  }
-
-  // ── Build the member picker section (only shown for private groups) ─────
-  Widget _buildMemberPicker() {
-    return Container(
-      color: HuddlColors.white,
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Invite members',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.textDark,
-                  ),
-                ),
-              ),
-              if (_selectedMemberIds.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    '${_selectedMemberIds.length} selected',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Select members in ${_userBorough ?? 'your borough'} to invite to this private group.',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: HuddlColors.textHint,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Selected member chips ──────────────────────────────────
-          if (_selectedMemberIds.isNotEmpty) ...[
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _selectedMemberIds.map((id) {
-                final member = _boroughMembers.firstWhere(
-                  (m) => m.id == id,
-                  orElse: () => const BoroughMember(
-                    id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
-                  ),
-                );
-                return Container(
-                  padding: const EdgeInsets.only(left: 12, top: 4, bottom: 4, right: 4),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.peachLight,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        member.name,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () => setState(() => _selectedMemberIds.remove(id)),
-                        child: Container(
-                          width: 22, height: 22,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close, size: 14, color: HuddlColors.primary),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-          ],
-
-          // ── Search field ───────────────────────────────────────────
-          Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: HuddlColors.background,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextField(
-              controller: _memberSearchController,
-              style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
-              decoration: InputDecoration(
-                hintText: 'Search members...',
-                hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                prefixIcon: const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
-                suffixIcon: _memberSearchQuery.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () {
-                          _memberSearchController.clear();
-                          setState(() => _memberSearchQuery = '');
-                        },
-                        child: const Icon(Icons.close, size: 18, color: HuddlColors.textHint),
-                      )
-                    : null,
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-              ),
-              onChanged: (val) => setState(() => _memberSearchQuery = val),
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // ── Member list ────────────────────────────────────────────
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 260),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _filteredMembers.length,
-              itemBuilder: (context, index) {
-                final member = _filteredMembers[index];
-                final isSelected = _selectedMemberIds.contains(member.id);
-                final initials = member.name.split(' ').map((w) => w[0]).take(2).join();
-                return InkWell(
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        _selectedMemberIds.remove(member.id);
-                      } else {
-                        _selectedMemberIds.add(member.id);
-                      }
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 42, height: 42,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? HuddlColors.primary.withValues(alpha: 0.15)
-                                : HuddlColors.background,
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: HuddlColors.primary, width: 2)
-                                : null,
-                          ),
-                          child: Center(
-                            child: Text(
-                              initials,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? HuddlColors.primary
-                                    : HuddlColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Name + type tag
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                member.name,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.textDark,
-                                ),
-                              ),
-                              Text(
-                                member.parentType == 'mum' ? 'Mum' : 'Dad',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: HuddlColors.textHint,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Check indicator
-                        Container(
-                          width: 26, height: 26,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? HuddlColors.primary
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isSelected
-                                  ? HuddlColors.primary
-                                  : HuddlColors.divider,
-                              width: 2,
-                            ),
-                          ),
-                          child: isSelected
-                              ? const Icon(Icons.check, size: 16, color: Colors.white)
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
             ),
           ),
         ],
@@ -1029,69 +1089,56 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               ),
             ),
 
-            // ── Member picker (visible only when Private is selected) ─
-            if (_isPrivate) ...[
-              const SizedBox(height: 8),
-              _buildMemberPicker(),
-            ],
-
             const SizedBox(height: 8),
 
-            // ── Member count (read-only) ────────────────────────────
-            Container(
-              color: HuddlColors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isPrivate && _selectedMemberIds.isNotEmpty
-                        ? '${_selectedMemberIds.length + 1} member${_selectedMemberIds.length + 1 != 1 ? 's' : ''}'
-                        : _isPrivate ? '1 member (you)' : '1 member (you)',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: HuddlColors.textDark,
+            // ── Member count row ────────────────────────────────────
+            GestureDetector(
+              onTap: _showInviteMembersSheet,
+              child: Container(
+                color: HuddlColors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _selectedMemberIds.isEmpty
+                          ? '0 member'
+                          : '${_selectedMemberIds.length} member${_selectedMemberIds.length != 1 ? 's' : ''}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: HuddlColors.textDark,
+                      ),
                     ),
-                  ),
-                  const Icon(Icons.chevron_right, color: HuddlColors.textHint),
-                ],
+                    const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // ── Create button ───────────────────────────────────────
+            // ── Invite members button (gradient matching target design) ─
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: !_isCreating ? _createGroup : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isValid ? HuddlColors.primary : HuddlColors.divider,
-                    disabledBackgroundColor: HuddlColors.divider,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26)),
-                    elevation: 0,
+              child: GestureDetector(
+                onTap: _showInviteMembersSheet,
+                child: Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: HuddlColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(26),
                   ),
-                  child: _isCreating
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: HuddlColors.white),
-                        )
-                      : Text(
-                          _isPrivate
-                              ? 'Create & Send Invites'
-                              : 'Create Group',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _isValid ? HuddlColors.white : HuddlColors.textHint,
-                          ),
-                        ),
+                  child: Center(
+                    child: Text(
+                      'Invite members',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
