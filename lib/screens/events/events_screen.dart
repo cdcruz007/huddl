@@ -339,6 +339,30 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   String _filter = 'All';
   Set<String> _joinedGroupIds = {};
 
+  // Filter categories matching Create Meetup screen categories
+  // label → list of meetup short-code categories it maps to
+  static const _filterCategories = [
+    {'label': 'All', 'icon': null, 'codes': null},
+    {'label': 'Hanging out', 'icon': Icons.people_outline, 'codes': ['Social']},
+    {'label': 'Pregnancy', 'icon': Icons.pregnant_woman, 'codes': ['Social']},
+    {'label': 'Playdate', 'icon': Icons.child_care, 'codes': ['Playdate']},
+    {'label': 'Sports & exercise', 'icon': Icons.fitness_center, 'codes': ['Sport']},
+    {'label': 'Coffee & tea', 'icon': Icons.coffee, 'codes': ['Coffee']},
+    {'label': 'Parks & Walks', 'icon': Icons.park, 'codes': ['Walk']},
+    {'label': 'Food & nutrition', 'icon': Icons.restaurant, 'codes': ['Food']},
+    {'label': 'Performance & shows', 'icon': Icons.theater_comedy, 'codes': ['Social']},
+    {'label': 'Other', 'icon': Icons.more_horiz, 'codes': ['Other']},
+  ];
+
+  List<String>? get _activeFilterCodes {
+    if (_filter == 'All') return null;
+    final cat = _filterCategories.firstWhere(
+      (c) => c['label'] == _filter,
+      orElse: () => {'label': 'All', 'icon': null, 'codes': null},
+    );
+    return (cat['codes'] as List<String>?);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -398,13 +422,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   @override
   Widget build(BuildContext context) {
     final visible = _visibleMeetups;
-    final meetups = _filter == 'All'
+    final codes = _activeFilterCodes;
+    final meetups = codes == null
         ? visible
-        : visible.where((m) => m.category == _filter).toList();
+        : visible.where((m) => codes.contains(m.category)).toList();
 
     return Column(
       children: [
-        // ── Filter chips ─────────────────────────────────────────
+        // ── Filter chips (matching Create Meetup categories) ─────
         Container(
           color: HuddlColors.white,
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -413,16 +438,17 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                'All', 'Coffee', 'Playdate', 'Sport', 'Walk', 'Social', 'Food', 'Other',
-              ].map((f) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _FilterChip(
-                  label: f,
-                  isSelected: _filter == f,
-                  onTap: () => setState(() => _filter = f),
-                ),
-              )).toList(),
+              children: _filterCategories.map((cat) {
+                final label = cat['label'] as String;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _FilterChip(
+                    label: label,
+                    isSelected: _filter == label,
+                    onTap: () => setState(() => _filter = label),
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -1473,6 +1499,10 @@ _CatStyle _meetupCategoryStyle(String category) {
       return const _CatStyle(HuddlColors.yellowDark, Icons.directions_walk);
     case 'Social':
       return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
+    case 'Food':
+      return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
+    case 'Other':
+      return const _CatStyle(HuddlColors.blue, Icons.more_horiz);
     default:
       return const _CatStyle(HuddlColors.blue, Icons.groups);
   }

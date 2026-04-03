@@ -10,6 +10,7 @@ import '../../services/browser_storage.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
+import '../../services/member_photo_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -521,6 +522,114 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     );
   }
 
+  // ── Invite members widget (matching Create Meetup private section) ──
+  Widget _buildInviteMembersWidget() {
+    return Container(
+      margin: const EdgeInsets.only(left: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Selected members chips
+          if (_selectedMemberIds.isNotEmpty) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _selectedMemberIds.map((id) {
+                final member = _boroughMembers.firstWhere(
+                  (m) => m.id == id,
+                  orElse: () => const BoroughMember(
+                    id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
+                  ),
+                );
+                final photoUrl = MemberPhotoService.getPhotoByName(member.name);
+                return Chip(
+                  avatar: photoUrl != null
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(photoUrl),
+                        radius: 14,
+                      )
+                    : MemberAvatar(name: member.name, size: 28),
+                  label: Text(
+                    member.name,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
+                  deleteIcon: const Icon(Icons.close, size: 16),
+                  onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
+                  backgroundColor: HuddlColors.peachLight,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+          ],
+          // Add members button
+          GestureDetector(
+            onTap: _showInviteMembersSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _selectedMemberIds.isNotEmpty
+                      ? HuddlColors.primary
+                      : HuddlColors.gray300,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.person_add_outlined,
+                    size: 20,
+                    color: _selectedMemberIds.isNotEmpty
+                        ? HuddlColors.primary
+                        : HuddlColors.textHint,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedMemberIds.isEmpty
+                          ? 'Select members to invite'
+                          : '${_selectedMemberIds.length} member${_selectedMemberIds.length == 1 ? '' : 's'} selected',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: _selectedMemberIds.isNotEmpty
+                            ? HuddlColors.textDark
+                            : HuddlColors.textHint,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right,
+                    size: 20,
+                    color: _selectedMemberIds.isNotEmpty
+                        ? HuddlColors.primary
+                        : HuddlColors.textHint,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_userBorough != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Members from ${_userBorough!}',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: HuddlColors.textHint,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   // ── Create group logic ────────────────────────────────────────────────
   Future<void> _createGroup() async {
     if (_pickedImageUrl == null) {
@@ -739,7 +848,27 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             color: HuddlColors.textDark,
           ),
         ),
-        actions: const [SizedBox.shrink()],
+        actions: [
+          GestureDetector(
+            onTap: _isValid && !_isCreating ? _createGroup : null,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: _isCreating
+                    ? const SizedBox(
+                        width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text('Save',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: _isValid
+                                ? HuddlColors.textDark
+                                : HuddlColors.textHint)),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -861,90 +990,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     isSelected: _isPrivate,
                     onTap: () => setState(() => _isPrivate = true),
                   ),
+                  if (_isPrivate) ...[
+                    const SizedBox(height: 12),
+                    _buildInviteMembersWidget(),
+                  ],
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // ─────────── MEMBER COUNT ROW ───────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: GestureDetector(
-                onTap: _showInviteMembersSheet,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: HuddlColors.gray300),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _selectedMemberIds.isEmpty
-                            ? '0 member'
-                            : '${_selectedMemberIds.length} member${_selectedMemberIds.length != 1 ? 's' : ''}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      const Icon(Icons.chevron_right,
-                          color: HuddlColors.textHint),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // ─────────── CREATE GROUP BUTTON (final action) ───────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: GestureDetector(
-                onTap: _isValid && !_isCreating ? _createGroup : null,
-                child: Container(
-                  width: double.infinity,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: _isValid && !_isCreating
-                        ? HuddlColors.primaryGradient
-                        : null,
-                    color: _isValid && !_isCreating
-                        ? null
-                        : HuddlColors.divider,
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                  child: Center(
-                    child: _isCreating
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: HuddlColors.white,
-                            ),
-                          )
-                        : Text(
-                            'Create Group',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: _isValid
-                                  ? HuddlColors.white
-                                  : HuddlColors.textHint,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
+            const SizedBox(height: 32),
           ],
         ),
       ),

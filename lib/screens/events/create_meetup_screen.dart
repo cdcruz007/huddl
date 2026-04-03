@@ -86,6 +86,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     {'label': 'Parks & Walks', 'icon': Icons.park},
     {'label': 'Food & nutrition', 'icon': Icons.restaurant},
     {'label': 'Performance & shows', 'icon': Icons.theater_comedy},
+    {'label': 'Other', 'icon': Icons.more_horiz},
   ];
 
   static const _repeatOptions = [
@@ -421,7 +422,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         case 'Pregnancy': return 'Social';
         case 'Food & nutrition': return 'Food';
         case 'Performance & shows': return 'Social';
-        default: return 'Social';
+        case 'Other': return 'Other';
+        default: return 'Other';
       }
     }).first;
 
