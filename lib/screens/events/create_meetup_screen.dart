@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,14 +43,15 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   DateTime? _repeatEndDate;
   String? _pickedImageUrl;
   bool _isCreating = false;
+  int? _maxAttendees;
 
   // ── Participants ──
   final Map<String, bool> _participants = {
-    'Mums': false,
-    'Dads': false,
-    'Aspiring parents': false,
-    'Expecting parents': false,
-    'Kids': false,
+    'For mums': false,
+    'For dads': false,
+    'For aspiring parents': false,
+    'For expecting parents': false,
+    'For kids': false,
   };
 
   // ── Privacy ──
@@ -404,7 +406,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       organiserName: organiserName,
       organiserId: 'current_user',
       attendeeCount: 1,
-      maxAttendees: null,
+      maxAttendees: _maxAttendees,
       isGoing: true,
       isFree: _isFree,
       price: _isFree
@@ -455,10 +457,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left,
-              size: 30, color: HuddlColors.blue),
-          onPressed: () => Navigator.pop(context),
+        automaticallyImplyLeading: false,
+        leadingWidth: 80,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Cancel',
+                  style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark)),
+            ),
+          ),
         ),
         centerTitle: true,
         title: Text(
@@ -469,6 +482,23 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
             color: HuddlColors.textDark,
           ),
         ),
+        actions: [
+          GestureDetector(
+            onTap: _isFormValid ? _createMeetup : null,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Text('Save',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: _isFormValid
+                            ? HuddlColors.textDark
+                            : HuddlColors.textHint)),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -565,16 +595,16 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Repeat',
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textDark)),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          height: 28,
-                          child: Switch(
+                        Transform.scale(
+                          scale: 0.8,
+                          child: CupertinoSwitch(
                             value: _repeatOn,
                             onChanged: (v) => setState(() {
                               _repeatOn = v;
@@ -583,10 +613,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                 _repeatEndOption = 'no_end';
                               }
                             }),
-                            activeThumbColor: HuddlColors.white,
-                            activeTrackColor: HuddlColors.blue,
-                            inactiveThumbColor: HuddlColors.white,
-                            inactiveTrackColor: HuddlColors.gray300,
+                            activeTrackColor: HuddlColors.teal,
+                            inactiveTrackColor: const Color(0xFFE9E9EA),
                           ),
                         ),
                       ],
@@ -790,34 +818,88 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _sectionLabel('Participants'),
                   ),
-                  const SizedBox(height: 12),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      children: _participants.keys.map((key) {
-                        final checked = _participants[key]!;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: GestureDetector(
-                            onTap: () => setState(
-                                () => _participants[key] = !checked),
+                  const SizedBox(height: 8),
+                  ..._participants.keys.map((key) {
+                    final isOn = _participants[key]!;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _checkbox(checked),
-                                const SizedBox(width: 12),
                                 Text(key,
                                     style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         color: HuddlColors.textDark)),
+                                Transform.scale(
+                                  scale: 0.8,
+                                  child: CupertinoSwitch(
+                                    value: isOn,
+                                    onChanged: (v) =>
+                                        setState(() => _participants[key] = v),
+                                    activeTrackColor: HuddlColors.teal,
+                                    inactiveTrackColor: const Color(0xFFE9E9EA),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                        );
-                      }).toList(),
+                          const Divider(height: 1, color: HuddlColors.gray200),
+                        ],
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 20),
+
+                  // ─────────── NUMBER OF ATTENDEES ───────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _sectionLabel('Number of attendees'),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HuddlColors.gray300),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _maxAttendees != null
+                                  ? '$_maxAttendees people'
+                                  : 'Max number of people',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: _maxAttendees != null
+                                    ? HuddlColors.textDark
+                                    : HuddlColors.textHint,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _maxAttendees = (_maxAttendees ?? 0) + 5;
+                              });
+                            },
+                            child: const Icon(Icons.add,
+                                color: HuddlColors.primary, size: 22),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
 
                   // ─────────── PRIVACY SETTINGS ───────────
                   Padding(
@@ -1164,22 +1246,16 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     );
   }
 
-  /// Category chip matching screenshot design — blue palette
+  /// Category chip matching original target design — outlined only, never filled
   Widget _categoryChip({
     required String label,
     required IconData icon,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    // Use yellow accent for food/nutrition category per style guide
+    // Use amber accent for food/nutrition category per style guide
     final isYellowCategory = label == 'Food & nutrition';
-    final activeColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.blue;
-    final inactiveColor = isYellowCategory
-        ? HuddlColors.accentAmber.withValues(alpha: 0.5)
-        : HuddlColors.lightBlue.withValues(alpha: 0.5);
-    final inactiveTextColor = isYellowCategory
-        ? HuddlColors.accentAmber
-        : HuddlColors.lightBlue;
+    final chipColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.blue;
 
     return GestureDetector(
       onTap: onTap,
@@ -1188,11 +1264,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         padding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white,
+          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? activeColor : inactiveColor,
-            width: 1.5,
+            color: isSelected ? chipColor : HuddlColors.gray300,
+            width: isSelected ? 1.8 : 1.2,
           ),
         ),
         child: Row(
@@ -1200,18 +1276,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           children: [
             Icon(icon,
                 size: 16,
-                color: isSelected
-                    ? Colors.white
-                    : inactiveTextColor),
+                color: isSelected ? chipColor : HuddlColors.textHint),
             const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? Colors.white
-                    : inactiveTextColor,
+                color: isSelected ? chipColor : HuddlColors.textSecondary,
               ),
             ),
           ],
@@ -1377,7 +1449,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     );
   }
 
-  /// Privacy radio with description text and icon
+  /// Privacy radio — clean style matching original target design (no container border)
   Widget _privacyRadio({
     required String label,
     required String description,
@@ -1389,34 +1461,22 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       onTap: () {
         setState(() {
           _privacy = value;
-          // Clear group selection when switching away from group
           if (value != 'group') {
             _selectedGroupId = null;
             _selectedGroupName = null;
           }
         });
       },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: selected
-              ? HuddlColors.primary.withValues(alpha: 0.06)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected
-                ? HuddlColors.primary.withValues(alpha: 0.3)
-                : Colors.transparent,
-          ),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: Container(
-                width: 22,
-                height: 22,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -1440,15 +1500,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     : null,
               ),
             ),
-            const SizedBox(width: 10),
-            if (icon != null) ...[
-              Icon(icon,
-                  size: 18,
-                  color: selected
-                      ? HuddlColors.primary
-                      : HuddlColors.textHint),
-              const SizedBox(width: 8),
-            ],
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1457,13 +1509,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: selected
-                              ? HuddlColors.primaryDark
-                              : HuddlColors.textDark)),
+                          color: HuddlColors.textDark)),
                   const SizedBox(height: 2),
                   Text(description,
                       style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           color: HuddlColors.textHint,
                           height: 1.3)),
                 ],
