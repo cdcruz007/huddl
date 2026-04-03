@@ -105,7 +105,7 @@ class CommunityFeedService {
   factory CommunityFeedService() => _instance;
   CommunityFeedService._internal();
 
-  static const String _storageKey = 'community_feed_v1';
+  static const String _storageKey = 'community_feed_v2';
   static const String _lastLoginKey = 'last_login_timestamp';
 
   final OnboardingDataService _onboarding = OnboardingDataService();
@@ -256,22 +256,25 @@ class CommunityFeedService {
       ));
     }
 
-    // Sample marketplace items
+    // Sample marketplace items (with image URLs)
     final items = [
       {
         'title': 'Baby Jogger City Mini',
         'price': '\u00a3180',
-        'seller': 'Emma J.'
+        'seller': 'Emma J.',
+        'image': 'https://images.pexels.com/photos/3933096/pexels-photo-3933096.jpeg?auto=compress&cs=tinysrgb&w=400',
       },
       {
         'title': 'Wooden Toy Set',
         'price': '\u00a325',
-        'seller': 'David L.'
+        'seller': 'David L.',
+        'image': 'https://images.pexels.com/photos/3661248/pexels-photo-3661248.jpeg?auto=compress&cs=tinysrgb&w=400',
       },
       {
         'title': 'Ergobaby Carrier',
         'price': '\u00a395',
-        'seller': 'Anna K.'
+        'seller': 'Anna K.',
+        'image': 'https://images.pexels.com/photos/3845459/pexels-photo-3845459.jpeg?auto=compress&cs=tinysrgb&w=400',
       },
     ];
     for (var i = 0; i < items.length; i++) {
@@ -280,24 +283,35 @@ class CommunityFeedService {
         type: FeedItemType.newMarketplaceItem,
         title: items[i]['title']!,
         subtitle: '${items[i]['price']} by ${items[i]['seller']}',
+        imageAsset: items[i]['image'],
         iconName: 'storefront',
         createdAt: now.subtract(Duration(hours: rng.nextInt(36) + 1)),
         meta: items[i],
       ));
     }
 
-    // New events
-    final events = [
-      'Baby Sensory Play',
-      'Parents Coffee Morning',
-      'Toddler Music & Movement',
+    // New events (with image URLs matching meetup images)
+    final eventData = [
+      {
+        'title': 'Baby Sensory Play',
+        'image': 'https://images.pexels.com/photos/296301/pexels-photo-296301.jpeg?auto=compress&cs=tinysrgb&w=400',
+      },
+      {
+        'title': 'Parents Coffee Morning',
+        'image': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=400',
+      },
+      {
+        'title': 'Toddler Music & Movement',
+        'image': 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=400',
+      },
     ];
-    for (var i = 0; i < events.length; i++) {
+    for (var i = 0; i < eventData.length; i++) {
       _feedItems.add(FeedItem(
         id: 'fe_$i',
         type: FeedItemType.newEvent,
-        title: events[i],
-        subtitle: 'New event in $borough',
+        title: eventData[i]['title']!,
+        subtitle: 'New meetup in $borough',
+        imageAsset: eventData[i]['image'],
         iconName: 'event',
         createdAt: now.subtract(Duration(hours: rng.nextInt(72) + 1)),
       ));

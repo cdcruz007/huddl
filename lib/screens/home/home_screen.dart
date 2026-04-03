@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
@@ -11,7 +10,13 @@ import '../../services/postcode_service.dart';
 import '../../services/announcement_service.dart';
 import '../../services/community_feed_service.dart';
 import '../../services/member_photo_service.dart';
+import '../../services/meetup_service.dart';
+import '../../services/invitation_service.dart';
+import '../../services/dm_service.dart';
+import '../../services/browser_storage.dart';
 import '../main_shell.dart';
+import '../events/meetup_detail_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -26,6 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
   final PostcodeService _postcodeService = PostcodeService();
   final AnnouncementService _announcementService = AnnouncementService();
   final CommunityFeedService _feedService = CommunityFeedService();
+  final MeetupService _meetupService = MeetupService();
+  final InvitationService _invitationService = InvitationService();
+  final DMService _dmService = DMService();
+
 
   bool _isLoading = true;
 
@@ -35,7 +44,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Group> _userGroups = [];
   List<Announcement> _announcements = [];
   List<FeedItem> _feedItems = [];
-  List<UpcomingEvent> _upcomingEvents = [];
+  List<Meetup> _upcomingMeetups = [];
+  List<Group> _newPublicGroups = [];
+  List<BoroughMember> _boroughMembers = [];
 
   // Announcement compose
   final TextEditingController _postController = TextEditingController();
@@ -60,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
       await _groupService.initialize();
       await _announcementService.initialize();
       await _feedService.initialize();
+      await _invitationService.initialize();
+      await _dmService.initialize();
 
       String borough = '';
       final pc = _onboarding.postcode;
@@ -69,6 +82,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final groups = await _groupService.getUserGroups('current_user');
 
+      // Get upcoming meetups (sorted by date, future only)
+      final allMeetups = _meetupService.meetups;
+      final upcomingMeetups = allMeetups.take(5).toList();
+
+      // Get new public groups (user-created ones loaded from storage)
+      final newGroups = await _loadNewPublicGroups();
+
+      // Get borough members for Welcome DM
+      List<BoroughMember> boroughMembers = [];
+      if (pc != null) {
+        boroughMembers = InvitationService.getBoroughMembers(pc);
+      }
+
       setState(() {
         _name = _onboarding.name ?? 'there';
         _borough = borough;
@@ -76,12 +102,37 @@ class _HomeScreenState extends State<HomeScreen> {
         _userGroups = groups;
         _announcements = _announcementService.boroughAnnouncements;
         _feedItems = _feedService.feedItems;
-        _upcomingEvents = _feedService.upcomingEvents;
+        _upcomingMeetups = upcomingMeetups;
+        _newPublicGroups = newGroups;
+        _boroughMembers = boroughMembers;
         _isLoading = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  Future<List<Group>> _loadNewPublicGroups() async {
+    // Load user-created public groups from storage
+    final List<Group> result = [];
+    try {
+      final raw = await BrowserStorage.getString('user_created_groups_v1');
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        for (final j in decoded) {
+          final g = Group.fromJson(j as Map<String, dynamic>);
+          if (!g.isPrivate) result.add(g);
+        }
+      }
+    } catch (_) {}
+    // Also include default groups that were recently created
+    final allDefault = _groupService.getAllDefaultGroups();
+    for (final g in allDefault) {
+      if (!result.any((r) => r.id == g.id)) {
+        result.add(g);
+      }
+    }
+    return result.take(6).toList();
   }
 
   String get _greeting {
@@ -138,29 +189,93 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _sharePost(Announcement announcement) {
     _announcementService.share(announcement.id);
-    Clipboard.setData(ClipboardData(
-      text:
-          '${announcement.authorName}: "${announcement.content}" - via Huddl Connect',
-    ));
     setState(() {
       _announcements = _announcementService.boroughAnnouncements;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: HuddlColors.white, size: 18),
-            const SizedBox(width: 8),
-            Text('Post copied to clipboard!',
-                style: GoogleFonts.poppins(fontSize: 13)),
-          ],
-        ),
-        backgroundColor: HuddlColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    _showShareTargetSheet(announcement);
+  }
+
+  /// Shows a bottom sheet letting the user choose a group or individual to share with.
+  void _showShareTargetSheet(Announcement announcement) {
+    final shareText = '${announcement.authorName}: "${announcement.content}" - via Huddl Connect';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return _SharePostSheet(
+          shareText: shareText,
+          userGroups: _userGroups,
+          boroughMembers: _boroughMembers,
+          borough: _borough,
+          currentUserName: _name,
+          dmService: _dmService,
+          onShared: (String targetName) {
+            Navigator.pop(ctx);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.check_circle, color: HuddlColors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text('Shared with $targetName',
+                          style: GoogleFonts.poppins(fontSize: 13)),
+                    ),
+                  ],
+                ),
+                backgroundColor: HuddlColors.success,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  /// Send a welcome DM to a new parent in the same borough
+  Future<void> _sendWelcomeDM(FeedItem item) async {
+    final recipientName = item.title; // The person's name is in title
+    final recipientId = 'mem_${recipientName.toLowerCase().replaceAll(' ', '_').replaceAll("'", '')}';
+    final senderName = _name.isNotEmpty ? _name : 'You';
+
+    final conv = await _dmService.getOrCreateConversation(
+      recipientId: recipientId,
+      recipientName: recipientName,
+    );
+
+    await _dmService.sendMessage(
+      conversationId: conv.id,
+      message: 'Welcome to the $_borough community! Great to have you here. If you need any tips or recommendations for the area, don\'t hesitate to ask!',
+      senderName: senderName,
+    );
+
+    if (mounted) {
+      // Switch to Messages tab
+      _switchToTab(1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: HuddlColors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Welcome message sent to $recipientName!',
+                    style: GoogleFonts.poppins(fontSize: 13)),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _showPostMenu(Announcement announcement) {
@@ -332,12 +447,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ── Feed item tap ─────────────────────────────────────────────────────────
   void _onFeedItemTap(FeedItem item) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ActivityDetailSheet(item: item, borough: _borough),
-    );
+    switch (item.type) {
+      case FeedItemType.newParent:
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _ActivityDetailSheet(
+            item: item,
+            borough: _borough,
+            onAction: () {
+              Navigator.pop(context);
+              _sendWelcomeDM(item);
+            },
+          ),
+        );
+        break;
+      case FeedItemType.newGroup:
+        _switchToTab(1);
+        break;
+      case FeedItemType.newEvent:
+        final match = _meetupService.meetups
+            .where((m) => m.title == item.title)
+            .toList();
+        if (match.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MeetupDetailScreen(meetup: match.first),
+            ),
+          );
+        } else {
+          _switchToTab(2);
+        }
+        break;
+      case FeedItemType.newMarketplaceItem:
+        _switchToTab(3);
+        break;
+      case FeedItemType.milestone:
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => _ActivityDetailSheet(item: item, borough: _borough),
+        );
+        break;
+    }
   }
 
   // ── See All: Community Activity ───────────────────────────────────────────
@@ -618,12 +772,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Upcoming Events ──────────────────────────────────────
+              // ── Upcoming Meetups ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: HuddlSectionHeader(
-                    title: 'Upcoming events',
+                    title: 'Upcoming Meetups',
                     actionText: 'See all',
                     onAction: _openAllEvents,
                   ),
@@ -632,37 +786,54 @@ class _HomeScreenState extends State<HomeScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _upcomingEvents.length,
-                    itemBuilder: (context, index) {
-                      return Container(
-                        width: 240,
-                        margin: EdgeInsets.only(
-                            right:
-                                index < _upcomingEvents.length - 1 ? 12 : 0),
-                        child: GestureDetector(
-                          onTap: () => _switchToTab(2),
-                          child:
-                              _EventCard(event: _upcomingEvents[index]),
+                  height: 210,
+                  child: _upcomingMeetups.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text('No upcoming meetups',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14, color: HuddlColors.textHint)),
+                          ),
+                        )
+                      : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _upcomingMeetups.length,
+                          itemBuilder: (context, index) {
+                            final meetup = _upcomingMeetups[index];
+                            return Container(
+                              width: 240,
+                              margin: EdgeInsets.only(
+                                  right: index < _upcomingMeetups.length - 1
+                                      ? 12
+                                      : 0),
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          MeetupDetailScreen(meetup: meetup),
+                                    ),
+                                  );
+                                },
+                                child: _MeetupCard(meetup: meetup),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Your Groups (real) ───────────────────────────────────
-              if (_userGroups.isNotEmpty) ...[
+              // ── New Groups ──────────────────────────────────────────
+              if (_newPublicGroups.isNotEmpty) ...[
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: HuddlSectionHeader(
-                      title: 'Your groups',
+                      title: 'New Groups',
                       actionText: 'See all',
                       onAction: _openAllGroups,
                     ),
@@ -671,57 +842,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 86,
+                    height: 210,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _userGroups.length,
+                      itemCount: _newPublicGroups.length,
                       itemBuilder: (context, index) {
-                        final g = _userGroups[index];
+                        final g = _newPublicGroups[index];
                         return Container(
-                          width: 70,
+                          width: 240,
                           margin: EdgeInsets.only(
-                              right:
-                                  index < _userGroups.length - 1 ? 14 : 0),
+                              right: index < _newPublicGroups.length - 1
+                                  ? 12
+                                  : 0),
                           child: GestureDetector(
                             onTap: () {
-                              Navigator.of(context).pushNamed(
-                                '/group_chat',
-                                arguments: {
-                                  'groupId': g.id,
-                                  'groupName': g.name,
-                                  'groupImageUrl': g.imageUrl,
-                                },
-                              );
+                              // Navigate to Discover tab in Chat
+                              _switchToTab(1);
                             },
-                            child: Column(
-                              children: [
-                                Container(
-                                  width: 56,
-                                  height: 56,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                        color: HuddlColors.primary
-                                            .withValues(alpha: 0.25),
-                                        width: 1.5),
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: _buildGroupImage(g.imageUrl),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  g.name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    color: HuddlColors.textSecondary,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
+                            child: _NewGroupCard(group: g),
                           ),
                         );
                       },
@@ -764,30 +903,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-  }
-
-  // ── Group image helper (supports data-uri, http, assets) ──────────────
-  Widget _buildGroupImage(String imageUrl) {
-    if (imageUrl.startsWith('data:')) {
-      try {
-        final dataUri = imageUrl.split(',');
-        if (dataUri.length > 1) {
-          final bytes = base64Decode(dataUri[1]);
-          return Image.memory(bytes, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _groupFallback());
-        }
-      } catch (_) {}
-      return _groupFallback();
-    }
-    if (imageUrl.startsWith('http')) {
-      return Image.network(imageUrl, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _groupFallback());
-    }
-    if (imageUrl.startsWith('assets/')) {
-      return Image.asset(imageUrl, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _groupFallback());
-    }
-    return _groupFallback();
   }
 
   Widget _buildSmallAvatar() {
@@ -866,13 +981,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _groupFallback() {
-    return Container(
-      color: HuddlColors.peachLight,
-      child: const Center(
-          child: Icon(Icons.people, size: 22, color: HuddlColors.primary)),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -927,41 +1035,11 @@ class _QuickAction extends StatelessWidget {
   }
 }
 
-// ── Event card ────────────────────────────────────────────────────────────
-class _EventCard extends StatelessWidget {
-  final UpcomingEvent event;
+// ── Meetup card (with real image) ─────────────────────────────────────────
+class _MeetupCard extends StatelessWidget {
+  final Meetup meetup;
 
-  const _EventCard({required this.event});
-
-  Color get _categoryColor {
-    switch (event.category) {
-      case 'Baby':
-        return HuddlColors.primary;
-      case 'Social':
-        return HuddlColors.blue;
-      case 'Toddler':
-        return HuddlColors.accentAmber;
-      case 'Outdoors':
-        return HuddlColors.yellowDark;
-      default:
-        return HuddlColors.primary;
-    }
-  }
-
-  IconData get _categoryIcon {
-    switch (event.category) {
-      case 'Baby':
-        return Icons.child_care;
-      case 'Social':
-        return Icons.coffee;
-      case 'Toddler':
-        return Icons.music_note;
-      case 'Outdoors':
-        return Icons.directions_walk;
-      default:
-        return Icons.event;
-    }
-  }
+  const _MeetupCard({required this.meetup});
 
   @override
   Widget build(BuildContext context) {
@@ -981,19 +1059,32 @@ class _EventCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            height: 100,
+          // Meetup image
+          SizedBox(
+            height: 110,
             width: double.infinity,
-            color: _categoryColor,
             child: Stack(
+              fit: StackFit.expand,
               children: [
-                Center(
-                  child: Icon(
-                    _categoryIcon,
-                    size: 40,
-                    color: HuddlColors.white.withValues(alpha: 0.7),
-                  ),
-                ),
+                meetup.imageUrl.isNotEmpty
+                    ? Image.network(
+                        meetup.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: HuddlColors.primary,
+                          child: const Center(
+                            child: Icon(Icons.groups,
+                                size: 40, color: HuddlColors.white),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        color: HuddlColors.primary,
+                        child: const Center(
+                          child: Icon(Icons.groups,
+                              size: 40, color: HuddlColors.white),
+                        ),
+                      ),
                 Positioned(
                   top: 8,
                   left: 8,
@@ -1001,20 +1092,20 @@ class _EventCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: HuddlColors.white,
+                      color: HuddlColors.white.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      event.date,
+                      meetup.dateDisplay,
                       style: GoogleFonts.poppins(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: _categoryColor,
+                        color: HuddlColors.primary,
                       ),
                     ),
                   ),
                 ),
-                if (!event.isFree)
+                if (!meetup.isFree)
                   Positioned(
                     top: 8,
                     right: 8,
@@ -1022,11 +1113,13 @@ class _EventCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: HuddlColors.white,
+                        color: HuddlColors.white.withValues(alpha: 0.9),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        event.price ?? '',
+                        meetup.price != null
+                            ? '\u00a3${meetup.price!.toStringAsFixed(0)}'
+                            : '',
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -1044,7 +1137,7 @@ class _EventCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  event.title,
+                  meetup.title,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -1059,11 +1152,15 @@ class _EventCard extends StatelessWidget {
                     const Icon(Icons.access_time,
                         size: 14, color: HuddlColors.textHint),
                     const SizedBox(width: 4),
-                    Text(
-                      event.time,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: HuddlColors.textHint,
+                    Expanded(
+                      child: Text(
+                        meetup.timeDisplay,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: HuddlColors.textHint,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1075,7 +1172,7 @@ class _EventCard extends StatelessWidget {
                         size: 14, color: HuddlColors.textHint),
                     const SizedBox(width: 4),
                     Text(
-                      '${event.attendees} going',
+                      '${meetup.attendeeCount} going',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         color: HuddlColors.textHint,
@@ -1087,6 +1184,133 @@ class _EventCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── New Group card (matching meetup card style) ──────────────────────────
+class _NewGroupCard extends StatelessWidget {
+  final Group group;
+
+  const _NewGroupCard({required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            height: 110,
+            width: double.infinity,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _buildGroupImage(group.imageUrl),
+                Positioned(
+                  top: 8,
+                  left: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.white.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.people,
+                            size: 12, color: HuddlColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${group.memberCount} members',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  group.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.textDark,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  group.description,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: HuddlColors.textHint,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildGroupImage(String imageUrl) {
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(imageUrl, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _imageFallback());
+    }
+    if (imageUrl.startsWith('http')) {
+      return Image.network(imageUrl, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _imageFallback());
+    }
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final parts = imageUrl.split(',');
+        if (parts.length > 1) {
+          final bytes = base64Decode(parts[1]);
+          return Image.memory(bytes, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _imageFallback());
+        }
+      } catch (_) {}
+    }
+    return _imageFallback();
+  }
+
+  static Widget _imageFallback() {
+    return Container(
+      color: HuddlColors.peachLight,
+      child: const Center(
+        child: Icon(Icons.people, size: 40, color: HuddlColors.primary),
       ),
     );
   }
@@ -1337,24 +1561,23 @@ class _AnnouncementCard extends StatelessWidget {
   }
 }
 
-// ── Community feed card ───────────────────────────────────────────────────
+// ── Community feed card (with images) ─────────────────────────────────────
 class _FeedCard extends StatelessWidget {
   final FeedItem item;
 
   const _FeedCard({required this.item});
 
-  IconData get _icon {
+  String? get _imageUrl {
+    // Resolve image based on type
     switch (item.type) {
       case FeedItemType.newParent:
-        return Icons.person_add;
+        return MemberPhotoService.getPhotoByName(item.title);
       case FeedItemType.newGroup:
-        return Icons.people;
       case FeedItemType.newEvent:
-        return Icons.event;
       case FeedItemType.newMarketplaceItem:
-        return Icons.storefront;
+        return item.imageAsset; // image URL stored in imageAsset field
       case FeedItemType.milestone:
-        return Icons.emoji_events;
+        return null;
     }
   }
 
@@ -1388,6 +1611,21 @@ class _FeedCard extends StatelessWidget {
     }
   }
 
+  IconData get _icon {
+    switch (item.type) {
+      case FeedItemType.newParent:
+        return Icons.person_add;
+      case FeedItemType.newGroup:
+        return Icons.people;
+      case FeedItemType.newEvent:
+        return Icons.event;
+      case FeedItemType.newMarketplaceItem:
+        return Icons.storefront;
+      case FeedItemType.milestone:
+        return Icons.emoji_events;
+    }
+  }
+
   String get _typeLabel {
     switch (item.type) {
       case FeedItemType.newParent:
@@ -1395,7 +1633,7 @@ class _FeedCard extends StatelessWidget {
       case FeedItemType.newGroup:
         return 'New Group';
       case FeedItemType.newEvent:
-        return 'New Event';
+        return 'New Meetup';
       case FeedItemType.newMarketplaceItem:
         return 'Preloved';
       case FeedItemType.milestone:
@@ -1405,6 +1643,9 @@ class _FeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imgUrl = _imageUrl;
+    final hasImage = imgUrl != null && imgUrl.isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       padding: const EdgeInsets.all(14),
@@ -1421,15 +1662,26 @@ class _FeedCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon
+          // Image or icon
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
               color: _iconBg,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: item.type == FeedItemType.newParent
+                  ? BorderRadius.circular(26)
+                  : BorderRadius.circular(12),
             ),
-            child: Icon(_icon, color: _iconColor, size: 24),
+            clipBehavior: Clip.antiAlias,
+            child: hasImage
+                ? (imgUrl.startsWith('assets/')
+                    ? Image.asset(imgUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Icon(_icon, color: _iconColor, size: 24))
+                    : Image.network(imgUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Icon(_icon, color: _iconColor, size: 24)))
+                : Center(child: Icon(_icon, color: _iconColor, size: 24)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -2250,12 +2502,358 @@ class _NotifItem {
   });
 }
 
+// ── Share Post Sheet ─────────────────────────────────────────────────────
+class _SharePostSheet extends StatefulWidget {
+  final String shareText;
+  final List<Group> userGroups;
+  final List<BoroughMember> boroughMembers;
+  final String borough;
+  final String currentUserName;
+  final DMService dmService;
+  final void Function(String targetName) onShared;
+
+  const _SharePostSheet({
+    required this.shareText,
+    required this.userGroups,
+    required this.boroughMembers,
+    required this.borough,
+    required this.currentUserName,
+    required this.dmService,
+    required this.onShared,
+  });
+
+  @override
+  State<_SharePostSheet> createState() => _SharePostSheetState();
+}
+
+class _SharePostSheetState extends State<_SharePostSheet>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabCtrl;
+  String _search = '';
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabCtrl.dispose();
+    super.dispose();
+  }
+
+  List<Group> get _filteredGroups {
+    if (_search.isEmpty) return widget.userGroups;
+    final q = _search.toLowerCase();
+    return widget.userGroups
+        .where((g) => g.name.toLowerCase().contains(q))
+        .toList();
+  }
+
+  List<BoroughMember> get _filteredMembers {
+    if (_search.isEmpty) return widget.boroughMembers;
+    final q = _search.toLowerCase();
+    return widget.boroughMembers
+        .where((m) => m.name.toLowerCase().contains(q))
+        .toList();
+  }
+
+  Future<void> _shareToGroup(Group group) async {
+    setState(() => _sending = true);
+    // Simulate sharing the post to the group chat
+    await Future.delayed(const Duration(milliseconds: 400));
+    if (mounted) {
+      setState(() => _sending = false);
+      widget.onShared(group.name);
+    }
+  }
+
+  Future<void> _shareToMember(BoroughMember member) async {
+    setState(() => _sending = true);
+    final recipientId = member.id;
+    final conv = await widget.dmService.getOrCreateConversation(
+      recipientId: recipientId,
+      recipientName: member.name,
+    );
+    await widget.dmService.sendMessage(
+      conversationId: conv.id,
+      message: widget.shareText,
+      senderName: widget.currentUserName,
+    );
+    if (mounted) {
+      setState(() => _sending = false);
+      widget.onShared(member.name);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      decoration: const BoxDecoration(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const HuddlBottomSheetHandle(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.share, color: HuddlColors.primary, size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  'Share with...',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              onChanged: (v) => setState(() => _search = v),
+              decoration: InputDecoration(
+                hintText: 'Search groups or people...',
+                hintStyle: GoogleFonts.poppins(
+                    fontSize: 14, color: HuddlColors.textHint),
+                prefixIcon: const Icon(Icons.search,
+                    size: 20, color: HuddlColors.textHint),
+                filled: true,
+                fillColor: HuddlColors.background,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                isDense: true,
+              ),
+              style: GoogleFonts.poppins(
+                  fontSize: 14, color: HuddlColors.textDark),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Tab bar: Groups | People
+          TabBar(
+            controller: _tabCtrl,
+            labelColor: HuddlColors.primary,
+            unselectedLabelColor: HuddlColors.textHint,
+            indicatorColor: HuddlColors.primary,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelStyle: GoogleFonts.poppins(
+                fontSize: 14, fontWeight: FontWeight.w600),
+            unselectedLabelStyle:
+                GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
+            tabs: const [Tab(text: 'My Groups'), Tab(text: 'People')],
+          ),
+          const Divider(height: 1, color: HuddlColors.divider),
+          // Tab views
+          Flexible(
+            child: TabBarView(
+              controller: _tabCtrl,
+              children: [
+                // Groups tab
+                _filteredGroups.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Text(
+                            'No groups to share with',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, color: HuddlColors.textHint),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _filteredGroups.length,
+                        separatorBuilder: (_, __) => const Divider(
+                            height: 1,
+                            indent: 72,
+                            color: HuddlColors.divider),
+                        itemBuilder: (_, i) {
+                          final g = _filteredGroups[i];
+                          return ListTile(
+                            leading: SizedBox(
+                              width: 44,
+                              height: 44,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: _buildShareImage(g.imageUrl),
+                              ),
+                            ),
+                            title: Text(
+                              g.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              '${g.memberCount} members',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: HuddlColors.textHint),
+                            ),
+                            trailing: _sending
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: HuddlColors.primary),
+                                  )
+                                : Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      'Share',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.white,
+                                      ),
+                                    ),
+                                  ),
+                            onTap: _sending ? null : () => _shareToGroup(g),
+                          );
+                        },
+                      ),
+                // People tab
+                _filteredMembers.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32),
+                          child: Text(
+                            'No people in ${widget.borough} to share with',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, color: HuddlColors.textHint),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: _filteredMembers.length,
+                        separatorBuilder: (_, __) => const Divider(
+                            height: 1,
+                            indent: 72,
+                            color: HuddlColors.divider),
+                        itemBuilder: (_, i) {
+                          final m = _filteredMembers[i];
+                          return ListTile(
+                            leading: MemberAvatar(
+                              name: m.name,
+                              imageUrl: m.avatarUrl,
+                              size: 44,
+                            ),
+                            title: Text(
+                              m.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textDark,
+                              ),
+                            ),
+                            subtitle: Text(
+                              widget.borough,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: HuddlColors.textHint),
+                            ),
+                            trailing: _sending
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: HuddlColors.primary),
+                                  )
+                                : Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      'Send',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.white,
+                                      ),
+                                    ),
+                                  ),
+                            onTap: _sending ? null : () => _shareToMember(m),
+                          );
+                        },
+                      ),
+              ],
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShareImage(String imageUrl) {
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(imageUrl, width: 44, height: 44, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _shareFallback());
+    }
+    if (imageUrl.startsWith('http')) {
+      return Image.network(imageUrl, width: 44, height: 44, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _shareFallback());
+    }
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final parts = imageUrl.split(',');
+        if (parts.length > 1) {
+          final bytes = base64Decode(parts[1]);
+          return Image.memory(bytes, width: 44, height: 44, fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _shareFallback());
+        }
+      } catch (_) {}
+    }
+    return _shareFallback();
+  }
+
+  Widget _shareFallback() {
+    return Container(
+      width: 44,
+      height: 44,
+      color: HuddlColors.peachLight,
+      child: const Icon(Icons.people, size: 22, color: HuddlColors.primary),
+    );
+  }
+}
+
 // ── Activity Detail Sheet ─────────────────────────────────────────────────
 class _ActivityDetailSheet extends StatelessWidget {
   final FeedItem item;
   final String borough;
+  final VoidCallback? onAction;
 
-  const _ActivityDetailSheet({required this.item, required this.borough});
+  const _ActivityDetailSheet({required this.item, required this.borough, this.onAction});
 
   @override
   Widget build(BuildContext context) {
@@ -2353,24 +2951,28 @@ class _ActivityDetailSheet extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.pop(context);
-                        // Navigate based on type
-                        final shell = MainShell.shellKey.currentState;
-                        if (shell == null) return;
-                        switch (item.type) {
-                          case FeedItemType.newGroup:
-                            shell.switchTab(1);
-                            break;
-                          case FeedItemType.newEvent:
-                            shell.switchTab(2);
-                            break;
-                          case FeedItemType.newMarketplaceItem:
-                            shell.switchTab(3);
-                            break;
-                          case FeedItemType.newParent:
-                          case FeedItemType.milestone:
-                            // Stay on home
-                            break;
+                        if (onAction != null) {
+                          onAction!();
+                        } else {
+                          Navigator.pop(context);
+                          // Navigate based on type
+                          final shell = MainShell.shellKey.currentState;
+                          if (shell == null) return;
+                          switch (item.type) {
+                            case FeedItemType.newGroup:
+                              shell.switchTab(1);
+                              break;
+                            case FeedItemType.newEvent:
+                              shell.switchTab(2);
+                              break;
+                            case FeedItemType.newMarketplaceItem:
+                              shell.switchTab(3);
+                              break;
+                            case FeedItemType.newParent:
+                            case FeedItemType.milestone:
+                              // Stay on home
+                              break;
+                          }
                         }
                       },
                       child: Text(
