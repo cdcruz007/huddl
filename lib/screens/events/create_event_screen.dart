@@ -523,8 +523,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           children: [
             // ─────────── PHOTO UPLOAD (Blue banner — matching target) ───────────
             _buildPhotoUpload(),
-            const SizedBox(height: 8),
-            _fullWidthDivider(),
+            const SizedBox(height: 16),
 
             // ─────────── EVENT NAME ───────────
             Padding(
@@ -538,8 +537,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 hint: 'Event name',
               ),
             ),
-            const SizedBox(height: 6),
-            _fullWidthDivider(),
+            const SizedBox(height: 8),
 
             // ─────────── LOCATION ───────────
             Padding(
@@ -576,8 +574,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 hint: _isOnline ? 'Link or platform' : 'Location',
               ),
             ),
-            const SizedBox(height: 6),
-            _fullWidthDivider(),
+            const SizedBox(height: 8),
 
             // ─────────── DATE / TIME ───────────
             Padding(
@@ -660,8 +657,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 ),
               ),
 
-            const SizedBox(height: 12),
-            _fullWidthDivider(),
+            const SizedBox(height: 16),
 
             // ─────────── PRICE ───────────
             Padding(
@@ -700,8 +696,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 12),
-            _fullWidthDivider(),
+            const SizedBox(height: 16),
 
             // ─────────── DESCRIPTION ───────────
             Padding(
@@ -740,8 +735,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            _fullWidthDivider(),
+            const SizedBox(height: 16),
 
             // ─────────── CATEGORY ───────────
             Padding(
@@ -907,11 +901,6 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   // ══════════════════════════════════════════════════════════════════════
   // COMPONENT WIDGETS (identical to target design screenshots)
   // ══════════════════════════════════════════════════════════════════════
-
-  /// Full-width thin divider
-  Widget _fullWidthDivider() {
-    return Container(height: 1, color: HuddlColors.gray200);
-  }
 
   /// Blue photo upload banner matching target
   Widget _buildPhotoUpload() {

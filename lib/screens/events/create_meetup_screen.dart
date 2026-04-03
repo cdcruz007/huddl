@@ -566,8 +566,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 children: [
                   // ─────────── PHOTO UPLOAD ───────────
                   _buildPhotoUpload(),
-                  const SizedBox(height: 8),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 16),
 
                   // ─────────── MEETUP NAME ───────────
                   Padding(
@@ -581,8 +580,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       hint: 'Meetup name',
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 8),
 
                   // ─────────── LOCATION ───────────
                   Padding(
@@ -596,8 +594,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       hint: 'Location',
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 8),
 
                   // ─────────── DATE ───────────
                   Padding(
@@ -755,8 +752,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 12),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 16),
 
                   // ─────────── PRICE ───────────
                   Padding(
@@ -796,8 +792,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 16),
 
                   // ─────────── DESCRIPTION ───────────
                   Padding(
@@ -838,8 +833,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _fullWidthDivider(),
+                  const SizedBox(height: 16),
 
                   // ─────────── CATEGORY ───────────
                   Padding(
@@ -1055,14 +1049,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ══════════════════════════════════════════════════════════════════════
   // COMPONENT WIDGETS
   // ══════════════════════════════════════════════════════════════════════
-
-  /// Full-width thin divider matching screenshot
-  Widget _fullWidthDivider() {
-    return Container(
-      height: 1,
-      color: HuddlColors.gray200,
-    );
-  }
 
   /// Blue photo upload banner matching screenshot design
   Widget _buildPhotoUpload() {
