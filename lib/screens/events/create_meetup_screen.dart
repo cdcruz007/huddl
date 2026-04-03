@@ -119,6 +119,57 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     super.dispose();
   }
 
+  // ── More options menu ──────────────────────────────────────────────
+  void _showMoreOptions() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: HuddlColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.save_outlined,
+                  color: HuddlColors.textDark),
+              title: Text('Save as draft',
+                  style: GoogleFonts.poppins(
+                      fontSize: 15, fontWeight: FontWeight.w500)),
+              onTap: () {
+                Navigator.pop(ctx);
+                if (_isFormValid) _createMeetup();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline,
+                  color: HuddlColors.error),
+              title: Text('Discard',
+                  style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.error)),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ]),
+        ),
+      ),
+    );
+  }
+
   // ── Helpers ──────────────────────────────────────────────────────────
   String _formatDate(DateTime d) {
     const months = [
@@ -457,19 +508,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
-        leadingWidth: 80,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Cancel',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark)),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Center(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: HuddlColors.gray100,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.chevron_left,
+                    size: 26, color: HuddlColors.blue),
+              ),
             ),
           ),
         ),
@@ -483,18 +536,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           ),
         ),
         actions: [
-          GestureDetector(
-            onTap: _isFormValid ? _createMeetup : null,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Text('Save',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: _isFormValid
-                            ? HuddlColors.textDark
-                            : HuddlColors.textHint)),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Center(
+              child: GestureDetector(
+                onTap: () => _showMoreOptions(),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.gray100,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.more_horiz,
+                      size: 22, color: HuddlColors.blue),
+                ),
               ),
             ),
           ),
@@ -1015,7 +1071,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         onTap: _pickImage,
         child: SizedBox(
           width: double.infinity,
-          height: 180,
+          height: 240,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -1053,11 +1109,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       onTap: _pickImage,
       child: Container(
         width: double.infinity,
-        height: 140,
-        margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-        decoration: BoxDecoration(
+        height: 240,
+        margin: EdgeInsets.zero,
+        decoration: const BoxDecoration(
           color: HuddlColors.blue,
-          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
