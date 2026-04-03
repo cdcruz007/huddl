@@ -56,12 +56,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Participants ──
   final Map<String, bool> _participants = {
-    'For mums': false,
-    'For dads': false,
-    'For aspiring parents': false,
-    'For expecting parents': false,
-    'For kids': false,
+    'Mums': false,
+    'Dads': false,
+    'Aspiring parents': false,
+    'Expecting parents': false,
+    'Kids': false,
   };
+  final _minAgeCtrl = TextEditingController();
+  final _maxAgeCtrl = TextEditingController();
 
   // ── Privacy ──
   String _privacy = '';
@@ -147,6 +149,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     _priceCtrl.dispose();
     _scrollController.dispose();
     _memberSearchController.dispose();
+    _minAgeCtrl.dispose();
+    _maxAgeCtrl.dispose();
     super.dispose();
   }
 
@@ -961,30 +965,125 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   ),
                   const SizedBox(height: 8),
                   ..._participants.keys.map((key) {
-                    final isOn = _participants[key]!;
+                    final isChecked = _participants[key]!;
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(key,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: HuddlColors.textDark)),
-                            Transform.scale(
-                              scale: 0.8,
-                              child: CupertinoSwitch(
-                                value: isOn,
-                                onChanged: (v) =>
-                                    setState(() => _participants[key] = v),
-                                activeTrackColor: HuddlColors.teal,
-                                inactiveTrackColor: const Color(0xFFE9E9EA),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () => setState(() {
+                              _participants[key] = !_participants[key]!;
+                            }),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Row(
+                                children: [
+                                  _checkbox(isChecked),
+                                  const SizedBox(width: 10),
+                                  Text(key,
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: HuddlColors.textDark)),
+                                ],
+                              ),
+                            ),
+                          ),
+                          // Show age range fields when Kids is checked
+                          if (key == 'Kids' && isChecked) ...[                            Padding(
+                              padding: const EdgeInsets.only(left: 32, right: 0, bottom: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Min. age',
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: HuddlColors.textHint)),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _minAgeCtrl,
+                                          keyboardType: TextInputType.number,
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              color: HuddlColors.textDark),
+                                          decoration: InputDecoration(
+                                            hintText: '0',
+                                            hintStyle: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                color: HuddlColors.textHint),
+                                            border: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.gray300),
+                                            ),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.gray300),
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.primary,
+                                                  width: 1.5),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 20),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Max. age',
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                color: HuddlColors.textHint)),
+                                        const SizedBox(height: 4),
+                                        TextField(
+                                          controller: _maxAgeCtrl,
+                                          keyboardType: TextInputType.number,
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              color: HuddlColors.textDark),
+                                          decoration: InputDecoration(
+                                            hintText: '17',
+                                            hintStyle: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                color: HuddlColors.textHint),
+                                            border: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.gray300),
+                                            ),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.gray300),
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: HuddlColors.primary,
+                                                  width: 1.5),
+                                            ),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 4,
+                                                    vertical: 8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
                     );
                   }),

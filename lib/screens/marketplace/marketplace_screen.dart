@@ -53,9 +53,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   void _onTabChanged() {
-    if (!_tabController.indexIsChanging) {
-      setState(() {});
-    }
+    // Always rebuild to update filter bar visibility across tabs
+    setState(() {});
   }
 
   List<RehomeItem> get _filteredItems => _service.filter(
@@ -120,7 +119,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         child: Column(
           children: [
             _buildHeader(),
-            _buildFilterBar(),
+            // Only show filter bar on Buy tab (index 0)
+            if (_tabController.index == 0) _buildFilterBar(),
             Expanded(
               child: TabBarView(
                 controller: _tabController,

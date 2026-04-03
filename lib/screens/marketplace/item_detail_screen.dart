@@ -7,7 +7,7 @@ import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ITEM DETAIL SCREEN — full product view
+// ITEM DETAIL SCREEN — consistent with Create Meetup / Create Group design
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ItemDetailScreen extends StatefulWidget {
@@ -46,8 +46,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   void _shareItem() {
     final shareText =
-        '${item.title}\n${item.priceDisplay} · ${item.condition.label}'
-        '\n📍 ${item.sellerLocation}'
+        '${item.title}\n${item.priceDisplay} \u00B7 ${item.condition.label}'
+        '\n\uD83D\uDCCD ${item.sellerLocation}'
         '\nSold by ${item.sellerName}'
         '\n\nCheck it out on Huddl Connect Preloved!';
     Clipboard.setData(ClipboardData(text: shareText));
@@ -70,14 +70,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   /// Open (or create) a DM conversation with the item seller and navigate.
   Future<void> _openSellerChat() async {
-    if (_openingChat) return; // prevent double-tap
+    if (_openingChat) return;
     setState(() => _openingChat = true);
 
     try {
-      // Ensure the DM service is ready
       await _dmService.initialize();
-
-      // Get or create a conversation with the seller
       final conversation = await _dmService.getOrCreateConversation(
         recipientId: item.sellerId,
         recipientName: item.sellerName,
@@ -85,7 +82,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
       if (!mounted) return;
 
-      // Navigate to the DM chat screen
       Navigator.pushNamed(
         context,
         '/dm_chat',
@@ -254,59 +250,95 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.white,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              // Image gallery
-              SliverAppBar(
-                expandedHeight: 320,
-                pinned: true,
-                backgroundColor: HuddlColors.white,
-                leading: _circleButton(
-                  icon: Icons.arrow_back,
-                  onTap: () => Navigator.pop(context),
-                ),
-                actions: [
-                  _circleButton(
-                    icon: Icons.share_outlined,
-                    onTap: _shareItem,
-                  ),
-                  _circleButton(
-                    icon: item.isSaved ? Icons.favorite : Icons.favorite_border,
-                    iconColor: item.isSaved ? HuddlColors.error : null,
-                    onTap: _toggleSave,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: _buildImageGallery(),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.white,
+        automaticallyImplyLeading: false,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: const Center(
+            child: Padding(
+              padding: EdgeInsets.only(left: 4),
+              child: Icon(Icons.arrow_back, color: HuddlColors.textDark, size: 24),
+            ),
+          ),
+        ),
+        leadingWidth: 56,
+        centerTitle: true,
+        title: Text(
+          'Item details',
+          style: GoogleFonts.poppins(
+            fontSize: 17,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.textDark,
+          ),
+        ),
+        actions: [
+          GestureDetector(
+            onTap: _shareItem,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Center(
+                child: Icon(Icons.share_outlined,
+                    size: 22, color: HuddlColors.textDark),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: _toggleSave,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Icon(
+                  item.isSaved ? Icons.favorite : Icons.favorite_border,
+                  size: 22,
+                  color: item.isSaved ? HuddlColors.error : HuddlColors.textDark,
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // ─────────── PHOTO GALLERY ───────────
+                  _buildPhotoGallery(),
+                  const SizedBox(height: 20),
 
-              // Content
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Price & condition row
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                  // ─────────── PRICE & CONDITION ───────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _sectionLabel('Price'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: HuddlColors.gray300),
+                        ),
+                      ),
+                      child: Row(
                         children: [
                           Text(
                             item.priceDisplay,
                             style: GoogleFonts.poppins(
-                              fontSize: 28,
+                              fontSize: 22,
                               fontWeight: FontWeight.w700,
                               color: item.isFree
                                   ? HuddlColors.blue
                                   : HuddlColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
@@ -325,169 +357,278 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // Title
-                      Text(
-                        item.title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
-                          height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ─────────── ITEM NAME ───────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _sectionLabel('Item name'),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: HuddlColors.gray300),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      // Listed time
-                      Text(
-                        'Listed ${item.timeAgo}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: HuddlColors.textHint,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Tags row
-                      _buildTagsRow(),
-                      const SizedBox(height: 20),
-                      // Description
-                      Text(
-                        'Description',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        item.description,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: HuddlColors.textSecondary,
-                          height: 1.6,
-                        ),
-                        maxLines: _showFullDescription ? null : 4,
-                        overflow: _showFullDescription
-                            ? null
-                            : TextOverflow.ellipsis,
-                      ),
-                      if (item.description.length > 160) ...[
-                        GestureDetector(
-                          onTap: () => setState(
-                              () => _showFullDescription = !_showFullDescription),
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Expanded(
                             child: Text(
-                              _showFullDescription
-                                  ? 'Show less'
-                                  : 'Read more',
+                              item.title,
                               style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.primary,
+                                fontSize: 14,
+                                color: HuddlColors.textDark,
                               ),
                             ),
                           ),
-                        ),
-                      ],
-
-                      const SizedBox(height: 24),
-                      // Seller card
-                      _buildSellerCard(),
-                      const SizedBox(height: 24),
-                      // Safety tips
-                      _buildSafetyTips(),
-                      const SizedBox(height: 120),
-                    ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Listed ${item.timeAgo}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ─────────── DETAILS (age, category, location) ───────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _sectionLabel('Details'),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _detailRow(
+                      icon: Icons.child_care,
+                      label: 'Age',
+                      value: item.ageStage.shortLabel,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _detailRow(
+                      icon: item.category.icon,
+                      label: 'Category',
+                      value: item.category.label,
+                      color: item.category.color,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _detailRow(
+                      icon: Icons.location_on_outlined,
+                      label: 'Location',
+                      value: item.sellerLocation,
+                      color: HuddlColors.blue,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ─────────── DESCRIPTION ───────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _sectionLabel('Description'),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: TextField(
+                      controller: TextEditingController(text: item.description),
+                      readOnly: true,
+                      maxLines: _showFullDescription ? null : 4,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: HuddlColors.textSecondary,
+                        height: 1.6,
+                      ),
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: HuddlColors.gray300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: HuddlColors.gray300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: HuddlColors.gray300),
+                        ),
+                        contentPadding: const EdgeInsets.all(14),
+                      ),
+                    ),
+                  ),
+                  if (item.description.length > 160)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20, top: 4),
+                      child: GestureDetector(
+                        onTap: () => setState(
+                            () => _showFullDescription = !_showFullDescription),
+                        child: Text(
+                          _showFullDescription ? 'Show less' : 'Read more',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  // ─────────── SELLER ───────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    child: _sectionLabel('Seller'),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildSellerCard(),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ─────────── SAFETY TIPS ───────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildSafetyTips(),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
+            ),
           ),
 
-          // Bottom action bar
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _buildBottomBar(),
+          // ── Bottom action bar ──
+          _buildBottomBar(),
+        ],
+      ),
+    );
+  }
+
+  // ── PHOTO GALLERY (matching Create Meetup / Create Listing blue banner) ──
+
+  Widget _buildPhotoGallery() {
+    final images = item.imageUrls;
+    return SizedBox(
+      width: double.infinity,
+      height: 240,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: images.length,
+            onPageChanged: (i) => setState(() => _currentImage = i),
+            itemBuilder: (_, i) => Image.network(
+              images[i],
+              fit: BoxFit.cover,
+              width: double.infinity,
+              errorBuilder: (_, __, ___) => Container(
+                color: HuddlColors.blue,
+                child: Center(
+                  child: Icon(item.category.icon,
+                      size: 64,
+                      color: Colors.white.withValues(alpha: 0.6)),
+                ),
+              ),
+            ),
+          ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 12,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(images.length, (i) {
+                  return Container(
+                    width: i == _currentImage ? 20 : 7,
+                    height: 7,
+                    margin: const EdgeInsets.symmetric(horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: i == _currentImage
+                          ? HuddlColors.primary
+                          : Colors.white.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  );
+                }),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── DETAIL ROW (underline style matching Create Meetup fields) ──
+
+  Widget _detailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: HuddlColors.gray300),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: HuddlColors.textHint,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: HuddlColors.textDark,
+            ),
           ),
         ],
       ),
     );
   }
 
-  // ── IMAGE GALLERY ─────────────────────────────────────────────────────────
+  // ── SECTION LABEL (matching Create Meetup / Create Group) ──
 
-  Widget _buildImageGallery() {
-    final images = item.imageUrls;
-    return Stack(
-      children: [
-        PageView.builder(
-          itemCount: images.length,
-          onPageChanged: (i) => setState(() => _currentImage = i),
-          itemBuilder: (_, i) => Image.network(
-            images[i],
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: HuddlColors.peachLight,
-              child: Center(
-                child: Icon(item.category.icon,
-                    size: 64,
-                    color: item.category.color.withValues(alpha: 0.4)),
-              ),
-            ),
-          ),
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: HuddlColors.textDark,
         ),
-        if (images.length > 1)
-          Positioned(
-            bottom: 12,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(images.length, (i) {
-                return Container(
-                  width: i == _currentImage ? 20 : 7,
-                  height: 7,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: i == _currentImage
-                        ? HuddlColors.primary
-                        : Colors.white.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                );
-              }),
-            ),
-          ),
-      ],
-    );
-  }
-
-  // ── TAGS ROW ──────────────────────────────────────────────────────────────
-
-  Widget _buildTagsRow() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _InfoTag(
-          icon: Icons.child_care,
-          label: 'For age: ${item.ageStage.shortLabel}',
-          color: HuddlColors.primary,
-        ),
-        _InfoTag(
-          icon: item.category.icon,
-          label: item.category.label,
-          color: item.category.color,
-        ),
-        _InfoTag(
-          icon: Icons.location_on_outlined,
-          label: item.sellerLocation,
-          color: HuddlColors.blue,
-        ),
-      ],
+      ),
     );
   }
 
@@ -495,14 +636,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildSellerCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HuddlColors.gray300),
       ),
       child: Row(
         children: [
-          MemberAvatar(name: item.sellerName, size: 48),
+          MemberAvatar(name: item.sellerName, size: 44),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -511,7 +652,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 Text(
                   item.sellerName,
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: HuddlColors.textDark,
                   ),
@@ -534,15 +675,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.chat_bubble_outline,
-                  color: HuddlColors.primary, size: 20),
-              onPressed: _openSellerChat,
+          GestureDetector(
+            onTap: _openSellerChat,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                border: Border.all(color: HuddlColors.primary),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.chat_bubble_outline,
+                      color: HuddlColors.primary, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Chat',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -556,8 +712,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.blueBackground,
-        borderRadius: BorderRadius.circular(14),
+        color: HuddlColors.blue.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.15)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,7 +791,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: HuddlColors.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Text(
@@ -655,7 +812,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: HuddlColors.primary,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 0,
               ),
@@ -667,80 +824,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   color: Colors.white,
                 ),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── HELPERS ───────────────────────────────────────────────────────────────
-
-  Widget _circleButton({
-    required IconData icon,
-    Color? iconColor,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(4),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.9),
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
-                blurRadius: 6,
-              ),
-            ],
-          ),
-          child: Icon(icon,
-              size: 20,
-              color: iconColor ?? HuddlColors.textDark),
-        ),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// INFO TAG CHIP
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _InfoTag extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _InfoTag({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
             ),
           ),
         ],
