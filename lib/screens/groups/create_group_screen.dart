@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../services/browser_storage.dart';
 import '../../services/onboarding_data_service.dart';
@@ -404,11 +405,6 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                       final member = filtered[index];
                       final isSelected =
                           _selectedMemberIds.contains(member.id);
-                      final initials = member.name
-                          .split(' ')
-                          .map((w) => w[0])
-                          .take(2)
-                          .join();
                       return InkWell(
                         onTap: () {
                           setState(() {
@@ -425,31 +421,18 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           child: Row(
                             children: [
                               Container(
-                                width: 42,
-                                height: 42,
-                                decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? HuddlColors.primary
-                                          .withValues(alpha: 0.15)
-                                      : HuddlColors.background,
-                                  shape: BoxShape.circle,
-                                  border: isSelected
-                                      ? Border.all(
-                                          color: HuddlColors.primary,
-                                          width: 2)
-                                      : null,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    initials,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: isSelected
-                                          ? HuddlColors.primary
-                                          : HuddlColors.textSecondary,
-                                    ),
-                                  ),
+                                decoration: isSelected
+                                    ? BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: HuddlColors.primary,
+                                            width: 2),
+                                      )
+                                    : null,
+                                child: MemberAvatar(
+                                  name: member.name,
+                                  imageUrl: member.avatarUrl,
+                                  size: 42,
                                 ),
                               ),
                               const SizedBox(width: 12),

@@ -158,7 +158,6 @@ class _MessagesTabState extends State<_MessagesTab> {
   List<DMConversation> _filteredDMs = [];
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
-  final Set<String> _favouriteIds = {};
   bool _isLoading = true;
   String _searchQuery = '';
   bool _showSearch = false;
@@ -173,7 +172,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   void initState() {
     super.initState();
     _loadGroups();
-    _loadFavourites();
+    _loadMutedAndPinned();
     _dmService.addListener(_onDMUpdate);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
@@ -191,20 +190,11 @@ class _MessagesTabState extends State<_MessagesTab> {
     _loadGroups();
   }
 
-  // ── Favourites persistence ────────────────────────────────────────
-  static const String _favouritesKey = 'huddl_favourite_ids';
+  // ── Muted & Pinned persistence ────────────────────────────────────
   static const String _mutedKey = 'huddl_muted_ids';
   static const String _pinnedKey = 'huddl_pinned_ids';
 
-  Future<void> _loadFavourites() async {
-    final stored = await BrowserStorage.getString(_favouritesKey);
-    if (stored != null && stored.isNotEmpty) {
-      final List<dynamic> decoded = json.decode(stored);
-      setState(() {
-        _favouriteIds.addAll(decoded.cast<String>());
-      });
-    }
-    // Also load muted and pinned
+  Future<void> _loadMutedAndPinned() async {
     final mutedStored = await BrowserStorage.getString(_mutedKey);
     if (mutedStored != null && mutedStored.isNotEmpty) {
       final List<dynamic> decoded = json.decode(mutedStored);
@@ -221,11 +211,6 @@ class _MessagesTabState extends State<_MessagesTab> {
     }
   }
 
-  Future<void> _saveFavourites() async {
-    await BrowserStorage.setString(
-        _favouritesKey, json.encode(_favouriteIds.toList()));
-  }
-
   Future<void> _saveMutedAndPinned() async {
     await BrowserStorage.setString(
         _mutedKey, json.encode(_mutedGroupIds.toList()));
@@ -233,20 +218,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         _pinnedKey, json.encode(_pinnedGroupIds.toList()));
   }
 
-  void _toggleFavourite(String id) {
-    setState(() {
-      if (_favouriteIds.contains(id)) {
-        _favouriteIds.remove(id);
-        _pinnedGroupIds.remove(id); // Unfavourite also unpins
-      } else {
-        _favouriteIds.add(id);
-        _pinnedGroupIds.add(id); // Favourite also pins
-      }
-      _applyFilter(); // Re-sort to move pinned items to top
-    });
-    _saveFavourites();
-    _saveMutedAndPinned();
-  }
+
 
   void _onDMUpdate() {
     if (mounted) {
@@ -370,11 +342,14 @@ class _MessagesTabState extends State<_MessagesTab> {
       final q = _searchQuery.toLowerCase();
       _filteredGroups = _allGroups
           .where((g) =>
-              g.name.toLowerCase().contains(q))
+              g.name.toLowerCase().contains(q) ||
+              g.description.toLowerCase().contains(q) ||
+              g.category.toLowerCase().contains(q))
           .toList();
       _filteredDMs = _dmConversations
           .where((d) =>
-              d.recipientName.toLowerCase().contains(q))
+              d.recipientName.toLowerCase().contains(q) ||
+              (d.lastMessage?.toLowerCase().contains(q) ?? false))
           .toList();
 
       // Deep search within messages is disabled — search only titles
@@ -1004,7 +979,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 group: item.groupItem!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-                isFavourite: _favouriteIds.contains(item.id),
+
                 onTap: () {
                   Navigator.pushNamed(context, '/group_chat', arguments: {
                     'groupId': item.groupItem!.id,
@@ -1019,14 +994,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showGroupActions(context, item.groupItem!),
-                onToggleFavourite: () => _toggleFavourite(item.id),
+
               );
             } else {
               rowWidget = _DMMessageRow(
                 conversation: item.dmConversation!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-                isFavourite: _favouriteIds.contains(item.id),
+
                 onTap: () {
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
@@ -1038,7 +1013,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showDMActions(context, item.dmConversation!),
-                onToggleFavourite: () => _toggleFavourite(item.id),
+
               );
             }
 
@@ -1164,7 +1139,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 group: item.groupItem!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-                isFavourite: _favouriteIds.contains(item.id),
+
                 onTap: () {
                   Navigator.pushNamed(context, '/group_chat', arguments: {
                     'groupId': item.groupItem!.id,
@@ -1179,14 +1154,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showGroupActions(context, item.groupItem!),
-                onToggleFavourite: () => _toggleFavourite(item.id),
+
               );
             } else {
               rowWidget = _DMMessageRow(
                 conversation: item.dmConversation!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-                isFavourite: _favouriteIds.contains(item.id),
+
                 onTap: () {
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
@@ -1198,7 +1173,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showDMActions(context, item.dmConversation!),
-                onToggleFavourite: () => _toggleFavourite(item.id),
+
               );
             }
 
@@ -1737,166 +1712,154 @@ class _GroupMessageRow extends StatelessWidget {
   final _GroupItem group;
   final bool isPinned;
   final bool isMuted;
-  final bool isFavourite;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  final VoidCallback? onToggleFavourite;
 
   const _GroupMessageRow({
     required this.group,
     required this.isPinned,
     required this.isMuted,
-    this.isFavourite = false,
     required this.onTap,
     required this.onLongPress,
-    this.onToggleFavourite,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasUnread = (group.unreadCount ?? 0) > 0;
 
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
         color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            // ── Group avatar (scenic image or fallback) ──────────
-            _GroupAvatar(
-              imageUrl: group.imageUrl,
-              size: 54,
-              isOnline: hasUnread, // show green dot when there's activity
-            ),
-            const SizedBox(width: 12),
+        borderRadius: BorderRadius.circular(16),
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                // ── Group avatar (scenic image or fallback) ──────────
+                _GroupAvatar(
+                  imageUrl: group.imageUrl,
+                  size: 54,
+                  isOnline: hasUnread,
+                ),
+                const SizedBox(width: 12),
 
-            // ── Name + last message ─────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // ── Name + last message ─────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Pin icon
-                      if (isPinned) ...[
-                        Icon(Icons.push_pin,
-                            size: 14, color: HuddlColors.primary.withValues(alpha: 0.7)),
-                        const SizedBox(width: 4),
-                      ],
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                group.name,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight:
-                                      hasUnread ? FontWeight.w600 : FontWeight.w500,
-                                  color: HuddlColors.textDark,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (group.isPrivate) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.textHint.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Private Group',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textSecondary,
+                      Row(
+                        children: [
+                          if (isPinned) ...[
+                            Icon(Icons.push_pin,
+                                size: 14, color: HuddlColors.primary.withValues(alpha: 0.7)),
+                            const SizedBox(width: 4),
+                          ],
+                          Expanded(
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    group.name,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight:
+                                          hasUnread ? FontWeight.w600 : FontWeight.w500,
+                                      color: HuddlColors.textDark,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      // Mute icon
-                      if (isMuted) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.notifications_off,
-                            size: 14, color: HuddlColors.textHint),
-                      ],
-                      const SizedBox(width: 6),
-                      // Time
-                      Text(
-                        _formatTime(group.lastMessageTime),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: hasUnread ? HuddlColors.primary : HuddlColors.textHint,
-                          fontWeight:
-                              hasUnread ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          group.lastMessage ?? 'Tap to start a conversation',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: hasUnread ? HuddlColors.textSecondary : HuddlColors.textHint,
-                            fontWeight:
-                                hasUnread ? FontWeight.w500 : FontWeight.w400,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (hasUnread) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.primary,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${group.unreadCount}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.white,
+                                if (group.isPrivate) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.textHint.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      'Private Group',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                          if (isMuted) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.notifications_off,
+                                size: 14, color: HuddlColors.textHint),
+                          ],
+                          const SizedBox(width: 6),
+                          Text(
+                            _formatTime(group.lastMessageTime),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: hasUnread ? HuddlColors.primary : HuddlColors.textHint,
+                              fontWeight:
+                                  hasUnread ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              group.lastMessage ?? 'Tap to start a conversation',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: hasUnread ? HuddlColors.textSecondary : HuddlColors.textHint,
+                                fontWeight:
+                                    hasUnread ? FontWeight.w500 : FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (hasUnread) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${group.unreadCount}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            // ── Favourite heart icon ──────────────────────────────
-            GestureDetector(
-              onTap: onToggleFavourite,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: Icon(
-                  isFavourite ? Icons.favorite : Icons.favorite_border,
-                  size: 20,
-                  color: isFavourite
-                      ? HuddlColors.error
-                      : HuddlColors.textHint.withValues(alpha: 0.5),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -2142,19 +2105,15 @@ class _DMMessageRow extends StatelessWidget {
   final DMConversation conversation;
   final bool isPinned;
   final bool isMuted;
-  final bool isFavourite;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  final VoidCallback? onToggleFavourite;
 
   const _DMMessageRow({
     required this.conversation,
     required this.isPinned,
     required this.isMuted,
-    this.isFavourite = false,
     required this.onTap,
     required this.onLongPress,
-    this.onToggleFavourite,
   });
 
   @override
@@ -2162,138 +2121,133 @@ class _DMMessageRow extends StatelessWidget {
     final hasUnread = conversation.unreadCount > 0;
     final color = _dmColorFromHex(conversation.recipientAvatarColor);
 
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
         color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            // ── Person avatar with profile photo ──────────────
-            MemberAvatar(
-              name: conversation.recipientName,
-              size: 54,
-              accentColor: color,
-              showOnlineDot: true,
-              isOnline: DMService().isUserOnline(conversation.recipientId),
-            ),
-            const SizedBox(width: 12),
+        borderRadius: BorderRadius.circular(16),
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                // ── Person avatar with profile photo ──────────────
+                MemberAvatar(
+                  name: conversation.recipientName,
+                  size: 54,
+                  accentColor: color,
+                  showOnlineDot: true,
+                  isOnline: DMService().isUserOnline(conversation.recipientId),
+                ),
+                const SizedBox(width: 12),
 
-            // ── Name + last message ─────────────────────────────
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // ── Name + last message ─────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (isPinned) ...[
-                        Icon(Icons.push_pin,
-                            size: 14,
-                            color: HuddlColors.primary.withValues(alpha: 0.7)),
-                        const SizedBox(width: 4),
-                      ],
-                      Expanded(
-                        child: Text(
-                          conversation.recipientName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight:
-                                hasUnread ? FontWeight.w600 : FontWeight.w500,
-                            color: HuddlColors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (isMuted) ...[
-                        const SizedBox(width: 4),
-                        const Icon(Icons.notifications_off,
-                            size: 14, color: HuddlColors.textHint),
-                      ],
-                      const SizedBox(width: 6),
-                      Text(
-                        _formatTime(conversation.lastMessageTime),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: hasUnread
-                              ? HuddlColors.primary
-                              : HuddlColors.textHint,
-                          fontWeight:
-                              hasUnread ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: conversation.isTyping
-                            ? Text(
-                                'typing...',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                  color: HuddlColors.blue,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              )
-                            : Text(
-                                conversation.lastMessage ??
-                                    'Tap to start chatting',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: hasUnread
-                                      ? HuddlColors.textSecondary
-                                      : HuddlColors.textHint,
-                                  fontWeight: hasUnread
-                                      ? FontWeight.w500
-                                      : FontWeight.w400,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          if (isPinned) ...[
+                            Icon(Icons.push_pin,
+                                size: 14,
+                                color: HuddlColors.primary.withValues(alpha: 0.7)),
+                            const SizedBox(width: 4),
+                          ],
+                          Expanded(
+                            child: Text(
+                              conversation.recipientName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight:
+                                    hasUnread ? FontWeight.w600 : FontWeight.w500,
+                                color: HuddlColors.textDark,
                               ),
-                      ),
-                      if (hasUnread) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.primary,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            '${conversation.unreadCount}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.white,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ],
+                          if (isMuted) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.notifications_off,
+                                size: 14, color: HuddlColors.textHint),
+                          ],
+                          const SizedBox(width: 6),
+                          Text(
+                            _formatTime(conversation.lastMessageTime),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: hasUnread
+                                  ? HuddlColors.primary
+                                  : HuddlColors.textHint,
+                              fontWeight:
+                                  hasUnread ? FontWeight.w600 : FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: conversation.isTyping
+                                ? Text(
+                                    'typing...',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontStyle: FontStyle.italic,
+                                      color: HuddlColors.blue,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  )
+                                : Text(
+                                    conversation.lastMessage ??
+                                        'Tap to start chatting',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: hasUnread
+                                          ? HuddlColors.textSecondary
+                                          : HuddlColors.textHint,
+                                      fontWeight: hasUnread
+                                          ? FontWeight.w500
+                                          : FontWeight.w400,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                          ),
+                          if (hasUnread) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${conversation.unreadCount}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            // ── Favourite heart icon ──────────────────────────────
-            GestureDetector(
-              onTap: onToggleFavourite,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 6),
-                child: Icon(
-                  isFavourite ? Icons.favorite : Icons.favorite_border,
-                  size: 20,
-                  color: isFavourite
-                      ? HuddlColors.error
-                      : HuddlColors.textHint.withValues(alpha: 0.5),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -2477,9 +2431,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   bool _showSearchField = false;
 
   // ── New filter states ─────────────────────────────────────────────────
-  bool _showFavouritesOnly = false;
   Set<String> _selectedAudiences = {}; // multi-select: 'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads'
-  Set<String> _favouriteIds = {};
 
   // Onboarding profile — used for audience-based filtering and borough matching
   final OnboardingDataService _onboardingService = OnboardingDataService();
@@ -2503,11 +2455,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
   void _onGroupsChanged() {
-    // Reload user-created groups and favourites when notified
+    // Reload user-created groups when notified
     _reloadUserCreatedGroups();
-    _loadFavouriteIds().then((_) {
-      if (mounted) setState(() {});
-    });
   }
 
   /// Reload only user-created public groups from storage and rebuild
@@ -2523,8 +2472,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     await _invitationService.initialize();
     // Also load any user-created public groups from local storage
     await _loadUserCreatedGroups();
-    // Load favourites from BrowserStorage (shared with Messages tab)
-    await _loadFavouriteIds();
     if (mounted) {
       setState(() {
         _userParentType = _onboardingService.parentType;
@@ -2535,15 +2482,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
   }
 
-  Future<void> _loadFavouriteIds() async {
-    try {
-      final stored = await BrowserStorage.getString('huddl_favourite_ids');
-      if (stored != null) {
-        final List<dynamic> decoded = json.decode(stored);
-        _favouriteIds = decoded.cast<String>().toSet();
-      }
-    } catch (_) {}
-  }
 
   /// Load user-created groups from local storage and add public ones to
   /// the discover list so other users (in the demo) can see them.
@@ -2671,11 +2609,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       return true;
     }).toList();
 
-    // ── Apply "Show favourite groups" filter ────────────────────────────
-    if (_showFavouritesOnly) {
-      results = results.where((g) => _favouriteIds.contains(g.id)).toList();
-    }
-
     // ── Apply "Show groups for" audience filter (multi-select) ─────────
     if (_selectedAudiences.isNotEmpty) {
       results = results.where((g) {
@@ -2775,7 +2708,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
   // ── Filter and sort bottom sheet (matches provided design) ──────────
   void _showFilterSortSheet() {
-    bool tempFavourites = _showFavouritesOnly;
     Set<String> tempAudiences = Set<String>.from(_selectedAudiences);
     String tempSort = _selectedSort;
 
@@ -2818,7 +2750,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       GestureDetector(
                         onTap: () {
                           setSheetState(() {
-                            tempFavourites = false;
                             tempAudiences = {};
                             tempSort = 'Recommended';
                           });
@@ -2835,30 +2766,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     ],
                   ),
                   const SizedBox(height: 28),
-
-                  // ── "Show favourite groups" toggle ─────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Show favourite groups',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      Switch(
-                        value: tempFavourites,
-                        onChanged: (val) => setSheetState(() => tempFavourites = val),
-                        activeThumbColor: HuddlColors.white,
-                        activeTrackColor: HuddlColors.primary,
-                        inactiveThumbColor: HuddlColors.white,
-                        inactiveTrackColor: HuddlColors.gray300,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
 
                   // ── "Show groups for" multi-select checkboxes ──────
                   Text(
@@ -2990,7 +2897,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       onPressed: () {
                         Navigator.pop(ctx);
                         setState(() {
-                          _showFavouritesOnly = tempFavourites;
                           _selectedAudiences = tempAudiences;
                           _selectedSort = tempSort;
                         });
@@ -3038,8 +2944,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   Widget build(BuildContext context) {
     final groups = _filteredGroups;
 
-    final bool hasActiveFilters =
-        _showFavouritesOnly || _selectedAudiences.isNotEmpty || _selectedSort != 'Recommended';
+    final bool hasActiveFilters = _selectedAudiences.isNotEmpty || _selectedSort != 'Recommended';
 
     return Stack(
       children: [
@@ -3133,7 +3038,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               Expanded(
                                 child: Text(
                                   hasActiveFilters
-                                      ? 'Filtered${_showFavouritesOnly ? ' \u00B7 Favourites' : ''}${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
+                                      ? 'Filtered${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
                                       : 'Filter and sort',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
@@ -3503,32 +3408,8 @@ class _DiscoverGroupCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Category badge (top-left)
-                Positioned(
-                  top: 10, left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: catColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(catIcon, size: 13, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          group.category,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // Audience tags (top-left) — only show valid parent-stage tags
+                ..._buildAudienceTags(group, catColor, catIcon),
                 // "Your group" badge or privacy badge (top-right)
                 if (group.creatorId == 'current_user')
                   Positioned(
@@ -3725,6 +3606,71 @@ class _DiscoverGroupCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Valid parent-stage tags that should be displayed
+  static const _validTags = ['Aspiring Parents', 'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads'];
+
+  List<Widget> _buildAudienceTags(_GroupItem group, Color catColor, IconData catIcon) {
+    // Filter to only valid parent-stage tags
+    final validAudience = group.targetAudience
+        .where((t) => _validTags.any((v) => v.toLowerCase() == t.toLowerCase()))
+        .take(2)
+        .toList();
+
+    if (validAudience.isNotEmpty) {
+      return [
+        Positioned(
+          top: 10, left: 10,
+          child: Wrap(
+            spacing: 4,
+            children: validAudience.map((tag) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: catColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                tag,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            )).toList(),
+          ),
+        ),
+      ];
+    }
+    // Fallback: show category badge
+    return [
+      Positioned(
+        top: 10, left: 10,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: catColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(catIcon, size: 13, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                group.category,
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 
   /// Builds the cover image from various sources: asset, http URL, base64,
