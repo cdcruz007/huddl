@@ -487,33 +487,36 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     Navigator.pop(context, meetup);
   }
 
-  /// Sends group chat message or DMs when a group/private meetup is created
+  /// Sends group chat meetup card or DM meetup cards when a group/private meetup is created.
+  /// Instead of sending a text message, this sends the full meetup data so the
+  /// chat screens can render a clickable meetup card component.
   Future<void> _sendMeetupNotifications(Meetup meetup, String organiserName) async {
     final dmService = DMService();
     await dmService.initialize();
 
+    // Prepare meetup data for the card (serialise the Meetup to JSON)
+    final meetupJson = meetup.toJson();
+    // Ensure imageUrl is not a data: URI (too large for storage)
+    if (meetupJson['imageUrl'] is String &&
+        (meetupJson['imageUrl'] as String).startsWith('data:')) {
+      meetupJson['imageUrl'] = '';
+    }
+
     if (meetup.privacy == MeetupPrivacy.group && meetup.groupId != null) {
-      // For group meetups: post a message to the group chat
-      // The group chat message is simulated by storing it so it appears in the chat
-      final msgText = 'Hey $organiserName has organised a meetup \u2014 '
-          '${meetup.title} and would like you to know if you are interested in attending. '
-          'Please click on this meetup for more details.';
+      // For group meetups: store meetup card data so group chat renders a card
       await BrowserStorage.setString(
         'meetup_notification_${meetup.groupId}',
         json.encode({
+          'type': 'meetup_card',
           'meetupId': meetup.id,
-          'message': msgText,
           'organiser': organiserName,
           'meetupTitle': meetup.title,
-          'dateDisplay': meetup.dateDisplay,
-          'timeDisplay': meetup.timeDisplay,
-          'location': meetup.location,
-          'imageUrl': meetup.imageUrl,
           'timestamp': DateTime.now().toIso8601String(),
+          'meetupData': meetupJson,
         }),
       );
     } else if (meetup.privacy == MeetupPrivacy.private_) {
-      // For private meetups: send a DM to each invited member
+      // For private meetups: send a meetup card DM to each invited member
       for (final memberId in meetup.invitedMemberIds) {
         final member = _boroughMembers.firstWhere(
           (m) => m.id == memberId,
@@ -523,16 +526,12 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         );
         if (member.id.isEmpty) continue;
 
-        final msgText = 'Hey $organiserName has organised a meetup \u2014 '
-            '${meetup.title} and would like you to know if you are interested in attending. '
-            'Please click on this meetup for more details.';
-
         await dmService.sendMeetupInvite(
           recipientId: member.id,
           recipientName: member.name,
-          message: msgText,
           meetupId: meetup.id,
           meetupTitle: meetup.title,
+          meetupData: meetupJson,
         );
       }
     }

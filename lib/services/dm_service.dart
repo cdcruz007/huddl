@@ -210,6 +210,9 @@ class DMService {
       case MessageType.contact:
         displayText = '\u{1F464} ${contactName ?? 'Contact'}';
         break;
+      case MessageType.meetupInvite:
+        displayText = '\u{1F4C5} Meetup invite';
+        break;
       case MessageType.text:
         break;
     }
@@ -443,14 +446,14 @@ class DMService {
     }
   }
 
-  /// Send a meetup invite DM to a specific member.
-  /// Creates or finds the conversation and inserts a rich meetup invite message.
+  /// Send a meetup invite DM as a clickable meetup card to a specific member.
+  /// Creates or finds the conversation and inserts a rich meetup invite card message.
   Future<void> sendMeetupInvite({
     required String recipientId,
     required String recipientName,
-    required String message,
     required String meetupId,
     required String meetupTitle,
+    required Map<String, dynamic> meetupData,
   }) async {
     await initialize();
 
@@ -463,17 +466,19 @@ class DMService {
       id: 'dm_msg_meetup_${DateTime.now().millisecondsSinceEpoch}_$recipientId',
       senderId: 'current_user',
       senderName: 'You',
-      message: message,
+      message: meetupTitle,
       timestamp: DateTime.now(),
       isMe: true,
       status: MessageStatus.sent,
+      type: MessageType.meetupInvite,
+      meetupData: meetupData,
     );
 
     final messages = await getMessages(conv.id);
     messages.add(msg);
     await _saveMessages(conv.id, messages);
 
-    _updateConversationLastMessage(conv.id, message, 'You');
+    _updateConversationLastMessage(conv.id, '\u{1F4C5} Meetup: $meetupTitle', 'You');
   }
 
   /// Clear all DM data — used for GDPR account deletion.

@@ -23,6 +23,7 @@ enum MessageType {
   document,
   location,
   contact,
+  meetupInvite,
 }
 
 /// A single direct message between two users.
@@ -48,6 +49,7 @@ class DirectMessage {
   final String? contactName;    // for contact sharing
   final String? contactPhone;
   final Map<String, int> reactions; // emoji → count
+  final Map<String, dynamic>? meetupData; // for meetup invite cards
 
   DirectMessage({
     required this.id,
@@ -69,6 +71,7 @@ class DirectMessage {
     this.contactName,
     this.contactPhone,
     this.reactions = const {},
+    this.meetupData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -91,6 +94,7 @@ class DirectMessage {
         'contactName': contactName,
         'contactPhone': contactPhone,
         'reactions': reactions,
+        'meetupData': meetupData,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -126,6 +130,9 @@ class DirectMessage {
       contactName: json['contactName'] as String?,
       contactPhone: json['contactPhone'] as String?,
       reactions: rxn,
+      meetupData: json['meetupData'] != null
+          ? Map<String, dynamic>.from(json['meetupData'] as Map)
+          : null,
     );
   }
 
@@ -154,6 +161,7 @@ class DirectMessage {
       contactName: contactName,
       contactPhone: contactPhone,
       reactions: reactions ?? this.reactions,
+      meetupData: meetupData,
     );
   }
 }

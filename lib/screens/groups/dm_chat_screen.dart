@@ -14,6 +14,7 @@ import 'forward_message_sheet.dart';
 import '../../widgets/attach_bottom_sheet.dart';
 import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
+import '../../widgets/meetup_invite_card.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -436,6 +437,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                       },
                                     ),
                                   ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Meetup invite card message
+                          if (msg.type == MessageType.meetupInvite && msg.meetupData != null) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                MeetupInviteCard(
+                                  meetupData: msg.meetupData!,
+                                  isMe: msg.isMe,
                                 ),
                               ],
                             );
@@ -1592,6 +1606,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       case MessageType.document: displayMsg = documentName ?? 'Document'; break;
       case MessageType.location: displayMsg = locationLabel ?? 'Location'; break;
       case MessageType.contact: displayMsg = contactName ?? 'Contact'; break;
+      case MessageType.meetupInvite: displayMsg = 'Meetup invite'; break;
       case MessageType.text: break;
     }
     await _dmService.sendMessage(

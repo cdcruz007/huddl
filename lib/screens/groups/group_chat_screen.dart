@@ -21,6 +21,7 @@ import 'thread_reply_screen.dart';
 import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../widgets/meetup_invite_card.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -2206,6 +2207,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             return _SystemMessageBubble(message: msg);
                           }
 
+                          // Meetup invite card messages
+                          if (msg.isMeetupCard && msg.meetupData != null) {
+                            final showTimestampCard = msgIdx == 0 ||
+                                msg.timestamp
+                                        .difference(_messages[msgIdx - 1].timestamp)
+                                        .inMinutes >
+                                    5;
+                            return Column(
+                              children: [
+                                if (showTimestampCard)
+                                  _TimestampDivider(timestamp: msg.timestamp),
+                                MeetupInviteCard(
+                                  meetupData: msg.meetupData!,
+                                  isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
                           final showAvatar = msgIdx == 0 ||
                               _messages[msgIdx - 1].senderId != msg.senderId ||
                               _messages[msgIdx - 1].isSystem;
@@ -3292,7 +3312,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     } catch (_) {}
   }
 
-  /// Load meetup notification message posted by CreateMeetupScreen
+  /// Load meetup notification posted by CreateMeetupScreen as a clickable meetup card
   Future<void> _loadMeetupNotification() async {
     try {
       final key = 'meetup_notification_${widget.groupId}';
@@ -3302,14 +3322,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         final msgId = 'meetup_notif_${data['meetupId']}';
         if (!_messages.any((msg) => msg.id == msgId)) {
           final ts = DateTime.tryParse(data['timestamp'] as String? ?? '') ?? DateTime.now();
+          final meetupData = data['meetupData'] as Map<String, dynamic>?;
           _messages.add(ChatMessage(
             id: msgId,
             senderId: 'current_user',
             senderName: data['organiser'] as String? ?? 'You',
             senderAvatar: '#FF975C',
-            message: data['message'] as String? ?? '',
+            message: data['meetupTitle'] as String? ?? 'Meetup',
             timestamp: ts,
             isMe: true,
+            isMeetupCard: meetupData != null,
+            meetupData: meetupData,
           ));
         }
       }

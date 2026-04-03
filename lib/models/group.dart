@@ -145,6 +145,8 @@ class ChatMessage {
   final bool isSystem; // for join/leave system messages
   final String? replyToText;
   final String? replyToSender;
+  final bool isMeetupCard; // meetup invite card message
+  final Map<String, dynamic>? meetupData; // full meetup data for card rendering
 
   ChatMessage({
     required this.id,
@@ -157,5 +159,7 @@ class ChatMessage {
     this.isSystem = false,
     this.replyToText,
     this.replyToSender,
+    this.isMeetupCard = false,
+    this.meetupData,
   });
 }
