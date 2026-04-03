@@ -247,6 +247,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // BUILD — consistent layout: AppBar > Photo > scrollable form-like body
+  // ══════════════════════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,14 +262,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         automaticallyImplyLeading: false,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Center(
+          child: Center(
             child: Padding(
-              padding: EdgeInsets.only(left: 4),
-              child: Icon(Icons.arrow_back, color: HuddlColors.textDark, size: 24),
+              padding: const EdgeInsets.only(left: 4),
+              child: Text('Back',
+                  style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textDark)),
             ),
           ),
         ),
-        leadingWidth: 56,
+        leadingWidth: 80,
         centerTitle: true,
         title: Text(
           'Item details',
@@ -279,7 +287,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           GestureDetector(
             onTap: _shareItem,
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 4),
               child: Center(
                 child: Icon(Icons.share_outlined,
                     size: 22, color: HuddlColors.textDark),
@@ -308,7 +316,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ─────────── PHOTO GALLERY ───────────
+                  // ─────────── PHOTO GALLERY (full-width banner) ───────────
                   _buildPhotoGallery(),
                   const SizedBox(height: 20),
 
@@ -321,7 +329,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: HuddlColors.gray300),
                         ),
@@ -334,7 +342,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
                               color: item.isFree
-                                  ? HuddlColors.blue
+                                  ? HuddlColors.teal
                                   : HuddlColors.primary,
                             ),
                           ),
@@ -370,7 +378,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         border: Border(
                           bottom: BorderSide(color: HuddlColors.gray300),
                         ),
@@ -390,7 +398,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(
@@ -408,7 +416,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                     child: _sectionLabel('Details'),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _detailRow(
@@ -436,7 +444,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       color: HuddlColors.blue,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
                   // ─────────── DESCRIPTION ───────────
                   Padding(
@@ -446,35 +454,30 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextField(
-                      controller: TextEditingController(text: item.description),
-                      readOnly: true,
-                      maxLines: _showFullDescription ? null : 4,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: HuddlColors.textSecondary,
-                        height: 1.6,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HuddlColors.gray300),
                       ),
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.gray300),
+                      child: Text(
+                        _showFullDescription
+                            ? item.description
+                            : (item.description.length > 160
+                                ? '${item.description.substring(0, 160)}...'
+                                : item.description),
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          color: HuddlColors.textSecondary,
+                          height: 1.6,
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        contentPadding: const EdgeInsets.all(14),
                       ),
                     ),
                   ),
                   if (item.description.length > 160)
                     Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 4),
+                      padding: const EdgeInsets.only(left: 20, top: 6),
                       child: GestureDetector(
                         onTap: () => setState(
                             () => _showFullDescription = !_showFullDescription),
@@ -482,7 +485,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           _showFullDescription ? 'Show less' : 'Read more',
                           style: GoogleFonts.poppins(
                             fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: FontWeight.w600,
                             color: HuddlColors.primary,
                           ),
                         ),
@@ -523,13 +526,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  // ── PHOTO GALLERY (matching Create Meetup / Create Listing blue banner) ──
+  // ══════════════════════════════════════════════════════════════════════════
+  // COMPONENT WIDGETS (matching Create Meetup / Create Group design language)
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // ── PHOTO GALLERY (full-width banner, matching Create Meetup photo area) ──
 
   Widget _buildPhotoGallery() {
     final images = item.imageUrls;
     return SizedBox(
       width: double.infinity,
-      height: 240,
+      height: 200,
       child: Stack(
         children: [
           PageView.builder(
@@ -540,15 +547,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               fit: BoxFit.cover,
               width: double.infinity,
               errorBuilder: (_, __, ___) => Container(
-                color: HuddlColors.blue,
+                color: HuddlColors.peachLight,
                 child: Center(
                   child: Icon(item.category.icon,
-                      size: 64,
-                      color: Colors.white.withValues(alpha: 0.6)),
+                      size: 56,
+                      color: HuddlColors.primary.withValues(alpha: 0.6)),
                 ),
               ),
             ),
           ),
+          // Page indicator dots
           if (images.length > 1)
             Positioned(
               bottom: 12,
@@ -564,14 +572,51 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     decoration: BoxDecoration(
                       color: i == _currentImage
                           ? HuddlColors.primary
-                          : Colors.white.withValues(alpha: 0.6),
+                          : Colors.white.withValues(alpha: 0.7),
                       borderRadius: BorderRadius.circular(4),
                     ),
                   );
                 }),
               ),
             ),
+          // Image counter badge
+          if (images.length > 1)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_currentImage + 1}/${images.length}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+
+  // ── SECTION LABEL — bold dark text matching Create Meetup / Create Group ──
+
+  Widget _sectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: HuddlColors.textDark,
+        ),
       ),
     );
   }
@@ -586,15 +631,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         border: Border(
           bottom: BorderSide(color: HuddlColors.gray300),
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 10),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
           Text(
             label,
             style: GoogleFonts.poppins(
@@ -612,22 +665,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── SECTION LABEL (matching Create Meetup / Create Group) ──
-
-  Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: HuddlColors.textDark,
-        ),
       ),
     );
   }
@@ -680,21 +717,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: HuddlColors.primary),
+                color: HuddlColors.primary,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.chat_bubble_outline,
-                      color: HuddlColors.primary, size: 16),
+                      color: Colors.white, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'Chat',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.primary,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -712,16 +749,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.blue.withValues(alpha: 0.06),
+        color: HuddlColors.peachLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.15)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.shield_outlined,
-              size: 20, color: HuddlColors.blue),
-          const SizedBox(width: 10),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: HuddlColors.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.shield_outlined,
+                size: 18, color: HuddlColors.primary),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -756,13 +800,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget _buildBottomBar() {
     return Container(
       padding: EdgeInsets.fromLTRB(
-          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+          20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
         color: HuddlColors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
@@ -771,16 +815,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         children: [
           // Save button
           Container(
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              border: Border.all(color: HuddlColors.divider, width: 1.5),
+              border: Border.all(color: HuddlColors.gray300, width: 1.5),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: IconButton(
-              icon: Icon(
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: _toggleSave,
+              child: Icon(
                 item.isSaved ? Icons.favorite : Icons.favorite_border,
                 color: item.isSaved ? HuddlColors.error : HuddlColors.textHint,
+                size: 22,
               ),
-              onPressed: _toggleSave,
             ),
           ),
           const SizedBox(width: 10),
@@ -816,14 +864,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 0,
               ),
-              child: Text(
-                'Message',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
+              child: _openingChat
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
+                    )
+                  : Text(
+                      'Message',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
           ),
         ],
