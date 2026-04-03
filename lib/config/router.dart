@@ -195,7 +195,14 @@ class AppRouter {
         );
 
       case '/item_detail':
-        final item = settings.arguments as RehomeItem;
+        final item = settings.arguments;
+        if (item is! RehomeItem) {
+          return MaterialPageRoute(
+            builder: (_) => const Scaffold(
+              body: Center(child: Text('Item not found')),
+            ),
+          );
+        }
         return SlidePageRoute(
           page: ItemDetailScreen(item: item),
         );

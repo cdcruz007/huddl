@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -127,7 +126,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   void _shareGroup() {
     final shareText =
-        '${_editableName}\n👥 ${widget.memberCount ?? 0} members'
+        '$_editableName\n👥 ${widget.memberCount ?? 0} members'
         '${widget.isPrivate ? ' · Private group' : ''}'
         '\n\nJoin us on Huddl Connect!';
     Clipboard.setData(ClipboardData(text: shareText));

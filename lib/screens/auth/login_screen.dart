@@ -7,7 +7,6 @@ import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/onboarding_data_service.dart';
 import 'login_otp_screen.dart';
-import '../../theme/huddl_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

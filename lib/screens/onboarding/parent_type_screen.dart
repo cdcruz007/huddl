@@ -115,7 +115,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     const SizedBox(height: 12),
                     Center(
                       child: Image.asset(
-                        'assets/images/illustrations/parent_type_illustration.png',
+                        'assets/images/illustrations/man__woman__female__male__person__shapes__shape__layout.png',
                         height: 140,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) =>
