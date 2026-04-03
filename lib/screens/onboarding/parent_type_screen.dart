@@ -74,7 +74,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     _ParentTypeCard(
                       label: 'Mum',
                       subtitle: 'Join as a parent',
-                      icon: Icons.face,
+                      icon: Icons.face_2,
                       accentColor: HuddlColors.onboardingOrange,
                       selected: _selected == 'Mum',
                       onTap: () => setState(() => _selected = 'Mum'),
@@ -84,7 +84,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     _ParentTypeCard(
                       label: 'Dad',
                       subtitle: 'Join as a parent',
-                      icon: Icons.face_2,
+                      icon: Icons.face,
                       accentColor: HuddlColors.onboardingOrange,
                       selected: _selected == 'Dad',
                       onTap: () => setState(() => _selected = 'Dad'),
