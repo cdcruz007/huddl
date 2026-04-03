@@ -384,6 +384,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
     _eventService.createEvent(event);
 
+    if (kDebugMode && _selectedGroupName != null) {
+      debugPrint('Event created for group: $_selectedGroupName');
+    }
+
     setState(() => _isCreating = false);
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -441,20 +445,26 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         // Save text button on the right (matching target)
         actions: [
           GestureDetector(
-            onTap: _isFormValid ? _createEvent : null,
+            onTap: (_isFormValid && !_isCreating) ? _createEvent : null,
             child: Padding(
               padding: const EdgeInsets.only(right: 16),
               child: Center(
-                child: Text(
-                  'Save',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: _isFormValid
-                        ? HuddlColors.textDark
-                        : HuddlColors.textHint,
-                  ),
-                ),
+                child: _isCreating
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: HuddlColors.primary))
+                    : Text(
+                        'Save',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: _isFormValid
+                              ? HuddlColors.textDark
+                              : HuddlColors.textHint,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -505,7 +515,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           value: _isOnline,
                           onChanged: (v) => setState(() => _isOnline = v),
                           activeTrackColor: HuddlColors.teal,
-                          trackColor: const Color(0xFFE9E9EA),
+                          inactiveTrackColor: const Color(0xFFE9E9EA),
                         ),
                       ),
                     ],
@@ -743,7 +753,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                               onChanged: (v) =>
                                   setState(() => _participants[key] = v),
                               activeTrackColor: HuddlColors.teal,
-                              trackColor: const Color(0xFFE9E9EA),
+                              inactiveTrackColor: const Color(0xFFE9E9EA),
                             ),
                           ),
                         ],
