@@ -71,7 +71,7 @@ b) Information Collected Automatically:
 a) Provide and Improve Service:
 \u2022 Create and manage your account
 \u2022 Connect you with local parents
-\u2022 Show relevant groups, events, and content
+\u2022 Show relevant groups, meetups, and content
 \u2022 Process transactions and subscriptions
 \u2022 Provide customer support
 

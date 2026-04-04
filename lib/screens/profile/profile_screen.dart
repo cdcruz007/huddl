@@ -2127,8 +2127,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               setState(() {});
               _saveSetting('pref_dm_messages', v);
             }),
-            _toggleTile(Icons.event_outlined, 'Event reminders',
-                'Reminders for upcoming events', _eventReminders, (v) {
+            _toggleTile(Icons.event_outlined, 'Meetup reminders',
+                'Reminders for upcoming meetups', _eventReminders, (v) {
               setLocal(() => _eventReminders = v);
               setState(() {});
               _saveSetting('pref_event_reminders', v);
@@ -3303,7 +3303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showFAQScreen() {
     final faqs = [
       ('What is Huddl?',
-          'Huddl is a community app for parents in the Cambridge area. Connect with local parents, join groups, attend events, and find support.'),
+          'Huddl is a community app for parents in the Cambridge area. Connect with local parents, join groups, attend meetups, and find support.'),
       ('How do I join a group?',
           'Go to the Local tab \u2192 Discover and browse available groups. Tap on any group and press Join to become a member.'),
       ('Can I create my own group?',
@@ -3457,7 +3457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text(
-              'Huddl connects parents in the Cambridge area, helping you find your community, join local groups, attend events, and support each other through every stage of parenthood.',
+              'Huddl connects parents in the Cambridge area, helping you find your community, join local groups, attend meetups, and support each other through every stage of parenthood.',
               style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: HuddlColors.textSecondary,

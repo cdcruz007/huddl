@@ -96,20 +96,20 @@ class _UpgradePromptSheet extends StatelessWidget {
               // Quick tier previews
               if (currentTier == SubscriptionTier.explorer) ...[
                 _QuickTierPreview(
-                  name: 'Village',
+                  name: 'Neighbourhood',
                   price: '\u00A35.99/mo',
                   color: HuddlColors.primary,
                   icon: Icons.home_outlined,
                   benefits: const [
                     'Unlimited groups, DMs & meetups',
-                    'Private groups & events',
+                    'Private groups & meetups',
                     'Ad-free + expert Q&A',
                   ],
                   onTap: () {
                     Navigator.pop(context, false);
                     Navigator.pushNamed(context, '/subscription_plans',
                         arguments: {
-                          'highlightTier': 'village',
+                          'highlightTier': 'neighbourhood',
                           'gateMessage': message,
                         });
                   },
@@ -123,7 +123,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                 color: HuddlColors.teal,
                 icon: Icons.workspace_premium,
                 benefits: const [
-                  'Everything in Village',
+                  'Everything in Neighbourhood',
                   'Analytics, promoted listings',
                   'Priority support & early access',
                 ],
@@ -295,7 +295,7 @@ class UpgradeBanner extends StatelessWidget {
 
   const UpgradeBanner({
     super.key,
-    this.message = 'Upgrade to Village for unlimited access',
+    this.message = 'Upgrade to Neighbourhood for unlimited access',
     this.onTap,
   });
 

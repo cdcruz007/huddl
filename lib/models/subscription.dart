@@ -228,7 +228,7 @@ class SubscriptionPlan {
         '5 direct conversations',
         '2 marketplace listings',
         '30 messages/month',
-        'View community feed & events',
+        'View community feed & meetups',
         'Basic parent profile',
       ],
       shortBenefits: [

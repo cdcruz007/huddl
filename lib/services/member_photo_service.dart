@@ -1,7 +1,7 @@
 import '../services/onboarding_data_service.dart';
 
 /// Centralised mapping of member names → profile photo URLs.
-/// Used across all screens (home, groups, events, meetups) so
+/// Used across all screens (home, groups, meetups) so
 /// every member avatar is consistent app-wide.
 ///
 /// Also provides a lookup-by-name helper so that even screens

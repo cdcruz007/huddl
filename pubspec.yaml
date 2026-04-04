@@ -1,5 +1,5 @@
 name: huddl_connect
-description: Huddl - Connect with your community through groups, events and marketplace.
+description: Huddl - Connect with your community through groups, meetups and marketplace.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -20,6 +20,9 @@ dependencies:
   image_picker: ^1.1.2
   file_picker: ^8.0.0
   url_launcher: ^6.2.5
+
+  # Payment / In-App Purchases
+  in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
 
 dev_dependencies:
   flutter_test:

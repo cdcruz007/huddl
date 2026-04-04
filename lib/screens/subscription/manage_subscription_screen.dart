@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
+import '../../services/payment_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MANAGE SUBSCRIPTION — view usage, change plan, cancel
+// MANAGE SUBSCRIPTION — view usage, change plan, cancel, restore
+//
+// COMPLIANCE:
+//   Apple 3.1.1:  Restore Purchases button present.
+//   Apple 3.1.2:  Shows current plan, renewal date, auto-renewal status,
+//                 cancellation instructions via system settings.
+//   Google Play:  Shows manage/cancel in Google Play settings instructions.
+//   Web:          Links to Stripe Customer Portal for management.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ManageSubscriptionScreen extends StatefulWidget {
@@ -18,12 +28,20 @@ class ManageSubscriptionScreen extends StatefulWidget {
 
 class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
   final SubscriptionService _service = SubscriptionService();
+  final PaymentService _payService = PaymentService();
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _service.initialize();
+    _initServices();
     _service.addListener(_onUpdate);
+  }
+
+  Future<void> _initServices() async {
+    await _service.initialize();
+    await _payService.initialize();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -43,6 +61,25 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
     }
   }
 
+  Future<void> _restorePurchases() async {
+    setState(() => _isLoading = true);
+    final restored = await _payService.restorePurchases();
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            restored
+                ? 'Subscription restored!'
+                : 'No previous purchases found.',
+            style: GoogleFonts.poppins(color: HuddlColors.white),
+          ),
+          backgroundColor: restored ? HuddlColors.teal : HuddlColors.textHint,
+        ),
+      );
+    }
+  }
+
   Future<void> _cancelSubscription() async {
     // Show exit survey first
     final reason = await _showExitSurvey();
@@ -54,7 +91,8 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Subscription paused for 1 month. Welcome back anytime!',
+            content: Text(
+                'Subscription paused for 1 month. Welcome back anytime!',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
             backgroundColor: HuddlColors.teal,
           ),
@@ -63,16 +101,116 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
       return;
     }
 
-    // Actually cancel
+    // Direct user to platform-specific cancellation
+    if (!kIsWeb) {
+      // On mobile, guide user to their store settings
+      await _showStoreCancellationGuide();
+    } else {
+      // On web, open Stripe Customer Portal
+      await _payService.openSubscriptionManagement();
+    }
+
+    // Actually cancel locally
     await _service.cancelSubscription();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Subscription cancelled. You\'ll keep access until the billing period ends.',
+          content: Text(
+              'Subscription cancelled. You\'ll keep access until the billing period ends.',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
           backgroundColor: HuddlColors.textHint,
         ),
       );
+    }
+  }
+
+  Future<void> _showStoreCancellationGuide() async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Cancel via Your Store',
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'To cancel your subscription, please go to your device settings:',
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: HuddlColors.textSecondary),
+            ),
+            const SizedBox(height: 16),
+            if (defaultTargetPlatform == TargetPlatform.iOS) ...[
+              _StepRow(step: '1', text: 'Open Settings on your iPhone'),
+              _StepRow(step: '2', text: 'Tap your name at the top'),
+              _StepRow(step: '3', text: 'Tap Subscriptions'),
+              _StepRow(step: '4', text: 'Tap Huddl Connect'),
+              _StepRow(step: '5', text: 'Tap Cancel Subscription'),
+            ] else ...[
+              _StepRow(step: '1', text: 'Open Google Play Store'),
+              _StepRow(step: '2', text: 'Tap your profile icon'),
+              _StepRow(step: '3', text: 'Tap Payments & subscriptions'),
+              _StepRow(step: '4', text: 'Tap Subscriptions'),
+              _StepRow(step: '5', text: 'Find Huddl and tap Cancel'),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              'Your current plan will remain active until the end of your billing period.',
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: HuddlColors.textHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Got it',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+          ),
+          if (defaultTargetPlatform == TargetPlatform.iOS)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openAppStoreSubscriptions();
+              },
+              child: Text('Open Settings',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+            )
+          else
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openGooglePlaySubscriptions();
+              },
+              child: Text('Open Play Store',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _openAppStoreSubscriptions() async {
+    // Deep link to iOS subscription management
+    final url = Uri.parse('https://apps.apple.com/account/subscriptions');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _openGooglePlaySubscriptions() async {
+    // Deep link to Google Play subscription management
+    final url = Uri.parse(
+        'https://play.google.com/store/account/subscriptions');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -88,7 +226,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Wait — how about a free pause?',
+        title: Text('Wait \u2014 how about a free pause?',
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
         content: Column(
@@ -115,7 +253,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textDark)),
                         Text(
-                          'Keep your data & groups. Resume when you\'re ready — no charge during the pause.',
+                          'Keep your data & groups. Resume when you\'re ready \u2014 no charge during the pause.',
                           style: GoogleFonts.poppins(
                               fontSize: 12, color: HuddlColors.textSecondary),
                         ),
@@ -182,7 +320,13 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             children: [
               // Current plan card
               _CurrentPlanCard(subscription: sub),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Payment info card (for paid users)
+              if (isPaid) ...[
+                _PaymentInfoCard(paymentService: _payService),
+                const SizedBox(height: 20),
+              ],
 
               // Usage section
               Text('Your Usage',
@@ -292,6 +436,25 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                // Restore purchases (Apple Guideline 3.1.1)
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _isLoading ? null : _restorePurchases,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.restore, size: 18),
+                    label: Text('Restore Purchases',
+                        style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.textHint)),
+                  ),
+                ),
               ] else ...[
                 // Change plan / Cancel
                 SizedBox(
@@ -308,6 +471,46 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                     child: Text('Change Plan',
                         style: GoogleFonts.poppins(
                             fontSize: 15, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                // Manage via store
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      if (kIsWeb) {
+                        _payService.openSubscriptionManagement();
+                      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+                        _openAppStoreSubscriptions();
+                      } else {
+                        _openGooglePlaySubscriptions();
+                      }
+                    },
+                    icon: Icon(
+                      kIsWeb
+                          ? Icons.credit_card
+                          : (defaultTargetPlatform == TargetPlatform.iOS
+                              ? Icons.apple
+                              : Icons.g_mobiledata),
+                      size: 20,
+                    ),
+                    label: Text(
+                      kIsWeb
+                          ? 'Manage via Stripe'
+                          : (defaultTargetPlatform == TargetPlatform.iOS
+                              ? 'Manage in App Store'
+                              : 'Manage in Google Play'),
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: HuddlColors.textDark,
+                      side: const BorderSide(color: HuddlColors.gray300),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -335,6 +538,104 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBWIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+class _StepRow extends StatelessWidget {
+  final String step;
+  final String text;
+  const _StepRow({required this.step, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: HuddlColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Text(step,
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(text,
+                style: GoogleFonts.poppins(
+                    fontSize: 13, color: HuddlColors.textDark)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Shows current payment billing info
+class _PaymentInfoCard extends StatelessWidget {
+  final PaymentService paymentService;
+  const _PaymentInfoCard({required this.paymentService});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: HuddlColors.gray200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: HuddlColors.blueBackground,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              kIsWeb
+                  ? Icons.credit_card
+                  : (defaultTargetPlatform == TargetPlatform.iOS
+                      ? Icons.apple
+                      : Icons.g_mobiledata),
+              color: HuddlColors.blue,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Billed via ${paymentService.paymentMethodName}',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textDark)),
+                Text(
+                  kIsWeb
+                      ? 'Managed through your Stripe account'
+                      : 'Managed through your ${defaultTargetPlatform == TargetPlatform.iOS ? 'Apple ID' : 'Google'} account',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right,
+              color: HuddlColors.textHint, size: 20),
+        ],
+      ),
+    );
+  }
+}
 
 class _ExitSurveyDialog extends StatefulWidget {
   @override
@@ -374,7 +675,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Help us improve — what\'s your main reason for cancelling?',
+            Text('Help us improve \u2014 what\'s your main reason for cancelling?',
                 style: GoogleFonts.poppins(
                     fontSize: 13, color: HuddlColors.textSecondary)),
             const SizedBox(height: 12),
@@ -509,7 +810,8 @@ class _CurrentPlanCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber.withValues(alpha: 0.2),
+                              color:
+                                  HuddlColors.accentAmber.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('Trial',
@@ -525,7 +827,8 @@ class _CurrentPlanCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                              color: const Color(0xFF8B5CF6)
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Row(
@@ -550,12 +853,12 @@ class _CurrentPlanCard extends StatelessWidget {
                       Text(
                         subscription.isTrial
                             ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
-                            : 'Renews ${_formatDate(subscription.renewalDate!)}',
+                            : 'Auto-renews ${_formatDate(subscription.renewalDate!)}',
                         style: GoogleFonts.poppins(
                             fontSize: 12, color: HuddlColors.textSecondary),
                       )
                     else
-                      Text('Free plan — upgrade anytime',
+                      Text('Free plan \u2014 upgrade anytime',
                           style: GoogleFonts.poppins(
                               fontSize: 12, color: HuddlColors.textHint)),
                   ],
@@ -563,7 +866,8 @@ class _CurrentPlanCard extends StatelessWidget {
               ),
               if (!isFree)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),

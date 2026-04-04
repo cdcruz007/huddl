@@ -321,6 +321,7 @@ class SubscriptionService extends ChangeNotifier {
     switch (feature) {
       case 'private_groups':
       case 'meetups':
+      case 'events': // backward-compat alias for 'meetups'
       case 'ad_free':
       case 'profile_badge':
       case 'expert_qa':
