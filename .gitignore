@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Backend secrets (NEVER commit)
+backend/.env
+backend/config/firebase-admin-sdk.json
+backend/config/apple-subscription-key.p8
+backend/node_modules/
+
+# Signing keys
+android/release-key.jks
+android/key.properties

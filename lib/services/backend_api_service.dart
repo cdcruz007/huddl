@@ -1,0 +1,217 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// HUDDL CONNECT — BACKEND API SERVICE
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// Centralised HTTP client for communicating with the Huddl Node.js backend.
+// Handles:
+//   - Firebase ID token injection in every request
+//   - Stripe Checkout session creation
+//   - Stripe Customer Portal
+//   - Apple & Google receipt verification
+//   - Subscription status queries
+//   - FCM token registration
+//   - Error mapping
+//
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+
+class BackendApiService {
+  // ── Singleton ──────────────────────────────────────────────────────────
+  static final BackendApiService _instance = BackendApiService._();
+  factory BackendApiService() => _instance;
+  BackendApiService._();
+
+  // ── Configuration ──────────────────────────────────────────────────────
+  // In production, point to your deployed backend URL.
+  // In development, use the local backend or the sandbox URL.
+  static const String _prodBaseUrl = 'https://api.huddlconnect.com';
+  static const String _devBaseUrl = 'http://localhost:3000';
+
+  String get baseUrl {
+    if (kReleaseMode) return _prodBaseUrl;
+    return _devBaseUrl;
+  }
+
+  // ── Auth helper ────────────────────────────────────────────────────────
+
+  /// Get the current user's Firebase ID token for API authentication.
+  Future<String?> _getIdToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return await user.getIdToken();
+  }
+
+  /// Build authenticated headers.
+  Future<Map<String, String>> _authHeaders() async {
+    final token = await _getIdToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // STRIPE ENDPOINTS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Create a Stripe Checkout session and return the redirect URL.
+  ///
+  /// Returns { 'sessionId': '...', 'url': 'https://checkout.stripe.com/...' }
+  Future<Map<String, dynamic>> createCheckoutSession({
+    required String productId,
+    String? successUrl,
+    String? cancelUrl,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/stripe/create-checkout-session'),
+      headers: headers,
+      body: jsonEncode({
+        'productId': productId,
+        if (successUrl != null) 'successUrl': successUrl,
+        if (cancelUrl != null) 'cancelUrl': cancelUrl,
+      }),
+    );
+    return _handleResponse(response);
+  }
+
+  /// Create a Stripe Customer Portal session and return the redirect URL.
+  ///
+  /// Returns { 'url': 'https://billing.stripe.com/...' }
+  Future<Map<String, dynamic>> createCustomerPortal() async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/stripe/customer-portal'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // RECEIPT VERIFICATION
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Verify an Apple App Store receipt.
+  ///
+  /// Returns { 'valid': true, 'subscription': { 'tier': '...', ... } }
+  Future<Map<String, dynamic>> verifyAppleReceipt({
+    required String receiptData,
+    required String productId,
+    String? transactionId,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/verify/apple'),
+      headers: headers,
+      body: jsonEncode({
+        'receiptData': receiptData,
+        'productId': productId,
+        if (transactionId != null) 'transactionId': transactionId,
+      }),
+    );
+    return _handleResponse(response);
+  }
+
+  /// Verify a Google Play purchase token.
+  ///
+  /// Returns { 'valid': true, 'subscription': { 'tier': '...', ... } }
+  Future<Map<String, dynamic>> verifyGoogleReceipt({
+    required String purchaseToken,
+    required String productId,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/verify/google'),
+      headers: headers,
+      body: jsonEncode({
+        'purchaseToken': purchaseToken,
+        'productId': productId,
+      }),
+    );
+    return _handleResponse(response);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTION
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Get the current subscription status from the backend.
+  Future<Map<String, dynamic>> getSubscriptionStatus(String userId) async {
+    final headers = await _authHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/subscription/$userId'),
+      headers: headers,
+    );
+    return _handleResponse(response);
+  }
+
+  /// Cancel the current subscription.
+  Future<Map<String, dynamic>> cancelSubscription({
+    String? reason,
+    int? pauseMonths,
+  }) async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/subscription/cancel'),
+      headers: headers,
+      body: jsonEncode({
+        if (reason != null) 'reason': reason,
+        if (pauseMonths != null) 'pauseMonths': pauseMonths,
+      }),
+    );
+    return _handleResponse(response);
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // NOTIFICATIONS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Register the FCM token with the backend.
+  Future<void> registerFcmToken({
+    required String token,
+    required String platform,
+  }) async {
+    final headers = await _authHeaders();
+    await http.post(
+      Uri.parse('$baseUrl/api/notifications/register-token'),
+      headers: headers,
+      body: jsonEncode({
+        'token': token,
+        'platform': platform,
+      }),
+    );
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // RESPONSE HANDLING
+  // ═════════════════════════════════════════════════════════════════════════
+
+  Map<String, dynamic> _handleResponse(http.Response response) {
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return body;
+    }
+
+    final errorMsg = body['error'] as String? ?? 'Unknown error';
+    throw BackendApiException(
+      statusCode: response.statusCode,
+      message: errorMsg,
+    );
+  }
+}
+
+/// Exception thrown when a backend API call fails.
+class BackendApiException implements Exception {
+  final int statusCode;
+  final String message;
+
+  BackendApiException({required this.statusCode, required this.message});
+
+  @override
+  String toString() => 'BackendApiException($statusCode): $message';
+}

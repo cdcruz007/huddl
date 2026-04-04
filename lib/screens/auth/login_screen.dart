@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
-import '../../services/onboarding_data_service.dart';
-import 'login_otp_screen.dart';
+import '../../services/firebase_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -88,11 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool get _canLogin => _isPhoneValid && _isPasswordValid;
 
-  // ── Generate a 6-digit OTP ──────────────────────────────────────────────
-  String _generateOtp() {
-    final rng = math.Random();
-    return List.generate(6, (_) => rng.nextInt(10)).join();
-  }
+  final FirebaseAuthService _authService = FirebaseAuthService();
 
   Future<void> _handleLogin() async {
     if (!_canLogin) return;
@@ -101,41 +95,28 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    final digits = _normalise(_phoneController.text);
+    // Build an email from the phone number (Firebase email/password pattern)
+    final email = '$_countryCode$digits@huddl.app';
+    final password = _passwordController.text;
+
+    final result = await _authService.signInWithEmail(
+      email: email,
+      password: password,
+    );
 
     if (!mounted) return;
 
-    // Validate against stored onboarding credentials
-    final svc          = OnboardingDataService();
-    final storedPhone  = svc.fullPhoneNumber ?? '';
-    final storedPass   = svc.password        ?? '';
-    final digits       = _normalise(_phoneController.text);
-    final enteredPhone = '$_countryCode$digits';
-
-    final credentialsValid = storedPhone.isNotEmpty &&
-        storedPass.isNotEmpty &&
-        enteredPhone == storedPhone &&
-        _passwordController.text == storedPass;
-
-    if (credentialsValid) {
-      final otp           = _generateOtp();
-      final displayPhone  = '$_countryCode $digits';
+    if (result.isSuccess) {
+      // Update last active timestamp
+      _authService.updateLastActive();
 
       setState(() => _isLoading = false);
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LoginOtpScreen(
-            phoneNumber:  displayPhone,
-            generatedOtp: otp,
-          ),
-        ),
-      );
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } else {
       setState(() {
         _isLoading    = false;
-        _errorMessage = 'Incorrect phone number or password.\nPlease try again.';
+        _errorMessage = result.errorMessage ?? 'Login failed. Please try again.';
       });
     }
   }
@@ -420,10 +401,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Forgot password — OTP then new password entry ──────────────────────
+  // ── Forgot password — Firebase password reset via email ──────────────────
   void _showForgotPasswordFlow() {
     final resetPhoneCtrl = TextEditingController();
     String? resetPhoneError;
+    bool isSending = false;
 
     showModalBottomSheet(
       context: context,
@@ -458,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: HuddlColors.textDark)),
                 const SizedBox(height: 8),
                 Text(
-                    'Enter your UK mobile number. We\'ll send a 6-digit OTP to verify your identity.',
+                    'Enter your UK mobile number. We\'ll send a password reset link to your associated email.',
                     style: TextStyle(
                         fontSize: 14,
                         color: HuddlColors.textSecondary,
@@ -525,12 +507,32 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: isSending ? null : () async {
                       final digits = _normalise(resetPhoneCtrl.text);
                       if (digits.length == 10 && digits.startsWith('7')) {
+                        setLocal(() => isSending = true);
+                        final email = '+44$digits@huddl.app';
+                        final result = await _authService.sendPasswordResetEmail(email);
+                        if (!ctx.mounted) return;
+                        setLocal(() => isSending = false);
                         Navigator.pop(ctx);
-                        final otp = _generateOtp();
-                        _showResetOtpScreen('+44$digits', otp);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                  result.isSuccess
+                                      ? 'Password reset email sent!'
+                                      : result.errorMessage ?? 'Failed to send reset email.',
+                                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                              backgroundColor: result.isSuccess
+                                  ? HuddlColors.successGreen
+                                  : HuddlColors.error,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -540,220 +542,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                     ),
-                    child: const Text('Send OTP',
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showResetOtpScreen(String phone, String otp) {
-    final codeCtrl = TextEditingController();
-    final newPwdCtrl = TextEditingController();
-    final confirmPwdCtrl = TextEditingController();
-    bool otpVerified = false;
-    bool hasOtpError = false;
-    bool obscureNew = true;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (c) => StatefulBuilder(
-        builder: (ctx, setLocal) {
-          return Padding(
-            padding: EdgeInsets.fromLTRB(
-                24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.gray300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                    otpVerified ? 'Set new password' : 'Enter OTP',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark)),
-                const SizedBox(height: 8),
-                if (!otpVerified) ...[
-                  Text(
-                      'Enter the 6-digit code sent to $phone',
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: HuddlColors.textSecondary,
-                          height: 1.4)),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: codeCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 6,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 8),
-                    decoration: InputDecoration(
-                      counterText: '',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: HuddlColors.primary, width: 2)),
-                    ),
-                  ),
-                  if (hasOtpError)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text('Incorrect code. Try again.',
-                          style: TextStyle(
-                              fontSize: 12, color: HuddlColors.error)),
-                    ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (codeCtrl.text.trim() == otp ||
-                            codeCtrl.text.trim() == '123456') {
-                          setLocal(() {
-                            otpVerified = true;
-                            hasOtpError = false;
-                          });
-                        } else {
-                          setLocal(() => hasOtpError = true);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      child: const Text('Verify',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white)),
-                    ),
-                  ),
-                ] else ...[
-                  Text(
-                      'Create a new password (min 8 chars, 1 upper, 1 lower, 1 digit)',
-                      style: TextStyle(
-                          fontSize: 14,
-                          color: HuddlColors.textSecondary,
-                          height: 1.4)),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: newPwdCtrl,
-                    obscureText: obscureNew,
-                    onChanged: (_) => setLocal(() {}),
-                    decoration: InputDecoration(
-                      labelText: 'New password',
-                      suffixIcon: IconButton(
-                        icon: Icon(obscureNew
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined),
-                        onPressed: () =>
-                            setLocal(() => obscureNew = !obscureNew),
-                      ),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: HuddlColors.primary, width: 2)),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: confirmPwdCtrl,
-                    obscureText: true,
-                    onChanged: (_) => setLocal(() {}),
-                    decoration: InputDecoration(
-                      labelText: 'Confirm password',
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                              color: HuddlColors.primary, width: 2)),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: (newPwdCtrl.text.length >= 8 &&
-                              RegExp(r'[A-Z]').hasMatch(newPwdCtrl.text) &&
-                              RegExp(r'[a-z]').hasMatch(newPwdCtrl.text) &&
-                              RegExp(r'[0-9]').hasMatch(newPwdCtrl.text) &&
-                              newPwdCtrl.text == confirmPwdCtrl.text)
-                          ? () {
-                              OnboardingDataService()
-                                  .setPassword(newPwdCtrl.text);
-                              Navigator.pop(ctx);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                      'Password reset successfully! You can now log in.',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.w600)),
-                                  backgroundColor: HuddlColors.successGreen,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.circular(12)),
-                                ),
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        disabledBackgroundColor: HuddlColors.disabled,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                      ),
-                      child: const Text('Reset Password',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white)),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text('Cancel',
-                        style: TextStyle(color: HuddlColors.textSecondary)),
+                    child: isSending
+                        ? const SizedBox(
+                            width: 20, height: 20,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Text('Send Reset Link',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white)),
                   ),
                 ),
               ],

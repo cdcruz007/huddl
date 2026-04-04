@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
+import '../../services/firebase_auth_service.dart';
 
 /// ── Huddl Splash Screen ────────────────────────────────────────────────────
 /// Design:
@@ -124,16 +125,37 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true); // bounces back and forth continuously
 
-    // Start logo animation after short delay, then navigate
+    // Start logo animation after short delay, then check auth & navigate
     Future.delayed(const Duration(milliseconds: 200), () {
       if (!mounted) return;
       _logoCtrl.forward().then((_) {
         Future.delayed(const Duration(milliseconds: 900), () {
           if (!mounted) return;
-          Navigator.of(context).pushReplacementNamed('/onboarding');
+          _navigateBasedOnAuth();
         });
       });
     });
+  }
+
+  /// Check Firebase Auth state and navigate to the right screen.
+  Future<void> _navigateBasedOnAuth() async {
+    final auth = FirebaseAuthService();
+    if (auth.isSignedIn) {
+      // User is already signed in — check if they have a Firestore profile
+      final hasProfile = await auth.hasUserProfile();
+      if (!mounted) return;
+      if (hasProfile) {
+        // Returning user → go to home
+        auth.updateLastActive();
+        Navigator.of(context).pushReplacementNamed('/home');
+      } else {
+        // Signed in but no profile → incomplete onboarding
+        Navigator.of(context).pushReplacementNamed('/onboarding');
+      }
+    } else {
+      // Not signed in → show onboarding / login
+      Navigator.of(context).pushReplacementNamed('/onboarding');
+    }
   }
 
   @override

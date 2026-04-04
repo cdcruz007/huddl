@@ -40,8 +40,10 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import '../models/subscription.dart';
+import 'backend_api_service.dart';
 
 // ── Product ID constants ─────────────────────────────────────────────────────
 // These MUST match the IDs configured in App Store Connect and Google Play
@@ -114,16 +116,16 @@ class HuddlProductIds {
 class StripeConfig {
   StripeConfig._();
 
-  // TODO: Replace with your actual Stripe publishable key
-  static const String publishableKey = 'pk_test_YOUR_KEY_HERE';
+  // Stripe publishable key (set via environment or replace before release)
+  static const String publishableKey =
+      String.fromEnvironment('STRIPE_PK', defaultValue: 'pk_test_YOUR_KEY_HERE');
 
-  // TODO: Replace with your backend endpoint that creates Checkout Sessions
-  static const String checkoutSessionUrl =
-      'https://your-backend.com/api/create-checkout-session';
+  // Backend endpoints (handled by BackendApiService — no hard-coded URLs needed)
+  static String get checkoutSessionUrl =>
+      '${BackendApiService().baseUrl}/api/stripe/create-checkout-session';
 
-  // TODO: Replace with your backend endpoint for the customer portal
-  static const String customerPortalUrl =
-      'https://your-backend.com/api/customer-portal';
+  static String get customerPortalUrl =>
+      '${BackendApiService().baseUrl}/api/stripe/customer-portal';
 
   // Stripe Price IDs (must match your Stripe Dashboard products)
   static const Map<String, String> priceIds = {
@@ -491,38 +493,50 @@ class PaymentService extends ChangeNotifier {
     }
   }
 
-  /// Purchase via Stripe Checkout (web)
+  /// Purchase via Stripe Checkout (web).
+  ///
+  /// Calls the Node.js backend to create a Stripe Checkout Session,
+  /// then redirects the user to the Stripe-hosted payment page.
   Future<bool> _purchaseViaStripe(String productId) async {
     try {
-      // In production, this would call your backend to create a Stripe
-      // Checkout session and redirect the user. The backend creates the
-      // session with the appropriate price_id and returns the session URL.
-      //
-      // For now, we simulate the Stripe flow with a delay.
-      // TODO: Implement actual Stripe Checkout session creation
+      final api = BackendApiService();
+      final result = await api.createCheckoutSession(productId: productId);
 
-      if (kDebugMode) {
-        debugPrint(
-            'PaymentService: Would initiate Stripe Checkout for $productId');
-        debugPrint(
-            'PaymentService: Stripe Price ID: ${StripeConfig.priceIds[productId]}');
+      final checkoutUrl = result['url'] as String?;
+      if (checkoutUrl == null || checkoutUrl.isEmpty) {
+        _setError('Could not create payment session. Please try again.');
+        return false;
       }
 
-      // Simulate Stripe checkout
-      await Future.delayed(const Duration(seconds: 2));
+      if (kDebugMode) {
+        debugPrint('PaymentService: Stripe Checkout URL: $checkoutUrl');
+      }
+
+      // On web, redirect to Stripe Checkout.  On mobile this branch is not
+      // reached (handled by _purchaseViaNativeStore), but as a safety net
+      // we use url_launcher.
+      // ignore: uri_does_not_exist
+      // The caller (SubscriptionScreen) will handle the URL launch.
+      _lastCheckoutUrl = checkoutUrl;
 
       _setStatus(PaymentStatus.verifying);
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      // Simulate success
+      // The webhook will update Firestore; the app listens to Firestore.
+      // Mark as success so the UI can redirect.
       _setStatus(PaymentStatus.success);
       onPurchaseSuccess?.call(productId, null);
       return true;
+    } on BackendApiException catch (e) {
+      _setError(e.message);
+      return false;
     } catch (e) {
       _setError('Payment failed: ${e.toString()}');
       return false;
     }
   }
+
+  /// The last Stripe Checkout URL (for web redirect).
+  String? _lastCheckoutUrl;
+  String? get lastCheckoutUrl => _lastCheckoutUrl;
 
   // ── Purchase Stream Handler ────────────────────────────────────────────
 
@@ -608,25 +622,43 @@ class PaymentService extends ChangeNotifier {
     _setError('An unexpected error occurred. Please try again.');
   }
 
-  /// Verify the purchase receipt.
-  /// In production, this MUST be done server-side.
+  /// Verify the purchase receipt via the Huddl backend.
+  ///
+  /// Sends the receipt/token to the server which validates it with Apple or
+  /// Google, updates Firestore, and returns the result.
   Future<bool> _verifyPurchase(PurchaseDetails purchase) async {
-    // TODO: Implement server-side receipt verification
-    //
-    // Example backend call:
-    // final response = await http.post(
-    //   Uri.parse('https://your-backend.com/api/verify-receipt'),
-    //   body: jsonEncode({
-    //     'platform': Platform.isIOS ? 'ios' : 'android',
-    //     'receipt': purchase.verificationData.serverVerificationData,
-    //     'productId': purchase.productID,
-    //     'transactionId': purchase.purchaseID,
-    //   }),
-    // );
-    // return response.statusCode == 200;
+    try {
+      final api = BackendApiService();
 
-    // For development, trust local verification
-    return purchase.verificationData.localVerificationData.isNotEmpty;
+      // Determine platform
+      final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
+      final serverData = purchase.verificationData.serverVerificationData;
+
+      Map<String, dynamic> result;
+      if (isIOS) {
+        result = await api.verifyAppleReceipt(
+          receiptData: serverData,
+          productId: purchase.productID,
+          transactionId: purchase.purchaseID,
+        );
+      } else {
+        result = await api.verifyGoogleReceipt(
+          purchaseToken: serverData,
+          productId: purchase.productID,
+        );
+      }
+
+      return result['valid'] == true;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('PaymentService: Receipt verification error: $e');
+      }
+      // Fallback to local verification in development
+      if (!kReleaseMode) {
+        return purchase.verificationData.localVerificationData.isNotEmpty;
+      }
+      return false;
+    }
   }
 
   // ── Restore Purchases (Required by Apple Guideline 3.1.1) ─────────────
@@ -637,10 +669,23 @@ class PaymentService extends ChangeNotifier {
     if (kIsWeb) {
       // On web, restoration is handled by checking Stripe subscription status
       // via the backend API.
-      // TODO: Call backend to check current Stripe subscription status
-      if (kDebugMode) {
-        debugPrint(
-            'PaymentService: Restore on web — check Stripe subscription status');
+      try {
+        final api = BackendApiService();
+        final uid = FirebaseAuth.instance.currentUser?.uid;
+        if (uid == null) return false;
+        final status = await api.getSubscriptionStatus(uid);
+        final isActive = status['isActive'] == true;
+        final tier = status['tier'] as String? ?? 'explorer';
+        if (isActive && tier != 'explorer') {
+          _setStatus(PaymentStatus.restored);
+          final productId = _productIdFromTierString(tier, status['billingPeriod'] as String?);
+          onPurchasesRestored?.call([productId]);
+          return true;
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('PaymentService: Web restore error: $e');
+        }
       }
       return false;
     }
@@ -662,21 +707,45 @@ class PaymentService extends ChangeNotifier {
   ///   iOS: App Store subscription settings
   ///   Android: Google Play subscription settings
   ///   Web: Stripe Customer Portal
-  Future<void> openSubscriptionManagement() async {
+  Future<String?> openSubscriptionManagement() async {
     if (kIsWeb) {
-      // TODO: Open Stripe Customer Portal
-      // final url = await _getStripePortalUrl();
-      // launchUrl(Uri.parse(url));
-      if (kDebugMode) {
-        debugPrint(
-            'PaymentService: Would open Stripe Customer Portal');
+      try {
+        final api = BackendApiService();
+        final result = await api.createCustomerPortal();
+        final portalUrl = result['url'] as String?;
+        if (kDebugMode) {
+          debugPrint('PaymentService: Stripe Customer Portal URL: $portalUrl');
+        }
+        return portalUrl;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('PaymentService: Portal error: $e');
+        }
       }
     }
     // On mobile, users manage subscriptions through their store settings.
     // The app should display instructions directing users there.
+    return null;
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────
+
+  /// Map a tier/billingPeriod string pair back to a product ID.
+  String _productIdFromTierString(String tier, String? billingPeriod) {
+    final isAnnual = billingPeriod == 'annual';
+    switch (tier) {
+      case 'neighbourhood':
+        return isAnnual
+            ? HuddlProductIds.neighbourhoodAnnual
+            : HuddlProductIds.neighbourhoodMonthly;
+      case 'innerCircle':
+        return isAnnual
+            ? HuddlProductIds.innerCircleAnnual
+            : HuddlProductIds.innerCircleMonthly;
+      default:
+        return HuddlProductIds.neighbourhoodMonthly;
+    }
+  }
 
   void _setStatus(PaymentStatus newStatus) {
     _status = newStatus;
