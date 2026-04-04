@@ -5,6 +5,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
+import '../rehome/create_listing_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ITEM DETAIL SCREEN — consistent with Create Meetup / Create Group design
@@ -27,6 +28,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   bool _openingChat = false;
 
   RehomeItem get item => widget.item;
+  bool get _isOwnItem => item.sellerId == 'current_user';
 
   @override
   void initState() {
@@ -294,19 +296,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _toggleSave,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: Icon(
-                  item.isSaved ? Icons.favorite : Icons.favorite_border,
-                  size: 22,
-                  color: item.isSaved ? HuddlColors.error : HuddlColors.textDark,
+          // Hide save button for the item owner
+          if (!_isOwnItem)
+            GestureDetector(
+              onTap: _toggleSave,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: Icon(
+                    item.isSaved ? Icons.favorite : Icons.favorite_border,
+                    size: 22,
+                    color: item.isSaved ? HuddlColors.error : HuddlColors.textDark,
+                  ),
                 ),
               ),
             ),
-          ),
+          if (_isOwnItem)
+            const SizedBox(width: 12),
         ],
       ),
       body: Column(
@@ -600,6 +606,28 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
             ),
+          // Sold overlay banner for sold items
+          if (item.isSold)
+            Positioned(
+              top: 10,
+              left: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: HuddlColors.error,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'SOLD',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -795,9 +823,191 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
+  // ── EDIT OWN LISTING ──────────────────────────────────────────────────────
+
+  void _openEditListing() async {
+    final result = await Navigator.push<RehomeItem>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateListingScreen(existingItem: item),
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {});
+    }
+  }
+
   // ── BOTTOM BAR ────────────────────────────────────────────────────────────
 
   Widget _buildBottomBar() {
+    if (_isOwnItem) {
+      return _buildOwnerBottomBar();
+    }
+    return _buildBuyerBottomBar();
+  }
+
+  Widget _buildOwnerBottomBar() {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+      decoration: BoxDecoration(
+        color: HuddlColors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: item.isSold
+          ? _buildSoldOwnerBar()
+          : _buildActiveOwnerBar(),
+    );
+  }
+
+  /// Bottom bar for the owner when the item is currently for sale.
+  Widget _buildActiveOwnerBar() {
+    return Row(
+      children: [
+        // Mark sold button
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              _service.markSold(item.id);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('"${item.title}" marked as sold')),
+                    ],
+                  ),
+                  backgroundColor: HuddlColors.teal,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            },
+            icon: const Icon(Icons.sell_outlined, size: 18),
+            label: Text(
+              'Mark sold',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.blue,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: HuddlColors.blue,
+              side: const BorderSide(color: HuddlColors.blue, width: 1.5),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Edit listing button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _openEditListing,
+            icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.white),
+            label: Text(
+              'Edit listing',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Bottom bar for the owner when the item has been marked as sold.
+  Widget _buildSoldOwnerBar() {
+    return Row(
+      children: [
+        // Sold badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: HuddlColors.error.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.check_circle, size: 18, color: HuddlColors.error),
+              const SizedBox(width: 6),
+              Text(
+                'Sold',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Relist button
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _service.relistItem(item.id);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text('"${item.title}" is back on sale')),
+                    ],
+                  ),
+                  backgroundColor: HuddlColors.teal,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+              );
+            },
+            icon: const Icon(Icons.refresh, size: 18, color: Colors.white),
+            label: Text(
+              'Relist item',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.teal,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBuyerBottomBar() {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, MediaQuery.of(context).padding.bottom + 12),

@@ -763,6 +763,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       ),
                     );
                   },
+                  onRelist: () {
+                    _service.relistItem(item.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.check_circle,
+                                color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text('"${item.title}" is back on sale')),
+                          ],
+                        ),
+                        backgroundColor: HuddlColors.teal,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  },
                   onDelete: () => _confirmDelistItem(item),
                 )),
           ],
@@ -1162,6 +1181,7 @@ class _MyListingTile extends StatelessWidget {
   final VoidCallback onMarkSold;
   final VoidCallback onDelete;
   final VoidCallback? onEdit;
+  final VoidCallback? onRelist;
 
   const _MyListingTile({
     required this.item,
@@ -1169,6 +1189,7 @@ class _MyListingTile extends StatelessWidget {
     required this.onMarkSold,
     required this.onDelete,
     this.onEdit,
+    this.onRelist,
   });
 
   @override
@@ -1252,11 +1273,19 @@ class _MyListingTile extends StatelessWidget {
                         ),
                       if (onEdit != null && !item.isSold)
                         const SizedBox(width: 6),
-                      _TinyButton(
-                        text: item.isSold ? 'Sold' : 'Mark sold',
-                        color: item.isSold ? HuddlColors.textHint : HuddlColors.blue,
-                        onTap: item.isSold ? () {} : onMarkSold,
-                      ),
+                      if (item.isSold && onRelist != null) ...[
+                        _TinyButton(
+                          text: 'Relist',
+                          color: HuddlColors.teal,
+                          onTap: onRelist!,
+                        ),
+                      ] else if (!item.isSold) ...[
+                        _TinyButton(
+                          text: 'Mark sold',
+                          color: HuddlColors.blue,
+                          onTap: onMarkSold,
+                        ),
+                      ],
                       const SizedBox(width: 6),
                       _TinyButton(
                         text: 'Delete',

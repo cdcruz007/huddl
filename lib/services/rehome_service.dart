@@ -403,6 +403,22 @@ class RehomeService extends ChangeNotifier {
       _items[idx].isSold = true;
       notifyListeners();
     }
+    final myIdx = _myListings.indexWhere((i) => i.id == id);
+    if (myIdx >= 0) {
+      _myListings[myIdx].isSold = true;
+    }
+  }
+
+  void relistItem(String id) {
+    final idx = _items.indexWhere((i) => i.id == id);
+    if (idx >= 0) {
+      _items[idx].isSold = false;
+      notifyListeners();
+    }
+    final myIdx = _myListings.indexWhere((i) => i.id == id);
+    if (myIdx >= 0) {
+      _myListings[myIdx].isSold = false;
+    }
   }
 
   void deleteListing(String id) {
