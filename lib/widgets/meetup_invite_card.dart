@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,6 +9,9 @@ import '../screens/events/meetup_detail_screen.dart';
 /// A clickable meetup card that appears in DM and group chats
 /// instead of a text notification message. Tapping it navigates
 /// to the MeetupDetailScreen.
+///
+/// The layout now matches the Nearby tab's _MeetupCard so the user
+/// sees the same image, details and visual hierarchy everywhere.
 class MeetupInviteCard extends StatelessWidget {
   final Map<String, dynamic> meetupData;
   final bool isMe;
@@ -18,6 +22,25 @@ class MeetupInviteCard extends StatelessWidget {
     this.isMe = true,
   });
 
+  /// Try to resolve the best available image URL for this meetup.
+  /// The notification storage intentionally strips data: URIs (too large),
+  /// so we look up the live Meetup object from MeetupService first.
+  String _resolveImageUrl() {
+    final storedUrl = meetupData['imageUrl'] as String? ?? '';
+    if (storedUrl.isNotEmpty) return storedUrl;
+
+    // Fall back to MeetupService's in-memory copy which keeps data: URIs
+    final meetupId = meetupData['id'] as String?;
+    if (meetupId != null) {
+      final service = MeetupService();
+      final found = service.meetups.where((m) => m.id == meetupId).toList();
+      if (found.isNotEmpty && found.first.imageUrl.isNotEmpty) {
+        return found.first.imageUrl;
+      }
+    }
+    return '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = meetupData['title'] as String? ?? 'Meetup';
@@ -25,11 +48,15 @@ class MeetupInviteCard extends StatelessWidget {
     final timeDisplay = meetupData['timeDisplay'] as String? ?? '';
     final location = meetupData['location'] as String? ?? '';
     final organiser = meetupData['organiserName'] as String? ?? '';
-    final imageUrl = meetupData['imageUrl'] as String? ?? '';
     final category = meetupData['category'] as String? ?? 'Other';
     final isFree = meetupData['isFree'] as bool? ?? true;
     final price = meetupData['price'];
+    final attendeeCount = meetupData['attendeeCount'] as int? ?? 1;
+    final maxAttendees = meetupData['maxAttendees'] as int?;
+    final privacyIdx = meetupData['privacy'] as int? ?? 0;
+    final privacy = MeetupPrivacy.values[privacyIdx.clamp(0, MeetupPrivacy.values.length - 1)];
 
+    final imageUrl = _resolveImageUrl();
     final catStyle = _getCatStyle(category);
 
     return Align(
@@ -38,25 +65,21 @@ class MeetupInviteCard extends StatelessWidget {
         margin: EdgeInsets.only(
           top: 4,
           bottom: 4,
-          left: isMe ? 48 : 40,
-          right: isMe ? 0 : 48,
+          left: isMe ? 24 : 40,
+          right: isMe ? 0 : 24,
         ),
-        constraints: const BoxConstraints(maxWidth: 300),
+        constraints: const BoxConstraints(maxWidth: 320),
         child: GestureDetector(
           onTap: () => _navigateToMeetupDetail(context),
           child: Container(
             decoration: BoxDecoration(
               color: HuddlColors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: catStyle.color.withValues(alpha: 0.3),
-                width: 1.5,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  color: HuddlColors.gray900.withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -64,154 +87,186 @@ class MeetupInviteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Cover image / category gradient ──
-                SizedBox(
-                  height: 100,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildCoverImage(imageUrl, catStyle),
-                      // Gradient overlay
-                      Container(
+                // ── Cover image (matches Nearby tab: 150 px) ─────────
+                Stack(
+                  children: [
+                    SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: _buildCoverImage(imageUrl, catStyle),
+                    ),
+                    // Gradient overlay at bottom for readability
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: Container(
+                        height: 50,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.45),
+                              HuddlColors.white.withValues(alpha: 0.0),
+                              HuddlColors.gray900.withValues(alpha: 0.4),
                             ],
                           ),
                         ),
                       ),
-                      // Category + price badges
-                      Positioned(
-                        bottom: 8,
-                        left: 10,
+                    ),
+                    // Category badge (top-left)
+                    Positioned(
+                      top: 10, left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: catStyle.color,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: catStyle.color,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(catStyle.icon,
-                                      size: 11, color: HuddlColors.white),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    category,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: HuddlColors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: isFree
-                                    ? HuddlColors.blue
-                                    : HuddlColors.accentAmber,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                isFree
-                                    ? 'Free'
-                                    : '\u00A3${price is num ? price.toStringAsFixed(0) : ''}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white,
-                                ),
+                            Icon(catStyle.icon, size: 13, color: HuddlColors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              category,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.white,
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    // Price + privacy badges (top-right)
+                    Positioned(
+                      top: 10, right: 10,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (privacy != MeetupPrivacy.public)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.gray900.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      privacy == MeetupPrivacy.group
+                                          ? Icons.group
+                                          : Icons.lock,
+                                      size: 12,
+                                      color: HuddlColors.white,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      privacy == MeetupPrivacy.group
+                                          ? 'Group'
+                                          : 'Private',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isFree ? HuddlColors.blue : HuddlColors.accentAmber,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              isFree
+                                  ? 'Free'
+                                  : '\u00A3${price is num ? price.toStringAsFixed(0) : ''}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Attendee count overlay (bottom-right)
+                    Positioned(
+                      bottom: 8, right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.gray900.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.people, size: 13, color: HuddlColors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$attendeeCount${maxAttendees != null ? '/$maxAttendees' : ''} going',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                // ── Card content ──
+                // ── Card body (matches Nearby tab layout) ────────────
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
                           color: HuddlColors.textDark,
-                          height: 1.2,
                         ),
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      // Date / time row
+                      // Date + time
                       Row(
                         children: [
                           Icon(Icons.calendar_today_outlined,
-                              size: 12, color: catStyle.color),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '$dateDisplay  $timeDisplay',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              size: 13, color: catStyle.color),
+                          const SizedBox(width: 5),
+                          Text(
+                            dateDisplay,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: HuddlColors.textSecondary,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      // Location row
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 12, color: catStyle.color),
+                          const SizedBox(width: 10),
+                          Icon(Icons.access_time,
+                              size: 13, color: catStyle.color),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              location,
+                              timeDisplay,
                               style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: HuddlColors.textSecondary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      // Organiser row
-                      Row(
-                        children: [
-                          Icon(Icons.person_outline,
-                              size: 12, color: catStyle.color),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              'Organised by $organiser',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
+                                fontSize: 12,
                                 color: HuddlColors.textHint,
                               ),
                               maxLines: 1,
@@ -220,31 +275,81 @@ class MeetupInviteCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      // "View meetup" button
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: catStyle.color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.open_in_new,
-                                size: 14, color: catStyle.color),
-                            const SizedBox(width: 6),
-                            Text(
-                              'View meetup details',
+                      const SizedBox(height: 4),
+                      // Location
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 13, color: catStyle.color),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              location,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.textHint,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Organiser row with avatar
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 11,
+                            backgroundColor: catStyle.color.withValues(alpha: 0.15),
+                            child: Text(
+                              organiser.isNotEmpty
+                                  ? organiser[0].toUpperCase()
+                                  : '?',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
                                 color: catStyle.color,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Organised by $organiser',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.textSecondary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // View button
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: catStyle.color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.open_in_new, size: 12, color: catStyle.color),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'View',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: catStyle.color,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -257,6 +362,7 @@ class MeetupInviteCard extends StatelessWidget {
     );
   }
 
+  /// Build cover image — supports data: URIs, http URLs, and gradient fallback.
   Widget _buildCoverImage(String imageUrl, _CatStyle catStyle) {
     Widget fallback() => Container(
           decoration: BoxDecoration(
@@ -267,18 +373,63 @@ class MeetupInviteCard extends StatelessWidget {
             ),
           ),
           child: Center(
-            child: Icon(catStyle.icon, size: 32, color: HuddlColors.white),
+            child: Icon(catStyle.icon, size: 40, color: HuddlColors.white),
+          ),
+        );
+
+    Widget placeholder() => Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                catStyle.color.withValues(alpha: 0.12),
+                catStyle.color.withValues(alpha: 0.06),
+              ],
+            ),
+          ),
+          child: Center(
+            child: Icon(catStyle.icon, size: 40,
+                color: catStyle.color.withValues(alpha: 0.4)),
           ),
         );
 
     if (imageUrl.isEmpty) return fallback();
 
+    // ── base64 data-URI (user-uploaded photos) ────────────────────────
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final dataUri = Uri.parse(imageUrl);
+        final bytes = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => fallback(),
+          );
+        }
+      } catch (_) {}
+      return fallback();
+    }
+
+    // ── http(s) URL (Pexels images etc.) ──────────────────────────────
     if (imageUrl.startsWith('http')) {
       return CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
-        placeholder: (_, __) => fallback(),
+        placeholder: (_, __) => placeholder(),
         errorWidget: (_, __, ___) => fallback(),
+      );
+    }
+
+    // ── Local asset path ──────────────────────────────────────────────
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => fallback(),
       );
     }
 
@@ -324,7 +475,7 @@ class MeetupInviteCard extends StatelessWidget {
   }
 }
 
-// ── Category style helper (mirrors meetup_detail_screen.dart) ──
+// ── Category style helper (mirrors events_screen.dart _meetupCategoryStyle) ──
 class _CatStyle {
   final Color color;
   final IconData icon;
@@ -340,11 +491,13 @@ _CatStyle _getCatStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.paleBlue, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.yellowDark, Icons.directions_walk);
     case 'Social':
       return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
     case 'Food':
       return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
+    case 'Other':
+      return const _CatStyle(HuddlColors.blue, Icons.more_horiz);
     default:
       return const _CatStyle(HuddlColors.blue, Icons.groups);
   }
