@@ -111,6 +111,119 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     }
   }
 
+  void _confirmDelistItem(RehomeItem item) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.error.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.delete_outline,
+                    size: 28, color: HuddlColors.error),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Delist this item?',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Are you sure you want to delist "${item.title}"? This will remove it from the marketplace.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: HuddlColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: HuddlColors.gray300),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _service.deleteListing(item.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle,
+                                    color: Colors.white, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                    child: Text(
+                                        '"${item.title}" has been delisted')),
+                              ],
+                            ),
+                            backgroundColor: HuddlColors.teal,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.error,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Delist',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -650,9 +763,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       ),
                     );
                   },
-                  onDelete: () {
-                    _service.deleteListing(item.id);
-                  },
+                  onDelete: () => _confirmDelistItem(item),
                 )),
           ],
           // Offers section
