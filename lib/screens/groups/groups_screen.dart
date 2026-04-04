@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
@@ -302,7 +303,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             category: 'PRIVATE',
             isDefault: false,
             isImageLocked: false,
-            isPrivate: true,
+            privacy: GroupPrivacy.private_,
             lastMessage: '${inv.invitedByName}: Welcome to the group!',
             lastSenderName: inv.invitedByName,
             lastMessageTime: inv.sentAt,
@@ -2592,18 +2593,28 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   ];
 
   List<_GroupItem> get _filteredGroups {
-    // 1. Private groups are never shown on the Discover tab
-    // 1. Private groups: visible only to creator or invited members
-    // 2. Public groups with targetAudience: shown if user matches at least one
-    // 3. User-created groups: filter by same borough
+    // Privacy visibility rules:
+    // 1. Public groups: visible to everyone (subject to audience / borough filters)
+    // 2. Group-privacy: visible only to members of the parent group (+ creator)
+    // 3. Private: visible only to creator or explicitly invited members
     List<_GroupItem> results = _allDiscoverGroups.where((g) {
-      // The creator always sees their own groups (public & private) on Discover
+      // The creator always sees their own groups (public, group, & private) on Discover
       final isOwnGroup = g.creatorId == 'current_user';
 
       // Private group visibility: only creator or invited members can see it
-      if (g.isPrivate) {
+      if (g.privacy == GroupPrivacy.private_) {
         final isInvited = g.invitedMemberIds.contains('current_user');
         if (!isOwnGroup && !isInvited) return false;
+      }
+
+      // Group-tier visibility: only members of the parent group can see it
+      if (g.privacy == GroupPrivacy.group && g.parentGroupId != null) {
+        if (!isOwnGroup) {
+          // Check if current user has joined the parent group
+          final isParentMember =
+              _invitationService.isGroupJoined(g.parentGroupId!);
+          if (!isParentMember) return false;
+        }
       }
 
       // Audience / visibility filter — skip for the creator
@@ -2691,7 +2702,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       memberCount: group.memberCount + 1,
       category: group.category,
       isJoined: true,
-      isPrivate: false,
+      privacy: GroupPrivacy.public,
       targetAudience: group.targetAudience,
       creatorBorough: group.creatorBorough,
       creatorId: group.creatorId,
@@ -3426,7 +3437,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                 ),
                 // Audience tags (top-left) — only show valid parent-stage tags
                 ..._buildAudienceTags(group, catColor, catIcon),
-                // "Your group" badge (top-right) — also shows lock for private
+                // "Your group" badge (top-right) — also shows privacy icon
                 if (group.creatorId == 'current_user')
                   Positioned(
                     top: 10, right: 10,
@@ -3439,8 +3450,13 @@ class _DiscoverGroupCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (group.isPrivate) ...[
-                            const Icon(Icons.lock_outline, size: 12, color: Colors.white),
+                          if (group.privacy != GroupPrivacy.public) ...[
+                            Icon(
+                              group.privacy == GroupPrivacy.group
+                                  ? Icons.group
+                                  : Icons.lock_outline,
+                              size: 12, color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                           ],
                           Text(
@@ -3455,7 +3471,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                       ),
                     ),
                   )
-                else if (group.isPrivate)
+                else if (group.privacy != GroupPrivacy.public)
                   Positioned(
                     top: 10, right: 10,
                     child: Container(
@@ -3467,10 +3483,17 @@ class _DiscoverGroupCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.lock_outline, size: 12, color: Colors.white),
+                          Icon(
+                            group.privacy == GroupPrivacy.group
+                                ? Icons.group
+                                : Icons.lock_outline,
+                            size: 12, color: Colors.white,
+                          ),
                           const SizedBox(width: 3),
                           Text(
-                            'Private',
+                            group.privacy == GroupPrivacy.group
+                                ? 'Group'
+                                : 'Private',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -3597,6 +3620,24 @@ class _DiscoverGroupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      // Share button — public: anyone; group/private: only creator
+                      if (group.privacy == GroupPrivacy.public ||
+                          group.creatorId == 'current_user')
+                        Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: GestureDetector(
+                            onTap: () => _shareGroup(context, group),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: catColor.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.share_outlined,
+                                  size: 16, color: catColor),
+                            ),
+                          ),
+                        ),
                       // Join / Joined button
                       GestureDetector(
                         onTap: isJoined ? null : onJoinTap,
@@ -3629,6 +3670,54 @@ class _DiscoverGroupCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static void _shareGroup(BuildContext context, _GroupItem group) {
+    final privacyText = group.privacy == GroupPrivacy.public
+        ? 'Public'
+        : group.privacy == GroupPrivacy.group
+            ? 'Group${group.parentGroupName != null ? ' (${group.parentGroupName})' : ''}'
+            : 'Private';
+
+    final audienceText = group.targetAudience.isNotEmpty
+        ? '\n\u{1F3AF} For: ${group.targetAudience.join(', ')}'
+        : '';
+
+    final boroughText = group.creatorBorough != null &&
+            group.creatorBorough!.isNotEmpty &&
+            group.creatorBorough != 'Unknown Borough'
+        ? '\n\u{1F4CD} ${group.creatorBorough}'
+        : '';
+
+    final shareText = '''
+\u{1F46B} ${group.name}
+\u{1F512} $privacyText  |  \u{1F465} ${group.memberCount} members$audienceText$boroughText
+${group.creatorName != null ? '\u{1F464} Created by ${group.creatorName}' : ''}
+
+${group.description}
+---
+Shared from Huddl Connect
+'''.trim();
+
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('Group card copied to clipboard!',
+                  style: GoogleFonts.poppins(fontSize: 13)),
+            ),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -5027,7 +5116,10 @@ class _GroupItem {
   final String? lastSenderName;
   final DateTime? lastMessageTime;
   final int? unreadCount;
-  final bool isPrivate;
+  final GroupPrivacy privacy;
+  bool get isPrivate => privacy == GroupPrivacy.private_;
+  final String? parentGroupId;
+  final String? parentGroupName;
   final List<String> targetAudience;
   final String? creatorId;
   final String? creatorName;
@@ -5047,7 +5139,9 @@ class _GroupItem {
     this.lastSenderName,
     this.lastMessageTime,
     this.unreadCount,
-    this.isPrivate = false,
+    this.privacy = GroupPrivacy.public,
+    this.parentGroupId,
+    this.parentGroupName,
     this.targetAudience = const [],
     this.creatorId,
     this.creatorName,
@@ -5069,7 +5163,9 @@ class _GroupItem {
       lastSenderName: g.lastSenderName,
       lastMessageTime: g.lastMessageTime,
       unreadCount: g.unreadCount,
-      isPrivate: g.isPrivate,
+      privacy: g.privacy,
+      parentGroupId: g.parentGroupId,
+      parentGroupName: g.parentGroupName,
       targetAudience: g.targetAudience,
       creatorId: g.creatorId,
       creatorName: g.creatorName,
@@ -5116,7 +5212,9 @@ class _GroupItem {
     String? lastSenderName,
     DateTime? lastMessageTime,
     int? unreadCount,
-    bool? isPrivate,
+    GroupPrivacy? privacy,
+    String? parentGroupId,
+    String? parentGroupName,
     List<String>? targetAudience,
     String? creatorId,
     String? creatorName,
@@ -5136,7 +5234,9 @@ class _GroupItem {
       lastSenderName: lastSenderName ?? this.lastSenderName,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
       unreadCount: unreadCount ?? this.unreadCount,
-      isPrivate: isPrivate ?? this.isPrivate,
+      privacy: privacy ?? this.privacy,
+      parentGroupId: parentGroupId ?? this.parentGroupId,
+      parentGroupName: parentGroupName ?? this.parentGroupName,
       targetAudience: targetAudience ?? this.targetAudience,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
@@ -5158,7 +5258,9 @@ class _GroupItem {
         'lastSenderName': lastSenderName,
         'lastMessageTime': lastMessageTime?.toIso8601String(),
         'unreadCount': unreadCount,
-        'isPrivate': isPrivate,
+        'privacy': privacy.name,
+        'parentGroupId': parentGroupId,
+        'parentGroupName': parentGroupName,
         'targetAudience': targetAudience,
         'creatorId': creatorId,
         'creatorName': creatorName,

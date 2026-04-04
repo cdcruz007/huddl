@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
@@ -1068,7 +1069,7 @@ class _MeetupCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // Organiser row
+                  // Organiser row + share button
                   Row(
                     children: [
                       CircleAvatar(
@@ -1086,14 +1087,33 @@ class _MeetupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        'Organised by ${meetup.organiserName}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
+                      Expanded(
+                        child: Text(
+                          'Organised by ${meetup.organiserName}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      // Share button — public: anyone can share; group/private: only creator
+                      if (meetup.privacy == MeetupPrivacy.public ||
+                          meetup.organiserId == 'current_user')
+                        GestureDetector(
+                          onTap: () => _shareMeetup(context, meetup),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: catStyle.color.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(Icons.share_outlined,
+                                size: 16, color: catStyle.color),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -1101,6 +1121,50 @@ class _MeetupCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  static void _shareMeetup(BuildContext context, Meetup meetup) {
+    final priceText = meetup.isFree
+        ? 'Free'
+        : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
+    final privacyText = meetup.privacy == MeetupPrivacy.public
+        ? ''
+        : meetup.privacy == MeetupPrivacy.group
+            ? ' [Group: ${meetup.groupName ?? ''}]'
+            : ' [Private]';
+
+    final shareText = '''
+\u{1F91D} ${meetup.title}$privacyText
+\u{1F4C5} ${meetup.dateDisplay}  \u23F0 ${meetup.timeDisplay}
+\u{1F4CD} ${meetup.location}
+\u{1F3F7}\uFE0F ${meetup.category}  |  $priceText
+\u{1F464} Organised by ${meetup.organiserName}
+\u{1F465} ${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going
+
+${meetup.description.isNotEmpty ? meetup.description : ''}
+---
+Shared from Huddl Connect
+'''.trim();
+
+    Clipboard.setData(ClipboardData(text: shareText));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text('Meetup card copied to clipboard!',
+                  style: GoogleFonts.poppins(fontSize: 13)),
+            ),
+          ],
+        ),
+        backgroundColor: HuddlColors.teal,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

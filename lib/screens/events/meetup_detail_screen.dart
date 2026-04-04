@@ -85,7 +85,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       isJoined: true,
       isImageLocked: false,
       targetAudience: const [],
-      isPrivate: true,
+      privacy: GroupPrivacy.private_,
       creatorId: _meetup.organiserId,
       creatorName: _meetup.organiserName,
       creatorBorough: '',

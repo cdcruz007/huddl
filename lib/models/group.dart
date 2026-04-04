@@ -1,3 +1,6 @@
+/// Privacy level for a group — mirrors MeetupPrivacy for consistency.
+enum GroupPrivacy { public, group, private_ }
+
 class Group {
   final String id;
   final String name;
@@ -17,9 +20,15 @@ class Group {
   /// Target audience for the group (e.g. 'Aspiring parents', 'Mums', 'Dads')
   final List<String> targetAudience;
 
-  /// When true, the group is private — not listed on the Discover tab.
-  /// Members must be invited and accept the invite to join.
-  final bool isPrivate;
+  /// Privacy level: public / group (visible to members of a parent group) / private (invite-only)
+  final GroupPrivacy privacy;
+
+  /// Backward-compat getter so old code checking `isPrivate` still works.
+  bool get isPrivate => privacy == GroupPrivacy.private_;
+
+  /// When privacy == group, the parent group whose members can see this group.
+  final String? parentGroupId;
+  final String? parentGroupName;
 
   /// Creator identification — used for borough matching and admin rights
   final String? creatorId;
@@ -44,7 +53,9 @@ class Group {
     this.unreadCount,
     this.isImageLocked = false,
     this.targetAudience = const [],
-    this.isPrivate = false,
+    this.privacy = GroupPrivacy.public,
+    this.parentGroupId,
+    this.parentGroupName,
     this.creatorId,
     this.creatorName,
     this.creatorBorough,
@@ -67,7 +78,9 @@ class Group {
       'unreadCount': unreadCount,
       'isImageLocked': isImageLocked,
       'targetAudience': targetAudience,
-      'isPrivate': isPrivate,
+      'privacy': privacy.name, // 'public', 'group', or 'private_'
+      'parentGroupId': parentGroupId,
+      'parentGroupName': parentGroupName,
       'creatorId': creatorId,
       'creatorName': creatorName,
       'creatorBorough': creatorBorough,
@@ -92,12 +105,32 @@ class Group {
       unreadCount: json['unreadCount'] as int?,
       isImageLocked: json['isImageLocked'] as bool? ?? false,
       targetAudience: (json['targetAudience'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
-      isPrivate: json['isPrivate'] as bool? ?? false,
+      privacy: _parseGroupPrivacy(json),
+      parentGroupId: json['parentGroupId'] as String?,
+      parentGroupName: json['parentGroupName'] as String?,
       creatorId: json['creatorId'] as String?,
       creatorName: json['creatorName'] as String?,
       creatorBorough: json['creatorBorough'] as String?,
       invitedMemberIds: (json['invitedMemberIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
     );
+  }
+
+  /// Parse privacy from JSON supporting both new enum and legacy boolean
+  static GroupPrivacy _parseGroupPrivacy(Map<String, dynamic> json) {
+    final privacyStr = json['privacy'] as String?;
+    if (privacyStr != null) {
+      switch (privacyStr) {
+        case 'group':
+          return GroupPrivacy.group;
+        case 'private_':
+          return GroupPrivacy.private_;
+        default:
+          return GroupPrivacy.public;
+      }
+    }
+    // Legacy: fall back to boolean isPrivate
+    final legacy = json['isPrivate'] as bool? ?? false;
+    return legacy ? GroupPrivacy.private_ : GroupPrivacy.public;
   }
 
   Group copyWith({
@@ -114,7 +147,9 @@ class Group {
     int? unreadCount,
     bool? isImageLocked,
     List<String>? targetAudience,
-    bool? isPrivate,
+    GroupPrivacy? privacy,
+    String? parentGroupId,
+    String? parentGroupName,
     String? creatorId,
     String? creatorName,
     String? creatorBorough,
@@ -134,7 +169,9 @@ class Group {
       unreadCount: unreadCount ?? this.unreadCount,
       isImageLocked: isImageLocked ?? this.isImageLocked,
       targetAudience: targetAudience ?? this.targetAudience,
-      isPrivate: isPrivate ?? this.isPrivate,
+      privacy: privacy ?? this.privacy,
+      parentGroupId: parentGroupId ?? this.parentGroupId,
+      parentGroupName: parentGroupName ?? this.parentGroupName,
       creatorId: creatorId ?? this.creatorId,
       creatorName: creatorName ?? this.creatorName,
       creatorBorough: creatorBorough ?? this.creatorBorough,

@@ -104,7 +104,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       memberCount: (widget.memberCount ?? 42) + 1,
       category: '',
       isJoined: true,
-      isPrivate: widget.isPrivate,
+      privacy: widget.isPrivate ? GroupPrivacy.private_ : GroupPrivacy.public,
     );
     await _invitationService.joinPublicGroup(group, userName);
 

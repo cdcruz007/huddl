@@ -11,6 +11,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
 import '../../services/member_photo_service.dart';
+import '../../services/default_group_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -42,8 +43,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     'Dads': false,
   };
 
-  // ── Privacy setting ────────────────────────────────────────────────────
-  bool _isPrivate = false;
+  // ── Privacy setting (3-tier: public / group / private) ─────────────────
+  String _privacy = 'public';
+
+  // ── Group picker (for "group" privacy) ────────────────────────────────
+  String? _selectedParentGroupId;
+  String? _selectedParentGroupName;
+  List<Group> _userGroups = [];
+  final DefaultGroupService _groupService = DefaultGroupService();
 
   // ── Member picker (for private groups) ─────────────────────────────────
   List<BoroughMember> _boroughMembers = [];
@@ -55,6 +62,26 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   void initState() {
     super.initState();
     _loadBoroughMembers();
+    _loadUserGroups();
+  }
+
+  Future<void> _loadUserGroups() async {
+    await _groupService.initialize();
+    final defaultGroups = await _groupService.getUserGroups('current_user');
+    List<Group> discovered = [];
+    try {
+      final discoveredJson =
+          await BrowserStorage.getString(_userGroupsKey);
+      if (discoveredJson != null) {
+        final List<dynamic> decoded = json.decode(discoveredJson);
+        discovered = decoded
+            .map((e) => Group.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (_) {}
+    if (mounted) {
+      setState(() => _userGroups = [...defaultGroups, ...discovered]);
+    }
   }
 
   Future<void> _loadBoroughMembers() async {
@@ -645,7 +672,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     if (!_isValid) return;
 
     // ── Duplicate public group name check ─────────────────────────────
-    if (!_isPrivate) {
+    if (_privacy == 'public') {
       final newName = _nameController.text.trim().toLowerCase();
 
       final existing = await BrowserStorage.getString(_userGroupsKey);
@@ -690,23 +717,32 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           .map((e) => e.key)
           .toList();
 
+      GroupPrivacy privacy = GroupPrivacy.public;
+      if (_privacy == 'group') {
+        privacy = GroupPrivacy.group;
+      } else if (_privacy == 'private') {
+        privacy = GroupPrivacy.private_;
+      }
+
       final newGroup = Group(
         id: 'user_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
         imageUrl: _pickedImageUrl!,
-        memberCount: _isPrivate ? 1 + _selectedMemberIds.length : 1,
+        memberCount: _privacy == 'private' ? 1 + _selectedMemberIds.length : 1,
         category: selectedAudience.isNotEmpty
             ? selectedAudience.join(', ').toUpperCase()
             : 'PARENTING',
         isJoined: true,
         isImageLocked: false,
         targetAudience: selectedAudience,
-        isPrivate: _isPrivate,
+        privacy: privacy,
+        parentGroupId: _privacy == 'group' ? _selectedParentGroupId : null,
+        parentGroupName: _privacy == 'group' ? _selectedParentGroupName : null,
         creatorId: 'current_user',
         creatorName: creatorName,
         creatorBorough: creatorBorough,
-        invitedMemberIds: _isPrivate ? _selectedMemberIds.toList() : [],
+        invitedMemberIds: _privacy == 'private' ? _selectedMemberIds.toList() : [],
         lastMessage: '$creatorName created this group',
         lastSenderName: 'System',
         lastMessageTime: DateTime.now(),
@@ -728,7 +764,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         type: 'joined',
       );
 
-      if (_isPrivate && _selectedMemberIds.isNotEmpty) {
+      if (_privacy == 'private' && _selectedMemberIds.isNotEmpty) {
         await invService.sendInvitations(
           group: newGroup,
           invitedMemberIds: _selectedMemberIds.toList(),
@@ -743,9 +779,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               const Icon(Icons.check_circle, color: Colors.white, size: 18),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(_isPrivate
+                child: Text(_privacy == 'private'
                     ? '"${newGroup.name}" created! Invitations sent to ${_selectedMemberIds.length} member(s).'
-                    : '"${newGroup.name}" created and listed in Discover for ${creatorBorough != 'Unknown Borough' ? creatorBorough : 'your borough'}!'),
+                    : _privacy == 'group'
+                        ? '"${newGroup.name}" created! Visible to members of ${_selectedParentGroupName ?? 'the selected group'}.'
+                        : '"${newGroup.name}" created and listed in Discover for ${creatorBorough != 'Unknown Borough' ? creatorBorough : 'your borough'}!'),
               ),
             ]),
             backgroundColor: HuddlColors.teal,
@@ -966,7 +1004,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
             const SizedBox(height: 20),
 
-            // ─────────── PRIVACY SETTINGS ───────────
+            // ─────────── PRIVACY SETTINGS (3-tier) ───────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: _sectionLabel('Privacy settings'),
@@ -979,19 +1017,44 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   _privacyRadio(
                     label: 'Public',
                     description:
-                        'This group will be listed under the Discover tab so people in ${_userBorough ?? 'your borough'} can join.',
-                    isSelected: !_isPrivate,
-                    onTap: () => setState(() => _isPrivate = false),
+                        'Everyone in your local community can see and join your group.',
+                    isSelected: _privacy == 'public',
+                    icon: Icons.public,
+                    onTap: () => setState(() {
+                      _privacy = 'public';
+                      _selectedParentGroupId = null;
+                      _selectedParentGroupName = null;
+                    }),
                   ),
+                  const SizedBox(height: 10),
+                  _privacyRadio(
+                    label: 'Group',
+                    description:
+                        'Only members of a specific group can see and join your group.',
+                    isSelected: _privacy == 'group',
+                    icon: Icons.group,
+                    onTap: () => setState(() {
+                      _privacy = 'group';
+                    }),
+                  ),
+                  if (_privacy == 'group') ...[
+                    const SizedBox(height: 12),
+                    _buildGroupPicker(),
+                  ],
                   const SizedBox(height: 10),
                   _privacyRadio(
                     label: 'Private',
                     description:
-                        'This group will be listed under the Discover tab but can only be seen by specific people in ${_userBorough ?? 'your borough'} that you invite.',
-                    isSelected: _isPrivate,
-                    onTap: () => setState(() => _isPrivate = true),
+                        'Invite only \u2014 choose specific people in ${_userBorough ?? 'your borough'} to invite.',
+                    isSelected: _privacy == 'private',
+                    icon: Icons.lock_outline,
+                    onTap: () => setState(() {
+                      _privacy = 'private';
+                      _selectedParentGroupId = null;
+                      _selectedParentGroupName = null;
+                    }),
                   ),
-                  if (_isPrivate) ...[
+                  if (_privacy == 'private') ...[
                     const SizedBox(height: 12),
                     _buildInviteMembersWidget(),
                   ],
@@ -1192,12 +1255,107 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     );
   }
 
+  /// Group picker — shown when privacy = 'group'
+  Widget _buildGroupPicker() {
+    if (_userGroups.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.only(left: 32),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: HuddlColors.peachLight,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline,
+                size: 16, color: HuddlColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'You don\'t belong to any groups yet. Join a group first to use group privacy.',
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.primary,
+                    height: 1.3),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: _selectedParentGroupId != null
+              ? HuddlColors.primary
+              : HuddlColors.gray300,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedParentGroupId,
+          isExpanded: true,
+          hint: Text('Select a parent group',
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: HuddlColors.textHint)),
+          icon: Icon(Icons.keyboard_arrow_down,
+              color: _selectedParentGroupId != null
+                  ? HuddlColors.primary
+                  : HuddlColors.textHint),
+          style:
+              GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+          items: _userGroups.map((g) {
+            return DropdownMenuItem(
+              value: g.id,
+              child: Row(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.peachLight,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.people,
+                          size: 14, color: HuddlColors.primary),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(g.name,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, color: HuddlColors.textDark)),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (v) {
+            final group = _userGroups.firstWhere((g) => g.id == v,
+                orElse: () => _userGroups.first);
+            setState(() {
+              _selectedParentGroupId = v;
+              _selectedParentGroupName = group.name;
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   /// Privacy radio — clean style matching Create Meetup's _privacyRadio
   Widget _privacyRadio({
     required String label,
     required String description,
     required bool isSelected,
     required VoidCallback onTap,
+    IconData? icon,
   }) {
     return GestureDetector(
       onTap: onTap,
