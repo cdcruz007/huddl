@@ -345,22 +345,20 @@ class OnboardingDataService {
         _hourlyRate = data['hourly_rate'] as String?;
         _serviceAreas = List<String>.from(data['service_areas'] ?? []);
         
-        // ignore: avoid_print
-        print('✅ OnboardingData loaded from storage');
-        // ignore: avoid_print
-        print('   Name: $_name');
-        // ignore: avoid_print
-        print('   Postcode: $_postcode');
-        // ignore: avoid_print
-        print('   Stages: $_stagesOfLife');
-        // ignore: avoid_print
-        print('   Phone: $fullPhoneNumber');
+        if (kDebugMode) {
+          debugPrint('OnboardingData loaded from storage');
+          debugPrint('   Name: $_name');
+          debugPrint('   Postcode: $_postcode');
+          debugPrint('   Stages: $_stagesOfLife');
+          debugPrint('   Phone: $fullPhoneNumber');
+        }
       }
       
       _isInitialized = true;
     } catch (e) {
-      // ignore: avoid_print
-      print('❌ Error loading onboarding data: $e');
+      if (kDebugMode) {
+        debugPrint('Error loading onboarding data: $e');
+      }
     }
   }
   
@@ -397,8 +395,9 @@ class OnboardingDataService {
       await BrowserStorage.setString(_storageKey, json.encode(data));
       _log('Data saved to storage');
     } catch (e) {
-      // ignore: avoid_print
-      print('❌ Error saving onboarding data: $e');
+      if (kDebugMode) {
+        debugPrint('Error saving onboarding data: $e');
+      }
     }
   }
 

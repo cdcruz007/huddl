@@ -75,11 +75,11 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Demo OTP: $_currentOtp  (sent to ${widget.phoneNumber})',
+          'Verification code sent to ${widget.phoneNumber}',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: HuddlColors.onboardingOrange,
-        duration: const Duration(seconds: 6),
+        duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

@@ -604,12 +604,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           fontSize: 14,
                           color: HuddlColors.textSecondary,
                           height: 1.4)),
-                  const SizedBox(height: 6),
-                  Text('Demo code: $otp',
-                      style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: codeCtrl,

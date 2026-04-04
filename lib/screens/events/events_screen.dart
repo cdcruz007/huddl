@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -561,8 +560,6 @@ class _ImGoingTab extends StatelessWidget {
         icon: Icons.event_available_outlined,
         title: "You're not going to any meet-ups yet",
         subtitle: "Tap 'Count Me In' on a meet-up to add it here!",
-        actionLabel: 'Browse Meet-ups',
-        onAction: () {},
       );
     }
 

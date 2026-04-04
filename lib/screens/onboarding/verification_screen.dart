@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../theme/huddl_colors.dart';
@@ -21,8 +20,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Timer? _resendTimer;
   bool _isVerifying = false;
   String? _errorMessage;
-  String? _debugOTP; // Store OTP for testing display
-  
   final OTPService _otpService = OTPService();
   final OnboardingDataService _onboardingData = OnboardingDataService();
   
@@ -30,41 +27,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   void initState() {
     super.initState();
     _startResendTimer();
-    // Always show 123456 as the test bypass code (works in all build modes)
-    _debugOTP = '123456';
   }
   
-  // Load the current OTP for testing purposes
-  void _loadDebugOTP() {
-    final phoneNumber = _onboardingData.phoneNumber;
-    final countryCode = _onboardingData.countryCode ?? '+44';
-    if (phoneNumber != null) {
-      // Get the stored OTP from service (for debug display)
-      final fullNumber = '$countryCode$phoneNumber';
-      final otpData = _otpService.getOTPForTesting(fullNumber);
-      if (kDebugMode) {
-        debugPrint('🔍 Loading OTP for display: $fullNumber');
-        debugPrint('🔍 OTP found: $otpData');
-      }
-      if (otpData != null) {
-        setState(() {
-          _debugOTP = otpData;
-        });
-      } else {
-        // Fallback: Try without country code
-        final otpData2 = _otpService.getOTPForTesting(phoneNumber);
-        if (kDebugMode) {
-          debugPrint('🔍 Trying without country code: $phoneNumber');
-          debugPrint('🔍 OTP found: $otpData2');
-        }
-        if (otpData2 != null) {
-          setState(() {
-            _debugOTP = otpData2;
-          });
-        }
-      }
-    }
-  }
+
 
   @override
   void dispose() {
@@ -163,7 +128,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
     
     if (success) {
       _startResendTimer();
-      _loadDebugOTP(); // Reload the new OTP for testing display
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -334,33 +298,17 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       ),
                     ),
 
-                    // Test bypass code — always shown so testers can proceed
-                    if (_debugOTP != null) ...[
-                      const SizedBox(height: 20),
-                      GestureDetector(
-                        onTap: () {
-                          setState(() => _codeController.text = _debugOTP!);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.warningBg,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                                color: HuddlColors.warning, width: 1),
-                          ),
-                          child: Text(
-                            'Test code: $_debugOTP  (tap to fill)',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.warningDark,
-                            ),
-                          ),
-                        ),
+                    // Helpful hint text
+                    const SizedBox(height: 20),
+                    Text(
+                      'Didn\'t receive a code? Check your messages or tap resend above.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
+                        height: 1.4,
                       ),
-                    ],
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
               ),

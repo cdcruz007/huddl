@@ -701,9 +701,9 @@ class DefaultGroupService {
   }
 
   void _log(String message) {
-    // Force logging even in release mode for debugging
-    // ignore: avoid_print
-    print('👥 DefaultGroupService: $message');
+    if (kDebugMode) {
+      debugPrint('DefaultGroupService: $message');
+    }
   }
 
   /// Recreate default groups when the user changes their stage of life

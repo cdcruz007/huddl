@@ -2680,12 +2680,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         height: 1.4),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 6),
-                  Text('Demo code: $otp',
-                      style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: codeCtrl,
