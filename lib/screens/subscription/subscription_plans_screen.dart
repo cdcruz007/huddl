@@ -27,7 +27,7 @@ class SubscriptionPlansScreen extends StatefulWidget {
 
 class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   final SubscriptionService _service = SubscriptionService();
-  BillingPeriod _period = BillingPeriod.annual;
+  BillingPeriod _period = BillingPeriod.annual; // Default to annual for LTV
 
   @override
   void initState() {
@@ -39,7 +39,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   Future<void> _onSelectPlan(SubscriptionPlan plan) async {
     if (plan.tier == _service.tier) return; // Already on this plan
 
-    if (plan.tier == SubscriptionTier.free) {
+    if (plan.tier == SubscriptionTier.explorer) {
       // Downgrade confirmation
       final confirmed = await _showDowngradeDialog();
       if (!confirmed) return;
@@ -47,7 +47,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Reverted to Free plan',
+            content: Text('Reverted to Explorer plan',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
             backgroundColor: HuddlColors.teal,
           ),
@@ -79,19 +79,23 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           builder: (ctx) => AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Downgrade to Free?',
+            title: Text('Downgrade to Explorer?',
                 style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
             content: Text(
-              'You\'ll lose access to premium features at the end of your billing period. Your data will be preserved.',
+              'You\'ll lose access to premium features at the end of your billing period. '
+              'Your groups, conversations, and data will be preserved, but you\'ll '
+              'be limited to Explorer tier features.',
               style: GoogleFonts.poppins(
                   fontSize: 14, color: HuddlColors.textSecondary),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: Text('Cancel',
-                    style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+                child: Text('Keep Plan',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary)),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
@@ -133,11 +137,21 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               if (widget.gateMessage != null) _GateBanner(widget.gateMessage!),
               if (widget.gateMessage != null) const SizedBox(height: 16),
 
-              // Trial CTA
+              // 7-day Village trial CTA
               if (_service.isFree) ...[
                 _TrialBanner(onTap: _startTrial),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
               ],
+
+              // Founding member banner
+              if (_service.isFree && _service.foundingMemberAvailable) ...[
+                _FoundingMemberBanner(
+                  claimed: _service.foundingMembersClaimed,
+                  cap: SubscriptionService.foundingMemberCap,
+                ),
+                const SizedBox(height: 20),
+              ] else
+                const SizedBox(height: 8),
 
               // Billing toggle
               _BillingToggle(
@@ -155,7 +169,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       isCurrentPlan: plan.tier == _service.tier,
                       isHighlighted: plan.tier == widget.highlightTier ||
                           (widget.highlightTier == null &&
-                              plan.tier == SubscriptionTier.plus),
+                              plan.tier == SubscriptionTier.village),
+                      isFoundingAvailable: _service.foundingMemberAvailable,
                       onSelect: () => _onSelectPlan(plan),
                     ),
                   )),
@@ -182,7 +197,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Text(
                   'Subscriptions are billed through your app store account. '
-                  'Plans auto-renew unless cancelled 24 hours before the end of the current period.',
+                  'Plans auto-renew unless cancelled 24 hours before the end of the current period. '
+                  'Free trial converts to paid plan after 7 days.',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                       fontSize: 11, color: HuddlColors.textLight),
@@ -200,12 +216,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('14-day Plus trial activated!',
+          content: Text('7-day Village trial activated! Enjoy unlimited access.',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
           backgroundColor: HuddlColors.teal,
         ),
       );
       Navigator.pop(context, true);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Trial already used. Choose a plan to continue!',
+              style: GoogleFonts.poppins(color: HuddlColors.white)),
+          backgroundColor: HuddlColors.textHint,
+        ),
+      );
     }
   }
 
@@ -262,7 +286,7 @@ class _GateBanner extends StatelessWidget {
   }
 }
 
-/// 14-day trial banner
+/// 7-day Village trial banner
 class _TrialBanner extends StatelessWidget {
   final VoidCallback onTap;
   const _TrialBanner({required this.onTap});
@@ -286,21 +310,21 @@ class _TrialBanner extends StatelessWidget {
               color: HuddlColors.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.star, color: HuddlColors.primary, size: 24),
+            child: const Icon(Icons.auto_awesome, color: HuddlColors.primary, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Try Plus free for 14 days',
+                Text('Try Village free for 7 days',
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
                         color: HuddlColors.textDark)),
                 const SizedBox(height: 2),
                 Text(
-                    'More groups, private groups, events & ad-free. Cancel anytime.',
+                    'Unlimited groups, DMs, meetups & more. No card required.',
                     style: GoogleFonts.poppins(
                         fontSize: 12, color: HuddlColors.textSecondary)),
               ],
@@ -321,6 +345,81 @@ class _TrialBanner extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.white)),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Founding member urgency banner
+class _FoundingMemberBanner extends StatelessWidget {
+  final int claimed;
+  final int cap;
+  const _FoundingMemberBanner({required this.claimed, required this.cap});
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = cap - claimed;
+    final progress = claimed / cap;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.local_fire_department,
+                    color: Color(0xFF8B5CF6), size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Founding Member: \u00A33.99/mo locked for life',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF6D28D9)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+              color: const Color(0xFF8B5CF6),
+              minHeight: 6,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('$claimed of $cap claimed',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.textSecondary)),
+              Text('Only $remaining spots left!',
+                  style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF8B5CF6))),
+            ],
           ),
         ],
       ),
@@ -394,7 +493,7 @@ class _BillingToggle extends StatelessWidget {
                     color: HuddlColors.teal.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text('Save 33%',
+                  child: Text('Save 30%',
                       style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
@@ -415,6 +514,7 @@ class _PlanCard extends StatelessWidget {
   final BillingPeriod period;
   final bool isCurrentPlan;
   final bool isHighlighted;
+  final bool isFoundingAvailable;
   final VoidCallback onSelect;
 
   const _PlanCard({
@@ -422,13 +522,15 @@ class _PlanCard extends StatelessWidget {
     required this.period,
     required this.isCurrentPlan,
     required this.isHighlighted,
+    required this.isFoundingAvailable,
     required this.onSelect,
   });
 
   @override
   Widget build(BuildContext context) {
     final price = plan.priceFor(period);
-    final isFree = plan.tier == SubscriptionTier.free;
+    final isFree = plan.tier == SubscriptionTier.explorer;
+    final isVillage = plan.tier == SubscriptionTier.village;
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isHighlighted && !isCurrentPlan) {
@@ -510,7 +612,7 @@ class _PlanCard extends StatelessWidget {
                                 color: HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text('Popular',
+                              child: Text('Best Value',
                                   style: GoogleFonts.poppins(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -581,6 +683,46 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
 
+          // Subtitle
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(plan.subtitle,
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: HuddlColors.textHint)),
+            ),
+          ),
+
+          // Founding member price callout
+          if (isVillage && isFoundingAvailable && period == BillingPeriod.monthly) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.local_fire_department,
+                        color: Color(0xFF8B5CF6), size: 14),
+                    const SizedBox(width: 4),
+                    Text('Founding: \u00A33.99/mo locked for life',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6D28D9))),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
           // Highlights
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
@@ -589,10 +731,14 @@ class _PlanCard extends StatelessWidget {
                   .map((h) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.check_circle,
-                                size: 16,
-                                color: _tierColor(plan.tier)),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Icon(Icons.check_circle,
+                                  size: 16,
+                                  color: _tierColor(plan.tier)),
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(h,
@@ -645,22 +791,22 @@ class _PlanCard extends StatelessWidget {
 
   static Color _tierColor(SubscriptionTier tier) {
     switch (tier) {
-      case SubscriptionTier.free:
+      case SubscriptionTier.explorer:
         return HuddlColors.textHint;
-      case SubscriptionTier.plus:
+      case SubscriptionTier.village:
         return HuddlColors.primary;
-      case SubscriptionTier.pro:
+      case SubscriptionTier.innerCircle:
         return HuddlColors.teal;
     }
   }
 
   static IconData _tierIcon(SubscriptionTier tier) {
     switch (tier) {
-      case SubscriptionTier.free:
-        return Icons.person_outline;
-      case SubscriptionTier.plus:
-        return Icons.star_outline;
-      case SubscriptionTier.pro:
+      case SubscriptionTier.explorer:
+        return Icons.explore_outlined;
+      case SubscriptionTier.village:
+        return Icons.home_outlined;
+      case SubscriptionTier.innerCircle:
         return Icons.workspace_premium;
     }
   }
@@ -708,39 +854,42 @@ class _FeatureComparisonTable extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textHint))),
                     Expanded(
-                        child: Text('Free',
+                        child: Text('Explorer',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textHint))),
                     Expanded(
-                        child: Text('Plus',
+                        child: Text('Village',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.primary))),
                     Expanded(
-                        child: Text('Pro',
+                        child: Text('Inner\nCircle',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.teal))),
                   ],
                 ),
               ),
-              _row('Groups joined', '5', '20', '\u221E'),
-              _row('Groups created', '2', '10', '\u221E'),
-              _row('Meetups/month', '3', '15', '\u221E'),
-              _row('DM conversations', '10', '50', '\u221E'),
-              _row('Marketplace listings', '5', '25', '\u221E'),
-              _row('Photo uploads', '3', '10', '50'),
+              _row('Groups joined', '2', '\u221E', '\u221E'),
+              _row('Groups created', '1', '25', '\u221E'),
+              _row('Meetups/month', '2', '\u221E', '\u221E'),
+              _row('DM conversations', '5', '\u221E', '\u221E'),
+              _row('Messages/month', '30', '\u221E', '\u221E'),
+              _row('Marketplace listings', '2', '15', '\u221E'),
+              _row('Photo uploads', '3', '15', '50'),
               _rowBool('Private groups', false, true, true),
               _rowBool('Create events', false, true, true),
               _rowBool('Ad-free', false, true, true),
               _rowBool('Profile badge', false, true, true),
+              _rowBool('Expert Q&A', false, true, true),
+              _rowBool('Milestone tracker', false, true, true),
               _rowBool('Priority support', false, false, true),
               _rowBool('Analytics', false, false, true),
               _rowBool('Promoted listings', false, false, true),
@@ -752,7 +901,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String free, String plus, String pro) {
+  Widget _row(String label, String explorer, String village, String inner) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
@@ -766,21 +915,21 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textSecondary))),
           Expanded(
-              child: Text(free,
+              child: Text(explorer,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.textHint))),
           Expanded(
-              child: Text(plus,
+              child: Text(village,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.primary))),
           Expanded(
-              child: Text(pro,
+              child: Text(inner,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                       fontSize: 12,
@@ -791,7 +940,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _rowBool(String label, bool free, bool plus, bool pro) {
+  Widget _rowBool(String label, bool explorer, bool village, bool inner) {
     Widget checkIcon(bool val, Color color) => Icon(
           val ? Icons.check_circle : Icons.remove_circle_outline,
           size: 16,
@@ -810,9 +959,9 @@ class _FeatureComparisonTable extends StatelessWidget {
               child: Text(label,
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textSecondary))),
-          Expanded(child: Center(child: checkIcon(free, HuddlColors.textHint))),
-          Expanded(child: Center(child: checkIcon(plus, HuddlColors.primary))),
-          Expanded(child: Center(child: checkIcon(pro, HuddlColors.teal))),
+          Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
+          Expanded(child: Center(child: checkIcon(village, HuddlColors.primary))),
+          Expanded(child: Center(child: checkIcon(inner, HuddlColors.teal))),
         ],
       ),
     );

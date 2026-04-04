@@ -80,7 +80,7 @@ class _UpgradePromptSheet extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              Text('Upgrade Required',
+              Text('Upgrade to Unlock',
                   style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -94,22 +94,22 @@ class _UpgradePromptSheet extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Quick tier previews
-              if (currentTier == SubscriptionTier.free) ...[
+              if (currentTier == SubscriptionTier.explorer) ...[
                 _QuickTierPreview(
-                  name: 'Plus',
-                  price: '\u00A34.99/mo',
+                  name: 'Village',
+                  price: '\u00A35.99/mo',
                   color: HuddlColors.primary,
-                  icon: Icons.star_outline,
+                  icon: Icons.home_outlined,
                   benefits: const [
-                    '20 groups, 15 meetups/mo',
+                    'Unlimited groups, DMs & meetups',
                     'Private groups & events',
-                    'Ad-free experience',
+                    'Ad-free + expert Q&A',
                   ],
                   onTap: () {
                     Navigator.pop(context, false);
                     Navigator.pushNamed(context, '/subscription_plans',
                         arguments: {
-                          'highlightTier': 'plus',
+                          'highlightTier': 'village',
                           'gateMessage': message,
                         });
                   },
@@ -118,26 +118,59 @@ class _UpgradePromptSheet extends StatelessWidget {
               ],
 
               _QuickTierPreview(
-                name: 'Pro',
-                price: '\u00A39.99/mo',
+                name: 'Inner Circle',
+                price: '\u00A311.99/mo',
                 color: HuddlColors.teal,
                 icon: Icons.workspace_premium,
                 benefits: const [
-                  'Unlimited everything',
-                  'Priority support & analytics',
-                  'Promoted listings',
+                  'Everything in Village',
+                  'Analytics, promoted listings',
+                  'Priority support & early access',
                 ],
                 onTap: () {
                   Navigator.pop(context, false);
                   Navigator.pushNamed(context, '/subscription_plans',
                       arguments: {
-                        'highlightTier': 'pro',
+                        'highlightTier': 'innerCircle',
                         'gateMessage': message,
                       });
                 },
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // 7-day trial CTA (only if on Explorer and trial not used)
+              if (currentTier == SubscriptionTier.explorer) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                        color: HuddlColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome,
+                          color: HuddlColors.primary, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Try Village free for 7 days — no card required',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: HuddlColors.textDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
 
               // View all plans
               SizedBox(
@@ -262,7 +295,7 @@ class UpgradeBanner extends StatelessWidget {
 
   const UpgradeBanner({
     super.key,
-    this.message = 'Upgrade for more features',
+    this.message = 'Upgrade to Village for unlimited access',
     this.onTap,
   });
 
@@ -280,7 +313,7 @@ class UpgradeBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.star, color: HuddlColors.white, size: 20),
+            const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,

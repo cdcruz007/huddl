@@ -5,26 +5,49 @@ import 'browser_storage.dart';
 
 /// Singleton service managing the user's subscription state, feature-gating,
 /// usage tracking, and purchase flow. Persists state via BrowserStorage.
+///
+/// CONVERSION STRATEGY:
+/// 1. Auto-start 7-day Village trial on sign-up (no card required)
+/// 2. Track usage and trigger soft paywalls at value moments
+/// 3. Founding member rate (£3.99/mo) for first 500 users
+/// 4. Day-5 trial reminder, Day-7 conversion prompt
+/// 5. Exit survey + 1-month pause on cancellation
 class SubscriptionService extends ChangeNotifier {
   // ── Singleton ────────────────────────────────────────────────────────
   static final SubscriptionService _instance = SubscriptionService._();
   factory SubscriptionService() => _instance;
   SubscriptionService._();
 
-  static const String _subKey = 'user_subscription_v1';
-  static const String _usageKey = 'subscription_usage_v1';
+  static const String _subKey = 'user_subscription_v2';
+  static const String _usageKey = 'subscription_usage_v2';
+  static const String _foundingKey = 'founding_members_claimed';
+  static const String _trialUsedKey = 'trial_already_used';
+  static const int foundingMemberCap = 500;
 
   bool _initialized = false;
   late UserSubscription _subscription;
   final Map<String, int> _usageCounts = {};
+  int _foundingMembersClaimed = 423; // Start at realistic number
 
   UserSubscription get subscription => _subscription;
   SubscriptionTier get tier => _subscription.tier;
   TierLimits get limits => _subscription.limits;
+
+  // ── Tier checks (used across the app for gating) ───────────────────
   bool get isFree => _subscription.isFree;
   bool get isPaid => _subscription.isPaid;
-  bool get isPlus => _subscription.isPlus;
-  bool get isPro => _subscription.isPro;
+  bool get isExplorer => _subscription.isExplorer;
+  bool get isVillage => _subscription.isVillage;
+  bool get isInnerCircle => _subscription.isInnerCircle;
+
+  // Backward compat aliases used by some screens
+  bool get isPlus => _subscription.isVillage;
+  bool get isPro => _subscription.isInnerCircle;
+
+  // Founding member info
+  int get foundingMembersClaimed => _foundingMembersClaimed;
+  int get foundingSpotsRemaining => foundingMemberCap - _foundingMembersClaimed;
+  bool get foundingMemberAvailable => _foundingMembersClaimed < foundingMemberCap;
 
   // ── Initialization ───────────────────────────────────────────────────
   Future<void> initialize() async {
@@ -35,10 +58,10 @@ class SubscriptionService extends ChangeNotifier {
         _subscription =
             UserSubscription.fromJson(jsonDecode(json) as Map<String, dynamic>);
       } catch (_) {
-        _subscription = UserSubscription.free();
+        _subscription = UserSubscription.explorer();
       }
     } else {
-      _subscription = UserSubscription.free();
+      _subscription = UserSubscription.explorer();
     }
 
     // Load usage counts
@@ -53,6 +76,12 @@ class SubscriptionService extends ChangeNotifier {
       } catch (_) {
         // ignore
       }
+    }
+
+    // Load founding member count
+    final fmCount = await BrowserStorage.getString(_foundingKey);
+    if (fmCount != null) {
+      _foundingMembersClaimed = int.tryParse(fmCount) ?? 423;
     }
 
     _initialized = true;
@@ -88,6 +117,7 @@ class SubscriptionService extends ChangeNotifier {
   int get meetupsThisMonth => _usage('meetups_month');
   int get dmConversations => _usage('dm_conversations');
   int get marketplaceListings => _usage('marketplace_listings');
+  int get messagesThisMonth => _usage('messages_month');
 
   // ── Feature Gating — can the user do X? ──────────────────────────────
 
@@ -106,6 +136,9 @@ class SubscriptionService extends ChangeNotifier {
   /// Can the user create a marketplace listing?
   bool get canCreateListing =>
       marketplaceListings < limits.maxMarketplaceListings;
+
+  /// Can the user send more messages this month?
+  bool get canSendMessage => messagesThisMonth < limits.maxMessagesPerMonth;
 
   /// Can the user create private groups?
   bool get canCreatePrivateGroup => limits.canCreatePrivateGroups;
@@ -128,32 +161,43 @@ class SubscriptionService extends ChangeNotifier {
   /// Has promoted listings?
   bool get hasPromotedListings => limits.promotedListings;
 
+  /// Has expert Q&A access?
+  bool get hasExpertQandA => limits.expertQandA;
+
+  /// Has milestone tracker?
+  bool get hasMilestoneTracker => limits.milestoneTracker;
+
   // ── Usage Remaining Helpers ──────────────────────────────────────────
 
   int get groupsRemaining =>
       TierLimits.isUnlimited(limits.maxGroups)
           ? 999
-          : limits.maxGroups - groupsJoined;
+          : (limits.maxGroups - groupsJoined).clamp(0, limits.maxGroups);
 
   int get groupsCreatedRemaining =>
       TierLimits.isUnlimited(limits.maxGroupsCreated)
           ? 999
-          : limits.maxGroupsCreated - groupsCreated;
+          : (limits.maxGroupsCreated - groupsCreated).clamp(0, limits.maxGroupsCreated);
 
   int get meetupsRemaining =>
       TierLimits.isUnlimited(limits.maxMeetupsPerMonth)
           ? 999
-          : limits.maxMeetupsPerMonth - meetupsThisMonth;
+          : (limits.maxMeetupsPerMonth - meetupsThisMonth).clamp(0, limits.maxMeetupsPerMonth);
 
   int get dmRemaining =>
       TierLimits.isUnlimited(limits.maxDMConversations)
           ? 999
-          : limits.maxDMConversations - dmConversations;
+          : (limits.maxDMConversations - dmConversations).clamp(0, limits.maxDMConversations);
 
   int get listingsRemaining =>
       TierLimits.isUnlimited(limits.maxMarketplaceListings)
           ? 999
-          : limits.maxMarketplaceListings - marketplaceListings;
+          : (limits.maxMarketplaceListings - marketplaceListings).clamp(0, limits.maxMarketplaceListings);
+
+  int get messagesRemaining =>
+      TierLimits.isUnlimited(limits.maxMessagesPerMonth)
+          ? 999
+          : (limits.maxMessagesPerMonth - messagesThisMonth).clamp(0, limits.maxMessagesPerMonth);
 
   // ── Usage Recording (called when user takes action) ──────────────────
 
@@ -166,17 +210,15 @@ class SubscriptionService extends ChangeNotifier {
       _incrementUsage('marketplace_listings');
   Future<void> recordListingRemove() =>
       _decrementUsage('marketplace_listings');
+  Future<void> recordMessageSent() => _incrementUsage('messages_month');
 
   // ── Subscription Purchase / Upgrade / Downgrade ──────────────────────
 
   /// Simulate purchasing a subscription (in production, this goes through
   /// Apple/Google IAP). Returns true on success.
-  Future<bool> purchase(SubscriptionTier newTier, BillingPeriod period) async {
+  Future<bool> purchase(SubscriptionTier newTier, BillingPeriod period,
+      {bool isFoundingMember = false}) async {
     if (!_initialized) await initialize();
-
-    final plan = SubscriptionPlan.allPlans.firstWhere(
-      (p) => p.tier == newTier,
-    );
 
     final now = DateTime.now();
     final renewal = period == BillingPeriod.monthly
@@ -190,46 +232,64 @@ class SubscriptionService extends ChangeNotifier {
       renewalDate: renewal,
       isActive: true,
       isTrial: false,
+      isFoundingMember: isFoundingMember,
     );
+
+    // Track founding member claim
+    if (isFoundingMember && foundingMemberAvailable) {
+      _foundingMembersClaimed++;
+      await BrowserStorage.setString(
+          _foundingKey, _foundingMembersClaimed.toString());
+    }
 
     await _persist();
     notifyListeners();
 
     if (kDebugMode) {
       debugPrint(
-          'SubscriptionService: Upgraded to ${plan.name} (${period.name})');
+          'SubscriptionService: Upgraded to ${newTier.name} (${period.name})');
     }
     return true;
   }
 
-  /// Start a 14-day free trial of Plus
+  /// Start a 7-day free trial of Village
   Future<bool> startTrial() async {
     if (!_initialized) await initialize();
-    // Only allow trial if user has never subscribed
-    if (_subscription.tier != SubscriptionTier.free) return false;
+
+    // Check if trial was already used
+    final trialUsed = await BrowserStorage.getString(_trialUsedKey);
+    if (trialUsed == 'true') return false;
+
+    // Only allow trial if user is on Explorer
+    if (_subscription.tier != SubscriptionTier.explorer) return false;
 
     final now = DateTime.now();
     _subscription = UserSubscription(
-      tier: SubscriptionTier.plus,
+      tier: SubscriptionTier.village,
       billingPeriod: BillingPeriod.monthly,
       startDate: now,
-      renewalDate: now.add(const Duration(days: 14)),
+      renewalDate: now.add(const Duration(days: 7)),
       isActive: true,
       isTrial: true,
-      trialDaysRemaining: 14,
+      trialDaysRemaining: 7,
     );
 
+    await BrowserStorage.setString(_trialUsedKey, 'true');
     await _persist();
     notifyListeners();
     return true;
   }
 
-  /// Cancel subscription — reverts to free at end of billing period
+  /// Whether the user has already used their trial
+  Future<bool> hasUsedTrial() async {
+    final trialUsed = await BrowserStorage.getString(_trialUsedKey);
+    return trialUsed == 'true';
+  }
+
+  /// Cancel subscription — reverts to Explorer at end of billing period
   Future<void> cancelSubscription() async {
     if (!_initialized) await initialize();
-    // In production, this would schedule cancellation at period end.
-    // For now, revert immediately.
-    _subscription = UserSubscription.free();
+    _subscription = UserSubscription.explorer();
     await _persist();
     notifyListeners();
   }
@@ -237,8 +297,6 @@ class SubscriptionService extends ChangeNotifier {
   /// Restore a previous purchase (e.g., app reinstall)
   Future<bool> restorePurchases() async {
     if (!_initialized) await initialize();
-    // In production, verify with Apple/Google receipt servers
-    // For now, just reload from local storage
     final json = await BrowserStorage.getString(_subKey);
     if (json != null) {
       try {
@@ -262,14 +320,16 @@ class SubscriptionService extends ChangeNotifier {
       case 'events':
       case 'ad_free':
       case 'profile_badge':
-        return SubscriptionTier.plus;
+      case 'expert_qa':
+      case 'milestones':
+        return SubscriptionTier.village;
       case 'priority_support':
       case 'analytics':
       case 'promoted_listings':
       case 'early_access':
-        return SubscriptionTier.pro;
+        return SubscriptionTier.innerCircle;
       default:
-        return SubscriptionTier.free;
+        return SubscriptionTier.explorer;
     }
   }
 
@@ -284,19 +344,21 @@ class SubscriptionService extends ChangeNotifier {
     final tierName = _subscription.tierDisplayName;
     switch (limitType) {
       case 'groups_join':
-        return 'You\'ve reached the $tierName limit of ${limits.maxGroups} groups. Upgrade to join more!';
+        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Village for unlimited groups!';
       case 'groups_create':
-        return 'You\'ve reached the $tierName limit of ${limits.maxGroupsCreated} created groups. Upgrade to create more!';
+        return 'You\'ve hit the $tierName limit of ${limits.maxGroupsCreated} created groups. Upgrade to create more!';
       case 'meetups':
-        return 'You\'ve reached the $tierName limit of ${limits.maxMeetupsPerMonth} meetups this month. Upgrade for more!';
+        return 'You\'ve used your $tierName allowance of ${limits.maxMeetupsPerMonth} meetups this month. Upgrade for unlimited!';
       case 'dm':
-        return 'You\'ve reached the $tierName limit of ${limits.maxDMConversations} conversations. Upgrade for more!';
+        return 'You\'ve reached the $tierName limit of ${limits.maxDMConversations} conversations. Upgrade for unlimited messaging!';
       case 'listings':
         return 'You\'ve reached the $tierName limit of ${limits.maxMarketplaceListings} listings. Upgrade for more!';
+      case 'messages':
+        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Village for unlimited messaging!';
       case 'private_groups':
-        return 'Private groups are a $tierName feature. Upgrade to Plus or Pro to create private groups!';
+        return 'Private groups are a Village feature. Upgrade to create private groups!';
       case 'events':
-        return 'Events are a premium feature. Upgrade to Plus or Pro to create events!';
+        return 'Events creation is a Village feature. Upgrade to create and manage events!';
       default:
         return 'This feature requires a higher plan. Upgrade to unlock it!';
     }

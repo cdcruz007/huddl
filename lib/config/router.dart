@@ -206,7 +206,7 @@ class AppRouter {
         if (hlStr != null) {
           highlightTier = SubscriptionTier.values.firstWhere(
             (t) => t.name == hlStr,
-            orElse: () => SubscriptionTier.plus,
+            orElse: () => SubscriptionTier.village,
           );
         }
         return SlidePageRoute(
@@ -222,8 +222,8 @@ class AppRouter {
         return SlidePageRoute(
           page: SubscriptionCheckoutScreen(
             tier: SubscriptionTier.values.firstWhere(
-              (t) => t.name == (args['tier'] as String? ?? 'plus'),
-              orElse: () => SubscriptionTier.plus,
+              (t) => t.name == (args['tier'] as String? ?? 'village'),
+              orElse: () => SubscriptionTier.village,
             ),
             period: BillingPeriod.values.firstWhere(
               (b) => b.name == (args['period'] as String? ?? 'annual'),

@@ -216,30 +216,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSubscriptionCard() {
     final sub = _subscriptionService.subscription;
     final isFree = sub.isFree;
-    final isPlus = sub.isPlus;
-    final isPro = sub.isPro;
+    final isVillage = sub.isVillage;
+    final isInnerCircle = sub.isInnerCircle;
 
     Color accentColor = HuddlColors.textHint;
-    IconData icon = Icons.person_outline;
-    String planLabel = 'Free Plan';
-    String subtitle = 'Upgrade for more features';
+    IconData icon = Icons.explore_outlined;
+    String planLabel = 'Explorer';
+    String subtitle = 'Upgrade for unlimited access';
 
-    if (isPlus) {
+    if (isVillage) {
       accentColor = HuddlColors.primary;
-      icon = Icons.star;
-      planLabel = 'Huddl Plus';
+      icon = Icons.home_outlined;
+      planLabel = 'Huddl Village';
       subtitle = sub.isTrial
           ? 'Trial \u2022 ${sub.trialDaysRemaining} days left'
           : sub.billingPeriod == BillingPeriod.annual
-              ? '\u00A339.99/year'
-              : '\u00A34.99/month';
-    } else if (isPro) {
+              ? '\u00A349.99/year'
+              : '\u00A35.99/month';
+    } else if (isInnerCircle) {
       accentColor = HuddlColors.teal;
       icon = Icons.workspace_premium;
-      planLabel = 'Huddl Pro';
+      planLabel = 'Inner Circle';
       subtitle = sub.billingPeriod == BillingPeriod.annual
-          ? '\u00A379.99/year'
-          : '\u00A39.99/month';
+          ? '\u00A399.99/year'
+          : '\u00A311.99/month';
     }
 
     return Container(
@@ -437,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _subscriptionService.isPro
+                                color: _subscriptionService.isInnerCircle
                                     ? HuddlColors.teal
                                     : HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(8),
@@ -446,15 +446,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _subscriptionService.isPro
+                                    _subscriptionService.isInnerCircle
                                         ? Icons.workspace_premium
-                                        : Icons.star,
+                                        : Icons.home_outlined,
                                     color: HuddlColors.white,
                                     size: 12,
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    _subscriptionService.isPro ? 'PRO' : 'PLUS',
+                                    _subscriptionService.isInnerCircle ? 'INNER CIRCLE' : 'VILLAGE',
                                     style: GoogleFonts.poppins(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w700,

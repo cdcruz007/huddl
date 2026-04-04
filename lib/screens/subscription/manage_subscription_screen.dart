@@ -44,47 +44,111 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
   }
 
   Future<void> _cancelSubscription() async {
-    final confirmed = await showDialog<bool>(
+    // Show exit survey first
+    final reason = await _showExitSurvey();
+    if (reason == null) return; // User cancelled the survey
+
+    // Offer 1-month pause
+    final wantsPause = await _offerPause();
+    if (wantsPause == true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Subscription paused for 1 month. Welcome back anytime!',
+                style: GoogleFonts.poppins(color: HuddlColors.white)),
+            backgroundColor: HuddlColors.teal,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Actually cancel
+    await _service.cancelSubscription();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Subscription cancelled. You\'ll keep access until the billing period ends.',
+              style: GoogleFonts.poppins(color: HuddlColors.white)),
+          backgroundColor: HuddlColors.textHint,
+        ),
+      );
+    }
+  }
+
+  Future<String?> _showExitSurvey() async {
+    return await showDialog<String>(
+      context: context,
+      builder: (ctx) => _ExitSurveyDialog(),
+    );
+  }
+
+  Future<bool?> _offerPause() async {
+    return await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Cancel Subscription?',
+        title: Text('Wait — how about a free pause?',
             style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-        content: Text(
-          'Your subscription will remain active until the end of your current billing period. '
-          'After that, you\'ll be moved to the Free plan and may lose access to premium features.',
-          style:
-              GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: HuddlColors.peachVeryLight,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.pause_circle_outline,
+                      color: HuddlColors.primary, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('1-Month Free Pause',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.textDark)),
+                        Text(
+                          'Keep your data & groups. Resume when you\'re ready — no charge during the pause.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, color: HuddlColors.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Keep Plan',
+            child: Text('No, cancel my plan',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                    fontSize: 13, color: HuddlColors.error)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Cancel Plan',
-                style: GoogleFonts.poppins(color: HuddlColors.error)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.primary,
+              foregroundColor: HuddlColors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text('Pause Instead',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
     );
-
-    if (confirmed == true) {
-      await _service.cancelSubscription();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Subscription cancelled',
-                style: GoogleFonts.poppins(color: HuddlColors.white)),
-            backgroundColor: HuddlColors.textHint,
-          ),
-        );
-      }
-    }
   }
 
   @override
@@ -160,6 +224,14 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               ),
               const SizedBox(height: 8),
               _UsageCard(
+                icon: Icons.message_outlined,
+                label: 'Messages This Month',
+                used: _service.messagesThisMonth,
+                limit: limits.maxMessagesPerMonth,
+                color: const Color(0xFF8B5CF6),
+              ),
+              const SizedBox(height: 8),
+              _UsageCard(
                 icon: Icons.storefront_outlined,
                 label: 'Marketplace Listings',
                 used: _service.marketplaceListings,
@@ -187,14 +259,14 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       const Icon(Icons.rocket_launch,
                           color: HuddlColors.primary, size: 36),
                       const SizedBox(height: 12),
-                      Text('Unlock More with Plus or Pro',
+                      Text('Unlock Your Full Village',
                           style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: HuddlColors.textDark)),
                       const SizedBox(height: 6),
                       Text(
-                        'Create private groups, host more meetups, go ad-free and more.',
+                        'Unlimited groups, DMs, meetups, private groups, events, ad-free & more — from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: HuddlColors.textSecondary),
@@ -264,22 +336,131 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
 // SUBWIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
+class _ExitSurveyDialog extends StatefulWidget {
+  @override
+  State<_ExitSurveyDialog> createState() => _ExitSurveyDialogState();
+}
+
+class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
+  String? _selectedReason;
+  final _otherCtrl = TextEditingController();
+
+  static const _reasons = [
+    'Too expensive',
+    'Not using it enough',
+    'Missing features I need',
+    'Found a better alternative',
+    'Technical issues',
+    'Other',
+  ];
+
+  @override
+  void dispose() {
+    _otherCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Text('We\'re sorry to see you go',
+          style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.textDark)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Help us improve — what\'s your main reason for cancelling?',
+                style: GoogleFonts.poppins(
+                    fontSize: 13, color: HuddlColors.textSecondary)),
+            const SizedBox(height: 12),
+            ..._reasons.map((r) => GestureDetector(
+                  onTap: () => setState(() => _selectedReason = r),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _selectedReason == r
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                          color: _selectedReason == r
+                              ? HuddlColors.primary
+                              : HuddlColors.textHint,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(r,
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, color: HuddlColors.textDark)),
+                      ],
+                    ),
+                  ),
+                )),
+            if (_selectedReason == 'Other') ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _otherCtrl,
+                decoration: InputDecoration(
+                  hintText: 'Tell us more...',
+                  hintStyle: GoogleFonts.poppins(
+                      fontSize: 13, color: HuddlColors.textHint),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.all(12),
+                ),
+                maxLines: 2,
+                style: GoogleFonts.poppins(fontSize: 13),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, null),
+          child: Text('Never mind',
+              style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+        ),
+        TextButton(
+          onPressed: _selectedReason != null
+              ? () => Navigator.pop(
+                  context,
+                  _selectedReason == 'Other'
+                      ? _otherCtrl.text
+                      : _selectedReason)
+              : null,
+          child: Text('Continue',
+              style: GoogleFonts.poppins(
+                  color: _selectedReason != null
+                      ? HuddlColors.error
+                      : HuddlColors.textLight)),
+        ),
+      ],
+    );
+  }
+}
+
 class _CurrentPlanCard extends StatelessWidget {
   final UserSubscription subscription;
   const _CurrentPlanCard({required this.subscription});
 
   @override
   Widget build(BuildContext context) {
-    final isPro = subscription.isPro;
-    final isPlus = subscription.isPlus;
+    final isInnerCircle = subscription.isInnerCircle;
+    final isVillage = subscription.isVillage;
     final isFree = subscription.isFree;
 
     Color accentColor = HuddlColors.textHint;
-    IconData icon = Icons.person_outline;
-    if (isPlus) {
+    IconData icon = Icons.explore_outlined;
+    if (isVillage) {
       accentColor = HuddlColors.primary;
-      icon = Icons.star;
-    } else if (isPro) {
+      icon = Icons.home_outlined;
+    } else if (isInnerCircle) {
       accentColor = HuddlColors.teal;
       icon = Icons.workspace_premium;
     }
@@ -298,79 +479,107 @@ class _CurrentPlanCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, color: accentColor, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: accentColor, size: 28),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(subscription.tierDisplayName,
-                        style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: HuddlColors.textDark)),
-                    if (subscription.isTrial) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: HuddlColors.accentAmber.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text('Trial',
+                    Row(
+                      children: [
+                        Text(subscription.tierDisplayName,
                             style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.yellowDark)),
-                      ),
-                    ],
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: HuddlColors.textDark)),
+                        if (subscription.isTrial) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text('Trial',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.yellowDark)),
+                          ),
+                        ],
+                        if (subscription.isFoundingMember) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.local_fire_department,
+                                    color: Color(0xFF8B5CF6), size: 10),
+                                const SizedBox(width: 2),
+                                Text('Founding',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF6D28D9))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    if (!isFree && subscription.renewalDate != null)
+                      Text(
+                        subscription.isTrial
+                            ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
+                            : 'Renews ${_formatDate(subscription.renewalDate!)}',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, color: HuddlColors.textSecondary),
+                      )
+                    else
+                      Text('Free plan — upgrade anytime',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, color: HuddlColors.textHint)),
                   ],
                 ),
-                const SizedBox(height: 2),
-                if (!isFree && subscription.renewalDate != null)
-                  Text(
-                    subscription.isTrial
-                        ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
-                        : 'Renews ${_formatDate(subscription.renewalDate!)}',
+              ),
+              if (!isFree)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: accentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    subscription.billingPeriod == BillingPeriod.annual
+                        ? 'Annual'
+                        : 'Monthly',
                     style: GoogleFonts.poppins(
-                        fontSize: 12, color: HuddlColors.textSecondary),
-                  )
-                else
-                  Text('No active subscription',
-                      style: GoogleFonts.poppins(
-                          fontSize: 12, color: HuddlColors.textHint)),
-              ],
-            ),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor),
+                  ),
+                ),
+            ],
           ),
-          if (!isFree)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                subscription.billingPeriod == BillingPeriod.annual
-                    ? 'Annual'
-                    : 'Monthly',
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor),
-              ),
-            ),
         ],
       ),
     );

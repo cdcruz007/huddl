@@ -29,6 +29,7 @@ class _SubscriptionCheckoutScreenState
   late BillingPeriod _period;
   bool _isProcessing = false;
   bool _agreedToTerms = false;
+  bool _useFoundingRate = false;
 
   late SubscriptionPlan _plan;
 
@@ -40,6 +41,21 @@ class _SubscriptionCheckoutScreenState
       (p) => p.tier == widget.tier,
     );
     _service.initialize();
+    // Auto-select founding rate if available for Village tier
+    if (_plan.tier == SubscriptionTier.village &&
+        _plan.foundingMonthlyPrice != null &&
+        _service.foundingMemberAvailable) {
+      _useFoundingRate = true;
+    }
+  }
+
+  double get _displayPrice {
+    if (_useFoundingRate &&
+        _plan.foundingMonthlyPrice != null &&
+        _period == BillingPeriod.monthly) {
+      return _plan.foundingMonthlyPrice!;
+    }
+    return _plan.priceFor(_period);
   }
 
   Future<void> _completePurchase() async {
@@ -59,7 +75,11 @@ class _SubscriptionCheckoutScreenState
     // Simulate payment processing
     await Future.delayed(const Duration(seconds: 2));
 
-    final success = await _service.purchase(widget.tier, _period);
+    final success = await _service.purchase(
+      widget.tier,
+      _period,
+      isFoundingMember: _useFoundingRate,
+    );
 
     setState(() => _isProcessing = false);
 
@@ -68,7 +88,10 @@ class _SubscriptionCheckoutScreenState
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) => _SuccessDialog(plan: _plan),
+        builder: (ctx) => _SuccessDialog(
+          plan: _plan,
+          isFoundingMember: _useFoundingRate,
+        ),
       );
       if (mounted) {
         Navigator.pop(context, true);
@@ -86,8 +109,9 @@ class _SubscriptionCheckoutScreenState
 
   @override
   Widget build(BuildContext context) {
-    final price = _plan.priceFor(_period);
     final isAnnual = _period == BillingPeriod.annual;
+    final isInnerCircle = _plan.tier == SubscriptionTier.innerCircle;
+    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
 
     return Scaffold(
       backgroundColor: HuddlColors.background,
@@ -138,12 +162,95 @@ class _SubscriptionCheckoutScreenState
                       price: '\u00A3${_plan.annualPrice.toStringAsFixed(2)}/year',
                       savingsText: 'Save ${_plan.annualSavingsPercent}%',
                       isSelected: _period == BillingPeriod.annual,
-                      onTap: () => setState(() => _period = BillingPeriod.annual),
+                      onTap: () => setState(() {
+                        _period = BillingPeriod.annual;
+                        _useFoundingRate = false; // Founding rate is monthly only
+                      }),
                     ),
+
+                    // Founding member option
+                    if (_plan.tier == SubscriptionTier.village &&
+                        _plan.foundingMonthlyPrice != null &&
+                        _service.foundingMemberAvailable &&
+                        _period == BillingPeriod.monthly) ...[
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () =>
+                            setState(() => _useFoundingRate = !_useFoundingRate),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: _useFoundingRate
+                                ? const Color(0xFFF5F0FF)
+                                : HuddlColors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: _useFoundingRate
+                                  ? const Color(0xFF8B5CF6)
+                                  : HuddlColors.gray200,
+                              width: _useFoundingRate ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _useFoundingRate
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: _useFoundingRate
+                                    ? const Color(0xFF8B5CF6)
+                                    : HuddlColors.textHint,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text('Founding Member Rate',
+                                            style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: const Color(0xFF6D28D9))),
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.local_fire_department,
+                                            color: Color(0xFF8B5CF6), size: 16),
+                                      ],
+                                    ),
+                                    Text(
+                                        '\u00A3${_plan.foundingMonthlyPrice!.toStringAsFixed(2)}/mo — locked for life',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 12,
+                                            color: HuddlColors.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B5CF6)
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                    'Save \u00A3${(_plan.monthlyPrice - _plan.foundingMonthlyPrice!).toStringAsFixed(2)}/mo',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF8B5CF6))),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 24),
 
-                    // Payment method (simulated — in production, use Apple/Google Pay)
+                    // Payment method
                     Text('Payment Method',
                         style: GoogleFonts.poppins(
                             fontSize: 15,
@@ -164,12 +271,13 @@ class _SubscriptionCheckoutScreenState
                     ..._plan.highlights.map((h) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
                           child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.check_circle_outline,
-                                  size: 18,
-                                  color: _plan.tier == SubscriptionTier.pro
-                                      ? HuddlColors.teal
-                                      : HuddlColors.primary),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Icon(Icons.check_circle_outline,
+                                    size: 18, color: color),
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(h,
@@ -268,12 +376,29 @@ class _SubscriptionCheckoutScreenState
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textDark)),
-                        Text(
-                          '\u00A3${price.toStringAsFixed(2)}${isAnnual ? '/year' : '/month'}',
-                          style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (_useFoundingRate &&
+                                _plan.foundingMonthlyPrice != null) ...[
+                              Text(
+                                '\u00A3${_plan.monthlyPrice.toStringAsFixed(2)}/month',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: HuddlColors.textHint,
+                                    decoration: TextDecoration.lineThrough),
+                              ),
+                            ],
+                            Text(
+                              '\u00A3${_displayPrice.toStringAsFixed(2)}${isAnnual ? '/year' : '/month'}',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: _useFoundingRate
+                                      ? const Color(0xFF6D28D9)
+                                      : HuddlColors.textDark),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -283,10 +408,11 @@ class _SubscriptionCheckoutScreenState
                       child: ElevatedButton(
                         onPressed: _isProcessing ? null : _completePurchase,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
+                          backgroundColor: _useFoundingRate
+                              ? const Color(0xFF8B5CF6)
+                              : color,
                           foregroundColor: HuddlColors.white,
-                          disabledBackgroundColor:
-                              HuddlColors.primary.withValues(alpha: 0.5),
+                          disabledBackgroundColor: color.withValues(alpha: 0.5),
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -302,7 +428,9 @@ class _SubscriptionCheckoutScreenState
                                 ),
                               )
                             : Text(
-                                'Subscribe to ${_plan.name}',
+                                _useFoundingRate
+                                    ? 'Lock Founding Rate'
+                                    : 'Subscribe to ${_plan.name}',
                                 style: GoogleFonts.poppins(
                                     fontSize: 16, fontWeight: FontWeight.w600),
                               ),
@@ -331,14 +459,14 @@ class _OrderSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isPro = plan.tier == SubscriptionTier.pro;
-    final color = isPro ? HuddlColors.teal : HuddlColors.primary;
+    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
+    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isPro
+          colors: isInnerCircle
               ? [const Color(0xFFE6F5F3), const Color(0xFFF0FAF8)]
               : [const Color(0xFFFFF0E6), const Color(0xFFFFF8F0)],
         ),
@@ -354,7 +482,7 @@ class _OrderSummaryCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
-              isPro ? Icons.workspace_premium : Icons.star,
+              isInnerCircle ? Icons.workspace_premium : Icons.home_outlined,
               color: color,
               size: 28,
             ),
@@ -529,12 +657,15 @@ class _PaymentMethodCard extends StatelessWidget {
 
 class _SuccessDialog extends StatelessWidget {
   final SubscriptionPlan plan;
-  const _SuccessDialog({required this.plan});
+  final bool isFoundingMember;
+  const _SuccessDialog({required this.plan, this.isFoundingMember = false});
 
   @override
   Widget build(BuildContext context) {
-    final isPro = plan.tier == SubscriptionTier.pro;
-    final color = isPro ? HuddlColors.teal : HuddlColors.primary;
+    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
+    final color = isFoundingMember
+        ? const Color(0xFF8B5CF6)
+        : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -552,18 +683,48 @@ class _SuccessDialog extends StatelessWidget {
               child: Icon(Icons.celebration, color: color, size: 40),
             ),
             const SizedBox(height: 20),
-            Text('Welcome to ${plan.name}!',
-                style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark)),
+            Text(
+              isFoundingMember
+                  ? 'Welcome, Founding Member!'
+                  : 'Welcome to ${plan.name}!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: HuddlColors.textDark),
+            ),
             const SizedBox(height: 8),
             Text(
-              'Your subscription is now active. Enjoy all your new features!',
+              isFoundingMember
+                  ? 'Your \u00A33.99/mo rate is locked for life. Thank you for being an early supporter!'
+                  : 'Your subscription is now active. Enjoy all your new features!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                   fontSize: 14, color: HuddlColors.textSecondary),
             ),
+            if (isFoundingMember) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.verified,
+                        color: Color(0xFF8B5CF6), size: 16),
+                    const SizedBox(width: 6),
+                    Text('Founding Member Badge Unlocked',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6D28D9))),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
