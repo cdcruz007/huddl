@@ -17,6 +17,8 @@ import '../../services/saved_message_service.dart';
 import '../../services/message_search_service.dart';
 import '../../models/saved_message.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
@@ -2725,6 +2727,20 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
   Future<void> _onJoinTap(String groupId) async {
+    // ── Subscription gate: group join limit ───────────────────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canJoinGroup) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'groups_join',
+          message: subService.limitReachedMessage('groups_join'),
+        );
+      }
+      return;
+    }
+
     final isAlreadyJoined = _invitationService.isGroupJoined(groupId);
     if (isAlreadyJoined) {
       if (mounted) {
@@ -2760,6 +2776,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     );
 
     await _invitationService.joinPublicGroup(groupObj, userName);
+
+    // Record usage for subscription tracking
+    subService.recordGroupJoin();
 
     if (mounted) {
       setState(() {});

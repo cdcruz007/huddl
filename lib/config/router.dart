@@ -30,7 +30,11 @@ import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
+import '../screens/subscription/subscription_plans_screen.dart';
+import '../screens/subscription/subscription_checkout_screen.dart';
+import '../screens/subscription/manage_subscription_screen.dart';
 import '../services/rehome_service.dart';
+import '../models/subscription.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -192,6 +196,45 @@ class AppRouter {
         return SlidePageRoute(
           page: const CreateListingScreen(),
           direction: SlideDirection.up,
+        );
+
+      // ── Subscription feature routes ──────────────────────────────────
+      case '/subscription_plans':
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        SubscriptionTier? highlightTier;
+        final hlStr = args['highlightTier'] as String?;
+        if (hlStr != null) {
+          highlightTier = SubscriptionTier.values.firstWhere(
+            (t) => t.name == hlStr,
+            orElse: () => SubscriptionTier.plus,
+          );
+        }
+        return SlidePageRoute(
+          page: SubscriptionPlansScreen(
+            highlightTier: highlightTier,
+            gateMessage: args['gateMessage'] as String?,
+          ),
+          direction: SlideDirection.up,
+        );
+
+      case '/subscription_checkout':
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
+        return SlidePageRoute(
+          page: SubscriptionCheckoutScreen(
+            tier: SubscriptionTier.values.firstWhere(
+              (t) => t.name == (args['tier'] as String? ?? 'plus'),
+              orElse: () => SubscriptionTier.plus,
+            ),
+            period: BillingPeriod.values.firstWhere(
+              (b) => b.name == (args['period'] as String? ?? 'annual'),
+              orElse: () => BillingPeriod.annual,
+            ),
+          ),
+        );
+
+      case '/manage_subscription':
+        return SlidePageRoute(
+          page: const ManageSubscriptionScreen(),
         );
 
       case '/item_detail':

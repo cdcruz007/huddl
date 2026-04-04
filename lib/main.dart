@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'theme/huddl_theme.dart';
 import 'config/router.dart';
+import 'services/subscription_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Pre-initialize subscription service for app-wide access
+  await SubscriptionService().initialize();
   runApp(const HuddlApp());
 }
 

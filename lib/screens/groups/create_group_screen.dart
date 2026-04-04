@@ -12,6 +12,8 @@ import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -659,6 +661,31 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   // ── Create group logic ────────────────────────────────────────────────
   Future<void> _createGroup() async {
+    // ── Subscription gate: group creation limit ────────────────────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canCreateGroup) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'groups_create',
+          message: subService.limitReachedMessage('groups_create'),
+        );
+      }
+      return;
+    }
+    // ── Subscription gate: private group ────────────────────────────
+    if (_privacy == 'private' && !subService.canCreatePrivateGroup) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'private_groups',
+          message: subService.limitReachedMessage('private_groups'),
+        );
+      }
+      return;
+    }
+
     if (_pickedImageUrl == null) {
       setState(() => _showImageError = true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -792,6 +819,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
+        // Record usage for subscription tracking
+        subService.recordGroupCreate();
         Navigator.pop(context, newGroup);
       }
     } catch (e) {

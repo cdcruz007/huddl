@@ -11,6 +11,8 @@ import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE EVENT — single-page scrollable form matching target design screenshots
@@ -351,7 +353,21 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   }
 
   // ── Create ──────────────────────────────────────────────────────────
-  void _createEvent() {
+  void _createEvent() async {
+    // ── Subscription gate: events require Plus or Pro ───────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canCreateEvent) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'events',
+          message: subService.limitReachedMessage('events'),
+        );
+      }
+      return;
+    }
+
     if (!_isFormValid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('Please fill in all required fields'),

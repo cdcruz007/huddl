@@ -15,6 +15,8 @@ import '../../services/dm_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE MEETUP — single-page scrollable form matching design screenshots
@@ -361,6 +363,20 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Create ──────────────────────────────────────────────────────────
   Future<void> _createMeetup() async {
+    // ── Subscription gate: meetup creation limit ────────────────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canCreateMeetup) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'meetups',
+          message: subService.limitReachedMessage('meetups'),
+        );
+      }
+      return;
+    }
+
     if (!_isFormValid) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('Please fill in all required fields'),
@@ -484,6 +500,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
     ));
 
+    // Record usage for subscription tracking
+    subService.recordMeetupCreate();
     Navigator.pop(context, meetup);
   }
 

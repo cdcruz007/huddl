@@ -19,6 +19,8 @@ import '../../services/announcement_service.dart';
 import '../../models/group.dart';
 import '../main_shell.dart';
 import '../../services/feedback_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -35,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final MeetupService _meetupService = MeetupService();
   final BlockService _blockService = BlockService();
   final FeedbackService _feedbackService = FeedbackService();
+  final SubscriptionService _subscriptionService = SubscriptionService();
 
   bool _isLoading = true;
 
@@ -80,6 +83,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadSettings();
     _blockService.initialize();
     _feedbackService.initialize();
+    _subscriptionService.initialize();
+    _subscriptionService.addListener(_onSubChange);
+  }
+
+  void _onSubChange() {
+    if (mounted) setState(() {});
   }
 
   Future<void> _loadSettings() async {
@@ -201,6 +210,152 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int get _totalGroupCount => _userGroups.length + _discoveredGroups.length;
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTION CARD
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildSubscriptionCard() {
+    final sub = _subscriptionService.subscription;
+    final isFree = sub.isFree;
+    final isPlus = sub.isPlus;
+    final isPro = sub.isPro;
+
+    Color accentColor = HuddlColors.textHint;
+    IconData icon = Icons.person_outline;
+    String planLabel = 'Free Plan';
+    String subtitle = 'Upgrade for more features';
+
+    if (isPlus) {
+      accentColor = HuddlColors.primary;
+      icon = Icons.star;
+      planLabel = 'Huddl Plus';
+      subtitle = sub.isTrial
+          ? 'Trial \u2022 ${sub.trialDaysRemaining} days left'
+          : sub.billingPeriod == BillingPeriod.annual
+              ? '\u00A339.99/year'
+              : '\u00A34.99/month';
+    } else if (isPro) {
+      accentColor = HuddlColors.teal;
+      icon = Icons.workspace_premium;
+      planLabel = 'Huddl Pro';
+      subtitle = sub.billingPeriod == BillingPeriod.annual
+          ? '\u00A379.99/year'
+          : '\u00A39.99/month';
+    }
+
+    return Container(
+      color: HuddlColors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('Subscription',
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textHint)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () async {
+              if (isFree) {
+                await Navigator.pushNamed(context, '/subscription_plans');
+              } else {
+                await Navigator.pushNamed(context, '/manage_subscription');
+              }
+              if (mounted) setState(() {});
+            },
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isFree
+                    ? HuddlColors.peachVeryLight
+                    : accentColor.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isFree
+                      ? HuddlColors.primary.withValues(alpha: 0.2)
+                      : accentColor.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: accentColor, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(planLabel,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.textDark)),
+                            if (sub.isTrial) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.accentAmber
+                                      .withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text('Trial',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.yellowDark)),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 1),
+                        Text(subtitle,
+                            style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: HuddlColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  if (isFree)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: HuddlColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text('Upgrade',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.white)),
+                    )
+                  else
+                    Icon(Icons.chevron_right,
+                        color: accentColor, size: 22),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // BUILD
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -268,11 +423,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(_name,
-                          style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_name,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.textDark)),
+                          if (_subscriptionService.isPaid) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _subscriptionService.isPro
+                                    ? HuddlColors.teal
+                                    : HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _subscriptionService.isPro
+                                        ? Icons.workspace_premium
+                                        : Icons.star,
+                                    color: HuddlColors.white,
+                                    size: 12,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _subscriptionService.isPro ? 'PRO' : 'PLUS',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: HuddlColors.white),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                       const SizedBox(height: 4),
                       Text(_borough,
                           style: GoogleFonts.poppins(
@@ -395,6 +588,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 if (_userGroups.isNotEmpty || _discoveredGroups.isNotEmpty)
                   const SizedBox(height: 8),
+
+                // ── Subscription section ──────────────────────────────────
+                _buildSubscriptionCard(),
+                const SizedBox(height: 8),
 
                 // ── Account section ──────────────────────────────────────
                 _MenuSection(

@@ -7,6 +7,8 @@ import '../../theme/huddl_colors.dart';
 import '../../services/rehome_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 // =============================================================================
 // CREATE / EDIT LISTING SCREEN — age-stage-first posting flow
@@ -221,6 +223,21 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // ── Subscription gate: listing creation limit ────────────────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canCreateListing) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'listings',
+          message: subService.limitReachedMessage('listings'),
+        );
+      }
+      return;
+    }
+
     setState(() => _isCreating = true);
 
     final onboarding = OnboardingDataService();
@@ -305,6 +322,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
+        // Record usage for subscription tracking
+        subService.recordListingCreate();
         Navigator.pop(context, newItem);
       }
     }

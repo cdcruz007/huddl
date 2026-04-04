@@ -17,6 +17,8 @@ import '../../services/dm_service.dart';
 import '../../services/browser_storage.dart';
 import '../main_shell.dart';
 import '../events/meetup_detail_screen.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -631,6 +633,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+
+              // ── Subscription upgrade banner (free users) ─────────────
+              if (SubscriptionService().isFree)
+                SliverToBoxAdapter(
+                  child: UpgradeBanner(
+                    message: 'Unlock more groups, meetups & private features',
+                    onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
+                  ),
+                ),
 
               // ── Meetups I'm Going ─────────────────────────────────────
               SliverToBoxAdapter(

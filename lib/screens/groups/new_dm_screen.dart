@@ -5,6 +5,8 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
+import '../../services/subscription_service.dart';
+import '../../widgets/upgrade_prompt.dart';
 
 /// Screen that lists all borough members so the user can pick one to start
 /// a direct message conversation with.
@@ -60,7 +62,22 @@ class _NewDMScreenState extends State<NewDMScreen> {
     });
   }
 
-  void _selectMember(BoroughMember member) {
+  void _selectMember(BoroughMember member) async {
+    // ── Subscription gate: DM conversation limit ──────────────────
+    final subService = SubscriptionService();
+    await subService.initialize();
+    if (!subService.canStartDM) {
+      if (mounted) {
+        showUpgradePrompt(
+          context,
+          feature: 'dm',
+          message: subService.limitReachedMessage('dm'),
+        );
+      }
+      return;
+    }
+    subService.recordDMStart();
+
     // Assign a colour based on the member's name
     final colours = [
       '#FF975C',
