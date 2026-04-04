@@ -3215,38 +3215,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (_) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 24),
+          Center(
             child: Image.asset(
-              'assets/images/logo_huddl_icon.png',
-              width: 72,
-              height: 72,
+              'assets/images/logo_huddl_hq.png',
+              width: 220,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Center(
-                    child: Icon(Icons.people, size: 36, color: HuddlColors.primary)),
+              errorBuilder: (_, __, ___) => Column(
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.peachLight,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Center(
+                        child: Icon(Icons.people, size: 36, color: HuddlColors.primary)),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('huddl',
+                      style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.primary)),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Image.asset(
-            'assets/images/logo_huddl_splash.png',
-            height: 30,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => Text('huddl',
-                style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: HuddlColors.primary)),
-          ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text('Version 1.0.0',
               style: GoogleFonts.poppins(
                   fontSize: 13, color: HuddlColors.textHint)),
