@@ -354,15 +354,15 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   // ── Create ──────────────────────────────────────────────────────────
   void _createEvent() async {
-    // ── Subscription gate: events require Plus or Pro ───────────
+    // ── Subscription gate: meetup creation requires Neighbourhood or Inner Circle ───────────
     final subService = SubscriptionService();
     await subService.initialize();
-    if (!subService.canCreateEvent) {
+    if (!subService.canCreateMeetupFeature) {
       if (mounted) {
         showUpgradePrompt(
           context,
-          feature: 'events',
-          message: subService.limitReachedMessage('events'),
+          feature: 'meetups',
+          message: subService.limitReachedMessage('meetups'),
         );
       }
       return;

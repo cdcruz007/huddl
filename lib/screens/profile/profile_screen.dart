@@ -216,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSubscriptionCard() {
     final sub = _subscriptionService.subscription;
     final isFree = sub.isFree;
-    final isVillage = sub.isVillage;
+    final isNeighbourhood = sub.isNeighbourhood;
     final isInnerCircle = sub.isInnerCircle;
 
     Color accentColor = HuddlColors.textHint;
@@ -224,10 +224,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String planLabel = 'Explorer';
     String subtitle = 'Upgrade for unlimited access';
 
-    if (isVillage) {
+    if (isNeighbourhood) {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
-      planLabel = 'Huddl Village';
+      planLabel = 'Huddl Neighbourhood';
       subtitle = sub.isTrial
           ? 'Trial \u2022 ${sub.trialDaysRemaining} days left'
           : sub.billingPeriod == BillingPeriod.annual
@@ -454,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    _subscriptionService.isInnerCircle ? 'INNER CIRCLE' : 'VILLAGE',
+                                    _subscriptionService.isInnerCircle ? 'INNER CIRCLE' : 'N\'HOOD',
                                     style: GoogleFonts.poppins(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w700,

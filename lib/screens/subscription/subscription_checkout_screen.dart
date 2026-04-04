@@ -41,8 +41,8 @@ class _SubscriptionCheckoutScreenState
       (p) => p.tier == widget.tier,
     );
     _service.initialize();
-    // Auto-select founding rate if available for Village tier
-    if (_plan.tier == SubscriptionTier.village &&
+    // Auto-select founding rate if available for Neighbourhood tier
+    if (_plan.tier == SubscriptionTier.neighbourhood &&
         _plan.foundingMonthlyPrice != null &&
         _service.foundingMemberAvailable) {
       _useFoundingRate = true;
@@ -169,7 +169,7 @@ class _SubscriptionCheckoutScreenState
                     ),
 
                     // Founding member option
-                    if (_plan.tier == SubscriptionTier.village &&
+                    if (_plan.tier == SubscriptionTier.neighbourhood &&
                         _plan.foundingMonthlyPrice != null &&
                         _service.foundingMemberAvailable &&
                         _period == BillingPeriod.monthly) ...[
@@ -291,7 +291,9 @@ class _SubscriptionCheckoutScreenState
 
                     const SizedBox(height: 20),
 
-                    // Terms
+                    // ── Apple 3.1.2 / Google Play required terms disclosure ──
+                    // Must clearly state: auto-renewal, cancellation, billing
+                    // period, price, and link to ToS & Privacy Policy.
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -336,15 +338,28 @@ class _SubscriptionCheckoutScreenState
                                         color: HuddlColors.primary,
                                         decoration: TextDecoration.underline),
                                   ),
-                                  const TextSpan(
-                                      text:
-                                          '. Auto-renews unless cancelled 24h before period end.'),
+                                  const TextSpan(text: '. '),
                                 ],
                               ),
                             ),
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Apple/Google required: explicit auto-renewal disclosure
+                    Padding(
+                      padding: const EdgeInsets.only(left: 34),
+                      child: Text(
+                        'This subscription automatically renews unless '
+                        'auto-renew is turned off at least 24 hours before '
+                        'the end of the current period. Payment will be '
+                        'charged to your App Store or Google Play account. '
+                        'You can manage or cancel your subscription in your '
+                        'device\u2019s account settings at any time.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: HuddlColors.textHint),
+                      ),
                     ),
                   ],
                 ),

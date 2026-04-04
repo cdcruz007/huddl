@@ -159,7 +159,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Try Village free for 7 days — no card required',
+                          'Try Neighbourhood free for 7 days — no card required',
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,

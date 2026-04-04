@@ -259,14 +259,14 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       const Icon(Icons.rocket_launch,
                           color: HuddlColors.primary, size: 36),
                       const SizedBox(height: 12),
-                      Text('Unlock Your Full Village',
+                      Text('Unlock Your Full Neighbourhood',
                           style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: HuddlColors.textDark)),
                       const SizedBox(height: 6),
                       Text(
-                        'Unlimited groups, DMs, meetups, private groups, events, ad-free & more — from just \u00A35.99/mo.',
+                        'Unlimited groups, DMs, meetups, private groups, ad-free & more \u2014 from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: HuddlColors.textSecondary),
@@ -452,12 +452,12 @@ class _CurrentPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = subscription.isInnerCircle;
-    final isVillage = subscription.isVillage;
+    final isNeighbourhood = subscription.isNeighbourhood;
     final isFree = subscription.isFree;
 
     Color accentColor = HuddlColors.textHint;
     IconData icon = Icons.explore_outlined;
-    if (isVillage) {
+    if (isNeighbourhood) {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
     } else if (isInnerCircle) {

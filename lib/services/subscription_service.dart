@@ -7,7 +7,7 @@ import 'browser_storage.dart';
 /// usage tracking, and purchase flow. Persists state via BrowserStorage.
 ///
 /// CONVERSION STRATEGY:
-/// 1. Auto-start 7-day Village trial on sign-up (no card required)
+/// 1. Auto-start 7-day Neighbourhood trial on sign-up (no card required)
 /// 2. Track usage and trigger soft paywalls at value moments
 /// 3. Founding member rate (£3.99/mo) for first 500 users
 /// 4. Day-5 trial reminder, Day-7 conversion prompt
@@ -37,7 +37,8 @@ class SubscriptionService extends ChangeNotifier {
   bool get isFree => _subscription.isFree;
   bool get isPaid => _subscription.isPaid;
   bool get isExplorer => _subscription.isExplorer;
-  bool get isVillage => _subscription.isVillage;
+  bool get isNeighbourhood => _subscription.isNeighbourhood;
+  bool get isVillage => _subscription.isVillage; // backward-compat alias
   bool get isInnerCircle => _subscription.isInnerCircle;
 
   // Backward compat aliases used by some screens
@@ -143,8 +144,10 @@ class SubscriptionService extends ChangeNotifier {
   /// Can the user create private groups?
   bool get canCreatePrivateGroup => limits.canCreatePrivateGroups;
 
-  /// Can the user create events?
-  bool get canCreateEvent => limits.canCreateEvents;
+  /// Does the user's tier allow meetup/event creation?
+  bool get canCreateMeetupFeature => limits.canCreateMeetups;
+  /// Backward-compat alias (used by create_event_screen)
+  bool get canCreateEvent => canCreateMeetupFeature;
 
   /// Is the user ad-free?
   bool get isAdFree => limits.adFree;
@@ -252,7 +255,7 @@ class SubscriptionService extends ChangeNotifier {
     return true;
   }
 
-  /// Start a 7-day free trial of Village
+  /// Start a 7-day free trial of Neighbourhood
   Future<bool> startTrial() async {
     if (!_initialized) await initialize();
 
@@ -265,7 +268,7 @@ class SubscriptionService extends ChangeNotifier {
 
     final now = DateTime.now();
     _subscription = UserSubscription(
-      tier: SubscriptionTier.village,
+      tier: SubscriptionTier.neighbourhood,
       billingPeriod: BillingPeriod.monthly,
       startDate: now,
       renewalDate: now.add(const Duration(days: 7)),
@@ -317,12 +320,12 @@ class SubscriptionService extends ChangeNotifier {
   SubscriptionTier minimumTierFor(String feature) {
     switch (feature) {
       case 'private_groups':
-      case 'events':
+      case 'meetups':
       case 'ad_free':
       case 'profile_badge':
       case 'expert_qa':
       case 'milestones':
-        return SubscriptionTier.village;
+        return SubscriptionTier.neighbourhood;
       case 'priority_support':
       case 'analytics':
       case 'promoted_listings':
@@ -344,7 +347,7 @@ class SubscriptionService extends ChangeNotifier {
     final tierName = _subscription.tierDisplayName;
     switch (limitType) {
       case 'groups_join':
-        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Village for unlimited groups!';
+        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Neighbourhood for unlimited groups!';
       case 'groups_create':
         return 'You\'ve hit the $tierName limit of ${limits.maxGroupsCreated} created groups. Upgrade to create more!';
       case 'meetups':
@@ -354,11 +357,11 @@ class SubscriptionService extends ChangeNotifier {
       case 'listings':
         return 'You\'ve reached the $tierName limit of ${limits.maxMarketplaceListings} listings. Upgrade for more!';
       case 'messages':
-        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Village for unlimited messaging!';
+        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Neighbourhood for unlimited messaging!';
       case 'private_groups':
-        return 'Private groups are a Village feature. Upgrade to create private groups!';
+        return 'Private groups are a Neighbourhood feature. Upgrade to create private groups!';
       case 'events':
-        return 'Events creation is a Village feature. Upgrade to create and manage events!';
+        return 'Meetup creation is a Neighbourhood feature. Upgrade to create and host meetups!';
       default:
         return 'This feature requires a higher plan. Upgrade to unlock it!';
     }

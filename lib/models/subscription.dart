@@ -11,10 +11,10 @@
 //    (join 2 groups, attend meetups, 5 DMs) but hit friction within the
 //    first week. Goal: force an upgrade decision within 7 days.
 //
-// 2. VILLAGE (£5.99/mo | £49.99/yr) — "Sweet-spot tier"
+// 2. NEIGHBOURHOOD (£5.99/mo | £49.99/yr) — "Sweet-spot tier"
 //    Priced at the UK impulse-buy threshold (< cost of 2 coffees/mo).
 //    Removes ALL social friction (unlimited groups, DMs, meetups) and
-//    adds private groups, events, ad-free, and a profile badge.
+//    adds private groups, meetup creation, ad-free, and a profile badge.
 //    This is the tier 80%+ of paying users should land on.
 //    Annual plan saves 30% — anchored as default to maximise LTV.
 //
@@ -29,12 +29,12 @@
 //   Huckleberry:  ~£7.99/mo
 //   Mush:         Free (ad-supported)
 //
-// Huddl Village at £5.99/mo undercuts Peanut and Huckleberry by 25-33%
+// Huddl Neighbourhood at £5.99/mo undercuts Peanut and Huckleberry by 25-33%
 // while offering comparable or superior social features, making it the
 // highest-value option in the market.
 //
 // KEY CONVERSION LEVERS:
-//   7-day auto-trial of Village on sign-up (no card required)
+//   7-day auto-trial of Neighbourhood on sign-up (no card required)
 //   Soft paywalls at "aha moments" (3rd group, 6th DM, private group)
 //   Founding Member rate: £3.99/mo locked for life (first 500 users)
 //   Annual billing default with "Save 30%" badge
@@ -43,7 +43,7 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// Subscription tier levels for Huddl Connect
-enum SubscriptionTier { explorer, village, innerCircle }
+enum SubscriptionTier { explorer, neighbourhood, innerCircle }
 
 /// Billing period
 enum BillingPeriod { monthly, annual }
@@ -58,7 +58,7 @@ class TierLimits {
   final int maxPhotoUploads;
   final int maxMessagesPerMonth;
   final bool canCreatePrivateGroups;
-  final bool canCreateEvents;
+  final bool canCreateMeetups;
   final bool prioritySupport;
   final bool adFree;
   final bool customProfileBadge;
@@ -77,7 +77,7 @@ class TierLimits {
     required this.maxPhotoUploads,
     required this.maxMessagesPerMonth,
     required this.canCreatePrivateGroups,
-    required this.canCreateEvents,
+    required this.canCreateMeetups,
     required this.prioritySupport,
     required this.adFree,
     required this.customProfileBadge,
@@ -91,7 +91,7 @@ class TierLimits {
   // ── EXPLORER (Free) ─────────────────────────────────────────────────
   // Tight limits: experience value fast, hit friction within 7 days.
   // 2 groups, 1 created, 2 meetups/mo, 5 DMs, 2 listings, 3 photos.
-  // No private groups, no events, no ad-free.
+  // No private groups, no meetup creation, no ad-free.
   static const TierLimits explorer = TierLimits(
     maxGroups: 2,
     maxGroupsCreated: 1,
@@ -101,7 +101,7 @@ class TierLimits {
     maxPhotoUploads: 3,
     maxMessagesPerMonth: 30,
     canCreatePrivateGroups: false,
-    canCreateEvents: false,
+    canCreateMeetups: false,
     prioritySupport: false,
     adFree: false,
     customProfileBadge: false,
@@ -112,10 +112,10 @@ class TierLimits {
     milestoneTracker: false,
   );
 
-  // ── VILLAGE (£5.99/mo) ──────────────────────────────────────────────
+  // ── NEIGHBOURHOOD (£5.99/mo) ─────────────────────────────────────────
   // Removes all social friction. Unlimited core features.
-  // Private groups, events, ad-free, badge, expert Q&A, milestones.
-  static const TierLimits village = TierLimits(
+  // Private groups, meetup creation, ad-free, badge, expert Q&A, milestones.
+  static const TierLimits neighbourhood = TierLimits(
     maxGroups: 999,
     maxGroupsCreated: 25,
     maxMeetupsPerMonth: 999,
@@ -124,7 +124,7 @@ class TierLimits {
     maxPhotoUploads: 15,
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: true,
-    canCreateEvents: true,
+    canCreateMeetups: true,
     prioritySupport: false,
     adFree: true,
     customProfileBadge: true,
@@ -136,7 +136,7 @@ class TierLimits {
   );
 
   // ── INNER CIRCLE (£11.99/mo) ────────────────────────────────────────
-  // Everything in Village + analytics, promoted listings, priority
+  // Everything in Neighbourhood + analytics, promoted listings, priority
   // support, unlimited photos, early access.
   static const TierLimits innerCircle = TierLimits(
     maxGroups: 999,
@@ -147,7 +147,7 @@ class TierLimits {
     maxPhotoUploads: 50,
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: true,
-    canCreateEvents: true,
+    canCreateMeetups: true,
     prioritySupport: true,
     adFree: true,
     customProfileBadge: true,
@@ -162,8 +162,8 @@ class TierLimits {
     switch (tier) {
       case SubscriptionTier.explorer:
         return explorer;
-      case SubscriptionTier.village:
-        return village;
+      case SubscriptionTier.neighbourhood:
+        return neighbourhood;
       case SubscriptionTier.innerCircle:
         return innerCircle;
     }
@@ -237,16 +237,16 @@ class SubscriptionPlan {
       ],
     ),
 
-    // ── VILLAGE (£5.99/mo | £49.99/yr) ────────────────────────────────
+    // ── NEIGHBOURHOOD (£5.99/mo | £49.99/yr) ─────────────────────────
     SubscriptionPlan(
-      tier: SubscriptionTier.village,
-      name: 'Village',
-      tagline: 'Your full parent village, unlocked',
+      tier: SubscriptionTier.neighbourhood,
+      name: 'Neighbourhood',
+      tagline: 'Your full parent community, unlocked',
       subtitle: 'Less than 2 coffees a month',
       monthlyPrice: 5.99,
       annualPrice: 49.99,
       foundingMonthlyPrice: 3.99,
-      limits: TierLimits.village,
+      limits: TierLimits.neighbourhood,
       highlights: [
         'Unlimited groups & messaging',
         'Create up to 25 groups',
@@ -254,15 +254,15 @@ class SubscriptionPlan {
         'Unlimited direct conversations',
         '15 marketplace listings',
         'Create private groups',
-        'Create & manage events',
+        'Create & host meetups',
         'Ad-free experience',
-        'Village member badge',
+        'Neighbourhood member badge',
         'Weekly expert Q&A access',
         'Child milestone tracker',
       ],
       shortBenefits: [
         'Unlimited groups, DMs & meetups',
-        'Private groups & events',
+        'Private groups & meetups',
         'Ad-free + expert Q&A',
       ],
     ),
@@ -277,7 +277,7 @@ class SubscriptionPlan {
       annualPrice: 99.99,
       limits: TierLimits.innerCircle,
       highlights: [
-        'Everything in Village',
+        'Everything in Neighbourhood',
         'Unlimited group creation',
         'Unlimited marketplace listings',
         'Promoted listings (2\u00D7 visibility)',
@@ -288,7 +288,7 @@ class SubscriptionPlan {
         'Inner Circle badge',
       ],
       shortBenefits: [
-        'Everything in Village',
+        'Everything in Neighbourhood',
         'Analytics, promoted listings',
         'Priority support & early access',
       ],
@@ -321,7 +321,9 @@ class UserSubscription {
   TierLimits get limits => TierLimits.forTier(tier);
 
   bool get isExplorer => tier == SubscriptionTier.explorer;
-  bool get isVillage => tier == SubscriptionTier.village;
+  bool get isNeighbourhood => tier == SubscriptionTier.neighbourhood;
+  /// Backward-compat alias
+  bool get isVillage => isNeighbourhood;
   bool get isInnerCircle => tier == SubscriptionTier.innerCircle;
   bool get isFree => tier == SubscriptionTier.explorer;
   bool get isPaid => !isFree;
@@ -330,8 +332,8 @@ class UserSubscription {
     switch (tier) {
       case SubscriptionTier.explorer:
         return 'Explorer';
-      case SubscriptionTier.village:
-        return 'Huddl Village';
+      case SubscriptionTier.neighbourhood:
+        return 'Huddl Neighbourhood';
       case SubscriptionTier.innerCircle:
         return 'Inner Circle';
     }
@@ -341,8 +343,8 @@ class UserSubscription {
     switch (tier) {
       case SubscriptionTier.explorer:
         return 'Explorer';
-      case SubscriptionTier.village:
-        return 'Village';
+      case SubscriptionTier.neighbourhood:
+        return 'Neighbourhood';
       case SubscriptionTier.innerCircle:
         return 'Inner Circle';
     }
@@ -363,7 +365,8 @@ class UserSubscription {
     // Handle migration from old tier names
     String tierName = json['tier'] as String? ?? 'explorer';
     if (tierName == 'free') tierName = 'explorer';
-    if (tierName == 'plus') tierName = 'village';
+    if (tierName == 'plus') tierName = 'neighbourhood';
+    if (tierName == 'village') tierName = 'neighbourhood';
     if (tierName == 'pro') tierName = 'innerCircle';
 
     return UserSubscription(

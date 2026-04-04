@@ -137,7 +137,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               if (widget.gateMessage != null) _GateBanner(widget.gateMessage!),
               if (widget.gateMessage != null) const SizedBox(height: 16),
 
-              // 7-day Village trial CTA
+              // 7-day Neighbourhood trial CTA
               if (_service.isFree) ...[
                 _TrialBanner(onTap: _startTrial),
                 const SizedBox(height: 12),
@@ -169,7 +169,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       isCurrentPlan: plan.tier == _service.tier,
                       isHighlighted: plan.tier == widget.highlightTier ||
                           (widget.highlightTier == null &&
-                              plan.tier == SubscriptionTier.village),
+                              plan.tier == SubscriptionTier.neighbourhood),
                       isFoundingAvailable: _service.foundingMemberAvailable,
                       onSelect: () => _onSelectPlan(plan),
                     ),
@@ -182,7 +182,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
               const SizedBox(height: 24),
 
-              // Restore purchases
+              // Restore purchases (Apple Guideline 3.1.1 — required)
               TextButton(
                 onPressed: _restorePurchases,
                 child: Text('Restore Purchases',
@@ -192,16 +192,75 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         color: HuddlColors.textHint)),
               ),
 
-              // Legal
+              // ── Apple 3.1.2 / Google Play required subscription disclosures ──
+              // Apple requires: subscription name, duration, price, renewal/
+              // cancellation terms, and links to ToS & Privacy Policy.
+              // Google Play requires: prominent disclosure of subscription
+              // terms, auto-renewal, how to cancel, and billing information.
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: Text(
-                  'Subscriptions are billed through your app store account. '
-                  'Plans auto-renew unless cancelled 24 hours before the end of the current period. '
-                  'Free trial converts to paid plan after 7 days.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textLight),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Column(
+                  children: [
+                    Text(
+                      'Subscription Terms',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.textSecondary),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Payment will be charged to your Apple ID or Google Play '
+                      'account at confirmation of purchase. Subscriptions '
+                      'automatically renew unless auto-renew is turned off at '
+                      'least 24 hours before the end of the current period. '
+                      'Your account will be charged for renewal within 24 hours '
+                      'prior to the end of the current period at the rate of '
+                      'your selected plan. You can manage and cancel your '
+                      'subscriptions by going to your account settings on the '
+                      'App Store or Google Play Store after purchase. Any '
+                      'unused portion of a free trial period will be forfeited '
+                      'when you purchase a subscription. Prices shown are in '
+                      'GBP and may vary by region.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                          fontSize: 10, color: HuddlColors.textLight),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            // TODO: Navigate to Terms of Service URL
+                          },
+                          child: Text('Terms of Service',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: HuddlColors.primary,
+                                  decoration: TextDecoration.underline)),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text('\u2022',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: HuddlColors.textLight)),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            // TODO: Navigate to Privacy Policy URL
+                          },
+                          child: Text('Privacy Policy',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: HuddlColors.primary,
+                                  decoration: TextDecoration.underline)),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -216,7 +275,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('7-day Village trial activated! Enjoy unlimited access.',
+          content: Text('7-day Neighbourhood trial activated! Enjoy unlimited access.',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
           backgroundColor: HuddlColors.teal,
         ),
@@ -286,7 +345,7 @@ class _GateBanner extends StatelessWidget {
   }
 }
 
-/// 7-day Village trial banner
+/// 7-day Neighbourhood trial banner
 class _TrialBanner extends StatelessWidget {
   final VoidCallback onTap;
   const _TrialBanner({required this.onTap});
@@ -317,7 +376,7 @@ class _TrialBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Try Village free for 7 days',
+                Text('Try Neighbourhood free for 7 days',
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -530,7 +589,7 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final price = plan.priceFor(period);
     final isFree = plan.tier == SubscriptionTier.explorer;
-    final isVillage = plan.tier == SubscriptionTier.village;
+    final isNeighbourhood = plan.tier == SubscriptionTier.neighbourhood;
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isHighlighted && !isCurrentPlan) {
@@ -697,7 +756,7 @@ class _PlanCard extends StatelessWidget {
           ),
 
           // Founding member price callout
-          if (isVillage && isFoundingAvailable && period == BillingPeriod.monthly) ...[
+          if (isNeighbourhood && isFoundingAvailable && period == BillingPeriod.monthly) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Container(
@@ -793,7 +852,7 @@ class _PlanCard extends StatelessWidget {
     switch (tier) {
       case SubscriptionTier.explorer:
         return HuddlColors.textHint;
-      case SubscriptionTier.village:
+      case SubscriptionTier.neighbourhood:
         return HuddlColors.primary;
       case SubscriptionTier.innerCircle:
         return HuddlColors.teal;
@@ -804,7 +863,7 @@ class _PlanCard extends StatelessWidget {
     switch (tier) {
       case SubscriptionTier.explorer:
         return Icons.explore_outlined;
-      case SubscriptionTier.village:
+      case SubscriptionTier.neighbourhood:
         return Icons.home_outlined;
       case SubscriptionTier.innerCircle:
         return Icons.workspace_premium;
@@ -861,7 +920,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.textHint))),
                     Expanded(
-                        child: Text('Village',
+                        child: Text('N’hood',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
@@ -885,7 +944,7 @@ class _FeatureComparisonTable extends StatelessWidget {
               _row('Marketplace listings', '2', '15', '\u221E'),
               _row('Photo uploads', '3', '15', '50'),
               _rowBool('Private groups', false, true, true),
-              _rowBool('Create events', false, true, true),
+              _rowBool('Create meetups', false, true, true),
               _rowBool('Ad-free', false, true, true),
               _rowBool('Profile badge', false, true, true),
               _rowBool('Expert Q&A', false, true, true),
@@ -901,7 +960,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _row(String label, String explorer, String village, String inner) {
+  Widget _row(String label, String explorer, String neighbourhood, String inner) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: const BoxDecoration(
@@ -922,7 +981,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.textHint))),
           Expanded(
-              child: Text(village,
+              child: Text(neighbourhood,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                       fontSize: 12,
@@ -940,7 +999,7 @@ class _FeatureComparisonTable extends StatelessWidget {
     );
   }
 
-  Widget _rowBool(String label, bool explorer, bool village, bool inner) {
+  Widget _rowBool(String label, bool explorer, bool neighbourhood, bool inner) {
     Widget checkIcon(bool val, Color color) => Icon(
           val ? Icons.check_circle : Icons.remove_circle_outline,
           size: 16,
@@ -960,7 +1019,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12, color: HuddlColors.textSecondary))),
           Expanded(child: Center(child: checkIcon(explorer, HuddlColors.textHint))),
-          Expanded(child: Center(child: checkIcon(village, HuddlColors.primary))),
+          Expanded(child: Center(child: checkIcon(neighbourhood, HuddlColors.primary))),
           Expanded(child: Center(child: checkIcon(inner, HuddlColors.teal))),
         ],
       ),
