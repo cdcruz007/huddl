@@ -319,7 +319,10 @@ class OnboardingDataService {
         _parentType = data['parent_type'] as String?;
         _stagesOfLife = List<String>.from(data['stages_of_life'] ?? []);
         _postcode = data['postcode'] as String?;
-        _dueDate = data['due_date'] as String?;
+        // Sanitize legacy full-date values (e.g. '2027-01-01' → '2027')
+        String? rawDue = data['due_date'] as String?;
+        if (rawDue != null && rawDue.contains('-')) rawDue = rawDue.substring(0, 4);
+        _dueDate = rawDue;
         _children = List<Map<String, String>>.from(
           (data['children'] as List? ?? []).map((e) => Map<String, String>.from(e))
         );

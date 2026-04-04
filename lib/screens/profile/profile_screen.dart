@@ -583,8 +583,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final selected = Set<String>.from(_stagesOfLife);
     final childrenList = List<Map<String, String>>.from(
         _children.map((c) => Map<String, String>.from(c)));
-    // Due date is year-only
-    String selectedDueYear = _dueDate ?? '';
+    // Due date is year-only — sanitize any legacy full-date values (e.g. '2027-01-01' → '2027')
+    String rawDue = _dueDate ?? '';
+    if (rawDue.contains('-')) rawDue = rawDue.substring(0, 4);
+    String selectedDueYear = rawDue;
 
     // Parent type is LOCKED once set during onboarding
     final bool parentTypeLocked = _parentType.isNotEmpty;

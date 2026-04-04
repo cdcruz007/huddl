@@ -39,7 +39,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
   void _continue() {
     // Store just the year — that's all the group service needs
     final service = OnboardingDataService();
-    service.setDueDate('$_selYear-01-01');
+    service.setDueDate('$_selYear');
 
     // If user also selected "I have a child", go to child_info next
     // before continuing to postcode
