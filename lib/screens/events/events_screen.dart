@@ -394,30 +394,84 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
   }
 
-  /// Filter meetups by visibility rules:
-  /// - Public: same borough, visible to all
-  /// - Group: same borough, visible only to members of that group
-  /// - Private: visible only to invited members (or organiser)
-  /// - Past meetups are excluded
+  /// All future meetups — ALL privacy levels are now listed on Nearby tab.
+  /// Access control is enforced at tap-time, not at listing-time.
   List<Meetup> get _visibleMeetups {
     final now = DateTime.now();
     return widget.meetupService.meetups.where((m) {
       // Exclude past meetups from Nearby
       if (m.dateTime.isBefore(now)) return false;
-
-      switch (m.privacy) {
-        case MeetupPrivacy.public:
-          // Public: visible to anyone in the same borough (or if no borough set)
-          return true;
-        case MeetupPrivacy.group:
-          // Group: only visible to members of that group
-          if (m.groupId == null) return false;
-          return _joinedGroupIds.contains(m.groupId) || m.organiserId == 'current_user';
-        case MeetupPrivacy.private_:
-          // Private: only visible to invited members or organiser
-          return m.invitedMemberIds.contains('current_user') || m.organiserId == 'current_user';
-      }
+      // Show ALL meetups regardless of privacy
+      return true;
     }).toList();
+  }
+
+  /// Check if current user can open/join this meetup.
+  /// Public: anyone. Group: members of that group + organiser. Private: invited + organiser.
+  bool _canAccessMeetup(Meetup m) {
+    switch (m.privacy) {
+      case MeetupPrivacy.public:
+        return true;
+      case MeetupPrivacy.group:
+        if (m.organiserId == 'current_user') return true;
+        if (m.groupId == null) return false;
+        return _joinedGroupIds.contains(m.groupId);
+      case MeetupPrivacy.private_:
+        return m.invitedMemberIds.contains('current_user') || m.organiserId == 'current_user';
+    }
+  }
+
+  /// Show restricted-access dialog for private/group meetups
+  void _showAccessDeniedDialog(BuildContext context, Meetup meetup) {
+    final isGroup = meetup.privacy == MeetupPrivacy.group;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              isGroup ? Icons.group : Icons.lock,
+              color: HuddlColors.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isGroup ? 'Group Members Only' : 'Private Meetup',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isGroup
+              ? 'This meetup is only open to members of ${meetup.groupName ?? 'a specific group'}. Join the group first to access this meetup.'
+              : 'This meetup is private and only open to invited members. Ask the organiser for an invitation.',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: HuddlColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'OK',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -467,7 +521,11 @@ class _MeetupsTabState extends State<_MeetupsTab> {
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: meetups.length,
-                  itemBuilder: (_, i) => _MeetupCard(meetup: meetups[i]),
+                  itemBuilder: (_, i) => _MeetupCard(
+                    meetup: meetups[i],
+                    canAccess: _canAccessMeetup(meetups[i]),
+                    onAccessDenied: () => _showAccessDeniedDialog(context, meetups[i]),
+                  ),
                 ),
         ),
       ],
@@ -828,15 +886,62 @@ class _SectionLabel extends StatelessWidget {
 /// ── MEET-UP CARD ────────────────────────────────────────────────────────────
 class _MeetupCard extends StatelessWidget {
   final Meetup meetup;
+  final bool canAccess;
+  final VoidCallback? onAccessDenied;
 
-  const _MeetupCard({required this.meetup});
+  const _MeetupCard({
+    required this.meetup,
+    this.canAccess = true,
+    this.onAccessDenied,
+  });
+
+  /// Privacy tag label: 'Public', 'Private', or the group name
+  String get _privacyTagLabel {
+    switch (meetup.privacy) {
+      case MeetupPrivacy.public:
+        return 'Public';
+      case MeetupPrivacy.group:
+        return meetup.groupName ?? 'Group';
+      case MeetupPrivacy.private_:
+        return 'Private';
+    }
+  }
+
+  /// Privacy tag colour
+  Color get _privacyTagColor {
+    switch (meetup.privacy) {
+      case MeetupPrivacy.public:
+        return HuddlColors.blue;
+      case MeetupPrivacy.group:
+        return HuddlColors.primaryDark;
+      case MeetupPrivacy.private_:
+        return HuddlColors.error;
+    }
+  }
+
+  /// Privacy tag icon
+  IconData get _privacyTagIcon {
+    switch (meetup.privacy) {
+      case MeetupPrivacy.public:
+        return Icons.public;
+      case MeetupPrivacy.group:
+        return Icons.group;
+      case MeetupPrivacy.private_:
+        return Icons.lock;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final catStyle = _meetupCategoryStyle(meetup.category);
+    final isRestricted = !canAccess;
 
     return GestureDetector(
       onTap: () {
+        if (isRestricted) {
+          onAccessDenied?.call();
+          return;
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -916,46 +1021,39 @@ class _MeetupCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Price badge
+                // ── Privacy tag badge (always shown) ──────────────────────
                 Positioned(
                   top: 10, right: 10,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (meetup.privacy != MeetupPrivacy.public)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.gray900.withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  meetup.privacy == MeetupPrivacy.group
-                                      ? Icons.group
-                                      : Icons.lock,
-                                  size: 12,
-                                  color: HuddlColors.white,
-                                ),
-                                const SizedBox(width: 3),
-                                Text(
-                                  meetup.privacy == MeetupPrivacy.group
-                                      ? 'Group'
-                                      : 'Private',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.white,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _privacyTagColor.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(12),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_privacyTagIcon, size: 12, color: HuddlColors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              _privacyTagLabel,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.white,
+                              ),
+                            ),
+                            if (isRestricted) ...[
+                              const SizedBox(width: 3),
+                              const Icon(Icons.block, size: 10, color: HuddlColors.white),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(

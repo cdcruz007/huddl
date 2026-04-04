@@ -2592,38 +2592,89 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     ),
   ];
 
+  /// Check if the current user can open/join a group.
+  /// Public: anyone. Group: members of parent group + creator. Private: invited + creator.
+  bool _canAccessGroup(_GroupItem g) {
+    final isOwnGroup = g.creatorId == 'current_user';
+    if (isOwnGroup) return true;
+
+    switch (g.privacy) {
+      case GroupPrivacy.public:
+        return true;
+      case GroupPrivacy.group:
+        if (g.parentGroupId == null) return true;
+        return _invitationService.isGroupJoined(g.parentGroupId!);
+      case GroupPrivacy.private_:
+        return g.invitedMemberIds.contains('current_user');
+    }
+  }
+
+  /// Show restricted-access dialog for private/group groups
+  void _showGroupAccessDeniedDialog(BuildContext context, _GroupItem group) {
+    final isGroupTier = group.privacy == GroupPrivacy.group;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              isGroupTier ? Icons.group : Icons.lock,
+              color: HuddlColors.primary,
+              size: 24,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isGroupTier ? 'Group Members Only' : 'Private Group',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isGroupTier
+              ? 'This group is only open to members of ${group.parentGroupName ?? 'a specific group'}. Join that group first to access this one.'
+              : 'This group is private and only open to invited members. Ask the group admin for an invitation.',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: HuddlColors.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'OK',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: HuddlColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<_GroupItem> get _filteredGroups {
-    // Privacy visibility rules:
-    // 1. Public groups: visible to everyone (subject to audience / borough filters)
-    // 2. Group-privacy: visible only to members of the parent group (+ creator)
-    // 3. Private: visible only to creator or explicitly invited members
+    // ALL groups are now listed on Discover regardless of privacy.
+    // Access control is enforced at tap-time, not at listing-time.
+    // Only apply audience and borough filters.
     List<_GroupItem> results = _allDiscoverGroups.where((g) {
-      // The creator always sees their own groups (public, group, & private) on Discover
       final isOwnGroup = g.creatorId == 'current_user';
-
-      // Private group visibility: only creator or invited members can see it
-      if (g.privacy == GroupPrivacy.private_) {
-        final isInvited = g.invitedMemberIds.contains('current_user');
-        if (!isOwnGroup && !isInvited) return false;
-      }
-
-      // Group-tier visibility: only members of the parent group can see it
-      if (g.privacy == GroupPrivacy.group && g.parentGroupId != null) {
-        if (!isOwnGroup) {
-          // Check if current user has joined the parent group
-          final isParentMember =
-              _invitationService.isGroupJoined(g.parentGroupId!);
-          if (!isParentMember) return false;
-        }
-      }
 
       // Audience / visibility filter — skip for the creator
       if (!isOwnGroup && !g.isVisibleTo(_userParentType, _userStagesOfLife)) {
         return false;
       }
 
-      // Borough matching for OTHER users' groups — creator's own groups
-      // always pass (they are in the same borough by definition)
+      // Borough matching for OTHER users' groups
       if (!isOwnGroup &&
           g.creatorBorough != null &&
           g.creatorBorough!.isNotEmpty &&
@@ -3272,11 +3323,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     final group = groups[index];
                     final isJoined = _invitationService.isGroupJoined(group.id) ||
                         group.creatorId == 'current_user';
+                    final canAccess = _canAccessGroup(group);
                     return _DiscoverGroupCard(
                       group: group,
                       isJoined: isJoined,
-                      onJoinTap: () => _onJoinTap(group.id),
+                      canAccess: canAccess,
+                      onJoinTap: () {
+                        if (!canAccess) {
+                          _showGroupAccessDeniedDialog(context, group);
+                          return;
+                        }
+                        _onJoinTap(group.id);
+                      },
                       onTap: () {
+                        if (!canAccess) {
+                          _showGroupAccessDeniedDialog(context, group);
+                          return;
+                        }
                         Navigator.pushNamed(context, '/group_details',
                             arguments: {
                               'groupId': group.id,
@@ -3370,15 +3433,53 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
 class _DiscoverGroupCard extends StatelessWidget {
   final _GroupItem group;
   final bool isJoined;
+  final bool canAccess;
   final VoidCallback onJoinTap;
   final VoidCallback onTap;
 
   const _DiscoverGroupCard({
     required this.group,
     required this.isJoined,
+    this.canAccess = true,
     required this.onJoinTap,
     required this.onTap,
   });
+
+  /// Privacy tag label: 'Public', 'Private', or the parent group name
+  String get _privacyTagLabel {
+    switch (group.privacy) {
+      case GroupPrivacy.public:
+        return 'Public';
+      case GroupPrivacy.group:
+        return group.parentGroupName ?? 'Group';
+      case GroupPrivacy.private_:
+        return 'Private';
+    }
+  }
+
+  /// Privacy tag colour
+  Color get _privacyTagColor {
+    switch (group.privacy) {
+      case GroupPrivacy.public:
+        return HuddlColors.blue;
+      case GroupPrivacy.group:
+        return HuddlColors.primaryDark;
+      case GroupPrivacy.private_:
+        return HuddlColors.error;
+    }
+  }
+
+  /// Privacy tag icon
+  IconData get _privacyTagIcon {
+    switch (group.privacy) {
+      case GroupPrivacy.public:
+        return Icons.public;
+      case GroupPrivacy.group:
+        return Icons.group;
+      case GroupPrivacy.private_:
+        return Icons.lock;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3437,73 +3538,59 @@ class _DiscoverGroupCard extends StatelessWidget {
                 ),
                 // Audience tags (top-left) — only show valid parent-stage tags
                 ..._buildAudienceTags(group, catColor, catIcon),
-                // "Your group" badge (top-right) — also shows privacy icon
-                if (group.creatorId == 'current_user')
-                  Positioned(
-                    top: 10, right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.blue,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (group.privacy != GroupPrivacy.public) ...[
-                            Icon(
-                              group.privacy == GroupPrivacy.group
-                                  ? Icons.group
-                                  : Icons.lock_outline,
-                              size: 12, color: Colors.white,
+                // ── Privacy tag badge (always shown, top-right) ─────────
+                Positioned(
+                  top: 10, right: 10,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _privacyTagColor.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(_privacyTagIcon, size: 12, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              _privacyTagLabel,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
-                            const SizedBox(width: 4),
+                            if (!canAccess) ...[
+                              const SizedBox(width: 3),
+                              const Icon(Icons.block, size: 10, color: Colors.white),
+                            ],
                           ],
-                          Text(
+                        ),
+                      ),
+                      if (group.creatorId == 'current_user') ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.blue,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
                             'Your group',
                             style: GoogleFonts.poppins(
-                              fontSize: 11,
+                              fontSize: 10,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (group.privacy != GroupPrivacy.public)
-                  Positioned(
-                    top: 10, right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            group.privacy == GroupPrivacy.group
-                                ? Icons.group
-                                : Icons.lock_outline,
-                            size: 12, color: Colors.white,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            group.privacy == GroupPrivacy.group
-                                ? 'Group'
-                                : 'Private',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      ],
+                    ],
                   ),
+                ),
                 // Member count overlay (bottom-right)
                 Positioned(
                   bottom: 8, right: 10,
@@ -3638,28 +3725,40 @@ class _DiscoverGroupCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                      // Join / Joined button
+                      // Join / Joined / Restricted button
                       GestureDetector(
                         onTap: isJoined ? null : onJoinTap,
                         child: Container(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                           decoration: BoxDecoration(
-                            color: isJoined ? HuddlColors.background : null,
-                            gradient: isJoined ? null : HuddlColors.primaryGradient,
+                            color: isJoined
+                                ? HuddlColors.background
+                                : (!canAccess ? HuddlColors.textHint.withValues(alpha: 0.15) : null),
+                            gradient: (isJoined || !canAccess) ? null : HuddlColors.primaryGradient,
                             borderRadius: BorderRadius.circular(20),
-                            border: isJoined
+                            border: (isJoined || !canAccess)
                                 ? Border.all(color: HuddlColors.divider)
                                 : null,
                           ),
-                          child: Text(
-                            isJoined ? 'Joined' : 'Join',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color:
-                                  isJoined ? HuddlColors.textSecondary : HuddlColors.white,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (!canAccess && !isJoined) ...[
+                                Icon(Icons.lock_outline, size: 14, color: HuddlColors.textHint),
+                                const SizedBox(width: 4),
+                              ],
+                              Text(
+                                isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isJoined
+                                      ? HuddlColors.textSecondary
+                                      : (!canAccess ? HuddlColors.textHint : HuddlColors.white),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
