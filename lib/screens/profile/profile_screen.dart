@@ -18,6 +18,7 @@ import '../../services/community_feed_service.dart';
 import '../../services/announcement_service.dart';
 import '../../models/group.dart';
 import '../main_shell.dart';
+import '../../services/feedback_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final EventService _eventService = EventService();
   final MeetupService _meetupService = MeetupService();
   final BlockService _blockService = BlockService();
+  final FeedbackService _feedbackService = FeedbackService();
 
   bool _isLoading = true;
 
@@ -77,6 +79,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfileData();
     _loadSettings();
     _blockService.initialize();
+    _feedbackService.initialize();
   }
 
   Future<void> _loadSettings() async {
@@ -323,6 +326,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 8),
 
+                // ── App Rating & Feedback card ─────────────────────────
+                _buildFeedbackCard(),
+
+                const SizedBox(height: 8),
+
                 // ── About me section ─────────────────────────────────────
                 if (_bio != null && _bio!.trim().isNotEmpty)
                   Container(
@@ -471,6 +479,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.password_outlined,
                       title: 'Change password',
                       onTap: _showChangePasswordSheet,
+                    ),
+                    _MenuItem(
+                      icon: Icons.feedback_outlined,
+                      title: 'Feedback & Rating',
+                      subtitle: 'Tell us what you think',
+                      iconColor: HuddlColors.accentAmber,
+                      onTap: _openFeedbackScreen,
                     ),
                     _MenuItem(
                       icon: Icons.help_outline,
@@ -3584,6 +3599,513 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: HuddlColors.primary)),
       ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FEEDBACK & RATING
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Prominent feedback card shown in the profile — includes static 4.8 rating
+  Widget _buildFeedbackCard() {
+    return Container(
+      color: HuddlColors.white,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Rating display row
+          Row(
+            children: [
+              // Star cluster
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.star_rounded,
+                    size: 28, color: HuddlColors.accentAmber),
+              ),
+              const SizedBox(width: 12),
+              // Rating text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '${_feedbackService.displayRating}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w700,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '/ 5.0',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 5 star icons showing 4.8
+                        ...List.generate(5, (i) {
+                          if (i < 4) {
+                            return const Icon(Icons.star_rounded,
+                                size: 16, color: HuddlColors.accentAmber);
+                          } else {
+                            return Icon(Icons.star_rounded,
+                                size: 16,
+                                color: HuddlColors.accentAmber
+                                    .withValues(alpha: 0.4));
+                          }
+                        }),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'App Rating',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Feedback CTA button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _openFeedbackScreen,
+              icon: const Icon(Icons.rate_review_outlined,
+                  size: 20, color: Colors.white),
+              label: Text(
+                'Give Feedback & Rate',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HuddlColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                elevation: 0,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Opens the full Feedback & Rating screen as a large bottom sheet
+  void _openFeedbackScreen() {
+    int selectedRating = 0;
+    final feedbackCtrl = TextEditingController();
+    bool isSubmitting = false;
+    bool isSubmitted = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: HuddlColors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        maxChildSize: 0.95,
+        minChildSize: 0.5,
+        expand: false,
+        builder: (ctx, scroll) => StatefulBuilder(
+          builder: (ctx2, setLocal) {
+            return Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: HuddlColors.divider,
+                        borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 16),
+                Text('Feedback & Rating',
+                    style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.textDark)),
+                const SizedBox(height: 4),
+                Text('Help us make Huddl better',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: HuddlColors.textHint)),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scroll,
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+                    child: isSubmitted
+                        ? _buildSubmittedState(ctx)
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // ── Star Rating Section ──
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(24),
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.background,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'How would you rate Huddl?',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: HuddlColors.textDark,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Interactive stars
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: List.generate(5, (i) {
+                                          final starIndex = i + 1;
+                                          return GestureDetector(
+                                            onTap: () {
+                                              setLocal(() =>
+                                                  selectedRating = starIndex);
+                                            },
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 6),
+                                              child: AnimatedScale(
+                                                scale:
+                                                    selectedRating >= starIndex
+                                                        ? 1.1
+                                                        : 1.0,
+                                                duration: const Duration(
+                                                    milliseconds: 150),
+                                                child: Icon(
+                                                  selectedRating >= starIndex
+                                                      ? Icons.star_rounded
+                                                      : Icons
+                                                          .star_outline_rounded,
+                                                  size: 44,
+                                                  color: selectedRating >=
+                                                          starIndex
+                                                      ? HuddlColors.accentAmber
+                                                      : HuddlColors.gray300,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      if (selectedRating > 0)
+                                        Text(
+                                          _ratingLabel(selectedRating),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: HuddlColors.accentAmber,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 24),
+
+                              // ── Feedback Text Section ──
+                              Text(
+                                'Your feedback',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: HuddlColors.textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Tell us what you love or what could be better. Your honest feedback helps us improve!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: HuddlColors.textHint,
+                                  height: 1.4,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: feedbackCtrl,
+                                maxLines: 6,
+                                maxLength: 1000,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: HuddlColors.textDark),
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Share your thoughts about the app...',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: HuddlColors.textHint),
+                                  filled: true,
+                                  fillColor: HuddlColors.background,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.divider),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.divider),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                        color: HuddlColors.primary, width: 2),
+                                  ),
+                                  contentPadding: const EdgeInsets.all(16),
+                                ),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              // ── Suggestions ──
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.peachLight,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.lightbulb_outline,
+                                        size: 18, color: HuddlColors.primary),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'You might want to mention: features you enjoy, things that could be improved, ideas for new features, or your overall experience.',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: HuddlColors.primary,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 28),
+
+                              // ── Submit Button ──
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton(
+                                  onPressed: (selectedRating == 0 &&
+                                          feedbackCtrl.text.trim().isEmpty)
+                                      ? null
+                                      : isSubmitting
+                                          ? null
+                                          : () async {
+                                              if (selectedRating == 0) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                        'Please select a star rating',
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                                fontSize: 13)),
+                                                    backgroundColor:
+                                                        HuddlColors
+                                                            .accentAmber,
+                                                    behavior: SnackBarBehavior
+                                                        .floating,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                  ),
+                                                );
+                                                return;
+                                              }
+
+                                              setLocal(
+                                                  () => isSubmitting = true);
+
+                                              await _feedbackService
+                                                  .submitFeedback(
+                                                feedbackText: feedbackCtrl.text
+                                                    .trim(),
+                                                starRating: selectedRating,
+                                                userName: _name,
+                                              );
+
+                                              // Short delay for UX
+                                              await Future.delayed(
+                                                  const Duration(
+                                                      milliseconds: 600));
+
+                                              if (ctx2.mounted) {
+                                                setLocal(() {
+                                                  isSubmitting = false;
+                                                  isSubmitted = true;
+                                                });
+                                              }
+                                            },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: HuddlColors.primary,
+                                    disabledBackgroundColor: HuddlColors.primary
+                                        .withValues(alpha: 0.3),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(24)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 15),
+                                    elevation: 0,
+                                  ),
+                                  child: isSubmitting
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white),
+                                        )
+                                      : Text(
+                                          'Submit Feedback',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Privacy note
+                              Center(
+                                child: Text(
+                                  'Your feedback is anonymous and helps us improve.',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: HuddlColors.textHint,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  /// The "Thank you" state shown after successful submission
+  Widget _buildSubmittedState(BuildContext ctx) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: HuddlColors.teal.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child:
+                const Icon(Icons.check_circle, size: 48, color: HuddlColors.teal),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Thank you!',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: HuddlColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your feedback and rating have been submitted.\nWe truly value your input — it helps us make\nHuddl better for everyone.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: HuddlColors.textSecondary,
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 32),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HuddlColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+              ),
+              child: Text('Done',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _ratingLabel(int rating) {
+    switch (rating) {
+      case 1:
+        return 'Poor';
+      case 2:
+        return 'Fair';
+      case 3:
+        return 'Good';
+      case 4:
+        return 'Great';
+      case 5:
+        return 'Excellent!';
+      default:
+        return '';
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
