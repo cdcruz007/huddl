@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 import 'onboarding_data_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -227,11 +228,7 @@ class TravelService extends ChangeNotifier {
 
   // ── AI Concierge — real Gemini-powered travel assistant ─────────────
 
-  // Gemini API configuration
-  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
-  static const String _geminiModel = 'gemini-2.0-flash';
-  static const String _geminiBaseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+  // Gemini API configuration (centralised in GeminiConfig)
 
   final List<Map<String, dynamic>> _chatHistory = [];
 
@@ -354,7 +351,7 @@ GUIDELINES:
     };
 
     final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+        GeminiConfig.generateContentUrl);
 
     final httpResponse = await http
         .post(
@@ -499,7 +496,7 @@ RULES:
     };
 
     final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+        GeminiConfig.generateContentUrl);
 
     final httpResponse = await http
         .post(

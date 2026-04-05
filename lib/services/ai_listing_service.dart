@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 import 'rehome_service.dart';
 
 // =============================================================================
@@ -61,11 +62,7 @@ class AiListingService {
 
   final RehomeService _rehomeService = RehomeService();
 
-  // Gemini API configuration
-  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
-  static const String _geminiModel = 'gemini-2.0-flash';
-  static const String _geminiBaseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+  // Gemini API configuration (centralised in GeminiConfig)
 
   // Safety recall database (real safety data)
   static const _safetyRecalls = <String>[
@@ -150,7 +147,7 @@ Be specific about the product. If the user mentions a brand, include it. If they
     };
 
     final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+        GeminiConfig.generateContentUrl);
 
     final response = await http
         .post(

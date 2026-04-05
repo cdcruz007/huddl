@@ -121,17 +121,21 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     Container(
                       width: 6,
                       height: 6,
-                      decoration: const BoxDecoration(
-                        color: HuddlColors.successGreen,
+                      decoration: BoxDecoration(
+                        color: _copilot.isOnline
+                            ? HuddlColors.successGreen
+                            : HuddlColors.textHint,
                         shape: BoxShape.circle,
                       ),
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'Online',
+                      _copilot.isOnline ? 'Online' : 'Offline mode',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textSecondary,
+                        color: _copilot.isOnline
+                            ? HuddlColors.textSecondary
+                            : HuddlColors.textHint,
                       ),
                     ),
                   ],

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'meetup_service.dart';
@@ -94,12 +95,7 @@ class AiMatchmakerService {
   final MeetupService _meetupService = MeetupService();
   final DefaultGroupService _groupService = DefaultGroupService();
 
-  // Gemini API configuration
-  static const String _geminiApiKey =
-      'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
-  static const String _geminiModel = 'gemini-2.0-flash';
-  static const String _geminiBaseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+  // Gemini API configuration (centralised in GeminiConfig)
 
   List<SuggestedMeetup> _suggestions = [];
   List<MatchableParent> _nearbyParents = [];
@@ -571,7 +567,7 @@ Please suggest 5 diverse meetups: 1) playdate, 2) coffee morning, 3) outdoor act
     };
 
     final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+        GeminiConfig.generateContentUrl);
 
     final response = await http
         .post(

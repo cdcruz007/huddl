@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
@@ -80,12 +81,11 @@ class AiCopilotService {
 
   final List<CopilotMessage> _messages = [];
   bool _isInitialized = false;
+  bool _isApiOnline = false;
 
-  // Gemini API configuration
-  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
-  static const String _geminiModel = 'gemini-2.0-flash';
-  static const String _geminiBaseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+  // Gemini API configuration (centralised in GeminiConfig)
+  /// Whether the Gemini API responded successfully at least once.
+  bool get isOnline => _isApiOnline;
 
   // Conversation history for multi-turn chat
   final List<Map<String, dynamic>> _conversationHistory = [];
@@ -191,6 +191,8 @@ class AiCopilotService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     await _onboarding.initialize();
+    // Validate the Gemini key in the background so the UI can reflect status
+    _isApiOnline = await GeminiConfig.validateKey();
     _isInitialized = true;
   }
 
@@ -219,6 +221,7 @@ class AiCopilotService {
     try {
       final response = await _callGeminiApi(userText);
       _messages.add(response);
+      _isApiOnline = true;
 
       // Add AI response to conversation history
       _conversationHistory.add({
@@ -230,6 +233,7 @@ class AiCopilotService {
 
       return response;
     } catch (e) {
+      _isApiOnline = false;
       if (kDebugMode) {
         debugPrint('Gemini API error: $e');
       }
@@ -291,8 +295,7 @@ class AiCopilotService {
       ],
     };
 
-    final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+    final url = Uri.parse(GeminiConfig.generateContentUrl);
 
     final response = await http
         .post(

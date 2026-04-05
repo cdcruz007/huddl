@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../config/gemini_config.dart';
 
 // =============================================================================
 // AI CHAT MESSAGE SUMMARISER & CATCH-UP SERVICE
@@ -55,12 +56,7 @@ class AiChatSummariserService {
   factory AiChatSummariserService() => _instance;
   AiChatSummariserService._internal();
 
-  // Gemini API configuration
-  static const String _geminiApiKey =
-      'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
-  static const String _geminiModel = 'gemini-2.0-flash';
-  static const String _geminiBaseUrl =
-      'https://generativelanguage.googleapis.com/v1beta/models';
+  // Gemini API configuration (centralised in GeminiConfig)
 
   final Map<String, ChatSummary> _summaries = {};
 
@@ -180,7 +176,7 @@ RULES:
     };
 
     final url = Uri.parse(
-        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+        GeminiConfig.generateContentUrl);
 
     final response = await http
         .post(
