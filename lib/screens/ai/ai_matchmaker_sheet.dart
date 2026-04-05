@@ -64,7 +64,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
+                        gradient: HuddlColors.aiGradient,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 22),
@@ -417,7 +417,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          gradient: HuddlColors.primaryGradient,
+                          gradient: HuddlColors.aiGradient,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(

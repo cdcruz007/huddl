@@ -283,7 +283,7 @@ class _SubscriptionCheckoutScreenState
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _useFoundingRate
-                                  ? const Color(0xFF8B5CF6)
+                                  ? const Color(0xFF3580F0)
                                   : HuddlColors.gray200,
                               width: _useFoundingRate ? 2 : 1,
                             ),
@@ -295,7 +295,7 @@ class _SubscriptionCheckoutScreenState
                                     ? Icons.check_circle
                                     : Icons.circle_outlined,
                                 color: _useFoundingRate
-                                    ? const Color(0xFF8B5CF6)
+                                    ? const Color(0xFF3580F0)
                                     : HuddlColors.textHint,
                                 size: 22,
                               ),
@@ -315,7 +315,7 @@ class _SubscriptionCheckoutScreenState
                                         const SizedBox(width: 6),
                                         const Icon(
                                             Icons.local_fire_department,
-                                            color: Color(0xFF8B5CF6),
+                                            color: Color(0xFF3580F0),
                                             size: 16),
                                       ],
                                     ),
@@ -332,7 +332,7 @@ class _SubscriptionCheckoutScreenState
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF8B5CF6)
+                                  color: const Color(0xFF3580F0)
                                       .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -341,7 +341,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF8B5CF6))),
+                                        color: const Color(0xFF3580F0))),
                               ),
                             ],
                           ),
@@ -523,7 +523,7 @@ class _SubscriptionCheckoutScreenState
                         onPressed: _isProcessing ? null : _completePurchase,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _useFoundingRate
-                              ? const Color(0xFF8B5CF6)
+                              ? const Color(0xFF3580F0)
                               : color,
                           foregroundColor: HuddlColors.white,
                           disabledBackgroundColor:
@@ -968,7 +968,7 @@ class _SuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
     final color = isFoundingMember
-        ? const Color(0xFF8B5CF6)
+        ? const Color(0xFF3580F0)
         : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
 
     return Dialog(
@@ -1012,14 +1012,14 @@ class _SuccessDialog extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.verified,
-                        color: Color(0xFF8B5CF6), size: 16),
+                        color: Color(0xFF3580F0), size: 16),
                     const SizedBox(width: 6),
                     Text('Founding Member Badge Unlocked',
                         style: GoogleFonts.poppins(

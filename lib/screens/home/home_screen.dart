@@ -1033,7 +1033,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                   ),
                   borderRadius: BorderRadius.circular(6),
                 ),

@@ -553,7 +553,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -586,7 +586,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -612,7 +612,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6C63FF).withValues(alpha: 0.08),
+                      color: const Color(0xFF3580F0).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -658,7 +658,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -694,10 +694,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withValues(alpha: 0.05),
+              color: const Color(0xFF3580F0).withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFF6C63FF).withValues(alpha: 0.12),
+                color: const Color(0xFF3580F0).withValues(alpha: 0.12),
               ),
             ),
             child: Column(
@@ -709,10 +709,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
+                        color: const Color(0xFF3580F0).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(sourceIcon, size: 18, color: const Color(0xFF6C63FF)),
+                      child: Icon(sourceIcon, size: 18, color: const Color(0xFF3580F0)),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -731,7 +731,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF6C63FF),
+                              color: const Color(0xFF3580F0),
                             ),
                           ),
                         ],
@@ -741,7 +741,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                          colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -773,7 +773,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: Color(0xFF6C63FF)),
+                      const Icon(Icons.info_outline, size: 16, color: Color(0xFF3580F0)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

@@ -81,9 +81,9 @@ class _PackingListScreenState extends State<PackingListScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.auto_awesome, size: 14, color: HuddlColors.primary),
+              Icon(Icons.auto_awesome, size: 14, color: HuddlColors.aiBlue),
               const SizedBox(width: 4),
-              Text('AI Generated', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+              Text('AI Generated', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.aiBlue)),
             ]),
           ),
         ],
@@ -91,7 +91,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
       body: _isGenerating
           ? Center(
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const CircularProgressIndicator(color: HuddlColors.primary),
+                const CircularProgressIndicator(color: HuddlColors.aiBlue),
                 const SizedBox(height: 16),
                 Text('Generating your personalised packing list...', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary)),
                 const SizedBox(height: 4),
@@ -135,7 +135,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
-                  gradient: _tripDays == d ? HuddlColors.primaryGradient : null,
+                  gradient: _tripDays == d ? HuddlColors.aiGradient : null,
                   color: _tripDays == d ? null : HuddlColors.background,
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -165,7 +165,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
           Row(children: [
             Text('$packed / $total items packed', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
             const Spacer(),
-            Text('${(progress * 100).round()}%', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+            Text('${(progress * 100).round()}%', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.aiBlue)),
           ]),
           const SizedBox(height: 8),
           ClipRRect(
@@ -282,7 +282,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
-                child: Text('Essential', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                child: Text('Essential', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.aiBlue)),
               ),
           ],
         ),

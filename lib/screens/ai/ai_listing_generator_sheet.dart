@@ -128,7 +128,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
+                        gradient: HuddlColors.aiGradient,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 22),
@@ -569,7 +569,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
+                    gradient: HuddlColors.aiGradient,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(

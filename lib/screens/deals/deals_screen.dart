@@ -552,7 +552,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)]),
+                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
@@ -572,7 +572,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
               if (_aiLoading)
                 const SizedBox(
                   width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8B5CF6)),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
                 ),
             ],
           ),
@@ -1004,13 +1004,13 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)]),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
+                                border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [
                                   const SizedBox(
                                     width: 16, height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8B5CF6)),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
                                   ),
                                   const SizedBox(width: 10),
                                   Text('AI is analysing these deals for you...',
@@ -1238,7 +1238,7 @@ class _CategoryTile extends StatelessWidget {
     if (t.contains('baby') || t.contains('child')) return const Color(0xFFFF6B9D);
     if (t.contains('travel') || t.contains('holiday')) return const Color(0xFF3580F0);
     if (t.contains('food') || t.contains('grocery')) return const Color(0xFF22C55E);
-    if (t.contains('fashion') || t.contains('cloth')) return const Color(0xFF9D4EDD);
+    if (t.contains('fashion') || t.contains('cloth')) return const Color(0xFF5B9DFF);
     if (t.contains('home') || t.contains('garden')) return const Color(0xFFF59E0B);
     if (t.contains('health') || t.contains('beauty')) return const Color(0xFFFF6B6B);
     if (t.contains('sport') || t.contains('fitness')) return const Color(0xFF10B981);
@@ -1282,7 +1282,7 @@ class _CouponCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
-          border: isTopPick ? Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.4), width: 1.5) : null,
+          border: isTopPick ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5) : null,
           boxShadow: [
             BoxShadow(
               color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -1301,7 +1301,7 @@ class _CouponCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)]),
+                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1391,7 +1391,7 @@ class _CouponCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF8B5CF6)),
+                    const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF3580F0)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -1429,7 +1429,7 @@ class _CouponCard extends StatelessWidget {
   Color _verdictColor(String verdict) {
     switch (verdict.toLowerCase()) {
       case 'must-grab':
-        return const Color(0xFF8B5CF6);
+        return const Color(0xFF3580F0);
       case 'great deal':
         return const Color(0xFF22C55E);
       case 'worth it':
@@ -1457,12 +1457,12 @@ class _AiSpotlightCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF6D28D9), Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+          colors: [Color(0xFF6D28D9), Color(0xFF3580F0), Color(0xFFA78BFA)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+            color: const Color(0xFF3580F0).withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1556,7 +1556,7 @@ class _AiPickCard extends StatelessWidget {
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
           border: rank == 1
-              ? Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.4), width: 1.5)
+              ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -1574,7 +1574,7 @@ class _AiPickCard extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 gradient: rank <= 3
-                    ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)])
+                    ? const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)])
                     : null,
                 color: rank > 3 ? HuddlColors.gray100 : null,
                 shape: BoxShape.circle,
@@ -1637,7 +1637,7 @@ class _AiPickCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          color: const Color(0xFF3580F0).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1752,7 +1752,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.15)),
+        border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
@@ -1770,7 +1770,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, size: 32, color: Color(0xFF8B5CF6)),
+              child: const Icon(Icons.auto_awesome, size: 32, color: Color(0xFF3580F0)),
             ),
           ),
           const SizedBox(height: 16),
@@ -1796,7 +1796,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
-              color: Color(0xFF8B5CF6),
+              color: Color(0xFF3580F0),
             ),
           ),
         ],

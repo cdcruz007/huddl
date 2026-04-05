@@ -109,11 +109,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            gradient: HuddlColors.aiGradient,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(
@@ -996,7 +992,7 @@ class _MessagesTabState extends State<_MessagesTab> {
           begin: Alignment.topLeft, end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF9D4EDD).withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFF5B9DFF).withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1007,7 +1003,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -1099,12 +1095,12 @@ class _MessagesTabState extends State<_MessagesTab> {
                   margin: const EdgeInsets.only(right: 6),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF9D4EDD).withValues(alpha: 0.10),
+                    color: const Color(0xFF5B9DFF).withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     topic,
-                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF6C63FF)),
+                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF3580F0)),
                   ),
                 )),
               ],
@@ -1122,7 +1118,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                      colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
                     ),
                     borderRadius: BorderRadius.circular(14),
                   ),

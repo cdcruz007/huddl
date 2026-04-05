@@ -94,8 +94,9 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      // ── FAB — Mingle = create meetup, Chat = none (has own FABs),
-      //         Deals & Profile = none, others = AI Copilot ──────────
+      // ── FAB — Mingle = create meetup, Chat/Preloved/Deals/Profile = none
+      //         (Chat has header AI icon, Preloved has header AI + own FAB,
+      //          Deals & Profile have no FAB), others = AI Copilot ──────────
       floatingActionButton: _currentIndex == 2 // Mingle tab
           ? Container(
               width: 60,
@@ -120,23 +121,19 @@ class MainShellState extends State<MainShell> {
                 child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
               ),
             )
-          // Chat tab: no global FAB — Chat screen manages its own + button
-          // and AI Copilot is accessible from the Chat header icon
-          : (_currentIndex != 1 && _currentIndex != 5 && _currentIndex != 6)
+          // Chat (1), Preloved (3), Deals (5), Profile (6): no global FAB
+          // Chat & Preloved access AI Copilot from their header icons
+          : (_currentIndex != 1 && _currentIndex != 3 && _currentIndex != 5 && _currentIndex != 6)
               ? Container(
                   width: 52,
                   height: 52,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: HuddlColors.aiGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF6C63FF).withValues(alpha: 0.35),
+                        color: HuddlColors.aiBlue.withValues(alpha: 0.35),
                         blurRadius: 14,
                         offset: const Offset(0, 5),
                       ),

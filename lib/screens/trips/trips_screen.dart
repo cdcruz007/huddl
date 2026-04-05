@@ -181,7 +181,7 @@ class _TripsScreenState extends State<TripsScreen> {
             Container(
               width: 56, height: 56,
               decoration: BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
+                gradient: HuddlColors.aiGradient,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 28),

@@ -429,7 +429,7 @@ class _FoundingMemberBanner extends StatelessWidget {
           colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
+        border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -438,11 +438,11 @@ class _FoundingMemberBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.local_fire_department,
-                    color: Color(0xFF8B5CF6), size: 18),
+                    color: Color(0xFF3580F0), size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -461,8 +461,8 @@ class _FoundingMemberBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-              color: const Color(0xFF8B5CF6),
+              backgroundColor: const Color(0xFF3580F0).withValues(alpha: 0.1),
+              color: const Color(0xFF3580F0),
               minHeight: 6,
             ),
           ),
@@ -477,7 +477,7 @@ class _FoundingMemberBanner extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF8B5CF6))),
+                      color: const Color(0xFF3580F0))),
             ],
           ),
         ],
@@ -762,14 +762,14 @@ class _PlanCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.08),
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.local_fire_department,
-                        color: Color(0xFF8B5CF6), size: 14),
+                        color: Color(0xFF3580F0), size: 14),
                     const SizedBox(width: 4),
                     Text('Founding: \u00A33.99/mo locked for life',
                         style: GoogleFonts.poppins(

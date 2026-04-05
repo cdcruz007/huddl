@@ -101,4 +101,13 @@ class HuddlColors {
     end: Alignment.bottomCenter,
     colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0), Color(0xFFFFFFFF)],
   );
+
+  // AI feature gradient — standard blue (replaces legacy purple)
+  static const LinearGradient aiGradient = LinearGradient(
+    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  static const Color aiBlue = Color(0xFF3580F0);       // primary AI accent
+  static const Color aiBlueLight = Color(0xFF5B9DFF);   // AI gradient end
 }

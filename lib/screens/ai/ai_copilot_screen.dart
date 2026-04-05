@@ -98,7 +98,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
+                gradient: HuddlColors.aiGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(Icons.auto_awesome,
@@ -180,7 +180,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: HuddlColors.primaryGradient,
+              gradient: HuddlColors.aiGradient,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.auto_awesome,
@@ -223,7 +223,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               Icons.storefront,
               'Preloved AI',
               'Sell items instantly with AI',
-              HuddlColors.primary,
+              HuddlColors.aiBlue,
               query: 'Help me sell an item on Preloved'),
           _buildFeatureCard(
               Icons.groups,
@@ -365,7 +365,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         margin: const EdgeInsets.only(bottom: 12, left: 60),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          gradient: HuddlColors.primaryGradient,
+          gradient: HuddlColors.aiGradient,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(18),
             topRight: Radius.circular(18),
@@ -399,7 +399,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 Container(
                   padding: const EdgeInsets.all(4),
                   decoration: BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
+                    gradient: HuddlColors.aiGradient,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Icon(Icons.auto_awesome,
@@ -411,7 +411,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
+                    color: HuddlColors.aiBlue,
                   ),
                 ),
               ],
@@ -451,21 +451,21 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.blueBackground,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(_getActionIcon(action.icon),
-                                  size: 14, color: HuddlColors.primary),
+                                  size: 14, color: HuddlColors.aiBlue),
                               const SizedBox(width: 6),
                               Text(
                                 action.label,
                                 style: GoogleFonts.poppins(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary,
+                                  color: HuddlColors.aiBlue,
                                 ),
                               ),
                             ],
@@ -543,7 +543,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              gradient: HuddlColors.primaryGradient,
+              gradient: HuddlColors.aiGradient,
               borderRadius: BorderRadius.circular(6),
             ),
             child: const Icon(Icons.auto_awesome,
@@ -635,7 +635,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         HuddlColors.gray300,
                         HuddlColors.gray300,
                       ])
-                    : HuddlColors.primaryGradient,
+                    : HuddlColors.aiGradient,
                 shape: BoxShape.circle,
               ),
               child:
@@ -743,7 +743,7 @@ class _TypingDotState extends State<_TypingDot>
         width: 8,
         height: 8,
         decoration: BoxDecoration(
-          color: HuddlColors.primary
+          color: HuddlColors.aiBlue
               .withValues(alpha: 0.3 + _controller.value * 0.7),
           shape: BoxShape.circle,
         ),

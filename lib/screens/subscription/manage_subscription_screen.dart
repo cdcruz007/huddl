@@ -372,7 +372,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Messages This Month',
                 used: _service.messagesThisMonth,
                 limit: limits.maxMessagesPerMonth,
-                color: const Color(0xFF8B5CF6),
+                color: const Color(0xFF3580F0),
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -432,7 +432,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   label: 'AI Travel Concierge Chats Today',
                   used: _service.aiTravelConciergeChatsToday,
                   limit: limits.maxAiTravelConciergeChatsPerDay,
-                  color: const Color(0xFF8B5CF6),
+                  color: const Color(0xFF3580F0),
                 ),
               ],
               if (limits.aiMeetupMatchmaker) ...[
@@ -890,7 +890,7 @@ class _CurrentPlanCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6)
+                              color: const Color(0xFF3580F0)
                                   .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -898,7 +898,7 @@ class _CurrentPlanCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(Icons.local_fire_department,
-                                    color: Color(0xFF8B5CF6), size: 10),
+                                    color: Color(0xFF3580F0), size: 10),
                                 const SizedBox(width: 2),
                                 Text('Founding',
                                     style: GoogleFonts.poppins(

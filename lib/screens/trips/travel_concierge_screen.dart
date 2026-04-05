@@ -85,7 +85,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
           children: [
             Container(
               width: 36, height: 36,
-              decoration: BoxDecoration(gradient: HuddlColors.primaryGradient, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(gradient: HuddlColors.aiGradient, borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
             ),
             const SizedBox(width: 10),
@@ -147,9 +147,9 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
           Container(
             width: 80, height: 80,
             decoration: BoxDecoration(
-              gradient: HuddlColors.primaryGradient,
+              gradient: HuddlColors.aiGradient,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [BoxShadow(color: HuddlColors.primary.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
+              boxShadow: [BoxShadow(color: HuddlColors.aiBlue.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 8))],
             ),
             child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 40),
           ),
@@ -179,8 +179,8 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
         children: [
           Container(
             width: 44, height: 44,
-            decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: HuddlColors.primary, size: 22),
+            decoration: BoxDecoration(color: HuddlColors.aiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, color: HuddlColors.aiBlue, size: 22),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -224,9 +224,9 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.auto_awesome, size: 14, color: HuddlColors.primary),
+                    Icon(Icons.auto_awesome, size: 14, color: HuddlColors.aiBlue),
                     const SizedBox(width: 4),
-                    Text('AI Concierge', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                    Text('AI Concierge', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.aiBlue)),
                   ],
                 ),
               ),
@@ -275,15 +275,15 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.1),
+          color: HuddlColors.aiBlue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: HuddlColors.primary),
+            Icon(icon, size: 16, color: HuddlColors.aiBlue),
             const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.primary)),
+            Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.aiBlue)),
           ],
         ),
       ),
@@ -368,9 +368,9 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
             decoration: BoxDecoration(
               color: HuddlColors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
+              border: Border.all(color: HuddlColors.aiBlue.withValues(alpha: 0.3)),
             ),
-            child: Text(action, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.primary, fontWeight: FontWeight.w500)),
+            child: Text(action, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.aiBlue, fontWeight: FontWeight.w500)),
           ),
         )).toList(),
       ),
@@ -411,7 +411,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
               onTap: () => _sendMessage(_messageController.text),
               child: Container(
                 width: 44, height: 44,
-                decoration: BoxDecoration(gradient: HuddlColors.primaryGradient, shape: BoxShape.circle),
+                decoration: BoxDecoration(gradient: HuddlColors.aiGradient, shape: BoxShape.circle),
                 child: const Icon(Icons.send, color: HuddlColors.white, size: 20),
               ),
             ),
@@ -464,7 +464,7 @@ class _AnimatedDotState extends State<_AnimatedDot> with SingleTickerProviderSta
       builder: (ctx, _) => Container(
         width: 8, height: 8,
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: _animation.value),
+          color: HuddlColors.aiBlue.withValues(alpha: _animation.value),
           shape: BoxShape.circle,
         ),
       ),

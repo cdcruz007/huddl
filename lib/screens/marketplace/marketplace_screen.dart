@@ -6,6 +6,7 @@ import '../../services/rehome_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../ai/ai_listing_generator_sheet.dart';
+import '../ai/ai_copilot_screen.dart';
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -261,14 +262,41 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row — no chat icon, no search icon (search is inline on Buy tab)
-          Text(
-            'Preloved',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: HuddlColors.textDark,
-            ),
+          // Title row with AI Copilot icon (top-right, same as Chat)
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Preloved',
+                  style: GoogleFonts.poppins(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: HuddlColors.textDark,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AiCopilotScreen(),
+                  ),
+                ),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: HuddlColors.aiGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: HuddlColors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           // Tab bar — same style as Messages, Discover, Nearby, I'm Going
@@ -633,18 +661,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFF0E6), Color(0xFFFFE8D6)],
+                  colors: [Color(0xFFEDF4FF), Color(0xFFDBEAFF)],
                   begin: Alignment.topLeft, end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+                border: Border.all(color: HuddlColors.aiBlue.withValues(alpha: 0.25)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      gradient: HuddlColors.primaryGradient,
+                      gradient: HuddlColors.aiGradient,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 24),
