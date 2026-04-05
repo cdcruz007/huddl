@@ -328,6 +328,32 @@ class AiCopilotService {
       }
       // If no valid content, throw to trigger fallback
       throw Exception('No content in Gemini response');
+    } else if (response.statusCode == 429) {
+      // Quota exceeded — key is valid but rate-limited
+      _isApiOnline = false;
+      final userName = _onboarding.name ?? 'there';
+      return CopilotMessage(
+        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+        text:
+            'I\'m taking a short breather, $userName! Our AI quota has been '
+            'reached for the moment.\n\n'
+            'This usually resets within **a few minutes**. In the meantime '
+            'I can still help with the topics below, or try again shortly!',
+        isUser: false,
+        category: CopilotCategory.general,
+        actions: const [
+          CopilotAction(
+              label: 'Browse Meetups',
+              route: '/meetups',
+              icon: 'groups'),
+          CopilotAction(
+              label: 'Preloved',
+              route: '/marketplace',
+              icon: 'storefront'),
+          CopilotAction(label: 'Trips', route: '/trips', icon: 'flight'),
+        ],
+        sourceNote: 'Quota limit reached \u00B7 Resets shortly',
+      );
     } else {
       throw Exception(
           'Gemini API error: ${response.statusCode} - ${response.body}');

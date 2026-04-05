@@ -13,7 +13,7 @@ class GeminiConfig {
   // TODO: Replace with a valid Gemini API key from
   //       https://aistudio.google.com/app/apikey
   static const String apiKey =
-      'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
+      'AIzaSyAB4VM98Ryk76OEFVUixydGziexWteKnWo';
 
   static const String model = 'gemini-2.0-flash';
   static const String baseUrl =
@@ -61,7 +61,8 @@ class GeminiConfig {
           .timeout(const Duration(seconds: 10));
 
       _validated = true;
-      _isValid = response.statusCode == 200;
+      // 200 = working, 429 = key is valid but quota-limited (still "online")
+      _isValid = response.statusCode == 200 || response.statusCode == 429;
 
       if (!_isValid && kDebugMode) {
         debugPrint(
