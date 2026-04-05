@@ -9,9 +9,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase with platform-specific options
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // Use a timeout so the app always launches even if Firebase is slow
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 10));
+  } catch (e) {
+    // Firebase init failed or timed out — app will still launch
+    // but Firebase features will be unavailable
+    debugPrint('Firebase init error: $e');
+  }
 
   // Pre-initialize subscription service for app-wide access
   await SubscriptionService().initialize();

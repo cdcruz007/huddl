@@ -18,6 +18,7 @@ import '../../services/community_feed_service.dart';
 import '../../services/announcement_service.dart';
 import '../../models/group.dart';
 import '../main_shell.dart';
+import '../../services/tutorial_service.dart';
 import '../../services/feedback_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
@@ -144,10 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .toList();
       }
 
-      // Load events and meetups
-      final userEvents = _eventService.events
-          .where((e) => e.isUserCreated)
-          .toList();
+      // Load events the user is registered for
+      final userEvents = _eventService.goingEvents;
       final userMeetups = _meetupService.meetups
           .where((m) => m.organiserId == 'current_user' || m.isGoing)
           .toList();
@@ -688,6 +687,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.help_outline,
                       title: 'Help & Support',
                       onTap: _showHelpSheet,
+                    ),
+                    _MenuItem(
+                      icon: Icons.school_outlined,
+                      title: 'Run Tutorial',
+                      subtitle: 'Walk through the app again',
+                      iconColor: const Color(0xFF7C4DFF),
+                      onTap: _rerunTutorial,
                     ),
                     _MenuItem(
                       icon: Icons.info_outline,
@@ -1831,7 +1837,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showMyEventsSheet() {
-    final allEvents = _eventService.events.where((e) => e.isUserCreated).toList();
+    final allEvents = _eventService.goingEvents;
     final goingMeetups = _meetupService.meetups
         .where((m) => m.organiserId == 'current_user' || m.isGoing)
         .toList();
@@ -1849,7 +1855,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (allEvents.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-                    child: Text('Events you created',
+                    child: Text('Events you\'re attending',
                         style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -3261,6 +3267,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SETTINGS — HELP
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  Future<void> _rerunTutorial() async {
+    await TutorialService().reset();
+    if (!mounted) return;
+    final shell = MainShell.shellKey.currentState;
+    if (shell != null) {
+      shell.launchTutorial();
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showHelpSheet() {

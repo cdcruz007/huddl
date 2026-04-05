@@ -936,6 +936,8 @@ class _FeatureComparisonTable extends StatelessWidget {
                   ],
                 ),
               ),
+              // ---- Community section ----
+              _sectionHeader('Community'),
               _row('Groups joined', '2', '\u221E', '\u221E'),
               _row('Groups created', '1', '25', '\u221E'),
               _row('Meetups/month', '2', '\u221E', '\u221E'),
@@ -949,14 +951,51 @@ class _FeatureComparisonTable extends StatelessWidget {
               _rowBool('Profile badge', false, true, true),
               _rowBool('Expert Q&A', false, true, true),
               _rowBool('Milestone tracker', false, true, true),
+
+              // ---- AI Features section ----
+              _sectionHeader('AI Features'),
+              _row('AI Copilot', '3/day', '25/day', '\u221E'),
+              _row('AI Chat Summaries', '1/day', '10/day', '\u221E'),
+              _row('AI Event Discovery', '1/wk', 'Daily', '\u221E'),
+              _rowBool('AI Recommendations', true, true, true),
+              _rowBool('AI Smart Feed', true, true, true),
+              _row('AI Listing Generator', '\u2014', '10/mo', '\u221E'),
+              _row('AI Travel Concierge', '\u2014', '15/day', '\u221E'),
+              _rowBool('AI Matchmaker', false, false, true),
+
+              // ---- Trips section ----
+              _sectionHeader('Trips'),
+              _rowBool('Browse destinations', true, true, true),
+              _row('Saved trips', '1', '10', '\u221E'),
+              _rowBool('AI packing lists', false, true, true),
+
+              // ---- Premium section ----
+              _sectionHeader('Premium'),
               _rowBool('Priority support', false, false, true),
-              _rowBool('Analytics', false, false, true),
+              _rowBool('Analytics dashboard', false, false, true),
               _rowBool('Promoted listings', false, false, true),
               _rowBool('Early access', false, false, true),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _sectionHeader(String title) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: HuddlColors.primary.withValues(alpha: 0.06),
+        border: const Border(bottom: BorderSide(color: HuddlColors.gray100)),
+      ),
+      child: Text(title,
+          style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+              color: HuddlColors.primary)),
     );
   }
 

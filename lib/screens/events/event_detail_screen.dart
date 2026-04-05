@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../services/event_service.dart';
+import '../../services/ai_event_recommender_service.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -15,8 +17,40 @@ class EventDetailScreen extends StatefulWidget {
 }
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
-  bool _isBookmarked = false;
-  bool _isRegistered = false;
+  final EventService _eventService = EventService();
+  final AiEventRecommenderService _recommender = AiEventRecommenderService();
+  ScoredEvent? _scoredEvent;
+  bool _aiReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAiRecommendation();
+  }
+
+  Future<void> _loadAiRecommendation() async {
+    await _recommender.initialize();
+    final eventId = widget.event['id'] as String? ?? '';
+    if (eventId.isEmpty) return;
+    final allScored = _recommender.rankAllEvents();
+    final match = allScored.where((s) => s.event.id == eventId);
+    if (mounted) {
+      setState(() {
+        _scoredEvent = match.isNotEmpty ? match.first : null;
+        _aiReady = true;
+      });
+    }
+  }
+
+  bool get _isRegistered {
+    final id = widget.event['id'] as String? ?? '';
+    return id.isNotEmpty && _eventService.isGoing(id);
+  }
+
+  bool get _isBookmarked {
+    final id = widget.event['id'] as String? ?? '';
+    return id.isNotEmpty && _eventService.isBookmarked(id);
+  }
 
   void _shareEvent() {
     final e = widget.event;
@@ -83,7 +117,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                     color: HuddlColors.white, size: 20,
                   ),
-                  onPressed: () => setState(() => _isBookmarked = !_isBookmarked),
+                  onPressed: () {
+                    final id = widget.event['id'] as String? ?? '';
+                    if (id.isNotEmpty) {
+                      _eventService.toggleBookmark(id);
+                      setState(() {});
+                    }
+                  },
                 ),
               ),
               Container(
@@ -257,6 +297,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 const SizedBox(height: 8),
 
+                // ── AI Discovered source section ─────────────────────
+                if (e['isAiDiscovered'] == true)
+                  _buildAiDiscoveredSection(e),
+                if (e['isAiDiscovered'] == true)
+                  const SizedBox(height: 8),
+
                 // Details
                 Container(
                   color: HuddlColors.white,
@@ -296,6 +342,15 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ? 'No cost to attend'
                             : 'Per person — paid on registration',
                       ),
+                      if ((e['borough'] as String? ?? '').isNotEmpty) ...[
+                        const Divider(height: 24),
+                        _DetailRow(
+                          icon: Icons.map_outlined,
+                          iconColor: HuddlColors.blue,
+                          title: e['borough'] as String,
+                          subtitle: 'Borough',
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -334,6 +389,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 // Who's going section
                 _buildAttendeesSection(e, color),
                 const SizedBox(height: 8),
+
+                // AI Recommendation section
+                if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
+                  _buildAiRecommendationSection(_scoredEvent!),
+                if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
+                  const SizedBox(height: 8),
 
                 // What to expect
                 Container(
@@ -430,7 +491,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  setState(() => _isRegistered = !_isRegistered);
+                  final id = widget.event['id'] as String? ?? '';
+                  if (id.isNotEmpty) {
+                    _eventService.toggleGoing(id);
+                  }
+                  setState(() {});
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(_isRegistered
@@ -467,6 +532,267 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── AI Recommendation section ────────────────────────────────────────
+  Widget _buildAiRecommendationSection(ScoredEvent scored) {
+    final reasons = scored.reasons.take(4).toList();
+    final scorePercent = scored.score.round();
+
+    return Container(
+      color: HuddlColors.white,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Why we recommend this',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    Text(
+                      'AI-matched to your family profile',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$scorePercent% match',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Reason list
+          ...reasons.map((reason) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6C63FF).withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(reason.emoji, style: const TextStyle(fontSize: 15)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      reason.label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ── AI Discovered source section ────────────────────────────────────
+  Widget _buildAiDiscoveredSection(Map<String, dynamic> e) {
+    final sourceName = e['aiSourceName'] as String? ?? 'the web';
+    final sourceIcon = e['aiSourceIcon'] as IconData? ?? Icons.language;
+
+    return Container(
+      color: HuddlColors.white,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI Discovered Event',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textDark,
+                      ),
+                    ),
+                    Text(
+                      'Found automatically by our AI scanner',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: HuddlColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Source details
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6C63FF).withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF6C63FF).withValues(alpha: 0.12),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Source row
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(sourceIcon, size: 18, color: const Color(0xFF6C63FF)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Discovered on',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                          Text(
+                            sourceName,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF6C63FF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                          const SizedBox(width: 4),
+                          Text(
+                            'AI Found',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // How it works explanation
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.white,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, size: 16, color: Color(0xFF6C63FF)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Our AI scans local event listings, council sites, and community boards daily to find events near you.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: HuddlColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

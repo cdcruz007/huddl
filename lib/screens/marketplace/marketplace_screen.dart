@@ -5,6 +5,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
+import '../ai/ai_listing_generator_sheet.dart';
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -616,6 +617,79 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       child: Column(
         children: [
+          // ── AI Listing Generator CTA ──────────────────────
+          GestureDetector(
+            onTap: () async {
+              final result = await showModalBottomSheet<bool>(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const AiListingGeneratorSheet(),
+              );
+              if (result == true && mounted) setState(() {});
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF0E6), Color(0xFFFFE8D6)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      gradient: HuddlColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Listing Generator',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w700,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Take a photo → AI creates title, description & smart pricing in 15 seconds',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, color: HuddlColors.textSecondary, height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'NEW',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10, fontWeight: FontWeight.w700,
+                        color: HuddlColors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           // Create listing CTA card — same size/style as Create New Group CTA
           GestureDetector(
             onTap: _openCreateListing,

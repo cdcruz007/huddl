@@ -1,46 +1,50 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — SUBSCRIPTION MODEL
-// ═══════════════════════════════════════════════════════════════════════════════
+// =====================================================================================
+// HUDDL CONNECT -- SUBSCRIPTION MODEL  (Updated April 2025)
+// =====================================================================================
 //
 // PRICING ANALYST RATIONALE
-// ─────────────────────────
-// Three tiers designed around the "Value-First Freemium" strategy:
+// -------------------------
+// Three tiers designed around the "Value-First Freemium" strategy, now expanded
+// to incorporate the full AI-powered feature suite launched in Cambridge:
 //
-// 1. EXPLORER (Free) — "Hook tier"
+// 1. EXPLORER (Free) -- "Hook tier"
 //    Deliberately tight limits that let users experience value quickly
 //    (join 2 groups, attend meetups, 5 DMs) but hit friction within the
-//    first week. Goal: force an upgrade decision within 7 days.
+//    first week. AI features are capped to give a taste without full access.
+//    Goal: force an upgrade decision within 7 days.
 //
-// 2. NEIGHBOURHOOD (£5.99/mo | £49.99/yr) — "Sweet-spot tier"
+// 2. NEIGHBOURHOOD (GBP 5.99/mo | GBP 49.99/yr) -- "Sweet-spot tier"
 //    Priced at the UK impulse-buy threshold (< cost of 2 coffees/mo).
 //    Removes ALL social friction (unlimited groups, DMs, meetups) and
-//    adds private groups, meetup creation, ad-free, and a profile badge.
+//    unlocks the core AI suite: Copilot, Event Discovery, Chat Summaries,
+//    Smart Feed, Listing Generator, and Travel Concierge with generous limits.
 //    This is the tier 80%+ of paying users should land on.
-//    Annual plan saves 30% — anchored as default to maximise LTV.
+//    Annual plan saves 30% -- anchored as default to maximise LTV.
 //
-// 3. INNER CIRCLE (£11.99/mo | £99.99/yr) — "Power-user tier"
-//    For community leaders and super-engaged parents. Adds analytics,
-//    promoted marketplace listings, priority support, unlimited photos,
-//    and early access. Targets the top ~5% of active users who derive
-//    outsized value and are willing to pay 2× for premium perks.
+// 3. INNER CIRCLE (GBP 11.99/mo | GBP 99.99/yr) -- "Power-user tier"
+//    For community leaders and super-engaged parents. Everything in
+//    Neighbourhood plus unlimited AI usage, AI Matchmaker, full analytics,
+//    promoted marketplace listings, priority support, early access, and
+//    exclusive Inner Circle features. Targets the top ~5% of active users
+//    who derive outsized value and are willing to pay 2x for premium perks.
 //
 // COMPETITIVE CONTEXT (UK parenting/community apps, 2025):
-//   Peanut Plus:  ~£8.99/mo or £79.99 lifetime
-//   Huckleberry:  ~£7.99/mo
+//   Peanut Plus:  ~GBP 8.99/mo or GBP 79.99 lifetime
+//   Huckleberry:  ~GBP 7.99/mo
 //   Mush:         Free (ad-supported)
 //
-// Huddl Neighbourhood at £5.99/mo undercuts Peanut and Huckleberry by 25-33%
-// while offering comparable or superior social features, making it the
-// highest-value option in the market.
+// Huddl Neighbourhood at GBP 5.99/mo undercuts Peanut and Huckleberry by 25-33%
+// while offering comparable or superior social features PLUS an AI suite no
+// competitor matches, making it the highest-value option in the market.
 //
 // KEY CONVERSION LEVERS:
 //   7-day auto-trial of Neighbourhood on sign-up (no card required)
-//   Soft paywalls at "aha moments" (3rd group, 6th DM, private group)
-//   Founding Member rate: £3.99/mo locked for life (first 500 users)
+//   Soft paywalls at "aha moments" (3rd group, 6th DM, AI limit hit)
+//   Founding Member rate: GBP 3.99/mo locked for life (first 500 users)
 //   Annual billing default with "Save 30%" badge
 //   Day-5 trial reminder push notification
 //   Day-7 exit survey + 1-month free pause on cancellation
-// ═══════════════════════════════════════════════════════════════════════════════
+// =====================================================================================
 
 /// Subscription tier levels for Huddl Connect
 enum SubscriptionTier { explorer, neighbourhood, innerCircle }
@@ -50,6 +54,7 @@ enum BillingPeriod { monthly, annual }
 
 /// Feature limits per tier
 class TierLimits {
+  // ---- Core Social Limits ----
   final int maxGroups;
   final int maxGroupsCreated;
   final int maxMeetupsPerMonth;
@@ -57,6 +62,8 @@ class TierLimits {
   final int maxMarketplaceListings;
   final int maxPhotoUploads;
   final int maxMessagesPerMonth;
+
+  // ---- Core Social Booleans ----
   final bool canCreatePrivateGroups;
   final bool canCreateMeetups;
   final bool prioritySupport;
@@ -68,7 +75,32 @@ class TierLimits {
   final bool expertQandA;
   final bool milestoneTracker;
 
+  // ---- AI Feature Limits ----
+  final int maxAiCopilotChatsPerDay;
+  final int maxAiEventDiscoveriesPerWeek;
+  final int maxAiChatSummariesPerDay;
+  final int maxAiListingGenerationsPerMonth;
+  final int maxAiTravelConciergeChatsPerDay;
+  final int maxAiMatchmakerRequestsPerMonth;
+  final int maxAiSmartFeedRefreshesPerDay;
+
+  // ---- AI Feature Booleans ----
+  final bool aiCopilotAccess;
+  final bool aiEventDiscovery;
+  final bool aiEventRecommendations;
+  final bool aiChatSummaries;
+  final bool aiListingGenerator;
+  final bool aiSmartFeed;
+  final bool aiTravelConcierge;
+  final bool aiMeetupMatchmaker;
+
+  // ---- Trips Feature ----
+  final bool tripsAccess;
+  final bool tripsPackingListAccess;
+  final int maxSavedTrips;
+
   const TierLimits({
+    // Core social
     required this.maxGroups,
     required this.maxGroupsCreated,
     required this.maxMeetupsPerMonth,
@@ -86,13 +118,37 @@ class TierLimits {
     required this.earlyAccess,
     required this.expertQandA,
     required this.milestoneTracker,
+    // AI limits
+    required this.maxAiCopilotChatsPerDay,
+    required this.maxAiEventDiscoveriesPerWeek,
+    required this.maxAiChatSummariesPerDay,
+    required this.maxAiListingGenerationsPerMonth,
+    required this.maxAiTravelConciergeChatsPerDay,
+    required this.maxAiMatchmakerRequestsPerMonth,
+    required this.maxAiSmartFeedRefreshesPerDay,
+    // AI booleans
+    required this.aiCopilotAccess,
+    required this.aiEventDiscovery,
+    required this.aiEventRecommendations,
+    required this.aiChatSummaries,
+    required this.aiListingGenerator,
+    required this.aiSmartFeed,
+    required this.aiTravelConcierge,
+    required this.aiMeetupMatchmaker,
+    // Trips
+    required this.tripsAccess,
+    required this.tripsPackingListAccess,
+    required this.maxSavedTrips,
   });
 
-  // ── EXPLORER (Free) ─────────────────────────────────────────────────
+  // ---- EXPLORER (Free) ----------------------------------------------------------
   // Tight limits: experience value fast, hit friction within 7 days.
   // 2 groups, 1 created, 2 meetups/mo, 5 DMs, 2 listings, 3 photos.
-  // No private groups, no meetup creation, no ad-free.
+  // AI: taster access -- 3 copilot chats/day, basic event discovery,
+  // basic recommendations, 1 chat summary/day, no listing generator,
+  // basic smart feed, no travel concierge, no matchmaker.
   static const TierLimits explorer = TierLimits(
+    // Core social
     maxGroups: 2,
     maxGroupsCreated: 1,
     maxMeetupsPerMonth: 2,
@@ -110,12 +166,35 @@ class TierLimits {
     earlyAccess: false,
     expertQandA: false,
     milestoneTracker: false,
+    // AI limits
+    maxAiCopilotChatsPerDay: 3,
+    maxAiEventDiscoveriesPerWeek: 1,
+    maxAiChatSummariesPerDay: 1,
+    maxAiListingGenerationsPerMonth: 0,
+    maxAiTravelConciergeChatsPerDay: 0,
+    maxAiMatchmakerRequestsPerMonth: 0,
+    maxAiSmartFeedRefreshesPerDay: 2,
+    // AI booleans
+    aiCopilotAccess: true,
+    aiEventDiscovery: true,
+    aiEventRecommendations: true,
+    aiChatSummaries: true,
+    aiListingGenerator: false,
+    aiSmartFeed: true,
+    aiTravelConcierge: false,
+    aiMeetupMatchmaker: false,
+    // Trips
+    tripsAccess: true,
+    tripsPackingListAccess: false,
+    maxSavedTrips: 1,
   );
 
-  // ── NEIGHBOURHOOD (£5.99/mo) ─────────────────────────────────────────
-  // Removes all social friction. Unlimited core features.
-  // Private groups, meetup creation, ad-free, badge, expert Q&A, milestones.
+  // ---- NEIGHBOURHOOD (GBP 5.99/mo) -----------------------------------------------
+  // Removes all social friction. Full AI suite with generous daily limits.
+  // Unlocks: Travel Concierge, AI Listing Generator, full Chat Summaries,
+  // unlimited Smart Feed, and increased Copilot usage.
   static const TierLimits neighbourhood = TierLimits(
+    // Core social
     maxGroups: 999,
     maxGroupsCreated: 25,
     maxMeetupsPerMonth: 999,
@@ -133,12 +212,34 @@ class TierLimits {
     earlyAccess: false,
     expertQandA: true,
     milestoneTracker: true,
+    // AI limits
+    maxAiCopilotChatsPerDay: 25,
+    maxAiEventDiscoveriesPerWeek: 7,
+    maxAiChatSummariesPerDay: 10,
+    maxAiListingGenerationsPerMonth: 10,
+    maxAiTravelConciergeChatsPerDay: 15,
+    maxAiMatchmakerRequestsPerMonth: 0,
+    maxAiSmartFeedRefreshesPerDay: 999,
+    // AI booleans
+    aiCopilotAccess: true,
+    aiEventDiscovery: true,
+    aiEventRecommendations: true,
+    aiChatSummaries: true,
+    aiListingGenerator: true,
+    aiSmartFeed: true,
+    aiTravelConcierge: true,
+    aiMeetupMatchmaker: false,
+    // Trips
+    tripsAccess: true,
+    tripsPackingListAccess: true,
+    maxSavedTrips: 10,
   );
 
-  // ── INNER CIRCLE (£11.99/mo) ────────────────────────────────────────
-  // Everything in Neighbourhood + analytics, promoted listings, priority
-  // support, unlimited photos, early access.
+  // ---- INNER CIRCLE (GBP 11.99/mo) -----------------------------------------------
+  // Everything in Neighbourhood + unlimited AI, AI Matchmaker, analytics,
+  // promoted listings, priority support, unlimited photos, early access.
   static const TierLimits innerCircle = TierLimits(
+    // Core social
     maxGroups: 999,
     maxGroupsCreated: 999,
     maxMeetupsPerMonth: 999,
@@ -156,6 +257,27 @@ class TierLimits {
     earlyAccess: true,
     expertQandA: true,
     milestoneTracker: true,
+    // AI limits -- effectively unlimited
+    maxAiCopilotChatsPerDay: 999,
+    maxAiEventDiscoveriesPerWeek: 999,
+    maxAiChatSummariesPerDay: 999,
+    maxAiListingGenerationsPerMonth: 999,
+    maxAiTravelConciergeChatsPerDay: 999,
+    maxAiMatchmakerRequestsPerMonth: 999,
+    maxAiSmartFeedRefreshesPerDay: 999,
+    // AI booleans -- everything unlocked
+    aiCopilotAccess: true,
+    aiEventDiscovery: true,
+    aiEventRecommendations: true,
+    aiChatSummaries: true,
+    aiListingGenerator: true,
+    aiSmartFeed: true,
+    aiTravelConcierge: true,
+    aiMeetupMatchmaker: true,
+    // Trips -- full access
+    tripsAccess: true,
+    tripsPackingListAccess: true,
+    maxSavedTrips: 999,
   );
 
   static TierLimits forTier(SubscriptionTier tier) {
@@ -212,7 +334,7 @@ class SubscriptionPlan {
           : 0;
 
   static const List<SubscriptionPlan> allPlans = [
-    // ── EXPLORER (Free) ───────────────────────────────────────────────
+    // ---- EXPLORER (Free) --------------------------------------------------------
     SubscriptionPlan(
       tier: SubscriptionTier.explorer,
       name: 'Explorer',
@@ -228,20 +350,23 @@ class SubscriptionPlan {
         '5 direct conversations',
         '2 marketplace listings',
         '30 messages/month',
-        'View community feed & meetups',
-        'Basic parent profile',
+        'AI Copilot (3 chats/day)',
+        'AI event discovery (weekly)',
+        'Basic smart feed',
+        'Browse family trips',
       ],
       shortBenefits: [
         '2 groups, 5 DMs, 2 meetups/mo',
-        'Basic community access',
+        'Basic AI features',
+        'Browse community & trips',
       ],
     ),
 
-    // ── NEIGHBOURHOOD (£5.99/mo | £49.99/yr) ─────────────────────────
+    // ---- NEIGHBOURHOOD (GBP 5.99/mo | GBP 49.99/yr) ----------------------------
     SubscriptionPlan(
       tier: SubscriptionTier.neighbourhood,
       name: 'Neighbourhood',
-      tagline: 'Your full parent community, unlocked',
+      tagline: 'Your full community + AI, unlocked',
       subtitle: 'Less than 2 coffees a month',
       monthlyPrice: 5.99,
       annualPrice: 49.99,
@@ -250,28 +375,32 @@ class SubscriptionPlan {
       highlights: [
         'Unlimited groups & messaging',
         'Create up to 25 groups',
-        'Unlimited meetups',
-        'Unlimited direct conversations',
-        '15 marketplace listings',
-        'Create private groups',
-        'Create & host meetups',
+        'Unlimited meetups & DMs',
+        'Create private groups & meetups',
         'Ad-free experience',
         'Neighbourhood member badge',
+        'AI Copilot (25 chats/day)',
+        'AI Chat Summaries (10/day)',
+        'AI Listing Generator (10/mo)',
+        'AI Travel Concierge (15 chats/day)',
+        'Daily AI event discovery',
+        'Unlimited smart feed',
+        'Save up to 10 trips + packing lists',
         'Weekly expert Q&A access',
         'Child milestone tracker',
       ],
       shortBenefits: [
         'Unlimited groups, DMs & meetups',
-        'Private groups & meetups',
-        'Ad-free + expert Q&A',
+        'Full AI suite (Copilot, Travel, Listings)',
+        'Ad-free + expert Q&A + milestones',
       ],
     ),
 
-    // ── INNER CIRCLE (£11.99/mo | £99.99/yr) ──────────────────────────
+    // ---- INNER CIRCLE (GBP 11.99/mo | GBP 99.99/yr) ----------------------------
     SubscriptionPlan(
       tier: SubscriptionTier.innerCircle,
       name: 'Inner Circle',
-      tagline: 'Lead your community with superpowers',
+      tagline: 'Lead your community with AI superpowers',
       subtitle: 'For active community builders',
       monthlyPrice: 11.99,
       annualPrice: 99.99,
@@ -281,6 +410,12 @@ class SubscriptionPlan {
         'Unlimited group creation',
         'Unlimited marketplace listings',
         'Promoted listings (2\u00D7 visibility)',
+        'Unlimited AI Copilot',
+        'AI Meetup Matchmaker',
+        'Unlimited AI Chat Summaries',
+        'Unlimited AI Travel Concierge',
+        'Unlimited AI Listing Generator',
+        'Unlimited saved trips',
         'Community analytics dashboard',
         'Priority support (< 2h response)',
         'Up to 50 photo uploads',
@@ -289,8 +424,8 @@ class SubscriptionPlan {
       ],
       shortBenefits: [
         'Everything in Neighbourhood',
-        'Analytics, promoted listings',
-        'Priority support & early access',
+        'Unlimited AI + Matchmaker',
+        'Analytics, priority support & early access',
       ],
     ),
   ];

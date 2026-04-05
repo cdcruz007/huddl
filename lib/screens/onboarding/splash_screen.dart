@@ -138,22 +138,38 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   /// Check Firebase Auth state and navigate to the right screen.
+  /// Wraps the entire check in a timeout so the splash screen never hangs.
   Future<void> _navigateBasedOnAuth() async {
-    final auth = FirebaseAuthService();
-    if (auth.isSignedIn) {
-      // User is already signed in — check if they have a Firestore profile
-      final hasProfile = await auth.hasUserProfile();
-      if (!mounted) return;
-      if (hasProfile) {
-        // Returning user → go to home
-        auth.updateLastActive();
-        Navigator.of(context).pushReplacementNamed('/home');
+    try {
+      final auth = FirebaseAuthService();
+      if (auth.isSignedIn) {
+        // User is already signed in — check if they have a Firestore profile
+        // Use a 5-second timeout so the splash screen never hangs
+        bool hasProfile = false;
+        try {
+          hasProfile = await auth.hasUserProfile()
+              .timeout(const Duration(seconds: 5), onTimeout: () => false);
+        } catch (_) {
+          // If Firestore is unreachable, treat as no profile
+          hasProfile = false;
+        }
+        if (!mounted) return;
+        if (hasProfile) {
+          // Returning user → go to home
+          auth.updateLastActive();
+          Navigator.of(context).pushReplacementNamed('/home');
+        } else {
+          // Signed in but no profile → incomplete onboarding
+          Navigator.of(context).pushReplacementNamed('/onboarding');
+        }
       } else {
-        // Signed in but no profile → incomplete onboarding
+        // Not signed in → show onboarding / login
+        if (!mounted) return;
         Navigator.of(context).pushReplacementNamed('/onboarding');
       }
-    } else {
-      // Not signed in → show onboarding / login
+    } catch (e) {
+      // Any unexpected error → go to onboarding so the app is always usable
+      if (!mounted) return;
       Navigator.of(context).pushReplacementNamed('/onboarding');
     }
   }

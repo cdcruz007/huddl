@@ -383,6 +383,69 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 color: HuddlColors.accentCoral,
               ),
 
+              const SizedBox(height: 20),
+
+              // AI Usage section
+              Text('AI Usage',
+                  style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark)),
+              const SizedBox(height: 12),
+              _UsageCard(
+                icon: Icons.auto_awesome,
+                label: 'AI Copilot Chats Today',
+                used: _service.aiCopilotChatsToday,
+                limit: limits.maxAiCopilotChatsPerDay,
+                color: HuddlColors.primary,
+              ),
+              const SizedBox(height: 8),
+              _UsageCard(
+                icon: Icons.summarize_outlined,
+                label: 'AI Chat Summaries Today',
+                used: _service.aiChatSummariesToday,
+                limit: limits.maxAiChatSummariesPerDay,
+                color: HuddlColors.teal,
+              ),
+              const SizedBox(height: 8),
+              _UsageCard(
+                icon: Icons.event_outlined,
+                label: 'AI Event Discoveries This Week',
+                used: _service.aiEventDiscoveriesThisWeek,
+                limit: limits.maxAiEventDiscoveriesPerWeek,
+                color: HuddlColors.accentAmber,
+              ),
+              if (limits.aiListingGenerator) ...[
+                const SizedBox(height: 8),
+                _UsageCard(
+                  icon: Icons.sell_outlined,
+                  label: 'AI Listing Generations This Month',
+                  used: _service.aiListingGenerationsThisMonth,
+                  limit: limits.maxAiListingGenerationsPerMonth,
+                  color: HuddlColors.blue,
+                ),
+              ],
+              if (limits.aiTravelConcierge) ...[
+                const SizedBox(height: 8),
+                _UsageCard(
+                  icon: Icons.flight_outlined,
+                  label: 'AI Travel Concierge Chats Today',
+                  used: _service.aiTravelConciergeChatsToday,
+                  limit: limits.maxAiTravelConciergeChatsPerDay,
+                  color: const Color(0xFF8B5CF6),
+                ),
+              ],
+              if (limits.aiMeetupMatchmaker) ...[
+                const SizedBox(height: 8),
+                _UsageCard(
+                  icon: Icons.handshake_outlined,
+                  label: 'AI Matchmaker Requests This Month',
+                  used: _service.aiMatchmakerRequestsThisMonth,
+                  limit: limits.maxAiMatchmakerRequestsPerMonth,
+                  color: HuddlColors.accentCoral,
+                ),
+              ],
+
               const SizedBox(height: 24),
 
               // Actions
@@ -410,7 +473,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                               color: HuddlColors.textDark)),
                       const SizedBox(height: 6),
                       Text(
-                        'Unlimited groups, DMs, meetups, private groups, ad-free & more \u2014 from just \u00A35.99/mo.',
+                        'Unlimited groups, DMs, meetups, full AI suite, Travel Concierge, ad-free & more \u2014 from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: HuddlColors.textSecondary),

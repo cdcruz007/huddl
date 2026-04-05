@@ -19,6 +19,7 @@ import '../main_shell.dart';
 import '../events/meetup_detail_screen.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../services/ai_feed_service.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -37,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final MeetupService _meetupService = MeetupService();
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
+  final AiFeedService _aiFeedService = AiFeedService();
 
 
   bool _isLoading = true;
@@ -76,6 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       await _feedService.initialize();
       await _invitationService.initialize();
       await _dmService.initialize();
+      await _aiFeedService.initialize();
 
       String borough = '';
       final pc = _onboarding.postcode;
@@ -643,6 +646,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
+              // ── AI Nudge Cards ───────────────────────────────────
+              if (_aiFeedService.activeNudges.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: _buildNudgeCarousel(),
+                ),
+
               // ── Meetups I'm Going ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
@@ -1004,6 +1013,154 @@ class _HomeScreenState extends State<HomeScreen> {
               const SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── AI Nudge Carousel ────────────────────────────────────────────────
+  Widget _buildNudgeCarousel() {
+    final nudges = _aiFeedService.activeNudges.take(3).toList();
+    if (nudges.isEmpty) return const SizedBox();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(Icons.auto_awesome, size: 14, color: HuddlColors.white),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'AI Insights for You',
+                style: GoogleFonts.poppins(
+                  fontSize: 15, fontWeight: FontWeight.w600,
+                  color: HuddlColors.textDark,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 130,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: nudges.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) => _buildNudgeCard(nudges[i]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _handleNudgeTap(NudgeCard nudge) {
+    // Map nudge route strings to MainShell tab indices
+    final tabRoutes = <String, int>{
+      '/meetups': 2,
+      '/groups': 1,
+      '/marketplace': 3,
+      '/create_meetup': 2,
+    };
+
+    final route = nudge.actionRoute;
+    if (route != null && tabRoutes.containsKey(route)) {
+      final shellState = MainShell.shellKey.currentState;
+      if (shellState != null) {
+        shellState.switchTab(tabRoutes[route]!);
+      }
+    } else if (route != null && route.startsWith('/')) {
+      Navigator.pushNamed(context, route);
+    }
+  }
+
+  Widget _buildNudgeCard(NudgeCard nudge) {
+    return GestureDetector(
+      onTap: () => _handleNudgeTap(nudge),
+      child: Container(
+        width: 280,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              nudge.type == NudgeType.nearbyMeetup
+                  ? const Color(0xFFFFF0E6)
+                  : nudge.type == NudgeType.milestone
+                      ? const Color(0xFFE6F5F3)
+                      : nudge.type == NudgeType.weatherActivity
+                          ? const Color(0xFFEDF4FF)
+                          : const Color(0xFFFFF7C9),
+              HuddlColors.white,
+            ],
+            begin: Alignment.topLeft, end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: HuddlColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(nudge.emoji, style: const TextStyle(fontSize: 22)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    nudge.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13, fontWeight: FontWeight.w600,
+                      color: HuddlColors.textDark,
+                    ),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _aiFeedService.dismissNudge(nudge.id);
+                    setState(() {});
+                  },
+                  child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              nudge.subtitle,
+              style: GoogleFonts.poppins(
+                fontSize: 11, color: HuddlColors.textSecondary, height: 1.3,
+              ),
+              maxLines: 2, overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            if (nudge.actionLabel != null)
+              GestureDetector(
+                onTap: () => _handleNudgeTap(nudge),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    nudge.actionLabel!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11, fontWeight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

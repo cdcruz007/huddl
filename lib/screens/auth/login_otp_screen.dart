@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
+import '../../services/test_account_service.dart';
+import '../../services/onboarding_data_service.dart';
+import '../../services/subscription_service.dart';
+import '../../models/subscription.dart';
 
 
 /// OTP verification screen shown after successful phone+password login.
@@ -10,11 +14,13 @@ import '../../theme/huddl_colors.dart';
 class LoginOtpScreen extends StatefulWidget {
   final String phoneNumber;
   final String generatedOtp;
+  final bool isTestAccount;
 
   const LoginOtpScreen({
     super.key,
     required this.phoneNumber,
     required this.generatedOtp,
+    this.isTestAccount = false,
   });
 
   @override
@@ -75,10 +81,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Verification code sent to ${widget.phoneNumber}',
+          widget.isTestAccount
+              ? 'Test account \u2014 use code ${TestAccountService.testOtp}'
+              : 'Verification code sent to ${widget.phoneNumber}',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        backgroundColor: HuddlColors.onboardingOrange,
+        backgroundColor: widget.isTestAccount
+            ? const Color(0xFF7C4DFF)
+            : HuddlColors.onboardingOrange,
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -97,6 +107,12 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
     // Accept the generated OTP or universal demo code 123456
     if (entered == _currentOtp || entered == '123456') {
+      // ── Test account: populate onboarding data from pre-set profile ──
+      if (widget.isTestAccount) {
+        await _populateTestAccountData();
+        await _activateTestAccountSubscription();
+      }
+      if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } else {
       setState(() {
@@ -104,6 +120,45 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         _isVerifying = false;
       });
       _codeController.clear();
+    }
+  }
+
+  /// Activate Inner Circle subscription for test accounts so all features
+  /// and functionality can be tested without manual upgrade.
+  Future<void> _activateTestAccountSubscription() async {
+    final subService = SubscriptionService();
+    await subService.initialize();
+    await subService.purchase(
+      SubscriptionTier.innerCircle,
+      BillingPeriod.annual,
+    );
+  }
+
+  /// Fill OnboardingDataService with the test account's pre-set profile
+  /// so the home / profile screen shows realistic data instantly.
+  Future<void> _populateTestAccountData() async {
+    final profile = TestAccountService.getTestProfileFull(widget.phoneNumber);
+    if (profile == null) return;
+
+    final data = OnboardingDataService();
+    await data.initialize();
+
+    data.setName(profile['name'] as String);
+    data.setParentType(profile['parentType'] as String);
+    data.setStagesOfLife(List<String>.from(profile['stagesOfLife'] ?? []));
+    data.setPostcode(profile['postcode'] as String);
+    data.setPhoneNumber(
+      profile['phoneNumber'] as String,
+      countryCode: profile['countryCode'] as String,
+    );
+    data.setPhoneVerified(true);
+    if (profile['bio'] != null) data.setBio(profile['bio'] as String);
+    if (profile['dueDate'] != null) data.setDueDate(profile['dueDate'] as String);
+    final children = profile['children'] as List<dynamic>?;
+    if (children != null && children.isNotEmpty) {
+      data.setChildren(
+        children.map((c) => Map<String, String>.from(c as Map)).toList(),
+      );
     }
   }
 

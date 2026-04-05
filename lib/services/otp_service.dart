@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'test_account_service.dart';
 
 class OTPService {
   static final OTPService _instance = OTPService._internal();
@@ -24,8 +25,12 @@ class OTPService {
   }) async {
     try {
       final fullNumber = '${countryCode ?? '+44'}$phoneNumber';
-      // TESTING: Always use 123456 for testing
-      final otp = '123456';
+
+      // For designated test accounts always use the fixed test OTP.
+      // For regular accounts also use 123456 in the demo environment.
+      final otp = TestAccountService.isTestAccountFull(fullNumber)
+          ? TestAccountService.testOtp
+          : '123456';
       final expiryTime = DateTime.now().add(const Duration(minutes: 5));
       
       // Store OTP data

@@ -7,11 +7,13 @@ import 'onboarding_data_service.dart';
 /// Centralised Firebase Authentication service for Huddl Connect.
 ///
 /// Supports:
-///   - Email/password sign-up & sign-in (primary for web)
-///   - Phone (SMS OTP) sign-in (primary for mobile)
+///   - Phone (SMS OTP) sign-in (primary auth method)
 ///   - User profile creation in Firestore on first sign-up
 ///   - Session persistence across app restarts
-///   - Password reset via email
+///
+/// Huddl Connect uses phone-only authentication. Users register and
+/// log in exclusively via their UK mobile number (+44) and a 6-digit
+/// SMS OTP code. No email/password auth is used.
 class FirebaseAuthService {
   // ── Singleton ────────────────────────────────────────────────────────────
   static final FirebaseAuthService _instance = FirebaseAuthService._internal();
@@ -24,73 +26,12 @@ class FirebaseAuthService {
   // ── Phone auth state ────────────────────────────────────────────────────
   String? _verificationId;
   int? _resendToken;
+
   // ── Getters ─────────────────────────────────────────────────────────────
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => _auth.currentUser != null;
   String? get uid => _auth.currentUser?.uid;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  // ═════════════════════════════════════════════════════════════════════════
-  // EMAIL / PASSWORD AUTH
-  // ═════════════════════════════════════════════════════════════════════════
-
-  /// Register a new user with email + password and create their Firestore
-  /// profile from the onboarding data collected so far.
-  Future<AuthResult> signUpWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final credential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final user = credential.user;
-      if (user == null) {
-        return AuthResult.failure('Account creation failed. Please try again.');
-      }
-
-      // Create Firestore user profile
-      await _createUserProfile(user.uid);
-
-      return AuthResult.success(user);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('An unexpected error occurred: $e');
-    }
-  }
-
-  /// Sign in with email + password.
-  Future<AuthResult> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final credential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return AuthResult.success(credential.user);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('An unexpected error occurred: $e');
-    }
-  }
-
-  /// Send password-reset email.
-  Future<AuthResult> sendPasswordResetEmail(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-      return AuthResult.success(null,
-          message: 'Password reset email sent. Check your inbox.');
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('Failed to send reset email: $e');
-    }
-  }
 
   // ═════════════════════════════════════════════════════════════════════════
   // PHONE (SMS OTP) AUTH
@@ -184,28 +125,6 @@ class FirebaseAuthService {
     try {
       final vId = verificationId ?? _verificationId;
 
-      if (kIsWeb) {
-        // On web, use stored verificationId with credential
-        if (vId == null) {
-          return AuthResult.failure(
-              'Verification session expired. Please request a new code.');
-        }
-        final credential = PhoneAuthProvider.credential(
-          verificationId: vId,
-          smsCode: smsCode,
-        );
-        final userCredential =
-            await _auth.signInWithCredential(credential);
-
-        // Create profile if first time
-        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-          await _createUserProfile(userCredential.user!.uid);
-        }
-
-        return AuthResult.success(userCredential.user);
-      }
-
-      // Mobile path
       if (vId == null) {
         return AuthResult.failure(
             'Verification session expired. Please request a new code.');
@@ -228,38 +147,6 @@ class FirebaseAuthService {
       return AuthResult.failure(_mapAuthError(e.code));
     } catch (e) {
       return AuthResult.failure('Verification failed: $e');
-    }
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════
-  // COMBINED: EMAIL + PHONE LINK
-  // ═════════════════════════════════════════════════════════════════════════
-
-  /// After email sign-up and phone verification, link the phone credential
-  /// to the existing email account so the user has both auth methods.
-  Future<AuthResult> linkPhoneToCurrentUser(String smsCode,
-      {String? verificationId}) async {
-    try {
-      final vId = verificationId ?? _verificationId;
-      if (vId == null || currentUser == null) {
-        return AuthResult.failure('No active session to link phone to.');
-      }
-
-      final credential = PhoneAuthProvider.credential(
-        verificationId: vId,
-        smsCode: smsCode,
-      );
-      await currentUser!.linkWithCredential(credential);
-      return AuthResult.success(currentUser);
-    } on FirebaseAuthException catch (e) {
-      // If already linked, treat as success
-      if (e.code == 'credential-already-in-use' ||
-          e.code == 'provider-already-linked') {
-        return AuthResult.success(currentUser);
-      }
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('Phone linking failed: $e');
     }
   }
 
@@ -305,7 +192,6 @@ class FirebaseAuthService {
               (onboarding.name?.split(' ').length ?? 0) > 1
           ? onboarding.name!.split(' ').sublist(1).join(' ')
           : '',
-      'email': _auth.currentUser?.email ?? '',
       'phone': onboarding.fullPhoneNumber ?? _auth.currentUser?.phoneNumber ?? '',
       'countryCode': onboarding.countryCode ?? '+44',
       'parentType': onboarding.parentType ?? '',
@@ -364,6 +250,61 @@ class FirebaseAuthService {
     }
   }
 
+  // ═════════════════════════════════════════════════════════════════════════
+  // LEGACY STUBS — kept for backward compatibility with screens that were
+  // originally built for email/password auth.  These use phone-based
+  // email aliases (e.g. +447700900123@huddl.app) internally.
+  // ═════════════════════════════════════════════════════════════════════════
+
+  Future<AuthResult> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      if (cred.user != null) await _createUserProfile(cred.user!.uid);
+      return AuthResult.success(cred.user, message: 'Account created');
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        return AuthResult.failure('This phone number is already registered. Try logging in.');
+      }
+      return AuthResult.failure(_mapAuthError(e.code));
+    } catch (e) {
+      return AuthResult.failure('Sign-up failed: $e');
+    }
+  }
+
+  Future<AuthResult> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return AuthResult.success(cred.user);
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(_mapAuthError(e.code));
+    } catch (e) {
+      return AuthResult.failure('Login failed: $e');
+    }
+  }
+
+  Future<AuthResult> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      return AuthResult.success(null, message: 'Password reset email sent');
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(_mapAuthError(e.code));
+    } catch (e) {
+      return AuthResult.failure('Failed to send reset email: $e');
+    }
+  }
+
   /// Update the last active timestamp.
   Future<void> updateLastActive() async {
     if (uid == null) return;
@@ -378,22 +319,14 @@ class FirebaseAuthService {
 
   String _mapAuthError(String code) {
     switch (code) {
-      case 'email-already-in-use':
-        return 'This email is already registered. Try logging in instead.';
-      case 'invalid-email':
-        return 'Please enter a valid email address.';
       case 'operation-not-allowed':
-        return 'This sign-in method is not enabled. Please contact support.';
-      case 'weak-password':
-        return 'Password is too weak. Use at least 8 characters with upper, lower and digit.';
+        return 'Phone sign-in is not enabled. Please contact support.';
       case 'user-disabled':
         return 'This account has been disabled. Please contact support.';
       case 'user-not-found':
-        return 'No account found with these credentials.';
-      case 'wrong-password':
-        return 'Incorrect password. Please try again.';
+        return 'No account found with this phone number.';
       case 'invalid-credential':
-        return 'Incorrect phone number or password. Please try again.';
+        return 'Invalid credentials. Please try again.';
       case 'too-many-requests':
         return 'Too many attempts. Please wait a moment and try again.';
       case 'invalid-verification-code':

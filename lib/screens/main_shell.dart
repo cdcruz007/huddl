@@ -6,7 +6,11 @@ import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
 import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
+import 'trips/trips_screen.dart';
 import 'profile/profile_screen.dart';
+import 'ai/ai_copilot_screen.dart';
+import '../services/tutorial_service.dart';
+import '../widgets/tutorial/tutorial_overlay.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -27,10 +31,46 @@ class MainShellState extends State<MainShell> {
     GroupsScreen(),
     EventsScreen(),
     MarketplaceScreen(),
+    TripsScreen(),
     ProfileScreen(),
   ];
 
-  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Meetups, 3=Preloved, 4=Profile)
+  @override
+  void initState() {
+    super.initState();
+    _checkTutorial();
+  }
+
+  Future<void> _checkTutorial() async {
+    final svc = TutorialService();
+    await svc.initialize();
+    if (!svc.hasCompleted && mounted) {
+      // Slight delay to let MainShell finish its first build
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
+      _launchTutorial();
+    }
+  }
+
+  /// Public so Profile screen can re-trigger it.
+  void launchTutorial() => _launchTutorial();
+
+  void _launchTutorial() {
+    TutorialOverlay.show(
+      context,
+      onTabSwitch: (index) {
+        if (index >= 0 && index < _screens.length) {
+          setState(() => _currentIndex = index);
+        }
+      },
+      onComplete: () {
+        // Return to MyHuddl tab after tutorial
+        setState(() => _currentIndex = 0);
+      },
+    );
+  }
+
+  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Trips, 5=Profile)
   void switchTab(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
@@ -52,7 +92,7 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      // ── FAB — visible only on Meetups tab ─────────────────────────
+      // ── FAB — Mingle = create, others = AI Copilot ──────────────────
       floatingActionButton: _currentIndex == 2
           ? Container(
               width: 60,
@@ -77,7 +117,39 @@ class MainShellState extends State<MainShell> {
                 child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
               ),
             )
-          : null,
+          : _currentIndex != 5 // Hide on Profile
+              ? Container(
+                  width: 52,
+                  height: 52,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AiCopilotScreen()),
+                    ),
+                    backgroundColor: const Color(0x00FFFFFF),
+                    elevation: 0,
+                    shape: const CircleBorder(),
+                    heroTag: 'ai_copilot_fab',
+                    child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 24),
+                  ),
+                )
+              : null,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -123,7 +195,7 @@ class MainShellState extends State<MainShell> {
                   _NavItem(
                     icon: Icons.groups_outlined,
                     activeIcon: Icons.groups,
-                    label: 'Meetups',
+                    label: 'Mingle',
                     isActive: _currentIndex == 2,
                     onTap: () => setState(() => _currentIndex = 2),
                   ),
@@ -135,11 +207,18 @@ class MainShellState extends State<MainShell> {
                     onTap: () => setState(() => _currentIndex = 3),
                   ),
                   _NavItem(
+                    icon: Icons.flight_outlined,
+                    activeIcon: Icons.flight,
+                    label: 'Trips',
+                    isActive: _currentIndex == 4,
+                    onTap: () => setState(() => _currentIndex = 4),
+                  ),
+                  _NavItem(
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Profile',
-                    isActive: _currentIndex == 4,
-                    onTap: () => setState(() => _currentIndex = 4),
+                    isActive: _currentIndex == 5,
+                    onTap: () => setState(() => _currentIndex = 5),
                   ),
                 ],
               ),
@@ -172,23 +251,24 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 60,
+        width: 52,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               isActive ? activeIcon : icon,
-              size: 24,
+              size: 22,
               color: isActive ? HuddlColors.primary : HuddlColors.textHint,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               style: GoogleFonts.poppins(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
                 color: isActive ? HuddlColors.primary : HuddlColors.textHint,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

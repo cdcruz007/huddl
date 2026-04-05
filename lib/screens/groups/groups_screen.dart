@@ -18,6 +18,7 @@ import '../../services/message_search_service.dart';
 import '../../models/saved_message.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/subscription_service.dart';
+import '../../services/ai_chat_summariser_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
@@ -152,6 +153,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
+  final AiChatSummariserService _summariser = AiChatSummariserService();
 
   List<_GroupItem> _allGroups = [];
   List<_GroupItem> _filteredGroups = [];
@@ -933,6 +935,175 @@ class _MessagesTabState extends State<_MessagesTab> {
   }
 
   /// Build the normal conversation list (no search active).
+  Widget _buildAiCatchUpCard() {
+    // Generate demo summaries on first call
+    final demos = _summariser.generateDemoSummaries();
+    final activeSummaries = demos.values.where((s) => !s.isDismissed && s.unreadCount > 10).toList();
+    if (activeSummaries.isEmpty) return const SizedBox();
+    final summary = activeSummaries.first;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFEDE7F6), Color(0xFFF3E5F5)],
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF9D4EDD).withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome, size: 16, color: HuddlColors.white),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'AI Catch-Up \u00B7 ${summary.unreadCount} unread in ${summary.groupName}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w600,
+                    color: const Color(0xFF4A148C),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _summariser.dismissSummary(summary.groupId);
+                  setState(() {});
+                },
+                child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            summary.overviewText,
+            style: GoogleFonts.poppins(
+              fontSize: 12, color: HuddlColors.textDark, height: 1.4,
+            ),
+            maxLines: 3, overflow: TextOverflow.ellipsis,
+          ),
+          if (summary.keyPoints.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            ...summary.keyPoints.take(2).map((point) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    point.category == 'plan' ? '\u{1F4C5} ' :
+                    point.category == 'recommendation' ? '\u{2B50} ' :
+                    point.category == 'question' ? '\u2753 ' : '\u{1F4AC} ',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  Expanded(
+                    child: Text(
+                      point.text,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11, color: HuddlColors.textSecondary, height: 1.3,
+                      ),
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+          if (summary.upcomingPlanNote != null) ...[
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: HuddlColors.white.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.event, size: 14, color: HuddlColors.primary),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      summary.upcomingPlanNote!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11, color: HuddlColors.primary, fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (summary.mentionedTopics.isNotEmpty) ...[
+                ...summary.mentionedTopics.take(3).map((topic) => Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF9D4EDD).withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    topic,
+                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF6C63FF)),
+                  ),
+                )),
+              ],
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, '/group_chat', arguments: {
+                    'groupId': summary.groupId,
+                    'groupName': summary.groupName,
+                    'groupImageUrl': '',
+                    'isDefaultGroup': true,
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.chat_bubble_outline, size: 12, color: HuddlColors.white),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Jump to Chat',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11, fontWeight: FontWeight.w600,
+                          color: HuddlColors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildConversationList(List<_MessageListItem> unified) {
     if (unified.isEmpty && _pendingInvitations.isEmpty) {
       return _EmptyMessagesState(onSearch: () {
@@ -946,6 +1117,8 @@ class _MessagesTabState extends State<_MessagesTab> {
       child: ListView(
         padding: const EdgeInsets.only(top: 4, bottom: 100),
         children: [
+          // ── AI Chat Catch-Up Card ─────────────────────────
+          _buildAiCatchUpCard(),
           // ── Pending invitation cards ──────────────────────
           if (_pendingInvitations.isNotEmpty) ...[
             Padding(
