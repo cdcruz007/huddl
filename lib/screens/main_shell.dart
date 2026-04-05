@@ -7,6 +7,7 @@ import 'events/events_screen.dart';
 import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'trips/trips_screen.dart';
+import 'deals/deals_screen.dart';
 import 'profile/profile_screen.dart';
 import 'ai/ai_copilot_screen.dart';
 import '../services/tutorial_service.dart';
@@ -32,6 +33,7 @@ class MainShellState extends State<MainShell> {
     EventsScreen(),
     MarketplaceScreen(),
     TripsScreen(),
+    DealsScreen(),
     ProfileScreen(),
   ];
 
@@ -70,7 +72,7 @@ class MainShellState extends State<MainShell> {
     );
   }
 
-  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Trips, 5=Profile)
+  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Trips, 5=Deals, 6=Profile)
   void switchTab(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
@@ -93,7 +95,7 @@ class MainShellState extends State<MainShell> {
         children: _screens,
       ),
       // ── FAB — Mingle = create, others = AI Copilot ──────────────────
-      floatingActionButton: _currentIndex == 2
+      floatingActionButton: _currentIndex == 2 // Mingle tab
           ? Container(
               width: 60,
               height: 60,
@@ -117,7 +119,7 @@ class MainShellState extends State<MainShell> {
                 child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
               ),
             )
-          : _currentIndex != 5 // Hide on Profile
+          : (_currentIndex != 5 && _currentIndex != 6) // Hide on Deals & Profile
               ? Container(
                   width: 52,
                   height: 52,
@@ -154,7 +156,7 @@ class MainShellState extends State<MainShell> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Container(
-            height: 68,
+            height: 70,
             decoration: BoxDecoration(
               color: HuddlColors.white,
               borderRadius: BorderRadius.circular(28),
@@ -214,11 +216,18 @@ class MainShellState extends State<MainShell> {
                     onTap: () => setState(() => _currentIndex = 4),
                   ),
                   _NavItem(
+                    icon: Icons.local_offer_outlined,
+                    activeIcon: Icons.local_offer,
+                    label: 'Deals',
+                    isActive: _currentIndex == 5,
+                    onTap: () => setState(() => _currentIndex = 5),
+                  ),
+                  _NavItem(
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Profile',
-                    isActive: _currentIndex == 5,
-                    onTap: () => setState(() => _currentIndex = 5),
+                    isActive: _currentIndex == 6,
+                    onTap: () => setState(() => _currentIndex = 6),
                   ),
                 ],
               ),
@@ -251,7 +260,7 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 52,
+        width: 46,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

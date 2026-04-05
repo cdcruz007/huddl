@@ -127,6 +127,8 @@ class _TutorialOverlayState extends State<TutorialOverlay>
         return Icons.storefront;
       case 'flight':
         return Icons.flight;
+      case 'local_offer':
+        return Icons.local_offer;
       case 'person':
         return Icons.person;
       default:

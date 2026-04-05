@@ -99,9 +99,22 @@ class TutorialService {
       ctaLabel: 'Tap Explore to browse destinations',
       iconName: 'flight',
     ),
-    // 5 — Profile
+    // 5 — Deals
     TutorialStep(
       tabIndex: 5,
+      title: 'Deals',
+      headline: 'Save money on top UK brands',
+      body:
+          'Browse exclusive coupons, voucher codes and daily deals from '
+          'hundreds of UK stores. Find family-friendly offers on baby '
+          'gear, clothing, toys and more. Every purchase through Huddl '
+          'earns cashback rewards!',
+      ctaLabel: 'Tap a store to see offers',
+      iconName: 'local_offer',
+    ),
+    // 6 — Profile
+    TutorialStep(
+      tabIndex: 6,
       title: 'Profile',
       headline: 'Your account & settings',
       body:
