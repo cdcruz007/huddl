@@ -94,7 +94,8 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      // ── FAB — Mingle = create, others = AI Copilot ──────────────────
+      // ── FAB — Mingle = create meetup, Chat = none (has own FABs),
+      //         Deals & Profile = none, others = AI Copilot ──────────
       floatingActionButton: _currentIndex == 2 // Mingle tab
           ? Container(
               width: 60,
@@ -119,7 +120,9 @@ class MainShellState extends State<MainShell> {
                 child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
               ),
             )
-          : (_currentIndex != 5 && _currentIndex != 6) // Hide on Deals & Profile
+          // Chat tab: no global FAB — Chat screen manages its own + button
+          // and AI Copilot is accessible from the Chat header icon
+          : (_currentIndex != 1 && _currentIndex != 5 && _currentIndex != 6)
               ? Container(
                   width: 52,
                   height: 52,

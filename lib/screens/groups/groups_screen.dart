@@ -20,6 +20,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/subscription_service.dart';
 import '../../services/ai_chat_summariser_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../ai/ai_copilot_screen.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
@@ -84,13 +85,45 @@ class _GroupsScreenState extends State<GroupsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Chat',
-                    style: GoogleFonts.poppins(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Chat',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                      ),
+                      // ── AI Copilot header button ─────────────────────
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AiCopilotScreen(),
+                          ),
+                        ),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF6C63FF), Color(0xFF9D4EDD)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: HuddlColors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   // ── Tab bar ───────────────────────────────────────
