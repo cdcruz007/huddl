@@ -9,7 +9,6 @@ import 'marketplace/marketplace_screen.dart';
 import 'trips/trips_screen.dart';
 import 'deals/deals_screen.dart';
 import 'profile/profile_screen.dart';
-import 'ai/ai_copilot_screen.dart';
 import '../services/tutorial_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 
@@ -94,9 +93,8 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      // ── FAB — Mingle = create meetup, Chat/Preloved/Deals/Profile = none
-      //         (Chat has header AI icon, Preloved has header AI + own FAB,
-      //          Deals & Profile have no FAB), others = AI Copilot ──────────
+      // ── FAB — Mingle only (create meetup button)
+      // All screens now have AI copilot in their header (top-right icon)
       floatingActionButton: _currentIndex == 2 // Mingle tab
           ? Container(
               width: 60,
@@ -121,37 +119,7 @@ class MainShellState extends State<MainShell> {
                 child: const Icon(Icons.add, color: HuddlColors.white, size: 30),
               ),
             )
-          // Chat (1), Preloved (3), Deals (5), Profile (6): no global FAB
-          // Chat & Preloved access AI Copilot from their header icons
-          : (_currentIndex != 1 && _currentIndex != 3 && _currentIndex != 5 && _currentIndex != 6)
-              ? Container(
-                  width: 52,
-                  height: 52,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    gradient: HuddlColors.aiGradient,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: HuddlColors.aiBlue.withValues(alpha: 0.35),
-                        blurRadius: 14,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: FloatingActionButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AiCopilotScreen()),
-                    ),
-                    backgroundColor: const Color(0x00FFFFFF),
-                    elevation: 0,
-                    shape: const CircleBorder(),
-                    heroTag: 'ai_copilot_fab',
-                    child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 24),
-                  ),
-                )
-              : null,
+          : null,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

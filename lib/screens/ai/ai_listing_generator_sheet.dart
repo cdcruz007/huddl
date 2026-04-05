@@ -192,10 +192,10 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           child: Container(
             height: 200,
             decoration: BoxDecoration(
-              color: HuddlColors.peachVeryLight,
+              color: HuddlColors.blueBackground,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: HuddlColors.primary.withValues(alpha: 0.3),
+                color: HuddlColors.aiBlue.withValues(alpha: 0.3),
                 width: 2,
                 strokeAlign: BorderSide.strokeAlignOutside,
               ),
@@ -205,13 +205,13 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(color: HuddlColors.primary),
+                        const CircularProgressIndicator(color: HuddlColors.aiBlue),
                         const SizedBox(height: 16),
                         Text(
                           'AI is analysing your item...',
                           style: GoogleFonts.poppins(
                             fontSize: 14, fontWeight: FontWeight.w500,
-                            color: HuddlColors.primary,
+                            color: HuddlColors.aiBlue,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -231,10 +231,10 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: HuddlColors.primary.withValues(alpha: 0.15),
+                            color: HuddlColors.aiBlue.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.add_a_photo, size: 36, color: HuddlColors.primary),
+                          child: const Icon(Icons.add_a_photo, size: 36, color: HuddlColors.aiBlue),
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -281,7 +281,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             ),
             suffixIcon: IconButton(
               onPressed: _simulatePhotoAnalysis,
-              icon: const Icon(Icons.auto_awesome, color: HuddlColors.primary),
+              icon: const Icon(Icons.auto_awesome, color: HuddlColors.aiBlue),
             ),
           ),
         ),
@@ -327,7 +327,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: HuddlColors.primary),
+            Icon(icon, size: 16, color: HuddlColors.aiBlue),
             const SizedBox(width: 6),
             Text(label, style: GoogleFonts.poppins(
               fontSize: 12, color: HuddlColors.textDark,
@@ -608,7 +608,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           maxLines: maxLines,
           style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
           decoration: InputDecoration(
-            prefixIcon: Icon(icon, size: 18, color: HuddlColors.primary),
+            prefixIcon: Icon(icon, size: 18, color: HuddlColors.aiBlue),
             filled: true,
             fillColor: HuddlColors.background,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -631,7 +631,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 18, color: HuddlColors.primary),
+          Icon(icon, size: 18, color: HuddlColors.aiBlue),
           const SizedBox(height: 4),
           Text(value, style: GoogleFonts.poppins(
             fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.textDark,

@@ -311,7 +311,7 @@ class _SubscriptionCheckoutScreenState
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color:
-                                                    const Color(0xFF6D28D9))),
+                                                    const Color(0xFF3580F0))),
                                         const SizedBox(width: 6),
                                         const Icon(
                                             Icons.local_fire_department,
@@ -509,7 +509,7 @@ class _SubscriptionCheckoutScreenState
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: _useFoundingRate
-                                      ? const Color(0xFF6D28D9)
+                                      ? const Color(0xFF3580F0)
                                       : HuddlColors.textDark),
                             ),
                           ],
@@ -1025,7 +1025,7 @@ class _SuccessDialog extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF6D28D9))),
+                            color: const Color(0xFF3580F0))),
                   ],
                 ),
               ),

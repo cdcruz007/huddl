@@ -79,7 +79,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
           Container(
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: HuddlColors.aiBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
               Icon(Icons.auto_awesome, size: 14, color: HuddlColors.aiBlue),
               const SizedBox(width: 4),

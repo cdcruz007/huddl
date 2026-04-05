@@ -101,7 +101,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
               // Content
               Expanded(
                 child: _isLoading
-                    ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
+                    ? const Center(child: CircularProgressIndicator(color: HuddlColors.aiBlue))
                     : ListView(
                         controller: scrollController,
                         padding: const EdgeInsets.all(16),
@@ -352,13 +352,13 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 14, color: HuddlColors.primary),
+                    const Icon(Icons.auto_awesome, size: 14, color: HuddlColors.aiBlue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         suggestion.reasoning,
                         style: GoogleFonts.poppins(
-                          fontSize: 11, color: HuddlColors.primary,
+                          fontSize: 11, color: HuddlColors.aiBlue,
                           fontStyle: FontStyle.italic,
                         ),
                       ),

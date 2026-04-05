@@ -13,6 +13,7 @@ import '../../services/postcode_service.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
 import '../ai/ai_matchmaker_sheet.dart';
+import '../ai/ai_copilot_screen.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 
@@ -259,6 +260,27 @@ class _EventsScreenState extends State<EventsScreen>
                       ),
                       Row(
                         children: [
+                          GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AiCopilotScreen(),
+                              ),
+                            ),
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                gradient: HuddlColors.aiGradient,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.auto_awesome,
+                                color: HuddlColors.white,
+                                size: 18,
+                              ),
+                            ),
+                          ),
                           IconButton(
                             icon: Icon(
                               _isSearching ? Icons.close : Icons.search,

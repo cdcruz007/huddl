@@ -904,7 +904,7 @@ class _CurrentPlanCard extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF6D28D9))),
+                                        color: const Color(0xFF3580F0))),
                               ],
                             ),
                           ),

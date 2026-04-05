@@ -7,6 +7,7 @@ import '../../services/revglue_service.dart';
 import '../../services/subscription_service.dart';
 import '../../services/ai_deals_service.dart';
 import '../../models/subscription.dart';
+import '../ai/ai_copilot_screen.dart';
 
 class DealsScreen extends StatefulWidget {
   const DealsScreen({super.key});
@@ -401,6 +402,29 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
               ],
             ),
           ),
+          GestureDetector(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AiCopilotScreen(),
+              ),
+            ),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                gradient: HuddlColors.aiGradient,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: HuddlColors.white,
+                size: 18,
+              ),
+            ),
+          ),
+          if (_isExplorer)
+            const SizedBox(width: 8),
           if (_isExplorer)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -552,7 +576,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)]),
+                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
@@ -1014,7 +1038,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                                   ),
                                   const SizedBox(width: 10),
                                   Text('AI is analysing these deals for you...',
-                                      style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6D28D9))),
+                                      style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF3580F0))),
                                 ],
                               ),
                             );
@@ -1301,7 +1325,7 @@ class _CouponCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)]),
+                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1399,7 +1423,7 @@ class _CouponCard extends StatelessWidget {
                         children: [
                           Text(
                             insight!.savvyTip,
-                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6D28D9)),
+                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF3580F0)),
                           ),
                           const SizedBox(height: 4),
                           Container(
@@ -1457,7 +1481,7 @@ class _AiSpotlightCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF6D28D9), Color(0xFF3580F0), Color(0xFFA78BFA)],
+          colors: [Color(0xFF3580F0), Color(0xFF3580F0), Color(0xFF5B9DFF)],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
@@ -1574,7 +1598,7 @@ class _AiPickCard extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 gradient: rank <= 3
-                    ? const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFFA78BFA)])
+                    ? const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)])
                     : null,
                 color: rank > 3 ? HuddlColors.gray100 : null,
                 shape: BoxShape.circle,
@@ -1645,7 +1669,7 @@ class _AiPickCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF6D28D9),
+                            color: const Color(0xFF3580F0),
                           ),
                         ),
                       ),
@@ -1779,7 +1803,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF6D28D9),
+              color: const Color(0xFF3580F0),
             ),
           ),
           const SizedBox(height: 8),

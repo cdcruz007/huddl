@@ -13,6 +13,7 @@ import '../../services/community_feed_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/meetup_service.dart';
 import '../../services/invitation_service.dart';
+import '../ai/ai_copilot_screen.dart';
 import '../../services/dm_service.dart';
 import '../../services/browser_storage.dart';
 import '../main_shell.dart';
@@ -577,6 +578,28 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const Spacer(),
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AiCopilotScreen(),
+                          ),
+                        ),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            gradient: HuddlColors.aiGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: HuddlColors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       HuddlBadge(
                         count: _feedService.newItemsSinceLastLogin
                             .clamp(0, 9),

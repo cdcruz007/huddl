@@ -5,6 +5,7 @@ import '../../theme/huddl_colors.dart';
 import '../../services/travel_service.dart';
 import 'destination_detail_screen.dart';
 import 'travel_concierge_screen.dart';
+import '../ai/ai_copilot_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HUDDL TRIPS — Main Screen
@@ -126,6 +127,27 @@ class _TripsScreenState extends State<TripsScreen> {
                   ],
                 ),
               ),
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AiCopilotScreen(),
+                  ),
+                ),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: HuddlColors.aiGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: HuddlColors.white,
+                    size: 18,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -169,12 +191,12 @@ class _TripsScreenState extends State<TripsScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0), Color(0xFFFFFFFF)],
+            colors: [Color(0xFFEDF4FF), Color(0xFFF5F9FF), Color(0xFFFFFFFF)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
+          border: Border.all(color: HuddlColors.aiBlue.withValues(alpha: 0.2)),
         ),
         child: Row(
           children: [
@@ -201,8 +223,8 @@ class _TripsScreenState extends State<TripsScreen> {
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-              child: const Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.primary),
+              decoration: BoxDecoration(color: HuddlColors.aiBlue.withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.aiBlue),
             ),
           ],
         ),
