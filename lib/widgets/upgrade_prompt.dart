@@ -103,7 +103,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   benefits: const [
                     'Unlimited groups, DMs & meetups',
                     'Private groups & meetups',
-                    'Ad-free + expert Q&A',
+                    'Ad-free + full AI suite',
                   ],
                   onTap: () {
                     Navigator.pop(context, false);
@@ -124,8 +124,8 @@ class _UpgradePromptSheet extends StatelessWidget {
                 icon: Icons.workspace_premium,
                 benefits: const [
                   'Everything in Neighbourhood',
-                  'Analytics, promoted listings',
-                  'Priority support & early access',
+                  'Unlimited AI + Matchmaker',
+                  'Unlimited listings, trips & photos',
                 ],
                 onTap: () {
                   Navigator.pop(context, false);

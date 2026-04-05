@@ -24,8 +24,8 @@
 // 3. INNER CIRCLE (GBP 11.99/mo | GBP 99.99/yr) -- "Power-user tier"
 //    For community leaders and super-engaged parents. Everything in
 //    Neighbourhood plus unlimited AI usage, AI Matchmaker, full analytics,
-//    promoted marketplace listings, priority support, early access, and
-//    exclusive Inner Circle features. Targets the top ~5% of active users
+//    exclusive Inner Circle features like AI Matchmaker and unlimited
+//    usage across all AI tools. Targets the top ~5% of active users
 //    who derive outsized value and are willing to pay 2x for premium perks.
 //
 // COMPETITIVE CONTEXT (UK parenting/community apps, 2025):
@@ -66,13 +66,8 @@ class TierLimits {
   // ---- Core Social Booleans ----
   final bool canCreatePrivateGroups;
   final bool canCreateMeetups;
-  final bool prioritySupport;
   final bool adFree;
   final bool customProfileBadge;
-  final bool analyticsAccess;
-  final bool promotedListings;
-  final bool earlyAccess;
-  final bool expertQandA;
   final bool milestoneTracker;
 
   // ---- AI Feature Limits ----
@@ -110,13 +105,8 @@ class TierLimits {
     required this.maxMessagesPerMonth,
     required this.canCreatePrivateGroups,
     required this.canCreateMeetups,
-    required this.prioritySupport,
     required this.adFree,
     required this.customProfileBadge,
-    required this.analyticsAccess,
-    required this.promotedListings,
-    required this.earlyAccess,
-    required this.expertQandA,
     required this.milestoneTracker,
     // AI limits
     required this.maxAiCopilotChatsPerDay,
@@ -158,13 +148,8 @@ class TierLimits {
     maxMessagesPerMonth: 30,
     canCreatePrivateGroups: false,
     canCreateMeetups: false,
-    prioritySupport: false,
     adFree: false,
     customProfileBadge: false,
-    analyticsAccess: false,
-    promotedListings: false,
-    earlyAccess: false,
-    expertQandA: false,
     milestoneTracker: false,
     // AI limits
     maxAiCopilotChatsPerDay: 3,
@@ -204,13 +189,8 @@ class TierLimits {
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: true,
     canCreateMeetups: true,
-    prioritySupport: false,
     adFree: true,
     customProfileBadge: true,
-    analyticsAccess: false,
-    promotedListings: false,
-    earlyAccess: false,
-    expertQandA: true,
     milestoneTracker: true,
     // AI limits
     maxAiCopilotChatsPerDay: 25,
@@ -236,8 +216,8 @@ class TierLimits {
   );
 
   // ---- INNER CIRCLE (GBP 11.99/mo) -----------------------------------------------
-  // Everything in Neighbourhood + unlimited AI, AI Matchmaker, analytics,
-  // promoted listings, priority support, unlimited photos, early access.
+  // Everything in Neighbourhood + unlimited AI, AI Matchmaker,
+  // unlimited photos, and exclusive Inner Circle badge.
   static const TierLimits innerCircle = TierLimits(
     // Core social
     maxGroups: 999,
@@ -249,13 +229,8 @@ class TierLimits {
     maxMessagesPerMonth: 999,
     canCreatePrivateGroups: true,
     canCreateMeetups: true,
-    prioritySupport: true,
     adFree: true,
     customProfileBadge: true,
-    analyticsAccess: true,
-    promotedListings: true,
-    earlyAccess: true,
-    expertQandA: true,
     milestoneTracker: true,
     // AI limits -- effectively unlimited
     maxAiCopilotChatsPerDay: 999,
@@ -386,13 +361,12 @@ class SubscriptionPlan {
         'Daily AI event discovery',
         'Unlimited smart feed',
         'Save up to 10 trips + packing lists',
-        'Weekly expert Q&A access',
         'Child milestone tracker',
       ],
       shortBenefits: [
         'Unlimited groups, DMs & meetups',
         'Full AI suite (Copilot, Travel, Listings)',
-        'Ad-free + expert Q&A + milestones',
+        'Ad-free + milestone tracker',
       ],
     ),
 
@@ -409,23 +383,19 @@ class SubscriptionPlan {
         'Everything in Neighbourhood',
         'Unlimited group creation',
         'Unlimited marketplace listings',
-        'Promoted listings (2\u00D7 visibility)',
         'Unlimited AI Copilot',
         'AI Meetup Matchmaker',
         'Unlimited AI Chat Summaries',
         'Unlimited AI Travel Concierge',
         'Unlimited AI Listing Generator',
         'Unlimited saved trips',
-        'Community analytics dashboard',
-        'Priority support (< 2h response)',
         'Up to 50 photo uploads',
-        'Early access to new features',
         'Inner Circle badge',
       ],
       shortBenefits: [
         'Everything in Neighbourhood',
         'Unlimited AI + Matchmaker',
-        'Analytics, priority support & early access',
+        'Unlimited listings, trips & 50 photos',
       ],
     ),
   ];

@@ -163,10 +163,6 @@ class SubscriptionService extends ChangeNotifier {
   bool get canCreateEvent => canCreateMeetupFeature; // backward-compat
   bool get isAdFree => limits.adFree;
   bool get hasBadge => limits.customProfileBadge;
-  bool get hasPrioritySupport => limits.prioritySupport;
-  bool get hasAnalytics => limits.analyticsAccess;
-  bool get hasPromotedListings => limits.promotedListings;
-  bool get hasExpertQandA => limits.expertQandA;
   bool get hasMilestoneTracker => limits.milestoneTracker;
 
   // ===========================================================================
@@ -434,7 +430,6 @@ class SubscriptionService extends ChangeNotifier {
       case 'events':
       case 'ad_free':
       case 'profile_badge':
-      case 'expert_qa':
       case 'milestones':
         return SubscriptionTier.neighbourhood;
 
@@ -449,10 +444,6 @@ class SubscriptionService extends ChangeNotifier {
 
       // AI -- Inner Circle (exclusive)
       case 'ai_matchmaker':
-      case 'priority_support':
-      case 'analytics':
-      case 'promoted_listings':
-      case 'early_access':
       case 'unlimited_ai':
         return SubscriptionTier.innerCircle;
 

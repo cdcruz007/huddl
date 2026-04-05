@@ -949,7 +949,6 @@ class _FeatureComparisonTable extends StatelessWidget {
               _rowBool('Create meetups', false, true, true),
               _rowBool('Ad-free', false, true, true),
               _rowBool('Profile badge', false, true, true),
-              _rowBool('Expert Q&A', false, true, true),
               _rowBool('Milestone tracker', false, true, true),
 
               // ---- AI Features section ----
@@ -969,12 +968,7 @@ class _FeatureComparisonTable extends StatelessWidget {
               _row('Saved trips', '1', '10', '\u221E'),
               _rowBool('AI packing lists', false, true, true),
 
-              // ---- Premium section ----
-              _sectionHeader('Premium'),
-              _rowBool('Priority support', false, false, true),
-              _rowBool('Analytics dashboard', false, false, true),
-              _rowBool('Promoted listings', false, false, true),
-              _rowBool('Early access', false, false, true),
+
             ],
           ),
         ),
