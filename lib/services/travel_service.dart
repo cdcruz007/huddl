@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'onboarding_data_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // HUDDL TRIPS — TRAVEL SERVICE
@@ -222,99 +225,183 @@ class TravelService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── AI Concierge — simulated community-powered responses ──────────────
+  // ── AI Concierge — real Gemini-powered travel assistant ─────────────
+
+  // Gemini API configuration
+  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
+  static const String _geminiModel = 'gemini-2.0-flash';
+  static const String _geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models';
+
+  final List<Map<String, dynamic>> _chatHistory = [];
 
   Future<TravelConversation> askConcierge(String question) async {
     // Add user message
     _conversations.add(TravelConversation(role: 'user', message: question));
+    _chatHistory.add({
+      'role': 'user',
+      'parts': [{'text': question}],
+    });
+    notifyListeners();
 
-    // Simulate AI processing delay
-    await Future.delayed(const Duration(milliseconds: 800));
+    try {
+      final response = await _callGeminiTravel(question);
+      final actionType = _detectActionType(question);
+      final suggestions = _detectDestinationSuggestions(question, response);
 
-    final q = question.toLowerCase();
-    String response;
-    List<String>? suggestions;
-    String? actionType;
+      final aiResponse = TravelConversation(
+        role: 'assistant',
+        message: response,
+        destinationSuggestions: suggestions,
+        actionType: actionType,
+      );
+      _conversations.add(aiResponse);
+      _chatHistory.add({
+        'role': 'model',
+        'parts': [{'text': response}],
+      });
+      notifyListeners();
+      return aiResponse;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Travel concierge Gemini error: $e');
+      }
+      // Fallback response
+      final fallback = TravelConversation(
+        role: 'assistant',
+        message: 'I\'m having a moment \u2014 let me try again! In the meantime, '
+            'I can help with:\n\n'
+            '\u2022 **Destination advice** \u2014 ask about any place\n'
+            '\u2022 **Packing lists** \u2014 tap "Pack My Bag" on any destination\n'
+            '\u2022 **Safety info** \u2014 vaccines, insurance, visa requirements\n'
+            '\u2022 **Best places for your kids\' ages**\n\n'
+            'Please try asking again!',
+      );
+      _conversations.add(fallback);
+      _chatHistory.add({
+        'role': 'model',
+        'parts': [{'text': fallback.message}],
+      });
+      notifyListeners();
+      return fallback;
+    }
+  }
 
-    if (q.contains('tenerife') || q.contains('canary') || q.contains('canaries')) {
-      response = 'Based on 8 huddl parents who visited Tenerife with under-3s, 7 out of 8 recommended it! Here are their top insights:\n\n'
-          'Top tips from the community:\n'
-          '- Book Siam Park\'s baby area in advance — it gets packed\n'
-          '- South coast beaches (Los Cristianos, Las Americas) have calmer waves for toddlers\n'
-          '- Lidl and Mercadona stock Ella\'s Kitchen pouches and Aptamil\n'
-          '- The cable car to Mount Teide is NOT suitable for under-3s\n'
-          '- Many restaurants offer free highchairs — just ask\n\n'
-          'Sarah from Cambridge visited last March with her 14-month-old and shared photos. Would you like to connect with her?';
-      suggestions = ['tenerife'];
-      actionType = 'destination';
-    } else if (q.contains('pack') || q.contains('bring') || q.contains('bag') || q.contains('luggage')) {
-      response = 'I\'ll generate a personalised packing list! Based on your family profile, here\'s what I recommend:\n\n'
-          'I\'ve created a smart packing list factoring in:\n'
-          '- Your children\'s ages\n'
-          '- The destination weather forecast\n'
-          '- Airline hand luggage restrictions\n'
-          '- Items available locally vs. must-bring\n\n'
-          'Tap "Pack My Bag" on any destination to see the full list. I also noticed 3 parents in your borough are lending travel cots on the Preloved marketplace!';
-      actionType = 'packing';
-    } else if (q.contains('safe') || q.contains('health') || q.contains('vaccine') || q.contains('insurance')) {
-      response = 'Great question about travel safety! Here\'s what I\'ve found:\n\n'
-          'For EU destinations (no visa for UK passport holders for short stays):\n'
-          '- EHIC/GHIC card covers emergency healthcare\n'
-          '- Travel insurance with "under-2 cover" is recommended\n'
-          '- Check NHS Fit for Travel for destination-specific vaccines\n\n'
-          'Based on community feedback, 92% of huddl parents recommend getting travel insurance with medical evacuation cover when travelling with under-5s.\n\n'
-          'Would you like me to check safety alerts for a specific destination?';
-      actionType = 'safety';
-    } else if (q.contains('spain') || q.contains('malaga') || q.contains('costa')) {
-      response = 'Mainland Spain is a favourite among huddl parents! 12 families from our community visited Costa del Sol last year.\n\n'
-          'Key insights from the community:\n'
-          '- Malaga airport has excellent baby facilities (changing rooms, nursing areas)\n'
-          '- Fuengirola has the best family beaches — shallow water, playground on the promenade\n'
-          '- Bioparc Fuengirola is THE top-rated family attraction (all ages)\n'
-          '- Supermarkets stock Hero Baby and Nestle brands — similar to UK options\n'
-          '- Restaurants serve dinner late (9pm+) but many do "family hour" at 7pm\n\n'
-          'Emma rated Costa del Sol 5 stars for her trip with a 2-year-old and 4-year-old. Want to see her full review?';
-      suggestions = ['malaga'];
-      actionType = 'destination';
-    } else if (q.contains('toddler') || q.contains('baby') || q.contains('under') || q.contains('infant')) {
-      response = 'Here are the top 5 destinations recommended by huddl parents travelling with babies and toddlers:\n\n'
-          '1. Tenerife (8 families, 87% recommend) — calm beaches, year-round sun\n'
-          '2. Mallorca (6 families, 100% recommend) — family resorts, short flight\n'
-          '3. Algarve, Portugal (5 families, 80% recommend) — gentle waves, great food\n'
-          '4. Costa del Sol, Spain (12 families, 92% recommend) — affordable, baby-friendly\n'
-          '5. Lake Garda, Italy (4 families, 100% recommend) — stunning scenery, toddler pools\n\n'
-          'All of these are under 3 hours from UK airports and rated highly for baby/toddler facilities. Which one interests you?';
-      suggestions = ['tenerife', 'mallorca', 'algarve', 'malaga', 'lakegarda'];
-    } else if (q.contains('rain') || q.contains('indoor') || q.contains('weather') || q.contains('meltdown')) {
-      response = 'Rainy day rescue mode activated! Here are community-tested indoor activities parents love:\n\n'
-          'For the UK (staycation):\n'
-          '- Soft play centres (most have under-2 areas)\n'
-          '- National Trust houses with indoor trails\n'
-          '- Swimming pools with baby splash areas\n\n'
-          'Abroad:\n'
-          '- Most large shopping centres have play areas\n'
-          '- Hotel kids clubs (many accept from 12 months)\n'
-          '- Indoor water parks at resort complexes\n\n'
-          'Pro tip from Jen: "Always pack one surprise toy and a pack of stickers. Saved us on 3 rainy days in Corfu!"';
-    } else {
-      response = 'I\'d love to help plan your family trip! Here are some things I can help with:\n\n'
-          '- Ask me about any destination and I\'ll find what huddl parents say\n'
-          '- "Best places for a toddler in February" — seasonal recommendations\n'
-          '- "What should I pack for Spain?" — personalised packing lists\n'
-          '- "Is it safe to travel to..." — health & safety alerts\n'
-          '- "What do parents say about Tenerife?" — community intelligence\n\n'
-          'I know your children\'s ages and can personalise all recommendations. Try asking me anything!';
+  Future<String> _callGeminiTravel(String query) async {
+    final onboarding = OnboardingDataService();
+    await onboarding.initialize();
+    final userName = onboarding.name ?? 'there';
+    final children = onboarding.children;
+
+    final childContext = StringBuffer();
+    for (int i = 0; i < children.length; i++) {
+      final child = children[i];
+      final name = child['name'] ?? 'Child ${i + 1}';
+      final birthday = child['birthday'];
+      if (birthday != null) {
+        childContext.writeln('- Child: $name, born $birthday');
+      }
     }
 
-    final aiResponse = TravelConversation(
-      role: 'assistant',
-      message: response,
-      destinationSuggestions: suggestions,
-      actionType: actionType,
-    );
-    _conversations.add(aiResponse);
-    notifyListeners();
-    return aiResponse;
+    // Build destination context from loaded data
+    final destNames = _destinations.map((d) => d.name).take(10).join(', ');
+
+    final systemPrompt = '''You are the huddl AI Travel Concierge \u2014 a friendly, expert family travel assistant built into the huddl app for UK parents.
+
+YOUR PERSONALITY:
+- Warm, enthusiastic, and practical \u2014 like a well-travelled friend who also has kids
+- British English (use "nappy" not "diaper", "pushchair" not "stroller")
+- Give specific, actionable advice with real tips
+- Use bullet points and **bold text** to structure key information
+- Keep responses 3-5 paragraphs \u2014 detailed but not overwhelming
+
+USER CONTEXT:
+- Name: $userName
+${childContext.isNotEmpty ? childContext.toString() : '- No children info available'}
+
+HUDDL TRIPS FEATURES (mention naturally):
+- "Pack My Bag" AI packing list generator on each destination page
+- Community reviews from real huddl parents
+- Parents Abroad \u2014 connect with huddl families at your destination
+- Preloved marketplace for lending/borrowing travel gear
+
+AVAILABLE DESTINATIONS IN APP: $destNames
+
+GUIDELINES:
+- Give real, practical travel advice for families with young children
+- Mention specific places, restaurants, and activities when relevant
+- Include flight times from UK airports when discussing destinations
+- Always mention safety considerations for families
+- Reference NHS Fit for Travel for health/vaccine advice
+- If unsure about specific facts, say so honestly
+- Suggest relevant huddl features naturally''';
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [{'text': systemPrompt}]
+      },
+      'contents': _chatHistory,
+      'generationConfig': {
+        'temperature': 0.8,
+        'topP': 0.95,
+        'topK': 40,
+        'maxOutputTokens': 1024,
+      },
+      'safetySettings': [
+        {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold': 'BLOCK_ONLY_HIGH'},
+        {'category': 'HARM_CATEGORY_HARASSMENT', 'threshold': 'BLOCK_ONLY_HIGH'},
+      ],
+    };
+
+    final url = Uri.parse(
+        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+
+    final httpResponse = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (httpResponse.statusCode == 200) {
+      final data = jsonDecode(httpResponse.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          return (parts[0]['text'] as String? ?? '').trim();
+        }
+      }
+      throw Exception('No content in Gemini response');
+    } else {
+      throw Exception('Gemini API error: ${httpResponse.statusCode}');
+    }
+  }
+
+  String? _detectActionType(String query) {
+    final q = query.toLowerCase();
+    if (q.contains('pack') || q.contains('bag') || q.contains('luggage')) return 'packing';
+    if (q.contains('safe') || q.contains('vaccine') || q.contains('insurance')) return 'safety';
+    // Check if query mentions a specific destination
+    for (final dest in _destinations) {
+      if (q.contains(dest.name.toLowerCase()) || q.contains(dest.country.toLowerCase())) {
+        return 'destination';
+      }
+    }
+    return null;
+  }
+
+  List<String>? _detectDestinationSuggestions(String query, String response) {
+    final suggestions = <String>[];
+    final combined = '$query $response'.toLowerCase();
+    for (final dest in _destinations) {
+      if (combined.contains(dest.name.toLowerCase())) {
+        suggestions.add(dest.id);
+      }
+    }
+    return suggestions.isNotEmpty ? suggestions.take(5).toList() : null;
   }
 
   void clearConversations() {
@@ -322,37 +409,162 @@ class TravelService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Packing list generation ────────────────────────────────────────────
+  // ── AI-Enhanced Packing list generation ─────────────────────────────────
 
-  List<PackingItem> generatePackingList(String destinationId, int durationDays, List<int> childAgesMonths) {
+  /// Generate a packing list using Gemini AI with local fallback
+  Future<List<PackingItem>> generatePackingList(String destinationId, int durationDays, List<int> childAgesMonths) async {
     final key = '$destinationId-$durationDays';
     if (_packingLists.containsKey(key)) return _packingLists[key]!;
 
-    final hasInfant = childAgesMonths.any((a) => a < 12);
-    final hasToddler = childAgesMonths.any((a) => a >= 12 && a < 36);
     final dest = _destinations.firstWhere((d) => d.id == destinationId,
         orElse: () => _destinations.first);
+
+    // Try AI-generated packing list
+    try {
+      final aiItems = await _callGeminiForPackingList(dest, durationDays, childAgesMonths);
+      if (aiItems.isNotEmpty) {
+        _packingLists[key] = aiItems;
+        notifyListeners();
+        return aiItems;
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('AI packing list error: $e');
+      }
+    }
+
+    // Fallback to local generation
+    final items = _generateLocalPackingList(dest, durationDays, childAgesMonths);
+    _packingLists[key] = items;
+    return items;
+  }
+
+  /// Call Gemini to generate a personalised packing list
+  Future<List<PackingItem>> _callGeminiForPackingList(
+    TravelDestination dest,
+    int durationDays,
+    List<int> childAgesMonths,
+  ) async {
+    final childDesc = childAgesMonths
+        .map((a) => a < 12 ? '$a-month-old' : '${(a / 12).floor()}-year-old')
+        .join(', ');
+
+    final systemPrompt = '''You are a family travel packing expert for a UK parents' app called huddl. Generate a personalised packing list.
+
+RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
+{
+  "items": [
+    {
+      "category": "Category Name",
+      "item": "Item name",
+      "quantity": 1,
+      "essential": true,
+      "note": "Helpful tip or null"
+    }
+  ]
+}
+
+RULES:
+- Generate 25-35 items across categories: Essentials, Medicine, Sun & Beach, Clothing, Travel Gear, Food & Feeding, Entertainment, Documents
+- Tailor to: destination climate, child ages, trip duration
+- Use British English (nappies, pushchair, Calpol, etc.)
+- Include specific tips from parent experience (e.g., "Lidl stocks Ella's Kitchen in Tenerife")
+- Calculate quantities based on trip duration and number of children
+- Flag essentials vs nice-to-haves
+- Include destination-specific items (e.g., beach gear for beach holidays)
+- Add community tips in notes (e.g., "3 parents on Marketplace lending travel cots")''';
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt}
+        ]
+      },
+      'contents': [
+        {
+          'role': 'user',
+          'parts': [
+            {
+              'text':
+                  'Generate a packing list for:\n- Destination: ${dest.name}, ${dest.country} (${dest.region})\n- Duration: $durationDays days\n- Children: $childDesc\n- Climate: ${dest.avgTemp}, ${dest.tags.join(", ")}\n- Flight time: ${dest.flightTime}\n- Highlights: ${dest.highlights.join(", ")}'
+            }
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.7,
+        'topP': 0.9,
+        'maxOutputTokens': 2048,
+      },
+    };
+
+    final url = Uri.parse(
+        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+
+    final httpResponse = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (httpResponse.statusCode == 200) {
+      final data = jsonDecode(httpResponse.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          var text = (parts[0]['text'] as String? ?? '').trim();
+          text = text.replaceAll(RegExp(r'^```json\s*'), '');
+          text = text.replaceAll(RegExp(r'\s*```$'), '');
+          text = text.trim();
+
+          final json = jsonDecode(text) as Map<String, dynamic>;
+          final itemsJson = json['items'] as List<dynamic>? ?? [];
+          return itemsJson
+              .map((item) => PackingItem(
+                    category: (item['category'] ?? 'Other') as String,
+                    item: (item['item'] ?? 'Item') as String,
+                    quantity: (item['quantity'] as num?)?.toInt() ?? 1,
+                    essential: (item['essential'] ?? false) as bool,
+                    note: (item['note'] ?? '') as String,
+                  ))
+              .toList();
+        }
+      }
+    }
+
+    throw Exception('No AI packing list response');
+  }
+
+  /// Local fallback packing list generator
+  List<PackingItem> _generateLocalPackingList(
+    TravelDestination dest,
+    int durationDays,
+    List<int> childAgesMonths,
+  ) {
+    final hasInfant = childAgesMonths.any((a) => a < 12);
+    final hasToddler = childAgesMonths.any((a) => a >= 12 && a < 36);
     final isWarm = dest.tags.contains('beach') || dest.tags.contains('summer');
 
     final items = <PackingItem>[];
 
-    // Nappies & essentials
     if (hasInfant || hasToddler) {
       final nappiesPerDay = hasInfant ? 8 : 5;
-      items.add(PackingItem(category: 'Essentials', item: 'Nappies', quantity: nappiesPerDay * durationDays + 10, essential: true, note: 'Pack extras — may not find your brand locally'));
+      items.add(PackingItem(category: 'Essentials', item: 'Nappies', quantity: nappiesPerDay * durationDays + 10, essential: true, note: 'Pack extras \u2014 may not find your brand locally'));
       items.add(PackingItem(category: 'Essentials', item: 'Nappy bags', quantity: nappiesPerDay * durationDays, essential: true));
       items.add(PackingItem(category: 'Essentials', item: 'Baby wipes (packs)', quantity: (durationDays / 2).ceil(), essential: true));
       items.add(PackingItem(category: 'Essentials', item: 'Nappy cream', quantity: 1, essential: true));
     }
 
-    // Medicine
     items.add(PackingItem(category: 'Medicine', item: 'Calpol sachets (hand luggage)', quantity: 4, essential: true, note: 'Liquid <100ml for cabin'));
     items.add(PackingItem(category: 'Medicine', item: 'Ibuprofen (children\'s)', quantity: 1, essential: true));
     items.add(PackingItem(category: 'Medicine', item: 'Plasters & antiseptic', quantity: 1, essential: true));
     items.add(PackingItem(category: 'Medicine', item: 'Thermometer', quantity: 1, essential: true));
     items.add(PackingItem(category: 'Medicine', item: 'Antihistamine (if allergies)', quantity: 1, essential: false));
 
-    // Sun protection
     if (isWarm) {
       items.add(PackingItem(category: 'Sun & Beach', item: 'Sun cream SPF50+', quantity: 2, essential: true, note: 'UV index likely 8-10'));
       items.add(PackingItem(category: 'Sun & Beach', item: 'Sun hat (wide brim)', quantity: childAgesMonths.length, essential: true));
@@ -362,18 +574,15 @@ class TravelService extends ChangeNotifier {
       items.add(PackingItem(category: 'Sun & Beach', item: 'Beach toys (bucket/spade)', quantity: 1, essential: false, note: 'Can buy locally'));
     }
 
-    // Clothing
-    items.add(PackingItem(category: 'Clothing', item: 'Outfit changes per child', quantity: durationDays + 3, essential: true, note: 'Pack 3 extra — toddler mess!'));
+    items.add(PackingItem(category: 'Clothing', item: 'Outfit changes per child', quantity: durationDays + 3, essential: true, note: 'Pack 3 extra \u2014 toddler mess!'));
     items.add(PackingItem(category: 'Clothing', item: 'Pyjamas', quantity: 3, essential: true));
     items.add(PackingItem(category: 'Clothing', item: 'Socks & shoes', quantity: 3, essential: true));
     items.add(PackingItem(category: 'Clothing', item: 'Light jacket / cardigan', quantity: 2, essential: true));
 
-    // Travel gear
     items.add(PackingItem(category: 'Travel Gear', item: 'Travel stroller / buggy', quantity: 1, essential: true, note: '3 parents in your area lending on Marketplace'));
     items.add(PackingItem(category: 'Travel Gear', item: 'Car seat (if driving)', quantity: 1, essential: false, note: 'Can hire at airport'));
     items.add(PackingItem(category: 'Travel Gear', item: 'Travel cot / sleeping solution', quantity: 1, essential: hasInfant, note: 'Check with hotel first'));
 
-    // Food & feeding
     if (hasInfant) {
       items.add(PackingItem(category: 'Food & Feeding', item: 'Formula (full trip + 2 extra)', quantity: durationDays + 2, essential: true, note: 'Your brand may not be available'));
       items.add(PackingItem(category: 'Food & Feeding', item: 'Bottles / sippy cups', quantity: 3, essential: true));
@@ -382,19 +591,16 @@ class TravelService extends ChangeNotifier {
     items.add(PackingItem(category: 'Food & Feeding', item: 'Snack pouches / fruit bars', quantity: durationDays * 3, essential: true, note: 'Lifesaver on the plane'));
     items.add(PackingItem(category: 'Food & Feeding', item: 'Portable high chair / booster', quantity: 1, essential: false));
 
-    // Entertainment
     items.add(PackingItem(category: 'Entertainment', item: 'Sticker books / colouring', quantity: 3, essential: true, note: 'Flight entertainment'));
     items.add(PackingItem(category: 'Entertainment', item: 'Small toys (new = bonus)', quantity: 3, essential: false));
     items.add(PackingItem(category: 'Entertainment', item: 'Tablet with downloaded shows', quantity: 1, essential: false));
     items.add(PackingItem(category: 'Entertainment', item: 'Headphones (child-size)', quantity: 1, essential: false));
 
-    // Documents
     items.add(PackingItem(category: 'Documents', item: 'Passports (all family)', quantity: childAgesMonths.length + 2, essential: true));
     items.add(PackingItem(category: 'Documents', item: 'EHIC/GHIC cards', quantity: childAgesMonths.length + 2, essential: true));
     items.add(PackingItem(category: 'Documents', item: 'Travel insurance docs', quantity: 1, essential: true));
     items.add(PackingItem(category: 'Documents', item: 'Booking confirmations', quantity: 1, essential: true));
 
-    _packingLists[key] = items;
     return items;
   }
 

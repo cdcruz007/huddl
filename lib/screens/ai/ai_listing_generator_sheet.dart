@@ -44,15 +44,15 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
     super.dispose();
   }
 
-  void _simulatePhotoAnalysis() {
+  Future<void> _simulatePhotoAnalysis() async {
     final hint = _hintController.text.isNotEmpty
         ? _hintController.text
         : 'baby pushchair bugaboo';
 
     setState(() => _isAnalysing = true);
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      final draft = _aiService.analyseAndGenerate(
+    try {
+      final draft = await _aiService.analyseAndGenerate(
         photoDescription: hint,
         userHint: hint,
       );
@@ -71,7 +71,11 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           _priceController.text = draft.suggestedPrice.toStringAsFixed(0);
         });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalysing = false);
+      }
+    }
   }
 
   void _publishListing() {

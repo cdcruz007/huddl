@@ -46,6 +46,10 @@ import '../utils/page_transitions.dart';
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
+      // '/' is pushed automatically by Flutter's Navigator as a prefix of
+      // any initialRoute that begins with '/'. Map it to the splash screen
+      // so the app never shows "No route defined for /".
+      case '/':
       case '/splash':
         return FadePageRoute(page: const SplashScreen());
 

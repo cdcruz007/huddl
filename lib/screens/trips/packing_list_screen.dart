@@ -28,14 +28,26 @@ class _PackingListScreenState extends State<PackingListScreen> {
     _generateList();
   }
 
-  void _generateList() {
+  Future<void> _generateList() async {
     setState(() => _isGenerating = true);
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _items = _travelService.generatePackingList(
-        widget.destination.id, _tripDays, [14, 36], // Simulated child ages: 14 months, 3 years
+    try {
+      final result = await _travelService.generatePackingList(
+        widget.destination.id, _tripDays, [14, 36],
       );
-      if (mounted) setState(() => _isGenerating = false);
-    });
+      if (mounted) {
+        setState(() {
+          _items = result;
+          _isGenerating = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _items = [];
+          _isGenerating = false;
+        });
+      }
+    }
   }
 
   Map<String, List<PackingItem>> get _groupedItems {

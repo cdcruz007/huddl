@@ -5,10 +5,10 @@ import '../../services/ai_copilot_service.dart';
 import '../main_shell.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// AI PARENTING COPILOT — Full-screen chat interface
-// Cross-feature assistant accessible from any screen
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// AI PARENTING COPILOT -- Full-screen chat interface
+// Real conversational AI powered by Gemini
+// =============================================================================
 
 class AiCopilotScreen extends StatefulWidget {
   const AiCopilotScreen({super.key});
@@ -42,26 +42,35 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     super.dispose();
   }
 
-  void _sendMessage(String text) {
-    if (text.trim().isEmpty) return;
+  Future<void> _sendMessage(String text) async {
+    if (text.trim().isEmpty || _isTyping) return;
+    final query = text.trim();
     _inputController.clear();
+
+    // Show the user message immediately
     setState(() => _isTyping = true);
 
-    // Simulate typing delay
-    Future.delayed(const Duration(milliseconds: 800), () {
-      _copilot.sendMessage(text.trim());
+    // Add user message to the service and get AI response
+    try {
+      await _copilot.sendMessage(query);
       if (mounted) {
         setState(() => _isTyping = false);
         _scrollToBottom();
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isTyping = false);
+      }
+    }
 
-    setState(() {});
-    _scrollToBottom();
+    if (mounted) {
+      setState(() {});
+      _scrollToBottom();
+    }
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 150), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -81,7 +90,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: HuddlColors.textDark, size: 20),
+          icon: const Icon(Icons.arrow_back_ios,
+              color: HuddlColors.textDark, size: 20),
         ),
         title: Row(
           children: [
@@ -91,7 +101,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 gradient: HuddlColors.primaryGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
+              child: const Icon(Icons.auto_awesome,
+                  color: HuddlColors.white, size: 18),
             ),
             const SizedBox(width: 10),
             Column(
@@ -100,15 +111,30 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 Text(
                   'huddl AI',
                   style: GoogleFonts.poppins(
-                    fontSize: 16, fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                     color: HuddlColors.textDark,
                   ),
                 ),
-                Text(
-                  'Your parenting copilot',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11, color: HuddlColors.textSecondary,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: HuddlColors.successGreen,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Online',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: HuddlColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -121,8 +147,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 _copilot.clearConversation();
                 setState(() {});
               },
-              icon: const Icon(Icons.refresh, color: HuddlColors.textHint, size: 22),
-              tooltip: 'Clear conversation',
+              icon: const Icon(Icons.refresh,
+                  color: HuddlColors.textHint, size: 22),
+              tooltip: 'New conversation',
             ),
           const SizedBox(width: 4),
         ],
@@ -152,47 +179,67 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               gradient: HuddlColors.primaryGradient,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 40),
+            child: const Icon(Icons.auto_awesome,
+                color: HuddlColors.white, size: 40),
           ),
           const SizedBox(height: 16),
           Text(
             'Hi! I\'m your huddl AI copilot',
             style: GoogleFonts.poppins(
-              fontSize: 20, fontWeight: FontWeight.w700,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
               color: HuddlColors.textDark,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'I know your community inside out.\nAsk me anything about parenting, local services, or huddl features!',
+            'Ask me anything about parenting, local services,\nor huddl features. I\'m here to help!',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: 13, color: HuddlColors.textSecondary, height: 1.5,
+              fontSize: 13,
+              color: HuddlColors.textSecondary,
+              height: 1.5,
             ),
           ),
           const SizedBox(height: 24),
           // Feature cards
-          _buildFeatureCard(Icons.health_and_safety, 'Health & Development',
-              'Milestones, sleep, feeding advice', HuddlColors.success,
+          _buildFeatureCard(
+              Icons.health_and_safety,
+              'Health & Development',
+              'Milestones, sleep, feeding advice',
+              HuddlColors.success,
               query: 'What milestones should my baby be hitting?'),
-          _buildFeatureCard(Icons.location_on, 'Local Services',
-              'Nurseries, GPs, classes near you', HuddlColors.blue,
+          _buildFeatureCard(
+              Icons.location_on,
+              'Local Services',
+              'Nurseries, GPs, classes near you',
+              HuddlColors.blue,
               query: 'Find nurseries near me'),
-          _buildFeatureCard(Icons.storefront, 'Preloved AI',
-              'Sell items instantly with AI', HuddlColors.primary,
+          _buildFeatureCard(
+              Icons.storefront,
+              'Preloved AI',
+              'Sell items instantly with AI',
+              HuddlColors.primary,
               query: 'Help me sell an item on Preloved'),
-          _buildFeatureCard(Icons.groups, 'Meetups & Social',
-              'Find compatible parents nearby', HuddlColors.teal,
+          _buildFeatureCard(
+              Icons.groups,
+              'Meetups & Social',
+              'Find compatible parents nearby',
+              HuddlColors.teal,
               query: 'Help me plan a meetup with local parents'),
-          _buildFeatureCard(Icons.flight, 'Family Travel',
-              'Destinations & packing lists', HuddlColors.accentAmber,
+          _buildFeatureCard(
+              Icons.flight,
+              'Family Travel',
+              'Destinations & packing lists',
+              HuddlColors.accentAmber,
               query: 'Best family-friendly holiday destinations'),
           const SizedBox(height: 24),
           // Quick actions
           Text(
             'Quick actions',
             style: GoogleFonts.poppins(
-              fontSize: 15, fontWeight: FontWeight.w600,
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
               color: HuddlColors.textDark,
             ),
           ),
@@ -201,11 +248,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.center,
-            children: (_isInitialized ? _copilot.contextualQuickActions : []).map((action) {
+            children: (_isInitialized
+                    ? _copilot.contextualQuickActions
+                    : <CopilotQuickAction>[])
+                .map((action) {
               return GestureDetector(
                 onTap: () => _sendMessage(action.query),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     color: HuddlColors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -214,12 +265,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(action.emoji, style: const TextStyle(fontSize: 16)),
+                      Text(action.emoji,
+                          style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 6),
                       Text(
                         action.label,
                         style: GoogleFonts.poppins(
-                          fontSize: 12, fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                           color: HuddlColors.textDark,
                         ),
                       ),
@@ -235,7 +288,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     );
   }
 
-  Widget _buildFeatureCard(IconData icon, String title, String subtitle, Color color, {String? query}) {
+  Widget _buildFeatureCard(
+      IconData icon, String title, String subtitle, Color color,
+      {String? query}) {
     return GestureDetector(
       onTap: query != null ? () => _sendMessage(query) : null,
       child: Container(
@@ -261,16 +316,22 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: GoogleFonts.poppins(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark,
-                  )),
-                  Text(subtitle, style: GoogleFonts.poppins(
-                    fontSize: 11, color: HuddlColors.textSecondary,
-                  )),
+                  Text(title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textDark,
+                      )),
+                  Text(subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: HuddlColors.textSecondary,
+                      )),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: HuddlColors.textHint, size: 20),
+            const Icon(Icons.chevron_right,
+                color: HuddlColors.textHint, size: 20),
           ],
         ),
       ),
@@ -278,15 +339,16 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   }
 
   Widget _buildChatView() {
+    final displayMessages = _copilot.messages;
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-      itemCount: _copilot.messages.length + (_isTyping ? 1 : 0),
+      itemCount: displayMessages.length + (_isTyping ? 1 : 0),
       itemBuilder: (context, index) {
-        if (_isTyping && index == _copilot.messages.length) {
+        if (_isTyping && index == displayMessages.length) {
           return _buildTypingIndicator();
         }
-        final msg = _copilot.messages[index];
+        final msg = displayMessages[index];
         return msg.isUser ? _buildUserBubble(msg) : _buildAiBubble(msg);
       },
     );
@@ -310,7 +372,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         child: Text(
           msg.text,
           style: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.white, height: 1.4,
+            fontSize: 14,
+            color: HuddlColors.white,
+            height: 1.4,
           ),
         ),
       ),
@@ -334,13 +398,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     gradient: HuddlColors.primaryGradient,
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.white),
+                  child: const Icon(Icons.auto_awesome,
+                      size: 12, color: HuddlColors.white),
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'huddl AI',
                   style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: HuddlColors.primary,
                   ),
                 ),
@@ -351,24 +417,24 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: msg.isError
+                  ? HuddlColors.errorLight
+                  : HuddlColors.white,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(4),
                 topRight: Radius.circular(18),
                 bottomLeft: Radius.circular(18),
                 bottomRight: Radius.circular(18),
               ),
-              border: Border.all(color: HuddlColors.divider),
+              border: Border.all(
+                  color: msg.isError
+                      ? HuddlColors.error.withValues(alpha: 0.3)
+                      : HuddlColors.divider),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  msg.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.textDark, height: 1.5,
-                  ),
-                ),
+                _buildRichText(msg.text),
                 if (msg.actions != null && msg.actions!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(
@@ -378,7 +444,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                       return GestureDetector(
                         onTap: () => _handleActionTap(action),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: HuddlColors.peachLight,
                             borderRadius: BorderRadius.circular(16),
@@ -386,12 +453,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(_getActionIcon(action.icon), size: 14, color: HuddlColors.primary),
+                              Icon(_getActionIcon(action.icon),
+                                  size: 14, color: HuddlColors.primary),
                               const SizedBox(width: 6),
                               Text(
                                 action.label,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 11, fontWeight: FontWeight.w600,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                   color: HuddlColors.primary,
                                 ),
                               ),
@@ -407,7 +476,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   Text(
                     msg.sourceNote!,
                     style: GoogleFonts.poppins(
-                      fontSize: 10, color: HuddlColors.textHint,
+                      fontSize: 10,
+                      color: HuddlColors.textHint,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -416,6 +486,46 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Parse basic markdown bold (**text**) and bullet points
+  Widget _buildRichText(String text) {
+    final lines = text.split('\n');
+    final spans = <InlineSpan>[];
+    
+    for (int i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        spans.add(const TextSpan(text: '\n'));
+      }
+      final line = lines[i];
+      // Parse bold markers
+      final boldRegex = RegExp(r'\*\*(.+?)\*\*');
+      int lastEnd = 0;
+      for (final match in boldRegex.allMatches(line)) {
+        if (match.start > lastEnd) {
+          spans.add(TextSpan(text: line.substring(lastEnd, match.start)));
+        }
+        spans.add(TextSpan(
+          text: match.group(1),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ));
+        lastEnd = match.end;
+      }
+      if (lastEnd < line.length) {
+        spans.add(TextSpan(text: line.substring(lastEnd)));
+      }
+    }
+
+    return RichText(
+      text: TextSpan(
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          color: HuddlColors.textDark,
+          height: 1.5,
+        ),
+        children: spans,
       ),
     );
   }
@@ -432,11 +542,13 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               gradient: HuddlColors.primaryGradient,
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.white),
+            child: const Icon(Icons.auto_awesome,
+                size: 12, color: HuddlColors.white),
           ),
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: HuddlColors.white,
               borderRadius: BorderRadius.circular(18),
@@ -445,6 +557,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Text(
+                  'Thinking',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: HuddlColors.textHint,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 _TypingDot(delay: 0),
                 const SizedBox(width: 4),
                 _TypingDot(delay: 200),
@@ -460,13 +581,15 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
   Widget _buildInputBar() {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
+      padding: EdgeInsets.fromLTRB(
+          16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
       decoration: BoxDecoration(
         color: HuddlColors.white,
         boxShadow: [
           BoxShadow(
             color: HuddlColors.gray900.withValues(alpha: 0.06),
-            blurRadius: 10, offset: const Offset(0, -2),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -476,13 +599,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             child: TextField(
               controller: _inputController,
               onSubmitted: _sendMessage,
+              enabled: !_isTyping,
               style: GoogleFonts.poppins(fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Ask me anything...',
-                hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                hintText: _isTyping
+                    ? 'Waiting for response...'
+                    : 'Ask me anything...',
+                hintStyle: GoogleFonts.poppins(
+                    fontSize: 14, color: HuddlColors.textHint),
                 filled: true,
                 fillColor: HuddlColors.background,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,
@@ -492,14 +620,22 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onTap: () => _sendMessage(_inputController.text),
+            onTap: _isTyping
+                ? null
+                : () => _sendMessage(_inputController.text),
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
+                gradient: _isTyping
+                    ? LinearGradient(colors: [
+                        HuddlColors.gray300,
+                        HuddlColors.gray300,
+                      ])
+                    : HuddlColors.primaryGradient,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: HuddlColors.white, size: 20),
+              child:
+                  const Icon(Icons.send, color: HuddlColors.white, size: 20),
             ),
           ),
         ],
@@ -538,7 +674,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
     // Named route navigation
     if (action.route.startsWith('/')) {
       Navigator.pop(context);
-      Navigator.pushNamed(context, action.route, arguments: action.params.isNotEmpty ? action.params : null);
+      Navigator.pushNamed(context, action.route,
+          arguments: action.params.isNotEmpty ? action.params : null);
       return;
     }
   }
@@ -572,7 +709,8 @@ class _TypingDot extends StatefulWidget {
   State<_TypingDot> createState() => _TypingDotState();
 }
 
-class _TypingDotState extends State<_TypingDot> with SingleTickerProviderStateMixin {
+class _TypingDotState extends State<_TypingDot>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -598,9 +736,11 @@ class _TypingDotState extends State<_TypingDot> with SingleTickerProviderStateMi
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) => Container(
-        width: 8, height: 8,
+        width: 8,
+        height: 8,
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.3 + _controller.value * 0.7),
+          color: HuddlColors.primary
+              .withValues(alpha: 0.3 + _controller.value * 0.7),
           shape: BoxShape.circle,
         ),
       ),

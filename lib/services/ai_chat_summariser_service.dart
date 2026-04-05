@@ -1,7 +1,11 @@
-// ═══════════════════════════════════════════════════════════════════════════════
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+
+// =============================================================================
 // AI CHAT MESSAGE SUMMARISER & CATCH-UP SERVICE
-// Generates intelligent summaries of unread group messages
-// ═══════════════════════════════════════════════════════════════════════════════
+// Uses Gemini AI to generate intelligent summaries of unread group messages
+// =============================================================================
 
 class MessageSummaryPoint {
   final String text;
@@ -46,14 +50,23 @@ class ChatSummary {
 }
 
 class AiChatSummariserService {
-  static final AiChatSummariserService _instance = AiChatSummariserService._internal();
+  static final AiChatSummariserService _instance =
+      AiChatSummariserService._internal();
   factory AiChatSummariserService() => _instance;
   AiChatSummariserService._internal();
+
+  // Gemini API configuration
+  static const String _geminiApiKey =
+      'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
+  static const String _geminiModel = 'gemini-2.0-flash';
+  static const String _geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models';
 
   final Map<String, ChatSummary> _summaries = {};
 
   ChatSummary? getSummary(String groupId) => _summaries[groupId];
-  bool hasSummary(String groupId) => _summaries.containsKey(groupId) &&
+  bool hasSummary(String groupId) =>
+      _summaries.containsKey(groupId) &&
       !(_summaries[groupId]?.isDismissed ?? true);
 
   void dismissSummary(String groupId) {
@@ -62,13 +75,13 @@ class AiChatSummariserService {
     }
   }
 
-  /// Generate a summary for a group's unread messages
-  ChatSummary generateSummary({
+  /// Generate a summary for a group's unread messages using Gemini AI
+  Future<ChatSummary> generateSummary({
     required String groupId,
     required String groupName,
     required List<Map<String, dynamic>> messages,
     int lastReadIndex = 0,
-  }) {
+  }) async {
     final unread = messages.length > lastReadIndex
         ? messages.sublist(lastReadIndex)
         : messages;
@@ -84,26 +97,268 @@ class AiChatSummariserService {
       );
     }
 
-    // Analyse message patterns
+    try {
+      final aiSummary = await _callGeminiForSummary(groupName, unread);
+      _summaries[groupId] = aiSummary;
+      return aiSummary;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Gemini summariser error: $e');
+      }
+      // Fallback to local analysis
+      final fallback =
+          _generateLocalSummary(groupId, groupName, unread, lastReadIndex);
+      _summaries[groupId] = fallback;
+      return fallback;
+    }
+  }
+
+  /// Call Gemini API to generate a message summary
+  Future<ChatSummary> _callGeminiForSummary(
+    String groupName,
+    List<Map<String, dynamic>> unreadMessages,
+  ) async {
+    // Format messages for the prompt
+    final messageText = StringBuffer();
+    for (var i = 0; i < unreadMessages.length; i++) {
+      final msg = unreadMessages[i];
+      final author =
+          (msg['senderName'] ?? msg['author'] ?? 'Someone') as String;
+      final text = (msg['text'] ?? msg['content'] ?? '') as String;
+      messageText.writeln('$author: $text');
+    }
+
+    final systemPrompt = '''You are a chat summariser for a UK parents' community app called huddl. 
+You summarise unread group messages into a concise, friendly catch-up.
+
+RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
+{
+  "overview": "A 1-2 sentence friendly summary starting with 'While you were away:' that captures the conversation highlights",
+  "keyPoints": [
+    {
+      "text": "Brief summary of this point",
+      "authorName": "Author name if clear",
+      "category": "one of: recommendation, discussion, question, plan, share"
+    }
+  ],
+  "topics": ["topic1", "topic2", "topic3"],
+  "hasActionItems": true or false,
+  "upcomingPlan": "Description of any planned meetup/event discussed, or null"
+}
+
+RULES:
+- Maximum 5 key points, ordered by importance
+- Use British English
+- Highlight plans, recommendations, questions, and shared experiences
+- Be warm and conversational in the overview
+- Detect any upcoming plans (meetups, playdates, events)
+- Extract 3-5 mentioned topics
+- Flag if there are action items the user should respond to''';
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt}
+        ]
+      },
+      'contents': [
+        {
+          'role': 'user',
+          'parts': [
+            {
+              'text':
+                  'Summarise these ${unreadMessages.length} unread messages from the "$groupName" group:\n\n${messageText.toString()}'
+            }
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.7,
+        'topP': 0.9,
+        'maxOutputTokens': 512,
+      },
+    };
+
+    final url = Uri.parse(
+        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          var text = (parts[0]['text'] as String? ?? '').trim();
+          text = text.replaceAll(RegExp(r'^```json\s*'), '');
+          text = text.replaceAll(RegExp(r'\s*```$'), '');
+          text = text.trim();
+
+          try {
+            final json = jsonDecode(text) as Map<String, dynamic>;
+            return _parseSummaryFromJson(json, groupName, unreadMessages.length);
+          } catch (parseError) {
+            if (kDebugMode) {
+              debugPrint('Summary JSON parse error: $parseError');
+              debugPrint('Raw: $text');
+            }
+            throw Exception('Failed to parse Gemini summary');
+          }
+        }
+      }
+      throw Exception('No content in Gemini response');
+    } else {
+      throw Exception('Gemini API error: ${response.statusCode}');
+    }
+  }
+
+  /// Parse the Gemini JSON response into a ChatSummary
+  ChatSummary _parseSummaryFromJson(
+    Map<String, dynamic> json,
+    String groupName,
+    int unreadCount,
+  ) {
+    final overview =
+        (json['overview'] ?? 'While you were away, the group was active.')
+            as String;
+    final hasActionItems = (json['hasActionItems'] ?? false) as bool;
+    final upcomingPlan = json['upcomingPlan'] as String?;
+    final topics = (json['topics'] as List<dynamic>?)
+            ?.map((t) => t.toString())
+            .toList() ??
+        [];
+
+    final keyPointsJson = json['keyPoints'] as List<dynamic>? ?? [];
+    final keyPoints = keyPointsJson
+        .take(5)
+        .map((kp) => MessageSummaryPoint(
+              text: (kp['text'] ?? '') as String,
+              authorName: kp['authorName'] as String?,
+              category: (kp['category'] ?? 'discussion') as String,
+            ))
+        .toList();
+
+    return ChatSummary(
+      groupId: groupName.toLowerCase().replaceAll(' ', '_'),
+      groupName: groupName,
+      unreadCount: unreadCount,
+      keyPoints: keyPoints,
+      overviewText: overview,
+      mentionedTopics: topics,
+      hasActionItems: hasActionItems,
+      upcomingPlanNote: upcomingPlan,
+    );
+  }
+
+  /// Generate sample summaries for demo groups using Gemini AI
+  Future<Map<String, ChatSummary>> generateDemoSummaries() async {
+    final demos = <String, ChatSummary>{};
+
+    // Generate AI summaries for each demo group
+    final demoGroups = {
+      'new_parents_cambridge': {
+        'name': 'Cambridge New Parents',
+        'messages': [
+          {'senderName': 'Sophie Williams', 'text': 'Has anyone tried Cherry Hinton Hall for playdates? I was thinking of organising one this Saturday at 10am if anyone fancies it?'},
+          {'senderName': 'Emma Thompson', 'text': 'Ooh yes! We went to Little Bean Cafe on Mill Road yesterday \u2014 so buggy friendly and they have a proper baby changing room. Highly recommend!'},
+          {'senderName': 'Kate Rogers', 'text': 'Can anyone recommend Newnham Nursery School? We\u2019re weighing it up against Little Owls and finding it hard to decide.'},
+          {'senderName': 'Priya Mehta', 'text': 'We\u2019re at Little Owls and really happy. Newnham Nursery is great too though \u2014 slightly bigger classes but more outdoor space.'},
+          {'senderName': 'Laura Chen', 'text': 'Just to add \u2014 Newnham has a much longer waiting list so apply early!'},
+          {'senderName': 'Anna Mitchell', 'text': 'Has anyone used the NHS health visitor drop-in at Brookfields? Thinking of going on Tuesday for a weigh-in.'},
+          {'senderName': 'Meg Hart', 'text': 'Yes! The Tuesday drop-in is great. Much less busy than the one at the Rosie. No appointment needed.'},
+        ],
+      },
+      'dads_connect': {
+        'name': 'Dads Connect',
+        'messages': [
+          {'senderName': 'James Carter', 'text': 'Right lads, I\u2019ve booked 4 tee times for this Sunday morning at Gog Magog Golf Course. 9am start. Who\u2019s in? 4 spots left!'},
+          {'senderName': 'Mark Robinson', 'text': 'Count me in! Also wanted to share \u2014 we tried the gentle fade method for sleep training instead of CIO and it\u2019s been brilliant. Took a week but she sleeps through now.'},
+          {'senderName': 'Tom Baker', 'text': 'That\u2019s great news Mark! We\u2019ve been struggling with night wakes. How old is she?'},
+          {'senderName': 'Mark Robinson', 'text': '7 months. The key was moving bedtime 30 mins earlier and doing the same routine every night. Happy to share the approach in detail.'},
+          {'senderName': 'Luke Anderson', 'text': 'Random one \u2014 any dads fancy putting a pub quiz team together? Thursday nights at The Eagle. My wife said she\u2019d do bedtime if I promise to be home by 10!'},
+          {'senderName': 'James Carter', 'text': 'Pub quiz \u2014 100% in! Love it. Let\u2019s get a team of 4-5.'},
+        ],
+      },
+      'toddler_adventures': {
+        'name': 'Toddler Adventures',
+        'messages': [
+          {'senderName': 'Lucy Taylor', 'text': 'Just posted some photos from yesterday\u2019s picnic at Grantchester Meadows \u2014 it was absolutely gorgeous! The kids loved splashing in the river.'},
+          {'senderName': 'Olivia Brown', 'text': 'Those photos are lovely Lucy! Also \u2014 I have a 20% off code for Monkey Music classes if anyone wants it: TODDLER20. Expires end of the month.'},
+          {'senderName': 'Sarah Clarke', 'text': 'Has anyone tried the Yumbox bento lunchbox? I\u2019ve been looking for something truly toddler-proof. My current ones always leak.'},
+          {'senderName': 'Lucy Taylor', 'text': 'Yes!! The Yumbox is amazing \u2014 completely leak-proof and dishwasher safe. We\u2019ve had ours for 8 months and it\u2019s still perfect.'},
+          {'senderName': 'Anya Patel', 'text': 'Does anyone know a good swimming class for 2-year-olds? We tried Puddle Ducks but the times don\u2019t work for us.'},
+        ],
+      },
+    };
+
+    for (final entry in demoGroups.entries) {
+      final groupId = entry.key;
+      final groupInfo = entry.value;
+      try {
+        final summary = await generateSummary(
+          groupId: groupId,
+          groupName: groupInfo['name'] as String,
+          messages: (groupInfo['messages'] as List)
+              .cast<Map<String, dynamic>>(),
+          lastReadIndex: 0,
+        );
+        demos[groupId] = summary;
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('Demo summary generation failed for $groupId: $e');
+        }
+        // Fallback for this specific group
+        demos[groupId] = _generateLocalSummary(
+          groupId,
+          groupInfo['name'] as String,
+          (groupInfo['messages'] as List).cast<Map<String, dynamic>>(),
+          0,
+        );
+      }
+    }
+
+    for (final entry in demos.entries) {
+      _summaries[entry.key] = entry.value;
+    }
+
+    return demos;
+  }
+
+  // ── Local fallback summary ────────────────────────────────────────────
+  ChatSummary _generateLocalSummary(
+    String groupId,
+    String groupName,
+    List<Map<String, dynamic>> unread,
+    int lastReadIndex,
+  ) {
     final authors = <String>{};
     final topics = <String>[];
     final recommendations = <MessageSummaryPoint>[];
-    final discussions = <MessageSummaryPoint>[];
     final plans = <MessageSummaryPoint>[];
     final questions = <MessageSummaryPoint>[];
 
     for (var i = 0; i < unread.length; i++) {
       final msg = unread[i];
       final text = (msg['text'] ?? msg['content'] ?? '') as String;
-      final author = (msg['senderName'] ?? msg['author'] ?? 'Someone') as String;
+      final author =
+          (msg['senderName'] ?? msg['author'] ?? 'Someone') as String;
       authors.add(author);
-
       final lower = text.toLowerCase();
 
-      // Detect recommendations
-      if (lower.contains('recommend') || lower.contains('try ') ||
-          lower.contains('love the') || lower.contains('great for') ||
-          lower.contains('best ') || lower.contains('suggest')) {
+      if (lower.contains('recommend') ||
+          lower.contains('try ') ||
+          lower.contains('love the') ||
+          lower.contains('great for') ||
+          lower.contains('best ') ||
+          lower.contains('suggest')) {
         recommendations.add(MessageSummaryPoint(
           text: _truncate(text, 100),
           authorName: author,
@@ -112,11 +367,14 @@ class AiChatSummariserService {
         ));
       }
 
-      // Detect plans / meetup discussions
-      if (lower.contains('saturday') || lower.contains('sunday') ||
-          lower.contains('meet') || lower.contains('join') ||
-          lower.contains('this weekend') || lower.contains('tomorrow') ||
-          lower.contains('playdate') || lower.contains('coffee')) {
+      if (lower.contains('saturday') ||
+          lower.contains('sunday') ||
+          lower.contains('meet') ||
+          lower.contains('join') ||
+          lower.contains('this weekend') ||
+          lower.contains('tomorrow') ||
+          lower.contains('playdate') ||
+          lower.contains('coffee')) {
         plans.add(MessageSummaryPoint(
           text: _truncate(text, 100),
           authorName: author,
@@ -125,9 +383,10 @@ class AiChatSummariserService {
         ));
       }
 
-      // Detect questions
-      if (text.contains('?') || lower.contains('anyone know') ||
-          lower.contains('has anyone') || lower.contains('advice')) {
+      if (text.contains('?') ||
+          lower.contains('anyone know') ||
+          lower.contains('has anyone') ||
+          lower.contains('advice')) {
         questions.add(MessageSummaryPoint(
           text: _truncate(text, 100),
           authorName: author,
@@ -136,11 +395,9 @@ class AiChatSummariserService {
         ));
       }
 
-      // Detect topic keywords
       _extractTopics(lower, topics);
     }
 
-    // Build key points (max 5)
     final keyPoints = <MessageSummaryPoint>[];
     if (plans.isNotEmpty) keyPoints.add(plans.first);
     for (final r in recommendations.take(2)) {
@@ -149,11 +406,7 @@ class AiChatSummariserService {
     for (final q in questions.take(1)) {
       keyPoints.add(q);
     }
-    if (keyPoints.length < 5 && discussions.isNotEmpty) {
-      keyPoints.add(discussions.first);
-    }
 
-    // Generate overview
     final overview = _buildOverview(
       groupName: groupName,
       unreadCount: unread.length,
@@ -164,7 +417,7 @@ class AiChatSummariserService {
       topics: topics,
     );
 
-    final summary = ChatSummary(
+    return ChatSummary(
       groupId: groupId,
       groupName: groupName,
       unreadCount: unread.length,
@@ -176,121 +429,8 @@ class AiChatSummariserService {
           ? '${plans.first.authorName} mentioned plans: "${_truncate(plans.first.text, 60)}"'
           : null,
     );
-
-    _summaries[groupId] = summary;
-    return summary;
   }
 
-  /// Generate sample summaries for demo groups
-  Map<String, ChatSummary> generateDemoSummaries() {
-    final demos = <String, ChatSummary>{};
-
-    // Cambridge New Parents group
-    demos['new_parents_cambridge'] = ChatSummary(
-      groupId: 'new_parents_cambridge',
-      groupName: 'Cambridge New Parents',
-      unreadCount: 47,
-      overviewText: 'While you were away: Emma shared a buggy-friendly cafe recommendation, 4 parents discussed the best nurseries in Newnham, and there\'s a playdate planned for Saturday at 10am.',
-      keyPoints: [
-        const MessageSummaryPoint(
-          text: 'Sophie proposed a group playdate at Cherry Hinton Hall this Saturday at 10am',
-          authorName: 'Sophie Williams',
-          messageIndex: 12,
-          category: 'plan',
-        ),
-        const MessageSummaryPoint(
-          text: 'Emma recommended Little Bean Cafe \u2014 great for prams and has a baby changing room',
-          authorName: 'Emma Thompson',
-          messageIndex: 8,
-          category: 'recommendation',
-        ),
-        const MessageSummaryPoint(
-          text: '4 parents discussed Newnham Nursery School vs Little Owls \u2014 mixed reviews on both',
-          authorName: 'Kate Rogers',
-          messageIndex: 23,
-          category: 'discussion',
-        ),
-        const MessageSummaryPoint(
-          text: 'Anna asked: "Has anyone used the NHS health visitor drop-in at Brookfields?"',
-          authorName: 'Anna Mitchell',
-          messageIndex: 35,
-          category: 'question',
-        ),
-      ],
-      mentionedTopics: ['nurseries', 'cafes', 'playdate', 'health visitor'],
-      hasActionItems: true,
-      upcomingPlanNote: 'Sophie proposed a playdate this Saturday at Cherry Hinton Hall',
-    );
-
-    // Dads Connect group
-    demos['dads_connect'] = ChatSummary(
-      groupId: 'dads_connect',
-      groupName: 'Dads Connect',
-      unreadCount: 23,
-      overviewText: 'James organised a golf morning next Sunday, Mark shared tips on baby sleep training, and 3 dads are planning a pub quiz team.',
-      keyPoints: [
-        const MessageSummaryPoint(
-          text: 'James booked tee times for Sunday morning golf \u2014 4 spots left',
-          authorName: 'James Carter',
-          messageIndex: 5,
-          category: 'plan',
-        ),
-        const MessageSummaryPoint(
-          text: 'Mark shared his sleep training method: "Gentle fade works better than CIO for us"',
-          authorName: 'Mark Robinson',
-          messageIndex: 11,
-          category: 'recommendation',
-        ),
-        const MessageSummaryPoint(
-          text: 'Luke asked: "Any dads fancy a pub quiz team on Thursday nights?"',
-          authorName: 'Luke Anderson',
-          messageIndex: 18,
-          category: 'question',
-        ),
-      ],
-      mentionedTopics: ['golf', 'sleep training', 'pub quiz'],
-      hasActionItems: true,
-      upcomingPlanNote: 'James booked golf for Sunday \u2014 4 spots remain',
-    );
-
-    // Toddler Adventures group
-    demos['toddler_adventures'] = ChatSummary(
-      groupId: 'toddler_adventures',
-      groupName: 'Toddler Adventures',
-      unreadCount: 31,
-      overviewText: 'Lucy shared photos from Grantchester Meadows picnic, Sarah recommended a toddler-proof lunchbox, and there\'s a music class discount code being passed around.',
-      keyPoints: [
-        const MessageSummaryPoint(
-          text: 'Lucy posted photos from the Grantchester picnic \u2014 looks amazing!',
-          authorName: 'Lucy Taylor',
-          messageIndex: 3,
-          category: 'share',
-        ),
-        const MessageSummaryPoint(
-          text: 'Sarah recommended the Yumbox lunchbox: "Toddler-proof and dishwasher safe"',
-          authorName: 'Sarah Clarke',
-          messageIndex: 14,
-          category: 'recommendation',
-        ),
-        const MessageSummaryPoint(
-          text: 'Olivia shared 20% off code for Monkey Music classes: TODDLER20',
-          authorName: 'Olivia Brown',
-          messageIndex: 22,
-          category: 'recommendation',
-        ),
-      ],
-      mentionedTopics: ['picnic', 'lunchbox', 'music classes', 'discount'],
-      hasActionItems: false,
-    );
-
-    for (final entry in demos.entries) {
-      _summaries[entry.key] = entry.value;
-    }
-
-    return demos;
-  }
-
-  // ── Helpers ────────────────────────────────────────────────────────────
   String _buildOverview({
     required String groupName,
     required int unreadCount,
@@ -302,7 +442,6 @@ class AiChatSummariserService {
   }) {
     final parts = <String>[];
     parts.add('While you were away:');
-
     if (hasRecommendations) {
       parts.add('${authors.first} shared a recommendation');
     }
@@ -315,7 +454,6 @@ class AiChatSummariserService {
     if (topics.isNotEmpty) {
       parts.add('topics included ${topics.take(3).join(', ')}');
     }
-
     return '${parts.join(', ')}.';
   }
 

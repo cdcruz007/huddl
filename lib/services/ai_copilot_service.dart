@@ -1,11 +1,16 @@
 
+import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // AI PARENTING COPILOT SERVICE
-// Cross-feature AI assistant that understands the parent's complete context
-// ═══════════════════════════════════════════════════════════════════════════════
+// Real conversational AI using Google Gemini API
+// Cross-feature assistant that understands the parent's complete context
+// =============================================================================
 
 enum CopilotCategory {
   health,
@@ -25,6 +30,7 @@ class CopilotMessage {
   final CopilotCategory? category;
   final List<CopilotAction>? actions;
   final String? sourceNote;
+  final bool isError;
 
   CopilotMessage({
     required this.id,
@@ -34,6 +40,7 @@ class CopilotMessage {
     this.category,
     this.actions,
     this.sourceNote,
+    this.isError = false,
   }) : timestamp = timestamp ?? DateTime.now();
 }
 
@@ -74,6 +81,15 @@ class AiCopilotService {
   final List<CopilotMessage> _messages = [];
   bool _isInitialized = false;
 
+  // Gemini API configuration
+  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
+  static const String _geminiModel = 'gemini-2.0-flash';
+  static const String _geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models';
+
+  // Conversation history for multi-turn chat
+  final List<Map<String, dynamic>> _conversationHistory = [];
+
   List<CopilotMessage> get messages => List.unmodifiable(_messages);
 
   List<CopilotQuickAction> get contextualQuickActions {
@@ -83,10 +99,19 @@ class AiCopilotService {
 
     // Context-aware suggestions
     if (stages.contains('expecting')) {
-      actions.addAll([
-        const CopilotQuickAction(label: 'Birth plan tips', emoji: '\u{1F4CB}', query: 'Help me create a birth plan'),
-        const CopilotQuickAction(label: 'Hospital bag', emoji: '\u{1F45C}', query: 'What should I pack in my hospital bag?'),
-        const CopilotQuickAction(label: 'Baby names', emoji: '\u{1F476}', query: 'Suggest some popular baby names'),
+      actions.addAll(const [
+        CopilotQuickAction(
+            label: 'Birth plan tips',
+            emoji: '\u{1F4CB}',
+            query: 'Help me create a birth plan'),
+        CopilotQuickAction(
+            label: 'Hospital bag',
+            emoji: '\u{1F45C}',
+            query: 'What should I pack in my hospital bag?'),
+        CopilotQuickAction(
+            label: 'Baby names',
+            emoji: '\u{1F476}',
+            query: 'Suggest some popular baby names'),
       ]);
     }
 
@@ -95,34 +120,69 @@ class AiCopilotService {
       if (birthday != null) {
         final ageMonths = _parseAgeMonths(birthday);
         if (ageMonths < 6) {
-          actions.addAll([
-            const CopilotQuickAction(label: 'Sleep schedule', emoji: '\u{1F634}', query: 'What sleep schedule is best for a newborn?'),
-            const CopilotQuickAction(label: 'Feeding guide', emoji: '\u{1F37C}', query: 'How often should I feed my baby?'),
+          actions.addAll(const [
+            CopilotQuickAction(
+                label: 'Sleep schedule',
+                emoji: '\u{1F634}',
+                query: 'What sleep schedule is best for a newborn?'),
+            CopilotQuickAction(
+                label: 'Feeding guide',
+                emoji: '\u{1F37C}',
+                query: 'How often should I feed my baby?'),
           ]);
         } else if (ageMonths < 12) {
-          actions.addAll([
-            const CopilotQuickAction(label: 'Weaning tips', emoji: '\u{1F34E}', query: 'How do I start weaning my baby?'),
-            const CopilotQuickAction(label: 'Development milestones', emoji: '\u{1F3C6}', query: 'What milestones should my baby be hitting?'),
+          actions.addAll(const [
+            CopilotQuickAction(
+                label: 'Weaning tips',
+                emoji: '\u{1F34E}',
+                query: 'How do I start weaning my baby?'),
+            CopilotQuickAction(
+                label: 'Development milestones',
+                emoji: '\u{1F3C6}',
+                query:
+                    'What milestones should my baby be hitting?'),
           ]);
         } else if (ageMonths < 24) {
-          actions.addAll([
-            const CopilotQuickAction(label: 'Toddler tantrums', emoji: '\u{1F62D}', query: 'How do I handle toddler tantrums?'),
-            const CopilotQuickAction(label: 'Nursery options', emoji: '\u{1F3EB}', query: 'Find nurseries near me'),
+          actions.addAll(const [
+            CopilotQuickAction(
+                label: 'Toddler tantrums',
+                emoji: '\u{1F62D}',
+                query: 'How do I handle toddler tantrums?'),
+            CopilotQuickAction(
+                label: 'Nursery options',
+                emoji: '\u{1F3EB}',
+                query: 'Find nurseries near me'),
           ]);
         } else {
-          actions.addAll([
-            const CopilotQuickAction(label: 'School readiness', emoji: '\u{1F4DA}', query: 'How do I prepare my child for school?'),
-            const CopilotQuickAction(label: 'Activities nearby', emoji: '\u{1F3A8}', query: 'What activities are available for kids near me?'),
+          actions.addAll(const [
+            CopilotQuickAction(
+                label: 'School readiness',
+                emoji: '\u{1F4DA}',
+                query: 'How do I prepare my child for school?'),
+            CopilotQuickAction(
+                label: 'Activities nearby',
+                emoji: '\u{1F3A8}',
+                query:
+                    'What activities are available for kids near me?'),
           ]);
         }
       }
     }
 
     // Universal actions
-    actions.addAll([
-      const CopilotQuickAction(label: 'Sell something', emoji: '\u{1F4F8}', query: 'Help me sell an item on Preloved'),
-      const CopilotQuickAction(label: 'Plan a meetup', emoji: '\u{1F91D}', query: 'Help me plan a meetup with local parents'),
-      const CopilotQuickAction(label: 'Travel tips', emoji: '\u2708\uFE0F', query: 'Best family-friendly holiday destinations'),
+    actions.addAll(const [
+      CopilotQuickAction(
+          label: 'Sell something',
+          emoji: '\u{1F4F8}',
+          query: 'Help me sell an item on Preloved'),
+      CopilotQuickAction(
+          label: 'Plan a meetup',
+          emoji: '\u{1F91D}',
+          query: 'Help me plan a meetup with local parents'),
+      CopilotQuickAction(
+          label: 'Travel tips',
+          emoji: '\u2708\uFE0F',
+          query: 'Best family-friendly holiday destinations'),
     ]);
 
     return actions;
@@ -136,10 +196,11 @@ class AiCopilotService {
 
   void clearConversation() {
     _messages.clear();
+    _conversationHistory.clear();
   }
 
   /// Process a user message and generate an AI response
-  CopilotMessage sendMessage(String userText) {
+  Future<CopilotMessage> sendMessage(String userText) async {
     final userMsg = CopilotMessage(
       id: 'user_${DateTime.now().millisecondsSinceEpoch}',
       text: userText,
@@ -147,218 +208,611 @@ class AiCopilotService {
     );
     _messages.add(userMsg);
 
-    final response = _generateResponse(userText);
-    _messages.add(response);
-    return response;
+    // Add to conversation history
+    _conversationHistory.add({
+      'role': 'user',
+      'parts': [
+        {'text': userText}
+      ],
+    });
+
+    try {
+      final response = await _callGeminiApi(userText);
+      _messages.add(response);
+
+      // Add AI response to conversation history
+      _conversationHistory.add({
+        'role': 'model',
+        'parts': [
+          {'text': response.text}
+        ],
+      });
+
+      return response;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Gemini API error: $e');
+      }
+      // Fall back to smart local response
+      final fallback = _generateLocalResponse(userText);
+      _messages.add(fallback);
+      _conversationHistory.add({
+        'role': 'model',
+        'parts': [
+          {'text': fallback.text}
+        ],
+      });
+      return fallback;
+    }
   }
 
-  CopilotMessage _generateResponse(String query) {
+  /// Call Gemini API with full conversation context
+  Future<CopilotMessage> _callGeminiApi(String query) async {
+    final systemPrompt = _buildSystemPrompt();
+
+    // Build contents with system instruction + conversation history
+    final contents = <Map<String, dynamic>>[];
+
+    // Add conversation history (Gemini uses alternating user/model roles)
+    for (final msg in _conversationHistory) {
+      contents.add(msg);
+    }
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt}
+        ]
+      },
+      'contents': contents,
+      'generationConfig': {
+        'temperature': 0.8,
+        'topP': 0.95,
+        'topK': 40,
+        'maxOutputTokens': 1024,
+      },
+      'safetySettings': [
+        {
+          'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
+          'threshold': 'BLOCK_ONLY_HIGH'
+        },
+        {
+          'category': 'HARM_CATEGORY_HARASSMENT',
+          'threshold': 'BLOCK_ONLY_HIGH'
+        },
+        {
+          'category': 'HARM_CATEGORY_HATE_SPEECH',
+          'threshold': 'BLOCK_ONLY_HIGH'
+        },
+        {
+          'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+          'threshold': 'BLOCK_ONLY_HIGH'
+        },
+      ],
+    };
+
+    final url = Uri.parse(
+        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(const Duration(seconds: 20));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          final text = parts[0]['text'] as String? ?? '';
+          final category = _detectCategory(query);
+          final actions = _suggestActions(query, category);
+
+          return CopilotMessage(
+            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+            text: text.trim(),
+            isUser: false,
+            category: category,
+            actions: actions,
+            sourceNote: 'Powered by huddl AI',
+          );
+        }
+      }
+      // If no valid content, throw to trigger fallback
+      throw Exception('No content in Gemini response');
+    } else {
+      throw Exception(
+          'Gemini API error: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Build a rich system prompt with user context
+  String _buildSystemPrompt() {
+    final userName = _onboarding.name ?? 'there';
+    final borough = _getUserBorough();
+    final parentType = _onboarding.parentType ?? 'parent';
+    final children = _onboarding.children;
+    final stages = _onboarding.stagesOfLife;
+
+    final buffer = StringBuffer();
+    buffer.writeln(
+        'You are the huddl AI Parenting Copilot \u2014 a warm, knowledgeable, '
+        'and supportive AI assistant built into the huddl app. huddl is a '
+        'community platform for parents in the UK.');
+    buffer.writeln();
+    buffer.writeln('YOUR PERSONALITY:');
+    buffer.writeln(
+        '- Warm, friendly, and empathetic \u2014 like talking to a knowledgeable friend');
+    buffer.writeln(
+        '- Supportive and non-judgmental \u2014 every parenting style is valid');
+    buffer.writeln('- Concise but thorough \u2014 give actionable advice');
+    buffer.writeln(
+        '- Use a casual British English tone (e.g. "nursery" not "daycare", '
+        '"pushchair" not "stroller", "nappy" not "diaper")');
+    buffer.writeln(
+        '- Use bullet points and bold text (**text**) to structure responses');
+    buffer.writeln(
+        '- Keep responses focused and helpful, typically 3-6 paragraphs');
+    buffer.writeln();
+    buffer.writeln('USER CONTEXT:');
+    buffer.writeln('- Name: $userName');
+    buffer.writeln('- Parent type: $parentType');
+    buffer.writeln('- Location: $borough, UK');
+
+    if (stages.isNotEmpty) {
+      buffer.writeln('- Life stage: ${stages.join(", ")}');
+    }
+
+    if (_onboarding.dueDate != null) {
+      buffer.writeln('- Due date: ${_onboarding.dueDate}');
+    }
+
+    if (children.isNotEmpty) {
+      for (int i = 0; i < children.length; i++) {
+        final child = children[i];
+        final name = child['name'] ?? 'Child ${i + 1}';
+        final birthday = child['birthday'];
+        if (birthday != null) {
+          final months = _parseAgeMonths(birthday);
+          if (months < 12) {
+            buffer.writeln('- Child: $name, $months months old');
+          } else {
+            buffer.writeln(
+                '- Child: $name, ${months ~/ 12} year(s) old');
+          }
+        } else {
+          buffer.writeln('- Child: $name');
+        }
+      }
+    }
+
+    buffer.writeln();
+    buffer.writeln('HUDDL APP FEATURES (mention when relevant):');
+    buffer.writeln(
+        '- **Groups**: Local community groups for parents in their borough');
+    buffer.writeln(
+        '- **Meetups**: Organise and join meetups with local parents');
+    buffer.writeln(
+        '- **Preloved Marketplace**: Buy & sell baby/children items with AI listing generator');
+    buffer.writeln(
+        '- **AI Matchmaker**: Matches compatible parents based on interests & child ages');
+    buffer.writeln(
+        '- **Trips**: Family-friendly holiday destinations with AI travel concierge');
+    buffer.writeln(
+        '- **DMs & Group Chats**: Message other parents directly or in groups');
+    buffer.writeln();
+    buffer.writeln('GUIDELINES:');
+    buffer.writeln(
+        '- For medical questions: Always recommend consulting NHS 111, their GP, or health visitor. Never diagnose.');
+    buffer.writeln(
+        '- For safety concerns: Direct to emergency services (999) if urgent.');
+    buffer.writeln(
+        '- Reference the user\'s local area ($borough) when relevant.');
+    buffer.writeln(
+        '- Suggest relevant huddl app features naturally when they fit the conversation.');
+    buffer.writeln(
+        '- Keep responses grounded and practical, avoiding overly generic advice.');
+    buffer.writeln(
+        '- If you do not know something specific, say so honestly rather than making up data.');
+
+    return buffer.toString();
+  }
+
+  /// Detect the category of a user query
+  CopilotCategory _detectCategory(String query) {
+    final lower = query.toLowerCase();
+    if (lower.contains('rash') ||
+        lower.contains('fever') ||
+        lower.contains('ill') ||
+        lower.contains('sick') ||
+        lower.contains('cold') ||
+        lower.contains('cough') ||
+        lower.contains('health') ||
+        lower.contains('doctor') ||
+        lower.contains('gp') ||
+        lower.contains('nhs')) {
+      return CopilotCategory.health;
+    }
+    if (lower.contains('milestone') ||
+        lower.contains('development') ||
+        lower.contains('crawl') ||
+        lower.contains('walk') ||
+        lower.contains('talk') ||
+        lower.contains('sleep') ||
+        lower.contains('wean') ||
+        lower.contains('feed')) {
+      return CopilotCategory.development;
+    }
+    if (lower.contains('nursery') ||
+        lower.contains('childcare') ||
+        lower.contains('school') ||
+        lower.contains('class')) {
+      return CopilotCategory.localServices;
+    }
+    if (lower.contains('sell') ||
+        lower.contains('buy') ||
+        lower.contains('preloved') ||
+        lower.contains('marketplace')) {
+      return CopilotCategory.marketplace;
+    }
+    if (lower.contains('travel') ||
+        lower.contains('holiday') ||
+        lower.contains('trip') ||
+        lower.contains('destination') ||
+        lower.contains('flight')) {
+      return CopilotCategory.travel;
+    }
+    if (lower.contains('meetup') ||
+        lower.contains('meet') ||
+        lower.contains('social') ||
+        lower.contains('friend') ||
+        lower.contains('lonely') ||
+        lower.contains('connect')) {
+      return CopilotCategory.social;
+    }
+    return CopilotCategory.general;
+  }
+
+  /// Suggest relevant app actions based on category
+  List<CopilotAction> _suggestActions(
+      String query, CopilotCategory category) {
+    switch (category) {
+      case CopilotCategory.health:
+        return const [
+          CopilotAction(
+              label: 'NHS 111 Online',
+              route: 'url',
+              icon: 'health_and_safety',
+              params: {'url': 'https://111.nhs.uk'}),
+          CopilotAction(
+              label: 'Ask Community', route: '/groups', icon: 'forum'),
+        ];
+      case CopilotCategory.development:
+        return const [
+          CopilotAction(
+              label: 'Track Milestones',
+              route: '/profile',
+              icon: 'timeline'),
+          CopilotAction(
+              label: 'Ask Community', route: '/groups', icon: 'forum'),
+        ];
+      case CopilotCategory.localServices:
+        return const [
+          CopilotAction(
+              label: 'Ask in Community',
+              route: '/groups',
+              icon: 'forum'),
+          CopilotAction(
+              label: 'View Meetups', route: '/meetups', icon: 'groups'),
+        ];
+      case CopilotCategory.marketplace:
+        return const [
+          CopilotAction(
+              label: 'Create AI Listing',
+              route: '/create_listing',
+              icon: 'add_a_photo'),
+          CopilotAction(
+              label: 'Browse Preloved',
+              route: '/marketplace',
+              icon: 'storefront'),
+        ];
+      case CopilotCategory.travel:
+        return const [
+          CopilotAction(
+              label: 'AI Travel Concierge',
+              route: '/trips',
+              icon: 'flight'),
+          CopilotAction(
+              label: 'Pack My Bag', route: '/trips', icon: 'luggage'),
+        ];
+      case CopilotCategory.social:
+        return const [
+          CopilotAction(
+              label: 'AI Matchmaker',
+              route: '/meetups',
+              icon: 'auto_awesome'),
+          CopilotAction(
+              label: 'Browse Meetups',
+              route: '/meetups',
+              icon: 'groups'),
+        ];
+      case CopilotCategory.general:
+        return const [
+          CopilotAction(
+              label: 'Browse Meetups',
+              route: '/meetups',
+              icon: 'groups'),
+          CopilotAction(
+              label: 'Preloved',
+              route: '/marketplace',
+              icon: 'storefront'),
+        ];
+    }
+  }
+
+  /// Smart local fallback when API is unavailable
+  CopilotMessage _generateLocalResponse(String query) {
     final lower = query.toLowerCase();
     final borough = _getUserBorough();
     final userName = _onboarding.name ?? 'there';
     final children = _onboarding.children;
 
-    // ── Health queries ────────────────────────────────────────────────
-    if (lower.contains('rash') || lower.contains('fever') ||
-        lower.contains('ill') || lower.contains('sick') ||
-        lower.contains('cold') || lower.contains('cough')) {
+    // -- Health queries --
+    if (lower.contains('rash') ||
+        lower.contains('fever') ||
+        lower.contains('ill') ||
+        lower.contains('sick') ||
+        lower.contains('cold') ||
+        lower.contains('cough') ||
+        lower.contains('health') ||
+        lower.contains('doctor')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'I understand your concern, $userName. While I can\'t provide medical advice, here\'s what I can help with:\n\n'
-            '\u2022 The NHS 111 service is available 24/7 for non-emergency health advice\n'
-            '\u2022 Your local GP in $borough can see you for same-day appointments\n'
-            '\u2022 3 parents in your community have discussed similar concerns recently\n\n'
-            'Would you like me to connect you with parents who\'ve been through this?',
+        text:
+            'I understand your concern, $userName. While I can\'t provide '
+            'medical advice, here are some helpful steps:\n\n'
+            '\u2022 **NHS 111** is available 24/7 for non-emergency health advice\n'
+            '\u2022 Your local **GP in $borough** can see you for urgent appointments\n'
+            '\u2022 For emergencies, always call **999**\n\n'
+            'You could also ask parents in your local huddl community '
+            '\u2014 they may have been through something similar.',
         isUser: false,
         category: CopilotCategory.health,
-        actions: [
-          const CopilotAction(label: 'NHS 111 Online', route: 'url', icon: 'health_and_safety', params: {'url': 'https://111.nhs.uk'}),
-          const CopilotAction(label: 'Ask Community', route: '/groups', icon: 'forum'),
+        actions: const [
+          CopilotAction(
+              label: 'NHS 111 Online',
+              route: 'url',
+              icon: 'health_and_safety',
+              params: {'url': 'https://111.nhs.uk'}),
+          CopilotAction(
+              label: 'Ask Community', route: '/groups', icon: 'forum'),
         ],
-        sourceNote: 'NHS verified information \u00B7 Community insights',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Sleep queries ─────────────────────────────────────────────────
-    if (lower.contains('sleep') || lower.contains('bedtime') || lower.contains('night wak')) {
+    // -- Sleep queries --
+    if (lower.contains('sleep') ||
+        lower.contains('bedtime') ||
+        lower.contains('night wak') ||
+        lower.contains('nap')) {
       final childAge = _getChildAgeContext(children);
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Sleep can be tough! Here\'s what works for parents $childAge in $borough:\n\n'
-            '\u2022 **Consistent bedtime routine**: Bath, book, bed \u2014 same order every night\n'
-            '\u2022 **Dark room**: Blackout blinds make a huge difference\n'
-            '\u2022 **White noise**: Many parents swear by the Hatch machine\n'
-            '\u2022 **Gentle methods**: The "fade" technique is popular in your community\n\n'
-            'Mark in Dads Connect shared: "The fade method worked for us after 3 nights \u2014 hang in there!"\n\n'
-            'Would you like to join a sleep support chat or find local sleep consultants?',
+        text:
+            'Sleep can be challenging! Here are some tips $childAge:\n\n'
+            '\u2022 **Consistent routine**: Bath, book, bed \u2014 same order every night\n'
+            '\u2022 **Dark room**: Blackout blinds can help enormously\n'
+            '\u2022 **White noise**: Steady background sound often soothes babies\n'
+            '\u2022 **Patience**: Most sleep regressions pass within 2\u20134 weeks\n\n'
+            'Many parents in $borough have shared their sleep tips in the community groups.',
         isUser: false,
         category: CopilotCategory.development,
-        actions: [
-          const CopilotAction(label: 'Sleep Support Group', route: '/groups', icon: 'bedtime'),
-          CopilotAction(label: 'Find Sleep Consultants', route: '/discover', icon: 'search', params: {'query': 'sleep consultant $borough'}),
+        actions: const [
+          CopilotAction(
+              label: 'Sleep Support Group',
+              route: '/groups',
+              icon: 'bedtime'),
+          CopilotAction(
+              label: 'Ask Community', route: '/groups', icon: 'forum'),
         ],
-        sourceNote: 'Based on community discussions \u00B7 NHS guidance',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Nursery / childcare queries ──────────────────────────────────
-    if (lower.contains('nursery') || lower.contains('nurseries') ||
-        lower.contains('childcare') || lower.contains('school')) {
+    // -- Nursery / childcare --
+    if (lower.contains('nursery') ||
+        lower.contains('nurseries') ||
+        lower.contains('childcare') ||
+        lower.contains('school')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Here are the top-rated nurseries near you in $borough:\n\n'
-            '\u2B50 **Little Owls Nursery** \u2014 4.8/5 (32 parent reviews)\n'
-            '   "Brilliant staff, our daughter loves it" \u2014 Sophie W.\n\n'
-            '\u2B50 **Newnham Nursery School** \u2014 4.6/5 (28 reviews)\n'
-            '   "Great outdoor space and forest school" \u2014 Emma T.\n\n'
-            '\u2B50 **Bright Horizons $borough** \u2014 4.5/5 (19 reviews)\n'
-            '   "Flexible hours, perfect for working parents" \u2014 Kate R.\n\n'
-            'Tip: Waiting lists can be 6\u201312 months, so register early!',
+        text: 'Finding the right nursery in $borough is so important! '
+            'Here are some tips:\n\n'
+            '\u2022 **Start early** \u2014 waiting lists can be 6\u201312 months\n'
+            '\u2022 **Check Ofsted ratings** for quality assurance\n'
+            '\u2022 **Visit in person** during a normal day to see the staff in action\n'
+            '\u2022 **Ask other parents** \u2014 word of mouth is invaluable\n\n'
+            'Your huddl community groups are a great place to get local recommendations!',
         isUser: false,
         category: CopilotCategory.localServices,
-        actions: [
-          const CopilotAction(label: 'Ask in Community', route: '/groups', icon: 'forum'),
-          const CopilotAction(label: 'View Meetups', route: '/meetups', icon: 'groups'),
+        actions: const [
+          CopilotAction(
+              label: 'Ask in Community',
+              route: '/groups',
+              icon: 'forum'),
+          CopilotAction(
+              label: 'View Meetups', route: '/meetups', icon: 'groups'),
         ],
-        sourceNote: 'Based on $borough community reviews \u00B7 Ofsted data',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Sell something ───────────────────────────────────────────────
-    if (lower.contains('sell') || lower.contains('list') || lower.contains('preloved')) {
+    // -- Sell something --
+    if (lower.contains('sell') ||
+        lower.contains('list') ||
+        lower.contains('preloved')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'I can help you list an item on Preloved! Here\'s how our AI Listing Generator works:\n\n'
-            '1. **Take a photo** \u2014 our AI identifies the product instantly\n'
+        text:
+            'Great idea! Selling on huddl Preloved is super easy:\n\n'
+            '1. **Take a photo** \u2014 our AI identifies the product\n'
             '2. **Auto-generates** title, description & smart pricing\n'
-            '3. **One tap** to publish \u2014 ready in 15 seconds!\n\n'
-            'Items in $borough sell on average within 3 days. The most popular categories right now are pushchairs and toys.',
+            '3. **One tap** to publish \u2014 ready in seconds!\n\n'
+            'Items in $borough typically sell quickly. Give it a go!',
         isUser: false,
         category: CopilotCategory.marketplace,
-        actions: [
-          const CopilotAction(label: 'Create AI Listing', route: '/create_listing', icon: 'add_a_photo'),
-          const CopilotAction(label: 'Browse Preloved', route: '/marketplace', icon: 'storefront'),
+        actions: const [
+          CopilotAction(
+              label: 'Create AI Listing',
+              route: '/create_listing',
+              icon: 'add_a_photo'),
+          CopilotAction(
+              label: 'Browse Preloved',
+              route: '/marketplace',
+              icon: 'storefront'),
         ],
-        sourceNote: 'Marketplace insights \u00B7 Local pricing data',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Meetup / social queries ─────────────────────────────────────
-    if (lower.contains('meetup') || lower.contains('meet') ||
-        lower.contains('social') || lower.contains('lonely') ||
-        lower.contains('friend') || lower.contains('connect')) {
+    // -- Meetup / social --
+    if (lower.contains('meetup') ||
+        lower.contains('meet') ||
+        lower.contains('social') ||
+        lower.contains('lonely') ||
+        lower.contains('friend')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Let\'s get you connected, $userName! Here\'s what\'s happening in $borough:\n\n'
-            '\u2022 **5 meetups** planned this week near you\n'
-            '\u2022 **3 parents** with similar-aged kids are looking to meet\n'
-            '\u2022 Our AI Matchmaker has found your top compatible parents!\n\n'
-            'The most popular meetup type in $borough right now is coffee mornings \u2014 relaxed, pram-friendly, and great for making friends.',
+        text:
+            'Let\'s get you connected, $userName! Here\'s what you can do:\n\n'
+            '\u2022 **Browse meetups** happening near you in $borough\n'
+            '\u2022 **Create your own meetup** \u2014 coffee mornings are very popular\n'
+            '\u2022 **Try AI Matchmaker** to find compatible parents nearby\n\n'
+            'Making parent friends is one of the best things you can do. '
+            'The huddl community is here for you!',
         isUser: false,
         category: CopilotCategory.social,
-        actions: [
-          const CopilotAction(label: 'AI Matchmaker', route: '/meetups', icon: 'auto_awesome'),
-          const CopilotAction(label: 'Create Meetup', route: '/create_meetup', icon: 'add'),
-          const CopilotAction(label: 'Browse Meetups', route: '/meetups', icon: 'groups'),
+        actions: const [
+          CopilotAction(
+              label: 'AI Matchmaker',
+              route: '/meetups',
+              icon: 'auto_awesome'),
+          CopilotAction(
+              label: 'Browse Meetups',
+              route: '/meetups',
+              icon: 'groups'),
         ],
-        sourceNote: 'AI Matchmaker \u00B7 Based on your profile',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Travel queries ──────────────────────────────────────────────
-    if (lower.contains('travel') || lower.contains('holiday') ||
-        lower.contains('vacation') || lower.contains('destination') ||
-        lower.contains('center parcs') || lower.contains('flight')) {
+    // -- Travel --
+    if (lower.contains('travel') ||
+        lower.contains('holiday') ||
+        lower.contains('vacation') ||
+        lower.contains('trip') ||
+        lower.contains('destination')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Family travel is one of our specialties! Here\'s what $borough parents love:\n\n'
-            '\u2708\uFE0F **Top 3 family destinations this season:**\n'
-            '1. Tenerife \u2014 4hr flight, 92% recommend, great for toddlers\n'
-            '2. Mallorca \u2014 2.5hr flight, all-inclusive options\n'
-            '3. Center Parcs Woburn \u2014 2hr drive, rain or shine!\n\n'
-            'Our AI Travel Concierge can create a personalised packing list and find destinations matched to your children\'s ages.',
+        text:
+            'Family travel is so rewarding! Here are some popular picks:\n\n'
+            '\u2022 **Short haul**: Mallorca, Tenerife, Algarve \u2014 great for little ones\n'
+            '\u2022 **UK staycation**: Center Parcs, Bluestone, Haven \u2014 rain or shine\n'
+            '\u2022 **City breaks**: Barcelona, Amsterdam \u2014 surprisingly family-friendly\n\n'
+            'Check out huddl Trips for our AI Travel Concierge \u2014 it creates '
+            'personalised packing lists based on your children\'s ages!',
         isUser: false,
         category: CopilotCategory.travel,
-        actions: [
-          const CopilotAction(label: 'AI Travel Concierge', route: '/trips', icon: 'flight'),
-          const CopilotAction(label: 'Pack My Bag', route: '/trips', icon: 'luggage'),
+        actions: const [
+          CopilotAction(
+              label: 'AI Travel Concierge',
+              route: '/trips',
+              icon: 'flight'),
+          CopilotAction(
+              label: 'Pack My Bag', route: '/trips', icon: 'luggage'),
         ],
-        sourceNote: 'huddl Trips \u00B7 Community travel reviews',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Weaning / feeding ────────────────────────────────────────────
-    if (lower.contains('wean') || lower.contains('food') ||
-        lower.contains('feed') || lower.contains('solids') ||
-        lower.contains('formula') || lower.contains('breastfe')) {
+    // -- Feeding / weaning --
+    if (lower.contains('wean') ||
+        lower.contains('food') ||
+        lower.contains('feed') ||
+        lower.contains('solids') ||
+        lower.contains('formula') ||
+        lower.contains('breastfe')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Great question about feeding! Here\'s what the community recommends:\n\n'
-            '\u2022 **Baby-led weaning** is very popular in $borough \u2014 start with soft finger foods\n'
-            '\u2022 **First foods**: Sweet potato, banana, avocado, and porridge are community favourites\n'
-            '\u2022 **Timing**: NHS recommends around 6 months, when baby can sit up and shows interest\n\n'
-            'Lucy in Toddler Adventures shared: "We started with steamed veg sticks and it was a game-changer!"\n\n'
-            'There\'s also a weaning workshop next week at the Community Centre.',
+        text:
+            'Great question about feeding! Here are the basics:\n\n'
+            '\u2022 **NHS recommends** starting solids around 6 months\n'
+            '\u2022 **First foods**: Sweet potato, banana, avocado, porridge\n'
+            '\u2022 **Baby-led weaning** is popular \u2014 start with soft finger foods\n'
+            '\u2022 **Go at your baby\'s pace** \u2014 every child is different\n\n'
+            'Parents in $borough have great tips in the community groups!',
         isUser: false,
         category: CopilotCategory.health,
-        actions: [
-          const CopilotAction(label: 'NHS Weaning Guide', route: 'url', icon: 'restaurant', params: {'url': 'https://www.nhs.uk/start4life/weaning'}),
-          const CopilotAction(label: 'Join Weaning Group', route: '/groups', icon: 'group_add'),
+        actions: const [
+          CopilotAction(
+              label: 'NHS Weaning Guide',
+              route: 'url',
+              icon: 'restaurant',
+              params: {
+                'url': 'https://www.nhs.uk/start4life/weaning'
+              }),
+          CopilotAction(
+              label: 'Join Weaning Group',
+              route: '/groups',
+              icon: 'group_add'),
         ],
-        sourceNote: 'NHS Start4Life \u00B7 Community tips',
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
     }
 
-    // ── Development milestones ──────────────────────────────────────
-    if (lower.contains('milestone') || lower.contains('development') ||
-        lower.contains('crawl') || lower.contains('walk') ||
-        lower.contains('talk') || lower.contains('first word')) {
-      final childAge = _getChildAgeContext(children);
-      return CopilotMessage(
-        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text: 'Every child develops at their own pace, $userName! Here\'s a general guide $childAge:\n\n'
-            '\u2022 **6 months**: Sitting with support, babbling, reaching for objects\n'
-            '\u2022 **9 months**: Crawling, pulling to stand, responding to name\n'
-            '\u2022 **12 months**: First steps, first words, pointing at things\n'
-            '\u2022 **18 months**: Walking confidently, 10\u201320 words, stacking blocks\n'
-            '\u2022 **24 months**: Running, 2-word phrases, imaginative play\n\n'
-            'Remember: These are averages. If you have concerns, your health visitor in $borough is a great first point of contact.',
-        isUser: false,
-        category: CopilotCategory.development,
-        actions: [
-          const CopilotAction(label: 'Track Milestones', route: '/profile', icon: 'timeline'),
-          const CopilotAction(label: 'Ask Community', route: '/groups', icon: 'forum'),
-        ],
-        sourceNote: 'NHS developmental guidance \u00B7 Community experiences',
-      );
-    }
-
-    // ── General / default response ──────────────────────────────────
+    // -- Default general --
     return CopilotMessage(
       id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-      text: 'Thanks for asking, $userName! I\'m your parenting copilot and I can help with:\n\n'
-          '\u{1F3E5} **Health & Development** \u2014 milestones, sleep, feeding advice\n'
-          '\u{1F3EB} **Local Services** \u2014 nurseries, GPs, classes near $borough\n'
-          '\u{1F6D2} **Preloved** \u2014 sell items instantly with our AI listing generator\n'
-          '\u{1F91D} **Meetups** \u2014 find compatible parents and plan activities\n'
-          '\u2708\uFE0F **Travel** \u2014 family-friendly destinations and packing lists\n\n'
-          'Just ask me anything \u2014 I know your $borough community inside out!',
+      text:
+          'That\'s a great question, $userName! I\'m having trouble connecting '
+          'to my full AI brain right now, but I can still help with the basics.\n\n'
+          'Try asking me about:\n'
+          '\u2022 **Sleep**, **feeding**, or **development milestones**\n'
+          '\u2022 **Nurseries** or **local services** near $borough\n'
+          '\u2022 **Selling items** on Preloved\n'
+          '\u2022 **Planning meetups** with local parents\n'
+          '\u2022 **Family travel** ideas\n\n'
+          'Or try again in a moment \u2014 I\'ll be fully connected shortly!',
       isUser: false,
       category: CopilotCategory.general,
-      actions: [
-        const CopilotAction(label: 'Browse Meetups', route: '/meetups', icon: 'groups'),
-        const CopilotAction(label: 'Preloved', route: '/marketplace', icon: 'storefront'),
-        const CopilotAction(label: 'Trips', route: '/trips', icon: 'flight'),
+      actions: const [
+        CopilotAction(
+            label: 'Browse Meetups',
+            route: '/meetups',
+            icon: 'groups'),
+        CopilotAction(
+            label: 'Preloved',
+            route: '/marketplace',
+            icon: 'storefront'),
+        CopilotAction(label: 'Trips', route: '/trips', icon: 'flight'),
       ],
-      sourceNote: 'Powered by huddl AI',
+      sourceNote: 'Offline mode \u00B7 Full AI available when connected',
     );
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────
+  // -- Helpers --
   String _getUserBorough() {
     final pc = _onboarding.postcode;
-    if (pc != null) return _postcode.getBoroughFromPostcode(pc) ?? 'Cambridge';
-    return 'Cambridge';
+    if (pc != null) {
+      return _postcode.getBoroughFromPostcode(pc) ?? 'your area';
+    }
+    return 'your area';
   }
 
   String _getChildAgeContext(List<Map<String, String>> children) {
@@ -366,7 +820,7 @@ class AiCopilotService {
     final birthday = children.first['birthday'];
     if (birthday == null) return '';
     final months = _parseAgeMonths(birthday);
-    if (months < 12) return 'for a ${months}-month-old';
+    if (months < 12) return 'for a $months-month-old';
     final years = months ~/ 12;
     return 'for a $years-year-old';
   }
@@ -378,7 +832,8 @@ class AiCopilotService {
         final month = int.parse(parts[0]);
         final year = int.parse(parts.last);
         final now = DateTime.now();
-        return ((now.difference(DateTime(year, month)).inDays) / 30.44).round();
+        return ((now.difference(DateTime(year, month)).inDays) / 30.44)
+            .round();
       }
     } catch (_) {}
     return 12;

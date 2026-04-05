@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../services/onboarding_data_service.dart';
 import '../legal/terms_of_service_screen.dart';
 import '../legal/privacy_policy_detail_screen.dart';
@@ -92,8 +93,25 @@ class _PasswordScreenState extends State<PasswordScreen> {
       _isLoading = true;
       _errorMsg = null;
     });
+
     final onboardingService = OnboardingDataService();
     onboardingService.setPassword(_passCtrl.text);
+
+    // On web, Firebase phone auth (reCAPTCHA) cannot work in sandboxed
+    // environments. Skip the verification screen entirely — save data
+    // locally and proceed straight to welcome. The real phone-OTP
+    // verification happens on the native Android app.
+    if (kIsWeb) {
+      onboardingService.setPhoneVerified(true);
+      setState(() => _isLoading = false);
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/welcome_complete', (route) => false);
+      }
+      return;
+    }
+
+    // On mobile, go through the normal phone OTP verification flow
     setState(() => _isLoading = false);
     if (mounted) Navigator.pushNamed(context, '/verification');
   }

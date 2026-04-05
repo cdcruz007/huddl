@@ -165,6 +165,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _isLoading = true;
   String _searchQuery = '';
   bool _showSearch = false;
+  bool _summariesLoaded = false;
   final TextEditingController _searchController = TextEditingController();
 
   // ── Deep search state ─────────────────────────────────────────────────
@@ -177,6 +178,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     super.initState();
     _loadGroups();
     _loadMutedAndPinned();
+    _loadDemoSummaries();
     _dmService.addListener(_onDMUpdate);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
@@ -192,6 +194,11 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   void _onGroupsChanged() {
     _loadGroups();
+  }
+
+  Future<void> _loadDemoSummaries() async {
+    await _summariser.generateDemoSummaries();
+    if (mounted) setState(() => _summariesLoaded = true);
   }
 
   // ── Muted & Pinned persistence ────────────────────────────────────
@@ -936,9 +943,14 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   /// Build the normal conversation list (no search active).
   Widget _buildAiCatchUpCard() {
-    // Generate demo summaries on first call
-    final demos = _summariser.generateDemoSummaries();
-    final activeSummaries = demos.values.where((s) => !s.isDismissed && s.unreadCount > 10).toList();
+    if (!_summariesLoaded) return const SizedBox();
+    // Check cached summaries for active ones
+    final groupIds = ['new_parents_cambridge', 'dads_connect', 'toddler_adventures'];
+    final activeSummaries = groupIds
+        .map((id) => _summariser.getSummary(id))
+        .whereType<ChatSummary>()
+        .where((s) => !s.isDismissed && s.unreadCount > 10)
+        .toList();
     if (activeSummaries.isEmpty) return const SizedBox();
     final summary = activeSummaries.first;
 

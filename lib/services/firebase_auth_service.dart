@@ -11,9 +11,9 @@ import 'onboarding_data_service.dart';
 ///   - User profile creation in Firestore on first sign-up
 ///   - Session persistence across app restarts
 ///
-/// Huddl Connect uses phone-only authentication. Users register and
+/// Huddl Connect uses **phone-only** authentication. Users register and
 /// log in exclusively via their UK mobile number (+44) and a 6-digit
-/// SMS OTP code. No email/password auth is used.
+/// SMS OTP code. There is NO email/password auth.
 class FirebaseAuthService {
   // ── Singleton ────────────────────────────────────────────────────────────
   static final FirebaseAuthService _instance = FirebaseAuthService._internal();
@@ -247,61 +247,6 @@ class FirebaseAuthService {
 
     if (kDebugMode) {
       debugPrint('FirebaseAuthService: User profile created for $userId');
-    }
-  }
-
-  // ═════════════════════════════════════════════════════════════════════════
-  // LEGACY STUBS — kept for backward compatibility with screens that were
-  // originally built for email/password auth.  These use phone-based
-  // email aliases (e.g. +447700900123@huddl.app) internally.
-  // ═════════════════════════════════════════════════════════════════════════
-
-  Future<AuthResult> signUpWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final cred = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      if (cred.user != null) await _createUserProfile(cred.user!.uid);
-      return AuthResult.success(cred.user, message: 'Account created');
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        return AuthResult.failure('This phone number is already registered. Try logging in.');
-      }
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('Sign-up failed: $e');
-    }
-  }
-
-  Future<AuthResult> signInWithEmail({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final cred = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return AuthResult.success(cred.user);
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('Login failed: $e');
-    }
-  }
-
-  Future<AuthResult> sendPasswordResetEmail(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-      return AuthResult.success(null, message: 'Password reset email sent');
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_mapAuthError(e.code));
-    } catch (e) {
-      return AuthResult.failure('Failed to send reset email: $e');
     }
   }
 

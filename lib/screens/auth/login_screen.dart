@@ -110,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final digits = _normalise(_phoneController.text);
 
     // ── Test account bypass ───────────────────────────────────────────
-    // For designated test accounts, skip Firebase email/password auth
+    // For designated test accounts, skip Firebase phone OTP
     // and go straight to the OTP verification screen with test OTP.
     if (TestAccountService.isTestAccount(digits)) {
       setState(() => _isLoading = false);
@@ -128,27 +128,48 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     // ────────────────────────────────────────────────────────────────
 
-    // Build an email from the phone number (Firebase email/password pattern)
-    final email = '$_countryCode$digits@huddl.app';
-    final password = _passwordController.text;
+    // Phone-only auth: initiate Firebase phone verification (sends SMS OTP)
+    final fullPhone = '$_countryCode$digits';
 
-    final result = await _authService.signInWithEmail(
-      email: email,
-      password: password,
-    );
+    try {
+      final result = await _authService.verifyPhoneNumber(fullPhone)
+          .timeout(const Duration(seconds: 10), onTimeout: () {
+        return PhoneAuthResult(
+          status: PhoneAuthStatus.error,
+          errorMessage: 'Verification timed out. Please try again.',
+        );
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (result.isSuccess) {
-      // Update last active timestamp
-      _authService.updateLastActive();
-
-      setState(() => _isLoading = false);
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
-    } else {
+      if (result.status == PhoneAuthStatus.verified) {
+        // Auto-verified (Android) — go straight to home
+        _authService.updateLastActive();
+        setState(() => _isLoading = false);
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+      } else if (result.status == PhoneAuthStatus.codeSent) {
+        // SMS sent — go to OTP screen
+        setState(() => _isLoading = false);
+        Navigator.pushNamed(
+          context,
+          '/login_otp',
+          arguments: {
+            'phoneNumber': fullPhone,
+            'generatedOtp': '',
+            'isTestAccount': 'false',
+          },
+        );
+      } else {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = result.errorMessage ?? 'Failed to send verification code.';
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _isLoading    = false;
-        _errorMessage = result.errorMessage ?? 'Login failed. Please try again.';
+        _isLoading = false;
+        _errorMessage = 'Login failed. Please try again.';
       });
     }
   }
@@ -478,7 +499,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  // ── Forgot password — Firebase password reset via email ──────────────────
+  // ── Forgot password — sends SMS OTP to reset ──────────────────────────
   void _showForgotPasswordFlow() {
     final resetPhoneCtrl = TextEditingController();
     String? resetPhoneError;
@@ -517,7 +538,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: HuddlColors.textDark)),
                 const SizedBox(height: 8),
                 Text(
-                    'Enter your UK mobile number. We\'ll send a password reset link to your associated email.',
+                    'Enter your UK mobile number. We\'ll send an SMS code to verify your identity.',
                     style: TextStyle(
                         fontSize: 14,
                         color: HuddlColors.textSecondary,
@@ -588,27 +609,51 @@ class _LoginScreenState extends State<LoginScreen> {
                       final digits = _normalise(resetPhoneCtrl.text);
                       if (digits.length == 10 && digits.startsWith('7')) {
                         setLocal(() => isSending = true);
-                        final email = '+44$digits@huddl.app';
-                        final result = await _authService.sendPasswordResetEmail(email);
-                        if (!ctx.mounted) return;
-                        setLocal(() => isSending = false);
-                        Navigator.pop(ctx);
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                  result.isSuccess
-                                      ? 'Password reset email sent!'
-                                      : result.errorMessage ?? 'Failed to send reset email.',
-                                  style: const TextStyle(fontWeight: FontWeight.w600)),
-                              backgroundColor: result.isSuccess
-                                  ? HuddlColors.successGreen
-                                  : HuddlColors.error,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                            ),
-                          );
+                        final fullPhone = '+44$digits';
+                        try {
+                          final result = await _authService.verifyPhoneNumber(fullPhone)
+                              .timeout(const Duration(seconds: 10), onTimeout: () {
+                            return PhoneAuthResult(
+                              status: PhoneAuthStatus.error,
+                              errorMessage: 'Timed out. Please try again.',
+                            );
+                          });
+                          if (!ctx.mounted) return;
+                          setLocal(() => isSending = false);
+                          Navigator.pop(ctx);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    result.status == PhoneAuthStatus.codeSent
+                                        ? 'Verification code sent to $fullPhone'
+                                        : result.errorMessage ?? 'Failed to send code.',
+                                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                                backgroundColor: result.status == PhoneAuthStatus.codeSent
+                                    ? HuddlColors.successGreen
+                                    : HuddlColors.error,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            );
+                          }
+                        } catch (_) {
+                          if (!ctx.mounted) return;
+                          setLocal(() => isSending = false);
+                          Navigator.pop(ctx);
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Failed to send code. Please try again.',
+                                    style: TextStyle(fontWeight: FontWeight.w600)),
+                                backgroundColor: HuddlColors.error,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            );
+                          }
                         }
                       }
                     },
@@ -624,7 +669,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 20, height: 20,
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white))
-                        : const Text('Send Reset Link',
+                        : const Text('Send Verification Code',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

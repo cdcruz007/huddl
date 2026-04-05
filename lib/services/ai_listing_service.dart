@@ -1,11 +1,14 @@
+import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'rehome_service.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // AI LISTING GENERATOR SERVICE
-// Generates listing titles, descriptions, smart pricing, and auto-categorisation
-// from photo analysis (simulated) and minimal user input
-// ═══════════════════════════════════════════════════════════════════════════════
+// Uses Gemini AI for genuine product analysis, description generation,
+// smart pricing, and auto-categorisation from user input
+// =============================================================================
 
 class AiListingDraft {
   final String suggestedTitle;
@@ -58,146 +61,141 @@ class AiListingService {
 
   final RehomeService _rehomeService = RehomeService();
 
-  // ── Product recognition database (simulated AI vision) ─────────────
-  static const _productDb = <String, Map<String, dynamic>>{
-    'bugaboo': {
-      'brand': 'Bugaboo',
-      'products': ['Fox 3', 'Cameleon', 'Donkey 5', 'Butterfly', 'Dragonfly'],
-      'category': 'pushchairsAndPrams',
-      'retailRange': [499, 1599],
-      'ageStage': 'newborn',
-    },
-    'silver cross': {
-      'brand': 'Silver Cross',
-      'products': ['Pioneer', 'Wave', 'Reef', 'Dune'],
-      'category': 'pushchairsAndPrams',
-      'retailRange': [350, 1200],
-      'ageStage': 'newborn',
-    },
-    'ergobaby': {
-      'brand': 'Ergobaby',
-      'products': ['Embrace', 'Omni 360', 'Adapt'],
-      'category': 'babyCareAndAccessories',
-      'retailRange': [79, 189],
-      'ageStage': 'newborn',
-    },
-    'stokke': {
-      'brand': 'Stokke',
-      'products': ['Tripp Trapp', 'Clikk', 'Steps'],
-      'category': 'furniture',
-      'retailRange': [199, 299],
-      'ageStage': 'baby0to12',
-    },
-    'snuzpod': {
-      'brand': 'Snuzpod',
-      'products': ['4', '3', '2'],
-      'category': 'furniture',
-      'retailRange': [199, 299],
-      'ageStage': 'newborn',
-    },
-    'maxi-cosi': {
-      'brand': 'Maxi-Cosi',
-      'products': ['Pebble 360', 'Pearl', 'Titan'],
-      'category': 'forTheCar',
-      'retailRange': [169, 399],
-      'ageStage': 'allAges',
-    },
-    'lego duplo': {
-      'brand': 'LEGO',
-      'products': ['DUPLO Zoo', 'DUPLO Train', 'DUPLO Town'],
-      'category': 'toysAndGames',
-      'retailRange': [25, 89],
-      'ageStage': 'toddler',
-    },
-    'tommee tippee': {
-      'brand': 'Tommee Tippee',
-      'products': ['Complete Feeding Set', 'Steriliser', 'Perfect Prep'],
-      'category': 'babyCareAndAccessories',
-      'retailRange': [39, 130],
-      'ageStage': 'newborn',
-    },
-    'fisher-price': {
-      'brand': 'Fisher-Price',
-      'products': ['Jumperoo', 'Rainforest', 'Laugh & Learn'],
-      'category': 'toysAndGames',
-      'retailRange': [30, 120],
-      'ageStage': 'baby0to12',
-    },
-    'joie': {
-      'brand': 'Joie',
-      'products': ['Spin 360', 'Every Stage', 'Stages'],
-      'category': 'forTheCar',
-      'retailRange': [150, 350],
-      'ageStage': 'allAges',
-    },
-  };
+  // Gemini API configuration
+  static const String _geminiApiKey = 'AIzaSyA3MOqpbEWR5shMm1EF6H06-O5mGVyxqIg';
+  static const String _geminiModel = 'gemini-2.0-flash';
+  static const String _geminiBaseUrl =
+      'https://generativelanguage.googleapis.com/v1beta/models';
 
-  // ── Safety recall database ────────────────────────────────────────────
+  // Safety recall database (real safety data)
   static const _safetyRecalls = <String>[
     'Fisher-Price Rock \'n Play Sleeper',
     'Kids2 Rocking Sleeper',
     'Boppy Lounger',
   ];
 
-  /// Simulate AI photo analysis and generate a listing draft
-  AiListingDraft analyseAndGenerate({
+  /// Use Gemini AI to analyse a product description and generate a listing
+  Future<AiListingDraft> analyseAndGenerate({
     String? photoDescription,
     String? userHint,
-  }) {
-    final hint = (photoDescription ?? userHint ?? '').toLowerCase();
-    final rng = Random(hint.hashCode);
+  }) async {
+    final hint = (photoDescription ?? userHint ?? '').trim();
+    if (hint.isEmpty) {
+      return _fallbackDraft('Baby Item', 'A quality baby item for sale.');
+    }
 
-    // Try to match a known product
-    String? matchedBrand;
-    Map<String, dynamic>? matchedProduct;
-
-    for (final entry in _productDb.entries) {
-      if (hint.contains(entry.key)) {
-        matchedBrand = entry.key;
-        matchedProduct = entry.value;
-        break;
+    try {
+      final aiResult = await _callGeminiForListing(hint);
+      return aiResult;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Gemini listing AI error: $e');
       }
+      return _fallbackFromInput(hint);
     }
+  }
 
-    // If no match, try keyword-based categorisation
-    if (matchedProduct == null) {
-      matchedProduct = _categoriseFromKeywords(hint);
-    }
+  /// Call Gemini to generate a complete listing from product description
+  Future<AiListingDraft> _callGeminiForListing(String userInput) async {
+    final systemPrompt = '''You are a marketplace listing expert for a UK-based parents' community app called huddl Preloved.
 
-    final brand = (matchedProduct?['brand'] ?? 'Baby') as String;
-    final products = (matchedProduct?['products'] as List<dynamic>?) ?? ['Item'];
-    final product = products[rng.nextInt(products.length)] as String;
-    final retailRange = (matchedProduct?['retailRange'] as List<dynamic>?) ?? [20, 100];
-    final retailLow = (retailRange[0] as num).toDouble();
-    final retailHigh = (retailRange[1] as num).toDouble();
-    final retailPrice = retailLow + rng.nextDouble() * (retailHigh - retailLow);
-    final categoryStr = (matchedProduct?['category'] ?? 'other') as String;
-    final ageStr = (matchedProduct?['ageStage'] ?? 'allAges') as String;
+Given a user's description of a baby/children's item they want to sell, generate a complete listing.
 
-    // Determine condition and price multiplier
-    final conditionIndex = rng.nextInt(3); // 0=likeNew, 1=good, 2=wellUsed
-    final condition = [ItemCondition.likeNew, ItemCondition.good, ItemCondition.wellUsed][conditionIndex];
-    final priceMultiplier = [0.55, 0.40, 0.25][conditionIndex];
-    final suggestedPrice = (retailPrice * priceMultiplier).roundToDouble();
-    final savings = ((1 - priceMultiplier) * 100).round();
+RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
+{
+  "title": "Brand Product Name",
+  "description": "A compelling 2-3 sentence marketplace listing description. Mention condition, key features, and why it's a great buy. Use British English.",
+  "suggestedPrice": 45.0,
+  "retailPrice": 120.0,
+  "savingsPercent": 63,
+  "category": "one of: pushchairsAndPrams, forTheCar, furniture, toysAndGames, babyCareAndAccessories, boysClothes, girlsClothes, maternity, books, other",
+  "ageStage": "one of: newborn, baby0to12, toddler, preschool, schoolAge, allAges, maternity",
+  "condition": "one of: brandNew, likeNew, good, wellUsed",
+  "safetyNote": null or "safety warning text if the item appears on a recall list",
+  "tags": ["tag1", "tag2", "tag3", "preloved"],
+  "confidence": 0.85
+}
 
-    // Generate description
-    final title = '$brand $product';
-    final description = _generateDescription(
-      brand: brand,
-      product: product,
-      condition: condition,
-      hint: hint,
-    );
+PRICING RULES:
+- Brand new items: 60-70% of retail
+- Like new: 45-55% of retail
+- Good: 30-45% of retail
+- Well used: 15-30% of retail
+- Research typical UK retail prices for the brand/product
+- Round prices to whole pounds
 
-    // Safety check
-    String? safetyNote;
-    for (final recall in _safetyRecalls) {
-      if (hint.contains(recall.toLowerCase())) {
-        safetyNote = 'This item appears on a product recall list. Please check the manufacturer\'s website before selling.';
-        break;
+SAFETY: Flag these recalled items: Fisher-Price Rock 'n Play Sleeper, Kids2 Rocking Sleeper, Boppy Lounger.
+
+Be specific about the product. If the user mentions a brand, include it. If they don't, infer the most likely product type.''';
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [
+          {'text': systemPrompt}
+        ]
+      },
+      'contents': [
+        {
+          'role': 'user',
+          'parts': [
+            {'text': 'Generate a listing for: $userInput'}
+          ]
+        }
+      ],
+      'generationConfig': {
+        'temperature': 0.7,
+        'topP': 0.9,
+        'maxOutputTokens': 512,
+      },
+    };
+
+    final url = Uri.parse(
+        '$_geminiBaseUrl/$_geminiModel:generateContent?key=$_geminiApiKey');
+
+    final response = await http
+        .post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          var text = (parts[0]['text'] as String? ?? '').trim();
+          // Strip markdown code fence if present
+          text = text.replaceAll(RegExp(r'^```json\s*'), '');
+          text = text.replaceAll(RegExp(r'\s*```$'), '');
+          text = text.trim();
+
+          try {
+            final json = jsonDecode(text) as Map<String, dynamic>;
+            return _parseDraftFromJson(json);
+          } catch (parseError) {
+            if (kDebugMode) {
+              debugPrint('JSON parse error: $parseError');
+              debugPrint('Raw response: $text');
+            }
+            throw Exception('Failed to parse Gemini JSON response');
+          }
+        }
       }
+      throw Exception('No content in Gemini response');
+    } else {
+      throw Exception('Gemini API error: ${response.statusCode}');
     }
+  }
+
+  /// Parse the JSON response from Gemini into an AiListingDraft
+  AiListingDraft _parseDraftFromJson(Map<String, dynamic> json) {
+    final categoryStr = (json['category'] ?? 'other') as String;
+    final ageStr = (json['ageStage'] ?? 'allAges') as String;
+    final condStr = (json['condition'] ?? 'good') as String;
 
     final category = ItemCategory.values.firstWhere(
       (c) => c.name == categoryStr,
@@ -207,25 +205,162 @@ class AiListingService {
       (a) => a.name == ageStr,
       orElse: () => AgeStage.allAges,
     );
+    final condition = ItemCondition.values.firstWhere(
+      (c) => c.name == condStr,
+      orElse: () => ItemCondition.good,
+    );
+
+    final suggestedPrice =
+        (json['suggestedPrice'] as num?)?.toDouble() ?? 25.0;
+    final retailPrice = (json['retailPrice'] as num?)?.toDouble() ??
+        suggestedPrice * 2.5;
+    final savingsPercent = (json['savingsPercent'] as num?)?.toInt() ?? 50;
 
     return AiListingDraft(
-      suggestedTitle: title,
-      suggestedDescription: description,
+      suggestedTitle: (json['title'] ?? 'Baby Item') as String,
+      suggestedDescription:
+          (json['description'] ?? 'A quality preloved item.') as String,
       suggestedPrice: suggestedPrice,
       retailPrice: retailPrice,
-      savingsPercent: savings,
+      savingsPercent: savingsPercent,
       suggestedCategory: category,
       suggestedAgeStage: ageStage,
       suggestedCondition: condition,
+      safetyNote: json['safetyNote'] as String?,
+      tags: (json['tags'] as List<dynamic>?)
+              ?.map((t) => t.toString())
+              .toList() ??
+          ['preloved', 'baby-gear'],
+      confidence: (json['confidence'] as num?)?.toDouble() ?? 0.85,
+    );
+  }
+
+  /// Fallback: generate a basic draft without AI
+  AiListingDraft _fallbackFromInput(String hint) {
+    final lower = hint.toLowerCase();
+    final rng = Random(hint.hashCode);
+
+    String title = 'Baby Item';
+    String category = 'other';
+    String ageStage = 'allAges';
+    double retailLow = 20;
+    double retailHigh = 100;
+
+    // Basic keyword categorisation
+    if (lower.contains('pram') ||
+        lower.contains('pushchair') ||
+        lower.contains('buggy') ||
+        lower.contains('bugaboo') ||
+        lower.contains('silver cross')) {
+      title = 'Pushchair / Pram';
+      category = 'pushchairsAndPrams';
+      retailLow = 100;
+      retailHigh = 800;
+      ageStage = 'newborn';
+    } else if (lower.contains('car seat') || lower.contains('isofix')) {
+      title = 'Car Seat';
+      category = 'forTheCar';
+      retailLow = 100;
+      retailHigh = 350;
+    } else if (lower.contains('cot') ||
+        lower.contains('crib') ||
+        lower.contains('bed')) {
+      title = 'Baby Cot / Crib';
+      category = 'furniture';
+      retailLow = 50;
+      retailHigh = 300;
+      ageStage = 'newborn';
+    } else if (lower.contains('toy') || lower.contains('game')) {
+      title = 'Children\'s Toys';
+      category = 'toysAndGames';
+      retailLow = 15;
+      retailHigh = 80;
+      ageStage = 'toddler';
+    } else if (lower.contains('clothes') || lower.contains('outfit')) {
+      title = 'Clothes Bundle';
+      category = 'boysClothes';
+      retailLow = 20;
+      retailHigh = 60;
+    } else if (lower.contains('book')) {
+      title = 'Book Collection';
+      category = 'books';
+      retailLow = 10;
+      retailHigh = 40;
+    }
+
+    // If hint has more detail, use it as title
+    if (hint.length > 5) {
+      // Capitalise first letter of each word
+      title = hint
+          .split(' ')
+          .map((w) =>
+              w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+          .join(' ');
+    }
+
+    final retailPrice =
+        retailLow + rng.nextDouble() * (retailHigh - retailLow);
+    final suggestedPrice = (retailPrice * 0.40).roundToDouble();
+    final savings = 60;
+
+    final catEnum = ItemCategory.values.firstWhere(
+      (c) => c.name == category,
+      orElse: () => ItemCategory.other,
+    );
+    final ageEnum = AgeStage.values.firstWhere(
+      (a) => a.name == ageStage,
+      orElse: () => AgeStage.allAges,
+    );
+
+    // Safety check
+    String? safetyNote;
+    for (final recall in _safetyRecalls) {
+      if (lower.contains(recall.toLowerCase())) {
+        safetyNote =
+            'This item appears on a product recall list. Check the manufacturer\'s website before selling.';
+        break;
+      }
+    }
+
+    return AiListingDraft(
+      suggestedTitle: title,
+      suggestedDescription:
+          '$title in good condition. Well cared for, from a clean smoke-free home. '
+          'Collection available or happy to meet locally.',
+      suggestedPrice: suggestedPrice,
+      retailPrice: retailPrice,
+      savingsPercent: savings,
+      suggestedCategory: catEnum,
+      suggestedAgeStage: ageEnum,
+      suggestedCondition: ItemCondition.good,
       safetyNote: safetyNote,
-      tags: _generateTags(brand, product, category, ageStage),
-      confidence: matchedBrand != null ? 0.92 : 0.70,
+      tags: [title.toLowerCase().replaceAll(' ', '-'), 'preloved', 'baby-gear'],
+      confidence: 0.55,
+    );
+  }
+
+  /// Minimal fallback draft
+  AiListingDraft _fallbackDraft(String title, String desc) {
+    return AiListingDraft(
+      suggestedTitle: title,
+      suggestedDescription: desc,
+      suggestedPrice: 20,
+      retailPrice: 50,
+      savingsPercent: 60,
+      suggestedCategory: ItemCategory.other,
+      suggestedAgeStage: AgeStage.allAges,
+      suggestedCondition: ItemCondition.good,
+      tags: ['preloved', 'baby-gear'],
+      confidence: 0.50,
     );
   }
 
   /// Get price comparison for a given category/price
-  PriceComparison getPriceComparison(ItemCategory category, double suggestedPrice) {
-    final items = _rehomeService.items.where((i) => i.category == category && !i.isSold).toList();
+  PriceComparison getPriceComparison(
+      ItemCategory category, double suggestedPrice) {
+    final items = _rehomeService.items
+        .where((i) => i.category == category && !i.isSold)
+        .toList();
     if (items.isEmpty) {
       return PriceComparison(
         avgLocalPrice: suggestedPrice,
@@ -265,7 +400,8 @@ class AiListingService {
   }
 
   /// Quick-list: one-tap listing from minimal input
-  RehomeItem quickCreateListing(AiListingDraft draft, {List<String>? imageUrls}) {
+  RehomeItem quickCreateListing(AiListingDraft draft,
+      {List<String>? imageUrls}) {
     final item = RehomeItem(
       id: 'rh_ai_${DateTime.now().millisecondsSinceEpoch}',
       title: draft.suggestedTitle,
@@ -274,9 +410,10 @@ class AiListingService {
       category: draft.suggestedCategory,
       condition: draft.suggestedCondition,
       price: draft.suggestedPrice,
-      imageUrls: imageUrls ?? [
-        'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
-      ],
+      imageUrls: imageUrls ??
+          [
+            'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
+          ],
       sellerName: 'You',
       sellerId: 'current_user',
       sellerLocation: 'Your area',
@@ -285,70 +422,5 @@ class AiListingService {
 
     _rehomeService.addListing(item);
     return item;
-  }
-
-  // ── Internal helpers ───────────────────────────────────────────────────
-  Map<String, dynamic>? _categoriseFromKeywords(String hint) {
-    if (hint.contains('clothes') || hint.contains('outfit') || hint.contains('dress')) {
-      return {'brand': 'Baby', 'products': ['Clothes Bundle'], 'category': 'boysClothes', 'retailRange': [20, 60], 'ageStage': 'allAges'};
-    }
-    if (hint.contains('toy') || hint.contains('game') || hint.contains('play')) {
-      return {'brand': 'Kids', 'products': ['Toy Set'], 'category': 'toysAndGames', 'retailRange': [15, 80], 'ageStage': 'toddler'};
-    }
-    if (hint.contains('book')) {
-      return {'brand': 'Children\'s', 'products': ['Book Collection'], 'category': 'books', 'retailRange': [10, 40], 'ageStage': 'allAges'};
-    }
-    if (hint.contains('car seat') || hint.contains('isofix')) {
-      return {'brand': 'Baby', 'products': ['Car Seat'], 'category': 'forTheCar', 'retailRange': [100, 300], 'ageStage': 'allAges'};
-    }
-    if (hint.contains('pram') || hint.contains('pushchair') || hint.contains('buggy') || hint.contains('stroller')) {
-      return {'brand': 'Baby', 'products': ['Pushchair'], 'category': 'pushchairsAndPrams', 'retailRange': [100, 500], 'ageStage': 'newborn'};
-    }
-    if (hint.contains('cot') || hint.contains('crib') || hint.contains('bed') || hint.contains('chair')) {
-      return {'brand': 'Baby', 'products': ['Furniture'], 'category': 'furniture', 'retailRange': [50, 200], 'ageStage': 'newborn'};
-    }
-    if (hint.contains('maternity') || hint.contains('pregnancy') || hint.contains('nursing')) {
-      return {'brand': 'Maternity', 'products': ['Wear Bundle'], 'category': 'maternity', 'retailRange': [15, 60], 'ageStage': 'maternity'};
-    }
-    return null;
-  }
-
-  String _generateDescription({
-    required String brand,
-    required String product,
-    required ItemCondition condition,
-    required String hint,
-  }) {
-    final condText = switch (condition) {
-      ItemCondition.brandNew => 'Brand new, never used.',
-      ItemCondition.likeNew => 'Excellent condition \u2014 barely used. Looks and works like new.',
-      ItemCondition.good => 'Good condition with normal signs of use. Well cared for.',
-      ItemCondition.wellUsed => 'Well loved with visible wear, but still works perfectly.',
-    };
-
-    final extras = <String>[
-      'Comes from a clean, smoke-free home.',
-      'All original parts included.',
-    ];
-
-    if (brand.contains('Bugaboo') || brand.contains('Silver Cross') || brand.contains('Stokke')) {
-      extras.add('Premium brand \u2014 built to last. RRP much higher than asking price.');
-    }
-    if (hint.contains('baby') || hint.contains('newborn')) {
-      extras.add('Perfect for newborns and young babies.');
-    }
-
-    return '$brand $product. $condText ${extras.join(' ')} Collection available or happy to meet locally.';
-  }
-
-  List<String> _generateTags(String brand, String product, ItemCategory category, AgeStage ageStage) {
-    return [
-      brand.toLowerCase(),
-      product.toLowerCase().replaceAll(' ', '-'),
-      category.label.toLowerCase(),
-      ageStage.shortLabel.toLowerCase(),
-      'preloved',
-      'baby-gear',
-    ];
   }
 }

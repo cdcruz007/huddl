@@ -125,7 +125,8 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true); // bounces back and forth continuously
 
-    // Start logo animation after short delay, then check auth & navigate
+    // Start logo animation after short delay, then check auth & navigate.
+    // Also set an absolute safety timeout so the splash never hangs.
     Future.delayed(const Duration(milliseconds: 200), () {
       if (!mounted) return;
       _logoCtrl.forward().then((_) {
@@ -134,6 +135,16 @@ class _SplashScreenState extends State<SplashScreen>
           _navigateBasedOnAuth();
         });
       });
+    });
+
+    // Absolute safety net: if nothing has navigated within 6 seconds, force
+    // navigation to /onboarding so the user never sees a stuck splash.
+    Future.delayed(const Duration(seconds: 6), () {
+      if (!mounted) return;
+      // If we're still on this screen, force navigation
+      if (ModalRoute.of(context)?.isCurrent ?? false) {
+        Navigator.of(context).pushReplacementNamed('/onboarding');
+      }
     });
   }
 
