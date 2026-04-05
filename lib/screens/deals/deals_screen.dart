@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/revglue_service.dart';
 import '../../services/subscription_service.dart';
+import '../../services/ai_deals_service.dart';
 import '../../models/subscription.dart';
 
 class DealsScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class DealsScreen extends StatefulWidget {
 class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStateMixin {
   final _service = RevGlueService();
   final _subService = SubscriptionService();
+  final _aiService = AiDealsService();
 
   List<RevGlueStore> _stores = [];
   List<RevGlueCategory> _categories = [];
@@ -28,6 +30,13 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
   RevGlueStore? _selectedStore;
   List<RevGlueCoupon> _storeCoupons = [];
   bool _loadingCoupons = false;
+
+  // AI state
+  List<AiDealRecommendation> _aiPicks = [];
+  AiSeasonalSpotlight? _spotlight;
+  Map<String, AiCouponInsight> _couponInsightsMap = {};
+  bool _aiLoading = false;
+  bool _couponInsightsLoading = false;
 
   // Search
   final _searchController = TextEditingController();
@@ -43,7 +52,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadData();
   }
 
@@ -73,12 +82,54 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
         _banners = results[2] as List<RevGlueBanner>;
         _isLoading = false;
       });
+      // Load AI picks in background (non-blocking)
+      _loadAiPicks();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = 'Unable to load deals. Please check your connection.';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadAiPicks() async {
+    if (_aiLoading) return;
+    setState(() => _aiLoading = true);
+    try {
+      final results = await Future.wait([
+        _aiService.getSmartPicks(),
+        _aiService.getSeasonalSpotlight(),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _aiPicks = results[0] as List<AiDealRecommendation>;
+        _spotlight = results[1] as AiSeasonalSpotlight;
+        _aiLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _aiLoading = false);
+    }
+  }
+
+  Future<void> _loadCouponInsights(String storeId, List<RevGlueCoupon> coupons) async {
+    if (_couponInsightsLoading) return;
+    setState(() => _couponInsightsLoading = true);
+    try {
+      final insights = await _aiService.getCouponInsights(storeId, coupons);
+      if (!mounted) return;
+      final map = <String, AiCouponInsight>{};
+      for (final insight in insights) {
+        map[insight.couponId] = insight;
+      }
+      setState(() {
+        _couponInsightsMap = map;
+        _couponInsightsLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _couponInsightsLoading = false);
     }
   }
 
@@ -95,6 +146,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
     setState(() {
       _selectedStore = store;
       _loadingCoupons = true;
+      _couponInsightsMap = {};
       _dealsViewedToday++;
     });
     final coupons = await _service.getStoreVouchers(store.id);
@@ -103,6 +155,10 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
       _storeCoupons = coupons;
       _loadingCoupons = false;
     });
+    // Load AI insights for these coupons in background
+    if (coupons.isNotEmpty) {
+      _loadCouponInsights(store.id, coupons);
+    }
   }
 
   Future<void> _openDealLink(String storeId) async {
@@ -293,7 +349,8 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                 indicatorColor: HuddlColors.primary,
                 indicatorWeight: 3,
                 tabs: const [
-                  Tab(text: 'Popular Stores'),
+                  Tab(text: 'AI Picks'),
+                  Tab(text: 'Popular'),
                   Tab(text: 'Categories'),
                   Tab(text: 'For Families'),
                 ],
@@ -308,6 +365,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                 : TabBarView(
                     controller: _tabController,
                     children: [
+                      _buildAiPicksTab(),
                       _buildStoresGrid(),
                       _buildCategoriesList(),
                       _buildFamilyPicks(),
@@ -337,7 +395,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
               children: [
                 Text('Deals', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: HuddlColors.textPrimary)),
                 Text(
-                  'Save money on top UK brands',
+                  'AI-powered savings for your family',
                   style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
                 ),
               ],
@@ -468,6 +526,152 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
             ),
           );
         },
+      ),
+    );
+  }
+
+  // ── AI PICKS TAB ─────────────────────────────────────────────────
+  Widget _buildAiPicksTab() {
+    return RefreshIndicator(
+      onRefresh: () async {
+        await _loadData();
+      },
+      color: HuddlColors.primary,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+        children: [
+          // AI Seasonal Spotlight
+          if (_spotlight != null) ...[
+            _AiSpotlightCard(spotlight: _spotlight!),
+            const SizedBox(height: 20),
+          ],
+
+          // AI Smart Picks header
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Smart Picks For You',
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
+                    Text('AI-curated based on your family',
+                        style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+                  ],
+                ),
+              ),
+              if (_aiLoading)
+                const SizedBox(
+                  width: 20, height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8B5CF6)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // AI Loading state
+          if (_aiLoading && _aiPicks.isEmpty) ...[
+            _AiThinkingCard(),
+          ] else if (_aiPicks.isEmpty) ...[
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: HuddlColors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                children: [
+                  const Icon(Icons.auto_awesome, size: 40, color: HuddlColors.gray300),
+                  const SizedBox(height: 12),
+                  Text('AI is learning your preferences',
+                      style: GoogleFonts.poppins(color: HuddlColors.textHint, fontSize: 14)),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _loadAiPicks,
+                    child: Text('Try Again', style: GoogleFonts.poppins(color: HuddlColors.primary, fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            // AI Pick cards
+            ..._aiPicks.asMap().entries.map((entry) {
+              final pick = entry.value;
+              // Find the matching store
+              final matchingStore = _stores.where((s) => s.id == pick.storeId).toList();
+              final store = matchingStore.isNotEmpty ? matchingStore.first : null;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _AiPickCard(
+                  recommendation: pick,
+                  store: store,
+                  rank: entry.key + 1,
+                  onTap: () {
+                    if (store != null) {
+                      _openStore(store);
+                    }
+                  },
+                ),
+              );
+            }),
+          ],
+
+          // Saving tips section
+          if (_spotlight != null && _spotlight!.savingTips.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                const Icon(Icons.lightbulb_outline, color: Color(0xFFF59E0B), size: 20),
+                const SizedBox(width: 8),
+                Text('AI Saving Tips',
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ..._spotlight!.savingTips.asMap().entries.map((entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: HuddlColors.gray100),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 24, height: 24,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text('${entry.key + 1}',
+                                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFF59E0B))),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(entry.value,
+                              style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+                        ),
+                      ],
+                    ),
+                  ),
+                )),
+          ],
+        ],
       ),
     );
   }
@@ -790,13 +994,41 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                        itemCount: _storeCoupons.length,
+                        itemCount: _storeCoupons.length + (_couponInsightsLoading ? 1 : 0),
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _CouponCard(
-                          coupon: _storeCoupons[i],
-                          onTap: () => _showCouponCode(_storeCoupons[i]),
-                          onShop: () => _openDealLink(_storeCoupons[i].storeId),
-                        ),
+                        itemBuilder: (_, i) {
+                          // Show AI loading indicator at top
+                          if (_couponInsightsLoading && i == 0) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)]),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 16, height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF8B5CF6)),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text('AI is analysing these deals for you...',
+                                      style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6D28D9))),
+                                ],
+                              ),
+                            );
+                          }
+                          final couponIdx = _couponInsightsLoading ? i - 1 : i;
+                          final coupon = _storeCoupons[couponIdx];
+                          final insight = _couponInsightsMap[coupon.id];
+                          return _CouponCard(
+                            coupon: coupon,
+                            insight: insight,
+                            onTap: () => _showCouponCode(coupon),
+                            onShop: () => _openDealLink(coupon.storeId),
+                          );
+                        },
                       ),
           ),
         ],
@@ -1035,12 +1267,14 @@ class _CategoryTile extends StatelessWidget {
 
 class _CouponCard extends StatelessWidget {
   final RevGlueCoupon coupon;
+  final AiCouponInsight? insight;
   final VoidCallback onTap;
   final VoidCallback onShop;
-  const _CouponCard({required this.coupon, required this.onTap, required this.onShop});
+  const _CouponCard({required this.coupon, this.insight, required this.onTap, required this.onShop});
 
   @override
   Widget build(BuildContext context) {
+    final isTopPick = insight?.isTopPick == true;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1048,6 +1282,282 @@ class _CouponCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
+          border: isTopPick ? Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.4), width: 1.5) : null,
+          boxShadow: [
+            BoxShadow(
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top pick badge
+            if (isTopPick)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)]),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 12),
+                      const SizedBox(width: 4),
+                      Text('AI Top Pick', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                    ],
+                  ),
+                ),
+              ),
+            Row(
+              children: [
+                // Type badge
+                Container(
+                  width: 56,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: coupon.hasCode ? HuddlColors.primary.withValues(alpha: 0.1) : HuddlColors.successBg,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        coupon.hasCode ? Icons.confirmation_number_outlined : Icons.local_offer_outlined,
+                        color: coupon.hasCode ? HuddlColors.primary : HuddlColors.success,
+                        size: 22,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        coupon.hasCode ? 'CODE' : 'OFFER',
+                        style: GoogleFonts.poppins(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: coupon.hasCode ? HuddlColors.primary : HuddlColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        coupon.title,
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textPrimary),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (coupon.expiryDate.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Expires: ${coupon.expiryDate}',
+                            style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    coupon.hasCode ? 'View' : 'Get',
+                    style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+            // AI insight row
+            if (insight != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF5F0FF),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF8B5CF6)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            insight!.savvyTip,
+                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6D28D9)),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _verdictColor(insight!.worthItVerdict).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              insight!.worthItVerdict,
+                              style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: _verdictColor(insight!.worthItVerdict)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _verdictColor(String verdict) {
+    switch (verdict.toLowerCase()) {
+      case 'must-grab':
+        return const Color(0xFF8B5CF6);
+      case 'great deal':
+        return const Color(0xFF22C55E);
+      case 'worth it':
+        return const Color(0xFF3B82F6);
+      case 'decent':
+        return const Color(0xFFF59E0B);
+      case 'skip it':
+        return const Color(0xFFEF4444);
+      default:
+        return HuddlColors.textSecondary;
+    }
+  }
+}
+
+// ── AI Spotlight Card ───────────────────────────────────────────
+class _AiSpotlightCard extends StatelessWidget {
+  final AiSeasonalSpotlight spotlight;
+  const _AiSpotlightCard({required this.spotlight});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF6D28D9), Color(0xFF8B5CF6), Color(0xFFA78BFA)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  spotlight.title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            spotlight.summary,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.9),
+              height: 1.5,
+            ),
+          ),
+          if (spotlight.topStoreNames.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: spotlight.topStoreNames.map((name) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              )).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── AI Pick Card ────────────────────────────────────────────────
+class _AiPickCard extends StatelessWidget {
+  final AiDealRecommendation recommendation;
+  final RevGlueStore? store;
+  final int rank;
+  final VoidCallback onTap;
+
+  const _AiPickCard({
+    required this.recommendation,
+    required this.store,
+    required this.rank,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: HuddlColors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: rank == 1
+              ? Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.4), width: 1.5)
+              : null,
           boxShadow: [
             BoxShadow(
               color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -1058,69 +1568,238 @@ class _CouponCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Type badge
+            // Rank circle
             Container(
-              width: 56,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: coupon.hasCode ? HuddlColors.primary.withValues(alpha: 0.1) : HuddlColors.successBg,
-                borderRadius: BorderRadius.circular(12),
+                gradient: rank <= 3
+                    ? const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFFA78BFA)])
+                    : null,
+                color: rank > 3 ? HuddlColors.gray100 : null,
+                shape: BoxShape.circle,
               ),
-              child: Column(
-                children: [
-                  Icon(
-                    coupon.hasCode ? Icons.confirmation_number_outlined : Icons.local_offer_outlined,
-                    color: coupon.hasCode ? HuddlColors.primary : HuddlColors.success,
-                    size: 22,
+              child: Center(
+                child: Text(
+                  '#$rank',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: rank <= 3 ? Colors.white : HuddlColors.textSecondary,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    coupon.hasCode ? 'CODE' : 'OFFER',
-                    style: GoogleFonts.poppins(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      color: coupon.hasCode ? HuddlColors.primary : HuddlColors.success,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
+            // Store icon
+            if (store != null && store!.storeIcon.isNotEmpty)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  store!.storeIcon,
+                  width: 48,
+                  height: 28,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox(width: 48),
+                ),
+              )
+            else
+              Container(
+                width: 48,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: HuddlColors.gray100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.store, size: 18, color: HuddlColors.gray400),
+              ),
+            const SizedBox(width: 12),
+            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          recommendation.storeName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          recommendation.badge,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF6D28D9),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    coupon.title,
-                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textPrimary),
+                    recommendation.parentTip,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.textSecondary,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (coupon.expiryDate.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        'Expires: ${coupon.expiryDate}',
-                        style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
-                      ),
+                  if (recommendation.tags.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 4,
+                      children: recommendation.tags.take(3).map((tag) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.gray100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          tag,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                      )).toList(),
                     ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                coupon.hasCode ? 'View' : 'Get',
-                style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600, fontSize: 13),
-              ),
+            // Score indicator
+            Column(
+              children: [
+                Text(
+                  '${recommendation.relevanceScore}',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: _scoreColor(recommendation.relevanceScore),
+                  ),
+                ),
+                Text(
+                  'match',
+                  style: GoogleFonts.poppins(fontSize: 9, color: HuddlColors.textHint),
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Color _scoreColor(int score) {
+    if (score >= 80) return const Color(0xFF22C55E);
+    if (score >= 60) return const Color(0xFF3B82F6);
+    if (score >= 40) return const Color(0xFFF59E0B);
+    return HuddlColors.textHint;
+  }
+}
+
+// ── AI Thinking Card ────────────────────────────────────────────
+class _AiThinkingCard extends StatefulWidget {
+  @override
+  State<_AiThinkingCard> createState() => _AiThinkingCardState();
+}
+
+class _AiThinkingCardState extends State<_AiThinkingCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF8B5CF6).withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        children: [
+          AnimatedBuilder(
+            animation: _pulse,
+            builder: (context, child) => Opacity(
+              opacity: _pulse.value,
+              child: child,
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF5F0FF), Color(0xFFEDE5FF)],
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.auto_awesome, size: 32, color: Color(0xFF8B5CF6)),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'AI is finding your best deals...',
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF6D28D9),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Analysing stores and offers for your family',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: HuddlColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.5,
+              color: Color(0xFF8B5CF6),
+            ),
+          ),
+        ],
       ),
     );
   }
