@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
@@ -880,20 +879,11 @@ class _ImGoingCard extends StatelessWidget {
                     color: accentColor.withValues(alpha: 0.1),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: item.imageUrl.isNotEmpty &&
-                          item.imageUrl.startsWith('http')
-                      ? Image.network(
-                          item.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Icon(fallbackIcon,
-                                color: accentColor, size: 28),
-                          ),
-                        )
-                      : Center(
-                          child: Icon(fallbackIcon,
-                              color: accentColor, size: 28),
-                        ),
+                  child: _buildCoverImage(
+                    imageUrl: item.imageUrl,
+                    fallbackIcon: fallbackIcon,
+                    fallbackColor: accentColor,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -2975,12 +2965,20 @@ Widget _buildCoverImage({
   }
 
   // ── http(s) URL (Pexels images etc.) ──────────────────────────────────
+  // Use Image.network instead of CachedNetworkImage for reliable web
+  // rendering — CachedNetworkImage can silently fail to load images on
+  // Flutter Web due to its IndexedDB caching layer.
   if (imageUrl.startsWith('http')) {
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
+    return Image.network(
+      imageUrl,
       fit: BoxFit.cover,
-      placeholder: (_, __) => placeholder(),
-      errorWidget: (_, __, ___) => fallback(),
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return placeholder();
+      },
+      errorBuilder: (_, __, ___) => fallback(),
     );
   }
 

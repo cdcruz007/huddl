@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/meetup_service.dart';
@@ -1137,13 +1136,18 @@ Widget _buildDetailCoverImage({
     return gradientFallback();
   }
 
-  // http(s) URL
+  // http(s) URL — use Image.network for reliable web rendering
   if (imageUrl.startsWith('http')) {
-    return CachedNetworkImage(
-      imageUrl: imageUrl,
+    return Image.network(
+      imageUrl,
       fit: BoxFit.cover,
-      placeholder: (_, __) => gradientFallback(showIcon: false),
-      errorWidget: (_, __, ___) => gradientFallback(),
+      width: double.infinity,
+      height: double.infinity,
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return gradientFallback(showIcon: false);
+      },
+      errorBuilder: (_, __, ___) => gradientFallback(),
     );
   }
 
