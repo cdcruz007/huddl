@@ -406,6 +406,22 @@ GUIDELINES:
     notifyListeners();
   }
 
+  /// Add a conversation message directly (used by community-enhanced AI)
+  void addConversation({
+    required String role,
+    required String message,
+    String? actionType,
+    List<String>? destinationSuggestions,
+  }) {
+    _conversations.add(TravelConversation(
+      role: role,
+      message: message,
+      actionType: actionType,
+      destinationSuggestions: destinationSuggestions,
+    ));
+    notifyListeners();
+  }
+
   // ── AI-Enhanced Packing list generation ─────────────────────────────────
 
   /// Generate a packing list using Gemini AI with local fallback

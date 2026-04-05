@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_service.dart';
+import '../../services/travel_community_service.dart';
 import 'destination_detail_screen.dart';
 import 'packing_list_screen.dart';
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI TRAVEL CONCIERGE — Chat-based travel assistant
@@ -18,9 +20,11 @@ class TravelConciergeScreen extends StatefulWidget {
 
 class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
   final TravelService _travelService = TravelService();
+  final TravelCommunityService _communityService = TravelCommunityService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isTyping = false;
+  final bool _useCommunityAI = true; // Toggle between community-enhanced and basic AI
 
   final List<String> _quickActions = [
     'Best places for a toddler?',
@@ -35,10 +39,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
   void initState() {
     super.initState();
     _travelService.initialize();
-    if (_travelService.conversations.isEmpty) {
-      // Add welcome message
-      _travelService.conversations;
-    }
+    _communityService.initialize();
   }
 
   @override
@@ -53,10 +54,39 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
     _messageController.clear();
     setState(() => _isTyping = true);
 
-    await _travelService.askConcierge(text.trim());
+    if (_useCommunityAI) {
+      // Use community-enhanced AI that draws from parent Q&A data
+      try {
+        final response = await _communityService.askCommunityAI(text.trim());
+        // Add user message
+        _travelService.addConversation(
+          role: 'user',
+          message: text.trim(),
+        );
+        // Add AI response with community context
+        _travelService.addConversation(
+          role: 'assistant',
+          message: response,
+          actionType: _detectActionType(text.trim()),
+        );
+      } catch (e) {
+        // Fallback to basic concierge
+        await _travelService.askConcierge(text.trim());
+      }
+    } else {
+      await _travelService.askConcierge(text.trim());
+    }
 
     setState(() => _isTyping = false);
     _scrollToBottom();
+  }
+
+  String? _detectActionType(String query) {
+    final q = query.toLowerCase();
+    if (q.contains('pack') || q.contains('bring') || q.contains('luggage')) return 'packing';
+    if (q.contains('safe') || q.contains('health') || q.contains('vaccine') || q.contains('medicine')) return 'safety';
+    if (q.contains('about') || q.contains('tell me') || q.contains('info')) return 'destination';
+    return null;
   }
 
   void _scrollToBottom() {
@@ -93,7 +123,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('AI Travel Concierge', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                Text('Powered by parent experiences', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.teal)),
+                Text('Powered by ${_communityService.experts.length} parent experts', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.teal)),
               ],
             ),
           ],
@@ -162,14 +192,40 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
             style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 32),
+          // Community stats
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HuddlColors.teal.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildStatItem('${_communityService.questions.length}', 'Questions'),
+                Container(width: 1, height: 30, color: HuddlColors.divider),
+                _buildStatItem('${_communityService.experts.length}', 'Experts'),
+                Container(width: 1, height: 30, color: HuddlColors.divider),
+                _buildStatItem('${_communityService.tips.length}', 'Tips'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           // Feature highlights
-          _buildFeatureRow(Icons.people, 'Community intelligence', 'Real tips from parents who\'ve been there'),
+          _buildFeatureRow(Icons.people, 'Community intelligence', 'Drawing from ${_communityService.questions.length} real parent Q&As'),
           _buildFeatureRow(Icons.child_care, 'Age-aware advice', 'Personalised to your children\'s ages'),
           _buildFeatureRow(Icons.luggage, 'Smart packing lists', 'Generated for your family & destination'),
-          _buildFeatureRow(Icons.health_and_safety, 'Safety alerts', 'Health & travel updates for families'),
+          _buildFeatureRow(Icons.forum, 'Ask Parents', 'Can\'t find what you need? Ask the community'),
         ],
       ),
     );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(children: [
+      Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.teal)),
+      Text(label, style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+    ]);
   }
 
   Widget _buildFeatureRow(IconData icon, String title, String subtitle) {
@@ -459,12 +515,12 @@ class _AnimatedDotState extends State<_AnimatedDot> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (ctx, _) => Container(
+    return FadeTransition(
+      opacity: _animation,
+      child: Container(
         width: 8, height: 8,
-        decoration: BoxDecoration(
-          color: HuddlColors.aiBlue.withValues(alpha: _animation.value),
+        decoration: const BoxDecoration(
+          color: HuddlColors.aiBlue,
           shape: BoxShape.circle,
         ),
       ),

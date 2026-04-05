@@ -94,6 +94,12 @@ class TierLimits {
   final bool tripsPackingListAccess;
   final int maxSavedTrips;
 
+  // ---- Community Q&A Feature ----
+  final int maxQuestionsPerWeek;
+  final int maxBookmarksPerMonth;
+  final bool communityBadgesEnabled;
+  final bool aiSynthesisAccess;
+
   const TierLimits({
     // Core social
     required this.maxGroups,
@@ -129,6 +135,11 @@ class TierLimits {
     required this.tripsAccess,
     required this.tripsPackingListAccess,
     required this.maxSavedTrips,
+    // Community Q&A
+    this.maxQuestionsPerWeek = 3,
+    this.communityBadgesEnabled = false,
+    this.maxBookmarksPerMonth = 5,
+    this.aiSynthesisAccess = false,
   });
 
   // ---- EXPLORER (Free) ----------------------------------------------------------
@@ -172,6 +183,11 @@ class TierLimits {
     tripsAccess: true,
     tripsPackingListAccess: false,
     maxSavedTrips: 1,
+    // Community Q&A
+    maxQuestionsPerWeek: 3,
+    communityBadgesEnabled: false,
+    maxBookmarksPerMonth: 5,
+    aiSynthesisAccess: false,
   );
 
   // ---- NEIGHBOURHOOD (GBP 5.99/mo) -----------------------------------------------
@@ -213,6 +229,11 @@ class TierLimits {
     tripsAccess: true,
     tripsPackingListAccess: true,
     maxSavedTrips: 10,
+    // Community Q&A
+    maxQuestionsPerWeek: 15,
+    communityBadgesEnabled: true,
+    maxBookmarksPerMonth: 50,
+    aiSynthesisAccess: true,
   );
 
   // ---- INNER CIRCLE (GBP 11.99/mo) -----------------------------------------------
@@ -253,6 +274,11 @@ class TierLimits {
     tripsAccess: true,
     tripsPackingListAccess: true,
     maxSavedTrips: 999,
+    // Community Q&A -- unlimited
+    maxQuestionsPerWeek: 999,
+    communityBadgesEnabled: true,
+    maxBookmarksPerMonth: 999,
+    aiSynthesisAccess: true,
   );
 
   static TierLimits forTier(SubscriptionTier tier) {
@@ -329,11 +355,13 @@ class SubscriptionPlan {
         'AI event discovery (weekly)',
         'Basic smart feed',
         'Browse family trips',
+        'Ask Parents Q&A (3 questions/week)',
+        'View community tips',
       ],
       shortBenefits: [
         '2 groups, 5 DMs, 2 meetups/mo',
         'Basic AI features',
-        'Browse community & trips',
+        'Browse community & trips + Q&A',
       ],
     ),
 
@@ -362,11 +390,15 @@ class SubscriptionPlan {
         'Unlimited smart feed',
         'Save up to 10 trips + packing lists',
         'Child milestone tracker',
+        'Ask Parents Q&A (15 questions/week)',
+        'AI answer synthesis',
+        'Community badges & leaderboard',
+        '50 bookmarks/month',
       ],
       shortBenefits: [
         'Unlimited groups, DMs & meetups',
-        'Full AI suite (Copilot, Travel, Listings)',
-        'Ad-free + milestone tracker',
+        'Full AI suite + community Q&A',
+        'Ad-free + badges + milestone tracker',
       ],
     ),
 
@@ -391,10 +423,12 @@ class SubscriptionPlan {
         'Unlimited saved trips',
         'Up to 50 photo uploads',
         'Inner Circle badge',
+        'Unlimited Ask Parents Q&A',
+        'Unlimited bookmarks & AI synthesis',
       ],
       shortBenefits: [
         'Everything in Neighbourhood',
-        'Unlimited AI + Matchmaker',
+        'Unlimited AI + Matchmaker + Q&A',
         'Unlimited listings, trips & 50 photos',
       ],
     ),
