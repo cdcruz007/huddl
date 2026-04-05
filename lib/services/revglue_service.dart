@@ -83,6 +83,22 @@ class RevGlueService {
     return [];
   }
 
+  // ── Stores filtered by category / subcategory ─────────────────
+  Future<List<RevGlueStore>> getCategoryStores(String categoryId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_baseUrl/top_stores/$_publisherId/$categoryId'),
+      ).timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final List data = json.decode(res.body);
+        return data.map((e) => RevGlueStore.fromJson(e)).toList();
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('RevGlue category_stores error: $e');
+    }
+    return [];
+  }
+
   // ── Store detail (returns list of vouchers for a store) ──────────
   Future<List<RevGlueCoupon>> getStoreVouchers(String storeId, {int page = 1}) async {
     try {

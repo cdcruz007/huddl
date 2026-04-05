@@ -767,79 +767,13 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (_, scrollCtrl) => Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Column(
-                children: [
-                  Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2)),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Icon(Icons.category_rounded, color: HuddlColors.primary),
-                      const SizedBox(width: 8),
-                      Text(cat.title, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                  if (cat.offerCouponStr.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 32, top: 4),
-                        child: Text(cat.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success)),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const Divider(),
-            Expanded(
-              child: cat.subCategories.isNotEmpty
-                  ? ListView.builder(
-                      controller: scrollCtrl,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: cat.subCategories.length,
-                      itemBuilder: (_, i) {
-                        final sub = cat.subCategories[i];
-                        return ListTile(
-                          leading: Container(
-                            width: 40, height: 40,
-                            decoration: BoxDecoration(
-                              color: HuddlColors.peachLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.local_offer, color: HuddlColors.primary, size: 18),
-                          ),
-                          title: Text(sub.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
-                          subtitle: sub.offerCouponStr.isNotEmpty
-                              ? Text(sub.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success))
-                              : null,
-                          trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Text(
-                          'Browse ${cat.title} deals by visiting our partner stores above!',
-                          style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-            ),
-          ],
-        ),
+      builder: (ctx) => _CategoryStoresSheet(
+        category: cat,
+        service: _service,
+        onStoreSelected: (store) {
+          Navigator.pop(ctx);
+          _openStore(store);
+        },
       ),
     );
   }
@@ -866,39 +800,49 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         children: [
           // Family highlight banner
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)],
+          GestureDetector(
+            onTap: () {
+              if (familyCats.isNotEmpty) {
+                _showCategoryStores(familyCats.first);
+              } else if (familyStores.isNotEmpty) {
+                _openStore(familyStores.first);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 48, height: 48,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48, height: 48,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.family_restroom, color: HuddlColors.primary, size: 26),
                   ),
-                  child: const Icon(Icons.family_restroom, color: HuddlColors.primary, size: 26),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Family Favourites', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
-                      Text(
-                        'Handpicked deals for parents & kids',
-                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
-                      ),
-                    ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Family Favourites', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
+                        Text(
+                          'Handpicked deals for parents & kids',
+                          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -1848,4 +1792,244 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => tabBar.preferredSize.height;
   @override
   bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => false;
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  Category / Subcategory bottom-sheet (stateful for loading)
+// ══════════════════════════════════════════════════════════════════
+class _CategoryStoresSheet extends StatefulWidget {
+  final RevGlueCategory category;
+  final RevGlueService service;
+  final void Function(RevGlueStore store) onStoreSelected;
+
+  const _CategoryStoresSheet({
+    required this.category,
+    required this.service,
+    required this.onStoreSelected,
+  });
+
+  @override
+  State<_CategoryStoresSheet> createState() => _CategoryStoresSheetState();
+}
+
+class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
+  RevGlueCategory? _viewingSub;            // non-null → showing stores
+  List<RevGlueStore> _subStores = [];
+  bool _loadingStores = false;
+
+  Future<void> _openSubcategory(RevGlueCategory sub) async {
+    setState(() {
+      _viewingSub = sub;
+      _loadingStores = true;
+      _subStores = [];
+    });
+    final stores = await widget.service.getCategoryStores(sub.id);
+    if (!mounted) return;
+    setState(() {
+      _subStores = stores;
+      _loadingStores = false;
+    });
+  }
+
+  void _goBack() => setState(() {
+    _viewingSub = null;
+    _subStores = [];
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (_, scrollCtrl) => Column(
+        children: [
+          // ── Header ────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            child: Column(
+              children: [
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    if (_viewingSub != null)
+                      GestureDetector(
+                        onTap: _goBack,
+                        child: const Padding(
+                          padding: EdgeInsets.only(right: 8),
+                          child: Icon(Icons.arrow_back_ios, size: 18, color: HuddlColors.textDark),
+                        ),
+                      ),
+                    const Icon(Icons.category_rounded, color: HuddlColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _viewingSub?.title ?? widget.category.title,
+                        style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                if ((_viewingSub?.offerCouponStr ?? widget.category.offerCouponStr).isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(left: _viewingSub != null ? 58 : 32, top: 4),
+                      child: Text(
+                        _viewingSub?.offerCouponStr ?? widget.category.offerCouponStr,
+                        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const Divider(),
+          // ── Body ──────────────────────────────────────────────
+          Expanded(child: _viewingSub != null ? _buildStoresList(scrollCtrl) : _buildSubcategoryList(scrollCtrl)),
+        ],
+      ),
+    );
+  }
+
+  // ── Subcategory list ─────────────────────────────────────────
+  Widget _buildSubcategoryList(ScrollController scrollCtrl) {
+    final cat = widget.category;
+    if (cat.subCategories.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.local_offer_outlined, size: 48, color: HuddlColors.gray300),
+              const SizedBox(height: 12),
+              Text(
+                'No subcategories available for ${cat.title}.\nBrowse partner stores for deals!',
+                style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      controller: scrollCtrl,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: cat.subCategories.length,
+      itemBuilder: (_, i) {
+        final sub = cat.subCategories[i];
+        return ListTile(
+          onTap: () => _openSubcategory(sub),
+          leading: Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: HuddlColors.peachLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.local_offer, color: HuddlColors.primary, size: 18),
+          ),
+          title: Text(sub.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
+          subtitle: sub.offerCouponStr.isNotEmpty
+              ? Text(sub.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success))
+              : null,
+          trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+        );
+      },
+    );
+  }
+
+  // ── Stores list (after subcategory tapped) ───────────────────
+  Widget _buildStoresList(ScrollController scrollCtrl) {
+    if (_loadingStores) {
+      return const Center(child: CircularProgressIndicator(color: HuddlColors.primary));
+    }
+    if (_subStores.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.storefront_outlined, size: 48, color: HuddlColors.gray300),
+              const SizedBox(height: 12),
+              Text(
+                'No stores found for ${_viewingSub?.title ?? 'this category'}.\nCheck back later for new deals!',
+                style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      controller: scrollCtrl,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _subStores.length,
+      itemBuilder: (_, i) {
+        final store = _subStores[i];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: GestureDetector(
+            onTap: () => widget.onStoreSelected(store),
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: HuddlColors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: HuddlColors.divider),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: store.storeIcon.isNotEmpty
+                        ? Image.network(store.storeIcon, width: 44, height: 44, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _storeIconPlaceholder(store))
+                        : _storeIconPlaceholder(store),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(store.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                        if (store.offerCouponStr.isNotEmpty)
+                          Text(store.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, color: HuddlColors.textHint, size: 20),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _storeIconPlaceholder(RevGlueStore store) {
+    return Container(
+      width: 44, height: 44,
+      decoration: BoxDecoration(
+        color: HuddlColors.peachLight,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Center(
+        child: Text(
+          store.title.isNotEmpty ? store.title[0].toUpperCase() : '?',
+          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.primary),
+        ),
+      ),
+    );
+  }
 }
