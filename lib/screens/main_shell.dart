@@ -6,8 +6,6 @@ import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
 import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
-import 'travel/travel_screen.dart';
-import 'offers/offers_screen.dart';
 import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
@@ -27,13 +25,11 @@ class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    HomeScreen(),    // 0 – MyHuddl
-    GroupsScreen(),  // 1 – Chat
-    EventsScreen(),  // 2 – Mingle
-    MarketplaceScreen(), // 3 – Preloved
-    TravelScreen(),  // 4 – Travel
-    OffersScreen(),  // 5 – Offers
-    ProfileScreen(), // 6 – Profile
+    HomeScreen(),    // 0 – Home
+    GroupsScreen(),  // 1 – Connect
+    EventsScreen(),  // 2 – Discover
+    MarketplaceScreen(), // 3 – Market (Buy, Sell, Offers, Saved)
+    ProfileScreen(), // 4 – Profile
   ];
 
   @override
@@ -70,7 +66,7 @@ class MainShellState extends State<MainShell> {
   }
 
   /// Switch to a specific tab by index
-  /// 0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Travel, 5=Offers, 6=Profile
+  /// 0=Home, 1=Connect, 2=Discover, 3=Market, 4=Profile
   void switchTab(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
@@ -131,51 +127,37 @@ class MainShellState extends State<MainShell> {
                   _NavItem(
                     icon: Icons.home_outlined,
                     activeIcon: Icons.home,
-                    label: 'MyHuddl',
+                    label: 'Home',
                     isActive: _currentIndex == 0,
                     onTap: () => setState(() => _currentIndex = 0),
                   ),
                   _NavItem(
                     icon: Icons.people_outline,
                     activeIcon: Icons.people,
-                    label: 'Chat',
+                    label: 'Connect',
                     isActive: _currentIndex == 1,
                     onTap: () => setState(() => _currentIndex = 1),
                   ),
                   _NavItem(
-                    icon: Icons.groups_outlined,
-                    activeIcon: Icons.groups,
-                    label: 'Mingle',
+                    icon: Icons.explore_outlined,
+                    activeIcon: Icons.explore,
+                    label: 'Discover',
                     isActive: _currentIndex == 2,
                     onTap: () => setState(() => _currentIndex = 2),
                   ),
                   _NavItem(
                     icon: Icons.storefront_outlined,
                     activeIcon: Icons.storefront,
-                    label: 'Preloved',
+                    label: 'Market',
                     isActive: _currentIndex == 3,
                     onTap: () => setState(() => _currentIndex = 3),
-                  ),
-                  _NavItem(
-                    icon: Icons.flight_outlined,
-                    activeIcon: Icons.flight,
-                    label: 'Travel',
-                    isActive: _currentIndex == 4,
-                    onTap: () => setState(() => _currentIndex = 4),
-                  ),
-                  _NavItem(
-                    icon: Icons.local_offer_outlined,
-                    activeIcon: Icons.local_offer,
-                    label: 'Offers',
-                    isActive: _currentIndex == 5,
-                    onTap: () => setState(() => _currentIndex = 5),
                   ),
                   _NavItem(
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Profile',
-                    isActive: _currentIndex == 6,
-                    onTap: () => setState(() => _currentIndex = 6),
+                    isActive: _currentIndex == 4,
+                    onTap: () => setState(() => _currentIndex = 4),
                   ),
                 ],
               ),

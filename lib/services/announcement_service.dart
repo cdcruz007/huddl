@@ -155,16 +155,23 @@ class AnnouncementService {
   List<Announcement> get announcements => List.unmodifiable(_announcements);
 
   /// Returns only announcements in the current user's borough, newest first.
+  /// If no borough is resolved, returns all announcements (so posts still appear).
   List<Announcement> get boroughAnnouncements {
-    if (_userBorough == null) return [];
-    final list = _announcements
-        .where((a) => a.borough.toLowerCase() == _userBorough!.toLowerCase())
-        .toList()
-      ..sort((a, b) {
-        // Pinned first, then newest
-        if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
-        return b.createdAt.compareTo(a.createdAt);
-      });
+    List<Announcement> list;
+    if (_userBorough == null || _userBorough!.isEmpty) {
+      // No borough resolved — show all announcements so user posts are visible
+      list = List<Announcement>.from(_announcements);
+    } else {
+      list = _announcements
+          .where(
+              (a) => a.borough.toLowerCase() == _userBorough!.toLowerCase())
+          .toList();
+    }
+    list.sort((a, b) {
+      // Pinned first, then newest
+      if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+      return b.createdAt.compareTo(a.createdAt);
+    });
     return list;
   }
 

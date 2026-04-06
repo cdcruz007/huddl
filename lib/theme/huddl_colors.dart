@@ -19,6 +19,76 @@ import 'package:flutter/material.dart';
 //   - TripIt / PackPoint: good packing lists but not family-aware.
 //   - Huddl differentiator: AI + real-parent community intelligence,
 //     age-aware checklists, and gamified expert badges.
+//
+// ─── USER JOURNEY MAPS ─────────────────────────────────────────────────────
+//
+// Journey 1: "New-Parent Nadia" — First-time Seller
+//   Touchpoints:
+//     1. Splash → Onboarding (name, phone, postcode, stage-of-life, children)
+//     2. MainShell → Home — community feed, upcoming events
+//     3. Market tab → Sell sub-tab (empty state: encouraging CTA)
+//     4. Taps CTA card → CreateListingScreen (AI pre-fills title+description)
+//     5. Listing appears in "My listings" with AI insight nudges
+//     6. Offer arrives → liveRegion announcement → AI summary ("Strong offer")
+//     7. Swipe-right to accept → SnackBar confirmation with Undo
+//     8. Item marked as Sold → celebration SnackBar
+//   Pain points mitigated: anxiety about pricing (AI suggest price),
+//     overwhelm with too many buttons (progressive disclosure),
+//     uncertainty about listing quality (AI photo/description hints).
+//   Emotional arc: unsure → guided → confident → delighted
+//
+// Journey 2: "Seasoned-Dad Sam" — Frequent Buyer
+//   Touchpoints:
+//     1. MainShell → Market tab → Buy sub-tab
+//     2. AI-adapted search placeholder reflects previous browsing
+//     3. Filters (age stage, category, condition, price) — one-tap chips
+//     4. AI-ranked grid → taps item → ItemDetailScreen
+//     5. Saves item (animated heart) → Saved tab
+//     6. Makes offer → waits for seller response
+//     7. Notification → offer accepted
+//   Pain points mitigated: irrelevant search results (invisible AI ranking),
+//     slow filter workflow (bottom-sheet filters with haptic feedback),
+//     information overload (clean card with essentials only).
+//   Emotional arc: purposeful → efficient → satisfied
+//
+// Journey 3: "Expert-Grandparent Grace" — Community Contributor
+//   Touchpoints:
+//     1. MainShell → Connect (groups for grandparents)
+//     2. Market tab → Buy tab → searches age-aware items (toddler, kids)
+//     3. Long-press to dismiss irrelevant items → AI learns preferences
+//     4. Sparkle icon → AI assistant → "Chat with Huddl" copilot
+//     5. Profile → My Groups → badges/achievements
+//     6. Market → Sell tab → lists curated items for community
+//   Pain points mitigated: small text (48dp targets, legible 14pt+ body),
+//     complex navigation (bottom nav with clear labels),
+//     technology frustration (simple CTA, AI handles complexity).
+//   Emotional arc: curious → engaged → rewarded → altruistic
+//
+// ─── TASK FLOW: PRELOVED SELL TAB ──────────────────────────────────────────
+//
+//   ┌─ Sell Tab ──────────────────────────────────────────────────┐
+//   │                                                             │
+//   │  [CTA Card: "Snap a photo..."] ─── tap ──► CreateListing   │
+//   │  [Quick sell chips: +Clothes +Toys]  ── tap ──► CreateListing│
+//   │                                                             │
+//   │  Active Listings (AI-ranked by health score)                │
+//   │    ├─ tap ──► ItemDetailScreen                              │
+//   │    ├─ long-press ──► Bottom sheet (Edit / Mark sold / Delist)│
+//   │    ├─ swipe-left ──► Delist confirmation dialog             │
+//   │    └─ AI insight row (fade-in, thumbs feedback)             │
+//   │                                                             │
+//   │  Offers (AI-ranked, liveRegion)                             │
+//   │    ├─ swipe-right ──► Accept + SnackBar (Undo)              │
+//   │    ├─ swipe-left  ──► Decline + SnackBar (Undo)             │
+//   │    └─ inline Accept/Decline buttons (fallback, 48dp)        │
+//   │                                                             │
+//   │  Recently Sold (auto-collapsed after 48h)                   │
+//   │    └─ long-press ──► Relist / Delist                        │
+//   │                                                             │
+//   │  [AI transparency note: "Ordered by what needs attention"]  │
+//   │  [Sparkle → AI Assistant: Quick list / Pricing / Voice]     │
+//   └─────────────────────────────────────────────────────────────┘
+//
 // =============================================================================
 
 class HuddlColors {
@@ -142,6 +212,50 @@ class HuddlColors {
   );
   static const Color aiBlue = Color(0xFF3580F0);
   static const Color aiBlueLight = Color(0xFF5B9DFF);
+
+  // ── Shimmer / Skeleton loading ─────────────────────────────────────────
+  static const Color shimmerBase = Color(0xFFE0E0E0);
+  static const Color shimmerHighlight = Color(0xFFF5F5F5);
+  static const Color darkShimmerBase = Color(0xFF2A2A2A);
+  static const Color darkShimmerHighlight = Color(0xFF3A3A3A);
+
+  // ── Overlay ────────────────────────────────────────────────────────────
+  static const Color overlay = Color(0x66000000);
+  static const Color overlayLight = Color(0x14000000);
+
+  // ── Accessibility design tokens ────────────────────────────────────────
+  /// Minimum touch-target size (Android Material You 48dp, iOS HIG 44pt).
+  /// All interactive widgets MUST meet or exceed this.
+  static const double minTouchTarget = 48.0;
+  /// Recommended touch-target size for primary actions.
+  static const double recommendedTouchTarget = 56.0;
+
+  // ── Spacing system (8dp base grid) ─────────────────────────────────────
+  static const double spaceXS  =  4.0;
+  static const double spaceSM  =  8.0;
+  static const double spaceMD  = 16.0;
+  static const double spaceLG  = 24.0;
+  static const double spaceXL  = 32.0;
+  static const double spaceXXL = 48.0;
+
+  // ── Border radius ──────────────────────────────────────────────────────
+  static const double radiusSM   =  8.0;  // chips, badges
+  static const double radiusMD   = 12.0;  // buttons, inputs
+  static const double radiusLG   = 16.0;  // cards
+  static const double radiusXL   = 24.0;  // modals, FABs
+  static const double radiusFull = 999.0; // circles
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // WCAG 2.2 CONTRAST VALIDATION — runtime helper
+  // ══════════════════════════════════════════════════════════════════════════
+  /// Returns true when [foreground] on [background] meets WCAG AA (4.5:1).
+  static bool meetsWcagAa(Color foreground, Color background) {
+    final l1 = foreground.computeLuminance();
+    final l2 = background.computeLuminance();
+    final lighter = l1 > l2 ? l1 : l2;
+    final darker  = l1 > l2 ? l2 : l1;
+    return (lighter + 0.05) / (darker + 0.05) >= 4.5;
+  }
 }
 
 // =============================================================================
@@ -150,16 +264,16 @@ class HuddlColors {
 /// Extension on [BuildContext] that returns the correct semantic color for the
 /// current brightness.  Usage: `context.hc.surface`, `context.hc.textPrimary`.
 ///
-/// This keeps all Travel screens theme-aware without touching every `const`
+/// This keeps all screens theme-aware without touching every `const`
 /// reference — screens can gradually migrate from `HuddlColors.white` to
 /// `context.hc.surface` at their own pace.
 extension HuddlAdaptive on BuildContext {
-  _HuddlContextColors get hc => _HuddlContextColors(this);
+  HuddlContextColors get hc => HuddlContextColors(this);
 }
 
-class _HuddlContextColors {
+class HuddlContextColors {
   final BuildContext _ctx;
-  const _HuddlContextColors(this._ctx);
+  const HuddlContextColors(this._ctx);
 
   bool get _isDark => Theme.of(_ctx).brightness == Brightness.dark;
 

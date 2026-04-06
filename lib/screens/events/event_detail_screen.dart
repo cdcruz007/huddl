@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
@@ -62,6 +63,26 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool get _isBookmarked {
     final id = widget.event['id'] as String? ?? '';
     return id.isNotEmpty && _eventService.isBookmarked(id);
+  }
+
+  /// Open the external source URL for this event.
+  Future<void> _launchSourceUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Could not open event link'),
+            backgroundColor: HuddlColors.textSecondary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
   }
 
   void _shareEvent() {
@@ -473,7 +494,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ],
       ),
 
-      // ── Bottom CTA ──────────────────────────────────────────────────
+      // ── Bottom CTA: "View Event" + "Count Me In" ──────────────────
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(
             20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
@@ -489,47 +510,77 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         child: Row(
           children: [
-            // Price display
-            if (!isFree)
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      e['price'] as String,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+            // View Event button — opens the source URL
+            Expanded(
+              flex: 2,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  final sourceUrl = e['sourceUrl'] as String? ?? '';
+                  if (sourceUrl.isNotEmpty) {
+                    _launchSourceUrl(sourceUrl);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Event link not available'),
+                        backgroundColor: HuddlColors.textSecondary,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
-                    ),
-                    Text(
-                      'per person',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: HuddlColors.textTertiary,
-                      ),
-                    ),
-                  ],
+                    );
+                  }
+                },
+                icon: const Icon(Icons.open_in_new, size: 18),
+                label: Text(
+                  'View Event',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: color,
+                  side: BorderSide(color: color),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
-            // Register button
+            ),
+            const SizedBox(width: 12),
+            // Count Me In button — marks attendance + auto-creates group chat
             Expanded(
-              child: ElevatedButton(
-                onPressed: () {
+              flex: 3,
+              child: ElevatedButton.icon(
+                onPressed: () async {
                   HapticFeedback.mediumImpact();
                   final id = widget.event['id'] as String? ?? '';
                   if (id.isNotEmpty) {
-                    _eventService.toggleGoing(id);
+                    final nowGoing = _eventService.toggleGoing(id);
+                    if (nowGoing) {
+                      await _eventService.createEventGroupChat(id);
+                    }
                   }
                   setState(() {});
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(_isRegistered
-                          ? 'Registered! You\'ll receive a confirmation email.'
-                          : 'Registration cancelled.'),
+                      content: Row(
+                        children: [
+                          Icon(
+                            _isRegistered ? Icons.group : Icons.close,
+                            color: HuddlColors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(_isRegistered
+                                ? 'You\'re in! Check Messages for the event chat.'
+                                : 'You\'ve left this event.'),
+                          ),
+                        ],
+                      ),
                       backgroundColor:
                           _isRegistered ? HuddlColors.teal : HuddlColors.textSecondary,
                       behavior: SnackBarBehavior.floating,
@@ -538,6 +589,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     ),
                   );
                 },
+                icon: Icon(
+                  _isRegistered ? Icons.check_circle : Icons.groups,
+                  color: HuddlColors.white,
+                  size: 20,
+                ),
+                label: Text(
+                  _isRegistered ? "I'm Going!" : 'Count Me In',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.white,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       _isRegistered ? HuddlColors.teal : color,
@@ -546,16 +610,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   elevation: 0,
-                ),
-                child: Text(
-                  _isRegistered
-                      ? 'Registered ✓'
-                      : (isFree ? 'Register — Free' : 'Register & Pay'),
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.white,
-                  ),
                 ),
               ),
             ),

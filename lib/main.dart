@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
 import 'theme/huddl_theme.dart';
 import 'config/router.dart';
 import 'services/subscription_service.dart';
+import 'services/browser_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ── One-time data reset for user 7575888452 ────────────────────────────
+  // Clears all stale profile data, created groups, meetups, DMs, etc.
+  // The flag ensures this only runs once per browser.
+  try {
+    final resetDone = await BrowserStorage.getString('data_reset_v2');
+    if (resetDone == null) {
+      await BrowserStorage.clear();
+      await BrowserStorage.setString('data_reset_v2', 'done');
+    }
+  } catch (_) {
+    // Ignore — app will still launch
+  }
 
   // ── Global error handler ────────────────────────────────────────────────
   // Replace the default blank-screen error widget with a visible red error
@@ -68,14 +83,43 @@ class HuddlApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Huddl',
-      debugShowCheckedModeBanner: false,
-      theme: HuddlTheme.lightTheme,
-      darkTheme: HuddlTheme.darkTheme,
-      themeMode: ThemeMode.system, // follows device brightness setting
-      initialRoute: '/splash',
-      onGenerateRoute: AppRouter.generateRoute,
+    // P3: Material You dynamic colour integration
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        // If the device provides a dynamic colour palette, use it for the
+        // primary seed but keep the brand identity (HuddlColors.primary).
+        ThemeData lightTheme = HuddlTheme.lightTheme;
+        ThemeData darkTheme = HuddlTheme.darkTheme;
+
+        if (lightDynamic != null) {
+          lightTheme = lightTheme.copyWith(
+            colorScheme: lightTheme.colorScheme.copyWith(
+              primaryContainer: lightDynamic.primaryContainer,
+              secondaryContainer: lightDynamic.secondaryContainer,
+              tertiaryContainer: lightDynamic.tertiaryContainer,
+            ),
+          );
+        }
+        if (darkDynamic != null) {
+          darkTheme = darkTheme.copyWith(
+            colorScheme: darkTheme.colorScheme.copyWith(
+              primaryContainer: darkDynamic.primaryContainer,
+              secondaryContainer: darkDynamic.secondaryContainer,
+              tertiaryContainer: darkDynamic.tertiaryContainer,
+            ),
+          );
+        }
+
+        return MaterialApp(
+          title: 'Huddl',
+          debugShowCheckedModeBanner: false,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.system,
+          initialRoute: '/splash',
+          onGenerateRoute: AppRouter.generateRoute,
+        );
+      },
     );
   }
 }

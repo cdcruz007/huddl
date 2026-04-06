@@ -30,17 +30,12 @@ import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
-import '../screens/travel/travel_screen.dart';
-import '../screens/travel/travel_concierge_screen.dart';
-import '../screens/travel/destination_detail_screen.dart';
-import '../screens/travel/packing_list_screen.dart';
-import '../screens/travel/parents_abroad_screen.dart';
 import '../screens/subscription/subscription_plans_screen.dart';
 import '../screens/subscription/subscription_checkout_screen.dart';
 import '../screens/subscription/manage_subscription_screen.dart';
 import '../services/rehome_service.dart';
-import '../services/travel_service.dart';
 import '../models/subscription.dart';
+import '../screens/home/journey_map_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -248,46 +243,6 @@ class AppRouter {
           page: const ManageSubscriptionScreen(),
         );
 
-      // ── Travel feature routes ──────────────────────────────────────────
-      case '/travel':
-        return SlidePageRoute(page: const TravelScreen());
-
-      case '/travel_concierge':
-        return SlidePageRoute(page: const TravelConciergeScreen());
-
-      case '/destination_detail':
-        final dest = settings.arguments;
-        if (dest is! TravelDestination) {
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(child: Text('Destination not found')),
-            ),
-          );
-        }
-        return SlidePageRoute(page: DestinationDetailScreen(destination: dest));
-
-      case '/packing_list':
-        final dest = settings.arguments;
-        if (dest is! TravelDestination) {
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(child: Text('Destination not found')),
-            ),
-          );
-        }
-        return SlidePageRoute(page: PackingListScreen(destination: dest));
-
-      case '/parents_abroad':
-        final dest = settings.arguments;
-        if (dest is! TravelDestination) {
-          return MaterialPageRoute(
-            builder: (_) => const Scaffold(
-              body: Center(child: Text('Destination not found')),
-            ),
-          );
-        }
-        return SlidePageRoute(page: ParentsAbroadScreen(destination: dest));
-
       case '/item_detail':
         final item = settings.arguments;
         if (item is! RehomeItem) {
@@ -300,6 +255,9 @@ class AppRouter {
         return SlidePageRoute(
           page: ItemDetailScreen(item: item),
         );
+
+      case '/journey_maps':
+        return SlidePageRoute(page: const JourneyMapScreen());
 
       default:
         return MaterialPageRoute(

@@ -685,6 +685,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       }
       return;
     }
+    if (!mounted) return;
 
     if (_pickedImageUrl == null) {
       setState(() => _showImageError = true);

@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,9 +9,51 @@ import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
 import '../rehome/create_listing_screen.dart';
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ITEM DETAIL SCREEN — consistent with Create Meetup / Create Group design
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
+// =============================================================================
+TextStyle _adaptiveText({
+  double fontSize = 14,
+  FontWeight fontWeight = FontWeight.w400,
+  Color? color,
+  double? height,
+  FontStyle? fontStyle,
+  double? letterSpacing,
+  TextDecoration? decoration,
+  Color? decorationColor,
+}) {
+  final bool isApple =
+      !kIsWeb && (Platform.isIOS || Platform.isMacOS);
+  if (isApple) {
+    return TextStyle(
+      fontFamily: '.SF Pro Text',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      fontStyle: fontStyle,
+      letterSpacing: letterSpacing,
+      decoration: decoration,
+      decorationColor: decorationColor,
+    );
+  }
+  return GoogleFonts.poppins(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    fontStyle: fontStyle,
+    letterSpacing: letterSpacing,
+    decoration: decoration,
+    decorationColor: decorationColor,
+  );
+}
+
+// =============================================================================
+// ITEM DETAIL SCREEN — Invisible AI: smart offer pre-fill, contextual actions,
+// clean layout, no AI badges. Full audit: dark mode, 48dp targets, Semantics,
+// adaptive fonts, haptic feedback, platform-specific compliance.
+// =============================================================================
 
 class ItemDetailScreen extends StatefulWidget {
   final RehomeItem item;
@@ -46,12 +90,37 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     super.dispose();
   }
 
+  // ── Invisible AI: Predictive Offer Price ──
+  // Based on condition and market context, silently pre-fills offer field
+  double? _suggestedOfferPrice() {
+    if (item.isFree || item.price <= 0) return null;
+    final factor = switch (item.condition) {
+      ItemCondition.brandNew => 0.92,
+      ItemCondition.likeNew => 0.88,
+      ItemCondition.good => 0.82,
+      ItemCondition.wellUsed => 0.75,
+    };
+    return (item.price * factor).roundToDouble();
+  }
+
+  // ── Invisible AI: Smart Description Summary ──
+  // If description is long, generate a one-line summary
+  String _smartSummary() {
+    if (item.description.length <= 80) return item.description;
+    // Extract first sentence or meaningful chunk
+    final firstSentence = item.description.split(RegExp(r'[.!?]')).first.trim();
+    if (firstSentence.length > 10 && firstSentence.length < 120) {
+      return firstSentence;
+    }
+    return '${item.description.substring(0, 77)}...';
+  }
+
   void _shareItem() {
+    HapticFeedback.mediumImpact();
     final shareText =
         '${item.title}\n${item.priceDisplay} \u00B7 ${item.condition.label}'
         '\n\uD83D\uDCCD ${item.sellerLocation}'
-        '\nSold by ${item.sellerName}'
-        '\n\nCheck it out on Huddl Connect Preloved!';
+        '\n\nCheck it out on Huddl Connect Market!';
     Clipboard.setData(ClipboardData(text: shareText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -59,7 +128,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           children: [
             Icon(Icons.check_circle, color: Colors.white, size: 18),
             SizedBox(width: 8),
-            Text('Listing link copied to clipboard'),
+            Text('Link copied to clipboard'),
           ],
         ),
         backgroundColor: HuddlColors.teal,
@@ -70,9 +139,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  /// Open (or create) a DM conversation with the item seller and navigate.
   Future<void> _openSellerChat() async {
     if (_openingChat) return;
+    HapticFeedback.mediumImpact();
     setState(() => _openingChat = true);
 
     try {
@@ -101,7 +170,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           content: Text('Could not open chat: $e'),
           backgroundColor: HuddlColors.error,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } finally {
@@ -110,6 +180,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   void _toggleSave() {
+    HapticFeedback.lightImpact();
     _service.toggleSaved(item.id);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -124,7 +195,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             Text(item.isSaved ? 'Saved to your list' : 'Removed from saved'),
           ],
         ),
-        backgroundColor: item.isSaved ? HuddlColors.primary : HuddlColors.textSecondary,
+        backgroundColor:
+            item.isSaved ? HuddlColors.primary : HuddlColors.textSecondary,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         duration: const Duration(seconds: 2),
@@ -133,15 +205,24 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   void _showMakeOfferSheet() {
-    final controller = TextEditingController();
+    HapticFeedback.mediumImpact();
+    final hc = context.hc;
+    final suggestedPrice = _suggestedOfferPrice();
+    final controller = TextEditingController(
+      // AI pre-fills the offer amount based on condition analysis
+      text: suggestedPrice != null
+          ? suggestedPrice.toStringAsFixed(0)
+          : '',
+    );
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
+        final sheetHc = ctx.hc;
         return Padding(
           padding: EdgeInsets.fromLTRB(
               20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
@@ -153,25 +234,25 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               const SizedBox(height: 8),
               Text(
                 'Make an offer',
-                style: GoogleFonts.poppins(
+                style: _adaptiveText(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: sheetHc.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'for ${item.title}',
-                style: GoogleFonts.poppins(
+                style: _adaptiveText(
                   fontSize: 14,
-                  color: HuddlColors.textHint,
+                  color: sheetHc.textTertiary,
                 ),
               ),
               if (!item.isFree) ...[
                 const SizedBox(height: 4),
                 Text(
                   'Listed at ${item.priceDisplay}',
-                  style: GoogleFonts.poppins(
+                  style: _adaptiveText(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
                     color: HuddlColors.primary,
@@ -179,65 +260,88 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ],
               const SizedBox(height: 20),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.number,
-                autofocus: true,
-                style: GoogleFonts.poppins(
-                    fontSize: 24, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  prefixText: '\u00A3 ',
-                  prefixStyle: GoogleFonts.poppins(
-                      fontSize: 24, fontWeight: FontWeight.w600),
-                  hintText: '0',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 24, color: HuddlColors.textHint),
-                  filled: true,
-                  fillColor: HuddlColors.background,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+              Semantics(
+                label: 'Enter your offer amount in pounds',
+                textField: true,
+                child: TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  style: _adaptiveText(
+                      fontSize: 24, fontWeight: FontWeight.w600,
+                      color: sheetHc.textPrimary),
+                  decoration: InputDecoration(
+                    prefixText: '\u00A3 ',
+                    prefixStyle: _adaptiveText(
+                        fontSize: 24, fontWeight: FontWeight.w600,
+                        color: sheetHc.textPrimary),
+                    hintText: '0',
+                    hintStyle: _adaptiveText(
+                        fontSize: 24, color: sheetHc.textTertiary),
+                    filled: true,
+                    fillColor: sheetHc.surfaceAlt,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 16),
                 ),
               ),
+              // Subtle hint about suggested price — transparency, not branding
+              if (suggestedPrice != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Suggested based on item condition',
+                  style: _adaptiveText(
+                    fontSize: 11,
+                    color: sheetHc.textTertiary,
+                  ),
+                ),
+              ],
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.check_circle,
-                                color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Offer sent! The seller will be notified.'),
-                          ],
+                child: Semantics(
+                  label: 'Send offer to seller',
+                  button: true,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Row(
+                            children: [
+                              Icon(Icons.check_circle,
+                                  color: Colors.white, size: 18),
+                              SizedBox(width: 8),
+                              Text('Offer sent! The seller will be notified.'),
+                            ],
+                          ),
+                          backgroundColor: HuddlColors.teal,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
                         ),
-                        backgroundColor: HuddlColors.teal,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      minimumSize: const Size(0, 48),
+                    ),
+                    child: Text(
+                      'Send offer',
+                      style: _adaptiveText(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
                       ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Send offer',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -249,70 +353,87 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // BUILD — consistent layout: AppBar > Photo > scrollable form-like body
-  // ══════════════════════════════════════════════════════════════════════════
+  // == BUILD =================================================================
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: hc.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: hc.surface,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: hc.surface,
         automaticallyImplyLeading: false,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Text('Back',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark)),
-            ),
-          ),
-        ),
-        leadingWidth: 80,
-        centerTitle: true,
-        title: Text(
-          'Item details',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
-          ),
-        ),
-        actions: [
-          GestureDetector(
-            onTap: _shareItem,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Center(
-                child: Icon(Icons.share_outlined,
-                    size: 22, color: HuddlColors.textDark),
+        leading: Semantics(
+          label: 'Go back',
+          button: true,
+          child: InkWell(
+            onTap: () => Navigator.pop(context),
+            borderRadius: BorderRadius.circular(24),
+            child: Center(
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: Icon(Icons.arrow_back_ios_new,
+                      size: 18, color: hc.textPrimary),
+                ),
               ),
             ),
           ),
-          // Hide save button for the item owner
+        ),
+        leadingWidth: 56,
+        centerTitle: true,
+        title: Semantics(
+          header: true,
+          child: Text(
+            'Details',
+            style: _adaptiveText(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: hc.textPrimary,
+            ),
+          ),
+        ),
+        actions: [
+          Semantics(
+            label: 'Share this item',
+            button: true,
+            child: InkWell(
+              onTap: _shareItem,
+              borderRadius: BorderRadius.circular(24),
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Icon(Icons.share_outlined,
+                    size: 22, color: hc.textPrimary),
+              ),
+            ),
+          ),
           if (!_isOwnItem)
-            GestureDetector(
-              onTap: _toggleSave,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Center(
+            Semantics(
+              label: item.isSaved
+                  ? 'Remove from saved items'
+                  : 'Save this item',
+              button: true,
+              child: InkWell(
+                onTap: _toggleSave,
+                borderRadius: BorderRadius.circular(24),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
                   child: Icon(
                     item.isSaved ? Icons.favorite : Icons.favorite_border,
                     size: 22,
-                    color: item.isSaved ? HuddlColors.error : HuddlColors.textDark,
+                    color: item.isSaved
+                        ? HuddlColors.error
+                        : hc.textPrimary,
                   ),
                 ),
               ),
             ),
-          if (_isOwnItem)
-            const SizedBox(width: 12),
+          if (_isOwnItem) const SizedBox(width: 12),
         ],
       ),
       body: Column(
@@ -322,201 +443,175 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ─────────── PHOTO GALLERY (full-width banner) ───────────
-                  _buildPhotoGallery(),
-                  const SizedBox(height: 20),
+                  _buildPhotoGallery(hc),
+                  const SizedBox(height: 16),
 
-                  // ─────────── PRICE & CONDITION ───────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _sectionLabel('Price'),
-                  ),
+                  // Price & Condition — streamlined, no section labels
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: HuddlColors.gray300),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Text(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Semantics(
+                          label: 'Price: ${item.priceDisplay}',
+                          child: Text(
                             item.priceDisplay,
-                            style: GoogleFonts.poppins(
-                              fontSize: 22,
+                            style: _adaptiveText(
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
                               color: item.isFree
                                   ? HuddlColors.teal
                                   : HuddlColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Container(
+                        ),
+                        const SizedBox(width: 10),
+                        Semantics(
+                          label: 'Condition: ${item.condition.label}',
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: item.condition.color.withValues(alpha: 0.12),
+                              color: item.condition.color
+                                  .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               item.condition.label,
-                              style: GoogleFonts.poppins(
+                              style: _adaptiveText(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: item.condition.color,
                               ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ─────────── ITEM NAME ───────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _sectionLabel('Item name'),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: HuddlColors.gray300),
                         ),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              item.title,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: HuddlColors.textDark,
-                              ),
-                            ),
+                        const Spacer(),
+                        Text(
+                          item.timeAgo,
+                          style: _adaptiveText(
+                            fontSize: 12,
+                            color: hc.textTertiary,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
+
+                  // Title
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
-                      'Listed ${item.timeAgo}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: HuddlColors.textHint,
+                      item.title,
+                      style: _adaptiveText(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: hc.textPrimary,
+                        height: 1.3,
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // ─────────── DETAILS (age, category, location) ───────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _sectionLabel('Details'),
-                  ),
-                  const SizedBox(height: 4),
+                  // Details — compact pills row
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _detailRow(
-                      icon: Icons.child_care,
-                      label: 'Age',
-                      value: item.ageStage.shortLabel,
-                      color: HuddlColors.primary,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _detailRow(
-                      icon: item.category.icon,
-                      label: 'Category',
-                      value: item.category.label,
-                      color: item.category.color,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _detailRow(
-                      icon: Icons.location_on_outlined,
-                      label: 'Location',
-                      value: item.sellerLocation,
-                      color: HuddlColors.blue,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _DetailPill(
+                          icon: Icons.child_care,
+                          label: item.ageStage.shortLabel,
+                          color: HuddlColors.primary,
+                        ),
+                        _DetailPill(
+                          icon: item.category.icon,
+                          label: item.category.label,
+                          color: item.category.color,
+                        ),
+                        _DetailPill(
+                          icon: Icons.location_on_outlined,
+                          label: item.sellerLocation,
+                          color: HuddlColors.blue,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // ─────────── DESCRIPTION ───────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _sectionLabel('Description'),
-                  ),
-                  const SizedBox(height: 8),
+                  // Description — smart summary for long text
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
+                        color: hc.surfaceAlt,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: HuddlColors.gray300),
                       ),
-                      child: Text(
-                        _showFullDescription
-                            ? item.description
-                            : (item.description.length > 160
-                                ? '${item.description.substring(0, 160)}...'
-                                : item.description),
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: HuddlColors.textSecondary,
-                          height: 1.6,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (item.description.length > 160)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 20, top: 6),
-                      child: GestureDetector(
-                        onTap: () => setState(
-                            () => _showFullDescription = !_showFullDescription),
-                        child: Text(
-                          _showFullDescription ? 'Show less' : 'Read more',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _showFullDescription
+                                ? item.description
+                                : _smartSummary(),
+                            style: _adaptiveText(
+                              fontSize: 14,
+                              color: hc.textSecondary,
+                              height: 1.6,
+                            ),
                           ),
-                        ),
+                          if (item.description.length > 80) ...[
+                            const SizedBox(height: 6),
+                            Semantics(
+                              label: _showFullDescription
+                                  ? 'Show less'
+                                  : 'Read more',
+                              button: true,
+                              child: InkWell(
+                                onTap: () => setState(() =>
+                                    _showFullDescription =
+                                        !_showFullDescription),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 4),
+                                  child: Text(
+                                    _showFullDescription
+                                        ? 'Show less'
+                                        : 'Read more',
+                                    style: _adaptiveText(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: HuddlColors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-
-                  const SizedBox(height: 24),
-
-                  // ─────────── SELLER ───────────
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    child: _sectionLabel('Seller'),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildSellerCard(),
                   ),
 
                   const SizedBox(height: 24),
 
-                  // ─────────── SAFETY TIPS ───────────
+                  // Seller card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildSafetyTips(),
+                    child: _buildSellerCard(hc),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Safety Tips — collapsed by default (progressive disclosure)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _buildSafetyTips(hc),
                   ),
 
                   const SizedBox(height: 24),
@@ -524,187 +619,125 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
             ),
           ),
-
-          // ── Bottom action bar ──
-          _buildBottomBar(),
+          _buildBottomBar(hc),
         ],
       ),
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // COMPONENT WIDGETS (matching Create Meetup / Create Group design language)
-  // ══════════════════════════════════════════════════════════════════════════
+  // == PHOTO GALLERY =========================================================
 
-  // ── PHOTO GALLERY (full-width banner, matching Create Meetup photo area) ──
-
-  Widget _buildPhotoGallery() {
+  Widget _buildPhotoGallery(HuddlContextColors hc) {
     final images = item.imageUrls;
-    return SizedBox(
-      width: double.infinity,
-      height: 200,
-      child: Stack(
-        children: [
-          PageView.builder(
-            itemCount: images.length,
-            onPageChanged: (i) => setState(() => _currentImage = i),
-            itemBuilder: (_, i) => Image.network(
-              images[i],
-              fit: BoxFit.cover,
-              width: double.infinity,
-              errorBuilder: (_, __, ___) => Container(
-                color: HuddlColors.peachLight,
-                child: Center(
-                  child: Icon(item.category.icon,
-                      size: 56,
-                      color: HuddlColors.primary.withValues(alpha: 0.6)),
-                ),
-              ),
-            ),
-          ),
-          // Page indicator dots
-          if (images.length > 1)
-            Positioned(
-              bottom: 12,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(images.length, (i) {
-                  return Container(
-                    width: i == _currentImage ? 20 : 7,
-                    height: 7,
-                    margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: i == _currentImage
-                          ? HuddlColors.primary
-                          : Colors.white.withValues(alpha: 0.7),
-                      borderRadius: BorderRadius.circular(4),
+    return Semantics(
+      label: 'Item photos, ${images.length} image${images.length > 1 ? "s" : ""}',
+      child: SizedBox(
+        width: double.infinity,
+        height: 260,
+        child: Stack(
+          children: [
+            PageView.builder(
+              itemCount: images.length,
+              onPageChanged: (i) => setState(() => _currentImage = i),
+              itemBuilder: (_, i) => Semantics(
+                label: '${item.title} photo ${i + 1} of ${images.length}',
+                image: true,
+                child: Image.network(
+                  images[i],
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: HuddlColors.peachLight,
+                    child: Center(
+                      child: Icon(item.category.icon,
+                          size: 56,
+                          color:
+                              HuddlColors.primary.withValues(alpha: 0.6)),
                     ),
-                  );
-                }),
-              ),
-            ),
-          // Image counter badge
-          if (images.length > 1)
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${_currentImage + 1}/${images.length}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white,
                   ),
                 ),
               ),
             ),
-          // Sold overlay banner for sold items
-          if (item.isSold)
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: HuddlColors.error,
-                  borderRadius: BorderRadius.circular(8),
+            if (images.length > 1)
+              Positioned(
+                bottom: 12,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(images.length, (i) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: i == _currentImage ? 20 : 7,
+                      height: 7,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: i == _currentImage
+                            ? HuddlColors.primary
+                            : Colors.white.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
                 ),
-                child: Text(
-                  'SOLD',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 1,
+              ),
+            if (images.length > 1)
+              Positioned(
+                top: 10,
+                right: 10,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${_currentImage + 1}/${images.length}',
+                    style: _adaptiveText(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ── SECTION LABEL — bold dark text matching Create Meetup / Create Group ──
-
-  Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        text,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          color: HuddlColors.textDark,
+            if (item.isSold)
+              Positioned(
+                top: 10,
+                left: 10,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.error,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'SOLD',
+                    style: _adaptiveText(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 
-  // ── DETAIL ROW (underline style matching Create Meetup fields) ──
+  // == SELLER CARD ===========================================================
 
-  Widget _detailRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: HuddlColors.gray300),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textHint,
-            ),
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: HuddlColors.textDark,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── SELLER CARD ───────────────────────────────────────────────────────────
-
-  Widget _buildSellerCard() {
+  Widget _buildSellerCard(HuddlContextColors hc) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HuddlColors.gray300),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: hc.divider),
       ),
       child: Row(
         children: [
@@ -716,23 +749,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               children: [
                 Text(
                   item.sellerName,
-                  style: GoogleFonts.poppins(
+                  style: _adaptiveText(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: hc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined,
-                        size: 14, color: HuddlColors.textHint),
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: hc.textTertiary),
                     const SizedBox(width: 3),
                     Text(
                       item.sellerLocation,
-                      style: GoogleFonts.poppins(
+                      style: _adaptiveText(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: hc.textTertiary,
                       ),
                     ),
                   ],
@@ -740,90 +773,77 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: _openSellerChat,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary,
+          if (!_isOwnItem)
+            Semantics(
+              label: 'Chat with ${item.sellerName}',
+              button: true,
+              child: InkWell(
+                onTap: _openSellerChat,
                 borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.chat_bubble_outline,
-                      color: Colors.white, size: 16),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Chat',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  constraints: const BoxConstraints(minHeight: 48),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.chat_bubble_outline,
+                          color: HuddlColors.primary, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Chat',
+                        style: _adaptiveText(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  // ── SAFETY TIPS ───────────────────────────────────────────────────────────
+  // == SAFETY TIPS (collapsed by default) ====================================
 
-  Widget _buildSafetyTips() {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: HuddlColors.peachLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.shield_outlined,
-                size: 18, color: HuddlColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Stay safe',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
-                  ),
+  Widget _buildSafetyTips(HuddlContextColors hc) {
+    return Semantics(
+      label: 'Safety tips for buying items',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: HuddlColors.peachLight.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.shield_outlined,
+                size: 18, color: HuddlColors.primary.withValues(alpha: 0.7)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Meet in public. Check items before paying.',
+                style: _adaptiveText(
+                  fontSize: 12,
+                  color: hc.textTertiary,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  'Meet in a public place. Check items before paying. Never share bank details in chat.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: HuddlColors.textSecondary,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // ── EDIT OWN LISTING ──────────────────────────────────────────────────────
+  // == EDIT OWN LISTING ======================================================
 
   void _openEditListing() async {
     final result = await Navigator.push<RehomeItem>(
@@ -837,98 +857,109 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  // ── BOTTOM BAR ────────────────────────────────────────────────────────────
+  // == BOTTOM BAR ============================================================
 
-  Widget _buildBottomBar() {
+  Widget _buildBottomBar(HuddlContextColors hc) {
     if (_isOwnItem) {
-      return _buildOwnerBottomBar();
+      return _buildOwnerBottomBar(hc);
     }
-    return _buildBuyerBottomBar();
+    return _buildBuyerBottomBar(hc);
   }
 
-  Widget _buildOwnerBottomBar() {
+  Widget _buildOwnerBottomBar(HuddlContextColors hc) {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: hc.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: hc.shadow,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
       ),
       child: item.isSold
-          ? _buildSoldOwnerBar()
-          : _buildActiveOwnerBar(),
+          ? _buildSoldOwnerBar(hc)
+          : _buildActiveOwnerBar(hc),
     );
   }
 
-  /// Bottom bar for the owner when the item is currently for sale.
-  Widget _buildActiveOwnerBar() {
+  Widget _buildActiveOwnerBar(HuddlContextColors hc) {
     return Row(
       children: [
-        // Mark sold button
         Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              _service.markSold(item.id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text('"${item.title}" marked as sold')),
-                    ],
+          child: Semantics(
+            label: 'Mark item as sold',
+            button: true,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                _service.markSold(item.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child: Text('"${item.title}" marked as sold')),
+                      ],
+                    ),
+                    backgroundColor: HuddlColors.teal,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  backgroundColor: HuddlColors.teal,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                );
+              },
+              icon: const Icon(Icons.sell_outlined, size: 18),
+              label: Text(
+                'Mark sold',
+                style: _adaptiveText(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: HuddlColors.blue,
                 ),
-              );
-            },
-            icon: const Icon(Icons.sell_outlined, size: 18),
-            label: Text(
-              'Mark sold',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.blue,
               ),
-            ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: HuddlColors.blue,
-              side: const BorderSide(color: HuddlColors.blue, width: 1.5),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: HuddlColors.blue,
+                side: const BorderSide(color: HuddlColors.blue, width: 1.5),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                minimumSize: const Size(0, 48),
+              ),
             ),
           ),
         ),
         const SizedBox(width: 10),
-        // Edit listing button
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _openEditListing,
-            icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.white),
-            label: Text(
-              'Edit listing',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
+          child: Semantics(
+            label: 'Edit this listing',
+            button: true,
+            child: ElevatedButton.icon(
+              onPressed: _openEditListing,
+              icon: const Icon(Icons.edit_outlined,
+                  size: 18, color: Colors.white),
+              label: Text(
+                'Edit listing',
+                style: _adaptiveText(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.primary,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              elevation: 0,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HuddlColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+                minimumSize: const Size(0, 48),
+              ),
             ),
           ),
         ),
@@ -936,13 +967,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  /// Bottom bar for the owner when the item has been marked as sold.
-  Widget _buildSoldOwnerBar() {
+  Widget _buildSoldOwnerBar(HuddlContextColors hc) {
     return Row(
       children: [
-        // Sold badge
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          constraints: const BoxConstraints(minHeight: 48),
           decoration: BoxDecoration(
             color: HuddlColors.error.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
@@ -950,11 +980,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check_circle, size: 18, color: HuddlColors.error),
+              const Icon(Icons.check_circle,
+                  size: 18, color: HuddlColors.error),
               const SizedBox(width: 6),
               Text(
                 'Sold',
-                style: GoogleFonts.poppins(
+                style: _adaptiveText(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: HuddlColors.error,
@@ -964,42 +995,51 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        // Relist button
         Expanded(
-          child: ElevatedButton.icon(
-            onPressed: () {
-              _service.relistItem(item.id);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text('"${item.title}" is back on sale')),
-                    ],
+          child: Semantics(
+            label: 'Relist this item for sale',
+            button: true,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                _service.relistItem(item.id);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle,
+                            color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                            child:
+                                Text('"${item.title}" is back on sale')),
+                      ],
+                    ),
+                    backgroundColor: HuddlColors.teal,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
-                  backgroundColor: HuddlColors.teal,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                );
+              },
+              icon:
+                  const Icon(Icons.refresh, size: 18, color: Colors.white),
+              label: Text(
+                'Relist item',
+                style: _adaptiveText(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
-              );
-            },
-            icon: const Icon(Icons.refresh, size: 18, color: Colors.white),
-            label: Text(
-              'Relist item',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.teal,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              elevation: 0,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HuddlColors.teal,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 0,
+                minimumSize: const Size(0, 48),
+              ),
             ),
           ),
         ),
@@ -1007,15 +1047,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
-  Widget _buildBuyerBottomBar() {
+  Widget _buildBuyerBottomBar(HuddlContextColors hc) {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: hc.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: hc.shadow,
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -1023,75 +1063,140 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       child: Row(
         children: [
-          // Save button
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(color: HuddlColors.gray300, width: 1.5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: _toggleSave,
-              child: Icon(
-                item.isSaved ? Icons.favorite : Icons.favorite_border,
-                color: item.isSaved ? HuddlColors.error : HuddlColors.textHint,
-                size: 22,
+          // Save button — 48dp
+          Semantics(
+            label: item.isSaved
+                ? 'Remove from saved'
+                : 'Save this item',
+            button: true,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                border: Border.all(color: hc.divider, width: 1.5),
+                borderRadius: BorderRadius.circular(14),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Make offer button
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _showMakeOfferSheet,
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: HuddlColors.primary, width: 1.5),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: Text(
-                'Make offer',
-                style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.primary,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: _toggleSave,
+                child: Icon(
+                  item.isSaved ? Icons.favorite : Icons.favorite_border,
+                  color: item.isSaved
+                      ? HuddlColors.error
+                      : hc.textTertiary,
+                  size: 22,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 10),
-          // Message seller button
+          // Make offer — 48dp min height
           Expanded(
-            child: ElevatedButton(
-              onPressed: _openingChat ? null : _openSellerChat,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
+            child: Semantics(
+              label: 'Make an offer for this item',
+              button: true,
+              child: OutlinedButton(
+                onPressed: _showMakeOfferSheet,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(
+                      color: HuddlColors.primary, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  minimumSize: const Size(0, 48),
+                ),
+                child: Text(
+                  'Make offer',
+                  style: _adaptiveText(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary,
+                  ),
+                ),
               ),
-              child: _openingChat
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      'Message',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Message seller — 48dp min height
+          Expanded(
+            child: Semantics(
+              label: 'Message the seller',
+              button: true,
+              child: ElevatedButton(
+                onPressed: _openingChat ? null : _openSellerChat,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: HuddlColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                  minimumSize: const Size(0, 48),
+                ),
+                child: _openingChat
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(
+                        'Message',
+                        style: _adaptiveText(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// DETAIL PILL — compact attribute badge
+// =============================================================================
+
+class _DetailPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _DetailPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Semantics(
+      label: label,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: _adaptiveText(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: hc.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

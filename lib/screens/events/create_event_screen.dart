@@ -228,7 +228,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       _titleCtrl.text.trim().isNotEmpty &&
       _locationCtrl.text.trim().isNotEmpty &&
       _startDate != null &&
-      _startTime != null;
+      _startTime != null &&
+      _pickedImageUrl != null; // Photo is required
 
   // ── Pickers ──────────────────────────────────────────────────────────
   void _pickStartDate() async {
@@ -408,9 +409,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       return;
     }
 
+    if (!mounted) return;
+
     if (!_isFormValid) {
+      final missingPhoto = _pickedImageUrl == null;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Please fill in all required fields'),
+        content: Text(missingPhoto
+            ? 'Please add a cover photo for your event'
+            : 'Please fill in all required fields'),
         backgroundColor: HuddlColors.error,
         behavior: SnackBarBehavior.floating,
         shape:
@@ -485,6 +491,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     }
 
     setState(() => _isCreating = false);
+    if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Row(children: [

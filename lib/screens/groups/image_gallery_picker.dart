@@ -21,7 +21,7 @@ const List<String> _kGalleryPhotos = [
   'https://images.pexels.com/photos/1758144/pexels-photo-1758144.jpeg?auto=compress&cs=tinysrgb&w=400',
   'https://images.pexels.com/photos/3807547/pexels-photo-3807547.jpeg?auto=compress&cs=tinysrgb&w=400',
   'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=400',
-  'https://images.pexels.com/photos/4543126/pexels-photo-4543126.jpeg?auto=compress&cs=tinysrgb&w=400',
+  'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=400',
   'https://images.pexels.com/photos/4473892/pexels-photo-4473892.jpeg?auto=compress&cs=tinysrgb&w=400',
   'https://images.pexels.com/photos/3807634/pexels-photo-3807634.jpeg?auto=compress&cs=tinysrgb&w=400',
   'https://images.pexels.com/photos/1684188/pexels-photo-1684188.jpeg?auto=compress&cs=tinysrgb&w=400',

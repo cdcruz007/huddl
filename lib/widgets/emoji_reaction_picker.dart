@@ -109,8 +109,8 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
           GestureDetector(
             onTap: () => setState(() => _showFull = true),
             child: Container(
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
                 color: HuddlColors.background,
@@ -125,17 +125,21 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
   }
 
   Widget _emojiButton(String emoji) {
-    return GestureDetector(
-      onTap: () => Navigator.pop(context, emoji),
-      child: Container(
-        width: 40,
-        height: 40,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+    return Semantics(
+      label: 'React with $emoji',
+      button: true,
+      child: GestureDetector(
+        onTap: () => Navigator.pop(context, emoji),
+        child: Container(
+          width: 48,
+          height: 48,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Text(emoji, style: const TextStyle(fontSize: 24)),
         ),
-        child: Text(emoji, style: const TextStyle(fontSize: 24)),
       ),
     );
   }

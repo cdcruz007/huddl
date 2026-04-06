@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
+import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
@@ -16,9 +17,10 @@ import '../ai/ai_copilot_screen.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
+import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MINGLE SCREEN — main entry with 3 tabs: Meetups · Events · I'm Going
+// DISCOVER SCREEN — main entry with 3 tabs: Meetups · Events · Groups
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class EventsScreen extends StatefulWidget {
@@ -274,7 +276,7 @@ class _EventsScreenState extends State<EventsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Mingle",
+                        "Discover",
                         style: GoogleFonts.poppins(
                           fontSize: 24,
                           fontWeight: FontWeight.w700,
@@ -378,13 +380,13 @@ class _EventsScreenState extends State<EventsScreen>
                     ),
                   ],
                   const SizedBox(height: 4),
-                  // ── Tabs: Meetups | Events | I'm Going ──────────────
+                  // ── Tabs: Groups | Meetups | Events ──────────────
                   TabBar(
                     controller: _tabController,
                     tabs: const [
+                      Tab(text: 'Groups'),
                       Tab(text: 'Meetups'),
                       Tab(text: 'Events'),
-                      Tab(text: "I'm Going"),
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: context.hc.textTertiary,
@@ -409,6 +411,7 @@ class _EventsScreenState extends State<EventsScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
+                  const DiscoverGroupsTab(),
                   _MeetupsTab(
                     meetupService: _meetupService,
                     onCreateMeetup: _navigateToCreateMeetup,
@@ -417,10 +420,6 @@ class _EventsScreenState extends State<EventsScreen>
                   _EventsTab(
                     eventService: _eventService,
                     searchQuery: _searchQuery,
-                  ),
-                  _ImGoingTab(
-                    meetupService: _meetupService,
-                    eventService: _eventService,
                   ),
                 ],
               ),
@@ -432,7 +431,7 @@ class _EventsScreenState extends State<EventsScreen>
   }
 }
 
-// Mingle screen has three tabs: Nearby | Events | I'm Going
+// Discover screen has three tabs: Groups | Meetups | Events
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MEET-UPS TAB — parent-organized casual gatherings
@@ -901,6 +900,11 @@ class _GoingItem {
   final bool isMeetup; // true = meetup, false = event
   final Meetup? meetup;
   final Event? event;
+  final String organiser;
+  final int attendees;
+  final bool isFree;
+  final String price;
+  final String category;
 
   _GoingItem({
     required this.id,
@@ -913,6 +917,11 @@ class _GoingItem {
     required this.isMeetup,
     this.meetup,
     this.event,
+    this.organiser = '',
+    this.attendees = 0,
+    this.isFree = true,
+    this.price = '',
+    this.category = '',
   });
 
   factory _GoingItem.fromMeetup(Meetup m) => _GoingItem(
@@ -922,10 +931,45 @@ class _GoingItem {
         timeDisplay: m.timeDisplay,
         dateTime: m.dateTime,
         location: m.location,
-        imageUrl: m.imageUrl,
+        imageUrl: m.imageUrl.isNotEmpty && !m.imageUrl.startsWith('data:')
+            ? m.imageUrl
+            : _meetupCategoryImage(m.category),
         isMeetup: true,
         meetup: m,
+        organiser: m.organiserName,
+        attendees: m.attendeeCount,
+        isFree: m.isFree,
+        price: m.isFree ? '' : (m.price != null ? '\u00A3${m.price}' : ''),
+        category: m.category,
       );
+
+  /// Category-based Pexels fallback image for meetups.
+  static String _meetupCategoryImage(String category) {
+    switch (category.toLowerCase()) {
+      case 'coffee':
+      case 'coffee & chat':
+        return 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'playdate':
+      case 'play':
+        return 'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'walk':
+      case 'outdoor':
+        return 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'sport':
+      case 'fitness':
+      case 'exercise':
+        return 'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'class':
+      case 'workshop':
+        return 'https://images.pexels.com/photos/3662667/pexels-photo-3662667.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'music':
+        return 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=600';
+      case 'social':
+        return 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=600';
+      default:
+        return 'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=600';
+    }
+  }
 
   factory _GoingItem.fromEvent(Event e) => _GoingItem(
         id: e.id,
@@ -934,91 +978,34 @@ class _GoingItem {
         timeDisplay: e.timeDisplay,
         dateTime: e.dateTime,
         location: e.location,
-        imageUrl: e.imageUrl,
+        imageUrl: e.imageUrl.isNotEmpty
+            ? e.imageUrl
+            : 'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=600',
         isMeetup: false,
         event: e,
+        organiser: e.organiser,
+        attendees: e.attendees,
+        isFree: e.isFree,
+        price: e.price,
+        category: e.category,
       );
-}
 
-class _ImGoingTab extends StatelessWidget {
-  final MeetupService meetupService;
-  final EventService eventService;
-
-  const _ImGoingTab({
-    required this.meetupService,
-    required this.eventService,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  /// Days until this event/meetup. 0 = today, 1 = tomorrow, negative = past.
+  int get daysUntil {
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    return eventDay.difference(today).inDays;
+  }
 
-    // Merge meetups & events the user is going to
-    final List<_GoingItem> allGoing = [
-      ...meetupService.meetups
-          .where((m) => m.isGoing)
-          .map((m) => _GoingItem.fromMeetup(m)),
-      ...eventService.goingEvents
-          .map((e) => _GoingItem.fromEvent(e)),
-    ];
-
-    // Sort by date ascending
-    allGoing.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-
-    final upcoming = allGoing.where((i) => i.dateTime.isAfter(now)).toList();
-    final past = allGoing.where((i) => !i.dateTime.isAfter(now)).toList();
-
-    if (allGoing.isEmpty) {
-      return _EmptyState(
-        icon: Icons.event_available_outlined,
-        title: "You're not going to anything yet",
-        subtitle:
-            "Tap 'Count Me In' on a meetup or 'Register' on an event to add it here!",
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        // Trigger a UI rebuild; services auto-refresh their state
-        await Future.delayed(const Duration(milliseconds: 500));
-      },
-      color: HuddlColors.primary,
-      child: ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        if (upcoming.isNotEmpty) ...[
-          _SectionLabel(
-            icon: Icons.upcoming_outlined,
-            label: 'Upcoming',
-            color: HuddlColors.primaryDark,
-          ),
-          const SizedBox(height: 8),
-          ...upcoming.map((item) => _ImGoingCard(
-                item: item,
-                onCancel: () => item.isMeetup
-                    ? meetupService.toggleGoing(item.id)
-                    : eventService.toggleGoing(item.id),
-              )),
-        ],
-        if (past.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _SectionLabel(
-            icon: Icons.history,
-            label: 'Past',
-            color: HuddlColors.textHint,
-          ),
-          const SizedBox(height: 8),
-          ...past.map((item) => _ImGoingCard(
-                item: item,
-                isPast: true,
-                onCancel: () => item.isMeetup
-                    ? meetupService.toggleGoing(item.id)
-                    : eventService.toggleGoing(item.id),
-              )),
-        ],
-      ],
-    ),
-    );
+  /// Human-readable countdown label.
+  String get countdownLabel {
+    final d = daysUntil;
+    if (d < 0) return 'Past';
+    if (d == 0) return 'Today';
+    if (d == 1) return 'Tomorrow';
+    if (d <= 7) return 'In $d days';
+    return dateDisplay;
   }
 }
 
@@ -1028,6 +1015,7 @@ class _ImGoingCard extends StatelessWidget {
   final VoidCallback onCancel;
 
   const _ImGoingCard({
+    super.key,
     required this.item,
     this.isPast = false,
     required this.onCancel,
@@ -1130,179 +1118,301 @@ class _ImGoingCard extends StatelessWidget {
             ),
           ],
         ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            if (item.isMeetup && item.meetup != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => MeetupDetailScreen(meetup: item.meetup!),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Cover image banner (clean, no overlay tags) ──────────
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: SizedBox(
+                height: 120,
+                width: double.infinity,
+                child: _buildCoverImage(
+                  imageUrl: item.imageUrl,
+                  fallbackIcon: fallbackIcon,
+                  fallbackColor: accentColor,
                 ),
-              );
-            } else if (item.event != null) {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      EventDetailScreen(event: item.event!.toMap()),
-                ),
-              );
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: accentColor.withValues(alpha: 0.1),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: _buildCoverImage(
-                    imageUrl: item.imageUrl,
-                    fallbackIcon: fallbackIcon,
-                    fallbackColor: accentColor,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Type badge + title
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item.isMeetup ? 'Meetup' : 'Event',
-                              style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: accentColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              item.title,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
+              ),
+            ),
+
+            // ── Card body ────────────────────────────────────────
+            InkWell(
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+              onTap: () {
+                if (item.isMeetup && item.meetup != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => MeetupDetailScreen(meetup: item.meetup!),
+                    ),
+                  );
+                } else if (item.event != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          EventDetailScreen(event: item.event!.toMap()),
+                    ),
+                  );
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      item.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: context.hc.textPrimary,
                       ),
-                      const SizedBox(height: 2),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    // Date + time row
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: accentColor),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            '${item.dateDisplay}  ·  ${item.timeDisplay}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: context.hc.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Location row
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 13, color: accentColor),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            item.location,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: context.hc.textTertiary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Organiser + attendees row
+                    if (item.organiser.isNotEmpty || item.attendees > 0) ...[
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined,
-                              size: 12, color: context.hc.textTertiary),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              '${item.dateDisplay} · ${item.timeDisplay}',
+                          if (item.organiser.isNotEmpty) ...[
+                            Icon(Icons.person_outline,
+                                size: 13, color: context.hc.textTertiary),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                item.organiser,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  color: context.hc.textTertiary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                          if (item.organiser.isNotEmpty && item.attendees > 0)
+                            Text(
+                              '  ·  ',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 color: context.hc.textTertiary,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Icon(Icons.location_on_outlined,
-                              size: 12, color: context.hc.textTertiary),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              item.location,
+                          if (item.attendees > 0) ...[
+                            Icon(Icons.groups_outlined,
+                                size: 13, color: context.hc.textTertiary),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.attendees} going',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 color: context.hc.textTertiary,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  children: [
-                    if (isPast)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: HuddlColors.textHint.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          'Past',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textHint,
-                          ),
-                        ),
-                      )
-                    else
-                      Icon(Icons.check_circle,
-                          color: accentColor, size: 24),
-                    const SizedBox(height: 4),
-                    // ── 48dp touch target for cancel/clear ──
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => _confirmCancel(context),
-                        child: Container(
-                          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          alignment: Alignment.center,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            child: Text(
-                              isPast ? 'Clear' : 'Cancel',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: isPast ? HuddlColors.textTertiary : HuddlColors.error,
+                    // Cancel row
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => _confirmCancel(context),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: (isPast ? HuddlColors.textHint : HuddlColors.error)
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isPast ? 'Clear' : 'Cancel attendance',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: isPast ? HuddlColors.textTertiary : HuddlColors.error,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
       ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC WRAPPER — Exposes the I'm Going functionality for use in other screens
+// (e.g. the Connect screen's "I'm Going" tab).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class ImGoingTab extends StatefulWidget {
+  const ImGoingTab({super.key});
+
+  @override
+  State<ImGoingTab> createState() => _ImGoingTabWrapperState();
+}
+
+class _ImGoingTabWrapperState extends State<ImGoingTab> {
+  final MeetupService _meetupService = MeetupService();
+  final EventService _eventService = EventService();
+  // Rebuild key — incremented on every cancel to force list rebuild
+  int _rebuildKey = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _meetupService.addListener(_refresh);
+    _eventService.addListener(_refresh);
+  }
+
+  @override
+  void dispose() {
+    _meetupService.removeListener(_refresh);
+    _eventService.removeListener(_refresh);
+    super.dispose();
+  }
+
+  void _refresh() {
+    if (mounted) setState(() => _rebuildKey++);
+  }
+
+  void _cancelItem(_GoingItem item) {
+    if (item.isMeetup) {
+      _meetupService.toggleGoing(item.id);
+    } else {
+      _eventService.toggleGoing(item.id);
+    }
+    // Force immediate rebuild even if listener hasn't fired yet
+    if (mounted) setState(() => _rebuildKey++);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+
+    // Merge meetups & events the user is going to
+    final List<_GoingItem> allGoing = [
+      ..._meetupService.meetups
+          .where((m) => m.isGoing)
+          .map((m) => _GoingItem.fromMeetup(m)),
+      ..._eventService.goingEvents
+          .map((e) => _GoingItem.fromEvent(e)),
+    ];
+
+    // Sort by date ascending
+    allGoing.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+    final upcoming = allGoing.where((i) => i.dateTime.isAfter(now)).toList();
+    final past = allGoing.where((i) => !i.dateTime.isAfter(now)).toList();
+
+    if (allGoing.isEmpty) {
+      return _EmptyState(
+        icon: Icons.event_available_outlined,
+        title: "You're not going to anything yet",
+        subtitle:
+            "Tap 'Count Me In' on a meetup or event to add it here!",
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) setState(() => _rebuildKey++);
+      },
+      color: HuddlColors.primary,
+      child: ListView(
+        key: ValueKey('im_going_list_$_rebuildKey'),
+        padding: const EdgeInsets.all(16),
+        children: [
+          if (upcoming.isNotEmpty) ...[
+            _SectionLabel(
+              icon: Icons.upcoming_outlined,
+              label: 'Upcoming',
+              color: HuddlColors.primaryDark,
+            ),
+            const SizedBox(height: 8),
+            ...upcoming.map((item) => _ImGoingCard(
+                  key: ValueKey('going_card_${item.id}_$_rebuildKey'),
+                  item: item,
+                  onCancel: () => _cancelItem(item),
+                )),
+          ],
+          if (past.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _SectionLabel(
+              icon: Icons.history,
+              label: 'Past',
+              color: HuddlColors.textHint,
+            ),
+            const SizedBox(height: 8),
+            ...past.map((item) => _ImGoingCard(
+                  key: ValueKey('going_card_${item.id}_$_rebuildKey'),
+                  item: item,
+                  isPast: true,
+                  onCancel: () => _cancelItem(item),
+                )),
+          ],
+        ],
       ),
     );
   }
@@ -2010,83 +2120,21 @@ class _RecommendedCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image with AI score badge
-            Stack(
-              children: [
-                SizedBox(
-                  height: 110,
-                  width: double.infinity,
-                  child: _buildCoverImage(
-                    imageUrl: event.imageUrl,
-                    fallbackIcon: event.icon,
-                    fallbackColor: event.color,
-                  ),
+            // Clean cover image (no overlay tags)
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: SizedBox(
+                height: 110,
+                width: double.infinity,
+                child: _buildCoverImage(
+                  imageUrl: event.imageUrl,
+                  fallbackIcon: event.icon,
+                  fallbackColor: event.color,
                 ),
-                // Gradient overlay
-                Positioned(
-                  bottom: 0, left: 0, right: 0,
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          HuddlColors.gray900.withValues(alpha: 0.5),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // AI match score badge
-                Positioned(
-                  top: 8, right: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.auto_awesome, size: 11, color: Colors.white),
-                        const SizedBox(width: 3),
-                        Text(
-                          '$scorePercent%',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Price badge
-                Positioned(
-                  top: 8, left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: event.isFree ? HuddlColors.blue : event.color,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      event.isFree ? 'Free' : event.price,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             // Card body
             Expanded(
@@ -2119,6 +2167,15 @@ class _RecommendedCard extends StatelessWidget {
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          event.isFree ? 'Free' : event.price,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: event.isFree ? HuddlColors.blue : event.color,
                           ),
                         ),
                       ],
@@ -2235,42 +2292,6 @@ class _MeetupCard extends StatelessWidget {
     this.onView,
   });
 
-  /// Privacy tag label: 'Public', 'Private', or the group name
-  String get _privacyTagLabel {
-    switch (meetup.privacy) {
-      case MeetupPrivacy.public:
-        return 'Public';
-      case MeetupPrivacy.group:
-        return meetup.groupName ?? 'Group';
-      case MeetupPrivacy.private_:
-        return 'Private';
-    }
-  }
-
-  /// Privacy tag colour
-  Color get _privacyTagColor {
-    switch (meetup.privacy) {
-      case MeetupPrivacy.public:
-        return HuddlColors.blue;
-      case MeetupPrivacy.group:
-        return HuddlColors.primaryDark;
-      case MeetupPrivacy.private_:
-        return HuddlColors.error;
-    }
-  }
-
-  /// Privacy tag icon
-  IconData get _privacyTagIcon {
-    switch (meetup.privacy) {
-      case MeetupPrivacy.public:
-        return Icons.public;
-      case MeetupPrivacy.group:
-        return Icons.group;
-      case MeetupPrivacy.private_:
-        return Icons.lock;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final catStyle = _meetupCategoryStyle(meetup.category);
@@ -2320,148 +2341,73 @@ class _MeetupCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cover image ──────────────────────────────────────────
-            Stack(
-              children: [
-                SizedBox(
-                  height: 150,
-                  width: double.infinity,
-                  child: Hero(
-                    tag: 'meetup_cover_${meetup.id}',
-                    child: _buildCoverImage(
-                    imageUrl: meetup.imageUrl,
+            // ── Clean cover image (no overlay tags) ──────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: Hero(
+                  tag: 'meetup_cover_${meetup.id}',
+                  child: _buildCoverImage(
+                    imageUrl: meetup.imageUrl.isNotEmpty && !meetup.imageUrl.startsWith('data:')
+                        ? meetup.imageUrl
+                        : _GoingItem._meetupCategoryImage(meetup.category),
                     fallbackIcon: catStyle.icon,
                     fallbackColor: catStyle.color,
                   ),
-                  ),
                 ),
-                // Gradient overlay at bottom for readability
-                Positioned(
-                  bottom: 0, left: 0, right: 0,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          HuddlColors.white.withValues(alpha: 0.0),
-                          HuddlColors.gray900.withValues(alpha: 0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Category badge
-                Positioned(
-                  top: 10, left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
+              ),
+            ),
+            // ── Info row (category, price, attendees) ─────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+              child: Row(
+                children: [
+                  // Category
+                  Icon(catStyle.icon, size: 13, color: catStyle.color),
+                  const SizedBox(width: 4),
+                  Text(
+                    meetup.category,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                       color: catStyle.color,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(catStyle.icon, size: 13, color: HuddlColors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          meetup.category,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.white,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
-                // ── Privacy tag badge (always shown) ──────────────────────
-                Positioned(
-                  top: 10, right: 10,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _privacyTagColor.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(_privacyTagIcon, size: 12, color: HuddlColors.white),
-                            const SizedBox(width: 3),
-                            Text(
-                              _privacyTagLabel,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
-                              ),
-                            ),
-                            if (isRestricted) ...[
-                              const SizedBox(width: 3),
-                              const Icon(Icons.block, size: 10, color: HuddlColors.white),
-                            ],
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          meetup.isFree
-                              ? 'Free'
-                              : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Attendee count overlay
-                Positioned(
-                  bottom: 8, right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.gray900.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.people, size: 13, color: HuddlColors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.white,
-                          ),
-                        ),
-                      ],
+                  const SizedBox(width: 10),
+                  // Price
+                  Text(
+                    meetup.isFree
+                        ? 'Free'
+                        : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
                     ),
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  // Attendees
+                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textHint,
+                    ),
+                  ),
+                ],
+              ),
             ),
             // ── Card body ────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -2545,20 +2491,7 @@ class _MeetupCard extends StatelessWidget {
                   // Organiser row + share button
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 11,
-                        backgroundColor: catStyle.color.withValues(alpha: 0.15),
-                        child: Text(
-                          meetup.organiserName.isNotEmpty
-                              ? meetup.organiserName[0].toUpperCase()
-                              : '?',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: catStyle.color,
-                          ),
-                        ),
-                      ),
+                      _buildOrganiserAvatar(meetup.organiserName, meetup.organiserId, 22, catStyle.color),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
@@ -2795,191 +2728,99 @@ class _EventListCardState extends State<_EventListCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cover image ──────────────────────────────────────────
-            Stack(
-              children: [
-                SizedBox(
-                  height: 150,
-                  width: double.infinity,
-                  child: Hero(
-                    tag: 'event_cover_$eventId',
-                    child: _buildCoverImage(
+            // ── Clean cover image (no overlay tags) ──────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: Hero(
+                  tag: 'event_cover_$eventId',
+                  child: _buildCoverImage(
                     imageUrl: imageUrl,
                     fallbackIcon: event['icon'] as IconData,
                     fallbackColor: eventColor,
                   ),
-                  ),
                 ),
-                // Gradient overlay
-                Positioned(
-                  bottom: 0, left: 0, right: 0,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          HuddlColors.white.withValues(alpha: 0.0),
-                          HuddlColors.gray900.withValues(alpha: 0.4),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Price badge
-                Positioned(
-                  top: 10, left: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
+              ),
+            ),
+            // ── Info row (price, attendees, bookmark) ─────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+              child: Row(
+                children: [
+                  // Price
+                  Text(
+                    isFree ? 'Free' : event['price'] as String,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                       color: isFree ? HuddlColors.blue : eventColor,
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      isFree ? 'Free' : event['price'] as String,
+                  ),
+                  if (isOnline) ...[
+                    const SizedBox(width: 8),
+                    Icon(Icons.videocam_outlined, size: 13, color: HuddlColors.blue),
+                    const SizedBox(width: 3),
+                    Text(
+                      'Online',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                // Online / In-person badge
-                if (isOnline)
-                  Positioned(
-                    top: 10, right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
+                        fontWeight: FontWeight.w500,
                         color: HuddlColors.blue,
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.videocam, size: 13, color: HuddlColors.white),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Online',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.white,
+                    ),
+                  ],
+                  const Spacer(),
+                  // Attendees
+                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${event['attendees']} going',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textHint,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Bookmark
+                  Semantics(
+                    label: isBookmarked ? 'Remove bookmark' : 'Bookmark event',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (eventId.isNotEmpty) {
+                          HapticFeedback.lightImpact();
+                          _eventService.toggleBookmark(eventId);
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isBookmarked ? 'Bookmark removed' : 'Event bookmarked!'),
+                              backgroundColor: isBookmarked ? HuddlColors.textSecondary : HuddlColors.teal,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              duration: const Duration(seconds: 2),
                             ),
-                          ),
-                        ],
+                          );
+                        }
+                      },
+                      child: Icon(
+                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                        size: 20,
+                        color: isBookmarked ? HuddlColors.accentAmber : HuddlColors.textHint,
                       ),
                     ),
                   ),
-                // AI Discovered badge (top-right, below online badge)
-                if (event['isAiDiscovered'] == true && !isOnline)
-                  Positioned(
-                    top: 10, right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.auto_awesome, size: 11, color: Colors.white),
-                          const SizedBox(width: 3),
-                          Text(
-                            'AI Found',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                // Bookmark + attendees
-                Positioned(
-                  bottom: 8, right: 10,
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: HuddlColors.gray900.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.people, size: 13, color: HuddlColors.white),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${event['attendees']} going',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Semantics(
-                        label: isBookmarked ? 'Remove bookmark' : 'Bookmark event',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: () {
-                            if (eventId.isNotEmpty) {
-                              HapticFeedback.lightImpact();
-                              _eventService.toggleBookmark(eventId);
-                              setState(() {});
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isBookmarked ? 'Bookmark removed' : 'Event bookmarked!'),
-                                  backgroundColor: isBookmarked ? HuddlColors.textSecondary : HuddlColors.teal,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            alignment: Alignment.center,
-                            child: Container(
-                              width: 30,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: isBookmarked
-                                    ? HuddlColors.accentAmber.withValues(alpha: 0.85)
-                                    : HuddlColors.gray900.withValues(alpha: 0.4),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                                size: 16,
-                                color: HuddlColors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
             // ── Card body ────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3751,6 +3592,99 @@ _CatStyle _meetupCategoryStyle(String category) {
     default:
       return const _CatStyle(HuddlColors.blue, Icons.groups);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED — Organiser avatar helper
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Builds a small circular avatar for the meetup organiser.
+/// For the current user: show onboarding photo or local asset fallback.
+/// For known community members: show their Pexels photo.
+Widget _buildOrganiserAvatar(String name, String organiserId, double size, Color accentColor) {
+  // Current user: use local asset avatar
+  if (organiserId == 'current_user' || MemberPhotoService.isCurrentUser(name)) {
+    final photoUrl = MemberPhotoService.getPhotoByName(name);
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      if (photoUrl.startsWith('data:')) {
+        try {
+          final parts = photoUrl.split(',');
+          if (parts.length > 1) {
+            final bytes = base64Decode(parts[1]);
+            return Container(
+              width: size, height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: HuddlColors.primary, width: 1),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Image.memory(bytes, fit: BoxFit.cover, width: size, height: size),
+            );
+          }
+        } catch (_) {}
+      }
+      return Container(
+        width: size, height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: HuddlColors.primary, width: 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
+          errorBuilder: (_, __, ___) => _currentUserAssetAvatar(size)),
+      );
+    }
+    return _currentUserAssetAvatar(size);
+  }
+
+  // Known community member
+  final photoUrl = MemberPhotoService.getPhotoByName(name);
+  if (photoUrl != null && photoUrl.isNotEmpty) {
+    return Container(
+      width: size, height: size,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
+        errorBuilder: (_, __, ___) => CircleAvatar(
+          radius: size / 2,
+          backgroundColor: accentColor.withValues(alpha: 0.15),
+          child: Text(
+            name.isNotEmpty ? name[0].toUpperCase() : '?',
+            style: GoogleFonts.poppins(fontSize: size * 0.45, fontWeight: FontWeight.w700, color: accentColor),
+          ),
+        )),
+    );
+  }
+
+  return CircleAvatar(
+    radius: size / 2,
+    backgroundColor: accentColor.withValues(alpha: 0.15),
+    child: Text(
+      name.isNotEmpty ? name[0].toUpperCase() : '?',
+      style: GoogleFonts.poppins(fontSize: size * 0.45, fontWeight: FontWeight.w700, color: accentColor),
+    ),
+  );
+}
+
+/// Local asset avatar for the current user (gender-based), used in events_screen.
+Widget _currentUserAssetAvatar(double size) {
+  return Container(
+    width: size, height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: HuddlColors.primary, width: 1),
+    ),
+    child: ClipOval(
+      child: Image.asset(
+        MemberPhotoService.currentUserAvatarAsset,
+        width: size, height: size, fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          color: HuddlColors.peachLight,
+          child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
+        ),
+      ),
+    ),
+  );
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

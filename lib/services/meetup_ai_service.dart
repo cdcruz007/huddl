@@ -53,7 +53,7 @@ class MeetupAiService {
   // ── User behaviour state (persisted) ──────────────────────────────
   Map<String, int> _categoryClickCount = {};
   List<String> _attendedMeetupIds = [];
-  Set<String> _dismissedNudgeKeys = {};
+  final Set<String> _dismissedNudgeKeys = {};
   DateTime? _lastAttendedDate;
 
   bool _initialized = false;

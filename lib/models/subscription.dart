@@ -17,7 +17,7 @@
 //    Priced at the UK impulse-buy threshold (< cost of 2 coffees/mo).
 //    Removes ALL social friction (unlimited groups, DMs, meetups) and
 //    unlocks the core AI suite: Copilot, Event Discovery, Chat Summaries,
-//    Smart Feed, Listing Generator, and Travel Concierge with generous limits.
+//    Smart Feed, and Listing Generator with generous limits.
 //    This is the tier 80%+ of paying users should land on.
 //    Annual plan saves 30% -- anchored as default to maximise LTV.
 //
@@ -75,7 +75,6 @@ class TierLimits {
   final int maxAiEventDiscoveriesPerWeek;
   final int maxAiChatSummariesPerDay;
   final int maxAiListingGenerationsPerMonth;
-  final int maxAiTravelConciergeChatsPerDay;
   final int maxAiMatchmakerRequestsPerMonth;
   final int maxAiSmartFeedRefreshesPerDay;
 
@@ -86,13 +85,7 @@ class TierLimits {
   final bool aiChatSummaries;
   final bool aiListingGenerator;
   final bool aiSmartFeed;
-  final bool aiTravelConcierge;
   final bool aiMeetupMatchmaker;
-
-  // ---- Travel Feature ----
-  final bool travelAccess;
-  final bool tripsPackingListAccess;
-  final int maxSavedTravels;
 
   // ---- Community Q&A Feature ----
   final int maxQuestionsPerWeek;
@@ -119,7 +112,6 @@ class TierLimits {
     required this.maxAiEventDiscoveriesPerWeek,
     required this.maxAiChatSummariesPerDay,
     required this.maxAiListingGenerationsPerMonth,
-    required this.maxAiTravelConciergeChatsPerDay,
     required this.maxAiMatchmakerRequestsPerMonth,
     required this.maxAiSmartFeedRefreshesPerDay,
     // AI booleans
@@ -129,12 +121,7 @@ class TierLimits {
     required this.aiChatSummaries,
     required this.aiListingGenerator,
     required this.aiSmartFeed,
-    required this.aiTravelConcierge,
     required this.aiMeetupMatchmaker,
-    // Travel
-    required this.travelAccess,
-    required this.tripsPackingListAccess,
-    required this.maxSavedTravels,
     // Community Q&A
     this.maxQuestionsPerWeek = 3,
     this.communityBadgesEnabled = false,
@@ -147,7 +134,7 @@ class TierLimits {
   // 2 groups, 1 created, 2 meetups/mo, 5 DMs, 2 listings, 3 photos.
   // AI: taster access -- 3 copilot chats/day, basic event discovery,
   // basic recommendations, 1 chat summary/day, no listing generator,
-  // basic smart feed, no travel concierge, no matchmaker.
+  // basic smart feed, no matchmaker.
   static const TierLimits explorer = TierLimits(
     // Core social
     maxGroups: 2,
@@ -167,7 +154,6 @@ class TierLimits {
     maxAiEventDiscoveriesPerWeek: 1,
     maxAiChatSummariesPerDay: 1,
     maxAiListingGenerationsPerMonth: 0,
-    maxAiTravelConciergeChatsPerDay: 0,
     maxAiMatchmakerRequestsPerMonth: 0,
     maxAiSmartFeedRefreshesPerDay: 2,
     // AI booleans
@@ -177,12 +163,7 @@ class TierLimits {
     aiChatSummaries: true,
     aiListingGenerator: false,
     aiSmartFeed: true,
-    aiTravelConcierge: false,
     aiMeetupMatchmaker: false,
-    // Travel
-    travelAccess: true,
-    tripsPackingListAccess: false,
-    maxSavedTravels: 1,
     // Community Q&A
     maxQuestionsPerWeek: 3,
     communityBadgesEnabled: false,
@@ -192,7 +173,7 @@ class TierLimits {
 
   // ---- NEIGHBOURHOOD (GBP 5.99/mo) -----------------------------------------------
   // Removes all social friction. Full AI suite with generous daily limits.
-  // Unlocks: Travel Concierge, AI Listing Generator, full Chat Summaries,
+  // Unlocks: AI Listing Generator, full Chat Summaries,
   // unlimited Smart Feed, and increased Copilot usage.
   static const TierLimits neighbourhood = TierLimits(
     // Core social
@@ -213,7 +194,6 @@ class TierLimits {
     maxAiEventDiscoveriesPerWeek: 7,
     maxAiChatSummariesPerDay: 10,
     maxAiListingGenerationsPerMonth: 10,
-    maxAiTravelConciergeChatsPerDay: 15,
     maxAiMatchmakerRequestsPerMonth: 0,
     maxAiSmartFeedRefreshesPerDay: 999,
     // AI booleans
@@ -223,12 +203,7 @@ class TierLimits {
     aiChatSummaries: true,
     aiListingGenerator: true,
     aiSmartFeed: true,
-    aiTravelConcierge: true,
     aiMeetupMatchmaker: false,
-    // Travel
-    travelAccess: true,
-    tripsPackingListAccess: true,
-    maxSavedTravels: 10,
     // Community Q&A
     maxQuestionsPerWeek: 15,
     communityBadgesEnabled: true,
@@ -258,7 +233,6 @@ class TierLimits {
     maxAiEventDiscoveriesPerWeek: 999,
     maxAiChatSummariesPerDay: 999,
     maxAiListingGenerationsPerMonth: 999,
-    maxAiTravelConciergeChatsPerDay: 999,
     maxAiMatchmakerRequestsPerMonth: 999,
     maxAiSmartFeedRefreshesPerDay: 999,
     // AI booleans -- everything unlocked
@@ -268,12 +242,7 @@ class TierLimits {
     aiChatSummaries: true,
     aiListingGenerator: true,
     aiSmartFeed: true,
-    aiTravelConcierge: true,
     aiMeetupMatchmaker: true,
-    // Travel -- full access
-    travelAccess: true,
-    tripsPackingListAccess: true,
-    maxSavedTravels: 999,
     // Community Q&A -- unlimited
     maxQuestionsPerWeek: 999,
     communityBadgesEnabled: true,
@@ -354,14 +323,13 @@ class SubscriptionPlan {
         'AI Copilot (3 chats/day)',
         'AI event discovery (weekly)',
         'Basic smart feed',
-        'Browse family trips',
         'Ask Parents Q&A (3 questions/week)',
-        'View community tips',
+        'Browse offers & community tips',
       ],
       shortBenefits: [
         '2 groups, 5 DMs, 2 meetups/mo',
         'Basic AI features',
-        'Browse community & trips + Q&A',
+        'Community Q&A + offers',
       ],
     ),
 
@@ -385,10 +353,9 @@ class SubscriptionPlan {
         'AI Copilot (25 chats/day)',
         'AI Chat Summaries (10/day)',
         'AI Listing Generator (10/mo)',
-        'AI Travel Concierge (15 chats/day)',
         'Daily AI event discovery',
         'Unlimited smart feed',
-        'Save up to 10 trips + packing lists',
+        'Up to 15 photo uploads',
         'Child milestone tracker',
         'Ask Parents Q&A (15 questions/week)',
         'AI answer synthesis',
@@ -418,9 +385,7 @@ class SubscriptionPlan {
         'Unlimited AI Copilot',
         'AI Meetup Matchmaker',
         'Unlimited AI Chat Summaries',
-        'Unlimited AI Travel Concierge',
         'Unlimited AI Listing Generator',
-        'Unlimited saved trips',
         'Up to 50 photo uploads',
         'Inner Circle badge',
         'Unlimited Ask Parents Q&A',
@@ -429,7 +394,7 @@ class SubscriptionPlan {
       shortBenefits: [
         'Everything in Neighbourhood',
         'Unlimited AI + Matchmaker + Q&A',
-        'Unlimited listings, trips & 50 photos',
+        'Unlimited listings & 50 photos',
       ],
     ),
   ];

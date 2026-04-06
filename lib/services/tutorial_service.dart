@@ -38,89 +38,58 @@ class TutorialService {
   /// Ordered tutorial steps. Each maps to a tab index in MainShell plus
   /// a description of the screen's purpose and its primary CTA.
   static const List<TutorialStep> steps = [
-    // 0 — MyHuddl (Home)
+    // 0 — Home
     TutorialStep(
       tabIndex: 0,
-      title: 'MyHuddl',
+      title: 'HOME',
       headline: 'Your personalised dashboard',
       body:
-          'See everything at a glance: AI-recommended events, your groups, '
-          'community updates and quick actions tailored to your stage of '
-          'parenthood.',
+          'AI-curated feed with events, groups and community updates '
+          'tailored to your children\'s ages and your area.',
       ctaLabel: 'Tap cards to explore',
       iconName: 'home',
     ),
-    // 1 — Chat
+    // 1 — Connect
     TutorialStep(
       tabIndex: 1,
-      title: 'Chat',
-      headline: 'Your groups & conversations',
+      title: 'CONNECT',
+      headline: 'Groups & conversations',
       body:
-          'Join local parent groups, start direct messages, and stay '
-          'connected with other parents in Cambridge. Your assigned groups '
-          'appear automatically based on your postcode and stage of life.',
+          'Your auto-assigned local groups and DMs. Tap any group to '
+          'chat with parents nearby.',
       ctaLabel: 'Tap a group to start chatting',
       iconName: 'people',
     ),
-    // 2 — Mingle (Events + Meetups)
+    // 2 — Discover
     TutorialStep(
       tabIndex: 2,
-      title: 'Mingle',
+      title: 'DISCOVER',
       headline: 'Events, meetups & activities',
       body:
-          'Browse AI-discovered events in Cambridge, B2B partner events, '
-          'and parent-organised meetups. Filter by area, date or age. '
-          'The AI scans local sources daily so new events appear '
-          'automatically.',
+          'AI discovers local events daily. Browse, filter by age and '
+          'area, or create your own meetup with the + button.',
       ctaLabel: 'Tap + to create a meetup',
       iconName: 'groups',
     ),
-    // 3 — Preloved (Marketplace)
+    // 3 — Market
     TutorialStep(
       tabIndex: 3,
-      title: 'Preloved',
-      headline: 'Buy, sell & give away baby items',
+      title: 'MARKET',
+      headline: 'Buy, sell & give away',
       body:
-          'List outgrown clothes, toys and gear for other local parents. '
-          'Browse categories, message sellers directly and keep baby stuff '
-          'out of landfill. Free listings for all Huddl members.',
+          'List outgrown baby gear, browse bargains, and discover '
+          'exclusive offers from top UK brands.',
       ctaLabel: 'Tap + to list an item',
       iconName: 'storefront',
     ),
-    // 4 — Travel
+    // 4 — Profile
     TutorialStep(
       tabIndex: 4,
-      title: 'Travel',
-      headline: 'Family travel made easy',
-      body:
-          'Discover family-friendly destinations, get AI-powered packing '
-          'lists, and read tips from parents who\'ve been there. Our '
-          'travel concierge helps plan stress-free holidays with little ones.',
-      ctaLabel: 'Tap Explore to browse destinations',
-      iconName: 'flight',
-    ),
-    // 5 — Offers
-    TutorialStep(
-      tabIndex: 5,
-      title: 'Offers',
-      headline: 'Save money on top UK brands',
-      body:
-          'Browse exclusive coupons, voucher codes and daily offers from '
-          'hundreds of UK stores. Find family-friendly offers on baby '
-          'gear, clothing, toys and more. Every purchase through Huddl '
-          'earns cashback rewards!',
-      ctaLabel: 'Tap a store to see offers',
-      iconName: 'local_offer',
-    ),
-    // 6 — Profile
-    TutorialStep(
-      tabIndex: 6,
-      title: 'Profile',
+      title: 'PROFILE',
       headline: 'Your account & settings',
       body:
-          'Edit your profile, manage your subscription, adjust '
-          'notifications and privacy settings. You can also run this '
-          'tutorial any time from here.',
+          'Manage your subscription, notifications and privacy. '
+          'Re-run this tour any time from here.',
       ctaLabel: 'Scroll down for settings',
       iconName: 'person',
     ),

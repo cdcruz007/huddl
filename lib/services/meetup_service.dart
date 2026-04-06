@@ -145,6 +145,34 @@ class Meetup {
     );
   }
 
+  /// Returns a Pexels URL that matches the meetup category.
+  static String _categoryFallbackUrl(String category) {
+    switch (category.toLowerCase()) {
+      case 'coffee':
+      case 'coffee & chat':
+        return 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'playdate':
+      case 'play':
+        return 'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'walk':
+      case 'outdoor':
+        return 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'sport':
+      case 'fitness':
+      case 'exercise':
+        return 'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'class':
+      case 'workshop':
+        return 'https://images.pexels.com/photos/3662667/pexels-photo-3662667.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'music':
+        return 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=300';
+      case 'social':
+        return 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=300';
+      default:
+        return 'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=300';
+    }
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
@@ -160,7 +188,7 @@ class Meetup {
     'maxAttendees': maxAttendees,
     'isGoing': isGoing,
     'attendeeNames': attendeeNames,
-    'imageUrl': imageUrl.startsWith('data:') ? '' : imageUrl, // Don't persist base64
+    'imageUrl': imageUrl.startsWith('data:') ? _categoryFallbackUrl(category) : imageUrl, // Replace base64 with category image
     'isFree': isFree,
     'price': price,
     'privacy': privacy.index,

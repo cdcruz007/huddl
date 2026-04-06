@@ -232,7 +232,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            // TODO: Navigate to Terms of Service URL
+                            Navigator.pushNamed(context, '/terms');
                           },
                           child: Text('Terms of Service',
                               style: GoogleFonts.poppins(
@@ -249,7 +249,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            // TODO: Navigate to Privacy Policy URL
+                            Navigator.pushNamed(context, '/privacy');
                           },
                           child: Text('Privacy Policy',
                               style: GoogleFonts.poppins(
@@ -959,15 +959,14 @@ class _FeatureComparisonTable extends StatelessWidget {
               _rowBool('AI Recommendations', true, true, true),
               _rowBool('AI Smart Feed', true, true, true),
               _row('AI Listing Generator', '\u2014', '10/mo', '\u221E'),
-              _row('AI Travel Concierge', '\u2014', '15/day', '\u221E'),
               _rowBool('AI Matchmaker', false, false, true),
 
-              // ---- Travel section ----
-              _sectionHeader('Travel'),
-              _rowBool('Browse destinations', true, true, true),
-              _row('Saved trips', '1', '10', '\u221E'),
-              _rowBool('AI packing lists', false, true, true),
-
+              // ---- Community Q&A section ----
+              _sectionHeader('Community Q&A'),
+              _row('Questions/week', '3', '15', '\u221E'),
+              _row('Bookmarks/month', '5', '50', '\u221E'),
+              _rowBool('Community badges', false, true, true),
+              _rowBool('AI answer synthesis', false, true, true),
 
             ],
           ),

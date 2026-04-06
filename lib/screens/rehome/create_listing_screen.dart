@@ -224,6 +224,17 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // ── Photo required gate ─────────────────────────────────────────
+    if (_pickedImages.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: const Text('Please add at least one photo for your listing'),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ));
+      return;
+    }
+
     // ── Subscription gate: listing creation limit ────────────────────
     final subService = SubscriptionService();
     await subService.initialize();
@@ -254,9 +265,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         ? borough
         : 'Your area';
 
-    final images = _pickedImages.isNotEmpty
-        ? _pickedImages
-        : ['https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600'];
+    final images = _pickedImages; // Photo is always required
 
     if (_isEditing) {
       final updated = RehomeItem(

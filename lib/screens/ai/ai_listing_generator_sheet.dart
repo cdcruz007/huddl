@@ -85,7 +85,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Listed! "${_draft!.suggestedTitle}" is now live on Preloved',
+          'Listed! "${_draft!.suggestedTitle}" is now live on Market',
           style: GoogleFonts.poppins(fontSize: 13),
         ),
         backgroundColor: HuddlColors.success,

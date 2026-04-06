@@ -425,16 +425,6 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   color: HuddlColors.blue,
                 ),
               ],
-              if (limits.aiTravelConcierge) ...[
-                const SizedBox(height: 8),
-                _UsageCard(
-                  icon: Icons.flight_outlined,
-                  label: 'AI Travel Concierge Chats Today',
-                  used: _service.aiTravelConciergeChatsToday,
-                  limit: limits.maxAiTravelConciergeChatsPerDay,
-                  color: const Color(0xFF3580F0),
-                ),
-              ],
               if (limits.aiMeetupMatchmaker) ...[
                 const SizedBox(height: 8),
                 _UsageCard(
@@ -473,7 +463,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                               color: HuddlColors.textDark)),
                       const SizedBox(height: 6),
                       Text(
-                        'Unlimited groups, DMs, meetups, full AI suite, Travel Concierge, ad-free & more \u2014 from just \u00A35.99/mo.',
+                        'Unlimited groups, DMs, meetups, full AI suite, ad-free & more \u2014 from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: HuddlColors.textSecondary),

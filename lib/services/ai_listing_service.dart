@@ -94,7 +94,7 @@ class AiListingService {
 
   /// Call Gemini to generate a complete listing from product description
   Future<AiListingDraft> _callGeminiForListing(String userInput) async {
-    final systemPrompt = '''You are a marketplace listing expert for a UK-based parents' community app called huddl Preloved.
+    final systemPrompt = '''You are a marketplace listing expert for a UK-based parents' community app called huddl Market.
 
 Given a user's description of a baby/children's item they want to sell, generate a complete listing.
 

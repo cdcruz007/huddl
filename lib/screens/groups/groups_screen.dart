@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
@@ -19,8 +20,12 @@ import '../../models/saved_message.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/subscription_service.dart';
 import '../../services/ai_chat_summariser_service.dart';
+import '../../services/messages_ai_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../widgets/ai_assistant_sheet.dart';
+import '../../services/discover_ai_service.dart';
 import '../ai/ai_copilot_screen.dart';
+import '../events/events_screen.dart' show ImGoingTab;
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
@@ -38,6 +43,37 @@ const List<String> _cambridgeImages = [
 
 // ── Persistence key for user-created groups ──────────────────────────────
 const String _userGroupsKey = 'user_created_groups_v1';
+
+/// Platform-adaptive font family: SF Pro on iOS, Poppins elsewhere (P2).
+TextStyle _adaptiveText({
+  double fontSize = 14,
+  FontWeight fontWeight = FontWeight.w400,
+  Color? color,
+  double? height,
+  FontStyle? fontStyle,
+  double? letterSpacing,
+}) {
+  final bool isApple = !kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS);
+  if (isApple) {
+    return TextStyle(
+      fontFamily: '.SF Pro Text',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      fontStyle: fontStyle,
+      letterSpacing: letterSpacing,
+    );
+  }
+  return GoogleFonts.poppins(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    fontStyle: fontStyle,
+    letterSpacing: letterSpacing,
+  );
+}
 
 class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
@@ -74,75 +110,54 @@ class _GroupsScreenState extends State<GroupsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header ───────────────────────────────────────────────
+            // ── Minimal header ─────────────────────────────────────
             Container(
-              color: HuddlColors.white,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              color: context.hc.surface,
+              padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Expanded(
-                        child: Text(
-                          'Chat',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
-                          ),
+                      Text(
+                        'Connect',
+                        style: _adaptiveText(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary,
                         ),
                       ),
-                      // ── AI Copilot header button ─────────────────────
-                      GestureDetector(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const AiCopilotScreen(),
-                          ),
-                        ),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            gradient: HuddlColors.aiGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.auto_awesome,
-                            color: HuddlColors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
+                      const Spacer(),
+                      // ── Tab bar (inline, compact) ──────────────────
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  // ── Tab bar ───────────────────────────────────────
+                  const SizedBox(height: 4),
                   TabBar(
                     controller: _tabController,
                     tabs: const [
                       Tab(text: 'Messages'),
-                      Tab(text: 'Discover'),
+                      Tab(text: "I'm Going"),
                       Tab(text: 'Saved'),
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
                     labelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                     unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                     ),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     dividerColor: HuddlColors.divider,
+                    padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                   ),
                 ],
               ),
@@ -153,7 +168,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                 controller: _tabController,
                 children: [
                   _MessagesTab(groupsChangedNotifier: _groupsChangedNotifier),
-                  _DiscoverTab(groupsChangedNotifier: _groupsChangedNotifier),
+                  const ImGoingTab(),
                   _SavedTab(),
                 ],
               ),
@@ -183,6 +198,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
   final AiChatSummariserService _summariser = AiChatSummariserService();
+  final MessagesAiService _aiService = MessagesAiService();
 
   List<_GroupItem> _allGroups = [];
   List<_GroupItem> _filteredGroups = [];
@@ -192,9 +208,12 @@ class _MessagesTabState extends State<_MessagesTab> {
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
   bool _isLoading = true;
+  bool _hasLoadError = false;
+  String _errorMessage = '';
   String _searchQuery = '';
   bool _showSearch = false;
   bool _summariesLoaded = false;
+  bool _showAiSuggestions = false;
   final TextEditingController _searchController = TextEditingController();
 
   // ── Deep search state ─────────────────────────────────────────────────
@@ -208,6 +227,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     _loadGroups();
     _loadMutedAndPinned();
     _loadDemoSummaries();
+    _aiService.initialize();
     _dmService.addListener(_onDMUpdate);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
@@ -359,13 +379,17 @@ class _MessagesTabState extends State<_MessagesTab> {
       setState(() {
         _allGroups = items;
         _pendingInvitations = _invitationService.pendingInvitations;
+        _hasLoadError = false;
+        _errorMessage = '';
         _applyFilter();
         _isLoading = false;
       });
     } catch (e) {
-      // Fallback to demo items
+      // Fallback to demo items AND show error
       setState(() {
         _allGroups = _demoCommunityGroups();
+        _hasLoadError = true;
+        _errorMessage = 'Could not load your groups. Showing demo data.';
         _applyFilter();
         _isLoading = false;
       });
@@ -467,7 +491,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     showModalBottomSheet(
       context: ctx,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -481,7 +505,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: HuddlColors.divider,
+                  color: context.hc.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -490,6 +514,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(c);
                   setState(() {
                     if (isPinned) {
@@ -508,6 +533,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     : Icons.notifications_off_outlined,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(c);
                   setState(() {
                     if (isMuted) {
@@ -547,16 +573,33 @@ class _MessagesTabState extends State<_MessagesTab> {
                   });
                 },
               ),
-              _ActionTile(
-                icon: Icons.archive_outlined,
-                label: 'Archive',
-                onTap: () {
-                  Navigator.pop(c);
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    SnackBar(content: Text('${group.name} archived')),
-                  );
-                },
-              ),
+              // Archive is only available for user-created groups, not default/listed community groups
+              if (!group.isDefault)
+                _ActionTile(
+                  icon: Icons.archive_outlined,
+                  label: 'Archive',
+                  onTap: () {
+                    Navigator.pop(c);
+                    setState(() {
+                      _allGroups.removeWhere((g) => g.id == group.id);
+                      _applyFilter();
+                    });
+                    ScaffoldMessenger.of(ctx).showSnackBar(
+                      SnackBar(
+                        content: Text('${group.name} archived'),
+                        action: SnackBarAction(
+                          label: 'Undo',
+                          onPressed: () {
+                            setState(() {
+                              _allGroups.add(group);
+                              _applyFilter();
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
               // Delete is only available for private group creator/admin
               if (group.isPrivate && group.creatorId == 'current_user')
                 _ActionTile(
@@ -835,106 +878,205 @@ class _MessagesTabState extends State<_MessagesTab> {
         _searchQuery.isNotEmpty && _deepSearchResults.isNotEmpty;
     final bool isSearchActive = _showSearch && _searchQuery.isNotEmpty;
 
+    // AI suggestions
+    final aiSuggestions = _aiService.getPredictiveSuggestions(
+      partialQuery: _searchQuery.isEmpty ? null : _searchQuery,
+      recentGroupNames: _allGroups.take(5).map((g) => g.name).toList(),
+      recentDMNames: _dmConversations.take(5).map((d) => d.recipientName).toList(),
+    );
+
+    final aiActions = _aiService.getQuickActions(
+      totalUnread: unified.fold<int>(0, (s, i) => s + i.unreadCount),
+      hasPendingInvitations: _pendingInvitations.isNotEmpty,
+    );
+
     return Stack(
       children: [
         Column(
           children: [
-            // ── Always-visible search bar at top ──────────────────────
+            // ── Compact search bar + AI sparkle ──────────────────────
             Container(
-              color: HuddlColors.white,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              color: context.hc.surface,
+              padding: const EdgeInsets.fromLTRB(16, 6, 12, 10),
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.background,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 12),
-                          const Icon(Icons.search,
-                              size: 20, color: HuddlColors.textHint),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              onChanged: (val) {
-                                setState(() {
-                                  _searchQuery = val;
-                                  _showSearch = val.isNotEmpty;
-                                  _applyFilter();
-                                });
-                              },
-                              onTap: () {
-                                if (!_showSearch) {
-                                  setState(() => _showSearch = true);
-                                }
-                              },
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: HuddlColors.textDark,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Search messages, groups & DMs...',
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                contentPadding: EdgeInsets.zero,
-                                isDense: true,
-                                hintStyle: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: HuddlColors.textHint,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _showSearch = true;
+                          _showAiSuggestions = true;
+                        });
+                      },
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: context.hc.inputBg,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 14),
+                            Icon(Icons.search, size: 18, color: HuddlColors.textHint.withValues(alpha: 0.6)),
+                            const SizedBox(width: 8),
+                            if (_showSearch)
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  autofocus: true,
+                                  onChanged: (val) {
+                                    _aiService.recordSearch(val);
+                                    setState(() {
+                                      _searchQuery = val;
+                                      _showAiSuggestions = val.isEmpty;
+                                      _applyFilter();
+                                    });
+                                  },
+                                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search chats...',
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: EdgeInsets.zero,
+                                    isDense: true,
+                                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                                  ),
+                                ),
+                              )
+                            else
+                              Expanded(
+                                child: Text(
+                                  'Search chats...',
+                                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
                                 ),
                               ),
-                            ),
-                          ),
-                          if (_searchQuery.isNotEmpty) ...[
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _searchController.clear();
-                                  _searchQuery = '';
-                                  _showSearch = false;
-                                  _applyFilter();
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                child: const Icon(Icons.close,
-                                    size: 18, color: HuddlColors.textHint),
+                            if (_searchQuery.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  setState(() {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                    _showSearch = false;
+                                    _showAiSuggestions = false;
+                                    _applyFilter();
+                                  });
+                                },
+                                child: Semantics(
+                                  label: 'Clear search',
+                                  button: true,
+                                  child: Container(
+                                    width: 32, height: 32,
+                                    alignment: Alignment.center,
+                                    child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint),
+                                  ),
+                                ),
                               ),
-                            ),
                             const SizedBox(width: 4),
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
                   if (_showSearch) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () {
+                        HapticFeedback.lightImpact();
+                        FocusScope.of(context).unfocus();
                         setState(() {
                           _showSearch = false;
                           _searchQuery = '';
+                          _showAiSuggestions = false;
                           _searchController.clear();
                           _applyFilter();
                         });
-                        FocusScope.of(context).unfocus();
                       },
-                      child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              color: HuddlColors.primary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500)),
+                      child: Text('Cancel', style: GoogleFonts.poppins(
+                        color: HuddlColors.primary, fontSize: 13, fontWeight: FontWeight.w500,
+                      )),
+                    ),
+                  ] else ...[
+                    const SizedBox(width: 4),
+                    // ── AI Sparkle button (progressive disclosure) ────
+                    Semantics(
+                      label: 'AI Assistant',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showAiAssistant(context, aiActions, aiSuggestions);
+                        },
+                        child: Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(
+                            gradient: HuddlColors.aiGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 17),
+                        ),
+                      ),
                     ),
                   ],
                 ],
               ),
             ),
+
+            // ── AI predictive suggestions (shown when search focused but empty) ─
+            if (_showAiSuggestions && _showSearch && _searchQuery.isEmpty && aiSuggestions.isNotEmpty)
+              Container(
+                color: context.hc.surface,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.textHint),
+                        const SizedBox(width: 4),
+                        Text('Suggested', style: GoogleFonts.poppins(
+                          fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textHint,
+                        )),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: aiSuggestions.take(4).map((s) => GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _searchController.text = s.query;
+                          setState(() {
+                            _searchQuery = s.query;
+                            _showAiSuggestions = false;
+                            _applyFilter();
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.15)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(s.icon, style: const TextStyle(fontSize: 12)),
+                              const SizedBox(width: 4),
+                              Text(s.query, style: GoogleFonts.poppins(
+                                fontSize: 12, color: HuddlColors.primary, fontWeight: FontWeight.w500,
+                              )),
+                            ],
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                ),
+              ),
 
             // ── Content area ──────────────────────────────────────────
             Expanded(
@@ -945,23 +1087,30 @@ class _MessagesTabState extends State<_MessagesTab> {
           ],
         ),
 
-        // ── FAB for new DM (hidden during search) ─────────────────────
+        // ── Floating compose button ──────────────────────────────────
         if (!isSearchActive)
           Positioned(
             bottom: 24,
             right: 16,
-            child: Material(
-              elevation: 6,
-              shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-              shape: const CircleBorder(),
-              color: HuddlColors.primary,
-              child: InkWell(
-                onTap: () => Navigator.pushNamed(context, '/new_dm'),
-                customBorder: const CircleBorder(),
-                child: const SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: Icon(Icons.add, color: Colors.white, size: 28),
+            child: Semantics(
+              label: 'New direct message',
+              button: true,
+              child: Material(
+                elevation: 4,
+                shadowColor: HuddlColors.primary.withValues(alpha: 0.3),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                color: HuddlColors.primary,
+                child: InkWell(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pushNamed(context, '/new_dm');
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: const SizedBox(
+                    width: 52,
+                    height: 52,
+                    child: Icon(Icons.edit_outlined, color: Colors.white, size: 22),
+                  ),
                 ),
               ),
             ),
@@ -970,10 +1119,65 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
+  /// Show the AI Assistant bottom sheet (progressive disclosure).
+  void _showAiAssistant(
+    BuildContext context,
+    List<AiQuickAction> actions,
+    List<AiSearchSuggestion> suggestions,
+  ) async {
+    final result = await showAiAssistantSheet(
+      context,
+      quickActions: actions,
+      suggestions: suggestions,
+      totalUnread: _unifiedMessageList.fold<int>(0, (s, i) => s + i.unreadCount),
+    );
+
+    if (result != null && mounted) {
+      switch (result.action) {
+        case 'search':
+          setState(() {
+            _showSearch = true;
+            _searchQuery = result.query ?? '';
+            _searchController.text = _searchQuery;
+            _applyFilter();
+          });
+          break;
+        case 'catch_up':
+          // Navigate to AI Copilot
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const AiCopilotScreen()));
+          break;
+        case 'navigate':
+          // Try to find the conversation and navigate
+          final target = result.query?.toLowerCase() ?? '';
+          final match = _unifiedMessageList.firstWhere(
+            (i) => i.name.toLowerCase().contains(target),
+            orElse: () => _unifiedMessageList.first,
+          );
+          if (match.isGroup && match.groupItem != null) {
+            Navigator.pushNamed(context, '/group_chat', arguments: {
+              'groupId': match.groupItem!.id,
+              'groupName': match.groupItem!.name,
+              'groupImageUrl': match.groupItem!.imageUrl,
+              'isDefaultGroup': match.groupItem!.isDefault,
+            });
+          } else if (match.dmConversation != null) {
+            Navigator.pushNamed(context, '/dm_chat', arguments: {
+              'recipientId': match.dmConversation!.recipientId,
+              'recipientName': match.dmConversation!.recipientName,
+              'recipientAvatarColor': match.dmConversation!.recipientAvatarColor,
+              'conversationId': match.dmConversation!.id,
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
   /// Build the normal conversation list (no search active).
   Widget _buildAiCatchUpCard() {
     if (!_summariesLoaded) return const SizedBox();
-    // Check cached summaries for active ones
     final groupIds = ['new_parents_cambridge', 'dads_connect', 'toddler_adventures'];
     final activeSummaries = groupIds
         .map((id) => _summariser.getSummary(id))
@@ -983,162 +1187,92 @@ class _MessagesTabState extends State<_MessagesTab> {
     if (activeSummaries.isEmpty) return const SizedBox();
     final summary = activeSummaries.first;
 
+    // ── Compact "Invisible AI" card ──────────────────────────────────────
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFEDE7F6), Color(0xFFF3E5F5)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF3580F0).withValues(alpha: 0.06),
+            const Color(0xFF5B9DFF).withValues(alpha: 0.04),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF5B9DFF).withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF5B9DFF).withValues(alpha: 0.12)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.auto_awesome, size: 16, color: HuddlColors.white),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'AI Catch-Up \u00B7 ${summary.unreadCount} unread in ${summary.groupName}',
+          // AI icon
+          Container(
+            width: 32, height: 32,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.auto_awesome, size: 15, color: Colors.white),
+          ),
+          const SizedBox(width: 10),
+          // Summary text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${summary.unreadCount} unread in ${summary.groupName}',
                   style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: const Color(0xFF4A148C),
+                    color: const Color(0xFF3580F0),
                   ),
                 ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  _summariser.dismissSummary(summary.groupId);
-                  setState(() {});
-                },
-                child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            summary.overviewText,
-            style: GoogleFonts.poppins(
-              fontSize: 12, color: HuddlColors.textDark, height: 1.4,
-            ),
-            maxLines: 3, overflow: TextOverflow.ellipsis,
-          ),
-          if (summary.keyPoints.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            ...summary.keyPoints.take(2).map((point) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    point.category == 'plan' ? '\u{1F4C5} ' :
-                    point.category == 'recommendation' ? '\u{2B50} ' :
-                    point.category == 'question' ? '\u2753 ' : '\u{1F4AC} ',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  Expanded(
-                    child: Text(
-                      point.text,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.textSecondary, height: 1.3,
-                      ),
-                      maxLines: 2, overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ],
-          if (summary.upcomingPlanNote != null) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: HuddlColors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.event, size: 14, color: HuddlColors.primary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      summary.upcomingPlanNote!,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.primary, fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              if (summary.mentionedTopics.isNotEmpty) ...[
-                ...summary.mentionedTopics.take(3).map((topic) => Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5B9DFF).withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    topic,
-                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF3580F0)),
-                  ),
-                )),
+                Text(
+                  summary.overviewText,
+                  style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.3),
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                ),
               ],
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, '/group_chat', arguments: {
-                    'groupId': summary.groupId,
-                    'groupName': summary.groupName,
-                    'groupImageUrl': '',
-                    'isDefaultGroup': true,
-                  });
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.chat_bubble_outline, size: 12, color: HuddlColors.white),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Jump to Chat',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11, fontWeight: FontWeight.w600,
-                          color: HuddlColors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Quick jump
+          GestureDetector(
+            onTap: () {
+              Navigator.pushNamed(context, '/group_chat', arguments: {
+                'groupId': summary.groupId,
+                'groupName': summary.groupName,
+                'groupImageUrl': '',
+                'isDefaultGroup': true,
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                borderRadius: BorderRadius.circular(10),
               ),
-            ],
+              child: Text('View', style: GoogleFonts.poppins(
+                fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white,
+              )),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Dismiss
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              _summariser.dismissSummary(summary.groupId);
+              setState(() {});
+            },
+            child: Semantics(
+              label: 'Dismiss AI summary',
+              button: true,
+              child: const SizedBox(
+                width: 28, height: 28,
+                child: Icon(Icons.close, size: 14, color: HuddlColors.textHint),
+              ),
+            ),
           ),
         ],
       ),
@@ -1156,38 +1290,66 @@ class _MessagesTabState extends State<_MessagesTab> {
       onRefresh: _loadGroups,
       color: HuddlColors.primary,
       child: ListView(
-        padding: const EdgeInsets.only(top: 4, bottom: 100),
+        padding: const EdgeInsets.only(top: 2, bottom: 100),
         children: [
-          // ── AI Chat Catch-Up Card ─────────────────────────
+          // ── Error banner (P2: user-visible error) ──────────
+          if (_hasLoadError)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 6, 16, 2),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: HuddlColors.warningBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: HuddlColors.warning.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 16, color: HuddlColors.warningDark),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(_errorMessage, style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.warningDark,
+                    )),
+                  ),
+                  Semantics(
+                    label: 'Retry loading groups',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: _loadGroups,
+                      child: Text('Retry', style: GoogleFonts.poppins(
+                        fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.primary,
+                      )),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          // ── AI Catch-Up (compact) ─────────────────────────
           _buildAiCatchUpCard(),
-          // ── Pending invitation cards ──────────────────────
+          // ── Pending invitation cards (compact) ──────────────
           if (_pendingInvitations.isNotEmpty) ...[
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-              child: Text(
-                'Group invitations',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: HuddlColors.textHint,
-                  letterSpacing: 0.3,
-                ),
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+              child: Text('Invitations', style: GoogleFonts.poppins(
+                fontSize: 11, fontWeight: FontWeight.w600,
+                color: HuddlColors.textHint, letterSpacing: 0.3,
+              )),
             ),
             ..._pendingInvitations.map((inv) => _InvitationCard(
                   invitation: inv,
                   onAccept: () => _handleAccept(inv),
                   onDecline: () => _handleDecline(inv),
                 )),
-            const Divider(height: 1, color: HuddlColors.divider),
             const SizedBox(height: 4),
           ],
           // ── Unified rows (groups + DMs, sorted by recent) ──
           ...unified.asMap().entries.map((entry) {
             final index = entry.key;
             final item = entry.value;
-
             final bool isUnread = item.unreadCount > 0;
+
+            // AI insight for this conversation
+            final insight = _aiService.getInsightFor(item.id);
 
             Widget rowWidget;
             if (item.isGroup) {
@@ -1195,8 +1357,8 @@ class _MessagesTabState extends State<_MessagesTab> {
                 group: item.groupItem!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-
                 onTap: () {
+                  _aiService.recordConversationTap(item.id);
                   Navigator.pushNamed(context, '/group_chat', arguments: {
                     'groupId': item.groupItem!.id,
                     'groupName': item.groupItem!.name,
@@ -1210,15 +1372,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showGroupActions(context, item.groupItem!),
-
               );
             } else {
               rowWidget = _DMMessageRow(
                 conversation: item.dmConversation!,
                 isPinned: item.isPinned,
                 isMuted: item.isMuted,
-
                 onTap: () {
+                  _aiService.recordConversationTap(item.id);
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
                     'recipientName': item.dmConversation!.recipientName,
@@ -1229,7 +1390,6 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
                 onLongPress: () =>
                     _showDMActions(context, item.dmConversation!),
-
               );
             }
 
@@ -1241,9 +1401,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   swipeLeftLabel: item.isGroup ? 'Leave' : 'Delete',
                   swipeLeftIcon: item.isGroup ? Icons.exit_to_app : Icons.delete,
                   onDelete: () {
-                    // All groups (public & private): swipe triggers leave, not delete
                     if (item.isGroup && item.groupItem != null) {
-                      // Default groups cannot be left unless postcode changed
                       if (item.groupItem!.isDefault && !_onboardingService.hasChangedBorough) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -1263,12 +1421,48 @@ class _MessagesTabState extends State<_MessagesTab> {
                   onToggleRead: () => _toggleReadStatus(item),
                   child: rowWidget,
                 ),
-                if (index < unified.length - 1)
-                  const Divider(
-                    height: 1,
-                    indent: 80,
-                    color: HuddlColors.divider,
+                // AI insight badge (subtle, below the row)
+                if (insight != null && insight.category == 'reply_needed')
+                  Container(
+                    margin: const EdgeInsets.only(left: 80, right: 16, bottom: 2),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 4, height: 4,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.6),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(insight.insightText, style: GoogleFonts.poppins(
+                          fontSize: 10, color: HuddlColors.primary.withValues(alpha: 0.7),
+                          fontStyle: FontStyle.italic,
+                        )),
+                        const Spacer(),
+                        // Feedback buttons
+                        _AiFeedbackRow(
+                          onThumbsUp: () {
+                            _aiService.recordFeedback(AiMessageFeedback(
+                              suggestionId: 'insight_${item.id}',
+                              isPositive: true,
+                            ));
+                            setState(() {});
+                          },
+                          onThumbsDown: () {
+                            _aiService.recordFeedback(AiMessageFeedback(
+                              suggestionId: 'insight_${item.id}',
+                              isPositive: false,
+                            ));
+                            // Remove insight on negative feedback
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
                   ),
+                if (index < unified.length - 1)
+                  const Divider(height: 1, indent: 80, color: HuddlColors.divider),
               ],
             );
           }),
@@ -1691,7 +1885,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: HuddlColors.error,
                         ),
                       ),
                     ),
@@ -1713,7 +1907,7 @@ class _MessagesTabState extends State<_MessagesTab> {
 
     showModalBottomSheet(
       context: ctx,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1727,7 +1921,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: HuddlColors.divider,
+                  color: context.hc.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1736,6 +1930,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 icon: isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                 label: isPinned ? 'Unpin' : 'Pin',
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(c);
                   setState(() {
                     if (isPinned) {
@@ -1754,6 +1949,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     : Icons.notifications_off_outlined,
                 label: isMuted ? 'Unmute' : 'Mute',
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   Navigator.pop(c);
                   setState(() {
                     if (isMuted) {
@@ -2051,19 +2247,22 @@ class _GroupMessageRow extends StatelessWidget {
                           ),
                           if (hasUnread) ...[
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${group.unreadCount}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white,
+                            Semantics(
+                              label: '${group.unreadCount} unread messages',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${group.unreadCount}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -2439,19 +2638,22 @@ class _DMMessageRow extends StatelessWidget {
                           ),
                           if (hasUnread) ...[
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.primary,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '${conversation.unreadCount}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white,
+                            Semantics(
+                              label: '${conversation.unreadCount} unread messages',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '${conversation.unreadCount}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -2563,13 +2765,16 @@ class _GroupAvatar extends StatelessWidget {
           Positioned(
             right: 0,
             bottom: 0,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: _kOnline,
-                shape: BoxShape.circle,
-                border: Border.all(color: HuddlColors.white, width: 2),
+            child: Semantics(
+              label: 'New messages available',
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: _kOnline,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: HuddlColors.white, width: 2),
+                ),
               ),
             ),
           ),
@@ -2646,20 +2851,38 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   final TextEditingController _searchController = TextEditingController();
   bool _showSearchField = false;
 
-  // ── New filter states ─────────────────────────────────────────────────
-  Set<String> _selectedAudiences = {}; // multi-select: 'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads'
+  // ── Filter states ─────────────────────────────────────────────────
+  Set<String> _selectedAudiences = {};
 
-  // Onboarding profile — used for audience-based filtering and borough matching
+  // ── Services ──────────────────────────────────────────────────────
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final InvitationService _invitationService = InvitationService();
+  final DiscoverAiService _discoverAi = DiscoverAiService();
   String? _userParentType;
   List<String> _userStagesOfLife = [];
   String? _userBorough;
+  bool _hasLoadError = false;
+
+  // ── Invisible AI state ────────────────────────────────────────────
+  bool _aiRecommendationsEnabled = true; // human override toggle
+  List<DiscoverSearchSuggestion> _aiSuggestions = [];
+  bool _showAiContextBanner = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _discoverAi.initialize().then((_) {
+      if (mounted) {
+        setState(() {
+          _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+            userBorough: _userBorough,
+            stagesOfLife: _userStagesOfLife,
+            parentType: _userParentType,
+          );
+        });
+      }
+    });
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
 
@@ -2684,17 +2907,29 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
   Future<void> _loadUserProfile() async {
-    await _onboardingService.initialize();
-    await _invitationService.initialize();
-    // Also load any user-created public groups from local storage
-    await _loadUserCreatedGroups();
-    if (mounted) {
-      setState(() {
-        _userParentType = _onboardingService.parentType;
-        _userStagesOfLife = _onboardingService.stagesOfLife;
-        final postcode = _onboardingService.postcode;
-        _userBorough = PostcodeService().getBoroughFromPostcode(postcode);
-      });
+    try {
+      await _onboardingService.initialize();
+      await _invitationService.initialize();
+      await _loadUserCreatedGroups();
+      if (mounted) {
+        setState(() {
+          _userParentType = _onboardingService.parentType;
+          _userStagesOfLife = _onboardingService.stagesOfLife;
+          final postcode = _onboardingService.postcode;
+          _userBorough = PostcodeService().getBoroughFromPostcode(postcode);
+          _hasLoadError = false;
+          // Refresh AI suggestions with profile data
+          _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+            userBorough: _userBorough,
+            stagesOfLife: _userStagesOfLife,
+            parentType: _userParentType,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _hasLoadError = true);
+      }
     }
   }
 
@@ -2727,6 +2962,19 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   ];
 
   final List<_GroupItem> _allDiscoverGroups = [
+    _GroupItem(
+      id: 'disc_travel_tribe',
+      name: 'Travel Tribe',
+      description:
+          'Plan family-friendly adventures, share travel tips, discover kid-approved destinations and swap holiday hacks with fellow parent explorers.',
+      imageUrl:
+          'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 1893,
+      category: 'TRAVEL',
+      isDefault: false,
+      isImageLocked: false,
+      // No targetAudience → visible to everyone
+    ),
     _GroupItem(
       id: 'disc_first_time_mums',
       name: 'First Time Mums',
@@ -2878,18 +3126,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   }
 
   List<_GroupItem> get _filteredGroups {
-    // ALL groups are now listed on Discover regardless of privacy.
-    // Access control is enforced at tap-time, not at listing-time.
-    // Only apply audience and borough filters.
     List<_GroupItem> results = _allDiscoverGroups.where((g) {
       final isOwnGroup = g.creatorId == 'current_user';
-
-      // Audience / visibility filter — skip for the creator
       if (!isOwnGroup && !g.isVisibleTo(_userParentType, _userStagesOfLife)) {
         return false;
       }
-
-      // Borough matching for OTHER users' groups
       if (!isOwnGroup &&
           g.creatorBorough != null &&
           g.creatorBorough!.isNotEmpty &&
@@ -2902,12 +3143,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       return true;
     }).toList();
 
-    // ── Apply "Show groups for" audience filter (multi-select) ─────────
+    // Apply audience filter
     if (_selectedAudiences.isNotEmpty) {
       results = results.where((g) {
-        // Groups with no targetAudience are visible to everyone
         if (g.targetAudience.isEmpty) return true;
-        // Group must have at least one matching audience
         return g.targetAudience.any((a) => _selectedAudiences.contains(a));
       }).toList();
     }
@@ -2915,27 +3154,50 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     // Apply search query
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
+      // Also apply NLP parsing for natural language queries
+      final nlpParams = _discoverAi.parseNaturalQuery(q);
       results = results
           .where((g) =>
               g.name.toLowerCase().contains(q) ||
               g.category.toLowerCase().contains(q) ||
-              g.description.toLowerCase().contains(q))
+              g.description.toLowerCase().contains(q) ||
+              (nlpParams.containsKey('category') &&
+                  g.category.toUpperCase() ==
+                      (nlpParams['category'] as String).toUpperCase()) ||
+              (nlpParams.containsKey('audience') &&
+                  g.targetAudience.contains(nlpParams['audience'])))
           .toList();
     }
-    // Apply sort
-    switch (_selectedSort) {
-      case 'Most Members':
-        results.sort((a, b) => b.memberCount.compareTo(a.memberCount));
-        break;
-      case 'Newest':
-        results = results.reversed.toList();
-        break;
-      case 'A-Z':
-        results.sort(
-            (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        break;
-      default: // 'Recommended' — default order
-        break;
+
+    // AI-powered recommendation sorting (when sort = 'Recommended' and AI enabled)
+    if (_selectedSort == 'Recommended' && _aiRecommendationsEnabled) {
+      results.sort((a, b) {
+        final sa = _discoverAi.getGroupRecommendationScore(
+          a.toJson(),
+          userBorough: _userBorough,
+          parentType: _userParentType,
+          stagesOfLife: _userStagesOfLife,
+        );
+        final sb = _discoverAi.getGroupRecommendationScore(
+          b.toJson(),
+          userBorough: _userBorough,
+          parentType: _userParentType,
+          stagesOfLife: _userStagesOfLife,
+        );
+        return sb.compareTo(sa);
+      });
+    } else {
+      switch (_selectedSort) {
+        case 'Most Members':
+          results.sort((a, b) => b.memberCount.compareTo(a.memberCount));
+        case 'Newest':
+          results = results.reversed.toList();
+        case 'A-Z':
+          results.sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        default:
+          break;
+      }
     }
     return results;
   }
@@ -3016,7 +3278,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     'Dads',
   ];
 
-  // ── Filter and sort bottom sheet (matches provided design) ──────────
+  // ── Filter and sort bottom sheet ──────────────────────────────────────
   void _showFilterSortSheet() {
     Set<String> tempAudiences = Set<String>.from(_selectedAudiences);
     String tempSort = _selectedSort;
@@ -3029,9 +3291,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
             return Container(
-              decoration: const BoxDecoration(
-                color: HuddlColors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: context.hc.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
               child: Column(
@@ -3041,9 +3303,19 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   // ── Header: X  |  "Filter and sort"  |  RESET ──────
                   Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: const Icon(Icons.close, size: 24, color: HuddlColors.textDark),
+                      Semantics(
+                        label: 'Close filter sheet',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(ctx);
+                          },
+                          child: const SizedBox(
+                            width: 48, height: 48, // P0: 48dp touch target
+                            child: Icon(Icons.close, size: 24, color: HuddlColors.textDark),
+                          ),
+                        ),
                       ),
                       Expanded(
                         child: Center(
@@ -3057,19 +3329,27 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           ),
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () {
-                          setSheetState(() {
-                            tempAudiences = {};
-                            tempSort = 'Recommended';
-                          });
-                        },
-                        child: Text(
-                          'RESET',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                      Semantics(
+                        label: 'Reset all filters',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setSheetState(() {
+                              tempAudiences = {};
+                              tempSort = 'Recommended';
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text(
+                              'RESET',
+                              style: _adaptiveText(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -3089,20 +3369,25 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   const SizedBox(height: 12),
                   ..._audienceLabels.map((label) {
                     final isChecked = tempAudiences.contains(label);
-                    return GestureDetector(
-                      onTap: () {
-                        setSheetState(() {
-                          if (isChecked) {
-                            tempAudiences.remove(label);
-                          } else {
-                            tempAudiences.add(label);
-                          }
-                        });
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
+                    return Semantics(
+                      label: isChecked ? '$label filter selected' : '$label filter',
+                      toggled: isChecked,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setSheetState(() {
+                            if (isChecked) {
+                              tempAudiences.remove(label);
+                            } else {
+                              tempAudiences.add(label);
+                            }
+                          });
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 48), // P0: 48dp min touch height
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Row(
                           children: [
                             Container(
                               width: 26,
@@ -3122,15 +3407,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             const SizedBox(width: 14),
                             Text(
                               label,
-                              style: GoogleFonts.poppins(
+                              style: _adaptiveText(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w400,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                             ),
                           ],
                         ),
                       ),
+                    ),
                     );
                   }),
                   const SizedBox(height: 24),
@@ -3145,15 +3431,21 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  ...(_sortOptions.map((option) {
+                  ..._sortOptions.map((option) {
                     final isActive = tempSort == option;
-                    return GestureDetector(
-                      onTap: () =>
-                          setSheetState(() => tempSort = option),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                    return Semantics(
+                      label: isActive ? '$option sort selected' : 'Sort by $option',
+                      selected: isActive,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setSheetState(() => tempSort = option);
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          constraints: const BoxConstraints(minHeight: 48), // P0: 48dp min touch height
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                         margin: const EdgeInsets.only(bottom: 6),
                         decoration: BoxDecoration(
                           color: isActive
@@ -3195,8 +3487,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           ],
                         ),
                       ),
+                    ),
                     );
-                  })),
+                  }),
                   const SizedBox(height: 20),
 
                   // ── Apply button ───────────────────────────────────
@@ -3205,6 +3498,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
+                        HapticFeedback.lightImpact();
                         Navigator.pop(ctx);
                         setState(() {
                           _selectedAudiences = tempAudiences;
@@ -3253,293 +3547,554 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   @override
   Widget build(BuildContext context) {
     final groups = _filteredGroups;
-
     final bool hasActiveFilters = _selectedAudiences.isNotEmpty || _selectedSort != 'Recommended';
+    final contextLine = _discoverAi.getContextExplanation(
+      userBorough: _userBorough,
+      parentType: _userParentType,
+    );
 
     return Stack(
       children: [
         CustomScrollView(
           slivers: [
-            // ── Search bar / Filter-sort bar ─────────────────────────
-            SliverToBoxAdapter(
-              child: Container(
-                color: HuddlColors.white,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-                child: _showSearchField
-                    ? Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: HuddlColors.background,
-                                borderRadius: BorderRadius.circular(22),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                autofocus: true,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: HuddlColors.textDark),
-                                decoration: InputDecoration(
-                                  hintText: 'Search groups...',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: HuddlColors.textHint),
-                                  prefixIcon: const Icon(Icons.search,
-                                      size: 20, color: HuddlColors.textHint),
-                                  suffixIcon: _searchQuery.isNotEmpty
-                                      ? GestureDetector(
-                                          onTap: () => setState(() {
-                                            _searchController.clear();
-                                            _searchQuery = '';
-                                          }),
-                                          child: const Icon(Icons.close,
-                                              size: 18,
-                                              color: HuddlColors.textHint),
-                                        )
-                                      : null,
-                                  border: InputBorder.none,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 11),
-                                ),
-                                onChanged: (val) =>
-                                    setState(() => _searchQuery = val),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => setState(() {
-                              _showSearchField = false;
-                              _searchQuery = '';
-                              _searchController.clear();
-                            }),
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8),
-                              child: Text('Cancel',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: HuddlColors.primary,
-                                      fontWeight: FontWeight.w500)),
-                            ),
-                          ),
-                        ],
-                      )
-                    : GestureDetector(
-                        onTap: _showFilterSortSheet,
-                        child: Container(
-                          height: 44,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.background,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.tune,
-                                  size: 18,
-                                  color: hasActiveFilters
-                                      ? HuddlColors.primary
-                                      : HuddlColors.textHint),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  hasActiveFilters
-                                      ? 'Filtered${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
-                                      : 'Filter and sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: hasActiveFilters
-                                        ? HuddlColors.textDark
-                                        : HuddlColors.textHint,
-                                    fontWeight: hasActiveFilters
-                                        ? FontWeight.w500
-                                        : FontWeight.w400,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => _showSearchField = true),
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  child: const Icon(Icons.search,
-                                      size: 22,
-                                      color: HuddlColors.textDark),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-
-            // ── CTA Card — right under search bar ─────────────────────
-            SliverToBoxAdapter(
-              child: GestureDetector(
-                onTap: () async {
-                  final result = await Navigator.pushNamed(context, '/create_group');
-                  if (result != null) {
-                    widget.groupsChangedNotifier.value++;
-                  }
-                },
+            // ── Error banner ─────────────────────────────────────────
+            if (_hasLoadError)
+              SliverToBoxAdapter(
                 child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: HuddlColors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    color: HuddlColors.warningBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: HuddlColors.warning.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
-                      SizedBox(
-                        width: 64,
-                        height: 64,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: const BoxDecoration(
-                                color: HuddlColors.peachLight,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            Positioned(
-                              left: 0, top: 4,
-                              child: Container(
-                                width: 10, height: 10,
-                                decoration: const BoxDecoration(
-                                  color: HuddlColors.accentAmber,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 0, bottom: 6,
-                              child: Container(
-                                width: 8, height: 8,
-                                decoration: const BoxDecoration(
-                                  color: HuddlColors.paleBlue,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                            const Icon(Icons.diversity_3,
-                                size: 30, color: HuddlColors.primary),
-                            Positioned(
-                              right: 4, top: 4,
-                              child: Container(
-                                width: 20, height: 20,
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.blue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                      color: HuddlColors.white, width: 2),
-                                ),
-                                child: const Icon(Icons.add,
-                                    size: 11, color: Colors.white),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 14),
+                      const Icon(Icons.info_outline, size: 16, color: HuddlColors.warningDark),
+                      const SizedBox(width: 8),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Haven\'t found the perfect group?',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark,
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Don\'t worry, add your own!',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: HuddlColors.textHint,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 38,
-                              child: ElevatedButton(
-                                onPressed: () async {
-                                  final result = await Navigator.pushNamed(context, '/create_group');
-                                  if (result != null) {
-                                    widget.groupsChangedNotifier.value++;
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: HuddlColors.primary,
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                                child: Text(
-                                  'Create New Group',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                        child: Text('Could not load your profile. Showing all groups.',
+                          style: _adaptiveText(fontSize: 11, color: HuddlColors.warningDark)),
+                      ),
+                      Semantics(
+                        label: 'Retry loading profile',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: _loadUserProfile,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text('Retry', style: _adaptiveText(
+                              fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.primary,
+                            )),
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+
+            // ── Search bar / Filter-sort bar ─────────────────────────
+            SliverToBoxAdapter(
+              child: Container(
+                color: context.hc.surface,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+                child: _showSearchField
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: context.hc.inputBg,
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    autofocus: true,
+                                    style: _adaptiveText(
+                                        fontSize: 14,
+                                        color: context.hc.textPrimary),
+                                    decoration: InputDecoration(
+                                      hintText: 'Search groups...',
+                                      hintStyle: _adaptiveText(
+                                          fontSize: 14,
+                                          color: HuddlColors.textHint),
+                                      prefixIcon: const Icon(Icons.search,
+                                          size: 20, color: HuddlColors.textHint),
+                                      suffixIcon: _searchQuery.isNotEmpty
+                                          ? Semantics(
+                                              label: 'Clear search',
+                                              button: true,
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  HapticFeedback.lightImpact();
+                                                  setState(() {
+                                                    _searchController.clear();
+                                                    _searchQuery = '';
+                                                  });
+                                                },
+                                                child: const SizedBox(
+                                                  width: 44, height: 44,
+                                                  child: Icon(Icons.close,
+                                                      size: 18,
+                                                      color: HuddlColors.textHint),
+                                                ),
+                                              ),
+                                            )
+                                          : null,
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 13),
+                                    ),
+                                    onChanged: (val) {
+                                      _discoverAi.recordSearch(val);
+                                      setState(() {
+                                        _searchQuery = val;
+                                        if (val.isNotEmpty) {
+                                          _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+                                            partialQuery: val,
+                                            userBorough: _userBorough,
+                                            stagesOfLife: _userStagesOfLife,
+                                            parentType: _userParentType,
+                                          );
+                                        }
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Semantics(
+                                label: 'Cancel search',
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    setState(() {
+                                      _showSearchField = false;
+                                      _searchQuery = '';
+                                      _searchController.clear();
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                    child: Text('Cancel',
+                                        style: _adaptiveText(
+                                            fontSize: 14,
+                                            color: HuddlColors.primary,
+                                            fontWeight: FontWeight.w500)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          // ── Predictive AI suggestions (below search bar) ──
+                          if (_searchQuery.isNotEmpty && _aiSuggestions.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: _aiSuggestions.take(3).map((s) {
+                                  return Semantics(
+                                    label: 'AI suggestion: ${s.query}',
+                                    button: true,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        HapticFeedback.selectionClick();
+                                        setState(() {
+                                          _searchQuery = s.query;
+                                          _searchController.text = s.query;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: HuddlColors.teal.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(14),
+                                          border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.teal),
+                                            const SizedBox(width: 4),
+                                            Text(s.query, style: _adaptiveText(
+                                              fontSize: 11, fontWeight: FontWeight.w500,
+                                              color: HuddlColors.teal,
+                                            )),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                        ],
+                      )
+                    : Semantics(
+                        label: hasActiveFilters ? 'Active filters applied. Tap to change.' : 'Filter and sort groups',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _showFilterSortSheet();
+                          },
+                          child: Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: context.hc.inputBg,
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.tune,
+                                    size: 18,
+                                    color: hasActiveFilters
+                                        ? HuddlColors.primary
+                                        : HuddlColors.textHint),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    hasActiveFilters
+                                        ? 'Filtered${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
+                                        : 'Filter and sort',
+                                    style: _adaptiveText(
+                                      fontSize: 14,
+                                      color: hasActiveFilters
+                                          ? context.hc.textPrimary
+                                          : HuddlColors.textHint,
+                                      fontWeight: hasActiveFilters
+                                          ? FontWeight.w500
+                                          : FontWeight.w400,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Semantics(
+                                  label: 'Search groups',
+                                  button: true,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      setState(() => _showSearchField = true);
+                                    },
+                                    child: const SizedBox(
+                                      width: 48, height: 48,
+                                      child: Icon(Icons.search,
+                                          size: 22,
+                                          color: HuddlColors.textDark),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
             ),
 
-            // ── "Suggested for you" header ───────────────────────────
+            // ── AI Context Banner (transparency) ─────────────────────
+            if (_aiRecommendationsEnabled && _showAiContextBanner)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  child: Semantics(
+                    label: 'AI context: $contextLine',
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.teal.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.teal),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(contextLine,
+                              style: _adaptiveText(fontSize: 11, color: HuddlColors.teal)),
+                          ),
+                          // Human override toggle
+                          Semantics(
+                            label: 'Toggle AI recommendations',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _aiRecommendationsEnabled = !_aiRecommendationsEnabled);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  _aiRecommendationsEnabled ? Icons.toggle_on : Icons.toggle_off,
+                                  size: 22,
+                                  color: _aiRecommendationsEnabled
+                                      ? HuddlColors.teal
+                                      : HuddlColors.textHint,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // ── CTA Card ─────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Semantics(
+                label: 'Create a new group',
+                button: true,
+                child: GestureDetector(
+                  onTap: () async {
+                    HapticFeedback.lightImpact();
+                    final result = await Navigator.pushNamed(context, '/create_group');
+                    if (result != null) {
+                      widget.groupsChangedNotifier.value++;
+                    }
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: context.hc.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 64,
+                          height: 64,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 56, height: 56,
+                                decoration: const BoxDecoration(
+                                  color: HuddlColors.peachLight,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Positioned(
+                                left: 0, top: 4,
+                                child: Container(
+                                  width: 10, height: 10,
+                                  decoration: const BoxDecoration(
+                                    color: HuddlColors.accentAmber,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                right: 0, bottom: 6,
+                                child: Container(
+                                  width: 8, height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: HuddlColors.paleBlue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                              const Icon(Icons.diversity_3,
+                                  size: 30, color: HuddlColors.primary),
+                              Positioned(
+                                right: 4, top: 4,
+                                child: Container(
+                                  width: 20, height: 20,
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.blue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: HuddlColors.white, width: 2),
+                                  ),
+                                  child: const Icon(Icons.add,
+                                      size: 11, color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Haven\'t found the perfect group?',
+                                style: _adaptiveText(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.hc.textPrimary,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                'Don\'t worry, add your own!',
+                                style: _adaptiveText(
+                                  fontSize: 12,
+                                  color: HuddlColors.textHint,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    HapticFeedback.lightImpact();
+                                    final result = await Navigator.pushNamed(context, '/create_group');
+                                    if (result != null) {
+                                      widget.groupsChangedNotifier.value++;
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: HuddlColors.primary,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Create New Group',
+                                    style: _adaptiveText(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: HuddlColors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // ── AI-powered "Suggested for you" header ────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Suggested for you',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          'Suggested for you',
+                          style: _adaptiveText(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Semantics(
+                          label: 'AI-powered suggestions',
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.teal.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.teal),
+                                const SizedBox(width: 3),
+                                Text('AI', style: _adaptiveText(
+                                  fontSize: 9, fontWeight: FontWeight.w700,
+                                  color: HuddlColors.teal,
+                                )),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        // AI toggle (human override)
+                        Semantics(
+                          label: _aiRecommendationsEnabled
+                              ? 'AI recommendations on. Tap to see default order.'
+                              : 'AI recommendations off. Tap to enable.',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setState(() {
+                                _aiRecommendationsEnabled = !_aiRecommendationsEnabled;
+                                _showAiContextBanner = _aiRecommendationsEnabled;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _aiRecommendationsEnabled
+                                    ? HuddlColors.teal.withValues(alpha: 0.08)
+                                    : HuddlColors.gray100,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    _aiRecommendationsEnabled
+                                        ? Icons.auto_awesome
+                                        : Icons.auto_awesome_outlined,
+                                    size: 12,
+                                    color: _aiRecommendationsEnabled
+                                        ? HuddlColors.teal
+                                        : HuddlColors.textHint,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    _aiRecommendationsEnabled ? 'Smart' : 'Default',
+                                    style: _adaptiveText(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: _aiRecommendationsEnabled
+                                          ? HuddlColors.teal
+                                          : HuddlColors.textHint,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
                       _userBorough != null && _userBorough != 'Unknown Borough'
                           ? 'Groups in $_userBorough and beyond'
                           : 'Groups you might be interested in',
-                      style: GoogleFonts.poppins(
+                      style: _adaptiveText(
                         fontSize: 13,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textSecondary,
                       ),
                     ),
                   ],
@@ -3547,7 +4102,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               ),
             ),
 
-            // ── Group cards ──────────────────────────────────────────
+            // ── Group cards with AI feedback ─────────────────────────
             if (groups.isNotEmpty)
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -3556,10 +4111,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     final isJoined = _invitationService.isGroupJoined(group.id) ||
                         group.creatorId == 'current_user';
                     final canAccess = _canAccessGroup(group);
+
+                    // AI summary for the group
+                    final aiSummary = _discoverAi.summarizeGroup(
+                      group.toJson(),
+                      parentType: _userParentType,
+                      stagesOfLife: _userStagesOfLife,
+                      userBorough: _userBorough,
+                    );
+                    final existingFeedback = _discoverAi.getFeedback(group.id);
+
                     return _DiscoverGroupCard(
                       group: group,
                       isJoined: isJoined,
                       canAccess: canAccess,
+                      aiSummary: aiSummary,
+                      aiFeedback: existingFeedback,
+                      showAiBadges: _aiRecommendationsEnabled,
                       onJoinTap: () {
                         if (!canAccess) {
                           _showGroupAccessDeniedDialog(context, group);
@@ -3568,6 +4136,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         _onJoinTap(group.id);
                       },
                       onTap: () {
+                        _discoverAi.recordGroupView(group.id, group.category);
                         if (!canAccess) {
                           _showGroupAccessDeniedDialog(context, group);
                           return;
@@ -3584,6 +4153,14 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               'isJoined': isJoined,
                             });
                       },
+                      onFeedback: (isPositive) {
+                        HapticFeedback.selectionClick();
+                        _discoverAi.submitFeedback(
+                          group.id, isPositive,
+                          category: group.category,
+                        );
+                        setState(() {}); // Refresh to show updated state
+                      },
                     );
                   },
                   childCount: groups.length,
@@ -3597,19 +4174,56 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                   padding: const EdgeInsets.all(40),
                   child: Column(
                     children: [
-                      const Icon(Icons.search_off,
-                          size: 48, color: HuddlColors.textHint),
-                      const SizedBox(height: 12),
+                      Container(
+                        width: 64, height: 64,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.peachLight,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(Icons.search_off,
+                            size: 32, color: HuddlColors.primary),
+                      ),
+                      const SizedBox(height: 16),
                       Text('No groups match your search',
-                          style: GoogleFonts.poppins(
+                          style: _adaptiveText(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark)),
+                              color: context.hc.textPrimary)),
                       const SizedBox(height: 8),
                       Text('Try adjusting your filters or search terms.',
-                          style: GoogleFonts.poppins(
+                          style: _adaptiveText(
                               fontSize: 14, color: HuddlColors.textHint),
                           textAlign: TextAlign.center),
+                      if (hasActiveFilters) ...[
+                        const SizedBox(height: 16),
+                        Semantics(
+                          label: 'Clear all filters',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() {
+                                _selectedAudiences = {};
+                                _selectedSort = 'Recommended';
+                                _searchQuery = '';
+                                _searchController.clear();
+                                _showSearchField = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: HuddlColors.primary),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text('Clear Filters', style: _adaptiveText(
+                                fontSize: 14, fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
+                              )),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -3619,31 +4233,38 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           ],
         ),
 
-        // ── FAB ──────────────────────────────────────────────────────
+        // ── FAB (Create group — bottom-right) ──────────────────────
         Positioned(
           bottom: 24,
           right: 16,
-          child: Material(
-            elevation: 6,
-            shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-            shape: const CircleBorder(),
-            color: HuddlColors.primary,
-            child: InkWell(
-              onTap: () async {
-                final result = await Navigator.pushNamed(context, '/create_group');
-                if (result != null) {
-                  widget.groupsChangedNotifier.value++;
-                }
-              },
-              customBorder: const CircleBorder(),
-              child: const SizedBox(
-                width: 56,
-                height: 56,
-                child: Icon(Icons.add, color: Colors.white, size: 28),
+          child: Semantics(
+            label: 'Create a new group',
+            button: true,
+            child: Material(
+              elevation: 6,
+              shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              color: HuddlColors.primary,
+              child: InkWell(
+                onTap: () async {
+                  HapticFeedback.lightImpact();
+                  final result = await Navigator.pushNamed(context, '/create_group');
+                  if (result != null) {
+                    widget.groupsChangedNotifier.value++;
+                  }
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: const SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: Icon(Icons.add, color: Colors.white, size: 28),
+                ),
               ),
             ),
           ),
         ),
+
+
       ],
     );
   }
@@ -3654,6 +4275,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
+  'disc_travel_tribe': {'icon': Icons.flight_takeoff, 'color': HuddlColors.teal},
   'disc_first_time_mums': {'icon': Icons.child_friendly, 'color': HuddlColors.primary},
   'disc_dads_connect': {'icon': Icons.man, 'color': HuddlColors.blue},
   'disc_baby_sleep': {'icon': Icons.bedtime, 'color': HuddlColors.yellowMedium},
@@ -3668,6 +4290,10 @@ class _DiscoverGroupCard extends StatelessWidget {
   final bool canAccess;
   final VoidCallback onJoinTap;
   final VoidCallback onTap;
+  final AiGroupSummary? aiSummary;
+  final bool? aiFeedback; // null = no feedback, true = liked, false = disliked
+  final bool showAiBadges;
+  final void Function(bool isPositive)? onFeedback;
 
   const _DiscoverGroupCard({
     required this.group,
@@ -3675,6 +4301,10 @@ class _DiscoverGroupCard extends StatelessWidget {
     this.canAccess = true,
     required this.onJoinTap,
     required this.onTap,
+    this.aiSummary,
+    this.aiFeedback,
+    this.showAiBadges = false,
+    this.onFeedback,
   });
 
   /// Privacy tag label: 'Public', 'Private', or the parent group name
@@ -3720,12 +4350,14 @@ class _DiscoverGroupCard extends StatelessWidget {
     final Color catColor = style['color'] as Color;
     final IconData catIcon = style['icon'] as IconData;
 
-    return GestureDetector(
+    return Semantics(
+      label: '${group.name}, ${group.memberCount} members, $_privacyTagLabel group',
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -3739,121 +4371,74 @@ class _DiscoverGroupCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Cover image with badges ─────────────────────────────
-            Stack(
-              children: [
-                SizedBox(
-                  height: 150,
-                  width: double.infinity,
-                  child: _buildCoverImage(
-                    imageUrl: group.imageUrl,
-                    fallbackIcon: catIcon,
-                    fallbackColor: catColor,
-                  ),
+            // ── Clean cover image (no overlay tags) ─────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: SizedBox(
+                height: 150,
+                width: double.infinity,
+                child: _buildCoverImage(
+                  imageUrl: group.imageUrl,
+                  fallbackIcon: catIcon,
+                  fallbackColor: catColor,
                 ),
-                // Gradient overlay at bottom for readability
-                Positioned(
-                  bottom: 0, left: 0, right: 0,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.4),
-                        ],
+              ),
+            ),
+            // ── Card body: info moved below photo ────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+              child: Row(
+                children: [
+                  // Privacy + audience info as subtle text chips
+                  Icon(_privacyTagIcon, size: 13, color: _privacyTagColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    _privacyTagLabel,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: _privacyTagColor,
+                    ),
+                  ),
+                  if (group.creatorId == 'current_user') ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'Your group',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.blue,
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                // Audience tags (top-left) — only show valid parent-stage tags
-                ..._buildAudienceTags(group, catColor, catIcon),
-                // ── Privacy tag badge (always shown, top-right) ─────────
-                Positioned(
-                  top: 10, right: 10,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _privacyTagColor.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(_privacyTagIcon, size: 12, color: Colors.white),
-                            const SizedBox(width: 3),
-                            Text(
-                              _privacyTagLabel,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            if (!canAccess) ...[
-                              const SizedBox(width: 3),
-                              const Icon(Icons.block, size: 10, color: Colors.white),
-                            ],
-                          ],
-                        ),
-                      ),
-                      if (group.creatorId == 'current_user') ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.blue,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            'Your group',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                // Member count overlay (bottom-right)
-                Positioned(
-                  bottom: 8, right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.people, size: 13, color: Colors.white),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${group.memberCount} members',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                  ],
+                  const Spacer(),
+                  // Member count
+                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${group.memberCount}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.textHint,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             // ── Card body ──────────────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -3904,6 +4489,112 @@ class _DiscoverGroupCard extends StatelessWidget {
                       ],
                     ),
                   ],
+                  // ── AI suitability badge + match score ──────────────
+                  if (showAiBadges && aiSummary != null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        // Suitability line
+                        Expanded(
+                          child: Row(
+                            children: [
+                              const Icon(Icons.auto_awesome, size: 11, color: HuddlColors.teal),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  aiSummary!.suitability,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                    color: HuddlColors.teal,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Match score
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: _matchScoreColor(aiSummary!.matchScore).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            '${aiSummary!.matchScore.round()}% match',
+                            style: GoogleFonts.poppins(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: _matchScoreColor(aiSummary!.matchScore),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  // ── Feedback row (thumbs up/down) ──────────────────
+                  if (onFeedback != null && showAiBadges) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          'Is this relevant?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: HuddlColors.textHint,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Semantics(
+                          label: 'This group is relevant to me',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () => onFeedback!(true),
+                            child: Container(
+                              width: 28, height: 28,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: aiFeedback == true
+                                    ? HuddlColors.teal.withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                aiFeedback == true ? Icons.thumb_up : Icons.thumb_up_outlined,
+                                size: 14,
+                                color: aiFeedback == true ? HuddlColors.teal : HuddlColors.textHint,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Semantics(
+                          label: 'This group is not relevant to me',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () => onFeedback!(false),
+                            child: Container(
+                              width: 28, height: 28,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: aiFeedback == false
+                                    ? HuddlColors.error.withValues(alpha: 0.1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Icon(
+                                aiFeedback == false ? Icons.thumb_down : Icons.thumb_down_outlined,
+                                size: 14,
+                                color: aiFeedback == false ? HuddlColors.error : HuddlColors.textHint,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   // Bottom row: creator avatar + Join/Joined button
                   Row(
@@ -3944,22 +4635,39 @@ class _DiscoverGroupCard extends StatelessWidget {
                           group.creatorId == 'current_user')
                         Padding(
                           padding: const EdgeInsets.only(right: 6),
-                          child: GestureDetector(
-                            onTap: () => _shareGroup(context, group),
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: catColor.withValues(alpha: 0.1),
-                                shape: BoxShape.circle,
+                          child: Semantics(
+                            label: 'Share ${group.name}',
+                            button: true,
+                            child: GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _shareGroup(context, group);
+                              },
+                              child: Container(
+                                width: 44, height: 44, // P0: min 44×44 touch target
+                                alignment: Alignment.center,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: catColor.withValues(alpha: 0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(Icons.share_outlined,
+                                      size: 16, color: catColor),
+                                ),
                               ),
-                              child: Icon(Icons.share_outlined,
-                                  size: 16, color: catColor),
                             ),
                           ),
                         ),
                       // Join / Joined / Restricted button
-                      GestureDetector(
-                        onTap: isJoined ? null : onJoinTap,
+                      Semantics(
+                        label: isJoined ? 'Already joined ${group.name}' : (!canAccess ? 'Restricted group' : 'Join ${group.name}'),
+                        button: !isJoined,
+                        child: GestureDetector(
+                          onTap: isJoined ? null : () {
+                            HapticFeedback.lightImpact();
+                            onJoinTap();
+                          },
                         child: Container(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
@@ -3994,6 +4702,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      ),
                     ],
                   ),
                 ],
@@ -4002,7 +4711,14 @@ class _DiscoverGroupCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  static Color _matchScoreColor(double score) {
+    if (score >= 70) return HuddlColors.teal;
+    if (score >= 50) return HuddlColors.accentAmber;
+    return HuddlColors.textHint;
   }
 
   static void _shareGroup(BuildContext context, _GroupItem group) {
@@ -4051,71 +4767,6 @@ Shared from Huddl Connect
         duration: const Duration(seconds: 2),
       ),
     );
-  }
-
-  // Valid parent-stage tags that should be displayed
-  static const _validTags = ['Aspiring Parents', 'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads'];
-
-  List<Widget> _buildAudienceTags(_GroupItem group, Color catColor, IconData catIcon) {
-    // Filter to only valid parent-stage tags
-    final validAudience = group.targetAudience
-        .where((t) => _validTags.any((v) => v.toLowerCase() == t.toLowerCase()))
-        .take(2)
-        .toList();
-
-    if (validAudience.isNotEmpty) {
-      return [
-        Positioned(
-          top: 10, left: 10,
-          child: Wrap(
-            spacing: 4,
-            children: validAudience.map((tag) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: catColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                tag,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            )).toList(),
-          ),
-        ),
-      ];
-    }
-    // Fallback: show category badge
-    return [
-      Positioned(
-        top: 10, left: 10,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: catColor,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(catIcon, size: 13, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                group.category,
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ];
   }
 
   /// Builds the cover image from various sources: asset, http URL, base64,
@@ -4179,6 +4830,33 @@ Shared from Huddl Connect
     }
 
     return fallback();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PUBLIC WRAPPER — Exposes the Discover/Groups functionality for use in other
+// screens (e.g. the Discover screen's "Groups" tab).
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class DiscoverGroupsTab extends StatefulWidget {
+  const DiscoverGroupsTab({super.key});
+
+  @override
+  State<DiscoverGroupsTab> createState() => _DiscoverGroupsTabState();
+}
+
+class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
+  final ValueNotifier<int> _groupsChangedNotifier = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _groupsChangedNotifier.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _DiscoverTab(groupsChangedNotifier: _groupsChangedNotifier);
   }
 }
 
@@ -5426,6 +6104,47 @@ class _EmptyMessagesState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI FEEDBACK ROW — thumbs up/down for human-in-the-loop learning
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AiFeedbackRow extends StatelessWidget {
+  final VoidCallback onThumbsUp;
+  final VoidCallback onThumbsDown;
+
+  const _AiFeedbackRow({
+    required this.onThumbsUp,
+    required this.onThumbsDown,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GestureDetector(
+          onTap: onThumbsUp,
+          child: Container(
+            width: 24, height: 24,
+            alignment: Alignment.center,
+            child: Icon(Icons.thumb_up_alt_outlined,
+                size: 12, color: HuddlColors.textHint.withValues(alpha: 0.5)),
+          ),
+        ),
+        GestureDetector(
+          onTap: onThumbsDown,
+          child: Container(
+            width: 24, height: 24,
+            alignment: Alignment.center,
+            child: Icon(Icons.thumb_down_alt_outlined,
+                size: 12, color: HuddlColors.textHint.withValues(alpha: 0.5)),
+          ),
+        ),
+      ],
     );
   }
 }

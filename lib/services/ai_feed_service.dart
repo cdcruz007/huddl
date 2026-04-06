@@ -155,8 +155,8 @@ class AiFeedService {
         case FeedItemType.newMarketplaceItem:
           score += 0.22;
           reason = reason.isEmpty
-              ? 'Preloved item'
-              : '$reason \u00B7 Preloved';
+              ? 'Market item'
+              : '$reason \u00B7 Market';
           break;
         case FeedItemType.newParent:
           score += 0.20;
@@ -333,7 +333,7 @@ class AiFeedService {
         type: NudgeType.weeklyDigest,
         title: aiNudgeCopy?['weekly_title'] ?? 'This week in $borough',
         subtitle: aiNudgeCopy?['weekly_subtitle'] ??
-            '$meetupsThisWeek meetups planned, ${_feedService.feedItems.take(5).length} community updates, and 2 new preloved items',
+            '$meetupsThisWeek meetups planned, ${_feedService.feedItems.take(5).length} community updates, and 2 new market items',
         emoji: '\u{1F4CA}',
         actionLabel: 'See This Week',
         relevanceScore: 0.70,

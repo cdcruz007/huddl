@@ -79,7 +79,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       name: _meetup.title,
       description:
           'Group chat for "${_meetup.title}" meetup on ${_meetup.dateDisplay} at ${_meetup.location}',
-      imageUrl: _meetup.imageUrl,
+      imageUrl: _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
+          ? _meetup.imageUrl
+          : _categoryFallbackImage(_meetup.category),
       memberCount: _meetup.attendeeCount + 1,
       category: 'MEETUP',
       isJoined: true,
@@ -309,18 +311,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     itemBuilder: (_, i) {
                       final name = _meetup.attendeeNames[i];
                       final isOrganiser = i == 0;
-                      final photoUrl = MemberPhotoService.getPhotoByName(name);
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        leading: photoUrl != null
-                            ? Container(
-                                width: 40, height: 40,
-                                decoration: const BoxDecoration(shape: BoxShape.circle),
-                                clipBehavior: Clip.antiAlias,
-                                child: Image.network(photoUrl, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => MemberAvatar(name: name, size: 40)),
-                              )
-                            : MemberAvatar(name: name, size: 40),
+                        leading: _buildAttendeePhoto(name, 40),
                         title: Row(
                           children: [
                             Flexible(
@@ -477,7 +470,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   Hero(
                     tag: 'meetup_cover_${_meetup.id}',
                     child: _buildDetailCoverImage(
-                      imageUrl: _meetup.imageUrl,
+                      imageUrl: _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
+                          ? _meetup.imageUrl
+                          : _categoryFallbackImage(_meetup.category),
                       fallbackIcon: catStyle.icon,
                       fallbackColor: catStyle.color,
                     ),
@@ -943,10 +938,49 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     );
   }
 
-  /// Build attendee photo from MemberPhotoService
+  /// Build attendee photo from MemberPhotoService.
+  /// For the current user, show their onboarding photo or local asset avatar.
   Widget _buildAttendeePhoto(String name, double size) {
+    // Current user: use onboarding photo or local asset fallback
+    if (MemberPhotoService.isCurrentUser(name) || _meetup.organiserId == 'current_user' && name == _meetup.organiserName) {
+      final photoUrl = MemberPhotoService.getPhotoByName(name);
+      if (photoUrl != null && photoUrl.isNotEmpty) {
+        // User has an actual profile photo (e.g. data: URI or network URL)
+        if (photoUrl.startsWith('data:')) {
+          try {
+            final parts = photoUrl.split(',');
+            if (parts.length > 1) {
+              final bytes = base64Decode(parts[1]);
+              return Container(
+                width: size, height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: HuddlColors.primary, width: 1.5),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.memory(bytes, fit: BoxFit.cover, width: size, height: size),
+              );
+            }
+          } catch (_) {}
+        }
+        return Container(
+          width: size, height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: HuddlColors.primary, width: 1.5),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
+            errorBuilder: (_, __, ___) => _localAvatarFallback(size)),
+        );
+      }
+      // No profile photo set — use local asset avatar
+      return _localAvatarFallback(size);
+    }
+
+    // Known community member — use MemberPhotoService
     final photoUrl = MemberPhotoService.getPhotoByName(name);
-    if (photoUrl != null) {
+    if (photoUrl != null && photoUrl.isNotEmpty) {
       return Container(
         width: size,
         height: size,
@@ -962,6 +996,27 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       );
     }
     return MemberAvatar(name: name, size: size);
+  }
+
+  /// Local asset avatar for the current user (gender-based)
+  Widget _localAvatarFallback(double size) {
+    return Container(
+      width: size, height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: HuddlColors.primary, width: 1.5),
+      ),
+      child: ClipOval(
+        child: Image.asset(
+          MemberPhotoService.currentUserAvatarAsset,
+          width: size, height: size, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            color: HuddlColors.peachLight,
+            child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1097,6 +1152,34 @@ _CatStyleInfo _getCatStyle(String category) {
       return const _CatStyleInfo(HuddlColors.accentAmber, Icons.restaurant);
     default:
       return const _CatStyleInfo(HuddlColors.blue, Icons.groups);
+  }
+}
+
+// ── Category-based fallback image for meetups ────────────────────────────
+String _categoryFallbackImage(String category) {
+  switch (category.toLowerCase()) {
+    case 'coffee':
+    case 'coffee & chat':
+      return 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'playdate':
+    case 'play':
+      return 'https://images.pexels.com/photos/3933239/pexels-photo-3933239.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'walk':
+    case 'outdoor':
+      return 'https://images.pexels.com/photos/1325735/pexels-photo-1325735.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'sport':
+    case 'fitness':
+    case 'exercise':
+      return 'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'class':
+    case 'workshop':
+      return 'https://images.pexels.com/photos/3662667/pexels-photo-3662667.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'music':
+      return 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=600';
+    case 'social':
+      return 'https://images.pexels.com/photos/3184418/pexels-photo-3184418.jpeg?auto=compress&cs=tinysrgb&w=600';
+    default:
+      return 'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=600';
   }
 }
 

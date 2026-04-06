@@ -77,6 +77,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
       return;
     }
     subService.recordDMStart();
+    if (!mounted) return;
 
     // Assign a colour based on the member's name
     final colours = [

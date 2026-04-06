@@ -39,6 +39,7 @@ class PermissionService {
     await initialize();
     if (_mediaPermissionGranted) return true;
 
+    if (!context.mounted) return false;
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,

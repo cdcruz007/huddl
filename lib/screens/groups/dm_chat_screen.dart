@@ -187,6 +187,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     if (text.isEmpty) return;
 
     _messageController.clear();
+    HapticFeedback.lightImpact();
 
     // Create conversation on first message if it doesn't exist yet
     if (_conversationId == null) {
@@ -209,6 +210,47 @@ class _DMChatScreenState extends State<DMChatScreen> {
       _messages.add(msg);
     });
     _scrollToBottom(animate: true);
+  }
+
+  /// Resend a failed message (P1: tap-to-resend on error)
+  Future<void> _resendMessage(DirectMessage failedMsg) async {
+    HapticFeedback.lightImpact();
+    if (_conversationId == null) return;
+
+    // Remove the old failed message
+    setState(() {
+      _messages.removeWhere((m) => m.id == failedMsg.id);
+    });
+
+    // Re-send with the same text
+    final msg = await _dmService.sendMessage(
+      conversationId: _conversationId!,
+      message: failedMsg.message,
+      senderName: _userName,
+    );
+
+    setState(() {
+      _messages.add(msg);
+    });
+    _scrollToBottom(animate: true);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 18),
+              SizedBox(width: 8),
+              Text('Message resent'),
+            ],
+          ),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   // ── Search logic ────────────────────────────────────────────────────────
@@ -286,7 +328,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -515,6 +557,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   onTapReaction: (emoji) => _toggleReaction(msg.id, emoji),
                                   onCopy: () => _copyMessage(msg.message),
                                   onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
+                                  onResend: msg.isMe && msg.status == MessageStatus.error
+                                      ? () => _resendMessage(msg)
+                                      : null,
                                   onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
                                 ),
                             ],
@@ -532,9 +577,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       elevation: 0,
-      surfaceTintColor: HuddlColors.white,
+      surfaceTintColor: context.hc.surface,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
         onPressed: () => Navigator.pop(context),
@@ -702,9 +747,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   PreferredSizeWidget _buildSearchAppBar() {
     return AppBar(
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       elevation: 0,
-      surfaceTintColor: HuddlColors.white,
+      surfaceTintColor: context.hc.surface,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
         onPressed: () {
@@ -738,6 +783,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   // ── Copy message ──────────────────────────────────────────────────
   void _copyMessage(String text) {
+    HapticFeedback.lightImpact();
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1009,15 +1055,22 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
               const SizedBox(width: 4),
               GestureDetector(
-                onTap: _sendMessage,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
-                    shape: BoxShape.circle,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _sendMessage();
+                },
+                child: Semantics(
+                  label: 'Send message',
+                  button: true,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      gradient: HuddlColors.primaryGradient,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                   ),
-                  child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
                 ),
               ),
             ],
@@ -1706,6 +1759,7 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onUnsend;
   final VoidCallback? onAvatarTap;
+  final VoidCallback? onResend;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
 
@@ -1723,6 +1777,7 @@ class _DMBubble extends StatelessWidget {
     this.onCopy,
     this.onUnsend,
     this.onAvatarTap,
+    this.onResend,
     this.reactions = const {},
     this.onTapReaction,
   });
@@ -1818,7 +1873,38 @@ class _DMBubble extends StatelessWidget {
                             ],
                             if (isMe) ...[
                               const SizedBox(width: 4),
-                              _MessageStatusIcon(status: message.status),
+                              if (message.status == MessageStatus.error && onResend != null)
+                                Semantics(
+                                  label: 'Failed to send, tap to retry',
+                                  button: true,
+                                  child: GestureDetector(
+                                    onTap: onResend,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: HuddlColors.error.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.refresh, size: 12, color: HuddlColors.error),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            'Retry',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: HuddlColors.error,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              else
+                                _MessageStatusIcon(status: message.status),
                             ],
                           ],
                         ),
@@ -1895,11 +1981,15 @@ class _DMBubble extends StatelessWidget {
                         Navigator.pop(c);
                         onTapReaction?.call(emoji);
                       },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                      child: Semantics(
+                        label: 'React with $emoji',
+                        button: true,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          alignment: Alignment.center,
+                          child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                        ),
                       ),
                     )),
                     GestureDetector(
@@ -1908,8 +1998,8 @@ class _DMBubble extends StatelessWidget {
                         onReact?.call();
                       },
                       child: Container(
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: HuddlColors.background,
@@ -2104,15 +2194,30 @@ class _MessageStatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status) {
       case MessageStatus.sending:
-        return const Icon(Icons.access_time, size: 14, color: HuddlColors.textHint);
+        return Semantics(
+          label: 'Sending',
+          child: const Icon(Icons.access_time, size: 14, color: HuddlColors.textHint),
+        );
       case MessageStatus.sent:
-        return const Icon(Icons.check, size: 14, color: HuddlColors.textHint);
+        return Semantics(
+          label: 'Sent',
+          child: const Icon(Icons.check, size: 14, color: HuddlColors.textHint),
+        );
       case MessageStatus.delivered:
-        return const Icon(Icons.done_all, size: 14, color: HuddlColors.textHint);
+        return Semantics(
+          label: 'Delivered',
+          child: const Icon(Icons.done_all, size: 14, color: HuddlColors.textHint),
+        );
       case MessageStatus.read:
-        return const Icon(Icons.done_all, size: 14, color: HuddlColors.blue);
+        return Semantics(
+          label: 'Read',
+          child: const Icon(Icons.done_all, size: 14, color: HuddlColors.blue),
+        );
       case MessageStatus.error:
-        return const Icon(Icons.error_outline, size: 14, color: HuddlColors.error);
+        return Semantics(
+          label: 'Failed to send, tap to retry',
+          child: const Icon(Icons.error_outline, size: 14, color: HuddlColors.error),
+        );
     }
   }
 }
@@ -2152,7 +2257,10 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Semantics(
+      label: '${widget.name} is typing',
+      liveRegion: true,
+      child: Padding(
       padding: const EdgeInsets.only(top: 4, bottom: 4, right: 60),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -2204,6 +2312,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
           ),
         ],
       ),
+    ),
     );
   }
 }

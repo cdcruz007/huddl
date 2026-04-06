@@ -1,6 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../theme/huddl_colors.dart';
+import '../models/group.dart';
 import 'ai_event_discovery_service.dart';
+import 'browser_storage.dart';
+import 'onboarding_data_service.dart';
 
 /// Represents a third-party or user-created event (may be free or paid).
 /// Age range suitability for an event.
@@ -61,6 +65,9 @@ class Event {
   final bool isAiDiscovered;        // true if found by AI daily crawl
   final EventSource? aiSource;      // Source where AI found this event
 
+  // ── Source URL (external event page) ─────────────────────────
+  final String sourceUrl;           // URL to the original event listing
+
   Event({
     required this.id,
     required this.title,
@@ -89,6 +96,7 @@ class Event {
     this.partnerRating = 4.0,
     this.isAiDiscovered = false,
     this.aiSource,
+    this.sourceUrl = '',
   });
 
   /// Convert to the map expected by existing card widgets.
@@ -113,6 +121,7 @@ class Event {
       'isAiDiscovered': isAiDiscovered,
       'aiSourceName': aiSource?.name ?? '',
       'aiSourceIcon': aiSource?.icon ?? Icons.language,
+      'sourceUrl': sourceUrl,
     };
   }
 }
@@ -139,13 +148,69 @@ class EventService extends ChangeNotifier {
   bool isGoing(String eventId) => _goingEventIds.contains(eventId);
 
   /// Toggle going status for an event.
-  void toggleGoing(String eventId) {
+  /// Returns true if the user is now going (just registered).
+  bool toggleGoing(String eventId) {
     if (_goingEventIds.contains(eventId)) {
       _goingEventIds.remove(eventId);
+      notifyListeners();
+      return false;
     } else {
       _goingEventIds.add(eventId);
+      notifyListeners();
+      return true;
     }
-    notifyListeners();
+  }
+
+  /// Get the Event object by ID.
+  Event? getEventById(String eventId) {
+    final matches = _events.where((e) => e.id == eventId);
+    return matches.isNotEmpty ? matches.first : null;
+  }
+
+  /// Create a group chat for event attendees under the Messages tab.
+  /// Called when a user taps "Count Me In".
+  Future<void> createEventGroupChat(String eventId) async {
+    final event = getEventById(eventId);
+    if (event == null) return;
+
+    final groupKey = 'user_created_groups_v1';
+    final eventGroupId = 'event_group_$eventId';
+
+    // Check if group already exists
+    final existing = await BrowserStorage.getString(groupKey);
+    List<dynamic> groups = [];
+    if (existing != null) {
+      groups = json.decode(existing) as List<dynamic>;
+      final alreadyExists =
+          groups.any((g) => (g as Map<String, dynamic>)['id'] == eventGroupId);
+      if (alreadyExists) return; // Don't create duplicate
+    }
+
+    final onboarding = OnboardingDataService();
+    final userName = onboarding.name ?? 'You';
+
+    final newGroup = Group(
+      id: eventGroupId,
+      name: event.title,
+      description:
+          'Attendees chat for "${event.title}" on ${event.dateDisplay} at ${event.location}',
+      imageUrl: event.imageUrl,
+      memberCount: event.attendees + 1,
+      category: 'EVENT',
+      isJoined: true,
+      isImageLocked: true,
+      targetAudience: const [],
+      privacy: GroupPrivacy.private_,
+      creatorId: 'system',
+      creatorName: event.organiser,
+      creatorBorough: event.borough,
+      lastMessage: '$userName joined the event chat',
+      lastSenderName: 'System',
+      lastMessageTime: DateTime.now(),
+    );
+
+    groups.add(newGroup.toJson());
+    await BrowserStorage.setString(groupKey, json.encode(groups));
   }
 
   /// Whether the user has bookmarked this event.
@@ -207,6 +272,7 @@ class EventService extends ChangeNotifier {
         isWeekend: true,
         capacityLeft: 6,
         partnerRating: 4.7,
+        sourceUrl: 'https://littleexplorers.co.uk/sensory-play',
       ),
       Event(
         id: 'ev_2',
@@ -234,6 +300,7 @@ class EventService extends ChangeNotifier {
         isWeekend: false,
         capacityLeft: 4,
         partnerRating: 4.5,
+        sourceUrl: 'https://tinytunes.academy/music-movement',
       ),
       Event(
         id: 'ev_3',
@@ -261,6 +328,7 @@ class EventService extends ChangeNotifier {
         isWeekend: true,
         capacityLeft: 10,
         partnerRating: 4.8,
+        sourceUrl: 'https://parentpro.co.uk/new-parents-workshop',
       ),
       Event(
         id: 'ev_4',
@@ -288,6 +356,7 @@ class EventService extends ChangeNotifier {
         isWeekend: false,
         capacityLeft: -1,
         partnerRating: 4.6,
+        sourceUrl: 'https://sleepwellbabies.co.uk/masterclass',
       ),
       Event(
         id: 'ev_5',
@@ -315,6 +384,7 @@ class EventService extends ChangeNotifier {
         isWeekend: true,
         capacityLeft: -1,
         partnerRating: 4.2,
+        sourceUrl: 'https://cambridgecommunity.org.uk/family-fun-day',
       ),
       Event(
         id: 'ev_6',
@@ -342,6 +412,7 @@ class EventService extends ChangeNotifier {
         isWeekend: true,
         capacityLeft: 8,
         partnerRating: 4.9,
+        sourceUrl: 'https://redcross.org.uk/first-aid-baby',
       ),
     ]);
   }

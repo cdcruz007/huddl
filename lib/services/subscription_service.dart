@@ -143,7 +143,6 @@ class SubscriptionService extends ChangeNotifier {
   int get aiEventDiscoveriesThisWeek => _usage('ai_event_disc_week');
   int get aiChatSummariesToday => _usage('ai_chat_sum_today');
   int get aiListingGenerationsThisMonth => _usage('ai_listing_gen_month');
-  int get aiTravelConciergeChatsToday => _usage('ai_travel_today');
   int get aiMatchmakerRequestsThisMonth => _usage('ai_matchmaker_month');
   int get aiSmartFeedRefreshesToday => _usage('ai_feed_today');
 
@@ -218,31 +217,11 @@ class SubscriptionService extends ChangeNotifier {
       limits.aiSmartFeed &&
       aiSmartFeedRefreshesToday < limits.maxAiSmartFeedRefreshesPerDay;
 
-  /// AI Travel Concierge: chat-based family travel assistant
-  bool get hasAiTravelConcierge => limits.aiTravelConcierge;
-  bool get canUseAiTravelConcierge =>
-      limits.aiTravelConcierge &&
-      aiTravelConciergeChatsToday < limits.maxAiTravelConciergeChatsPerDay;
-  int get aiTravelConciergeChatsRemaining =>
-      TierLimits.isUnlimited(limits.maxAiTravelConciergeChatsPerDay)
-          ? 999
-          : (limits.maxAiTravelConciergeChatsPerDay -
-                  aiTravelConciergeChatsToday)
-              .clamp(0, limits.maxAiTravelConciergeChatsPerDay);
-
   /// AI Meetup Matchmaker: parent compatibility scoring & suggested meetups
   bool get hasAiMeetupMatchmaker => limits.aiMeetupMatchmaker;
   bool get canUseAiMatchmaker =>
       limits.aiMeetupMatchmaker &&
       aiMatchmakerRequestsThisMonth < limits.maxAiMatchmakerRequestsPerMonth;
-
-  // ===========================================================================
-  // TRIPS -- FEATURE GATING
-  // ===========================================================================
-
-  bool get hasTravelAccess => limits.travelAccess;
-  bool get hasPackingListAccess => limits.tripsPackingListAccess;
-  int get maxSavedTravels => limits.maxSavedTravels;
 
   // ===========================================================================
   // CORE SOCIAL -- USAGE REMAINING HELPERS
@@ -309,8 +288,6 @@ class SubscriptionService extends ChangeNotifier {
       _incrementUsage('ai_chat_sum_today');
   Future<void> recordAiListingGeneration() =>
       _incrementUsage('ai_listing_gen_month');
-  Future<void> recordAiTravelConciergeChat() =>
-      _incrementUsage('ai_travel_today');
   Future<void> recordAiMatchmakerRequest() =>
       _incrementUsage('ai_matchmaker_month');
   Future<void> recordAiSmartFeedRefresh() =>
@@ -435,11 +412,9 @@ class SubscriptionService extends ChangeNotifier {
 
       // AI -- Neighbourhood
       case 'ai_listing_generator':
-      case 'ai_travel_concierge':
       case 'ai_full_copilot':
       case 'ai_full_chat_summaries':
       case 'ai_full_event_discovery':
-      case 'trips_packing_list':
         return SubscriptionTier.neighbourhood;
 
       // AI -- Inner Circle (exclusive)
@@ -452,7 +427,6 @@ class SubscriptionService extends ChangeNotifier {
       case 'ai_event_discovery_basic':
       case 'ai_smart_feed_basic':
       case 'ai_recommendations_basic':
-      case 'trips_browse':
         return SubscriptionTier.explorer;
 
       default:
@@ -495,16 +469,14 @@ class SubscriptionService extends ChangeNotifier {
         return 'You\'ve used your ${limits.maxAiChatSummariesPerDay} AI chat summary today. Upgrade for up to 10 summaries/day!';
       case 'ai_listing_generator':
         return 'AI Listing Generator is a Neighbourhood feature. Upgrade to auto-generate listings from photos!';
-      case 'ai_travel_concierge':
-        return 'AI Travel Concierge is a Neighbourhood feature. Upgrade to plan family trips with AI!';
       case 'ai_matchmaker':
         return 'AI Meetup Matchmaker is an Inner Circle exclusive. Upgrade to get smart parent-matching!';
       case 'ai_event_discovery':
         return 'You\'ve used your weekly AI event discovery. Upgrade to Neighbourhood for daily discovery!';
       case 'ai_smart_feed':
         return 'You\'ve used your daily smart feed refreshes. Upgrade for unlimited personalisation!';
-      case 'trips_packing_list':
-        return 'Packing lists are a Neighbourhood feature. Upgrade to get AI-powered packing suggestions!';
+      case 'community_qa':
+        return 'You\'ve reached your $tierName weekly question limit. Upgrade to Neighbourhood for 15 questions/week!';
 
       default:
         return 'This feature requires a higher plan. Upgrade to unlock it!';

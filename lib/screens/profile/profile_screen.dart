@@ -1970,13 +1970,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _emptyState(Icons.storefront_outlined, 'No listings yet',
-              'Items you list on Preloved will appear here.'),
+              'Items you list on Market will appear here.'),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: Text('Go to Preloved',
+              label: Text('Go to Market',
                   style: GoogleFonts.poppins(
                       fontSize: 14, fontWeight: FontWeight.w500)),
               style: OutlinedButton.styleFrom(
@@ -1989,7 +1989,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               onPressed: () {
                 Navigator.pop(c);
-                // Switch to Preloved tab (index 3)
+                // Switch to Market tab (index 3)
                 MainShell.shellKey.currentState?.switchTab(3);
               },
             ),
@@ -3506,6 +3506,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pushNamed(context, '/privacy');
             },
           ),
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+            leading: const Icon(Icons.map_outlined, size: 20),
+            title: Text('User Journey Maps',
+                style: GoogleFonts.poppins(fontSize: 14)),
+            trailing: const Icon(Icons.chevron_right, size: 20, color: HuddlColors.textHint),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/journey_maps');
+            },
+          ),
           const SizedBox(height: 16),
           Text('\u00a9 2025 Huddl. All rights reserved.',
               style: GoogleFonts.poppins(
@@ -3618,10 +3629,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(width: 1, height: 40, color: HuddlColors.divider),
                   Expanded(
                     child: TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(c);
-                        Navigator.of(context)
-                            .pushNamedAndRemoveUntil('/splash', (r) => false);
+                        // Clear all persisted user data on logout
+                        await BrowserStorage.clear();
+                        _onboarding.clear();
+                        if (mounted) {
+                          Navigator.of(context)
+                              .pushNamedAndRemoveUntil('/splash', (r) => false);
+                        }
                       },
                       child: Text('Log out',
                           style: GoogleFonts.poppins(

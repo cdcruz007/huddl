@@ -18,7 +18,6 @@ enum CopilotCategory {
   development,
   localServices,
   marketplace,
-  travel,
   social,
   general,
 }
@@ -174,15 +173,11 @@ class AiCopilotService {
       CopilotQuickAction(
           label: 'Sell something',
           emoji: '\u{1F4F8}',
-          query: 'Help me sell an item on Preloved'),
+          query: 'Help me sell an item on Market'),
       CopilotQuickAction(
           label: 'Plan a meetup',
           emoji: '\u{1F91D}',
           query: 'Help me plan a meetup with local parents'),
-      CopilotQuickAction(
-          label: 'Travel tips',
-          emoji: '\u2708\uFE0F',
-          query: 'Best family-friendly holiday destinations'),
     ]);
 
     return actions;
@@ -347,10 +342,9 @@ class AiCopilotService {
               route: '/meetups',
               icon: 'groups'),
           CopilotAction(
-              label: 'Preloved',
+              label: 'Market',
               route: '/marketplace',
               icon: 'storefront'),
-          CopilotAction(label: 'Travel', route: '/travel', icon: 'flight'),
         ],
         sourceNote: 'Quota limit reached \u00B7 Resets shortly',
       );
@@ -427,11 +421,9 @@ class AiCopilotService {
     buffer.writeln(
         '- **Meetups**: Organise and join meetups with local parents');
     buffer.writeln(
-        '- **Preloved Marketplace**: Buy & sell baby/children items with AI listing generator');
+        '- **Market**: Buy & sell baby/children items with AI listing generator');
     buffer.writeln(
         '- **AI Matchmaker**: Matches compatible parents based on interests & child ages');
-    buffer.writeln(
-        '- **Travel**: Family-friendly holiday destinations with AI travel concierge');
     buffer.writeln(
         '- **DMs & Group Chats**: Message other parents directly or in groups');
     buffer.writeln();
@@ -486,15 +478,8 @@ class AiCopilotService {
     if (lower.contains('sell') ||
         lower.contains('buy') ||
         lower.contains('preloved') ||
-        lower.contains('marketplace')) {
+        lower.contains('market')) {
       return CopilotCategory.marketplace;
-    }
-    if (lower.contains('travel') ||
-        lower.contains('holiday') ||
-        lower.contains('trip') ||
-        lower.contains('destination') ||
-        lower.contains('flight')) {
-      return CopilotCategory.travel;
     }
     if (lower.contains('meetup') ||
         lower.contains('meet') ||
@@ -546,18 +531,9 @@ class AiCopilotService {
               route: '/create_listing',
               icon: 'add_a_photo'),
           CopilotAction(
-              label: 'Browse Preloved',
+              label: 'Browse Market',
               route: '/marketplace',
               icon: 'storefront'),
-        ];
-      case CopilotCategory.travel:
-        return const [
-          CopilotAction(
-              label: 'AI Travel Concierge',
-              route: '/travel',
-              icon: 'flight'),
-          CopilotAction(
-              label: 'Pack My Bag', route: '/travel', icon: 'luggage'),
         ];
       case CopilotCategory.social:
         return const [
@@ -577,7 +553,7 @@ class AiCopilotService {
               route: '/meetups',
               icon: 'groups'),
           CopilotAction(
-              label: 'Preloved',
+              label: 'Market',
               route: '/marketplace',
               icon: 'storefront'),
         ];
@@ -685,11 +661,12 @@ class AiCopilotService {
     // -- Sell something --
     if (lower.contains('sell') ||
         lower.contains('list') ||
-        lower.contains('preloved')) {
+        lower.contains('preloved') ||
+        lower.contains('market')) {
       return CopilotMessage(
         id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
         text:
-            'Great idea! Selling on huddl Preloved is super easy:\n\n'
+            'Great idea! Selling on huddl Market is super easy:\n\n'
             '1. **Take a photo** \u2014 our AI identifies the product\n'
             '2. **Auto-generates** title, description & smart pricing\n'
             '3. **One tap** to publish \u2014 ready in seconds!\n\n'
@@ -702,7 +679,7 @@ class AiCopilotService {
               route: '/create_listing',
               icon: 'add_a_photo'),
           CopilotAction(
-              label: 'Browse Preloved',
+              label: 'Browse Market',
               route: '/marketplace',
               icon: 'storefront'),
         ],
@@ -754,17 +731,15 @@ class AiCopilotService {
             '\u2022 **Short haul**: Mallorca, Tenerife, Algarve \u2014 great for little ones\n'
             '\u2022 **UK staycation**: Center Parcs, Bluestone, Haven \u2014 rain or shine\n'
             '\u2022 **City breaks**: Barcelona, Amsterdam \u2014 surprisingly family-friendly\n\n'
-            'Check out huddl Travel for our AI Travel Concierge \u2014 it creates '
-            'personalised packing lists based on your children\'s ages!',
+            'Check out the **Travel Tribe** group in Connect for tips '
+            'from parents who\'ve been there and done it!',
         isUser: false,
-        category: CopilotCategory.travel,
+        category: CopilotCategory.social,
         actions: const [
           CopilotAction(
-              label: 'AI Travel Concierge',
-              route: '/travel',
-              icon: 'flight'),
-          CopilotAction(
-              label: 'Pack My Bag', route: '/travel', icon: 'luggage'),
+              label: 'Go to Connect',
+              route: '/groups',
+              icon: 'people'),
         ],
         sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
@@ -814,9 +789,8 @@ class AiCopilotService {
           'Try asking me about:\n'
           '\u2022 **Sleep**, **feeding**, or **development milestones**\n'
           '\u2022 **Nurseries** or **local services** near $borough\n'
-          '\u2022 **Selling items** on Preloved\n'
-          '\u2022 **Planning meetups** with local parents\n'
-          '\u2022 **Family travel** ideas\n\n'
+          '\u2022 **Selling items** on Market\n'
+          '\u2022 **Planning meetups** with local parents\n\n'
           'Or try again in a moment \u2014 I\'ll be fully connected shortly!',
       isUser: false,
       category: CopilotCategory.general,
@@ -826,10 +800,9 @@ class AiCopilotService {
             route: '/meetups',
             icon: 'groups'),
         CopilotAction(
-            label: 'Preloved',
+            label: 'Market',
             route: '/marketplace',
             icon: 'storefront'),
-        CopilotAction(label: 'Travel', route: '/travel', icon: 'flight'),
       ],
       sourceNote: 'Offline mode \u00B7 Full AI available when connected',
     );

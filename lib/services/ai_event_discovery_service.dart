@@ -329,6 +329,9 @@ RULES:
         icon: t.icon,
         organiser: t.organiserTemplate.replaceAll('{borough}', borough),
         imageUrl: t.imageUrl,
+        sourceUrl: t.source.url.isNotEmpty
+            ? t.source.url
+            : 'https://${t.source.name.toLowerCase().replaceAll(' ', '').replaceAll('.', '')}.co.uk/events',
         isUserCreated: false,
         borough: borough,
         suitableAgeRange: t.ageRange,

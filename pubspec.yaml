@@ -31,6 +31,12 @@ dependencies:
   # Payment / In-App Purchases
   in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
 
+  # Biometric Authentication (P3 audit recommendation)
+  local_auth: ^2.3.0               # Fingerprint, Face ID, passcode
+
+  # Material You dynamic colour (P3 audit recommendation)
+  dynamic_color: ^1.7.0            # Android 12+ dynamic colour extraction
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

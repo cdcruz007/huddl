@@ -221,22 +221,16 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               query: 'Find nurseries near me'),
           _buildFeatureCard(
               Icons.storefront,
-              'Preloved AI',
+              'Market AI',
               'Sell items instantly with AI',
               HuddlColors.aiBlue,
-              query: 'Help me sell an item on Preloved'),
+              query: 'Help me sell an item on Market'),
           _buildFeatureCard(
               Icons.groups,
               'Meetups & Social',
               'Find compatible parents nearby',
               HuddlColors.teal,
               query: 'Help me plan a meetup with local parents'),
-          _buildFeatureCard(
-              Icons.flight,
-              'Family Travel',
-              'Destinations & packing lists',
-              HuddlColors.accentAmber,
-              query: 'Best family-friendly holiday destinations'),
           const SizedBox(height: 24),
           // Quick actions
           Text(
@@ -662,8 +656,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       '/groups': 1,
       '/meetups': 2,
       '/marketplace': 3,
-      '/travel': 4,
-      '/profile': 5,
+      '/profile': 4,
     };
 
     if (tabRoutes.containsKey(action.route)) {

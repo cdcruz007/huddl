@@ -1,17 +1,18 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/tutorial_service.dart';
 
-/// Full-screen semi-transparent overlay that walks the user through each
-/// tab of the app with a brief explanation and CTA highlight.
+/// Lightweight, translucent tutorial overlay that walks the user through each
+/// tab while keeping the actual screen fully visible underneath.
 ///
-/// Usage:
-/// ```dart
-/// TutorialOverlay.show(context, onTabSwitch: (index) {
-///   mainShellState.switchTab(index);
-/// });
-/// ```
+/// Design principles:
+///   - Ultra-light scrim so the real screen content shows through
+///   - Compact frosted-glass card near the bottom nav
+///   - Pulsing highlight ring around the active nav tab
+///   - Each step switches to the real tab so users see live content
+///   - Swipe left/right to navigate steps
 class TutorialOverlay extends StatefulWidget {
   final void Function(int tabIndex) onTabSwitch;
   final VoidCallback? onComplete;
@@ -22,7 +23,7 @@ class TutorialOverlay extends StatefulWidget {
     this.onComplete,
   });
 
-  /// Convenience launcher — pushes the overlay as a full-screen route.
+  /// Convenience launcher -- pushes the overlay as a transparent route.
   static Future<void> show(
     BuildContext context, {
     required void Function(int tabIndex) onTabSwitch,
@@ -38,7 +39,7 @@ class TutorialOverlay extends StatefulWidget {
         ),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 350),
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
@@ -48,47 +49,58 @@ class TutorialOverlay extends StatefulWidget {
 }
 
 class _TutorialOverlayState extends State<TutorialOverlay>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _current = 0;
-  late final AnimationController _animCtrl;
-  late Animation<double> _fadeAnim;
-  late Animation<Offset> _slideAnim;
+
+  late final AnimationController _cardAnim;
+  late final AnimationController _pulseAnim;
+  late Animation<double> _cardFade;
+  late Animation<Offset> _cardSlide;
 
   List<TutorialStep> get _steps => TutorialService.steps;
   TutorialStep get _step => _steps[_current];
 
+  // Nav tab layout: 5 evenly-spaced items inside the pill bar
+  // Each item centre is at (index + 0.5) / 5 of the bar width
+  static const int _tabCount = 5;
+
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 400),
-    );
-    _setupAnimations();
-    _animCtrl.forward();
-    // Switch to first tab
-    widget.onTabSwitch(_step.tabIndex);
-  }
 
-  void _setupAnimations() {
-    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
-    _slideAnim = Tween<Offset>(
-      begin: const Offset(0, 0.08),
+    _cardAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _cardFade = CurvedAnimation(parent: _cardAnim, curve: Curves.easeOut);
+    _cardSlide = Tween<Offset>(
+      begin: const Offset(0, 0.15),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animCtrl, curve: Curves.easeOutCubic));
+    ).animate(CurvedAnimation(parent: _cardAnim, curve: Curves.easeOutCubic));
+
+    _pulseAnim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat(reverse: true);
+
+    _cardAnim.forward();
+    widget.onTabSwitch(_step.tabIndex);
   }
 
   @override
   void dispose() {
-    _animCtrl.dispose();
+    _cardAnim.dispose();
+    _pulseAnim.dispose();
     super.dispose();
   }
 
+  // ── Navigation ──────────────────────────────────────────────────────────
+
   Future<void> _goTo(int index) async {
-    await _animCtrl.reverse();
+    await _cardAnim.reverse();
     setState(() => _current = index);
     widget.onTabSwitch(_steps[index].tabIndex);
-    _animCtrl.forward();
+    _cardAnim.forward();
   }
 
   Future<void> _next() async {
@@ -125,10 +137,6 @@ class _TutorialOverlayState extends State<TutorialOverlay>
         return Icons.groups;
       case 'storefront':
         return Icons.storefront;
-      case 'flight':
-        return Icons.flight;
-      case 'local_offer':
-        return Icons.local_offer;
       case 'person':
         return Icons.person;
       default:
@@ -136,294 +144,349 @@ class _TutorialOverlayState extends State<TutorialOverlay>
     }
   }
 
+  // ── Build ───────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final mq = MediaQuery.of(context);
-    final bottomPad = mq.padding.bottom + 90; // clear the bottom nav bar
+    // Bottom nav pill sits at: padding 16 from sides, 12 from bottom, height 70
+    // The safe-area bottom padding is handled by the nav bar itself
+    final navBarBottom = mq.padding.bottom + 12;
+    const navBarHeight = 70.0;
+    const navBarHPad = 16.0;
 
     return Material(
       color: Colors.transparent,
-      child: Stack(
-        children: [
-          // ── Dark overlay ─────────────────────────────────────
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: () {}, // absorb taps
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.62),
+      child: GestureDetector(
+        // Swipe left/right to navigate
+        onHorizontalDragEnd: (details) {
+          if (details.primaryVelocity == null) return;
+          if (details.primaryVelocity! < -200) {
+            _next();
+          } else if (details.primaryVelocity! > 200) {
+            _prev();
+          }
+        },
+        child: Stack(
+          children: [
+            // ── Ultra-light scrim -- screen shows through ─────────
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {}, // absorb taps
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.25),
+                ),
               ),
             ),
-          ),
 
-          // ── Skip button (top-right) ──────────────────────────
-          Positioned(
-            top: mq.padding.top + 12,
-            right: 16,
-            child: GestureDetector(
-              onTap: _skip,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
+            // ── Pulsing highlight ring around active nav tab ──────
+            _buildNavHighlight(
+              navBarBottom: navBarBottom,
+              navBarHeight: navBarHeight,
+              navBarHPad: navBarHPad,
+              screenWidth: mq.size.width,
+            ),
+
+            // ── Skip button (top-right) ──────────────────────────
+            Positioned(
+              top: mq.padding.top + 8,
+              right: 12,
+              child: GestureDetector(
+                onTap: _skip,
+                child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3), width: 1),
-                ),
-                child: Text(
-                  'Skip tutorial',
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withValues(alpha: 0.9),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        'Skip',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withValues(alpha: 0.95),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // ── Step counter (top-left) ──────────────────────────
-          Positioned(
-            top: mq.padding.top + 16,
-            left: 20,
-            child: Text(
-              '${_current + 1} / ${_steps.length}',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-
-          // ── Central card ─────────────────────────────────────
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: bottomPad + 16,
-            child: FadeTransition(
-              opacity: _fadeAnim,
-              child: SlideTransition(
-                position: _slideAnim,
-                child: _buildCard(),
-              ),
-            ),
-          ),
-
-          // ── Progress dots ────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: bottomPad - 12,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _steps.length,
-                (i) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: i == _current ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: i == _current
-                        ? HuddlColors.primary
-                        : Colors.white.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
+            // ── Compact frosted card above bottom nav ─────────────
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: navBarBottom + navBarHeight + 14,
+              child: FadeTransition(
+                opacity: _cardFade,
+                child: SlideTransition(
+                  position: _cardSlide,
+                  child: _buildCompactCard(),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCard() {
-    final isLast = _current == _steps.length - 1;
+  /// Pulsing glow ring positioned over the active bottom nav tab.
+  Widget _buildNavHighlight({
+    required double navBarBottom,
+    required double navBarHeight,
+    required double navBarHPad,
+    required double screenWidth,
+  }) {
+    final tabIndex = _step.tabIndex;
+    final barWidth = screenWidth - (navBarHPad * 2);
+    final tabWidth = barWidth / _tabCount;
+    final centreX = navBarHPad + (tabIndex * tabWidth) + (tabWidth / 2);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 30,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Icon badge ──────────────────────────────────
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  HuddlColors.primary.withValues(alpha: 0.12),
-                  HuddlColors.primary.withValues(alpha: 0.04),
+    return AnimatedBuilder(
+      animation: _pulseAnim,
+      builder: (_, __) {
+        final t = _pulseAnim.value; // 0 -> 1 -> 0
+        final scale = 1.0 + (t * 0.15);
+        final alpha = 0.35 + (t * 0.25);
+
+        return Positioned(
+          left: centreX - 28 * scale,
+          bottom: navBarBottom + (navBarHeight / 2) - 28 * scale,
+          child: IgnorePointer(
+            child: Container(
+              width: 56 * scale,
+              height: 56 * scale,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: HuddlColors.primary.withValues(alpha: alpha),
+                  width: 2.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: HuddlColors.primary.withValues(alpha: alpha * 0.5),
+                    blurRadius: 16 + (t * 8),
+                    spreadRadius: 2 + (t * 4),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _iconForName(_step.iconName),
-              color: HuddlColors.primary,
-              size: 28,
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── Tab name chip ──────────────────────────────
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-            decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              _step.title,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.primary,
               ),
             ),
           ),
+        );
+      },
+    );
+  }
 
-          const SizedBox(height: 12),
+  /// Compact, frosted-glass card with icon, headline, short text, and nav.
+  Widget _buildCompactCard() {
+    final isLast = _current == _steps.length - 1;
+    final isFirst = _current == 0;
 
-          // ── Headline ───────────────────────────────────
-          Text(
-            _step.headline,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: HuddlColors.textDark,
-              height: 1.3,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.88),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.5),
+              width: 1,
             ),
-            textAlign: TextAlign.center,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 10),
-
-          // ── Body text ──────────────────────────────────
-          Text(
-            _step.body,
-            style: GoogleFonts.poppins(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w400,
-              color: HuddlColors.textSecondary,
-              height: 1.55,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 14),
-
-          // ── CTA highlight ──────────────────────────────
-          Container(
-            width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF8E1), // warm amber tint
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                  color: HuddlColors.accentAmber.withValues(alpha: 0.35)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.touch_app,
-                    color: HuddlColors.accentAmber, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    _step.ctaLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.accentAmber.withValues(alpha: 0.85),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Top row: icon + headline + step counter ──────
+              Row(
+                children: [
+                  // Icon badge
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: HuddlColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      _iconForName(_step.iconName),
+                      color: Colors.white,
+                      size: 22,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // ── Navigation buttons ─────────────────────────
-          Row(
-            children: [
-              // Back
-              if (_current > 0)
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _prev,
-                    child: Container(
-                      height: 48,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: HuddlColors.gray300),
-                        borderRadius: BorderRadius.circular(14),
+                  const SizedBox(width: 12),
+                  // Title + headline
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _step.title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          _step.headline,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: HuddlColors.textDark,
+                            height: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Step counter
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.gray100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${_current + 1}/${_steps.length}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.textSecondary,
                       ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Back',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // ── Body text (short) ───────────────────────────
+              Text(
+                _step.body,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w400,
+                  color: HuddlColors.textSecondary,
+                  height: 1.45,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 12),
+
+              // ── Progress dots + navigation ──────────────────
+              Row(
+                children: [
+                  // Progress dots
+                  Expanded(
+                    child: Row(
+                      children: List.generate(
+                        _steps.length,
+                        (i) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          margin: const EdgeInsets.only(right: 4),
+                          width: i == _current ? 20 : 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: i == _current
+                                ? HuddlColors.primary
+                                : HuddlColors.gray300,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Back button
+                  if (!isFirst) ...[
+                    GestureDetector(
+                      onTap: _prev,
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.gray100,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          size: 14,
                           color: HuddlColors.textSecondary,
                         ),
                       ),
                     ),
-                  ),
-                ),
-              if (_current > 0) const SizedBox(width: 12),
+                    const SizedBox(width: 8),
+                  ],
 
-              // Next / Get started
-              Expanded(
-                flex: _current == 0 ? 1 : 1,
-                child: GestureDetector(
-                  onTap: _next,
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: HuddlColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color:
-                              HuddlColors.primary.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      isLast ? 'Get started!' : 'Next',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                  // Next / Done button
+                  GestureDetector(
+                    onTap: _next,
+                    child: Container(
+                      height: 36,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: isLast ? 20 : 16),
+                      decoration: BoxDecoration(
+                        gradient: HuddlColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                HuddlColors.primary.withValues(alpha: 0.20),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isLast ? 'Get started' : 'Next',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (!isLast) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_forward_ios,
+                                size: 12, color: Colors.white),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

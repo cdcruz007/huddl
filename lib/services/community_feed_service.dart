@@ -268,7 +268,7 @@ class CommunityFeedService {
         'title': 'Wooden Toy Set',
         'price': '\u00a325',
         'seller': 'David L.',
-        'image': 'https://images.pexels.com/photos/3661248/pexels-photo-3661248.jpeg?auto=compress&cs=tinysrgb&w=400',
+        'image': 'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=400',
       },
       {
         'title': 'Ergobaby Carrier',

@@ -94,11 +94,15 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: Text('Cancel',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.textSecondary,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                      alignment: Alignment.centerLeft,
+                      child: Text('Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.textSecondary,
+                        ),
                       ),
                     ),
                   ),
@@ -111,11 +115,15 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                   ),
                   GestureDetector(
                     onTap: () => Navigator.pop(context, _resultTime),
-                    child: Text('Done',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
+                    child: Container(
+                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                      alignment: Alignment.centerRight,
+                      child: Text('Done',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
                       ),
                     ),
                   ),

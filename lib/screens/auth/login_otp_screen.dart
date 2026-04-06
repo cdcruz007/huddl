@@ -113,6 +113,23 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         await _activateTestAccountSubscription();
       }
       if (!mounted) return;
+
+      // Check if the user has a name set — if not, prompt for one
+      final data = OnboardingDataService();
+      await data.initialize();
+      if (data.name == null || data.name!.trim().isEmpty) {
+        // Show name entry before going home
+        final nameEntered = await _showNameEntrySheet();
+        if (!mounted) return;
+        if (nameEntered == null || nameEntered.trim().isEmpty) {
+          // User cancelled — still need a name, use a fallback
+          data.setName('User');
+        } else {
+          data.setName(nameEntered.trim());
+        }
+      }
+
+      if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } else {
       setState(() {
@@ -121,6 +138,135 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       });
       _codeController.clear();
     }
+  }
+
+  /// Shows a bottom sheet asking the user for their first name.
+  /// Returns the entered name, or null if the user dismisses it.
+  Future<String?> _showNameEntrySheet() async {
+    final nameCtrl = TextEditingController();
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx2, setLocal) {
+            final canSave = nameCtrl.text.trim().isNotEmpty;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  24, 28, 24, MediaQuery.of(ctx2).viewInsets.bottom + 28),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Handle bar
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.disabledText.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Welcome icon
+                  Container(
+                    width: 56, height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.waving_hand_rounded,
+                        size: 28, color: HuddlColors.onboardingOrange),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Welcome! What should we\ncall you?',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: HuddlColors.textDark,
+                      height: 1.3,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enter your first name to personalise your experience.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: HuddlColors.disabledText,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 28),
+                  // Name text field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: HuddlColors.inputBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: HuddlColors.inputBorderLight, width: 1),
+                    ),
+                    child: TextField(
+                      controller: nameCtrl,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.words,
+                      style: const TextStyle(
+                          fontSize: 16, color: HuddlColors.textDark),
+                      decoration: const InputDecoration(
+                        hintText: 'Your first name',
+                        hintStyle: TextStyle(
+                            fontSize: 16, color: HuddlColors.disabledText),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
+                      ),
+                      onChanged: (_) => setLocal(() {}),
+                      onSubmitted: (v) {
+                        if (v.trim().isNotEmpty) Navigator.pop(ctx2, v.trim());
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Continue button
+                  GestureDetector(
+                    onTap: canSave
+                        ? () => Navigator.pop(ctx2, nameCtrl.text.trim())
+                        : null,
+                    child: Container(
+                      width: double.infinity,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: canSave
+                            ? HuddlColors.onboardingOrange
+                            : HuddlColors.disabled,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: canSave
+                              ? Colors.white
+                              : HuddlColors.disabledText,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   /// Activate Inner Circle subscription for test accounts so all features
@@ -134,8 +280,9 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     );
   }
 
-  /// Fill OnboardingDataService with the test account's pre-set profile
-  /// so the home / profile screen shows realistic data instantly.
+  /// Fill OnboardingDataService with the test account's pre-set profile,
+  /// but ONLY for fields that the user hasn't already set during onboarding.
+  /// This ensures user-entered data (e.g. their real name) is preserved.
   Future<void> _populateTestAccountData() async {
     final profile = TestAccountService.getTestProfileFull(widget.phoneNumber);
     if (profile == null) return;
@@ -143,22 +290,39 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     final data = OnboardingDataService();
     await data.initialize();
 
-    data.setName(profile['name'] as String);
-    data.setParentType(profile['parentType'] as String);
-    data.setStagesOfLife(List<String>.from(profile['stagesOfLife'] ?? []));
-    data.setPostcode(profile['postcode'] as String);
-    data.setPhoneNumber(
-      profile['phoneNumber'] as String,
-      countryCode: profile['countryCode'] as String,
-    );
-    data.setPhoneVerified(true);
-    if (profile['bio'] != null) data.setBio(profile['bio'] as String);
-    if (profile['dueDate'] != null) data.setDueDate(profile['dueDate'] as String);
-    final children = profile['children'] as List<dynamic>?;
-    if (children != null && children.isNotEmpty) {
-      data.setChildren(
-        children.map((c) => Map<String, String>.from(c as Map)).toList(),
+    // Only set fields that are still empty — respect user-entered data
+    if (data.name == null || data.name!.isEmpty) {
+      data.setName(profile['name'] as String);
+    }
+    if (data.parentType == null || data.parentType!.isEmpty) {
+      data.setParentType(profile['parentType'] as String);
+    }
+    if (data.stagesOfLife.isEmpty) {
+      data.setStagesOfLife(List<String>.from(profile['stagesOfLife'] ?? []));
+    }
+    if (data.postcode == null || data.postcode!.isEmpty) {
+      data.setPostcode(profile['postcode'] as String);
+    }
+    if (data.phoneNumber == null || data.phoneNumber!.isEmpty) {
+      data.setPhoneNumber(
+        profile['phoneNumber'] as String,
+        countryCode: profile['countryCode'] as String,
       );
+    }
+    data.setPhoneVerified(true);
+    if ((data.bio == null || data.bio!.isEmpty) && profile['bio'] != null) {
+      data.setBio(profile['bio'] as String);
+    }
+    if ((data.dueDate == null || data.dueDate!.isEmpty) && profile['dueDate'] != null) {
+      data.setDueDate(profile['dueDate'] as String);
+    }
+    if (data.children.isEmpty) {
+      final children = profile['children'] as List<dynamic>?;
+      if (children != null && children.isNotEmpty) {
+        data.setChildren(
+          children.map((c) => Map<String, String>.from(c as Map)).toList(),
+        );
+      }
     }
   }
 

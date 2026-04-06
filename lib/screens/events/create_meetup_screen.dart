@@ -222,7 +222,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       _selectedDate != null &&
       _startTime != null &&
       _endTime != null &&
-      _selectedCategories.isNotEmpty;
+      _selectedCategories.isNotEmpty &&
+      _pickedImageUrl != null; // Photo is required
 
   // ── Pickers ──────────────────────────────────────────────────────────
   void _pickDate() async {
@@ -420,10 +421,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       }
       return;
     }
+    if (!mounted) return;
 
     if (!_isFormValid) {
+      final missingPhoto = _pickedImageUrl == null;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Please fill in all required fields'),
+        content: Text(missingPhoto
+            ? 'Please add a cover photo for your meetup'
+            : 'Please fill in all required fields'),
         backgroundColor: HuddlColors.error,
         behavior: SnackBarBehavior.floating,
         shape:

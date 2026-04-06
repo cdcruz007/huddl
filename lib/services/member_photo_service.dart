@@ -192,10 +192,19 @@ class MemberPhotoService {
         'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200',
   };
 
+  // ── Gender-based default avatars ──────────────────────────────────────
+  // Male-presenting Pexels avatar for dads / unknown male
+  static const String defaultDadAvatar =
+      'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200';
+  // Female-presenting Pexels avatar for mums / unknown female
+  static const String defaultMumAvatar =
+      'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200';
+
   /// Look up a profile photo URL by display name.
-  /// Falls back to the current user's photo if the name matches.
+  /// Falls back to the current user's photo if the name matches,
+  /// then to a gender-based default avatar (dad = male, mum = female).
   static String? getPhotoByName(String name) {
-    // 1) Direct lookup
+    // 1) Direct lookup in known-members directory
     final direct = _photosByName[name];
     if (direct != null) return direct;
 
@@ -204,21 +213,61 @@ class MemberPhotoService {
     final currentName = onboarding.name;
     if (currentName != null &&
         name.toLowerCase() == currentName.toLowerCase()) {
+      // Return actual profile photo, or null to let UI use local asset
       return onboarding.profilePhotoObjectUrl;
     }
     if (name == 'You') {
       return onboarding.profilePhotoObjectUrl;
     }
 
-    return null;
+    // 3) Gender-based fallback for unknown names
+    return _defaultAvatarForCurrentUser();
+  }
+
+  /// Returns true if [name] matches the current onboarding user name or 'You'.
+  static bool isCurrentUser(String name) {
+    final onboarding = OnboardingDataService();
+    final currentName = onboarding.name;
+    if (name == 'You') return true;
+    if (currentName != null &&
+        name.toLowerCase() == currentName.toLowerCase()) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Returns the local asset path for the current user's default avatar
+  /// based on parentType (mum / dad). Used when no profile photo is set.
+  static String get currentUserAvatarAsset {
+    final parentType = OnboardingDataService().parentType;
+    return parentType == 'dad'
+        ? 'assets/images/avatars/John.png'
+        : 'assets/images/avatars/Emma.png';
+  }
+
+  /// Returns the correct default avatar based on the current user's parentType.
+  /// Dads get a male avatar, Mums get a female avatar.
+  static String _defaultAvatarForCurrentUser() {
+    final onboarding = OnboardingDataService();
+    final parentType = onboarding.parentType;
+    if (parentType == 'dad') return defaultDadAvatar;
+    return defaultMumAvatar; // default to mum for mum / null / other
+  }
+
+  /// Returns a gender-appropriate default avatar for a given parentType hint.
+  /// Use when you know the person is a 'dad' or 'mum'.
+  static String getDefaultAvatar({String? parentType}) {
+    if (parentType == 'dad') return defaultDadAvatar;
+    return defaultMumAvatar;
   }
 
   /// Look up a profile photo URL by member ID.
+  /// Falls back to a gender-based default avatar for the current user.
   static String? getPhotoByMemberId(String memberId) {
     if (memberId == 'current_user') {
-      return OnboardingDataService().profilePhotoObjectUrl;
+      return OnboardingDataService().profilePhotoObjectUrl ?? _defaultAvatarForCurrentUser();
     }
-    return _photosByMemberId[memberId];
+    return _photosByMemberId[memberId] ?? _defaultAvatarForCurrentUser();
   }
 
   /// All names that have photos (for iteration).
