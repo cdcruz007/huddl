@@ -3,10 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_community_service.dart';
 
-// =============================================================================
-// PARENT EXPERTS — Leaderboard, badges, and trusted voice profiles
-// =============================================================================
-
+/// Parent Experts — clean leaderboard with profiles and badges.
 class ParentExpertsScreen extends StatefulWidget {
   const ParentExpertsScreen({super.key});
 
@@ -15,18 +12,15 @@ class ParentExpertsScreen extends StatefulWidget {
 }
 
 class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
-  final TravelCommunityService _communityService = TravelCommunityService();
-  bool _isLoading = true;
+  final TravelCommunityService _svc = TravelCommunityService();
+  bool _loading = true;
 
   @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
+  void initState() { super.initState(); _load(); }
 
-  Future<void> _loadData() async {
-    await _communityService.initialize();
-    if (mounted) setState(() => _isLoading = false);
+  Future<void> _load() async {
+    await _svc.initialize();
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
@@ -34,97 +28,89 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
     return Scaffold(
       backgroundColor: HuddlColors.background,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white, elevation: 0,
+        backgroundColor: HuddlColors.white, elevation: 0, scrolledUnderElevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
         title: Text('Parent Experts', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
       ),
-      body: _isLoading
+      body: _loading
           ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header info
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), Color(0xFFFFFFFF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
-                    ),
-                    child: Row(children: [
-                      Container(
-                        width: 48, height: 48,
-                        decoration: BoxDecoration(gradient: HuddlColors.primaryGradient, borderRadius: BorderRadius.circular(14)),
-                        child: const Icon(Icons.emoji_events, color: HuddlColors.white, size: 26),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Community Experts', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                        Text('Parents who share their travel knowledge earn badges and become trusted voices', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary, height: 1.3)),
-                      ])),
-                    ]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Info banner
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), Color(0xFFFFFFFF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-
-                  // Badge legend
-                  const SizedBox(height: 20),
-                  Text('How badges work', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                  const SizedBox(height: 10),
-                  Row(children: [
-                    _buildBadgeLegendItem('Been There', 'Answer 3+ questions', HuddlColors.teal, Icons.place),
-                    const SizedBox(width: 8),
-                    _buildBadgeLegendItem('Trusted Voice', '10+ upvotes', HuddlColors.blue, Icons.verified),
-                    const SizedBox(width: 8),
-                    _buildBadgeLegendItem('Expert', '25+ upvotes', HuddlColors.accentAmber, Icons.emoji_events),
+                  child: Row(children: [
+                    Container(
+                      width: 44, height: 44,
+                      decoration: BoxDecoration(gradient: HuddlColors.primaryGradient, borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.emoji_events, color: HuddlColors.white, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Community Experts', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                      Text('Parents who share travel knowledge earn badges', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary, height: 1.3)),
+                    ])),
                   ]),
+                ),
 
-                  // Leaderboard
-                  const SizedBox(height: 24),
-                  Text('Top Contributors', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                  const SizedBox(height: 4),
-                  Text('Parents who help the community the most', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
-                  const SizedBox(height: 12),
-                  ..._communityService.topExperts.asMap().entries.map((e) => _buildExpertCard(e.value, e.key + 1)),
+                // Badges
+                const SizedBox(height: 20),
+                Text('How badges work', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                const SizedBox(height: 10),
+                Row(children: [
+                  _badgeLegend('Been There', '3+ answers', HuddlColors.teal, Icons.place),
+                  const SizedBox(width: 8),
+                  _badgeLegend('Trusted', '10+ upvotes', HuddlColors.blue, Icons.verified),
+                  const SizedBox(width: 8),
+                  _badgeLegend('Expert', '25+ upvotes', HuddlColors.accentAmber, Icons.emoji_events),
+                ]),
 
-                  const SizedBox(height: 24),
-                  // CTA
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.white, borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
-                    ),
-                    child: Column(children: [
-                      const Icon(Icons.volunteer_activism, size: 36, color: HuddlColors.primary),
-                      const SizedBox(height: 10),
-                      Text('Share your travel knowledge!', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                      const SizedBox(height: 4),
-                      Text('Answer questions from other parents to earn your first "Been There" badge. Your experience helps the whole community!', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary, height: 1.4)),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: HuddlColors.primary, foregroundColor: HuddlColors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            elevation: 0,
-                          ),
-                          child: Text('Answer Questions', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                // Leaderboard
+                const SizedBox(height: 24),
+                Text('Top Contributors', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                const SizedBox(height: 4),
+                Text('Parents who help the community the most', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                const SizedBox(height: 12),
+                ..._svc.topExperts.asMap().entries.map((e) => _expertCard(e.value, e.key + 1)),
+
+                // CTA
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(16)),
+                  child: Column(children: [
+                    const Icon(Icons.volunteer_activism, size: 32, color: HuddlColors.primary),
+                    const SizedBox(height: 10),
+                    Text('Share your travel knowledge!', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    const SizedBox(height: 4),
+                    Text('Answer questions to earn your first badge.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary, foregroundColor: HuddlColors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0,
                         ),
+                        child: Text('Answer Questions', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
                       ),
-                    ]),
-                  ),
-                  const SizedBox(height: 80),
-                ],
-              ),
+                    ),
+                  ]),
+                ),
+                const SizedBox(height: 80),
+              ]),
             ),
     );
   }
 
-  Widget _buildBadgeLegendItem(String title, String requirement, Color color, IconData icon) {
+  Widget _badgeLegend(String title, String req, Color color, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(10),
@@ -137,52 +123,44 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
           ),
           const SizedBox(height: 6),
           Text(title, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textDark), textAlign: TextAlign.center),
-          Text(requirement, style: GoogleFonts.poppins(fontSize: 9, color: HuddlColors.textHint), textAlign: TextAlign.center),
+          Text(req, style: GoogleFonts.poppins(fontSize: 9, color: HuddlColors.textHint), textAlign: TextAlign.center),
         ]),
       ),
     );
   }
 
-  Widget _buildExpertCard(ParentExpertProfile expert, int rank) {
-    final color = Color(int.parse(expert.avatarColor.replaceFirst('#', '0xFF')));
-    final rankColors = [HuddlColors.accentAmber, HuddlColors.gray400, Color(0xFFCD7F32), HuddlColors.textHint, HuddlColors.textHint, HuddlColors.textHint];
-    final rankColor = rank <= rankColors.length ? rankColors[rank - 1] : HuddlColors.textHint;
+  Widget _expertCard(ParentExpertProfile expert, int rank) {
+    final c = Color(int.parse(expert.avatarColor.replaceFirst('#', '0xFF')));
+    final rankColors = [HuddlColors.accentAmber, HuddlColors.gray400, const Color(0xFFCD7F32)];
+    final rc = rank <= rankColors.length ? rankColors[rank - 1] : HuddlColors.textHint;
 
     return GestureDetector(
-      onTap: () => _showExpertProfile(expert),
+      onTap: () => _showProfile(expert),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: HuddlColors.white, borderRadius: BorderRadius.circular(14),
-          border: rank <= 3 ? Border.all(color: rankColor.withValues(alpha: 0.3)) : null,
+          border: rank <= 3 ? Border.all(color: rc.withValues(alpha: 0.25)) : null,
         ),
         child: Row(children: [
-          // Rank number
           Container(
             width: 28, height: 28,
-            decoration: BoxDecoration(
-              color: rank <= 3 ? rankColor.withValues(alpha: 0.15) : HuddlColors.background,
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: Text('$rank', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: rank <= 3 ? rankColor : HuddlColors.textHint))),
+            decoration: BoxDecoration(color: rank <= 3 ? rc.withValues(alpha: 0.15) : HuddlColors.background, shape: BoxShape.circle),
+            child: Center(child: Text('$rank', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: rank <= 3 ? rc : HuddlColors.textHint))),
           ),
           const SizedBox(width: 12),
-          // Avatar
-          CircleAvatar(
-            radius: 22, backgroundColor: color.withValues(alpha: 0.15),
-            child: Text(expert.name[0], style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: color)),
-          ),
+          CircleAvatar(radius: 22, backgroundColor: c.withValues(alpha: 0.15),
+            child: Text(expert.name[0], style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: c))),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text(expert.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Flexible(child: Text(expert.name, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark), overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 6),
-              _buildRankBadge(expert),
+              _rankBadge(expert),
             ]),
             Text('${expert.location} · ${expert.childAges.join(", ")}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
             const SizedBox(height: 4),
-            // Destination badges
             Wrap(spacing: 4, children: expert.badges.take(3).map((b) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(color: HuddlColors.teal.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
@@ -193,7 +171,6 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
               ]),
             )).toList()),
           ])),
-          // Stats
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
             Row(mainAxisSize: MainAxisSize.min, children: [
               const Icon(Icons.thumb_up, size: 12, color: HuddlColors.primary),
@@ -208,52 +185,32 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
     );
   }
 
-  Widget _buildRankBadge(ParentExpertProfile expert) {
-    Color badgeColor;
+  Widget _rankBadge(ParentExpertProfile expert) {
+    Color bc;
     String label;
     IconData icon;
-
     switch (expert.rankLevel) {
-      case 4:
-        badgeColor = HuddlColors.accentAmber;
-        label = 'Legend';
-        icon = Icons.star;
-        break;
-      case 3:
-        badgeColor = HuddlColors.accentAmber;
-        label = 'Expert';
-        icon = Icons.emoji_events;
-        break;
-      case 2:
-        badgeColor = HuddlColors.blue;
-        label = 'Trusted';
-        icon = Icons.verified;
-        break;
-      default:
-        badgeColor = HuddlColors.teal;
-        label = 'Active';
-        icon = Icons.person;
+      case 4: bc = HuddlColors.accentAmber; label = 'Legend'; icon = Icons.star; break;
+      case 3: bc = HuddlColors.accentAmber; label = 'Expert'; icon = Icons.emoji_events; break;
+      case 2: bc = HuddlColors.blue; label = 'Trusted'; icon = Icons.verified; break;
+      default: bc = HuddlColors.teal; label = 'Active'; icon = Icons.person;
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-      decoration: BoxDecoration(color: badgeColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(color: bc.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 10, color: badgeColor),
+        Icon(icon, size: 10, color: bc),
         const SizedBox(width: 2),
-        Text(label, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: badgeColor)),
+        Text(label, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: bc)),
       ]),
     );
   }
 
-  void _showExpertProfile(ParentExpertProfile expert) {
-    final color = Color(int.parse(expert.avatarColor.replaceFirst('#', '0xFF')));
-
+  void _showProfile(ParentExpertProfile expert) {
+    final c = Color(int.parse(expert.avatarColor.replaceFirst('#', '0xFF')));
     showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (_) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: const BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         child: SingleChildScrollView(
@@ -261,26 +218,22 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
           child: Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 20),
-            CircleAvatar(
-              radius: 36, backgroundColor: color.withValues(alpha: 0.15),
-              child: Text(expert.name[0], style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600, color: color)),
-            ),
+            CircleAvatar(radius: 36, backgroundColor: c.withValues(alpha: 0.15),
+              child: Text(expert.name[0], style: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600, color: c))),
             const SizedBox(height: 12),
             Text(expert.name, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
             Text('${expert.location} · ${expert.rank}', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
             const SizedBox(height: 8),
             Text(expert.bio, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, height: 1.4)),
             const SizedBox(height: 16),
-            // Stats
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              _buildStatItem('${expert.totalAnswers}', 'Answers'),
+              _stat('${expert.totalAnswers}', 'Answers'),
               Container(width: 1, height: 30, color: HuddlColors.divider, margin: const EdgeInsets.symmetric(horizontal: 20)),
-              _buildStatItem('${expert.totalUpvotes}', 'Upvotes'),
+              _stat('${expert.totalUpvotes}', 'Upvotes'),
               Container(width: 1, height: 30, color: HuddlColors.divider, margin: const EdgeInsets.symmetric(horizontal: 20)),
-              _buildStatItem('${expert.badges.length}', 'Badges'),
+              _stat('${expert.badges.length}', 'Badges'),
             ]),
             const SizedBox(height: 20),
-            // Children & specialities
             Row(children: [
               const Icon(Icons.child_care, size: 16, color: HuddlColors.teal),
               const SizedBox(width: 6),
@@ -293,7 +246,6 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
               Expanded(child: Text('Specialities: ${expert.specialities.join(", ")}', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary))),
             ]),
             const SizedBox(height: 16),
-            // Destination badges
             Align(alignment: Alignment.centerLeft, child: Text('Destination Badges', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark))),
             const SizedBox(height: 8),
             ...expert.badges.map((b) => Container(
@@ -326,9 +278,9 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
     );
   }
 
-  Widget _buildStatItem(String value, String label) {
+  Widget _stat(String val, String label) {
     return Column(children: [
-      Text(value, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.primary)),
+      Text(val, style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.primary)),
       Text(label, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
     ]);
   }

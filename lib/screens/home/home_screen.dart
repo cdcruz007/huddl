@@ -21,6 +21,8 @@ import '../events/meetup_detail_screen.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
+import '../../services/travel_community_service.dart';
+import '../trips/ask_parents_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -1006,6 +1008,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
 
+              // ── Trips activity ─────────────────────────────────────
+              SliverToBoxAdapter(child: _buildTripsActivityCards()),
+
               // ── Community activity feed ──────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
@@ -1037,6 +1042,99 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ── Trips activity cards on home feed ──────────────────────────────────
+  Widget _buildTripsActivityCards() {
+    final svc = TravelCommunityService();
+    // Only show if initialized and has questions
+    if (svc.questions.isEmpty) return const SizedBox.shrink();
+
+    final unanswered = svc.questions
+        .where((q) => q.answers.where((a) => !a.isAiGenerated).isEmpty)
+        .take(2)
+        .toList();
+    final recent = svc.recentQuestions
+        .where((q) => q.answers.where((a) => !a.isAiGenerated).isNotEmpty)
+        .take(1)
+        .toList();
+    final items = [...unanswered, ...recent];
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.flight_takeoff_rounded, size: 18, color: HuddlColors.primary),
+              const SizedBox(width: 8),
+              Text('Trips community', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              const Spacer(),
+              GestureDetector(
+                onTap: () {
+                  final shell = MainShell.shellKey.currentState;
+                  if (shell != null) shell.switchTab(4);
+                },
+                child: Text('See all', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.primary)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...items.map((q) {
+            final isOpen = q.answers.where((a) => !a.isAiGenerated).isEmpty;
+            final replies = q.answers.where((a) => !a.isAiGenerated).length;
+            final authorColor = Color(int.parse(q.authorAvatarColor.replaceFirst('#', '0xFF')));
+
+            return GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AskParentsScreen())),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HuddlColors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: isOpen ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)) : null,
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18, backgroundColor: authorColor.withValues(alpha: 0.15),
+                      child: Text(q.authorName[0], style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: authorColor)),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isOpen ? '${q.authorName} needs travel advice' : '${q.authorName}\'s question got $replies ${replies == 1 ? 'reply' : 'replies'}',
+                            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                            maxLines: 1, overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(q.question, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.3), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (isOpen)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(8)),
+                        child: Text('Help', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                      )
+                    else
+                      Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.textHint),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
