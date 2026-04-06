@@ -246,7 +246,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               children: [
                 // Title + organiser
                 Container(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                   child: Column(
@@ -276,7 +276,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                                 'Organised by',
                                 style: GoogleFonts.poppins(
                                   fontSize: 11,
-                                  color: HuddlColors.textHint,
+                                  color: HuddlColors.textTertiary,
                                 ),
                               ),
                               Text(
@@ -304,7 +304,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                 // Details
                 Container(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
@@ -357,7 +357,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                 // Description
                 Container(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -397,7 +397,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
                 // What to expect
                 Container(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -449,7 +449,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         padding: EdgeInsets.fromLTRB(
             20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           boxShadow: [
             BoxShadow(
               color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -480,7 +480,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       'per person',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textHint,
+                        color: HuddlColors.textTertiary,
                       ),
                     ),
                   ],
@@ -541,7 +541,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final scorePercent = scored.score.round();
 
     return Container(
-      color: HuddlColors.white,
+      color: context.hc.surface,
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -576,7 +576,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       'AI-matched to your family profile',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textHint,
+                        color: HuddlColors.textTertiary,
                       ),
                     ),
                   ],
@@ -645,7 +645,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final sourceIcon = e['aiSourceIcon'] as IconData? ?? Icons.language;
 
     return Container(
-      color: HuddlColors.white,
+      color: context.hc.surface,
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -807,7 +807,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     ];
 
     return Container(
-      color: HuddlColors.white,
+      color: context.hc.surface,
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +827,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 '$attendeeCount people',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: HuddlColors.textHint,
+                  color: HuddlColors.textTertiary,
                 ),
               ),
             ],
@@ -960,7 +960,7 @@ class _DetailRow extends StatelessWidget {
                 subtitle,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: HuddlColors.textHint,
+                  color: HuddlColors.textTertiary,
                 ),
               ),
             ],

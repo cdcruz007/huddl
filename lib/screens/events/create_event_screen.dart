@@ -466,11 +466,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: context.hc.surface,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8),
           child: Center(

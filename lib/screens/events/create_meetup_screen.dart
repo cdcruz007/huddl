@@ -561,11 +561,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.hc.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
-        surfaceTintColor: Colors.white,
+        surfaceTintColor: context.hc.surface,
         automaticallyImplyLeading: false,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
