@@ -72,7 +72,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
           : SafeArea(
@@ -121,7 +121,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                 button: true,
                 label: 'Go back',
                 child: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios, size: 20, color: HuddlColors.textDark),
+                  icon: Icon(Icons.arrow_back_ios, size: 20, color: Theme.of(context).colorScheme.onSurface),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
@@ -130,8 +130,8 @@ class _AskParentsScreenState extends State<AskParentsScreen>
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Ask Parents', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
-                  Text('$total questions · $unanswered waiting for answers', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                  Text('Ask Parents', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('$total questions · $unanswered waiting for answers', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                 ]),
               ),
             ],
@@ -139,17 +139,17 @@ class _AskParentsScreenState extends State<AskParentsScreen>
           const SizedBox(height: 12),
           // Search
           Container(
-            decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
             child: TextField(
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v),
               style: GoogleFonts.poppins(fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search questions, destinations...',
-                hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                prefixIcon: const Icon(Icons.search, color: HuddlColors.textHint, size: 20),
+                hintStyle: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, size: 20),
                 suffixIcon: _query.isNotEmpty
-                    ? GestureDetector(onTap: () { _searchCtrl.clear(); setState(() => _query = ''); }, child: const Icon(Icons.close, color: HuddlColors.textHint, size: 18))
+                    ? GestureDetector(onTap: () { _searchCtrl.clear(); setState(() => _query = ''); }, child: Icon(Icons.close, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, size: 18))
                     : null,
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -241,8 +241,8 @@ class _AskParentsScreenState extends State<AskParentsScreen>
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.check_circle_outline, size: 48, color: HuddlColors.teal.withValues(alpha: 0.5)),
         const SizedBox(height: 12),
-        Text('All caught up!', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-        Text('Every question has been answered', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+        Text('All caught up!', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        Text('Every question has been answered', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
       ]));
     }
     return _list(qs);
@@ -253,8 +253,8 @@ class _AskParentsScreenState extends State<AskParentsScreen>
       return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(Icons.forum_outlined, size: 48, color: HuddlColors.textHint.withValues(alpha: 0.4)),
         const SizedBox(height: 12),
-        Text('No questions yet', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-        Text('Be the first to ask!', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+        Text('No questions yet', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        Text('Be the first to ask!', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
       ]));
     }
     return ListView.builder(
@@ -286,7 +286,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(14),
           border: isOpen ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)) : null,
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
+          boxShadow: [BoxShadow(color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.03), blurRadius: 6, offset: const Offset(0, 2))],
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Author
@@ -295,8 +295,8 @@ class _AskParentsScreenState extends State<AskParentsScreen>
               child: Text(q.authorName[0], style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: c))),
             const SizedBox(width: 10),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(q.authorName, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-              Text(_ago(q.createdAt), style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+              Text(q.authorName, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+              Text(_ago(q.createdAt), style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
             ])),
             if (isOpen)
               Container(
@@ -316,7 +316,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
               ),
           ]),
           const SizedBox(height: 10),
-          Text(q.question, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+          Text(q.question, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
           // Tags
           Wrap(spacing: 6, runSpacing: 4, children: [
@@ -329,17 +329,17 @@ class _AskParentsScreenState extends State<AskParentsScreen>
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(10)),
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 CircleAvatar(radius: 12, backgroundColor: _hex(last.authorAvatarColor).withValues(alpha: 0.15),
                   child: Text(last.authorName[0], style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: _hex(last.authorAvatarColor)))),
                 const SizedBox(width: 8),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    Text(last.authorName, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    Text(last.authorName, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                     if (last.hasBeenThereBadge) ...[const SizedBox(width: 4), const Icon(Icons.verified, size: 12, color: HuddlColors.teal)],
                   ]),
-                  Text(last.content, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(last.content, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ])),
               ]),
             ),
@@ -347,17 +347,17 @@ class _AskParentsScreenState extends State<AskParentsScreen>
           const SizedBox(height: 10),
           // Stats
           Row(children: [
-            const Icon(Icons.chat_bubble_outline, size: 14, color: HuddlColors.textHint),
+            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             const SizedBox(width: 4),
-            Text('$parentReplies ${parentReplies == 1 ? "reply" : "replies"}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+            Text('$parentReplies ${parentReplies == 1 ? "reply" : "replies"}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const SizedBox(width: 12),
-            const Icon(Icons.thumb_up_outlined, size: 14, color: HuddlColors.textHint),
+            Icon(Icons.thumb_up_outlined, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             const SizedBox(width: 4),
-            Text('${q.totalUpvotes}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+            Text('${q.totalUpvotes}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const SizedBox(width: 12),
-            const Icon(Icons.visibility_outlined, size: 14, color: HuddlColors.textHint),
+            Icon(Icons.visibility_outlined, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             const SizedBox(width: 4),
-            Text('${q.views}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+            Text('${q.views}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const Spacer(),
             if (q.hasAiSynthesis)
               Container(
@@ -404,24 +404,24 @@ class _AskParentsScreenState extends State<AskParentsScreen>
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => Container(
         height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
         child: Padding(
           padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(sheetCtx).viewInsets.bottom + 20),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2)))),
             const SizedBox(height: 16),
-            Text('Ask the Community', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
-            Text('Parents who\'ve been there will answer from experience', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+            Text('Ask the Community', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+            Text('Parents who\'ve been there will answer from experience', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const SizedBox(height: 20),
-            Text('Your question', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('Your question', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 6),
             Container(
-              decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14)),
               child: TextField(
                 controller: qCtrl, maxLines: 4, style: GoogleFonts.poppins(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'e.g. "Going to Tenerife with a 10-month-old — best area to stay?"',
-                  hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                  hintStyle: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                   border: InputBorder.none, contentPadding: const EdgeInsets.all(14),
                 ),
               ),
@@ -472,15 +472,15 @@ class _AskParentsScreenState extends State<AskParentsScreen>
 
   Widget _field(String label, String hint, TextEditingController ctrl, IconData icon) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+      Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 4),
       Container(
-        decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
         child: TextField(
           controller: ctrl, style: GoogleFonts.poppins(fontSize: 13),
           decoration: InputDecoration(
-            hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
-            prefixIcon: Icon(icon, size: 18, color: HuddlColors.textHint),
+            hintText: hint, hintStyle: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
+            prefixIcon: Icon(icon, size: 18, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 10),
           ),
         ),
@@ -526,13 +526,13 @@ class _DetailScreenState extends State<_DetailScreen> {
     final replies = q.answers.where((a) => !a.isAiGenerated).length;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white, elevation: 0, scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface, elevation: 0, scrolledUnderElevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
         title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Question', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-          Text('$replies ${replies == 1 ? "parent replied" : "parents replied"}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+          Text('Question', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+          Text('$replies ${replies == 1 ? "parent replied" : "parents replied"}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
         ]),
         actions: [
           IconButton(
@@ -549,19 +549,19 @@ class _DetailScreenState extends State<_DetailScreen> {
               // Question card
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
                     CircleAvatar(radius: 18, backgroundColor: ac.withValues(alpha: 0.15),
                       child: Text(q.authorName[0], style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: ac))),
                     const SizedBox(width: 10),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(q.authorName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                      Text(_ago(q.createdAt), style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                      Text(q.authorName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                      Text(_ago(q.createdAt), style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
                     ])),
                   ]),
                   const SizedBox(height: 14),
-                  Text(q.question, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark, height: 1.4)),
+                  Text(q.question, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface, height: 1.4)),
                   const SizedBox(height: 12),
                   Wrap(spacing: 6, runSpacing: 4, children: [
                     if (q.destination != null) _tag(q.destination!, HuddlColors.blue),
@@ -577,7 +577,7 @@ class _DetailScreenState extends State<_DetailScreen> {
               ],
               // Answers
               const SizedBox(height: 16),
-              Text('${q.answers.length} ${q.answers.length == 1 ? "Response" : "Responses"}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Text('${q.answers.length} ${q.answers.length == 1 ? "Response" : "Responses"}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 10),
               ...q.answers.map((a) => _answerCard(a)),
               // CTA for unanswered
@@ -586,9 +586,9 @@ class _DetailScreenState extends State<_DetailScreen> {
                   padding: const EdgeInsets.all(20), margin: const EdgeInsets.only(bottom: 10),
                   decoration: BoxDecoration(color: HuddlColors.peachLight, borderRadius: BorderRadius.circular(14)),
                   child: Column(children: [
-                    Text('Be the first parent to help!', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    Text('Be the first parent to help!', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 4),
-                    Text('Share your experience below to help ${q.authorName}.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+                    Text('Share your experience below to help ${q.authorName}.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                   ]),
                 ),
               const SizedBox(height: 80),
@@ -616,12 +616,12 @@ class _DetailScreenState extends State<_DetailScreen> {
           ),
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('AI Summary', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('AI Summary', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             Text('Based on ${s.parentResponseCount} parent responses', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.aiBlue)),
           ])),
         ]),
         const SizedBox(height: 12),
-        Text(s.summary, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, height: 1.5)),
+        Text(s.summary, style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, height: 1.5)),
         if (s.recommendations.isNotEmpty) ...[
           const SizedBox(height: 12),
           ...s.recommendations.map((r) => Padding(
@@ -629,7 +629,7 @@ class _DetailScreenState extends State<_DetailScreen> {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Icon(Icons.check_circle, size: 14, color: HuddlColors.teal),
               const SizedBox(width: 6),
-              Expanded(child: Text(r, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textDark, height: 1.3))),
+              Expanded(child: Text(r, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.3))),
             ]),
           )),
         ],
@@ -640,7 +640,7 @@ class _DetailScreenState extends State<_DetailScreen> {
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Icon(Icons.warning_amber, size: 14, color: HuddlColors.warning),
               const SizedBox(width: 6),
-              Expanded(child: Text(w, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textDark, height: 1.3))),
+              Expanded(child: Text(w, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.3))),
             ]),
           )),
         ],
@@ -688,16 +688,16 @@ class _DetailScreenState extends State<_DetailScreen> {
                 ),
             ]),
             Row(children: [
-              Text(_ago(a.createdAt), style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+              Text(_ago(a.createdAt), style: GoogleFonts.poppins(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               if (a.childAgesAtVisit != null) ...[
-                Text(' · ', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+                Text(' · ', style: GoogleFonts.poppins(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
                 Text('Visited with ${a.childAgesAtVisit}', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.teal)),
               ],
             ]),
           ])),
         ]),
         const SizedBox(height: 10),
-        Text(a.content, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, height: 1.5)),
+        Text(a.content, style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, height: 1.5)),
         const SizedBox(height: 10),
         Row(children: [
           Semantics(
@@ -748,11 +748,11 @@ class _DetailScreenState extends State<_DetailScreen> {
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(10)),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.bookmark_outline, size: 14, color: HuddlColors.textHint),
+                    Icon(Icons.bookmark_outline, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                     const SizedBox(width: 4),
-                    Text('Save', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                    Text('Save', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                   ]),
                 ),
               ),
@@ -774,13 +774,13 @@ class _DetailScreenState extends State<_DetailScreen> {
         child: Row(children: [
           Expanded(
             child: Container(
-              decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(20)),
+              decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(20)),
               child: TextField(
                 controller: _ctrl, style: GoogleFonts.poppins(fontSize: 14),
                 textInputAction: TextInputAction.send,
                 onSubmitted: (_) => _send(),
                 decoration: InputDecoration(
-                  hintText: 'Share your experience...', hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                  hintText: 'Share your experience...', hintStyle: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                   border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),

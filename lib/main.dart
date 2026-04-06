@@ -72,6 +72,8 @@ class HuddlApp extends StatelessWidget {
       title: 'Huddl',
       debugShowCheckedModeBanner: false,
       theme: HuddlTheme.lightTheme,
+      darkTheme: HuddlTheme.darkTheme,
+      themeMode: ThemeMode.system, // follows device brightness setting
       initialRoute: '/splash',
       onGenerateRoute: AppRouter.generateRoute,
     );

@@ -65,14 +65,14 @@ class _PackingListScreenState extends State<PackingListScreen> {
     return Scaffold(
       backgroundColor: HuddlColors.white,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Pack My Bag', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-            Text(widget.destination.name, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+            Text('Pack My Bag', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            Text(widget.destination.name, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
           ],
         ),
         actions: [
@@ -93,9 +93,9 @@ class _PackingListScreenState extends State<PackingListScreen> {
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const CircularProgressIndicator(color: HuddlColors.aiBlue),
                 const SizedBox(height: 16),
-                Text('Generating your personalised packing list...', style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary)),
+                Text('Generating your personalised packing list...', style: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                 const SizedBox(height: 4),
-                Text('Based on ${widget.destination.name}, $_tripDays days, 2 children', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+                Text('Based on ${widget.destination.name}, $_tripDays days, 2 children', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               ]),
             )
           : Column(
@@ -126,7 +126,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Row(
         children: [
-          Text('Trip duration:', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+          Text('Trip duration:', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(width: 12),
           ...([3, 5, 7, 10, 14].map((d) => Padding(
             padding: const EdgeInsets.only(right: 6),
@@ -163,7 +163,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
       child: Column(
         children: [
           Row(children: [
-            Text('$packed / $total items packed', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+            Text('$packed / $total items packed', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
             const Spacer(),
             Text('${(progress * 100).round()}%', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.aiBlue)),
           ]),
@@ -173,7 +173,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: HuddlColors.background,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               valueColor: AlwaysStoppedAnimation<Color>(
                 progress == 1.0 ? HuddlColors.successGreen : HuddlColors.primary,
               ),
@@ -207,7 +207,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
           const SizedBox(width: 10),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('3 parents in your area are lending travel cots', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.teal)),
-            Text('Browse the Preloved marketplace for travel gear', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+            Text('Browse the Preloved marketplace for travel gear', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
           ])),
           Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.teal),
         ],
@@ -233,9 +233,9 @@ class _PackingListScreenState extends State<PackingListScreen> {
             child: Icon(icon, size: 16, color: color),
           ),
           const SizedBox(width: 10),
-          Text(category, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text(category, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const Spacer(),
-          Text('${items.where((i) => i.isPacked).length}/${items.length}', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+          Text('${items.where((i) => i.isPacked).length}/${items.length}', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
         ]),
         const SizedBox(height: 6),
         ...items.map((item) => _buildPackingItem(item)),
@@ -275,7 +275,7 @@ class _PackingListScreenState extends State<PackingListScreen> {
                   ),
                 ),
                 if (item.note.isNotEmpty)
-                  Text(item.note, style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint, fontStyle: FontStyle.italic)),
+                  Text(item.note, style: GoogleFonts.poppins(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, fontStyle: FontStyle.italic)),
               ]),
             ),
             if (item.essential && !item.isPacked)

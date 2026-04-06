@@ -106,9 +106,9 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
     final conversations = _travelService.conversations;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
         title: Row(
@@ -122,7 +122,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('AI Travel Concierge', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                Text('AI Travel Concierge', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                 Text('Powered by ${_communityService.experts.length} parent experts', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.teal)),
               ],
             ),
@@ -131,7 +131,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
         actions: [
           if (conversations.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.refresh, size: 20, color: HuddlColors.textHint),
+              icon: Icon(Icons.refresh, size: 20, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
               onPressed: () {
                 _travelService.clearConversations();
                 setState(() {});
@@ -184,12 +184,12 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
             child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 40),
           ),
           const SizedBox(height: 24),
-          Text('Your AI Travel Concierge', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text('Your AI Travel Concierge', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Text(
             'I know what huddl parents say about every destination.\nAsk me anything about family travel!',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary, height: 1.5),
+            style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.5),
           ),
           const SizedBox(height: 32),
           // Community stats
@@ -203,9 +203,9 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildStatItem('${_communityService.questions.length}', 'Questions'),
-                Container(width: 1, height: 30, color: HuddlColors.divider),
+                Container(width: 1, height: 30, color: Theme.of(context).dividerColor),
                 _buildStatItem('${_communityService.experts.length}', 'Experts'),
-                Container(width: 1, height: 30, color: HuddlColors.divider),
+                Container(width: 1, height: 30, color: Theme.of(context).dividerColor),
                 _buildStatItem('${_communityService.tips.length}', 'Tips'),
               ],
             ),
@@ -224,7 +224,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
   Widget _buildStatItem(String value, String label) {
     return Column(children: [
       Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.teal)),
-      Text(label, style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+      Text(label, style: GoogleFonts.poppins(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
     ]);
   }
 
@@ -241,8 +241,8 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-              Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+              Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+              Text(subtitle, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             ]),
           ),
         ],
@@ -398,7 +398,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
           children: [
             _buildDot(0), const SizedBox(width: 4), _buildDot(1), const SizedBox(width: 4), _buildDot(2),
             const SizedBox(width: 8),
-            Text('Searching community reviews...', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint, fontStyle: FontStyle.italic)),
+            Text('Searching community reviews...', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, fontStyle: FontStyle.italic)),
           ],
         ),
       ),
@@ -447,7 +447,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
           children: [
             Expanded(
               child: Container(
-                decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(24)),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(24)),
                 child: TextField(
                   controller: _messageController,
                   style: GoogleFonts.poppins(fontSize: 14),
@@ -455,7 +455,7 @@ class _TravelConciergeScreenState extends State<TravelConciergeScreen> {
                   onSubmitted: _sendMessage,
                   decoration: InputDecoration(
                     hintText: 'Ask about family travel...',
-                    hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                    hintStyle: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                   ),

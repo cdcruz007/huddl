@@ -54,7 +54,7 @@ class _TripsScreenState extends State<TripsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: HuddlColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Semantics(
             label: 'Loading trips',
@@ -65,7 +65,7 @@ class _TripsScreenState extends State<TripsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           color: HuddlColors.primary,
@@ -105,10 +105,10 @@ class _TripsScreenState extends State<TripsScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                   Text("Plan, pack & ask parents who've been there",
                       style: GoogleFonts.poppins(
-                          fontSize: 12, color: HuddlColors.textSecondary)),
+                          fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                 ],
               ),
             ),
@@ -214,7 +214,7 @@ class _TripsScreenState extends State<TripsScreen> {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.04),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ],
@@ -234,7 +234,7 @@ class _TripsScreenState extends State<TripsScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark)),
+                          color: Theme.of(context).colorScheme.onSurface)),
                 ],
               ),
             ),
@@ -313,7 +313,7 @@ class _TripsScreenState extends State<TripsScreen> {
                   : null,
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.03),
                     blurRadius: 6,
                     offset: const Offset(0, 2))
               ],
@@ -342,11 +342,11 @@ class _TripsScreenState extends State<TripsScreen> {
                                 style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textDark)),
+                                    color: Theme.of(context).colorScheme.onSurface)),
                             Text(_timeAgo(q.createdAt),
                                 style: GoogleFonts.poppins(
                                     fontSize: 11,
-                                    color: HuddlColors.textSecondary)),
+                                    color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                           ]),
                     ),
                     if (urgent)
@@ -383,7 +383,7 @@ class _TripsScreenState extends State<TripsScreen> {
                     style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.4),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis),
@@ -428,7 +428,7 @@ class _TripsScreenState extends State<TripsScreen> {
                                         style: GoogleFonts.poppins(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
-                                            color: HuddlColors.textDark)),
+                                            color: Theme.of(context).colorScheme.onSurface)),
                                     if (last.hasBeenThereBadge) ...[
                                       const SizedBox(width: 4),
                                       const Icon(Icons.verified,
@@ -439,7 +439,7 @@ class _TripsScreenState extends State<TripsScreen> {
                                   Text(last.content,
                                       style: GoogleFonts.poppins(
                                           fontSize: 12,
-                                          color: HuddlColors.textSecondary,
+                                          color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary,
                                           height: 1.3),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis),
@@ -506,7 +506,7 @@ class _TripsScreenState extends State<TripsScreen> {
                           borderRadius: BorderRadius.circular(14),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2))
                           ],
@@ -533,7 +533,7 @@ class _TripsScreenState extends State<TripsScreen> {
                                       style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: HuddlColors.textDark))),
+                                          color: Theme.of(context).colorScheme.onSurface))),
                               _chip(tip.destination, HuddlColors.blue),
                             ]),
                             const SizedBox(height: 8),
@@ -541,7 +541,7 @@ class _TripsScreenState extends State<TripsScreen> {
                               child: Text(tip.tip,
                                   style: GoogleFonts.poppins(
                                       fontSize: 12,
-                                      color: HuddlColors.textSecondary,
+                                      color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary,
                                       height: 1.4),
                                   maxLines: 3,
                                   overflow: TextOverflow.ellipsis),
@@ -549,12 +549,12 @@ class _TripsScreenState extends State<TripsScreen> {
                             Row(children: [
                               Icon(Icons.thumb_up_alt_outlined,
                                   size: 13,
-                                  color: HuddlColors.textSecondary),
+                                  color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary),
                               const SizedBox(width: 4),
                               Text('${tip.upvotes}',
                                   style: GoogleFonts.poppins(
                                       fontSize: 11,
-                                      color: HuddlColors.textSecondary)),
+                                      color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                               const SizedBox(width: 10),
                               _chip(tip.childAge, HuddlColors.teal),
                             ]),
@@ -600,7 +600,7 @@ class _TripsScreenState extends State<TripsScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
+                      color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           const SizedBox(height: 10),
@@ -638,7 +638,7 @@ class _TripsScreenState extends State<TripsScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.04),
+                                color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.04),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2))
                           ],
@@ -695,11 +695,11 @@ class _TripsScreenState extends State<TripsScreen> {
                                         style: GoogleFonts.poppins(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w600,
-                                            color: HuddlColors.textDark)),
+                                            color: Theme.of(context).colorScheme.onSurface)),
                                     Text('${d.country} · ${d.flightTime}',
                                         style: GoogleFonts.poppins(
                                             fontSize: 10,
-                                            color: HuddlColors.textSecondary)),
+                                            color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                                     const SizedBox(height: 3),
                                     Row(children: [
                                       const Icon(Icons.star,
@@ -710,7 +710,7 @@ class _TripsScreenState extends State<TripsScreen> {
                                           style: GoogleFonts.poppins(
                                               fontSize: 11,
                                               fontWeight: FontWeight.w600,
-                                              color: HuddlColors.textDark)),
+                                              color: Theme.of(context).colorScheme.onSurface)),
                                       const SizedBox(width: 4),
                                       Text('${d.recommendPercent}% rec',
                                           style: GoogleFonts.poppins(
@@ -762,7 +762,7 @@ class _TripsScreenState extends State<TripsScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
+                      color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.04),
                       blurRadius: 8,
                       offset: const Offset(0, 2))
                 ],
@@ -804,16 +804,16 @@ class _TripsScreenState extends State<TripsScreen> {
                               style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textDark)),
+                                  color: Theme.of(context).colorScheme.onSurface)),
                           Text(
                               '${experts.length} experienced parents sharing travel tips',
                               style: GoogleFonts.poppins(
                                   fontSize: 11,
-                                  color: HuddlColors.textSecondary)),
+                                  color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                         ]),
                   ),
-                  const Icon(Icons.arrow_forward_ios,
-                      size: 14, color: HuddlColors.textSecondary),
+                  Icon(Icons.arrow_forward_ios,
+                      size: 14, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary),
                 ],
               ),
             ),
@@ -849,7 +849,7 @@ class _TripsScreenState extends State<TripsScreen> {
               style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark)),
+                  color: Theme.of(context).colorScheme.onSurface)),
         ),
         const Spacer(),
         if (action != null)

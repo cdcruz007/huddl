@@ -52,7 +52,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
               padding: const EdgeInsets.all(8),
               child: CircleAvatar(
                 backgroundColor: HuddlColors.white.withValues(alpha: 0.9),
-                child: IconButton(icon: const Icon(Icons.arrow_back_ios_new, size: 18, color: HuddlColors.textDark), onPressed: () => Navigator.pop(context)),
+                child: IconButton(icon: Icon(Icons.arrow_back_ios_new, size: 18, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
               ),
             ),
             flexibleSpace: FlexibleSpaceBar(
@@ -225,14 +225,14 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(dest.description, style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary, height: 1.5)),
+          Text(dest.description, style: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.5)),
           const SizedBox(height: 20),
           _buildInfoCard('Best months', dest.bestMonths, Icons.calendar_today),
           _buildInfoCard('Average temperature', dest.avgTemp, Icons.thermostat),
           _buildInfoCard('Flight time from UK', dest.flightTime, Icons.flight),
           _buildInfoCard('Visa required', dest.visaRequired ? 'Yes' : 'No (UK passport)', Icons.article),
           const SizedBox(height: 20),
-          Text('Best for ages', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text('Best for ages', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 8, children: dest.bestForAges.map((age) => Chip(
             label: Text(age, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.primary, fontWeight: FontWeight.w500)),
@@ -240,14 +240,14 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
             side: BorderSide.none,
           )).toList()),
           const SizedBox(height: 20),
-          Text('Highlights', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text('Highlights', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           ...dest.highlights.map((h) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Row(children: [
               Container(width: 6, height: 6, decoration: BoxDecoration(color: HuddlColors.primary, shape: BoxShape.circle)),
               const SizedBox(width: 10),
-              Text(h, style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark)),
+              Text(h, style: GoogleFonts.poppins(fontSize: 14, color: Theme.of(context).colorScheme.onSurface)),
             ]),
           )),
         ],
@@ -262,13 +262,13 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
         children: [
           Container(
             width: 36, height: 36,
-            decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, size: 18, color: HuddlColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(label, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
-            Text(value, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+            Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
+            Text(value, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
           ])),
         ],
       ),
@@ -284,9 +284,9 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.rate_review, size: 48, color: HuddlColors.textHint.withValues(alpha: 0.3)),
           const SizedBox(height: 12),
-          Text('No reviews yet', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+          Text('No reviews yet', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
           const SizedBox(height: 4),
-          Text('Be the first to review this destination!', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint)),
+          Text('Be the first to review this destination!', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
         ]),
       );
     }
@@ -305,7 +305,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,16 +316,16 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
                 child: Text(review.parentName[0], style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: color))),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(review.parentName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                Text('Travelled with ${review.childAgesAtVisit} · ${review.visitDate}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                Text(review.parentName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                Text('Travelled with ${review.childAgesAtVisit} · ${review.visitDate}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               ])),
               Row(children: List.generate(5, (i) => Icon(Icons.star, size: 14, color: i < review.rating.round() ? HuddlColors.accentAmber : HuddlColors.gray300))),
             ],
           ),
           const SizedBox(height: 12),
-          Text(review.title, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text(review.title, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 6),
-          Text(review.review, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary, height: 1.5)),
+          Text(review.review, style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.5)),
           if (review.topTips.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -338,7 +338,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('  ', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.primary)),
-                    Expanded(child: Text(tip, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textDark))),
+                    Expanded(child: Text(tip, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).colorScheme.onSurface))),
                   ]),
                 )),
               ]),
@@ -405,7 +405,7 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
                     width: 50,
                     child: Text(act.time, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: act.isNapTime ? HuddlColors.blue : HuddlColors.primary)),
                   ),
-                  SizedBox(width: 2, height: 40, child: ColoredBox(color: HuddlColors.divider)),
+                  SizedBox(width: 2, height: 40, child: ColoredBox(color: Theme.of(context).dividerColor)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
@@ -418,10 +418,10 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
                         Row(children: [
                           if (act.isNapTime) Icon(Icons.bedtime, size: 14, color: HuddlColors.blue),
                           if (act.isNapTime) const SizedBox(width: 4),
-                          Expanded(child: Text(act.title, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark))),
+                          Expanded(child: Text(act.title, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface))),
                         ]),
                         const SizedBox(height: 2),
-                        Text(act.description, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.4)),
+                        Text(act.description, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.4)),
                         if (act.ageNote != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
@@ -465,16 +465,16 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(dest.safetyAlerts.isEmpty ? 'No active alerts' : '${dest.safetyAlerts.length} active alert(s)',
-                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   Text(dest.safetyAlerts.isEmpty ? 'This destination is currently safe for family travel' : 'Check alerts below',
-                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                      style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                 ])),
               ],
             ),
           ),
           const SizedBox(height: 20),
           // General travel safety tips
-          Text('Family travel safety checklist', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text('Family travel safety checklist', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 12),
           _buildSafetyItem(Icons.medical_services, 'Health', 'EHIC/GHIC card covers emergency care in EU. Travel insurance recommended for under-5s.'),
           _buildSafetyItem(Icons.vaccines, 'Vaccinations', 'No special vaccinations required for ${dest.country}. Keep routine vaccinations up to date.'),
@@ -484,14 +484,14 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
           _buildSafetyItem(Icons.restaurant, 'Food safety', 'Most restaurants in ${dest.country} are baby-friendly. Always ask about allergens.'),
           const SizedBox(height: 20),
           // Community safety tips
-          Text('Tips from huddl parents', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text('Tips from huddl parents', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: HuddlColors.peachVeryLight, borderRadius: BorderRadius.circular(14)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('"Always take a photo of your hotel room number and address in the local language. Saved us when our toddler had a fever and we needed to tell the taxi driver where to go."',
-                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, fontStyle: FontStyle.italic, height: 1.5)),
+                  style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, fontStyle: FontStyle.italic, height: 1.5)),
               const SizedBox(height: 8),
               Text('— Emma, Cambridge (visited ${dest.name})', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.primary, fontWeight: FontWeight.w500)),
             ]),
@@ -514,8 +514,8 @@ class _DestinationDetailScreenState extends State<DestinationDetailScreen>
           ),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-            Text(description, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary, height: 1.4)),
+            Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            Text(description, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.4)),
           ])),
         ],
       ),

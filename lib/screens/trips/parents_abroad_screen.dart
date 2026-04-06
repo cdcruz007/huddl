@@ -42,15 +42,15 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Parents Abroad', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('Parents Abroad', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             Text(widget.destination.name, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.teal)),
           ],
         ),
@@ -64,16 +64,16 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
             _buildStatusCard(),
             const SizedBox(height: 24),
             // ── Families here now ───────────────────────────────
-            Text('Huddl families here now', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('Huddl families here now', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 4),
-            Text('Connect with local parents for playdates and tips', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+            Text('Connect with local parents for playdates and tips', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const SizedBox(height: 14),
             ..._data.families.map((f) => _buildFamilyCard(f)),
             const SizedBox(height: 24),
             // ── Community activities ─────────────────────────────
-            Text('Community activities', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('Community activities', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const SizedBox(height: 4),
-            Text('Meet-ups organised by huddl parents on holiday', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+            Text('Meet-ups organised by huddl parents on holiday', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             const SizedBox(height: 14),
             ..._data.activities.map((a) => _buildActivityCard(a)),
             const SizedBox(height: 24),
@@ -111,8 +111,8 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('${_data.familiesHere} huddl families in ${_data.destinationName}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                  Text('This week', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                  Text('${_data.familiesHere} huddl families in ${_data.destinationName}', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('This week', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
                 ]),
               ),
             ],
@@ -170,7 +170,7 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
       decoration: BoxDecoration(
         color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.divider),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -182,18 +182,18 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(family.parentName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-              Text(family.childAges, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+              Text(family.parentName, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+              Text(family.childAges, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
               const SizedBox(height: 4),
               Row(children: [
-                Icon(Icons.calendar_today, size: 12, color: HuddlColors.textHint),
+                Icon(Icons.calendar_today, size: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                 const SizedBox(width: 4),
-                Text(family.stayDates, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                Text(family.stayDates, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               ]),
               Row(children: [
-                Icon(Icons.hotel, size: 12, color: HuddlColors.textHint),
+                Icon(Icons.hotel, size: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                 const SizedBox(width: 4),
-                Text(family.accommodation, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                Text(family.accommodation, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               ]),
             ]),
           ),
@@ -251,8 +251,8 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(activity.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                  Text('Organised by ${activity.organiser}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                  Text(activity.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                  Text('Organised by ${activity.organiser}', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
                 ]),
               ),
               Container(
@@ -265,17 +265,17 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.access_time, size: 14, color: HuddlColors.textHint),
+              Icon(Icons.access_time, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
               const SizedBox(width: 4),
-              Text(activity.dateTime, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+              Text(activity.dateTime, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              Icon(Icons.place, size: 14, color: HuddlColors.textHint),
+              Icon(Icons.place, size: 14, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
               const SizedBox(width: 4),
-              Expanded(child: Text(activity.location, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary))),
+              Expanded(child: Text(activity.location, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary))),
             ],
           ),
           const SizedBox(height: 12),
@@ -317,9 +317,9 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Live Trip Companion', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+        Text('Live Trip Companion', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 4),
-        Text('Quick help while you\'re on holiday', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+        Text('Quick help while you\'re on holiday', style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
         const SizedBox(height: 14),
         Row(
           children: [
@@ -360,9 +360,9 @@ class _ParentsAbroadScreenState extends State<ParentsAbroadScreen> {
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(height: 10),
-          Text(title, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          Text(title, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 2),
-          Text(subtitle, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+          Text(subtitle, textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
         ],
       ),
     ),

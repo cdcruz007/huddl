@@ -126,7 +126,7 @@ class MainShellState extends State<MainShell> {
           child: Container(
             height: 70,
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
@@ -245,7 +245,7 @@ class _NavItem extends StatelessWidget {
                 Icon(
                   isActive ? activeIcon : icon,
                   size: 22,
-                  color: isActive ? HuddlColors.primary : HuddlColors.textHint,
+                  color: isActive ? HuddlColors.primary : (Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -253,7 +253,7 @@ class _NavItem extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 9,
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                    color: isActive ? HuddlColors.primary : HuddlColors.textHint,
+                    color: isActive ? HuddlColors.primary : (Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

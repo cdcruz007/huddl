@@ -186,11 +186,11 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white, elevation: 0, scrolledUnderElevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface, elevation: 0, scrolledUnderElevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
-        title: Text('My Trips', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+        title: Text('My Trips', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         actions: [
           GestureDetector(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TravelConciergeScreen())),
@@ -230,9 +230,9 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
         child: const Icon(Icons.flight_takeoff, size: 40, color: HuddlColors.primary),
       ),
       const SizedBox(height: 16),
-      Text('No trips planned yet', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+      Text('No trips planned yet', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
       const SizedBox(height: 8),
-      Text('Create your first trip to get AI-powered\nchecklists and community tips!', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary, height: 1.4)),
+      Text('Create your first trip to get AI-powered\nchecklists and community tips!', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.4)),
       const SizedBox(height: 24),
       ElevatedButton(
         onPressed: () => _createSheet(),
@@ -261,8 +261,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 14),
             decoration: BoxDecoration(
-              color: HuddlColors.white, borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+              color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
             ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Image header with robust fallback
@@ -294,7 +294,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
                 if (trip.daysUntil > 0)
                   Positioned(top: 12, right: 12, child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(10)),
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       const Icon(Icons.access_time, size: 13, color: HuddlColors.primary),
                       const SizedBox(width: 4),
@@ -316,9 +316,9 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
               Row(children: [
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(children: [
-                    Text('Trip Prep', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    Text('Trip Prep', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                     const Spacer(),
-                    Text('${trip.completedItems}/${trip.totalItems} items', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                    Text('${trip.completedItems}/${trip.totalItems} items', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
                   ]),
                   const SizedBox(height: 6),
                   ClipRRect(
@@ -367,24 +367,24 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       Row(children: [
         const Icon(Icons.bookmark, size: 20, color: HuddlColors.primary),
         const SizedBox(width: 8),
-        Text('Saved Research', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+        Text('Saved Research', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         const Spacer(),
-        Text('${saved.length} items', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+        Text('${saved.length} items', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
       ]),
       const SizedBox(height: 10),
       ...saved.map((s) => Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 8)]),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Theme.of(context).brightness == Brightness.dark ? Colors.transparent : Colors.black.withValues(alpha: 0.03), blurRadius: 8)]),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Icon(Icons.bookmark, size: 14, color: HuddlColors.primary),
             const SizedBox(width: 6),
-            Expanded(child: Text(s.questionText, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.textDark), maxLines: 1, overflow: TextOverflow.ellipsis)),
-            GestureDetector(onTap: () { _commSvc.removeSavedAnswer(s.answerId); setState(() {}); }, child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint)),
+            Expanded(child: Text(s.questionText, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface), maxLines: 1, overflow: TextOverflow.ellipsis)),
+            GestureDetector(onTap: () { _commSvc.removeSavedAnswer(s.answerId); setState(() {}); }, child: Icon(Icons.close, size: 16, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
           ]),
           const SizedBox(height: 4),
-          Text(s.answerText, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(s.answerText, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
           Row(children: [
             Container(
@@ -393,7 +393,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
               child: Text(s.destination, style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w500, color: HuddlColors.blue)),
             ),
             const SizedBox(width: 6),
-            Text('by ${s.authorName}', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+            Text('by ${s.authorName}', style: GoogleFonts.poppins(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
           ]),
         ]),
       )),
@@ -426,8 +426,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           ),
           const SizedBox(width: 14),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Need help planning?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-            Text('Ask the AI Concierge about your trips', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+            Text('Need help planning?', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+            Text('Ask the AI Concierge about your trips', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
           ])),
           const Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.aiBlue),
         ]),
@@ -452,29 +452,29 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, ss) => Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
           child: Padding(
             padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
-              Text('Plan a New Trip', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
-              Text('AI will generate checklists from community data', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+              Text('Plan a New Trip', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
+              Text('AI will generate checklists from community data', style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
               const SizedBox(height: 20),
-              Text('Where are you going?', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Text('Where are you going?', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 6),
               Container(
-                decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14)),
                 child: TextField(controller: destCtrl, style: GoogleFonts.poppins(fontSize: 14),
-                  decoration: InputDecoration(hintText: 'e.g. Tenerife, Mallorca...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint), prefixIcon: const Icon(Icons.place, color: HuddlColors.textHint, size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14))),
+                  decoration: InputDecoration(hintText: 'e.g. Tenerife, Mallorca...', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint), prefixIcon: Icon(Icons.place, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14))),
               ),
               const SizedBox(height: 14),
-              Text('Child age(s)', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Text('Child age(s)', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
               const SizedBox(height: 6),
               Container(
-                decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(14)),
+                decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(14)),
                 child: TextField(controller: ageCtrl, style: GoogleFonts.poppins(fontSize: 14),
-                  decoration: InputDecoration(hintText: 'e.g. 14 months, 3 years', hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint), prefixIcon: const Icon(Icons.child_care, color: HuddlColors.textHint, size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14))),
+                  decoration: InputDecoration(hintText: 'e.g. 14 months, 3 years', hintStyle: GoogleFonts.poppins(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint), prefixIcon: Icon(Icons.child_care, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, size: 20), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(vertical: 14))),
               ),
               const SizedBox(height: 14),
               Row(children: [
@@ -533,13 +533,13 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+        Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: Theme.of(context).scaffoldBackgroundColor, borderRadius: BorderRadius.circular(12)),
           child: Row(children: [
-            const Icon(Icons.calendar_today, size: 16, color: HuddlColors.textHint),
+            Icon(Icons.calendar_today, size: 16, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             const SizedBox(width: 8),
             Text(date != null ? '${date.day}/${date.month}/${date.year}' : 'Select date', style: GoogleFonts.poppins(fontSize: 13, color: date != null ? HuddlColors.textDark : HuddlColors.textHint)),
           ]),
@@ -593,7 +593,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
     final fc = _destColors[trip.destination] ?? HuddlColors.primary;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(slivers: [
         // Hero header with gradient fallback
         SliverAppBar(
@@ -603,7 +603,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
             child: Container(
               margin: const EdgeInsets.all(8),
               decoration: BoxDecoration(color: HuddlColors.white.withValues(alpha: 0.9), shape: BoxShape.circle),
-              child: const Icon(Icons.arrow_back_ios_new, size: 18, color: HuddlColors.textDark),
+              child: Icon(Icons.arrow_back_ios_new, size: 18, color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           flexibleSpace: FlexibleSpaceBar(
@@ -646,10 +646,10 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
         SliverToBoxAdapter(child: Container(
           margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14)),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              Text('Trip Prep Progress', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Text('Trip Prep Progress', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
               const Spacer(),
               Text('${(trip.progress * 100).toInt()}%', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: trip.progress >= 1 ? HuddlColors.successGreen : HuddlColors.primary)),
             ]),
@@ -659,7 +659,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
               child: LinearProgressIndicator(value: trip.progress, backgroundColor: HuddlColors.gray200, valueColor: AlwaysStoppedAnimation<Color>(trip.progress >= 1 ? HuddlColors.successGreen : HuddlColors.primary), minHeight: 8),
             ),
             const SizedBox(height: 6),
-            Text('${trip.completedItems} of ${trip.totalItems} items checked', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+            Text('${trip.completedItems} of ${trip.totalItems} items checked', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
           ]),
         )),
 
@@ -667,7 +667,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
           child: Row(children: [
-            Text('Checklists', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Text('Checklists', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -689,7 +689,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
         // Quick actions
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-          child: Text('Quick Actions', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+          child: Text('Quick Actions', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         )),
         SliverToBoxAdapter(child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -711,7 +711,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
     return Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 14, color: color),
       const SizedBox(width: 4),
-      Text(text, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+      Text(text, style: GoogleFonts.poppins(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color ?? HuddlColors.textSecondary)),
     ]);
   }
 
@@ -719,7 +719,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
     final done = cl.items.where((i) => i.isChecked).length;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-      decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(14)),
       child: Column(children: [
         GestureDetector(
           onTap: () => setState(() => cl.isExpanded = !cl.isExpanded),
@@ -733,10 +733,10 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(cl.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
-                Text('$done/${cl.items.length} completed', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                Text(cl.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+                Text('$done/${cl.items.length} completed', style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint)),
               ])),
-              Icon(cl.isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: HuddlColors.textHint),
+              Icon(cl.isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint),
             ]),
           ),
         ),
@@ -791,7 +791,7 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
             if (item.detail != null)
               Padding(
                 padding: const EdgeInsets.only(top: 2, bottom: 4),
-                child: Text(item.detail!, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint, height: 1.3)),
+                child: Text(item.detail!, style: GoogleFonts.poppins(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color ?? HuddlColors.textHint, height: 1.3)),
               ),
           ])),
         ]),
