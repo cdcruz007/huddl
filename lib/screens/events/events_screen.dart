@@ -11,7 +11,7 @@ import '../../models/group.dart';
 import 'create_meetup_screen.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
-import '../ai/ai_matchmaker_sheet.dart';
+import '../../services/meetup_ai_service.dart';
 import '../ai/ai_copilot_screen.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
@@ -452,27 +452,39 @@ class _MeetupsTab extends StatefulWidget {
 class _MeetupsTabState extends State<_MeetupsTab> {
   String _filter = 'All';
   Set<String> _joinedGroupIds = {};
+  final MeetupAiService _aiService = MeetupAiService();
+  bool _aiReady = false;
+  bool _filtersExpanded = false; // progressive disclosure
+  SmartNudge? _activeNudge;
 
-  // Filter categories matching Create Meetup screen categories
-  // label → list of meetup short-code categories it maps to
-  static const _filterCategories = [
-    {'label': 'All', 'icon': null, 'codes': null},
-    {'label': 'Hanging out', 'icon': Icons.people_outline, 'codes': ['Social']},
-    {'label': 'Pregnancy', 'icon': Icons.pregnant_woman, 'codes': ['Social']},
-    {'label': 'Playdate', 'icon': Icons.child_care, 'codes': ['Playdate']},
-    {'label': 'Sports & exercise', 'icon': Icons.fitness_center, 'codes': ['Sport']},
-    {'label': 'Coffee & tea', 'icon': Icons.coffee, 'codes': ['Coffee']},
-    {'label': 'Parks & Walks', 'icon': Icons.park, 'codes': ['Walk']},
-    {'label': 'Food & nutrition', 'icon': Icons.restaurant, 'codes': ['Food']},
-    {'label': 'Performance & shows', 'icon': Icons.theater_comedy, 'codes': ['Social']},
-    {'label': 'Other', 'icon': Icons.more_horiz, 'codes': ['Other']},
+  // Compact default filters — only the most common categories
+  static const _defaultFilters = [
+    {'label': 'All', 'codes': null},
+    {'label': 'Playdate', 'codes': ['Playdate']},
+    {'label': 'Coffee', 'codes': ['Coffee']},
+    {'label': 'Walk', 'codes': ['Walk']},
   ];
+
+  // Full filter set (progressive disclosure — revealed on tap)
+  static const _allFilters = [
+    {'label': 'All', 'codes': null},
+    {'label': 'Playdate', 'codes': ['Playdate']},
+    {'label': 'Coffee', 'codes': ['Coffee']},
+    {'label': 'Walk', 'codes': ['Walk']},
+    {'label': 'Sport', 'codes': ['Sport']},
+    {'label': 'Social', 'codes': ['Social']},
+    {'label': 'Food', 'codes': ['Food']},
+    {'label': 'Other', 'codes': ['Other']},
+  ];
+
+  List<Map<String, dynamic>> get _activeFilters =>
+      _filtersExpanded ? _allFilters : _defaultFilters;
 
   List<String>? get _activeFilterCodes {
     if (_filter == 'All') return null;
-    final cat = _filterCategories.firstWhere(
+    final cat = _allFilters.firstWhere(
       (c) => c['label'] == _filter,
-      orElse: () => {'label': 'All', 'icon': null, 'codes': null},
+      orElse: () => {'label': 'All', 'codes': null},
     );
     return (cat['codes'] as List<String>?);
   }
@@ -481,10 +493,17 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   void initState() {
     super.initState();
     _loadUserContext();
+    _initAi();
+  }
+
+  Future<void> _initAi() async {
+    await _aiService.initialize();
+    if (mounted) {
+      setState(() => _aiReady = true);
+    }
   }
 
   Future<void> _loadUserContext() async {
-    // Load user groups
     final groupService = DefaultGroupService();
     await groupService.initialize();
     final defaultGroups = await groupService.getUserGroups('current_user');
@@ -507,15 +526,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
   }
 
-  /// All future meetups — ALL privacy levels are now listed on Nearby tab.
-  /// Access control is enforced at tap-time, not at listing-time.
+  /// All future meetups — ALL privacy levels listed.
+  /// Access control enforced at tap-time.
   List<Meetup> get _visibleMeetups {
     final now = DateTime.now();
     final query = widget.searchQuery.toLowerCase();
     return widget.meetupService.meetups.where((m) {
-      // Exclude past meetups from Nearby
       if (m.dateTime.isBefore(now)) return false;
-      // Apply search filter
       if (query.isNotEmpty) {
         return m.title.toLowerCase().contains(query) ||
             m.location.toLowerCase().contains(query) ||
@@ -526,8 +543,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }).toList();
   }
 
-  /// Check if current user can open/join this meetup.
-  /// Public: anyone. Group: members of that group + organiser. Private: invited + organiser.
   bool _canAccessMeetup(Meetup m) {
     switch (m.privacy) {
       case MeetupPrivacy.public:
@@ -541,12 +556,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
   }
 
-  /// Show restricted-access dialog for private/group meetups
   void _showAccessDeniedDialog(BuildContext context, Meetup meetup) {
     final isGroup = meetup.privacy == MeetupPrivacy.group;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: context.hc.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
@@ -562,7 +577,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
             ),
@@ -574,7 +589,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
               : 'This meetup is private and only open to invited members. Ask the organiser for an invitation.',
           style: GoogleFonts.poppins(
             fontSize: 14,
-            color: HuddlColors.textSecondary,
+            color: context.hc.textSecondary,
             height: 1.5,
           ),
         ),
@@ -598,38 +613,115 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   Widget build(BuildContext context) {
     final visible = _visibleMeetups;
     final codes = _activeFilterCodes;
-    final meetups = codes == null
+    var filtered = codes == null
         ? visible
         : visible.where((m) => codes.contains(m.category)).toList();
 
+    // ── B) Smart Sort: AI silently reorders meetups ──────────────
+    List<ScoredMeetup> scored = [];
+    if (_aiReady) {
+      scored = _aiService.smartSort(filtered);
+      filtered = scored.map((s) => s.meetup).toList();
+      // ── E) Smart Nudge: contextual one-liner ────────────────
+      _activeNudge = _aiService.getSmartNudge(visible);
+    }
+
+    // Build a map from meetup id to boost reason for card display
+    final boostReasons = <String, String>{};
+    for (final s in scored) {
+      if (s.boostReason != null) boostReasons[s.meetup.id] = s.boostReason!;
+    }
+
     return Column(
       children: [
-        // ── Filter chips (matching Create Meetup categories) ─────
+        // ── Slim filter row with progressive disclosure ──────────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 6),
           child: SizedBox(
-            height: 44, // 48dp minimum touch target height
+            height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _filterCategories.map((cat) {
-                final label = cat['label'] as String;
-                return Padding(
+              children: [
+                ..._activeFilters.map((cat) {
+                  final label = cat['label'] as String;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _FilterChip(
+                      label: label,
+                      isSelected: _filter == label,
+                      onTap: () {
+                        _aiService.trackCategoryTap(label);
+                        setState(() => _filter = label);
+                      },
+                    ),
+                  );
+                }),
+                // More/Less toggle chip
+                Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: _FilterChip(
-                    label: label,
-                    isSelected: _filter == label,
-                    onTap: () => setState(() => _filter = label),
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _filtersExpanded = !_filtersExpanded);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      constraints: const BoxConstraints(minHeight: 40),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: context.hc.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: context.hc.divider, width: 0.5),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _filtersExpanded ? Icons.keyboard_arrow_left : Icons.tune,
+                            size: 16,
+                            color: HuddlColors.textHint,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _filtersExpanded ? 'Less' : 'More',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: HuddlColors.textHint,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                );
-              }).toList(),
+                ),
+              ],
             ),
           ),
         ),
+
+        // ── E) Smart Nudge — contextual one-liner (dismissible) ──
+        if (_activeNudge != null)
+          _SmartNudgeBanner(
+            nudge: _activeNudge!,
+            onDismiss: () {
+              _aiService.dismissNudge(_activeNudge!.type.name);
+              setState(() => _activeNudge = null);
+            },
+            onCreateMeetup: widget.onCreateMeetup,
+          ),
+
+        // ── AI context line (transparency about sort) ────────────
+        if (_aiReady && widget.searchQuery.isEmpty && scored.isNotEmpty)
+          _AiContextLine(
+            preferredCategories: _aiService.preferredCategories,
+          ),
+
         // ── List ─────────────────────────────────────────────────
         Expanded(
-          child: meetups.isEmpty
+          child: filtered.isEmpty
               ? _EmptyState(
                   icon: Icons.groups_outlined,
                   title: 'No meet-ups yet',
@@ -645,14 +737,16 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   },
                   color: HuddlColors.primary,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // bottom padding for FAB
-                    itemCount: meetups.length + 1, // +1 for AI Matchmaker card
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                    itemCount: filtered.length,
                     itemBuilder: (_, i) {
-                      if (i == 0) return _buildAiMatchmakerCard(context);
+                      final meetup = filtered[i];
                       return _MeetupCard(
-                        meetup: meetups[i - 1],
-                        canAccess: _canAccessMeetup(meetups[i - 1]),
-                        onAccessDenied: () => _showAccessDeniedDialog(context, meetups[i - 1]),
+                        meetup: meetup,
+                        canAccess: _canAccessMeetup(meetup),
+                        onAccessDenied: () => _showAccessDeniedDialog(context, meetup),
+                        boostReason: boostReasons[meetup.id],
+                        onView: () => _aiService.trackMeetupView(meetup.id, meetup.category),
                       );
                     },
                   ),
@@ -661,87 +755,127 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       ],
     );
   }
+}
 
-  Widget _buildAiMatchmakerCard(BuildContext context) {
-    return Semantics(
-      label: 'AI Matchmaker - Find compatible parents and suggested meetups',
-      button: true,
+// ═══════════════════════════════════════════════════════════════════════════════
+// SMART NUDGE BANNER — single contextual line, dismissible
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _SmartNudgeBanner extends StatelessWidget {
+  final SmartNudge nudge;
+  final VoidCallback onDismiss;
+  final VoidCallback onCreateMeetup;
+
+  const _SmartNudgeBanner({
+    required this.nudge,
+    required this.onDismiss,
+    required this.onCreateMeetup,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 4, 8, 8),
       child: Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF0E6), Color(0xFFFFE8D6)],
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.12)),
         ),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => const AiMatchmakerSheet(),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 24),
+        child: Row(
+          children: [
+            Text(nudge.icon, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                nudge.text,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textPrimary,
+                  height: 1.35,
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'AI Matchmaker',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Find compatible parents & suggested meetups personalised for you',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12, color: HuddlColors.textSecondary, height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (nudge.actionLabel != null) ...[              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onCreateMeetup,
+                child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: HuddlColors.primary,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'NEW',
+                    nudge.actionLabel!,
                     style: GoogleFonts.poppins(
-                      fontSize: 10, fontWeight: FontWeight.w700,
-                      color: HuddlColors.white,
-                    ),
+                      fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.white),
                   ),
                 ),
-              ],
+              ),
+            ],
+            // Dismiss button
+            GestureDetector(
+              onTap: onDismiss,
+              child: Container(
+                width: 32, height: 32,
+                alignment: Alignment.center,
+                child: Icon(Icons.close, size: 15, color: HuddlColors.textHint.withValues(alpha: 0.6)),
+              ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI CONTEXT LINE — subtle transparency about sort order
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AiContextLine extends StatelessWidget {
+  final List<String> preferredCategories;
+
+  const _AiContextLine({required this.preferredCategories});
+
+  String get _contextText {
+    if (preferredCategories.isNotEmpty) {
+      return 'Sorted by relevance \u00B7 ${preferredCategories.first} preference detected';
+    }
+    return 'Sorted by relevance to you';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: context.hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: HuddlColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.primary),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _contextText,
+              style: GoogleFonts.poppins(
+                fontSize: 11, color: HuddlColors.textHint, fontWeight: FontWeight.w400),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2090,11 +2224,15 @@ class _MeetupCard extends StatelessWidget {
   final Meetup meetup;
   final bool canAccess;
   final VoidCallback? onAccessDenied;
+  final String? boostReason; // AI-generated boost reason (subtle sparkle)
+  final VoidCallback? onView; // track AI view for learning
 
   const _MeetupCard({
     required this.meetup,
     this.canAccess = true,
     this.onAccessDenied,
+    this.boostReason,
+    this.onView,
   });
 
   /// Privacy tag label: 'Public', 'Private', or the group name
@@ -2144,6 +2282,7 @@ class _MeetupCard extends StatelessWidget {
       child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
+        onView?.call(); // track for AI learning
         if (isRestricted) {
           onAccessDenied?.call();
           return;
@@ -2384,6 +2523,24 @@ class _MeetupCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  // ── AI boost reason sparkle (subtle, invisible AI) ────
+                  if (boostReason != null) ...[                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.auto_awesome, size: 12,
+                          color: HuddlColors.primary.withValues(alpha: 0.7)),
+                        const SizedBox(width: 5),
+                        Text(
+                          boostReason!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.primary.withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   // Organiser row + share button
                   Row(
