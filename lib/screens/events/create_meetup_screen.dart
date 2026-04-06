@@ -109,6 +109,50 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     super.initState();
     _initServices();
     _loadUserGroups();
+    _restoreDraft();
+  }
+
+  /// L4: Restore draft from persistent storage
+  Future<void> _restoreDraft() async {
+    final draftJson = await BrowserStorage.getString('create_meetup_draft_v1');
+    if (draftJson == null) return;
+    try {
+      final d = json.decode(draftJson) as Map<String, dynamic>;
+      if (mounted) {
+        setState(() {
+          _titleCtrl.text = d['title'] as String? ?? '';
+          _descriptionCtrl.text = d['description'] as String? ?? '';
+          _locationCtrl.text = d['location'] as String? ?? '';
+          _priceCtrl.text = d['price'] as String? ?? '';
+          _isFree = d['isFree'] as bool? ?? false;
+          _isOnline = d['isOnline'] as bool? ?? false;
+          if (d['categories'] is List) {
+            _selectedCategories.addAll(
+              (d['categories'] as List).cast<String>(),
+            );
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// L4: Save draft to persistent storage
+  Future<void> _saveDraft() async {
+    final draftData = {
+      'title': _titleCtrl.text,
+      'description': _descriptionCtrl.text,
+      'location': _locationCtrl.text,
+      'price': _priceCtrl.text,
+      'isFree': _isFree,
+      'isOnline': _isOnline,
+      'categories': _selectedCategories.toList(),
+    };
+    await BrowserStorage.setString('create_meetup_draft_v1', json.encode(draftData));
+  }
+
+  /// L4: Clear draft after successful creation
+  Future<void> _clearDraft() async {
+    await BrowserStorage.remove('create_meetup_draft_v1');
   }
 
   Future<void> _initServices() async {
@@ -480,6 +524,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     );
 
     _meetupService.createMeetup(meetup);
+
+    await _clearDraft();
 
     // Send messages for group or private meetups
     await _sendMeetupNotifications(meetup, organiserName);
@@ -1336,7 +1382,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) { setState(() {}); _saveDraft(); },
       style:
           GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
       decoration: InputDecoration(

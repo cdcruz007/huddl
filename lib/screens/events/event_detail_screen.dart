@@ -52,6 +52,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   void _shareEvent() {
+    HapticFeedback.mediumImpact();
     final e = widget.event;
     final title = e['title'] as String? ?? 'Event';
     final date = e['date'] as String? ?? '';
@@ -142,10 +143,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 fit: StackFit.expand,
                 children: [
                   // Cover image — supports data-URI, http, and asset paths
-                  _buildEventDetailCover(
-                    imageUrl: e['imageUrl'] as String? ?? '',
-                    fallbackIcon: e['icon'] as IconData,
-                    fallbackColor: color,
+                  Hero(
+                    tag: 'event_cover_${widget.event['id'] ?? ''}',
+                    child: _buildEventDetailCover(
+                      imageUrl: e['imageUrl'] as String? ?? '',
+                      fallbackIcon: e['icon'] as IconData,
+                      fallbackColor: color,
+                    ),
                   ),
                   // Dark gradient overlay for text readability
                   Container(
@@ -490,6 +494,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
+                  HapticFeedback.mediumImpact();
                   final id = widget.event['id'] as String? ?? '';
                   if (id.isNotEmpty) {
                     _eventService.toggleGoing(id);

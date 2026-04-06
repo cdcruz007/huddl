@@ -49,6 +49,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   }
 
   void _toggleGoing() {
+    HapticFeedback.mediumImpact();
     final wasGoing = _meetup.isGoing;
     _meetupService.toggleGoing(_meetup.id);
 
@@ -134,6 +135,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
 
   /// Share meetup via forward sheet
   void _shareMeetup() {
+    HapticFeedback.mediumImpact();
     showForwardSheet(
       context: context,
       messageText:
@@ -472,10 +474,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  _buildDetailCoverImage(
-                    imageUrl: _meetup.imageUrl,
-                    fallbackIcon: catStyle.icon,
-                    fallbackColor: catStyle.color,
+                  Hero(
+                    tag: 'meetup_cover_${_meetup.id}',
+                    child: _buildDetailCoverImage(
+                      imageUrl: _meetup.imageUrl,
+                      fallbackIcon: catStyle.icon,
+                      fallbackColor: catStyle.color,
+                    ),
                   ),
                   Container(
                     decoration: BoxDecoration(

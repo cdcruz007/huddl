@@ -820,7 +820,13 @@ class _ImGoingTab extends StatelessWidget {
       );
     }
 
-    return ListView(
+    return RefreshIndicator(
+      onRefresh: () async {
+        // Trigger a UI rebuild; services auto-refresh their state
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      color: HuddlColors.primary,
+      child: ListView(
       padding: const EdgeInsets.all(16),
       children: [
         if (upcoming.isNotEmpty) ...[
@@ -854,6 +860,7 @@ class _ImGoingTab extends StatelessWidget {
               )),
         ],
       ],
+    ),
     );
   }
 }
@@ -1038,7 +1045,10 @@ class _ImGoingCard extends StatelessWidget {
                           color: accentColor, size: 24),
                     const SizedBox(height: 4),
                     GestureDetector(
-                      onTap: onCancel,
+                      onTap: () {
+                        HapticFeedback.mediumImpact();
+                        onCancel();
+                      },
                       child: Padding(
                         padding: const EdgeInsets.all(8),
                         child: Text(
@@ -1597,26 +1607,30 @@ class _EventsTabState extends State<_EventsTab> {
                       ? () => setState(() => _selectedBorough = 'All Boroughs')
                       : null,
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: events.length + (showCarousel ? 1 : 0),
-                  itemBuilder: (_, i) {
-                    if (showCarousel && i == 0) {
-                      return _RecommendedCarousel(
-                        scoredEvents: _recommended,
-                        eventService: widget.eventService,
+              : RefreshIndicator(
+                  onRefresh: _forceRefreshDiscovery,
+                  color: HuddlColors.primary,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: events.length + (showCarousel ? 1 : 0),
+                    itemBuilder: (_, i) {
+                      if (showCarousel && i == 0) {
+                        return _RecommendedCarousel(
+                          scoredEvents: _recommended,
+                          eventService: widget.eventService,
+                        );
+                      }
+                      final eventIdx = showCarousel ? i - 1 : i;
+                      final event = events[eventIdx];
+                      final eventId = event['id'] as String? ?? '';
+                      final scored = _scoredEventMap[eventId];
+                      return _EventListCard(
+                        event: event,
+                        matchReasons: scored?.reasons ?? [],
+                        aiScore: scored?.score ?? 0,
                       );
-                    }
-                    final eventIdx = showCarousel ? i - 1 : i;
-                    final event = events[eventIdx];
-                    final eventId = event['id'] as String? ?? '';
-                    final scored = _scoredEventMap[eventId];
-                    return _EventListCard(
-                      event: event,
-                      matchReasons: scored?.reasons ?? [],
-                      aiScore: scored?.score ?? 0,
-                    );
-                  },
+                    },
+                  ),
                 ),
         ),
       ],
@@ -1766,10 +1780,15 @@ class _RecommendedCard extends StatelessWidget {
       button: true,
       child: GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => EventDetailScreen(event: event.toMap()),
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => EventDetailScreen(event: event.toMap()),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 300),
           ),
         );
       },
@@ -2057,26 +2076,35 @@ class _MeetupCard extends StatelessWidget {
       button: true,
       child: GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         if (isRestricted) {
           onAccessDenied?.call();
           return;
         }
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => MeetupDetailScreen(meetup: meetup),
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 300),
           ),
         );
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
-          border: context.hc.cardBorder,
+          border: Border.all(
+            color: catStyle.color.withValues(alpha: 0.15),
+            width: 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: context.hc.shadow,
+              color: catStyle.color.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -2092,10 +2120,13 @@ class _MeetupCard extends StatelessWidget {
                 SizedBox(
                   height: 150,
                   width: double.infinity,
-                  child: _buildCoverImage(
+                  child: Hero(
+                    tag: 'meetup_cover_${meetup.id}',
+                    child: _buildCoverImage(
                     imageUrl: meetup.imageUrl,
                     fallbackIcon: catStyle.icon,
                     fallbackColor: catStyle.color,
+                  ),
                   ),
                 ),
                 // Gradient overlay at bottom for readability
@@ -2354,6 +2385,7 @@ class _MeetupCard extends StatelessWidget {
   }
 
   static void _shareMeetup(BuildContext context, Meetup meetup) {
+    HapticFeedback.mediumImpact();
     final priceText = meetup.isFree
         ? 'Free'
         : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
@@ -2503,22 +2535,31 @@ class _EventListCardState extends State<_EventListCard> {
       button: true,
       child: GestureDetector(
       onTap: () {
+        HapticFeedback.lightImpact();
         Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => EventDetailScreen(event: event),
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => EventDetailScreen(event: event),
+            transitionsBuilder: (_, animation, __, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 300),
           ),
         );
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 14),
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
-          border: context.hc.cardBorder,
+          border: Border.all(
+            color: eventColor.withValues(alpha: 0.15),
+            width: 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: context.hc.shadow,
+              color: eventColor.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 3),
             ),
@@ -2534,10 +2575,13 @@ class _EventListCardState extends State<_EventListCard> {
                 SizedBox(
                   height: 150,
                   width: double.infinity,
-                  child: _buildCoverImage(
+                  child: Hero(
+                    tag: 'event_cover_$eventId',
+                    child: _buildCoverImage(
                     imageUrl: imageUrl,
                     fallbackIcon: event['icon'] as IconData,
                     fallbackColor: eventColor,
+                  ),
                   ),
                 ),
                 // Gradient overlay
@@ -2666,6 +2710,7 @@ class _EventListCardState extends State<_EventListCard> {
                         child: GestureDetector(
                           onTap: () {
                             if (eventId.isNotEmpty) {
+                              HapticFeedback.lightImpact();
                               _eventService.toggleBookmark(eventId);
                               setState(() {});
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -2880,7 +2925,7 @@ class _EventListCardState extends State<_EventListCard> {
 // SHARED WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _FilterChip extends StatelessWidget {
+class _FilterChip extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
@@ -2892,25 +2937,81 @@ class _FilterChip extends StatelessWidget {
   });
 
   @override
+  State<_FilterChip> createState() => _FilterChipState();
+}
+
+class _FilterChipState extends State<_FilterChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    );
+    _scaleAnim = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    HapticFeedback.selectionClick();
+    _animCtrl.forward().then((_) {
+      _animCtrl.reverse();
+    });
+    widget.onTap();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: '$label filter${isSelected ? ", selected" : ""}',
+      label: '${widget.label} filter${widget.isSelected ? ", selected" : ""}',
       button: true,
-      selected: isSelected,
+      selected: widget.isSelected,
       child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected ? const Color(0xFF1A1A1A) : context.hc.textSecondary,
+        onTap: _handleTap,
+        child: ScaleTransition(
+          scale: _scaleAnim.drive(Tween(begin: 1.0, end: 1.0)..chain(CurveTween(curve: Curves.easeInOut))),
+          child: AnimatedScale(
+            scale: widget.isSelected ? 1.0 : 1.0,
+            duration: const Duration(milliseconds: 200),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: widget.isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: widget.isSelected
+                    ? [
+                        BoxShadow(
+                          color: HuddlColors.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 250),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: widget.isSelected ? const Color(0xFF1A1A1A) : context.hc.textSecondary,
+                ),
+                child: Text(widget.label),
+              ),
             ),
           ),
         ),

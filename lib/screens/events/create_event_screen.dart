@@ -86,6 +86,46 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     super.initState();
     _onboardingService.initialize();
     _loadUserGroups();
+    _restoreDraft();
+  }
+
+  /// L4: Restore draft from persistent storage
+  Future<void> _restoreDraft() async {
+    final draftJson = await BrowserStorage.getString('create_event_draft_v1');
+    if (draftJson == null) return;
+    try {
+      final d = json.decode(draftJson) as Map<String, dynamic>;
+      if (mounted) {
+        setState(() {
+          _titleCtrl.text = d['title'] as String? ?? '';
+          _descriptionCtrl.text = d['description'] as String? ?? '';
+          _locationCtrl.text = d['location'] as String? ?? '';
+          _priceCtrl.text = d['price'] as String? ?? '';
+          _category = d['category'] as String? ?? '';
+          _isFree = d['isFree'] as bool? ?? true;
+          _isOnline = d['isOnline'] as bool? ?? false;
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// L4: Save draft to persistent storage on each field change
+  Future<void> _saveDraft() async {
+    final draftData = {
+      'title': _titleCtrl.text,
+      'description': _descriptionCtrl.text,
+      'location': _locationCtrl.text,
+      'price': _priceCtrl.text,
+      'category': _category,
+      'isFree': _isFree,
+      'isOnline': _isOnline,
+    };
+    await BrowserStorage.setString('create_event_draft_v1', json.encode(draftData));
+  }
+
+  /// L4: Clear draft after successful creation
+  Future<void> _clearDraft() async {
+    await BrowserStorage.remove('create_event_draft_v1');
   }
 
   Future<void> _loadUserGroups() async {
@@ -437,6 +477,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     );
 
     _eventService.createEvent(event);
+
+    await _clearDraft();
 
     if (kDebugMode && _selectedGroupName != null) {
       debugPrint('Event created for group: $_selectedGroupName');
@@ -1029,7 +1071,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
-      onChanged: (_) => setState(() {}),
+      onChanged: (_) { setState(() {}); _saveDraft(); },
       style:
           GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
       decoration: InputDecoration(
