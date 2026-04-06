@@ -235,8 +235,31 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Show FAB only on Meetups tab (index 0)
+    final showFab = _tabController.index == 0;
+
     return Scaffold(
       backgroundColor: context.hc.scaffold,
+      // ── Material You FAB for Create Meet-up (always accessible) ──
+      floatingActionButton: showFab
+          ? FloatingActionButton.extended(
+              onPressed: _navigateToCreateMeetup,
+              backgroundColor: HuddlColors.primary,
+              foregroundColor: HuddlColors.white,
+              elevation: 3,
+              icon: const Icon(Icons.add, size: 20),
+              label: Text(
+                'Create',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Column(
           children: [
@@ -327,7 +350,7 @@ class _EventsScreenState extends State<EventsScreen>
                       controller: _searchController,
                       focusNode: _searchFocusNode,
                       onChanged: (v) => setState(() => _searchQuery = v),
-                      style: GoogleFonts.poppins(fontSize: 14),
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search meetups & events...',
                         hintStyle: GoogleFonts.poppins(
@@ -344,7 +367,7 @@ class _EventsScreenState extends State<EventsScreen>
                               )
                             : null,
                         filled: true,
-                        fillColor: HuddlColors.background,
+                        fillColor: context.hc.inputBg,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         border: OutlineInputBorder(
@@ -586,7 +609,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           color: context.hc.surface,
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: SizedBox(
-            height: 40,
+            height: 44, // 48dp minimum touch target height
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -622,7 +645,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   },
                   color: HuddlColors.primary,
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // bottom padding for FAB
                     itemCount: meetups.length + 1, // +1 for AI Matchmaker card
                     itemBuilder: (_, i) {
                       if (i == 0) return _buildAiMatchmakerCard(context);
@@ -876,6 +899,50 @@ class _ImGoingCard extends StatelessWidget {
     required this.onCancel,
   });
 
+  void _confirmCancel(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.hc.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isPast ? 'Clear from history?' : 'Cancel attendance?',
+          style: GoogleFonts.poppins(
+            fontSize: 17, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
+        ),
+        content: Text(
+          isPast
+              ? 'Remove "${item.title}" from your past events list?'
+              : 'You will be removed from "${item.title}" and the organiser will be notified.',
+          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Keep', style: GoogleFonts.poppins(
+              fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              onCancel();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isPast ? HuddlColors.textSecondary : HuddlColors.error,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(
+              isPast ? 'Clear' : 'Cancel',
+              style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final accentColor =
@@ -883,10 +950,37 @@ class _ImGoingCard extends StatelessWidget {
     final fallbackIcon =
         item.isMeetup ? Icons.groups : Icons.event;
 
-    return Opacity(
+    // Swipe-to-dismiss for one-handed usability
+    return Dismissible(
+      key: ValueKey('going_${item.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: isPast ? HuddlColors.textSecondary : HuddlColors.error,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.close, color: HuddlColors.white, size: 22),
+            const SizedBox(height: 2),
+            Text(isPast ? 'Clear' : 'Cancel',
+              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+          ],
+        ),
+      ),
+      confirmDismiss: (_) async {
+        HapticFeedback.mediumImpact();
+        return true;
+      },
+      onDismissed: (_) => onCancel(),
+      child: Opacity(
       opacity: isPast ? 0.55 : 1.0,
       child: Semantics(
-        label: '${item.isMeetup ? "Meetup" : "Event"}: ${item.title}, ${item.dateDisplay} ${item.timeDisplay} at ${item.location}${isPast ? " (Past)" : ""}',
+        label: '${item.isMeetup ? "Meetup" : "Event"}: ${item.title}, ${item.dateDisplay} ${item.timeDisplay} at ${item.location}${isPast ? " (Past)" : ""}. Swipe left to ${isPast ? "clear" : "cancel"}.',
         button: true,
         child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -971,7 +1065,7 @@ class _ImGoingCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -983,14 +1077,14 @@ class _ImGoingCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.calendar_today_outlined,
-                              size: 12, color: HuddlColors.textTertiary),
+                              size: 12, color: context.hc.textTertiary),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
                               '${item.dateDisplay} · ${item.timeDisplay}',
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: HuddlColors.textTertiary,
+                                color: context.hc.textTertiary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1002,14 +1096,14 @@ class _ImGoingCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.location_on_outlined,
-                              size: 12, color: HuddlColors.textTertiary),
+                              size: 12, color: context.hc.textTertiary),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               item.location,
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
-                                color: HuddlColors.textTertiary,
+                                color: context.hc.textTertiary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -1044,19 +1138,25 @@ class _ImGoingCard extends StatelessWidget {
                       Icon(Icons.check_circle,
                           color: accentColor, size: 24),
                     const SizedBox(height: 4),
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        onCancel();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          isPast ? 'Clear' : 'Cancel',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isPast ? HuddlColors.textTertiary : HuddlColors.error,
+                    // ── 48dp touch target for cancel/clear ──
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () => _confirmCancel(context),
+                        child: Container(
+                          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          alignment: Alignment.center,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            child: Text(
+                              isPast ? 'Clear' : 'Cancel',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: isPast ? HuddlColors.textTertiary : HuddlColors.error,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -1067,6 +1167,7 @@ class _ImGoingCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
       ),
     );
@@ -1646,14 +1747,14 @@ class _RecommendedCarousel extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: context.hc.textPrimary,
                       ),
                     ),
                     Text(
                       'AI-matched to your family profile',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                     ),
                   ],
@@ -1718,7 +1819,7 @@ class _RecommendedCarousel extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
           ],
@@ -1760,11 +1861,12 @@ class _RecommendedCard extends StatelessWidget {
       child: Container(
         width: 220,
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
+          border: context.hc.cardBorder,
           boxShadow: [
             BoxShadow(
-              color: HuddlColors.gray900.withValues(alpha: 0.08),
+              color: context.hc.shadow.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -1864,7 +1966,7 @@ class _RecommendedCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark,
+                        color: context.hc.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1975,7 +2077,7 @@ class _SectionLabel extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
       ],
@@ -3039,9 +3141,9 @@ class _AiAssistantSheet extends StatelessWidget {
     final negCount = invisibleAi.totalNegativeFeedback;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Padding(
@@ -3055,7 +3157,7 @@ class _AiAssistantSheet extends StatelessWidget {
                 child: Container(
                   width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -3083,13 +3185,13 @@ class _AiAssistantSheet extends StatelessWidget {
                           'AI Event Assistant',
                           style: GoogleFonts.poppins(
                             fontSize: 18, fontWeight: FontWeight.w700,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                         ),
                         Text(
                           'Finding the perfect events for your family',
                           style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.textHint),
+                            fontSize: 12, color: context.hc.textTertiary),
                         ),
                       ],
                     ),
@@ -3265,9 +3367,9 @@ class _AssistantInfoRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: GoogleFonts.poppins(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                  fontSize: 12, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
                 Text(detail, style: GoogleFonts.poppins(
-                  fontSize: 11, color: HuddlColors.textHint)),
+                  fontSize: 11, color: context.hc.textTertiary)),
               ],
             ),
           ),
@@ -3307,8 +3409,6 @@ class _FilterChipState extends State<_FilterChip>
     _animCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 150),
-      lowerBound: 0.0,
-      upperBound: 1.0,
     );
     _scaleAnim = Tween<double>(begin: 1.0, end: 0.92).animate(
       CurvedAnimation(parent: _animCtrl, curve: Curves.easeInOut),
@@ -3337,37 +3437,43 @@ class _FilterChipState extends State<_FilterChip>
       selected: widget.isSelected,
       child: GestureDetector(
         onTap: _handleTap,
-        child: ScaleTransition(
-          scale: _scaleAnim.drive(Tween(begin: 1.0, end: 1.0)..chain(CurveTween(curve: Curves.easeInOut))),
-          child: AnimatedScale(
-            scale: widget.isSelected ? 1.0 : 1.0,
-            duration: const Duration(milliseconds: 200),
-            child: AnimatedContainer(
+        child: AnimatedBuilder(
+          animation: _scaleAnim,
+          builder: (context, child) => Transform.scale(
+            scale: _scaleAnim.value,
+            child: child,
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            // 48dp minimum touch target height
+            constraints: const BoxConstraints(minHeight: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
+              borderRadius: BorderRadius.circular(20),
+              border: widget.isSelected
+                  ? null
+                  : Border.all(color: context.hc.divider, width: 0.5),
+              boxShadow: widget.isSelected
+                  ? [
+                      BoxShadow(
+                        color: HuddlColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [],
+            ),
+            child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: widget.isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: widget.isSelected
-                    ? [
-                        BoxShadow(
-                          color: HuddlColors.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : [],
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
+                // WCAG fix: white on primary (7.1:1) instead of dark (3.1:1)
+                color: widget.isSelected ? HuddlColors.white : context.hc.textSecondary,
               ),
-              child: AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 250),
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: widget.isSelected ? const Color(0xFF1A1A1A) : context.hc.textSecondary,
-                ),
-                child: Text(widget.label),
-              ),
+              child: Text(widget.label),
             ),
           ),
         ),
@@ -3414,7 +3520,7 @@ class _EmptyState extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -3422,7 +3528,7 @@ class _EmptyState extends StatelessWidget {
               subtitle,
               style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: HuddlColors.textHint,
+                color: context.hc.textTertiary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -3436,6 +3542,8 @@ class _EmptyState extends StatelessWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
+                  // 48dp minimum touch target
+                  minimumSize: const Size(120, 48),
                   padding: const EdgeInsets.symmetric(
                       horizontal: 28, vertical: 12),
                   elevation: 0,

@@ -172,7 +172,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   'Meet-up Options',
                   style: GoogleFonts.poppins(
                     fontSize: 16, fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -290,14 +290,14 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   'Attendees (${_meetup.attendeeCount})',
                   style: GoogleFonts.poppins(
                     fontSize: 18, fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 if (_meetup.maxAttendees != null)
                   Text(
                     '${_meetup.maxAttendees! - _meetup.attendeeCount} spots remaining',
-                    style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textTertiary),
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
                   ),
                 const SizedBox(height: 12),
                 const Divider(height: 1),
@@ -326,7 +326,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             Flexible(
                               child: Text(name, style: GoogleFonts.poppins(
                                 fontSize: 15, fontWeight: FontWeight.w500,
-                                color: HuddlColors.textDark)),
+                                color: context.hc.textPrimary)),
                             ),
                             if (isOrganiser) ...[
                               const SizedBox(width: 8),
@@ -345,7 +345,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         ),
                         subtitle: Text(
                           isOrganiser ? 'Host' : 'Going',
-                          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textTertiary),
+                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
                         ),
                         trailing: !isOrganiser
                             ? IconButton(
@@ -382,10 +382,10 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         backgroundColor: HuddlColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Cancel Meet-up?', style: GoogleFonts.poppins(
-          fontSize: 18, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
+          fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
         content: Text(
           'This will permanently remove "${_meetup.title}" and notify all attendees. This action cannot be undone.',
-          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary, height: 1.5),
+          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
         ),
         actions: [
           TextButton(
@@ -568,7 +568,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                           height: 1.3,
                         ),
                       ),
@@ -581,7 +581,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             'Organised by ',
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: HuddlColors.textTertiary,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                           Flexible(
@@ -671,9 +671,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text('Repeating', style: GoogleFonts.poppins(
-                                      fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                                      fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
                                     Text(_meetup.repeatDisplay ?? 'Recurring', style: GoogleFonts.poppins(
-                                      fontSize: 12, color: HuddlColors.textTertiary)),
+                                      fontSize: 12, color: context.hc.textTertiary)),
                                   ],
                                 ),
                               ),
@@ -703,11 +703,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                     Text(
                                       _meetup.privacy == MeetupPrivacy.group ? 'Group Meet-up' : 'Private Meet-up',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                                        fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
                                     ),
                                     Text(
                                       _meetup.groupName ?? 'Invite only',
-                                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textTertiary),
+                                      style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
                                     ),
                                   ],
                                 ),
@@ -733,7 +733,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -741,7 +741,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         _meetup.description,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                           height: 1.6,
                         ),
                       ),
@@ -762,9 +762,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('Invited', style: GoogleFonts.poppins(
-                              fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                              fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
                             Text('${_meetup.invitees.length} people', style: GoogleFonts.poppins(
-                              fontSize: 13, color: HuddlColors.textTertiary)),
+                              fontSize: 13, color: context.hc.textTertiary)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -775,7 +775,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                               MemberAvatar(name: inv.name, size: 32),
                               const SizedBox(width: 10),
                               Expanded(child: Text(inv.name, style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w500, color: HuddlColors.textDark))),
+                                fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary))),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                 decoration: BoxDecoration(
@@ -830,14 +830,14 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           Text(
                             '${_meetup.attendeeCount} people',
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: HuddlColors.textTertiary,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                         ],
@@ -1003,14 +1003,14 @@ class _DetailRow extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
               Text(
                 subtitle,
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: HuddlColors.textTertiary,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ],
@@ -1035,7 +1035,7 @@ class _AttendeeChipWithPhoto extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: context.hc.surfaceAlt,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -1064,7 +1064,7 @@ class _AttendeeChipWithPhoto extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
         ],
