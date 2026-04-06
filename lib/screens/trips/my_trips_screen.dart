@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_community_service.dart';
@@ -246,14 +247,23 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
     final emoji = _destEmojis[trip.destination] ?? '✈️';
     final fallbackColor = _destColors[trip.destination] ?? HuddlColors.primary;
 
-    return GestureDetector(
-      onTap: () => _openDetail(trip),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          color: HuddlColors.white, borderRadius: BorderRadius.circular(18),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
-        ),
+    return Semantics(
+      button: true,
+      label: '${trip.destination}, ${trip.dateRange}, ${trip.daysUntil > 0 ? "${trip.daysUntil} days to go" : "dates not set"}, ${trip.completedItems} of ${trip.totalItems} items checked',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _openDetail(trip);
+          },
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: HuddlColors.white, borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 3))],
+            ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Image header with robust fallback
           ClipRRect(
@@ -334,6 +344,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           ),
         ]),
       ),
+    ),
+    ),
     );
   }
 
@@ -389,14 +401,23 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
   }
 
   Widget _aiCta() {
-    return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TravelConciergeScreen())),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [Color(0xFFEDF4FF), Color(0xFFF5F9FF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+    return Semantics(
+      button: true,
+      label: 'Ask the AI Concierge about your trips',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const TravelConciergeScreen()));
+          },
           borderRadius: BorderRadius.circular(16),
-        ),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFEDF4FF), Color(0xFFF5F9FF)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(16),
+            ),
         child: Row(children: [
           Container(
             width: 44, height: 44,
@@ -411,6 +432,8 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
           const Icon(Icons.arrow_forward_ios, size: 14, color: HuddlColors.aiBlue),
         ]),
       ),
+    ),
+    ),
     );
   }
 
@@ -724,10 +747,18 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
   }
 
   Widget _checkItem(ChecklistItem item) {
-    return GestureDetector(
-      onTap: () => setState(() => item.isChecked = !item.isChecked),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 2, 14, 2),
+    return Semantics(
+      toggled: item.isChecked,
+      label: '${item.label}${item.isChecked ? ", completed" : ""}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() => item.isChecked = !item.isChecked);
+          },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Container(
             width: 22, height: 22, margin: const EdgeInsets.only(top: 2),
@@ -765,20 +796,33 @@ class _TripDetailScreenState extends State<_TripDetailScreen> {
           ])),
         ]),
       ),
+    ),
+    ),
     );
   }
 
   Widget _quickAction(IconData icon, String label, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
-        child: Column(children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 6),
-          Text(label, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: color), textAlign: TextAlign.center),
-        ]),
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            onTap();
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(14)),
+            child: Column(children: [
+              Icon(icon, size: 24, color: color),
+              const SizedBox(height: 6),
+              Text(label, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: color), textAlign: TextAlign.center),
+            ]),
+          ),
+        ),
       ),
     );
   }

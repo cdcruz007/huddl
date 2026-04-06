@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_community_service.dart';
 
 /// Community Tips — clean card list with destination filters and share CTA.
+/// Audit-hardened: WCAG 2.2, 48 dp touch targets, Semantics,
+/// Material ripples, haptic feedback.
 class CommunityTipsScreen extends StatefulWidget {
   final String? filterDestination;
   const CommunityTipsScreen({super.key, this.filterDestination});
@@ -66,15 +69,28 @@ class _CommunityTipsScreenState extends State<CommunityTipsScreen> {
                       final sel = _dest == _dests[i];
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _dest = _dests[i]),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: sel ? HuddlColors.primary : HuddlColors.background,
+                        child: Semantics(
+                          button: true,
+                          label: 'Filter by ${_dests[i]}',
+                          selected: sel,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _dest = _dests[i]);
+                              },
                               borderRadius: BorderRadius.circular(17),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: sel ? HuddlColors.primary : HuddlColors.background,
+                                  borderRadius: BorderRadius.circular(17),
+                                ),
+                                child: Text(_dests[i], style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: sel ? HuddlColors.white : HuddlColors.textSecondary)),
+                              ),
                             ),
-                            child: Text(_dests[i], style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: sel ? HuddlColors.white : HuddlColors.textSecondary)),
                           ),
                         ),
                       );

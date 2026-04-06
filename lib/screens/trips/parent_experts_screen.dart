@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_community_service.dart';
 
 /// Parent Experts — clean leaderboard with profiles and badges.
+/// Audit-hardened: WCAG 2.2, 48 dp touch targets, Semantics,
+/// Material ripples, haptic feedback.
 class ParentExpertsScreen extends StatefulWidget {
   const ParentExpertsScreen({super.key});
 
@@ -134,15 +137,24 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
     final rankColors = [HuddlColors.accentAmber, HuddlColors.gray400, const Color(0xFFCD7F32)];
     final rc = rank <= rankColors.length ? rankColors[rank - 1] : HuddlColors.textHint;
 
-    return GestureDetector(
-      onTap: () => _showProfile(expert),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: HuddlColors.white, borderRadius: BorderRadius.circular(14),
-          border: rank <= 3 ? Border.all(color: rc.withValues(alpha: 0.25)) : null,
-        ),
+    return Semantics(
+      button: true,
+      label: 'Rank $rank: ${expert.name}, ${expert.totalUpvotes} upvotes, ${expert.totalAnswers} answers',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _showProfile(expert);
+          },
+          borderRadius: BorderRadius.circular(14),
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HuddlColors.white, borderRadius: BorderRadius.circular(14),
+              border: rank <= 3 ? Border.all(color: rc.withValues(alpha: 0.25)) : null,
+            ),
         child: Row(children: [
           Container(
             width: 28, height: 28,
@@ -182,6 +194,8 @@ class _ParentExpertsScreenState extends State<ParentExpertsScreen> {
           ]),
         ]),
       ),
+    ),
+    ),
     );
   }
 
