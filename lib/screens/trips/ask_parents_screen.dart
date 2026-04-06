@@ -1,11 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/travel_community_service.dart';
 
 // =============================================================================
-// ASK PARENTS — Community Q&A Screen
-// "Like having a WhatsApp group of parents who've been everywhere — but organised"
+// ASK PARENTS — Chat-style Community Q&A (NOT a forum!)
+// Feels like a WhatsApp group where parents jump in to help immediately.
+// Every question gets urgency, typing indicators, and "be the first to help" CTAs.
 // =============================================================================
 
 class AskParentsScreen extends StatefulWidget {
@@ -16,13 +18,19 @@ class AskParentsScreen extends StatefulWidget {
 }
 
 class _AskParentsScreenState extends State<AskParentsScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final TravelCommunityService _communityService = TravelCommunityService();
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'All';
   bool _isLoading = true;
+
+  // Live presence simulation
+  Timer? _presenceTimer;
+  int _onlineCount = 0;
+  String _typingName = '';
+  bool _showTyping = false;
 
   final List<String> _filters = [
     'All', 'Accommodation', 'Transport', 'Gear', 'Health', 'Food', 'Activities'
@@ -37,11 +45,29 @@ class _AskParentsScreenState extends State<AskParentsScreen>
 
   Future<void> _loadData() async {
     await _communityService.initialize();
-    if (mounted) setState(() => _isLoading = false);
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+        _onlineCount = 12 + DateTime.now().second % 6;
+      });
+      _startPresence();
+    }
+  }
+
+  void _startPresence() {
+    final names = ['Sarah M.', 'Priya K.', 'Meg C.', 'Tom', 'Rachel W.', 'James'];
+    _presenceTimer = Timer.periodic(const Duration(seconds: 6), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _typingName = names[timer.tick % names.length];
+        _showTyping = timer.tick % 3 != 0;
+      });
+    });
   }
 
   @override
   void dispose() {
+    _presenceTimer?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -97,8 +123,10 @@ class _AskParentsScreenState extends State<AskParentsScreen>
     );
   }
 
-  // ── Header ─────────────────────────────────────────────────────────────
+  // ── Header with live presence ───────────────────────────────────────────
   Widget _buildHeader() {
+    final unansweredCount = _communityService.questions.where((q) => q.answers.where((a) => !a.isAiGenerated).isEmpty).length;
+
     return Container(
       color: HuddlColors.white,
       padding: EdgeInsets.fromLTRB(20, MediaQuery.of(context).padding.top + 12, 20, 0),
@@ -117,22 +145,31 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Ask Parents', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
-                    Text('Real answers from parents who\'ve been there', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                    Row(
+                      children: [
+                        Container(width: 6, height: 6, decoration: const BoxDecoration(color: HuddlColors.successGreen, shape: BoxShape.circle)),
+                        const SizedBox(width: 4),
+                        Text('$_onlineCount parents online', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.successGreen, fontWeight: FontWeight.w500)),
+                        if (_showTyping) ...[
+                          Text(' · ', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                          Text('$_typingName typing...', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint, fontStyle: FontStyle.italic)),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              // Unanswered badge
+              if (unansweredCount > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(12)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    const Icon(Icons.front_hand, size: 12, color: HuddlColors.white),
+                    const SizedBox(width: 4),
+                    Text('$unansweredCount need help', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                  ]),
                 ),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: HuddlColors.successGreen, shape: BoxShape.circle)),
-                  const SizedBox(width: 4),
-                  Text('${_communityService.questions.length} questions', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: HuddlColors.teal)),
-                ]),
-              ),
             ],
           ),
           const SizedBox(height: 14),
@@ -195,6 +232,8 @@ class _AskParentsScreenState extends State<AskParentsScreen>
 
   // ── Tabs ───────────────────────────────────────────────────────────────
   Widget _buildTabs() {
+    final unansweredCount = _communityService.questions.where((q) => q.answers.where((a) => !a.isAiGenerated).isEmpty).length;
+
     return Container(
       color: HuddlColors.white,
       child: TabBar(
@@ -205,10 +244,20 @@ class _AskParentsScreenState extends State<AskParentsScreen>
         unselectedLabelStyle: GoogleFonts.poppins(fontSize: 13),
         indicatorColor: HuddlColors.primary,
         indicatorWeight: 3,
-        tabs: const [
-          Tab(text: 'Recent'),
-          Tab(text: 'Popular'),
-          Tab(text: 'Unanswered'),
+        tabs: [
+          const Tab(text: 'Recent'),
+          const Tab(text: 'Popular'),
+          Tab(child: Row(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Need Help'),
+            if (unansweredCount > 0) ...[
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(8)),
+                child: Text('$unansweredCount', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: HuddlColors.white)),
+              ),
+            ],
+          ])),
         ],
       ),
     );
@@ -218,7 +267,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
   Widget _buildRecentTab() => _buildQuestionList(_filteredQuestions);
 
   Widget _buildHotTab() {
-    final questions = _filteredQuestions..sort((a, b) => b.totalUpvotes.compareTo(a.totalUpvotes));
+    final questions = List<TravelQuestion>.from(_filteredQuestions)..sort((a, b) => b.totalUpvotes.compareTo(a.totalUpvotes));
     return _buildQuestionList(questions);
   }
 
@@ -257,10 +306,14 @@ class _AskParentsScreenState extends State<AskParentsScreen>
     );
   }
 
-  // ── Question Card ──────────────────────────────────────────────────────
+  // ── Question Card — Chat-thread style ──────────────────────────────────
   Widget _buildQuestionCard(TravelQuestion question) {
     final color = Color(int.parse(question.authorAvatarColor.replaceFirst('#', '0xFF')));
     final parentAnswerCount = question.answers.where((a) => !a.isAiGenerated).length;
+    final isUnanswered = parentAnswerCount == 0;
+    final lastAnswer = question.answers.where((a) => !a.isAiGenerated).isNotEmpty
+        ? question.answers.where((a) => !a.isAiGenerated).last
+        : null;
 
     return GestureDetector(
       onTap: () => _openQuestionDetail(question),
@@ -270,13 +323,13 @@ class _AskParentsScreenState extends State<AskParentsScreen>
         decoration: BoxDecoration(
           color: HuddlColors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: question.isSolved ? HuddlColors.successGreen.withValues(alpha: 0.3) : HuddlColors.divider),
+          border: Border.all(color: isUnanswered ? HuddlColors.primary.withValues(alpha: 0.3) : question.isSolved ? HuddlColors.successGreen.withValues(alpha: 0.3) : HuddlColors.divider),
           boxShadow: [BoxShadow(color: HuddlColors.gray900.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Author row
+            // Author row with urgency
             Row(
               children: [
                 CircleAvatar(
@@ -290,7 +343,17 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                     Text(_timeAgo(question.createdAt), style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
                   ]),
                 ),
-                if (question.isSolved)
+                if (isUnanswered)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(8)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      const Icon(Icons.reply, size: 12, color: HuddlColors.white),
+                      const SizedBox(width: 3),
+                      Text('Help', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
+                    ]),
+                  )
+                else if (question.isSolved)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(color: HuddlColors.successGreen.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
@@ -310,28 +373,61 @@ class _AskParentsScreenState extends State<AskParentsScreen>
             Wrap(
               spacing: 6, runSpacing: 4,
               children: [
-                if (question.destination != null)
-                  _buildTag(question.destination!, HuddlColors.blue),
-                if (question.childAge != null)
-                  _buildTag(question.childAge!, HuddlColors.teal),
+                if (question.destination != null) _buildTag(question.destination!, HuddlColors.blue),
+                if (question.childAge != null) _buildTag(question.childAge!, HuddlColors.teal),
                 _buildTag(question.category.label, HuddlColors.primary),
               ],
             ),
-            const SizedBox(height: 12),
-            // Stats row
+
+            // Latest reply preview — chat-like
+            if (lastAnswer != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.background,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: Color(int.parse(lastAnswer.authorAvatarColor.replaceFirst('#', '0xFF'))).withValues(alpha: 0.15),
+                      child: Text(lastAnswer.authorName[0], style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Color(int.parse(lastAnswer.authorAvatarColor.replaceFirst('#', '0xFF'))))),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Text(lastAnswer.authorName, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                            if (lastAnswer.hasBeenThereBadge) ...[
+                              const SizedBox(width: 3),
+                              const Icon(Icons.verified, size: 10, color: HuddlColors.teal),
+                            ],
+                          ]),
+                          Text(lastAnswer.content, style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.3), maxLines: 2, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 10),
+            // Stats row with engagement CTA
             Row(
               children: [
-                Icon(Icons.people_outline, size: 16, color: HuddlColors.textHint),
+                Icon(Icons.chat_bubble_outline, size: 14, color: HuddlColors.textHint),
                 const SizedBox(width: 4),
-                Text('$parentAnswerCount ${parentAnswerCount == 1 ? "parent" : "parents"} answered', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+                Text('$parentAnswerCount ${parentAnswerCount == 1 ? "reply" : "replies"}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
                 const SizedBox(width: 12),
                 Icon(Icons.thumb_up_outlined, size: 14, color: HuddlColors.textHint),
                 const SizedBox(width: 4),
                 Text('${question.totalUpvotes}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
-                const SizedBox(width: 12),
-                Icon(Icons.visibility_outlined, size: 14, color: HuddlColors.textHint),
-                const SizedBox(width: 4),
-                Text('${question.views}', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
                 const Spacer(),
                 if (question.hasAiSynthesis)
                   Container(
@@ -342,6 +438,12 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                       const SizedBox(width: 3),
                       Text('AI Summary', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.aiBlue)),
                     ]),
+                  ),
+                if (!question.hasAiSynthesis && isUnanswered)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(color: HuddlColors.primary, borderRadius: BorderRadius.circular(10)),
+                    child: Text('Be first to help', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
                   ),
               ],
             ),
@@ -388,9 +490,14 @@ class _AskParentsScreenState extends State<AskParentsScreen>
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: HuddlColors.gray300, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
               Text('Ask the Community', style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: HuddlColors.textDark)),
-              Text('Parents who\'ve been there will answer from experience', style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+              Row(
+                children: [
+                  Container(width: 6, height: 6, decoration: const BoxDecoration(color: HuddlColors.successGreen, shape: BoxShape.circle)),
+                  const SizedBox(width: 4),
+                  Text('$_onlineCount parents ready to help right now', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.successGreen, fontWeight: FontWeight.w500)),
+                ],
+              ),
               const SizedBox(height: 20),
-              // Question input
               Text('Your question', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
               const SizedBox(height: 6),
               Container(
@@ -408,7 +515,6 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              // Destination input
               Row(
                 children: [
                   Expanded(child: _buildSmallInput('Destination (optional)', 'e.g. Tenerife', destinationController, Icons.place)),
@@ -417,20 +523,19 @@ class _AskParentsScreenState extends State<AskParentsScreen>
                 ],
               ),
               const SizedBox(height: 12),
-              // Info box
+              // Urgency box
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: HuddlColors.aiBlue.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: HuddlColors.primary.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, size: 18, color: HuddlColors.aiBlue),
+                    const Text('🙋', style: TextStyle(fontSize: 20)),
                     const SizedBox(width: 10),
-                    Expanded(child: Text('AI will auto-detect your destination, child age, and category. It will also provide an instant starter answer while we find parents who can help!', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.aiBlue, height: 1.4))),
+                    Expanded(child: Text('Parents typically respond within minutes. AI will provide an instant starter answer while we notify parents who can help!', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.primary, height: 1.4))),
                   ],
                 ),
               ),
               const Spacer(),
-              // Submit button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -490,6 +595,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
+    if (diff.inSeconds < 60) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
@@ -498,7 +604,7 @@ class _AskParentsScreenState extends State<AskParentsScreen>
 }
 
 // =============================================================================
-// QUESTION DETAIL SCREEN — Full Q&A thread with AI synthesis
+// QUESTION DETAIL SCREEN — Chat-thread style with live feel
 // =============================================================================
 
 class _QuestionDetailScreen extends StatefulWidget {
@@ -511,12 +617,30 @@ class _QuestionDetailScreen extends StatefulWidget {
   State<_QuestionDetailScreen> createState() => _QuestionDetailScreenState();
 }
 
-class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
+class _QuestionDetailScreenState extends State<_QuestionDetailScreen> with TickerProviderStateMixin {
   final TextEditingController _answerController = TextEditingController();
   bool _isSubmitting = false;
+  Timer? _typingTimer;
+  bool _showOtherTyping = false;
+  String _otherTypingName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    // Simulate someone else typing after a short delay
+    final names = ['Sarah M.', 'Tom', 'Priya K.'];
+    _typingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!mounted) return;
+      setState(() {
+        _showOtherTyping = timer.tick % 3 != 0;
+        _otherTypingName = names[timer.tick % names.length];
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _typingTimer?.cancel();
     _answerController.dispose();
     super.dispose();
   }
@@ -531,7 +655,17 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
       appBar: AppBar(
         backgroundColor: HuddlColors.white, elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
-        title: Text('Question', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Conversation', style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+            Row(children: [
+              Container(width: 5, height: 5, decoration: const BoxDecoration(color: HuddlColors.successGreen, shape: BoxShape.circle)),
+              const SizedBox(width: 3),
+              Text('${q.answers.where((a) => !a.isAiGenerated).length} parents replied', style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.successGreen)),
+            ]),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(q.isBookmarked ? Icons.bookmark : Icons.bookmark_outline, size: 22, color: q.isBookmarked ? HuddlColors.primary : HuddlColors.textHint),
@@ -598,19 +732,52 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
                   ]),
                   const SizedBox(height: 10),
                   ...q.answers.map((a) => _buildAnswerCard(a)),
+
+                  // Typing indicator
+                  if (_showOtherTyping)
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(color: HuddlColors.white, borderRadius: BorderRadius.circular(12)),
+                      child: Row(children: [
+                        CircleAvatar(radius: 14, backgroundColor: HuddlColors.blue.withValues(alpha: 0.15),
+                          child: Text(_otherTypingName[0], style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.blue))),
+                        const SizedBox(width: 8),
+                        Text('$_otherTypingName is typing an answer', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint, fontStyle: FontStyle.italic)),
+                        const SizedBox(width: 4),
+                        _AnimatedDots(),
+                      ]),
+                    ),
+
+                  // CTA for unanswered
+                  if (q.answers.where((a) => !a.isAiGenerated).isEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), Color(0xFFFFE8D6)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(children: [
+                        const Text('🙋', style: TextStyle(fontSize: 32)),
+                        const SizedBox(height: 8),
+                        Text('Be the first parent to help!', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                        const SizedBox(height: 4),
+                        Text('${q.authorName} is waiting for a real parent\'s answer. Share your experience below.', textAlign: TextAlign.center, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary)),
+                      ]),
+                    ),
+
                   const SizedBox(height: 80),
                 ],
               ),
             ),
           ),
-          // Answer input
           _buildAnswerInput(),
         ],
       ),
     );
   }
 
-  // ── AI Synthesis Card ──────────────────────────────────────────────────
   Widget _buildAiSynthesisCard(AiSynthesis synthesis) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -679,7 +846,6 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
     );
   }
 
-  // ── Answer Card ────────────────────────────────────────────────────────
   Widget _buildAnswerCard(TravelAnswer answer) {
     final color = Color(int.parse(answer.authorAvatarColor.replaceFirst('#', '0xFF')));
     final isAi = answer.isAiGenerated;
@@ -737,7 +903,6 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
           const SizedBox(height: 10),
           Text(answer.content, style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark, height: 1.5)),
           const SizedBox(height: 10),
-          // Action row
           Row(children: [
             GestureDetector(
               onTap: () {
@@ -786,7 +951,6 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
     );
   }
 
-  // ── Answer Input ───────────────────────────────────────────────────────
   Widget _buildAnswerInput() {
     return SafeArea(
       child: Container(
@@ -795,35 +959,47 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
           color: HuddlColors.white,
           boxShadow: [BoxShadow(color: HuddlColors.gray900.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, -2))],
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(20)),
-                child: TextField(
-                  controller: _answerController,
-                  style: GoogleFonts.poppins(fontSize: 14),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _submitAnswer(),
-                  decoration: InputDecoration(
-                    hintText: 'Share your experience...',
-                    hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            if (_showOtherTyping)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(children: [
+                  Text('$_otherTypingName is typing...', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint, fontStyle: FontStyle.italic)),
+                ]),
+              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(color: HuddlColors.background, borderRadius: BorderRadius.circular(20)),
+                    child: TextField(
+                      controller: _answerController,
+                      style: GoogleFonts.poppins(fontSize: 14),
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => _submitAnswer(),
+                      decoration: InputDecoration(
+                        hintText: 'Share your experience...',
+                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            GestureDetector(
-              onTap: _submitAnswer,
-              child: Container(
-                width: 40, height: 40,
-                decoration: const BoxDecoration(gradient: HuddlColors.primaryGradient, shape: BoxShape.circle),
-                child: _isSubmitting
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: HuddlColors.white, strokeWidth: 2))
-                    : const Icon(Icons.send, color: HuddlColors.white, size: 18),
-              ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _submitAnswer,
+                  child: Container(
+                    width: 40, height: 40,
+                    decoration: const BoxDecoration(gradient: HuddlColors.primaryGradient, shape: BoxShape.circle),
+                    child: _isSubmitting
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: HuddlColors.white, strokeWidth: 2))
+                        : const Icon(Icons.send, color: HuddlColors.white, size: 18),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -854,9 +1030,57 @@ class _QuestionDetailScreenState extends State<_QuestionDetailScreen> {
 
   String _timeAgo(DateTime date) {
     final diff = DateTime.now().difference(date);
+    if (diff.inSeconds < 60) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${(diff.inDays / 7).floor()}w ago';
+  }
+}
+
+// ── Animated typing dots ──────────────────────────────────────────────────
+class _AnimatedDots extends StatefulWidget {
+  @override
+  State<_AnimatedDots> createState() => _AnimatedDotsState();
+}
+
+class _AnimatedDotsState extends State<_AnimatedDots> with TickerProviderStateMixin {
+  late List<AnimationController> _controllers;
+  late List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(3, (i) => AnimationController(vsync: this, duration: const Duration(milliseconds: 500)));
+    _animations = _controllers.map((c) => Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut))).toList();
+    for (int i = 0; i < 3; i++) {
+      Future.delayed(Duration(milliseconds: i * 150), () {
+        if (mounted) _controllers[i].repeat(reverse: true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) { c.dispose(); }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(3, (i) => AnimatedBuilder(
+        animation: _animations[i],
+        builder: (_, __) => Container(
+          width: 4, height: 4,
+          margin: const EdgeInsets.symmetric(horizontal: 1),
+          decoration: BoxDecoration(
+            color: HuddlColors.textHint.withValues(alpha: 0.3 + _animations[i].value * 0.7),
+            shape: BoxShape.circle,
+          ),
+        ),
+      )),
+    );
   }
 }
