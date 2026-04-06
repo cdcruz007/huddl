@@ -4,6 +4,7 @@ import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
 import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
+import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'travel/travel_screen.dart';
 import 'offers/offers_screen.dart';
@@ -84,6 +85,21 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
+      floatingActionButton: _currentIndex == 2
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CreateMeetupScreen(),
+                  ),
+                );
+              },
+              backgroundColor: HuddlColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
