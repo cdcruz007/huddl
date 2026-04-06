@@ -9,13 +9,13 @@ import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import 'create_meetup_screen.dart';
-import '../../services/postcode_service.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
 import '../ai/ai_matchmaker_sheet.dart';
 import '../ai/ai_copilot_screen.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
+import '../../services/invisible_ai_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MINGLE SCREEN — main entry with 3 tabs: Meetups · Events · I'm Going
@@ -1084,39 +1084,48 @@ class _EventsTab extends StatefulWidget {
 }
 
 class _EventsTabState extends State<_EventsTab> {
-  String _filter = 'All';
-  String _selectedBorough = 'All Boroughs';
+  // ── Core AI services ───────────────────────────────────────
   final AiEventRecommenderService _recommender = AiEventRecommenderService();
   final AiEventDiscoveryService _discovery = AiEventDiscoveryService();
-  final PostcodeService _postcodeService = PostcodeService();
+  final InvisibleAiService _invisibleAi = InvisibleAiService();
+
+  // ── State ──────────────────────────────────────────────────
   bool _recommenderReady = false;
   bool _isDiscovering = false;
-  int _discoveredCount = 0;
   List<ScoredEvent> _recommended = [];
-  // Cache scored events to pass match reasons to list cards
   Map<String, ScoredEvent> _scoredEventMap = {};
-  // Borough list for the location filter
-  List<String> _boroughs = [];
+
+  // ── "Less is more" invisible AI state ──────────────────────
+  String _nlpQuery = '';
+  final TextEditingController _nlpController = TextEditingController();
+  final FocusNode _nlpFocusNode = FocusNode();
+  bool _showSuggestions = false;
+  Map<String, dynamic> _activeParsedFilters = {};
+  bool _filtersExpanded = false; // progressive disclosure: filters hidden by default
 
   @override
   void initState() {
     super.initState();
     _initServices();
+    _nlpFocusNode.addListener(() {
+      if (mounted) setState(() => _showSuggestions = _nlpFocusNode.hasFocus && _nlpQuery.isEmpty);
+    });
+  }
+
+  @override
+  void dispose() {
+    _nlpController.dispose();
+    _nlpFocusNode.dispose();
+    super.dispose();
   }
 
   Future<void> _initServices() async {
-    // 0. Populate borough list from all known events + postcode service
-    _boroughs = _buildBoroughList();
-
-    // 1. Run AI discovery first (populates events)
     setState(() => _isDiscovering = true);
     final count = await _discovery.runDailyDiscovery();
-    _discoveredCount = _discovery.discoveredEventCount;
-    _boroughs = _buildBoroughList(); // refresh after discovery adds events
     if (mounted) setState(() => _isDiscovering = false);
 
-    // 2. Then init recommender (scores the now-populated events)
     await _recommender.initialize();
+    await _invisibleAi.initialize();
     _refreshRecommendations();
     if (mounted) {
       setState(() => _recommenderReady = true);
@@ -1129,7 +1138,7 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'AI found $count new events in ${_discovery.userBorough}!',
+                    'Found $count new events near you',
                     style: GoogleFonts.poppins(fontSize: 13),
                   ),
                 ),
@@ -1138,474 +1147,339 @@ class _EventsTabState extends State<_EventsTab> {
             backgroundColor: const Color(0xFF3580F0),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     }
   }
 
-  /// Build a sorted, unique list of boroughs from all events.
-  List<String> _buildBoroughList() {
-    final fromEvents = widget.eventService.events
-        .where((e) => e.borough.isNotEmpty)
-        .map((e) => e.borough)
-        .toSet();
-    // Merge with the known postcodeService boroughs
-    final allBoroughs = {...fromEvents, ..._postcodeService.getAllBoroughs()};
-    return allBoroughs.toList()..sort();
-  }
-
-  void _showBoroughPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: HuddlColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: true,
-      builder: (ctx) {
-        String localSearch = '';
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            final filtered = localSearch.isEmpty
-                ? _boroughs
-                : _boroughs
-                    .where((b) => b.toLowerCase().contains(localSearch.toLowerCase()))
-                    .toList();
-            return SafeArea(
-              child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.65,
-                child: Column(
-                  children: [
-                    // Handle bar
-                    Container(
-                      margin: const EdgeInsets.only(top: 10, bottom: 4),
-                      width: 40, height: 4,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.divider,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on, color: Color(0xFF3580F0), size: 22),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Filter by Borough',
-                            style: GoogleFonts.poppins(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Search field
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search boroughs...',
-                          hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                          prefixIcon: const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
-                          filled: true,
-                          fillColor: HuddlColors.background,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                        ),
-                        style: GoogleFonts.poppins(fontSize: 14),
-                        onChanged: (v) => setSheetState(() => localSearch = v),
-                      ),
-                    ),
-                    // "All Boroughs" option
-                    ListTile(
-                      leading: Container(
-                        width: 36, height: 36,
-                        decoration: BoxDecoration(
-                          color: _selectedBorough == 'All Boroughs'
-                              ? const Color(0xFF3580F0).withValues(alpha: 0.15)
-                              : HuddlColors.background,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(Icons.public, size: 18,
-                          color: _selectedBorough == 'All Boroughs'
-                              ? const Color(0xFF3580F0) : HuddlColors.textHint),
-                      ),
-                      title: Text('All Boroughs',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: _selectedBorough == 'All Boroughs'
-                              ? FontWeight.w600 : FontWeight.w400,
-                          color: _selectedBorough == 'All Boroughs'
-                              ? const Color(0xFF3580F0) : HuddlColors.textDark,
-                        ),
-                      ),
-                      trailing: _selectedBorough == 'All Boroughs'
-                          ? const Icon(Icons.check_circle, color: Color(0xFF3580F0), size: 20)
-                          : null,
-                      onTap: () {
-                        setState(() => _selectedBorough = 'All Boroughs');
-                        Navigator.pop(ctx);
-                      },
-                    ),
-                    const Divider(height: 1),
-                    // Borough list
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: filtered.length,
-                        itemBuilder: (_, i) {
-                          final borough = filtered[i];
-                          final isSelected = _selectedBorough == borough;
-                          // Count events in this borough
-                          final count = widget.eventService.events
-                              .where((e) => e.borough == borough || (e.isOnline && e.borough.isEmpty))
-                              .length;
-                          return ListTile(
-                            leading: Container(
-                              width: 36, height: 36,
-                              decoration: BoxDecoration(
-                                color: isSelected
-                                    ? const Color(0xFF3580F0).withValues(alpha: 0.15)
-                                    : HuddlColors.background,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Icon(Icons.location_on_outlined, size: 18,
-                                color: isSelected
-                                    ? const Color(0xFF3580F0) : HuddlColors.textHint),
-                            ),
-                            title: Text(borough,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected
-                                    ? const Color(0xFF3580F0) : HuddlColors.textDark,
-                              ),
-                            ),
-                            subtitle: count > 0
-                                ? Text('$count event${count == 1 ? '' : 's'}',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 11, color: HuddlColors.textHint))
-                                : null,
-                            trailing: isSelected
-                                ? const Icon(Icons.check_circle, color: Color(0xFF3580F0), size: 20)
-                                : null,
-                            onTap: () {
-                              setState(() => _selectedBorough = borough);
-                              Navigator.pop(ctx);
-                            },
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   Future<void> _forceRefreshDiscovery() async {
     setState(() => _isDiscovering = true);
-    final count = await _discovery.runDailyDiscovery(force: true);
-    _discoveredCount = _discovery.discoveredEventCount;
-    _boroughs = _buildBoroughList();
+    await _discovery.runDailyDiscovery(force: true);
     _refreshRecommendations();
-    if (mounted) {
-      setState(() => _isDiscovering = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.sync, color: Colors.white, size: 16),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  count > 0
-                      ? 'Refreshed! Found $count new events.'
-                      : 'All events up to date.',
-                  style: GoogleFonts.poppins(fontSize: 13),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: HuddlColors.teal,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    if (mounted) setState(() => _isDiscovering = false);
   }
 
   void _refreshRecommendations() {
     _recommended = _recommender.recommendedEvents;
-    // Build scored map for all events
     final allScored = _recommender.rankAllEvents();
-    _scoredEventMap = {
-      for (final s in allScored) s.event.id: s,
-    };
+    _scoredEventMap = { for (final s in allScored) s.event.id: s };
+  }
+
+  void _onNlpQueryChanged(String value) {
+    setState(() {
+      _nlpQuery = value;
+      _showSuggestions = value.isEmpty && _nlpFocusNode.hasFocus;
+      if (value.isNotEmpty) {
+        _activeParsedFilters = _invisibleAi.parseNaturalQuery(value);
+      } else {
+        _activeParsedFilters = {};
+      }
+    });
+  }
+
+  void _applySuggestion(AiSearchSuggestion suggestion) {
+    _nlpController.text = suggestion.query;
+    _onNlpQueryChanged(suggestion.query);
+    _nlpFocusNode.unfocus();
+  }
+
+  void _clearSearch() {
+    _nlpController.clear();
+    setState(() {
+      _nlpQuery = '';
+      _activeParsedFilters = {};
+      _showSuggestions = false;
+    });
+    _nlpFocusNode.unfocus();
+  }
+
+  void _showAiAssistantSheet() {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _AiAssistantSheet(
+        invisibleAi: _invisibleAi,
+        onSuggestionTap: (query) {
+          Navigator.pop(context);
+          _nlpController.text = query;
+          _onNlpQueryChanged(query);
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Refresh recommendations on each build (picks up new registrations etc.)
     if (_recommenderReady) _refreshRecommendations();
 
-    final query = widget.searchQuery.toLowerCase();
+    // ── Build events list ────────────────────────────────────
     var allEvents = widget.eventService.eventMaps;
 
-    // ── 1. Apply text search ───────────────────────────────────
-    if (query.isNotEmpty) {
+    // Apply parent-level search
+    final parentQuery = widget.searchQuery.toLowerCase();
+    if (parentQuery.isNotEmpty) {
       allEvents = allEvents.where((e) {
         final title = (e['title'] as String? ?? '').toLowerCase();
         final location = (e['location'] as String? ?? '').toLowerCase();
         final organiser = (e['organiser'] as String? ?? '').toLowerCase();
-        final borough = (e['borough'] as String? ?? '').toLowerCase();
-        return title.contains(query) ||
-            location.contains(query) ||
-            organiser.contains(query) ||
-            borough.contains(query);
+        return title.contains(parentQuery) ||
+            location.contains(parentQuery) ||
+            organiser.contains(parentQuery);
       }).toList();
     }
 
-    // ── 2. Apply borough / location filter ─────────────────────
-    if (_selectedBorough != 'All Boroughs') {
-      allEvents = allEvents.where((e) {
-        final borough = e['borough'] as String? ?? '';
-        final isOnline = e['isOnline'] == true;
-        // Online events are visible everywhere
-        return isOnline || borough == _selectedBorough;
+    // Apply NLP smart filters (invisible AI)
+    List<Map<String, dynamic>> events;
+    if (_activeParsedFilters.isNotEmpty) {
+      events = _invisibleAi.applySmartFilter(allEvents, _activeParsedFilters);
+    } else {
+      events = allEvents;
+    }
+
+    // Apply manual filters if expanded
+    if (_filtersExpanded && _activeManualFilter != 'All') {
+      events = events.where((e) {
+        if (_activeManualFilter == 'Free') return e['isFree'] == true;
+        if (_activeManualFilter == 'Paid') return e['isFree'] != true;
+        if (_activeManualFilter == 'Online') return e['isOnline'] == true;
+        if (_activeManualFilter == 'In-Person') return e['isOnline'] != true;
+        return true;
       }).toList();
     }
 
-    // ── 3. Apply type filter (Free / Paid / Online / In-Person) ─
-    var events = _filter == 'All'
-        ? allEvents
-        : allEvents.where((e) {
-            if (_filter == 'Free') return e['isFree'] == true;
-            if (_filter == 'Paid') return e['isFree'] != true;
-            if (_filter == 'Online') return e['isOnline'] == true;
-            if (_filter == 'In-Person') return e['isOnline'] != true;
-            return true;
-          }).toList();
-
-    // Sort feed by AI score (highest first)
+    // Intelligent sort (AI-powered ranking)
     if (_recommenderReady && events.isNotEmpty) {
-      events = List<Map<String, dynamic>>.from(events);
-      events.sort((a, b) {
-        final scoreA = _scoredEventMap[a['id'] as String?]?.score ?? 0;
-        final scoreB = _scoredEventMap[b['id'] as String?]?.score ?? 0;
-        return scoreB.compareTo(scoreA);
-      });
+      events = _invisibleAi.intelligentSort(events, _scoredEventMap);
     }
 
-    // Whether to show the carousel (only when no search, no borough filter, no type filter)
+    // Show carousel only when clean state
     final showCarousel = _recommenderReady &&
         _recommended.isNotEmpty &&
-        query.isEmpty &&
-        _filter == 'All' &&
-        _selectedBorough == 'All Boroughs';
+        parentQuery.isEmpty &&
+        _nlpQuery.isEmpty &&
+        !_filtersExpanded;
+
+    // Active filter chips for NLP
+    final activeNlpChips = _buildActiveNlpChips();
 
     return Column(
       children: [
-        // ── Borough selector + Type filter row ───────────────────
-        Container(
-          color: HuddlColors.white,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-          child: GestureDetector(
-            onTap: _showBoroughPicker,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _selectedBorough != 'All Boroughs'
-                    ? const Color(0xFF3580F0).withValues(alpha: 0.06)
-                    : HuddlColors.background,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _selectedBorough != 'All Boroughs'
-                      ? const Color(0xFF3580F0).withValues(alpha: 0.3)
-                      : HuddlColors.divider,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 18,
-                    color: _selectedBorough != 'All Boroughs'
-                        ? const Color(0xFF3580F0)
-                        : HuddlColors.textHint,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      _selectedBorough,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: _selectedBorough != 'All Boroughs'
-                            ? FontWeight.w600 : FontWeight.w400,
-                        color: _selectedBorough != 'All Boroughs'
-                            ? const Color(0xFF3580F0)
-                            : HuddlColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  if (_selectedBorough != 'All Boroughs')
-                    Semantics(
-                      label: 'Clear borough filter',
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedBorough = 'All Boroughs'),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          alignment: Alignment.center,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF3580F0).withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close, size: 14, color: Color(0xFF3580F0)),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (_selectedBorough == 'All Boroughs')
-                    const Icon(Icons.keyboard_arrow_down, size: 20, color: HuddlColors.textHint),
-                ],
-              ),
-            ),
-          ),
-        ),
-        // ── Type filter chips ────────────────────────────────────
+        // ── Predictive NLP Search Bar ─────────────────────────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                'All', 'Free', 'Paid', 'Online', 'In-Person',
-              ].map((f) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _FilterChip(
-                  label: f,
-                  isSelected: _filter == f,
-                  onTap: () => setState(() => _filter = f),
+          padding: const EdgeInsets.fromLTRB(16, 10, 8, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: HuddlColors.background,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _nlpFocusNode.hasFocus
+                          ? const Color(0xFF3580F0).withValues(alpha: 0.4)
+                          : HuddlColors.divider,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _nlpController,
+                    focusNode: _nlpFocusNode,
+                    onChanged: _onNlpQueryChanged,
+                    style: GoogleFonts.poppins(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Try "free baby classes this weekend"',
+                      hintStyle: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: HuddlColors.textHint,
+                      ),
+                      prefixIcon: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: _nlpQuery.isNotEmpty
+                            ? const Icon(Icons.auto_awesome, key: ValueKey('ai'),
+                                size: 18, color: Color(0xFF3580F0))
+                            : const Icon(Icons.search, key: ValueKey('search'),
+                                size: 18, color: HuddlColors.textHint),
+                      ),
+                      suffixIcon: _nlpQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close, size: 18),
+                              onPressed: _clearSearch,
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    ),
+                  ),
                 ),
-              )).toList(),
-            ),
+              ),
+              // ── Sparkle entry point (progressive disclosure) ──
+              Semantics(
+                label: 'AI Assistant',
+                button: true,
+                child: GestureDetector(
+                  onTap: _showAiAssistantSheet,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    margin: const EdgeInsets.only(left: 4),
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+                        ),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: const Icon(Icons.auto_awesome, size: 17, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+              // ── Toggle manual filters ──
+              IconButton(
+                icon: Icon(
+                  _filtersExpanded ? Icons.tune : Icons.tune_outlined,
+                  size: 20,
+                  color: _filtersExpanded ? const Color(0xFF3580F0) : HuddlColors.textHint,
+                ),
+                tooltip: 'Filters',
+                onPressed: () => setState(() => _filtersExpanded = !_filtersExpanded),
+              ),
+            ],
           ),
         ),
-        // ── AI Discovery status bar ─────────────────────────────
-        if (_isDiscovering || (_discoveredCount > 0 && query.isEmpty))
+
+        // ── AI Suggestions (shown when search is focused & empty) ──
+        if (_showSuggestions)
+          _buildSuggestionsPanel(),
+
+        // ── Active NLP filter chips (shown when smart search is active) ──
+        if (activeNlpChips.isNotEmpty && _nlpQuery.isNotEmpty)
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                ),
+                const SizedBox(width: 6),
+                Text('AI understood:', style: GoogleFonts.poppins(
+                  fontSize: 10, color: HuddlColors.textHint, fontWeight: FontWeight.w500)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(children: activeNlpChips),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // ── Manual filter chips (progressive disclosure, hidden by default) ──
+        if (_filtersExpanded)
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: SizedBox(
+              height: 36,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: _invisibleAi.adaptiveFilterOrder.map((f) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _FilterChip(
+                    label: f,
+                    isSelected: _activeManualFilter == f,
+                    onTap: () {
+                      _invisibleAi.trackFilterClick(f);
+                      setState(() => _activeManualFilter = f);
+                    },
+                  ),
+                )).toList(),
+              ),
+            ),
+          ),
+
+        // ── AI Context line (transparent about what AI is doing) ──
+        if (_recommenderReady && _nlpQuery.isEmpty && !_isDiscovering && parentQuery.isEmpty)
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: const Icon(Icons.auto_awesome, size: 11, color: Color(0xFF3580F0)),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _invisibleAi.getContextExplanation(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.textHint, fontWeight: FontWeight.w400),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_isDiscovering)
+                  const SizedBox(
+                    width: 12, height: 12,
+                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF3580F0)),
+                  ),
+              ],
+            ),
+          ),
+
+        // ── Discovering indicator ─────────────────────────────
+        if (_isDiscovering)
           Container(
             color: context.hc.surface,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: _isDiscovering
-                ? Row(
-                    children: [
-                      const SizedBox(
-                        width: 14, height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Color(0xFF3580F0),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'AI scanning London boroughs for events\u2026',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: const Color(0xFF3580F0),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3580F0).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(Icons.auto_awesome, size: 13, color: Color(0xFF3580F0)),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _selectedBorough != 'All Boroughs'
-                              ? '${events.length} events in $_selectedBorough'
-                              : '$_discoveredCount AI-discovered events across London',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: HuddlColors.textHint,
-                          ),
-                        ),
-                      ),
-                      Semantics(
-                        label: 'Refresh events',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: _isDiscovering ? null : _forceRefreshDiscovery,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF3580F0).withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.sync, size: 12, color: Color(0xFF3580F0)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Refresh',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF3580F0),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 14, height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Color(0xFF3580F0)),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Finding events for you\u2026',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12, color: const Color(0xFF3580F0), fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
           ),
-        // ── List ─────────────────────────────────────────────────
+
+        // ── Event list ───────────────────────────────────────
         Expanded(
           child: events.isEmpty && !showCarousel
               ? _EmptyState(
                   icon: Icons.event_outlined,
-                  title: _selectedBorough != 'All Boroughs'
-                      ? 'No events in $_selectedBorough'
-                      : 'No events found',
-                  subtitle: _selectedBorough != 'All Boroughs'
-                      ? 'Try selecting a different borough\nor reset to see all events.'
-                      : 'Our AI is scanning local sources.\nNew events will appear soon.',
-                  actionLabel: _selectedBorough != 'All Boroughs'
-                      ? 'Show All Boroughs' : null,
-                  onAction: _selectedBorough != 'All Boroughs'
-                      ? () => setState(() => _selectedBorough = 'All Boroughs')
-                      : null,
+                  title: _nlpQuery.isNotEmpty ? 'No matches' : 'No events found',
+                  subtitle: _nlpQuery.isNotEmpty
+                      ? 'Try a different search like\n"free baby classes near me"'
+                      : 'Pull down to refresh or try searching.',
+                  actionLabel: _nlpQuery.isNotEmpty ? 'Clear search' : null,
+                  onAction: _nlpQuery.isNotEmpty ? _clearSearch : null,
                 )
               : RefreshIndicator(
                   onRefresh: _forceRefreshDiscovery,
@@ -1628,6 +1502,7 @@ class _EventsTabState extends State<_EventsTab> {
                         event: event,
                         matchReasons: scored?.reasons ?? [],
                         aiScore: scored?.score ?? 0,
+                        invisibleAi: _invisibleAi,
                       );
                     },
                   ),
@@ -1635,6 +1510,96 @@ class _EventsTabState extends State<_EventsTab> {
         ),
       ],
     );
+  }
+
+  String _activeManualFilter = 'All';
+
+  Widget _buildSuggestionsPanel() {
+    final suggestions = _invisibleAi.getSearchSuggestions();
+    if (suggestions.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      color: context.hc.surface,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+              ),
+              const SizedBox(width: 6),
+              Text('Suggested for you', style: GoogleFonts.poppins(
+                fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ...suggestions.map((s) => GestureDetector(
+            onTap: () => _applySuggestion(s),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: HuddlColors.background,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  Text(s.icon, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.query, style: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+                        Text(s.reason, style: GoogleFonts.poppins(
+                          fontSize: 11, color: HuddlColors.textHint)),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.north_west, size: 14, color: HuddlColors.textHint),
+                ],
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildActiveNlpChips() {
+    final chips = <Widget>[];
+    final p = _activeParsedFilters;
+
+    void addChip(String label, Color color) {
+      chips.add(Container(
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Text(label, style: GoogleFonts.poppins(
+          fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      ));
+    }
+
+    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, const Color(0xFF3580F0));
+    if (p.containsKey('formatFilter')) addChip(p['formatFilter'] as String, HuddlColors.teal);
+    if (p.containsKey('timeFilter')) addChip(p['timeFilter'] as String, HuddlColors.primaryDark);
+    if (p.containsKey('category')) addChip(p['category'] as String, HuddlColors.accentAmber);
+    if (p.containsKey('ageStage')) addChip(p['ageStage'] as String, HuddlColors.primary);
+    if (p.containsKey('keywords')) addChip('"${p['keywords']}"', HuddlColors.textSecondary);
+
+    return chips;
   }
 }
 
@@ -1776,7 +1741,7 @@ class _RecommendedCard extends StatelessWidget {
     final scorePercent = scored.score.round();
 
     return Semantics(
-      label: 'Recommended event: ${event.title}, ${scorePercent}% match, ${event.dateDisplay}${event.isFree ? ", Free" : ""}',
+      label: 'Recommended event: ${event.title}, $scorePercent% match, ${event.dateDisplay}${event.isFree ? ", Free" : ""}',
       button: true,
       child: GestureDetector(
       onTap: () {
@@ -2435,11 +2400,13 @@ class _EventListCard extends StatefulWidget {
   final Map<String, dynamic> event;
   final List<MatchReason> matchReasons;
   final double aiScore;
+  final InvisibleAiService? invisibleAi;
 
   const _EventListCard({
     required this.event,
     this.matchReasons = const [],
     this.aiScore = 0,
+    this.invisibleAi,
   });
 
   @override
@@ -2910,12 +2877,401 @@ class _EventListCardState extends State<_EventListCard> {
                       ],
                     ),
                   ],
+                  // ── AI Feedback thumbs (human-in-the-loop) ──
+                  if (widget.invisibleAi != null && widget.aiScore >= 40) ...[
+                    const SizedBox(height: 8),
+                    _AiFeedbackRow(
+                      eventId: eventId,
+                      invisibleAi: widget.invisibleAi!,
+                    ),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI FEEDBACK ROW — thumbs up/down for human-in-the-loop
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AiFeedbackRow extends StatefulWidget {
+  final String eventId;
+  final InvisibleAiService invisibleAi;
+
+  const _AiFeedbackRow({
+    required this.eventId,
+    required this.invisibleAi,
+  });
+
+  @override
+  State<_AiFeedbackRow> createState() => _AiFeedbackRowState();
+}
+
+class _AiFeedbackRowState extends State<_AiFeedbackRow> {
+  bool? _localFeedback;
+
+  @override
+  void initState() {
+    super.initState();
+    _localFeedback = widget.invisibleAi.getFeedback(widget.eventId);
+  }
+
+  void _submit(bool positive) {
+    HapticFeedback.lightImpact();
+    widget.invisibleAi.submitFeedback(widget.eventId, positive);
+    setState(() => _localFeedback = positive);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(positive
+            ? 'Thanks! We\u2019ll show more like this'
+            : 'Got it \u2014 fewer like this'),
+        backgroundColor: positive ? HuddlColors.teal : HuddlColors.textSecondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: const Icon(Icons.auto_awesome, size: 10, color: Color(0xFF3580F0)),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          'AI pick',
+          style: GoogleFonts.poppins(
+            fontSize: 10, color: HuddlColors.textHint, fontWeight: FontWeight.w500),
+        ),
+        const Spacer(),
+        if (_localFeedback != null)
+          Text(
+            _localFeedback! ? 'Liked' : 'Not for me',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: _localFeedback! ? HuddlColors.teal : HuddlColors.textHint,
+              fontWeight: FontWeight.w500,
+            ),
+          )
+        else ...[
+          Text('Helpful?', style: GoogleFonts.poppins(
+            fontSize: 10, color: HuddlColors.textHint)),
+          const SizedBox(width: 6),
+          GestureDetector(
+            onTap: () => _submit(true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: HuddlColors.teal.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.thumb_up_alt_outlined, size: 12, color: HuddlColors.teal),
+                  const SizedBox(width: 3),
+                  Text('Yes', style: GoogleFonts.poppins(
+                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => _submit(false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: HuddlColors.textHint.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: HuddlColors.textHint.withValues(alpha: 0.15)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.thumb_down_alt_outlined, size: 12,
+                    color: HuddlColors.textHint.withValues(alpha: 0.7)),
+                  const SizedBox(width: 3),
+                  Text('No', style: GoogleFonts.poppins(
+                    fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI ASSISTANT BOTTOM-SHEET — progressive disclosure via sparkle icon
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _AiAssistantSheet extends StatelessWidget {
+  final InvisibleAiService invisibleAi;
+  final void Function(String query) onSuggestionTap;
+
+  const _AiAssistantSheet({
+    required this.invisibleAi,
+    required this.onSuggestionTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final suggestions = invisibleAi.getSearchSuggestions();
+    final posCount = invisibleAi.totalPositiveFeedback;
+    final negCount = invisibleAi.totalNegativeFeedback;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Header
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'AI Event Assistant',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18, fontWeight: FontWeight.w700,
+                            color: HuddlColors.textDark,
+                          ),
+                        ),
+                        Text(
+                          'Finding the perfect events for your family',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, color: HuddlColors.textHint),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // How AI works (transparency)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('How it works', style: GoogleFonts.poppins(
+                      fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    const SizedBox(height: 8),
+                    _AssistantInfoRow(
+                      icon: Icons.search, label: 'Type naturally',
+                      detail: 'e.g. "free baby classes this weekend"'),
+                    _AssistantInfoRow(
+                      icon: Icons.auto_awesome, label: 'AI understands intent',
+                      detail: 'Automatically applies price, time, age filters'),
+                    _AssistantInfoRow(
+                      icon: Icons.thumb_up_alt_outlined, label: 'You give feedback',
+                      detail: 'Thumbs up/down helps AI learn your preferences'),
+                    _AssistantInfoRow(
+                      icon: Icons.sort, label: 'Smart sorting',
+                      detail: 'Events are ranked by relevance to your family'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Quick searches
+              Text('Quick searches', style: GoogleFonts.poppins(
+                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: suggestions.map((s) => GestureDetector(
+                  onTap: () => onSuggestionTap(s.query),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.background,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: HuddlColors.divider),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(s.icon, style: const TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(s.query, style: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.w500,
+                          color: HuddlColors.textDark)),
+                      ],
+                    ),
+                  ),
+                )).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              // Feedback stats (transparency)
+              if (posCount + negCount > 0)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.background,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.insights, size: 18, color: Color(0xFF3580F0)),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Your feedback: $posCount likes, $negCount dislikes \u2014 AI is learning your taste',
+                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Voice command placeholder
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.background,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: HuddlColors.divider),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.textHint.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.mic, size: 18, color: HuddlColors.textHint),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Voice search', style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textSecondary)),
+                          Text('Coming soon \u2014 search by speaking', style: GoogleFonts.poppins(
+                            fontSize: 11, color: HuddlColors.textHint)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.textHint.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('SOON', style: GoogleFonts.poppins(
+                        fontSize: 9, fontWeight: FontWeight.w700, color: HuddlColors.textHint)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AssistantInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String detail;
+
+  const _AssistantInfoRow({
+    required this.icon,
+    required this.label,
+    required this.detail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              color: const Color(0xFF3580F0).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 14, color: const Color(0xFF3580F0)),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.poppins(
+                  fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                Text(detail, style: GoogleFonts.poppins(
+                  fontSize: 11, color: HuddlColors.textHint)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
 import '../../services/ai_event_recommender_service.dart';
+import '../../services/invisible_ai_service.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -18,8 +19,11 @@ class EventDetailScreen extends StatefulWidget {
 class _EventDetailScreenState extends State<EventDetailScreen> {
   final EventService _eventService = EventService();
   final AiEventRecommenderService _recommender = AiEventRecommenderService();
+  final InvisibleAiService _invisibleAi = InvisibleAiService();
   ScoredEvent? _scoredEvent;
+  AiEventSummary? _aiSummary;
   bool _aiReady = false;
+  bool? _userFeedback;
 
   @override
   void initState() {
@@ -29,13 +33,22 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   Future<void> _loadAiRecommendation() async {
     await _recommender.initialize();
+    await _invisibleAi.initialize();
     final eventId = widget.event['id'] as String? ?? '';
     if (eventId.isEmpty) return;
     final allScored = _recommender.rankAllEvents();
     final match = allScored.where((s) => s.event.id == eventId);
+    // Generate AI summary
+    final summary = _invisibleAi.summarizeEvent(widget.event);
+    // Track view
+    _invisibleAi.trackEventView(widget.event);
+    // Check existing feedback
+    final fb = _invisibleAi.getFeedback(eventId);
     if (mounted) {
       setState(() {
         _scoredEvent = match.isNotEmpty ? match.first : null;
+        _aiSummary = summary;
+        _userFeedback = fb;
         _aiReady = true;
       });
     }
@@ -300,6 +313,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
                 const SizedBox(height: 8),
 
+                // ── AI Quick Summary (invisible AI) ─────────────────
+                if (_aiReady && _aiSummary != null)
+                  _buildAiSummarySection(_aiSummary!),
+                if (_aiReady && _aiSummary != null)
+                  const SizedBox(height: 8),
+
                 // ── AI Discovered source section ─────────────────────
                 if (e['isAiDiscovered'] == true)
                   _buildAiDiscoveredSection(e),
@@ -393,10 +412,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 _buildAttendeesSection(e, color),
                 const SizedBox(height: 8),
 
-                // AI Recommendation section
+                // AI Recommendation section with feedback
                 if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
                   _buildAiRecommendationSection(_scoredEvent!),
                 if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
+                  const SizedBox(height: 8),
+
+                // AI Feedback (human-in-the-loop)
+                if (_aiReady && _scoredEvent != null && _scoredEvent!.score >= 40)
+                  _buildAiFeedbackSection(),
+                if (_aiReady && _scoredEvent != null && _scoredEvent!.score >= 40)
                   const SizedBox(height: 8),
 
                 // What to expect
@@ -536,6 +561,237 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── AI Quick Summary section ──────────────────────────────────────────
+  Widget _buildAiSummarySection(AiEventSummary summary) {
+    return Container(
+      color: context.hc.surface,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'AI Summary',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  summary.vibe,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10, fontWeight: FontWeight.w500, color: const Color(0xFF3580F0)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Suitability line
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: HuddlColors.teal.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.family_restroom, size: 14, color: HuddlColors.teal),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    summary.suitability,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.teal),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Key highlights
+          if (summary.highlights.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...summary.highlights.map((h) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(top: 4),
+                    child: Icon(Icons.check_circle, size: 14, color: Color(0xFF3580F0)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      h,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12, color: HuddlColors.textSecondary, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── AI Feedback section (human-in-the-loop) ─────────────────────────────
+  Widget _buildAiFeedbackSection() {
+    return Container(
+      color: context.hc.surface,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.rate_review, size: 14, color: Color(0xFF3580F0)),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Was this recommendation helpful?',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_userFeedback != null)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _userFeedback!
+                    ? HuddlColors.teal.withValues(alpha: 0.06)
+                    : HuddlColors.textHint.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    _userFeedback! ? Icons.thumb_up_alt : Icons.thumb_down_alt,
+                    size: 18,
+                    color: _userFeedback! ? HuddlColors.teal : HuddlColors.textHint,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _userFeedback!
+                          ? 'Thanks! We\u2019ll show more events like this.'
+                          : 'Got it \u2014 we\u2019ll adjust future recommendations.',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: _userFeedback! ? HuddlColors.teal : HuddlColors.textHint,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      final id = widget.event['id'] as String? ?? '';
+                      if (id.isNotEmpty) {
+                        _invisibleAi.submitFeedback(id, true);
+                        setState(() => _userFeedback = true);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.teal.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.thumb_up_alt_outlined, size: 18, color: HuddlColors.teal),
+                          const SizedBox(width: 8),
+                          Text('Yes, helpful', style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.teal)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      final id = widget.event['id'] as String? ?? '';
+                      if (id.isNotEmpty) {
+                        _invisibleAi.submitFeedback(id, false);
+                        setState(() => _userFeedback = false);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.background,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HuddlColors.divider),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.thumb_down_alt_outlined, size: 18,
+                            color: HuddlColors.textHint.withValues(alpha: 0.7)),
+                          const SizedBox(width: 8),
+                          Text('Not for me', style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          const SizedBox(height: 8),
+          Text(
+            'Your feedback helps AI learn your family\u2019s preferences',
+            style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint),
+          ),
+        ],
       ),
     );
   }
