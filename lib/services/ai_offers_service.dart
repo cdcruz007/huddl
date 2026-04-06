@@ -72,11 +72,11 @@ class AiSeasonalSpotlight {
   });
 }
 
-class AiDealsService {
+class AiOffersService {
   // ---- Singleton ----
-  static final AiDealsService _instance = AiDealsService._internal();
-  factory AiDealsService() => _instance;
-  AiDealsService._internal();
+  static final AiOffersService _instance = AiOffersService._internal();
+  factory AiOffersService() => _instance;
+  AiOffersService._internal();
 
   // ---- Dependencies ----
   final OnboardingDataService _onboarding = OnboardingDataService();
@@ -130,7 +130,7 @@ class AiDealsService {
       _smartPicksCacheTime = DateTime.now();
       return recommendations;
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService smart picks error: $e');
+      if (kDebugMode) debugPrint('AiOffersService smart picks error: $e');
       return _fallbackSmartPicks(stores);
     }
   }
@@ -148,7 +148,7 @@ class AiDealsService {
         .join(',\n');
 
     final systemPrompt = '''
-You are Huddl's AI Deals Curator for UK parents. Your job is to analyse retail stores
+You are Huddl's AI Offers Curator for UK parents. Your job is to analyse retail stores
 and their current offers, then rank them by relevance for THIS specific parent.
 
 USER CONTEXT:
@@ -201,7 +201,7 @@ STORES:
       }).toList()
         ..sort((a, b) => b.relevanceScore.compareTo(a.relevanceScore));
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService parse error: $e');
+      if (kDebugMode) debugPrint('AiOffersService parse error: $e');
       return _fallbackSmartPicks(stores);
     }
   }
@@ -228,7 +228,7 @@ STORES:
       _couponInsightCache[storeId] = insights;
       return insights;
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService coupon insights error: $e');
+      if (kDebugMode) debugPrint('AiOffersService coupon insights error: $e');
       return _fallbackCouponInsights(coupons);
     }
   }
@@ -249,7 +249,7 @@ STORES:
         coupons.isNotEmpty ? coupons.first.storeTitle : 'this store';
 
     final systemPrompt = '''
-You are Huddl's AI Deals Advisor for UK parents. Analyse these coupons from $storeName
+You are Huddl's AI Offers Advisor for UK parents. Analyse these coupons from $storeName
 and provide personalised money-saving insights.
 
 USER CONTEXT:
@@ -296,7 +296,7 @@ COUPONS:
         );
       }).toList();
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService coupon parse error: $e');
+      if (kDebugMode) debugPrint('AiOffersService coupon parse error: $e');
       return _fallbackCouponInsights(coupons);
     }
   }
@@ -325,7 +325,7 @@ COUPONS:
       _spotlightCacheTime = DateTime.now();
       return spotlight;
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService spotlight error: $e');
+      if (kDebugMode) debugPrint('AiOffersService spotlight error: $e');
       return _fallbackSpotlight();
     }
   }
@@ -339,7 +339,7 @@ COUPONS:
     final storeNames = stores.take(25).map((s) => s.title).join(', ');
 
     final systemPrompt = '''
-You are Huddl's AI Deals Editor for UK parents. Write a short seasonal savings spotlight
+You are Huddl's AI Offers Editor for UK parents. Write a short seasonal savings spotlight
 personalised for this parent.
 
 USER CONTEXT:
@@ -375,7 +375,7 @@ RESPONSE FORMAT (strict JSON, no markdown):
       return AiSeasonalSpotlight(
         title: parsed['title']?.toString() ?? 'Seasonal Savings',
         summary: parsed['summary']?.toString() ??
-            'Check out the latest deals handpicked for your family.',
+            'Check out the latest offers handpicked for your family.',
         topStoreNames: (parsed['topStoreNames'] as List?)
                 ?.map((t) => t.toString())
                 .toList() ??
@@ -386,7 +386,7 @@ RESPONSE FORMAT (strict JSON, no markdown):
             [],
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('AiDealsService spotlight parse error: $e');
+      if (kDebugMode) debugPrint('AiOffersService spotlight parse error: $e');
       return _fallbackSpotlight();
     }
   }
@@ -500,7 +500,7 @@ RESPONSE FORMAT (strict JSON, no markdown):
     }
 
     if (parts.isEmpty) {
-      parts.add('A UK parent looking for family deals');
+      parts.add('A UK parent looking for family offers');
     }
 
     return parts.join('\n');
@@ -587,7 +587,7 @@ RESPONSE FORMAT (strict JSON, no markdown):
     final scored = stores.map((store) {
       final name = store.title.toLowerCase();
       int score = 30;
-      String tip = 'Browse ${store.title} for family deals';
+      String tip = 'Browse ${store.title} for family offers';
       String badge = 'Deal';
 
       if (name.contains('baby') || name.contains('mothercare')) {

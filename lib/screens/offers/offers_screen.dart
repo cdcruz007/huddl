@@ -5,21 +5,21 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/revglue_service.dart';
 import '../../services/subscription_service.dart';
-import '../../services/ai_deals_service.dart';
+import '../../services/ai_offers_service.dart';
 import '../../models/subscription.dart';
 import '../ai/ai_copilot_screen.dart';
 
-class DealsScreen extends StatefulWidget {
-  const DealsScreen({super.key});
+class OffersScreen extends StatefulWidget {
+  const OffersScreen({super.key});
 
   @override
-  State<DealsScreen> createState() => _DealsScreenState();
+  State<OffersScreen> createState() => _OffersScreenState();
 }
 
-class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStateMixin {
+class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderStateMixin {
   final _service = RevGlueService();
   final _subService = SubscriptionService();
-  final _aiService = AiDealsService();
+  final _aiService = AiOffersService();
 
   List<RevGlueStore> _stores = [];
   List<RevGlueCategory> _categories = [];
@@ -47,7 +47,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
   late TabController _tabController;
 
   // Subscription gating
-  int _dealsViewedToday = 0;
+  int _offersViewedToday = 0;
   static const int _freeViewLimit = 10;
 
   @override
@@ -137,10 +137,10 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
   bool get _isExplorer =>
       _subService.subscription.tier == SubscriptionTier.explorer;
 
-  bool get _canViewMoreDeals => !_isExplorer || _dealsViewedToday < _freeViewLimit;
+  bool get _canViewMoreOffers => !_isExplorer || _offersViewedToday < _freeViewLimit;
 
   Future<void> _openStore(RevGlueStore store) async {
-    if (!_canViewMoreDeals) {
+    if (!_canViewMoreOffers) {
       _showUpgradeDialog();
       return;
     }
@@ -148,7 +148,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
       _selectedStore = store;
       _loadingCoupons = true;
       _couponInsightsMap = {};
-      _dealsViewedToday++;
+      _offersViewedToday++;
     });
     final coupons = await _service.getStoreVouchers(store.id);
     if (!mounted) return;
@@ -179,7 +179,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
           children: [
             const Icon(Icons.lock, color: HuddlColors.primary, size: 24),
             const SizedBox(width: 8),
-            Text('Unlock More Deals', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18)),
+            Text('Unlock More Offers', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18)),
           ],
         ),
         content: Text(
@@ -394,7 +394,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Deals', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: HuddlColors.textPrimary)),
+                Text('Offers', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: HuddlColors.textPrimary)),
                 Text(
                   'AI-powered savings for your family',
                   style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
@@ -438,7 +438,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
                   const Icon(Icons.star, size: 14, color: HuddlColors.yellowDark),
                   const SizedBox(width: 4),
                   Text(
-                    '${_freeViewLimit - _dealsViewedToday} left',
+                    '${_freeViewLimit - _offersViewedToday} left',
                     style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.yellowDark),
                   ),
                 ],
@@ -748,7 +748,7 @@ class _DealsScreenState extends State<DealsScreen> with SingleTickerProviderStat
           return _CategoryTile(
             category: cat,
             onTap: () {
-              if (!_canViewMoreDeals && _isExplorer) {
+              if (!_canViewMoreOffers && _isExplorer) {
                 _showUpgradeDialog();
                 return;
               }

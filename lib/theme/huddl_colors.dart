@@ -150,7 +150,7 @@ class HuddlColors {
 /// Extension on [BuildContext] that returns the correct semantic color for the
 /// current brightness.  Usage: `context.hc.surface`, `context.hc.textPrimary`.
 ///
-/// This keeps all Trips screens theme-aware without touching every `const`
+/// This keeps all Travel screens theme-aware without touching every `const`
 /// reference — screens can gradually migrate from `HuddlColors.white` to
 /// `context.hc.surface` at their own pace.
 extension HuddlAdaptive on BuildContext {

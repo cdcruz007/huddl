@@ -22,7 +22,7 @@ import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
 import '../../services/travel_community_service.dart';
-import '../trips/ask_parents_screen.dart';
+import '../travel/ask_parents_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -1008,8 +1008,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
 
-              // ── Trips activity ─────────────────────────────────────
-              SliverToBoxAdapter(child: _buildTripsActivityCards()),
+              // ── Travel activity ─────────────────────────────────────
+              SliverToBoxAdapter(child: _buildTravelActivityCards()),
 
               // ── Community activity feed ──────────────────────────────
               SliverToBoxAdapter(
@@ -1046,8 +1046,8 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // ── Trips activity cards on home feed ──────────────────────────────────
-  Widget _buildTripsActivityCards() {
+  // ── Travel activity cards on home feed ──────────────────────────────────
+  Widget _buildTravelActivityCards() {
     final svc = TravelCommunityService();
     // Only show if initialized and has questions
     if (svc.questions.isEmpty) return const SizedBox.shrink();
@@ -1072,7 +1072,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const Icon(Icons.flight_takeoff_rounded, size: 18, color: HuddlColors.primary),
               const SizedBox(width: 8),
-              Text('Trips community', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+              Text('Travel community', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
               const Spacer(),
               GestureDetector(
                 onTap: () {

@@ -240,9 +240,9 @@ class SubscriptionService extends ChangeNotifier {
   // TRIPS -- FEATURE GATING
   // ===========================================================================
 
-  bool get hasTripsAccess => limits.tripsAccess;
+  bool get hasTravelAccess => limits.travelAccess;
   bool get hasPackingListAccess => limits.tripsPackingListAccess;
-  int get maxSavedTrips => limits.maxSavedTrips;
+  int get maxSavedTravels => limits.maxSavedTravels;
 
   // ===========================================================================
   // CORE SOCIAL -- USAGE REMAINING HELPERS

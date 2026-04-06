@@ -962,8 +962,8 @@ class _FeatureComparisonTable extends StatelessWidget {
               _row('AI Travel Concierge', '\u2014', '15/day', '\u221E'),
               _rowBool('AI Matchmaker', false, false, true),
 
-              // ---- Trips section ----
-              _sectionHeader('Trips'),
+              // ---- Travel section ----
+              _sectionHeader('Travel'),
               _rowBool('Browse destinations', true, true, true),
               _row('Saved trips', '1', '10', '\u221E'),
               _rowBool('AI packing lists', false, true, true),

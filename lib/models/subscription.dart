@@ -89,10 +89,10 @@ class TierLimits {
   final bool aiTravelConcierge;
   final bool aiMeetupMatchmaker;
 
-  // ---- Trips Feature ----
-  final bool tripsAccess;
+  // ---- Travel Feature ----
+  final bool travelAccess;
   final bool tripsPackingListAccess;
-  final int maxSavedTrips;
+  final int maxSavedTravels;
 
   // ---- Community Q&A Feature ----
   final int maxQuestionsPerWeek;
@@ -131,10 +131,10 @@ class TierLimits {
     required this.aiSmartFeed,
     required this.aiTravelConcierge,
     required this.aiMeetupMatchmaker,
-    // Trips
-    required this.tripsAccess,
+    // Travel
+    required this.travelAccess,
     required this.tripsPackingListAccess,
-    required this.maxSavedTrips,
+    required this.maxSavedTravels,
     // Community Q&A
     this.maxQuestionsPerWeek = 3,
     this.communityBadgesEnabled = false,
@@ -179,10 +179,10 @@ class TierLimits {
     aiSmartFeed: true,
     aiTravelConcierge: false,
     aiMeetupMatchmaker: false,
-    // Trips
-    tripsAccess: true,
+    // Travel
+    travelAccess: true,
     tripsPackingListAccess: false,
-    maxSavedTrips: 1,
+    maxSavedTravels: 1,
     // Community Q&A
     maxQuestionsPerWeek: 3,
     communityBadgesEnabled: false,
@@ -225,10 +225,10 @@ class TierLimits {
     aiSmartFeed: true,
     aiTravelConcierge: true,
     aiMeetupMatchmaker: false,
-    // Trips
-    tripsAccess: true,
+    // Travel
+    travelAccess: true,
     tripsPackingListAccess: true,
-    maxSavedTrips: 10,
+    maxSavedTravels: 10,
     // Community Q&A
     maxQuestionsPerWeek: 15,
     communityBadgesEnabled: true,
@@ -270,10 +270,10 @@ class TierLimits {
     aiSmartFeed: true,
     aiTravelConcierge: true,
     aiMeetupMatchmaker: true,
-    // Trips -- full access
-    tripsAccess: true,
+    // Travel -- full access
+    travelAccess: true,
     tripsPackingListAccess: true,
-    maxSavedTrips: 999,
+    maxSavedTravels: 999,
     // Community Q&A -- unlimited
     maxQuestionsPerWeek: 999,
     communityBadgesEnabled: true,

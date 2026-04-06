@@ -662,7 +662,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       '/groups': 1,
       '/meetups': 2,
       '/marketplace': 3,
-      '/trips': 4,
+      '/travel': 4,
       '/profile': 5,
     };
 

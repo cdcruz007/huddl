@@ -350,7 +350,7 @@ class AiCopilotService {
               label: 'Preloved',
               route: '/marketplace',
               icon: 'storefront'),
-          CopilotAction(label: 'Trips', route: '/trips', icon: 'flight'),
+          CopilotAction(label: 'Travel', route: '/travel', icon: 'flight'),
         ],
         sourceNote: 'Quota limit reached \u00B7 Resets shortly',
       );
@@ -431,7 +431,7 @@ class AiCopilotService {
     buffer.writeln(
         '- **AI Matchmaker**: Matches compatible parents based on interests & child ages');
     buffer.writeln(
-        '- **Trips**: Family-friendly holiday destinations with AI travel concierge');
+        '- **Travel**: Family-friendly holiday destinations with AI travel concierge');
     buffer.writeln(
         '- **DMs & Group Chats**: Message other parents directly or in groups');
     buffer.writeln();
@@ -554,10 +554,10 @@ class AiCopilotService {
         return const [
           CopilotAction(
               label: 'AI Travel Concierge',
-              route: '/trips',
+              route: '/travel',
               icon: 'flight'),
           CopilotAction(
-              label: 'Pack My Bag', route: '/trips', icon: 'luggage'),
+              label: 'Pack My Bag', route: '/travel', icon: 'luggage'),
         ];
       case CopilotCategory.social:
         return const [
@@ -754,17 +754,17 @@ class AiCopilotService {
             '\u2022 **Short haul**: Mallorca, Tenerife, Algarve \u2014 great for little ones\n'
             '\u2022 **UK staycation**: Center Parcs, Bluestone, Haven \u2014 rain or shine\n'
             '\u2022 **City breaks**: Barcelona, Amsterdam \u2014 surprisingly family-friendly\n\n'
-            'Check out huddl Trips for our AI Travel Concierge \u2014 it creates '
+            'Check out huddl Travel for our AI Travel Concierge \u2014 it creates '
             'personalised packing lists based on your children\'s ages!',
         isUser: false,
         category: CopilotCategory.travel,
         actions: const [
           CopilotAction(
               label: 'AI Travel Concierge',
-              route: '/trips',
+              route: '/travel',
               icon: 'flight'),
           CopilotAction(
-              label: 'Pack My Bag', route: '/trips', icon: 'luggage'),
+              label: 'Pack My Bag', route: '/travel', icon: 'luggage'),
         ],
         sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
       );
@@ -829,7 +829,7 @@ class AiCopilotService {
             label: 'Preloved',
             route: '/marketplace',
             icon: 'storefront'),
-        CopilotAction(label: 'Trips', route: '/trips', icon: 'flight'),
+        CopilotAction(label: 'Travel', route: '/travel', icon: 'flight'),
       ],
       sourceNote: 'Offline mode \u00B7 Full AI available when connected',
     );

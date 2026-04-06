@@ -30,11 +30,11 @@ import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
-import '../screens/trips/trips_screen.dart';
-import '../screens/trips/travel_concierge_screen.dart';
-import '../screens/trips/destination_detail_screen.dart';
-import '../screens/trips/packing_list_screen.dart';
-import '../screens/trips/parents_abroad_screen.dart';
+import '../screens/travel/travel_screen.dart';
+import '../screens/travel/travel_concierge_screen.dart';
+import '../screens/travel/destination_detail_screen.dart';
+import '../screens/travel/packing_list_screen.dart';
+import '../screens/travel/parents_abroad_screen.dart';
 import '../screens/subscription/subscription_plans_screen.dart';
 import '../screens/subscription/subscription_checkout_screen.dart';
 import '../screens/subscription/manage_subscription_screen.dart';
@@ -248,9 +248,9 @@ class AppRouter {
           page: const ManageSubscriptionScreen(),
         );
 
-      // ── Trips feature routes ──────────────────────────────────────────
-      case '/trips':
-        return SlidePageRoute(page: const TripsScreen());
+      // ── Travel feature routes ──────────────────────────────────────────
+      case '/travel':
+        return SlidePageRoute(page: const TravelScreen());
 
       case '/travel_concierge':
         return SlidePageRoute(page: const TravelConciergeScreen());

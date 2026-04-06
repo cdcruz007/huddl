@@ -87,10 +87,10 @@ class TutorialService {
       ctaLabel: 'Tap + to list an item',
       iconName: 'storefront',
     ),
-    // 4 — Trips
+    // 4 — Travel
     TutorialStep(
       tabIndex: 4,
-      title: 'Trips',
+      title: 'Travel',
       headline: 'Family travel made easy',
       body:
           'Discover family-friendly destinations, get AI-powered packing '
@@ -99,13 +99,13 @@ class TutorialService {
       ctaLabel: 'Tap Explore to browse destinations',
       iconName: 'flight',
     ),
-    // 5 — Deals
+    // 5 — Offers
     TutorialStep(
       tabIndex: 5,
-      title: 'Deals',
+      title: 'Offers',
       headline: 'Save money on top UK brands',
       body:
-          'Browse exclusive coupons, voucher codes and daily deals from '
+          'Browse exclusive coupons, voucher codes and daily offers from '
           'hundreds of UK stores. Find family-friendly offers on baby '
           'gear, clothing, toys and more. Every purchase through Huddl '
           'earns cashback rewards!',

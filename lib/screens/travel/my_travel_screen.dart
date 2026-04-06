@@ -97,14 +97,14 @@ class ChecklistItem {
 const _destEmojis = {'Tenerife': '🌴', 'Mallorca': '🏖️', 'Algarve': '🌊', 'Costa del Sol': '☀️', 'Lake Garda': '⛵', 'Cornwall': '🏄', 'Cotswolds': '🌿', 'Crete': '🏛️'};
 const _destColors = {'Tenerife': Color(0xFFFF975C), 'Mallorca': Color(0xFF3580F0), 'Algarve': Color(0xFF199A85), 'Costa del Sol': Color(0xFFF3C54F), 'Lake Garda': Color(0xFF5B9DFF), 'Cornwall': Color(0xFF22C55E), 'Cotswolds': Color(0xFF78B0FF), 'Crete': Color(0xFFF69F72)};
 
-class MyTripsScreen extends StatefulWidget {
-  const MyTripsScreen({super.key});
+class MyTravelScreen extends StatefulWidget {
+  const MyTravelScreen({super.key});
 
   @override
-  State<MyTripsScreen> createState() => _MyTripsScreenState();
+  State<MyTravelScreen> createState() => _MyTravelScreenState();
 }
 
-class _MyTripsScreenState extends State<MyTripsScreen> {
+class _MyTravelScreenState extends State<MyTravelScreen> {
   final TravelCommunityService _commSvc = TravelCommunityService();
   final TravelService _travelSvc = TravelService();
   final SubscriptionService _subSvc = SubscriptionService();
@@ -190,7 +190,7 @@ class _MyTripsScreenState extends State<MyTripsScreen> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface, elevation: 0, scrolledUnderElevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios, size: 20), onPressed: () => Navigator.pop(context)),
-        title: Text('My Trips', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
+        title: Text('My Travel', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
         actions: [
           GestureDetector(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TravelConciergeScreen())),

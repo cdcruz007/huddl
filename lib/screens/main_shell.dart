@@ -6,8 +6,8 @@ import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
 import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
-import 'trips/trips_screen.dart';
-import 'deals/deals_screen.dart';
+import 'travel/travel_screen.dart';
+import 'offers/offers_screen.dart';
 import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
@@ -31,8 +31,8 @@ class MainShellState extends State<MainShell> {
     GroupsScreen(),
     EventsScreen(),
     MarketplaceScreen(),
-    TripsScreen(),
-    DealsScreen(),
+    TravelScreen(),
+    OffersScreen(),
     ProfileScreen(),
   ];
 
@@ -71,7 +71,7 @@ class MainShellState extends State<MainShell> {
     );
   }
 
-  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Trips, 5=Deals, 6=Profile)
+  /// Switch to a specific tab by index (0=MyHuddl, 1=Chat, 2=Mingle, 3=Preloved, 4=Travel, 5=Offers, 6=Profile)
   void switchTab(int index) {
     if (index >= 0 && index < _screens.length) {
       setState(() => _currentIndex = index);
@@ -179,14 +179,14 @@ class MainShellState extends State<MainShell> {
                   _NavItem(
                     icon: Icons.flight_outlined,
                     activeIcon: Icons.flight,
-                    label: 'Trips',
+                    label: 'Travel',
                     isActive: _currentIndex == 4,
                     onTap: () => setState(() => _currentIndex = 4),
                   ),
                   _NavItem(
                     icon: Icons.local_offer_outlined,
                     activeIcon: Icons.local_offer,
-                    label: 'Deals',
+                    label: 'Offers',
                     isActive: _currentIndex == 5,
                     onTap: () => setState(() => _currentIndex = 5),
                   ),

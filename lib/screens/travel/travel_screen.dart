@@ -9,20 +9,20 @@ import 'travel_concierge_screen.dart';
 import 'ask_parents_screen.dart';
 import 'parent_experts_screen.dart';
 import 'community_tips_screen.dart';
-import 'my_trips_screen.dart';
+import 'my_travel_screen.dart';
 import '../ai/ai_copilot_screen.dart';
 
-/// Trips — minimal card-based hub matching MyHuddl / Preloved style.
+/// Travel — minimal card-based hub matching MyHuddl / Preloved style.
 /// Audit-hardened: WCAG 2.2 contrast, 48 dp touch targets, Semantics,
 /// micro-interactions, Material ripples, and gesture affordances.
-class TripsScreen extends StatefulWidget {
-  const TripsScreen({super.key});
+class TravelScreen extends StatefulWidget {
+  const TravelScreen({super.key});
 
   @override
-  State<TripsScreen> createState() => _TripsScreenState();
+  State<TravelScreen> createState() => _TravelScreenState();
 }
 
-class _TripsScreenState extends State<TripsScreen> {
+class _TravelScreenState extends State<TravelScreen> {
   final TravelService _travelService = TravelService();
   final TravelCommunityService _communityService = TravelCommunityService();
   bool _isLoading = true;
@@ -101,7 +101,7 @@ class _TripsScreenState extends State<TripsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Trips',
+                  Text('Travel',
                       style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -124,9 +124,9 @@ class _TripsScreenState extends State<TripsScreen> {
           _headerIcon(
             Icons.luggage_outlined,
             HuddlColors.primaryGradient,
-            'My Trips',
+            'My Travel',
             () => Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const MyTripsScreen())),
+                MaterialPageRoute(builder: (_) => const MyTravelScreen())),
           ),
         ],
       ),
