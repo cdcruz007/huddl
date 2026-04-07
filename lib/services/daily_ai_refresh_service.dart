@@ -12,7 +12,7 @@ import 'meetup_prepopulation_service.dart';
 // DAILY AI REFRESH CYCLE  — ENRICHED V3 (Step 13)
 //
 // Orchestrates periodic refresh of all AI-powered services:
-//   1. Knowledge Base refresh (articles from 25+ sources, milestones, vaccinations, seasonal tips)
+//   1. Knowledge Base refresh (articles from 40+ sources, milestones, vaccinations, seasonal tips)
 //   2. Learning Engine profile recalculation and signal decay
 //   3. Feed nudge regeneration with fresh knowledge (including V3 enriched nudges)
 //   4. Event recommendation score recomputation (UK-wide charity events)
@@ -22,9 +22,11 @@ import 'meetup_prepopulation_service.dart';
 // V3 enrichment sources cycled daily:
 //   Tier 1: NHS, NCT, BBC Bitesize
 //   Tier 2: Coram Family Lives, Gingerbread, Contact, Parent Zone, Barnardo's,
-//           Parentkind, Care for the Family, Adoption UK, Family Fund, Sibs
-//   Tier 3: Netmums, Dadsnet, DaddiLife, Parent Talk Podcast, Green Parent,
-//           Slummy Single Mummy, Berkshire Mummies, MummyPages, HuffPost, Bounty
+//           Parentkind, Care for the Family, Adoption UK, Family Fund, Sibs,
+//           Home for Good, CoramBAAF, HappySteps, OnlyMums & Dads
+//   Tier 3: Netmums, Dadsnet, DaddiLife, Dad.info, Parent Talk Podcast,
+//           Green Parent, Today's Parent, Mamas & Papas, Slummy Single Mummy,
+//           Berkshire Mummies, MummyPages, HuffPost Parents, Bounty
 //
 // Runs automatically:
 //   - On app launch (if > 24h since last refresh)
