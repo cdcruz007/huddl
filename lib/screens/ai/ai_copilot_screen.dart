@@ -84,14 +84,14 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios,
-              color: HuddlColors.textDark, size: 20),
+          icon: Icon(Icons.arrow_back_ios,
+              color: context.hc.textPrimary, size: 20),
         ),
         title: Row(
           children: [
@@ -101,8 +101,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 gradient: HuddlColors.aiGradient,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(Icons.auto_awesome,
-                  color: HuddlColors.white, size: 18),
+              child: Icon(Icons.auto_awesome,
+                  color: context.hc.surface, size: 18),
             ),
             const SizedBox(width: 10),
             Column(
@@ -113,7 +113,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 Row(
@@ -151,8 +151,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 _copilot.clearConversation();
                 setState(() {});
               },
-              icon: const Icon(Icons.refresh,
-                  color: HuddlColors.textHint, size: 22),
+              icon: Icon(Icons.refresh,
+                  color: context.hc.textTertiary, size: 22),
               tooltip: 'New conversation',
             ),
           const SizedBox(width: 4),
@@ -183,8 +183,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               gradient: HuddlColors.aiGradient,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome,
-                color: HuddlColors.white, size: 40),
+            child: Icon(Icons.auto_awesome,
+                color: context.hc.surface, size: 40),
           ),
           const SizedBox(height: 16),
           Text(
@@ -192,7 +192,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -201,7 +201,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 13,
-              color: HuddlColors.textSecondary,
+              color: context.hc.textSecondary,
               height: 1.5,
             ),
           ),
@@ -238,7 +238,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -256,9 +256,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
-                    color: HuddlColors.white,
+                    color: context.hc.surface,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: HuddlColors.divider),
+                    border: Border.all(color: context.hc.divider),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -271,7 +271,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                     ],
@@ -295,9 +295,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: HuddlColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Row(
           children: [
@@ -318,18 +318,18 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark,
+                        color: context.hc.textPrimary,
                       )),
                   Text(subtitle,
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textSecondary,
+                        color: context.hc.textSecondary,
                       )),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: HuddlColors.textHint, size: 20),
+            Icon(Icons.chevron_right,
+                color: context.hc.textTertiary, size: 20),
           ],
         ),
       ),
@@ -371,7 +371,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           msg.text,
           style: GoogleFonts.poppins(
             fontSize: 14,
-            color: HuddlColors.white,
+            color: context.hc.surface,
             height: 1.4,
           ),
         ),
@@ -475,7 +475,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     msg.sourceNote!,
                     style: GoogleFonts.poppins(
                       fontSize: 10,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -520,7 +520,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       text: TextSpan(
         style: GoogleFonts.poppins(
           fontSize: 13,
-          color: HuddlColors.textDark,
+          color: context.hc.textPrimary,
           height: 1.5,
         ),
         children: spans,
@@ -548,9 +548,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: HuddlColors.divider),
+              border: Border.all(color: context.hc.divider),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -559,7 +559,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                   'Thinking',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -582,7 +582,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
       padding: EdgeInsets.fromLTRB(
           16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         boxShadow: [
           BoxShadow(
             color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -604,9 +604,9 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                     ? 'Waiting for response...'
                     : 'Ask me anything...',
                 hintStyle: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.textHint),
+                    fontSize: 14, color: context.hc.textTertiary),
                 filled: true,
-                fillColor: HuddlColors.background,
+                fillColor: context.hc.scaffold,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
@@ -633,7 +633,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 shape: BoxShape.circle,
               ),
               child:
-                  const Icon(Icons.send, color: HuddlColors.white, size: 20),
+                  Icon(Icons.send, color: context.hc.surface, size: 20),
             ),
           ),
         ],

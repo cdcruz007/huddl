@@ -72,7 +72,7 @@ class MeetupInviteCard extends StatelessWidget {
           onTap: () => _navigateToMeetupDetail(context),
           child: Container(
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -130,7 +130,7 @@ class MeetupInviteCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             ),
                           ],
@@ -160,7 +160,7 @@ class MeetupInviteCard extends StatelessWidget {
                                           ? Icons.group
                                           : Icons.lock,
                                       size: 12,
-                                      color: HuddlColors.white,
+                                      color: context.hc.surface,
                                     ),
                                     const SizedBox(width: 3),
                                     Text(
@@ -170,7 +170,7 @@ class MeetupInviteCard extends StatelessWidget {
                                       style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.white,
+                                        color: context.hc.surface,
                                       ),
                                     ),
                                   ],
@@ -190,7 +190,7 @@ class MeetupInviteCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             ),
                           ),
@@ -216,7 +216,7 @@ class MeetupInviteCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             ),
                           ],
@@ -237,7 +237,7 @@ class MeetupInviteCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -254,7 +254,7 @@ class MeetupInviteCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textSecondary,
+                              color: context.hc.textSecondary,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -266,7 +266,7 @@ class MeetupInviteCard extends StatelessWidget {
                               timeDisplay,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                color: HuddlColors.textHint,
+                                color: context.hc.textTertiary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -286,7 +286,7 @@ class MeetupInviteCard extends StatelessWidget {
                               location,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                color: HuddlColors.textHint,
+                                color: context.hc.textTertiary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -319,7 +319,7 @@ class MeetupInviteCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.textSecondary,
+                                color: context.hc.textSecondary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

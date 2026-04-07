@@ -24,7 +24,7 @@ class TermsOfServiceScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
       ),

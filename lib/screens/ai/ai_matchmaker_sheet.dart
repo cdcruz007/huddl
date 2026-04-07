@@ -39,8 +39,8 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: HuddlColors.white,
+          decoration: BoxDecoration(
+            color: context.hc.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -51,7 +51,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 child: Container(
                   width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -67,7 +67,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                         gradient: HuddlColors.aiGradient,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 22),
+                      child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -78,13 +78,13 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                             'AI Matchmaker',
                             style: GoogleFonts.poppins(
                               fontSize: 20, fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           Text(
                             'Personalised meetup suggestions just for you',
                             style: GoogleFonts.poppins(
-                              fontSize: 12, color: HuddlColors.textSecondary,
+                              fontSize: 12, color: context.hc.textSecondary,
                             ),
                           ),
                         ],
@@ -92,12 +92,12 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: HuddlColors.textHint),
+                      icon: Icon(Icons.close, color: context.hc.textTertiary),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               // Content
               Expanded(
                 child: _isLoading
@@ -114,14 +114,14 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                             'Suggested Meetups',
                             style: GoogleFonts.poppins(
                               fontSize: 17, fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Based on your profile, child ages, and community activity',
                             style: GoogleFonts.poppins(
-                              fontSize: 12, color: HuddlColors.textSecondary,
+                              fontSize: 12, color: context.hc.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -145,14 +145,14 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
           'Compatible Parents Nearby',
           style: GoogleFonts.poppins(
             fontSize: 17, fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           'Parents with similar-aged kids in your area',
           style: GoogleFonts.poppins(
-            fontSize: 12, color: HuddlColors.textSecondary,
+            fontSize: 12, color: context.hc.textSecondary,
           ),
         ),
         const SizedBox(height: 12),
@@ -198,13 +198,13 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                   decoration: BoxDecoration(
                     color: pct >= 80 ? HuddlColors.success : HuddlColors.blue,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: HuddlColors.white, width: 1.5),
+                    border: Border.all(color: context.hc.surface, width: 1.5),
                   ),
                   child: Text(
                     '$pct%',
                     style: GoogleFonts.poppins(
                       fontSize: 9, fontWeight: FontWeight.w700,
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                     ),
                   ),
                 ),
@@ -216,7 +216,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
             parent.name.split(' ').first,
             style: GoogleFonts.poppins(
               fontSize: 11, fontWeight: FontWeight.w500,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -224,7 +224,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
             Text(
               parent.childAges.first,
               style: GoogleFonts.poppins(
-                fontSize: 9, color: HuddlColors.textHint,
+                fontSize: 9, color: context.hc.textTertiary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -238,9 +238,9 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.divider),
+        border: Border.all(color: context.hc.divider),
         boxShadow: [
           BoxShadow(
             color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -270,13 +270,13 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                         suggestion.title,
                         style: GoogleFonts.poppins(
                           fontSize: 15, fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       Text(
                         '${suggestion.suggestedDate} \u00B7 ${suggestion.suggestedTime}',
                         style: GoogleFonts.poppins(
-                          fontSize: 12, color: HuddlColors.textSecondary,
+                          fontSize: 12, color: context.hc.textSecondary,
                         ),
                       ),
                     ],
@@ -309,11 +309,11 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 // Location
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: HuddlColors.textHint),
+                    Icon(Icons.location_on_outlined, size: 14, color: context.hc.textTertiary),
                     const SizedBox(width: 4),
                     Text(
                       suggestion.suggestedLocation,
-                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                      style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
                     ),
                   ],
                 ),
@@ -322,7 +322,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                 Text(
                   suggestion.description,
                   style: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.textSecondary, height: 1.4,
+                    fontSize: 13, color: context.hc.textSecondary, height: 1.4,
                   ),
                 ),
                 if (suggestion.weatherNote != null) ...[
@@ -429,7 +429,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                               'Create & Invite',
                               style: GoogleFonts.poppins(
                                 fontSize: 12, fontWeight: FontWeight.w600,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             ),
                           ],

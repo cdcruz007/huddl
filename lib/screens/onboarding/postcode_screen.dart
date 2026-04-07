@@ -54,7 +54,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -66,12 +66,12 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    const Text(
+                    Text(
                       'What is your postcode?',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -171,9 +171,9 @@ class _UnderlineInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: HuddlColors.inputBg,
-        border: Border(bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
       ),
       child: TextField(
         controller: controller,
@@ -184,7 +184,7 @@ class _UnderlineInput extends StatelessWidget {
           LengthLimitingTextInputFormatter(8),
           _UpperCaseTextFormatter(),
         ],
-        style: const TextStyle(fontSize: 16, color: HuddlColors.textDark),
+        style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(fontSize: 16, color: HuddlColors.disabledText),

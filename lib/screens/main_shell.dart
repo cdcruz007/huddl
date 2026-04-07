@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
@@ -84,6 +85,7 @@ class MainShellState extends State<MainShell> {
       floatingActionButton: _currentIndex == 2
           ? FloatingActionButton(
               onPressed: () {
+                HapticFeedback.mediumImpact();
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -91,9 +93,11 @@ class MainShellState extends State<MainShell> {
                   ),
                 );
               },
+              tooltip: 'Create a meetup',
               backgroundColor: HuddlColors.primary,
               shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white),
+              elevation: 4,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
             )
           : null,
       bottomNavigationBar: SafeArea(
@@ -193,13 +197,16 @@ class _NavItem extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onTap();
+          },
           customBorder: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           child: SizedBox(
-            width: 48,
-            height: 48,
+            width: 56,
+            height: 56,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,

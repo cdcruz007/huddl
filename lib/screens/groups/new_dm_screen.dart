@@ -102,13 +102,13 @@ class _NewDMScreenState extends State<NewDMScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: HuddlColors.textDark),
+          icon: Icon(Icons.close, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -116,12 +116,12 @@ class _NewDMScreenState extends State<NewDMScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: _isLoading
@@ -131,29 +131,29 @@ class _NewDMScreenState extends State<NewDMScreen> {
               children: [
                 // ── Search bar ──────────────────────────────────────
                 Container(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   padding: const EdgeInsets.all(16),
                   child: Container(
                     height: 44,
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: context.hc.scaffold,
                       borderRadius: BorderRadius.circular(22),
                     ),
                     child: Row(
                       children: [
                         const SizedBox(width: 14),
-                        const Icon(Icons.search,
-                            size: 20, color: HuddlColors.textHint),
+                        Icon(Icons.search,
+                            size: 20, color: context.hc.textTertiary),
                         const SizedBox(width: 8),
                         Expanded(
                           child: TextField(
                             controller: _searchController,
                             style: GoogleFonts.poppins(
-                                fontSize: 14, color: HuddlColors.textDark),
+                                fontSize: 14, color: context.hc.textPrimary),
                             decoration: InputDecoration(
                               hintText: 'Search members...',
                               hintStyle: GoogleFonts.poppins(
-                                  fontSize: 14, color: HuddlColors.textHint),
+                                  fontSize: 14, color: context.hc.textTertiary),
                               border: InputBorder.none,
                               contentPadding:
                                   const EdgeInsets.symmetric(vertical: 10),
@@ -167,10 +167,10 @@ class _NewDMScreenState extends State<NewDMScreen> {
                               _searchController.clear();
                               _applyFilter('');
                             },
-                            child: const Padding(
+                            child: Padding(
                               padding: EdgeInsets.all(8.0),
                               child: Icon(Icons.close,
-                                  size: 18, color: HuddlColors.textHint),
+                                  size: 18, color: context.hc.textTertiary),
                             ),
                           ),
                       ],
@@ -189,7 +189,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -202,15 +202,15 @@ class _NewDMScreenState extends State<NewDMScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.person_search,
-                                  size: 48, color: HuddlColors.textHint),
+                              Icon(Icons.person_search,
+                                  size: 48, color: context.hc.textTertiary),
                               const SizedBox(height: 12),
                               Text(
                                 'No members found',
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textDark,
+                                  color: context.hc.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -218,7 +218,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                                 'Try a different search term.',
                                 style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    color: HuddlColors.textHint),
+                                    color: context.hc.textTertiary),
                               ),
                             ],
                           ),
@@ -226,10 +226,10 @@ class _NewDMScreenState extends State<NewDMScreen> {
                       : ListView.separated(
                           padding: const EdgeInsets.only(bottom: 100),
                           itemCount: _filtered.length,
-                          separatorBuilder: (_, __) => const Divider(
+                          separatorBuilder: (_, __) => Divider(
                             height: 1,
                             indent: 72,
-                            color: HuddlColors.divider,
+                            color: context.hc.divider,
                           ),
                           itemBuilder: (context, index) {
                             final member = _filtered[index];
@@ -275,7 +275,7 @@ class _MemberTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        color: HuddlColors.white,
+        color: context.hc.surface,
         child: Row(
           children: [
             // Avatar with profile photo
@@ -297,7 +297,7 @@ class _MemberTile extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -305,7 +305,7 @@ class _MemberTile extends StatelessWidget {
                     member.parentType == 'mum' ? 'Mum' : 'Dad',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -321,8 +321,8 @@ class _MemberTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.chat_bubble_outline,
-                size: 20, color: HuddlColors.textHint),
+            Icon(Icons.chat_bubble_outline,
+                size: 20, color: context.hc.textTertiary),
           ],
         ),
       ),

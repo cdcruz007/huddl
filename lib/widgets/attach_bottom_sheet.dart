@@ -22,8 +22,8 @@ class _AttachBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
@@ -36,7 +36,7 @@ class _AttachBottomSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -143,7 +143,7 @@ class _AttachIcon extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.textSecondary,
+                color: context.hc.textSecondary,
               ),
             ),
           ],

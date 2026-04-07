@@ -60,7 +60,7 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -184,10 +184,10 @@ class _CarouselPage extends StatelessWidget {
           // Title
           Text(
             data.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: HuddlColors.textDark,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.3,
             ),
             textAlign: TextAlign.center,
@@ -197,10 +197,10 @@ class _CarouselPage extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               data.subtitle!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: HuddlColors.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),

@@ -131,8 +131,8 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.65,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -143,7 +143,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
           Container(
             width: 40, height: 4,
             decoration: BoxDecoration(
-              color: HuddlColors.divider,
+              color: context.hc.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -171,13 +171,13 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         'Huddl AI',
                         style: GoogleFonts.poppins(
                           fontSize: 16, fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       Text(
                         'Ask me anything or try a voice command',
                         style: GoogleFonts.poppins(
-                          fontSize: 11, color: HuddlColors.textHint,
+                          fontSize: 11, color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -213,7 +213,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _isListening
@@ -228,12 +228,12 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     child: TextField(
                       controller: _inputController,
                       focusNode: _inputFocus,
-                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: _isListening ? 'Listening...' : 'Type a command or question...',
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: _isListening ? HuddlColors.blue : HuddlColors.textHint,
+                          color: _isListening ? HuddlColors.blue : context.hc.textTertiary,
                           fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
                         ),
                         border: InputBorder.none,
@@ -298,10 +298,10 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 children: [
                   Text('Suggested actions', style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: HuddlColors.textHint, letterSpacing: 0.3,
+                    color: context.hc.textTertiary, letterSpacing: 0.3,
                   )),
                   const SizedBox(width: 6),
-                  const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.textHint),
+                  Icon(Icons.auto_awesome, size: 12, color: context.hc.textTertiary),
                 ],
               ),
             ),
@@ -339,7 +339,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 children: [
                   Text('Try searching for', style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: HuddlColors.textHint, letterSpacing: 0.3,
+                    color: context.hc.textTertiary, letterSpacing: 0.3,
                   )),
                 ],
               ),
@@ -365,15 +365,15 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         children: [
                           Text(s.query, style: GoogleFonts.poppins(
                             fontSize: 14, fontWeight: FontWeight.w500,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           )),
                           Text(s.reason, style: GoogleFonts.poppins(
-                            fontSize: 11, color: HuddlColors.textHint,
+                            fontSize: 11, color: context.hc.textTertiary,
                           )),
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 12, color: HuddlColors.textHint),
+                    Icon(Icons.arrow_forward_ios, size: 12, color: context.hc.textTertiary),
                   ],
                 ),
               ),
@@ -437,9 +437,9 @@ class _QuickActionChip extends StatelessWidget {
         width: 140,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: HuddlColors.divider),
+          border: Border.all(color: context.hc.divider),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.04),
@@ -455,10 +455,10 @@ class _QuickActionChip extends StatelessWidget {
             const Spacer(),
             Text(action.label, style: GoogleFonts.poppins(
               fontSize: 12, fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             )),
             Text(action.description, style: GoogleFonts.poppins(
-              fontSize: 9, color: HuddlColors.textHint,
+              fontSize: 9, color: context.hc.textTertiary,
             ), maxLines: 1, overflow: TextOverflow.ellipsis),
           ],
         ),

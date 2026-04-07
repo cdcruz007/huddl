@@ -34,7 +34,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -54,12 +54,12 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Text(
+              Text(
                 'Add a profile photo',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -156,7 +156,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
     final hasPhoto = _pickedFile != null;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -188,12 +188,12 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
             const SizedBox(height: 32),
 
             // ── Title ────────────────────────────────────────────────────
-            const Text(
+            Text(
               'Add a photo',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: HuddlColors.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -290,7 +290,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        backgroundColor: Colors.white,
+                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                       ),
                     ),
                   ),
@@ -335,7 +335,7 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
   /// Returns the asset path of the gender-matched default avatar illustration.
   String get _defaultAvatarAsset {
-    final parentType = _onboarding.parentType; // 'mum' or 'dad'
+    final parentType = _onboarding.parentType?.toLowerCase(); // 'mum' or 'dad'
     return (parentType == 'dad') ? _kDadAvatar : _kMumAvatar;
   }
 

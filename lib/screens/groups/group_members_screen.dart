@@ -125,13 +125,13 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
     final filtered = _filteredMembers;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -142,44 +142,44 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
               style: GoogleFonts.poppins(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             Text(
               '${_members.length} members',
               style:
-                  GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                  GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
             ),
           ],
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: Column(
         children: [
           // ── Search bar ──────────────────────────────────────────────
           Container(
-            color: HuddlColors.white,
+            color: context.hc.surface,
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Container(
               height: 40,
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
                   const SizedBox(width: 12),
-                  const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                  Icon(Icons.search, size: 20, color: context.hc.textTertiary),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       onChanged: (val) =>
                           setState(() => _searchQuery = val),
                       style: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textDark),
+                          fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search members',
                         border: InputBorder.none,
@@ -188,7 +188,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         contentPadding: EdgeInsets.zero,
                         isDense: true,
                         hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: HuddlColors.textHint),
+                            fontSize: 14, color: context.hc.textTertiary),
                       ),
                     ),
                   ),
@@ -199,7 +199,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
 
           // ── Role filter chips ───────────────────────────────────────
           Container(
-            color: HuddlColors.white,
+            color: context.hc.surface,
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
             child: Row(
               children: _filters.map((f) {
@@ -245,16 +245,16 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                     child: Text(
                       'No members found',
                       style: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textHint),
+                          fontSize: 14, color: context.hc.textTertiary),
                     ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, __) => const Divider(
+                    separatorBuilder: (_, __) => Divider(
                       height: 1,
                       indent: 72,
-                      color: HuddlColors.divider,
+                      color: context.hc.divider,
                     ),
                     itemBuilder: (context, index) {
                       final member = filtered[index];
@@ -275,7 +275,7 @@ class _MemberTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: HuddlColors.white,
+      color: context.hc.surface,
       child: ListTile(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -293,7 +293,7 @@ class _MemberTile extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             if (member.role == 'admin') ...[
@@ -321,11 +321,11 @@ class _MemberTile extends StatelessWidget {
           member.isOnline ? 'Online' : 'Offline',
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: member.isOnline ? _kOnline : HuddlColors.textHint,
+            color: member.isOnline ? _kOnline : context.hc.textTertiary,
           ),
         ),
         trailing:
-            const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+            Icon(Icons.chevron_right, color: context.hc.textTertiary),
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

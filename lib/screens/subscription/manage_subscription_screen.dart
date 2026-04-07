@@ -131,7 +131,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Cancel via Your Store',
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +139,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             Text(
               'To cancel your subscription, please go to your device settings:',
               style: GoogleFonts.poppins(
-                  fontSize: 13, color: HuddlColors.textSecondary),
+                  fontSize: 13, color: context.hc.textSecondary),
             ),
             const SizedBox(height: 16),
             if (defaultTargetPlatform == TargetPlatform.iOS) ...[
@@ -161,7 +161,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
-                  color: HuddlColors.textHint),
+                  color: context.hc.textTertiary),
             ),
           ],
         ),
@@ -228,7 +228,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Wait \u2014 how about a free pause?',
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -251,11 +251,11 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark)),
+                                color: context.hc.textPrimary)),
                         Text(
                           'Keep your data & groups. Resume when you\'re ready \u2014 no charge during the pause.',
                           style: GoogleFonts.poppins(
-                              fontSize: 12, color: HuddlColors.textSecondary),
+                              fontSize: 12, color: context.hc.textSecondary),
                         ),
                       ],
                     ),
@@ -296,20 +296,20 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
     final isPaid = sub.isPaid;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Subscription',
             style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark)),
+                color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -333,7 +333,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
                 icon: Icons.people_outline,
@@ -390,7 +390,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
                 icon: Icons.auto_awesome,
@@ -460,13 +460,13 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                           style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark)),
+                              color: context.hc.textPrimary)),
                       const SizedBox(height: 6),
                       Text(
                         'Unlimited groups, DMs, meetups, full AI suite, ad-free & more \u2014 from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.textSecondary),
+                            fontSize: 13, color: context.hc.textSecondary),
                       ),
                       const SizedBox(height: 16),
                       SizedBox(
@@ -505,7 +505,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                         style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.textHint)),
+                            color: context.hc.textTertiary)),
                   ),
                 ),
               ] else ...[
@@ -622,7 +622,7 @@ class _StepRow extends StatelessWidget {
           Expanded(
             child: Text(text,
                 style: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.textDark)),
+                    fontSize: 13, color: context.hc.textPrimary)),
           ),
         ],
       ),
@@ -640,7 +640,7 @@ class _PaymentInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HuddlColors.gray200),
       ),
@@ -671,19 +671,19 @@ class _PaymentInfoCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark)),
+                        color: context.hc.textPrimary)),
                 Text(
                   kIsWeb
                       ? 'Managed through your Stripe account'
                       : 'Managed through your ${defaultTargetPlatform == TargetPlatform.iOS ? 'Apple ID' : 'Google'} account',
                   style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textSecondary),
+                      fontSize: 11, color: context.hc.textSecondary),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right,
-              color: HuddlColors.textHint, size: 20),
+          Icon(Icons.chevron_right,
+              color: context.hc.textTertiary, size: 20),
         ],
       ),
     );
@@ -722,7 +722,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
           style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark)),
+              color: context.hc.textPrimary)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -730,7 +730,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
           children: [
             Text('Help us improve \u2014 what\'s your main reason for cancelling?',
                 style: GoogleFonts.poppins(
-                    fontSize: 13, color: HuddlColors.textSecondary)),
+                    fontSize: 13, color: context.hc.textSecondary)),
             const SizedBox(height: 12),
             ..._reasons.map((r) => GestureDetector(
                   onTap: () => setState(() => _selectedReason = r),
@@ -750,7 +750,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                         const SizedBox(width: 10),
                         Text(r,
                             style: GoogleFonts.poppins(
-                                fontSize: 13, color: HuddlColors.textDark)),
+                                fontSize: 13, color: context.hc.textPrimary)),
                       ],
                     ),
                   ),
@@ -762,7 +762,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
                 decoration: InputDecoration(
                   hintText: 'Tell us more...',
                   hintStyle: GoogleFonts.poppins(
-                      fontSize: 13, color: HuddlColors.textHint),
+                      fontSize: 13, color: context.hc.textTertiary),
                   border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.all(12),
@@ -778,7 +778,7 @@ class _ExitSurveyDialogState extends State<_ExitSurveyDialog> {
         TextButton(
           onPressed: () => Navigator.pop(context, null),
           child: Text('Never mind',
-              style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+              style: GoogleFonts.poppins(color: context.hc.textTertiary)),
         ),
         TextButton(
           onPressed: _selectedReason != null
@@ -822,7 +822,7 @@ class _CurrentPlanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         boxShadow: [
@@ -856,7 +856,7 @@ class _CurrentPlanCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: HuddlColors.textDark)),
+                                color: context.hc.textPrimary)),
                         if (subscription.isTrial) ...[
                           const SizedBox(width: 8),
                           Container(
@@ -908,12 +908,12 @@ class _CurrentPlanCard extends StatelessWidget {
                             ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
                             : 'Auto-renews ${_formatDate(subscription.renewalDate!)}',
                         style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.textSecondary),
+                            fontSize: 12, color: context.hc.textSecondary),
                       )
                     else
                       Text('Free plan \u2014 upgrade anytime',
                           style: GoogleFonts.poppins(
-                              fontSize: 12, color: HuddlColors.textHint)),
+                              fontSize: 12, color: context.hc.textTertiary)),
                   ],
                 ),
               ),
@@ -976,7 +976,7 @@ class _UsageCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isAtLimit
@@ -1006,7 +1006,7 @@ class _UsageCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.textDark)),
+                            color: context.hc.textPrimary)),
                     Text(
                       isUnlimited ? '$used / \u221E' : '$used / $limit',
                       style: GoogleFonts.poppins(

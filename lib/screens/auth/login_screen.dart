@@ -177,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -202,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // ── Title ────────────────────────────────────────
               Text(
                 'Welcome back!',
-                style: AppTextStyles.h1.copyWith(color: HuddlColors.textDark),
+                style: AppTextStyles.h1.copyWith(color: Theme.of(context).colorScheme.onSurface),
                 textAlign: TextAlign.center,
               ),
 
@@ -535,7 +535,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark)),
+                        color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 8),
                 Text(
                     'Enter your UK mobile number. We\'ll send an SMS code to verify your identity.',
@@ -550,7 +550,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(
-                        color: HuddlColors.inputBg,
+                        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Text('\u{1F1EC}\u{1F1E7} +44',

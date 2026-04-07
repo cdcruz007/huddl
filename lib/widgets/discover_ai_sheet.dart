@@ -165,7 +165,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -204,7 +204,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           'Find groups, filter, or just ask',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                       ],
@@ -364,13 +364,13 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                         letterSpacing: 0.3,
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Icon(Icons.auto_awesome,
-                        size: 12, color: HuddlColors.textHint),
+                    Icon(Icons.auto_awesome,
+                        size: 12, color: context.hc.textTertiary),
                   ],
                 ),
               ),
@@ -402,7 +402,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                         decoration: BoxDecoration(
                           color: context.hc.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: HuddlColors.divider),
+                          border: Border.all(color: context.hc.divider),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.04),
@@ -429,7 +429,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                               action.description,
                               style: GoogleFonts.poppins(
                                 fontSize: 9,
-                                color: HuddlColors.textHint,
+                                color: context.hc.textTertiary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -455,7 +455,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                         letterSpacing: 0.3,
                       ),
                     ),
@@ -498,14 +498,14 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                   s.reason,
                                   style: GoogleFonts.poppins(
                                     fontSize: 11,
-                                    color: HuddlColors.textHint,
+                                    color: context.hc.textTertiary,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios,
-                              size: 12, color: HuddlColors.textHint),
+                          Icon(Icons.arrow_forward_ios,
+                              size: 12, color: context.hc.textTertiary),
                         ],
                       ),
                     ),

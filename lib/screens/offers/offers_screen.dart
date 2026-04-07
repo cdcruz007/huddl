@@ -186,12 +186,12 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           'You\'ve reached your daily deal limit on the Explorer plan. '
           'Upgrade to Neighbourhood for unlimited deals, cashback access, '
           'and exclusive offers!',
-          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary),
+          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text('Maybe Later', style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+            child: Text('Maybe Later', style: GoogleFonts.poppins(color: context.hc.textTertiary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -205,7 +205,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               backgroundColor: HuddlColors.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            child: Text('Upgrade Now', style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600)),
+            child: Text('Upgrade Now', style: GoogleFonts.poppins(color: context.hc.surface, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -236,7 +236,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             const SizedBox(height: 16),
             Text(coupon.storeTitle, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(coupon.title, style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary), textAlign: TextAlign.center),
+            Text(coupon.title, style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             if (coupon.hasCode) ...[
               Container(
@@ -291,7 +291,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             ),
             if (coupon.expiryDate.isNotEmpty) ...[
               const SizedBox(height: 12),
-              Text('Expires: ${coupon.expiryDate}', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint)),
+              Text('Expires: ${coupon.expiryDate}', style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
             ],
             const SizedBox(height: 8),
           ],
@@ -324,7 +324,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       body: _selectedStore != null ? _buildStoreDetail() : _buildMainView(),
     );
   }
@@ -387,7 +387,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               gradient: const LinearGradient(colors: [Color(0xFFFF6B6B), Color(0xFFFF975C)]),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.local_offer_rounded, color: HuddlColors.white, size: 22),
+            child: Icon(Icons.local_offer_rounded, color: context.hc.surface, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -397,7 +397,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 Text('Offers', style: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w700, color: HuddlColors.textPrimary)),
                 Text(
                   'AI-powered savings for your family',
-                  style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                  style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
                 ),
               ],
             ),
@@ -416,9 +416,9 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 gradient: HuddlColors.aiGradient,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.auto_awesome,
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 size: 18,
               ),
             ),
@@ -455,7 +455,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
       child: Container(
         height: 46,
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -471,15 +471,15 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search stores, brands...',
-            hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-            prefixIcon: const Icon(Icons.search, color: HuddlColors.textHint, size: 20),
+            hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+            prefixIcon: Icon(Icons.search, color: context.hc.textTertiary, size: 20),
             suffixIcon: _searchQuery.isNotEmpty
                 ? GestureDetector(
                     onTap: () => setState(() {
                       _searchController.clear();
                       _searchQuery = '';
                     }),
-                    child: const Icon(Icons.close, color: HuddlColors.textHint, size: 18),
+                    child: Icon(Icons.close, color: context.hc.textTertiary, size: 18),
                   )
                 : null,
             border: InputBorder.none,
@@ -544,7 +544,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 alignment: Alignment.centerLeft,
                 child: Text(
                   banner.title,
-                  style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600, fontSize: 16),
+                  style: GoogleFonts.poppins(color: context.hc.surface, fontWeight: FontWeight.w600, fontSize: 16),
                 ),
               ),
             ),
@@ -579,7 +579,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 18),
+                child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -589,7 +589,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                     Text('Smart Picks For You',
                         style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
                     Text('AI-curated based on your family',
-                        style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+                        style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary)),
                   ],
                 ),
               ),
@@ -609,7 +609,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -617,7 +617,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   const Icon(Icons.auto_awesome, size: 40, color: HuddlColors.gray300),
                   const SizedBox(height: 12),
                   Text('AI is learning your preferences',
-                      style: GoogleFonts.poppins(color: HuddlColors.textHint, fontSize: 14)),
+                      style: GoogleFonts.poppins(color: context.hc.textTertiary, fontSize: 14)),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: _loadAiPicks,
@@ -667,7 +667,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: HuddlColors.gray100),
                     ),
@@ -688,7 +688,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(entry.value,
-                              style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary)),
+                              style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
                         ),
                       ],
                     ),
@@ -710,7 +710,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           children: [
             Icon(Icons.search_off, size: 56, color: HuddlColors.gray300),
             const SizedBox(height: 12),
-            Text('No stores found', style: GoogleFonts.poppins(color: HuddlColors.textHint, fontSize: 15)),
+            Text('No stores found', style: GoogleFonts.poppins(color: context.hc.textTertiary, fontSize: 15)),
           ],
         ),
       );
@@ -835,12 +835,12 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         Text('Family Favourites', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
                         Text(
                           'Handpicked deals for parents & kids',
-                          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textSecondary),
+                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+                  Icon(Icons.chevron_right, color: context.hc.textTertiary),
                 ],
               ),
             ),
@@ -876,7 +876,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   children: [
                     Icon(Icons.child_care, size: 56, color: HuddlColors.gray300),
                     const SizedBox(height: 12),
-                    Text('Family deals coming soon!', style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+                    Text('Family deals coming soon!', style: GoogleFonts.poppins(color: context.hc.textTertiary)),
                   ],
                 ),
               ),
@@ -945,7 +945,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                           children: [
                             const Icon(Icons.local_offer_outlined, size: 48, color: HuddlColors.gray300),
                             const SizedBox(height: 12),
-                            Text('No coupons available right now', style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+                            Text('No coupons available right now', style: GoogleFonts.poppins(color: context.hc.textTertiary)),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () => _openDealLink(store.id),
@@ -1013,7 +1013,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           children: [
             const Icon(Icons.wifi_off_rounded, size: 56, color: HuddlColors.gray300),
             const SizedBox(height: 16),
-            Text(_error!, style: GoogleFonts.poppins(color: HuddlColors.textSecondary), textAlign: TextAlign.center),
+            Text(_error!, style: GoogleFonts.poppins(color: context.hc.textSecondary), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _loadData,
@@ -1046,7 +1046,7 @@ class _StoreCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -1112,7 +1112,7 @@ class _StoreListTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -1140,7 +1140,7 @@ class _StoreListTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+            Icon(Icons.chevron_right, color: context.hc.textTertiary),
           ],
         ),
       ),
@@ -1161,7 +1161,7 @@ class _CategoryTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -1190,11 +1190,11 @@ class _CategoryTile extends StatelessWidget {
                   if (category.offerCouponStr.isNotEmpty)
                     Text(category.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success)),
                   if (category.subCategories.isNotEmpty)
-                    Text('${category.subCategories.length} subcategories', style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint)),
+                    Text('${category.subCategories.length} subcategories', style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary)),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+            Icon(Icons.chevron_right, color: context.hc.textTertiary),
           ],
         ),
       ),
@@ -1248,7 +1248,7 @@ class _CouponCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: isTopPick ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5) : null,
           boxShadow: [
@@ -1275,7 +1275,7 @@ class _CouponCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 12),
+                      Icon(Icons.auto_awesome, color: context.hc.surface, size: 12),
                       const SizedBox(width: 4),
                       Text('AI Top Pick', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
                     ],
@@ -1327,7 +1327,7 @@ class _CouponCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 4),
                           child: Text(
                             'Expires: ${coupon.expiryDate}',
-                            style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                            style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
                           ),
                         ),
                     ],
@@ -1342,7 +1342,7 @@ class _CouponCard extends StatelessWidget {
                   ),
                   child: Text(
                     coupon.hasCode ? 'View' : 'Get',
-                    style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                    style: GoogleFonts.poppins(color: context.hc.surface, fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),
               ],
@@ -1521,7 +1521,7 @@ class _AiPickCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: rank == 1
               ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5)
@@ -1624,7 +1624,7 @@ class _AiPickCard extends StatelessWidget {
                     recommendation.parentTip,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -1643,7 +1643,7 @@ class _AiPickCard extends StatelessWidget {
                           tag,
                           style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                       )).toList(),
@@ -1666,7 +1666,7 @@ class _AiPickCard extends StatelessWidget {
                 ),
                 Text(
                   'match',
-                  style: GoogleFonts.poppins(fontSize: 9, color: HuddlColors.textHint),
+                  style: GoogleFonts.poppins(fontSize: 9, color: context.hc.textTertiary),
                 ),
               ],
             ),
@@ -1718,7 +1718,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.15)),
       ),
@@ -1755,7 +1755,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
             'Analysing stores and offers for your family',
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: HuddlColors.textSecondary,
+              color: context.hc.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
@@ -1781,7 +1781,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: HuddlColors.background,
+      color: context.hc.scaffold,
       child: tabBar,
     );
   }
@@ -1860,9 +1860,9 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
                     if (_viewingSub != null)
                       GestureDetector(
                         onTap: _goBack,
-                        child: const Padding(
+                        child: Padding(
                           padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.arrow_back_ios, size: 18, color: HuddlColors.textDark),
+                          child: Icon(Icons.arrow_back_ios, size: 18, color: context.hc.textPrimary),
                         ),
                       ),
                     const Icon(Icons.category_rounded, color: HuddlColors.primary),
@@ -1912,7 +1912,7 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
               const SizedBox(height: 12),
               Text(
                 'No subcategories available for ${cat.title}.\nBrowse partner stores for deals!',
-                style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
+                style: GoogleFonts.poppins(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1940,7 +1940,7 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
           subtitle: sub.offerCouponStr.isNotEmpty
               ? Text(sub.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success))
               : null,
-          trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+          trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
         );
       },
     );
@@ -1962,7 +1962,7 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
               const SizedBox(height: 12),
               Text(
                 'No stores found for ${_viewingSub?.title ?? 'this category'}.\nCheck back later for new deals!',
-                style: GoogleFonts.poppins(color: HuddlColors.textSecondary),
+                style: GoogleFonts.poppins(color: context.hc.textSecondary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1983,9 +1983,9 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: HuddlColors.divider),
+                border: Border.all(color: context.hc.divider),
               ),
               child: Row(
                 children: [
@@ -2001,13 +2001,13 @@ class _CategoryStoresSheetState extends State<_CategoryStoresSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(store.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                        Text(store.title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
                         if (store.offerCouponStr.isNotEmpty)
                           Text(store.offerCouponStr, style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.success)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right, color: HuddlColors.textHint, size: 20),
+                  Icon(Icons.chevron_right, color: context.hc.textTertiary, size: 20),
                 ],
               ),
             ),

@@ -47,14 +47,16 @@ class UnderlinedTextField extends StatelessWidget {
           obscureText: obscureText,
           onChanged: onChanged,
           maxLines: maxLines,
-          style: AppTextStyles.body1,
+          style: AppTextStyles.body1.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: AppTextStyles.inputHint,
             suffixIcon: suffixIcon,
             errorText: errorText,
             filled: true,
-            fillColor: HuddlColors.inputBg, // Light gray background
+            fillColor: context.hc.inputBg, // Light gray background
             enabledBorder: const UnderlineInputBorder(
               borderSide: BorderSide(color: HuddlColors.primary, width: 2),
             ),

@@ -67,13 +67,13 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context, null),
         ),
         title: Text(
@@ -81,7 +81,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         actions: [
@@ -102,7 +102,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                       letterSpacing: 0.5,
                     ),
                   ),
@@ -112,7 +112,7 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: GridView.builder(
@@ -134,9 +134,9 @@ class _ImageGalleryPickerState extends State<ImageGalleryPicker> {
                   _kGalleryPhotos[index],
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
-                    color: HuddlColors.background,
-                    child: const Icon(Icons.broken_image,
-                        color: HuddlColors.textHint),
+                    color: context.hc.scaffold,
+                    child: Icon(Icons.broken_image,
+                        color: context.hc.textTertiary),
                   ),
                 ),
                 // Selection overlay

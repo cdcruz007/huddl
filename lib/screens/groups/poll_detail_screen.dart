@@ -87,7 +87,7 @@ class PollCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: expired ? HuddlColors.background : HuddlColors.white,
+        color: expired ? context.hc.scaffold : HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: expired
@@ -132,7 +132,7 @@ class PollCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ),
@@ -200,7 +200,7 @@ class PollCard extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             if (poll.data.isCalendarMode)
@@ -241,7 +241,7 @@ class PollCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: selected
                         ? HuddlColors.primary.withValues(alpha: 0.1)
-                        : HuddlColors.background,
+                        : context.hc.scaffold,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color:
@@ -295,7 +295,7 @@ class PollCard extends StatelessWidget {
                                   fontWeight: selected
                                       ? FontWeight.w600
                                       : FontWeight.w400,
-                                  color: HuddlColors.textDark,
+                                  color: context.hc.textPrimary,
                                 ),
                               ),
                             ),
@@ -318,7 +318,7 @@ class PollCard extends StatelessWidget {
                           '($pct%)',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                       ],
@@ -334,18 +334,18 @@ class PollCard extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.how_to_vote_outlined,
-                    size: 14, color: HuddlColors.textHint),
+                    size: 14, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
                   '${poll.totalVotes} vote${poll.totalVotes != 1 ? 's' : ''}',
                   style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textHint),
+                      fontSize: 11, color: context.hc.textTertiary),
                 ),
                 if (poll.data.expiresAt != null) ...[
                   const SizedBox(width: 12),
                   Icon(Icons.access_time,
                       size: 14,
-                      color: expired ? HuddlColors.error : HuddlColors.textHint),
+                      color: expired ? HuddlColors.error : context.hc.textTertiary),
                   const SizedBox(width: 4),
                   Text(
                     expired
@@ -353,7 +353,7 @@ class PollCard extends StatelessWidget {
                         : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: expired ? HuddlColors.error : HuddlColors.textHint,
+                      color: expired ? HuddlColors.error : context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -382,12 +382,12 @@ class PollCard extends StatelessWidget {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert,
           size: 20,
-          color: HuddlColors.textHint.withValues(alpha: 0.7)),
+          color: context.hc.textTertiary.withValues(alpha: 0.7)),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       offset: const Offset(0, 32),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: HuddlColors.white,
+      color: context.hc.surface,
       elevation: 8,
       onSelected: (value) {
         switch (value) {
@@ -416,7 +416,7 @@ class PollCard extends StatelessWidget {
               Icon(
                 poll.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
                 size: 20,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
               const SizedBox(width: 12),
               Text(
@@ -424,7 +424,7 @@ class PollCard extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
             ],
@@ -437,15 +437,15 @@ class PollCard extends StatelessWidget {
             value: 'results',
             child: Row(
               children: [
-                const Icon(Icons.bar_chart_outlined,
-                    size: 20, color: HuddlColors.textDark),
+                Icon(Icons.bar_chart_outlined,
+                    size: 20, color: context.hc.textPrimary),
                 const SizedBox(width: 12),
                 Text(
                   'See Results',
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
               ],
@@ -475,15 +475,15 @@ class PollCard extends StatelessWidget {
               value: 'change_vote',
               child: Row(
                 children: [
-                  const Icon(Icons.how_to_vote_outlined,
-                      size: 20, color: HuddlColors.textDark),
+                  Icon(Icons.how_to_vote_outlined,
+                      size: 20, color: context.hc.textPrimary),
                   const SizedBox(width: 12),
                   Text(
                     'See Active Poll',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                 ],
@@ -495,15 +495,15 @@ class PollCard extends StatelessWidget {
             value: 'results',
             child: Row(
               children: [
-                const Icon(Icons.bar_chart_outlined,
-                    size: 20, color: HuddlColors.textDark),
+                Icon(Icons.bar_chart_outlined,
+                    size: 20, color: context.hc.textPrimary),
                 const SizedBox(width: 12),
                 Text(
                   'See Results',
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
               ],
@@ -544,13 +544,13 @@ class PollDetailScreen extends StatelessWidget {
     final total = poll.totalVotes;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -558,7 +558,7 @@ class PollDetailScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -575,7 +575,7 @@ class PollDetailScreen extends StatelessWidget {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: ListView(
@@ -585,7 +585,7 @@ class PollDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
@@ -612,7 +612,7 @@ class PollDetailScreen extends StatelessWidget {
                             'Created by ${poll.creatorName}',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                           if (poll.isExpired)
@@ -643,7 +643,7 @@ class PollDetailScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 if (poll.data.isCalendarMode)
@@ -681,7 +681,7 @@ class PollDetailScreen extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: isMyVote
                     ? Border.all(color: HuddlColors.primary, width: 1.5)
@@ -708,7 +708,7 @@ class PollDetailScreen extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                         ),
                       ),
@@ -741,11 +741,11 @@ class PollDetailScreen extends StatelessWidget {
                   Text(
                     '$count vote${count != 1 ? 's' : ''}',
                     style: GoogleFonts.poppins(
-                        fontSize: 12, color: HuddlColors.textHint),
+                        fontSize: 12, color: context.hc.textTertiary),
                   ),
                   if (voters.isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    const Divider(height: 1, color: HuddlColors.divider),
+                    Divider(height: 1, color: context.hc.divider),
                     const SizedBox(height: 10),
                     ...voters.map((v) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
@@ -757,7 +757,7 @@ class PollDetailScreen extends StatelessWidget {
                                 v.memberName,
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
-                                  color: HuddlColors.textSecondary,
+                                  color: context.hc.textSecondary,
                                 ),
                               ),
                             ],
@@ -780,14 +780,14 @@ class PollDetailScreen extends StatelessWidget {
                   Navigator.pop(context);
                   onDeletePoll?.call();
                 },
-                icon: const Icon(Icons.delete_outline,
-                    color: HuddlColors.white, size: 20),
+                icon: Icon(Icons.delete_outline,
+                    color: context.hc.surface, size: 20),
                 label: Text(
                   'Delete Poll',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.white,
+                    color: context.hc.surface,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -53,7 +53,7 @@ class _DueDateScreenState extends State<DueDateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -67,12 +67,12 @@ class _DueDateScreenState extends State<DueDateScreen> {
                     const SizedBox(height: 28),
 
                     // ── Title ────────────────────────────────────────
-                    const Text(
+                    Text(
                       'When is your baby due?',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),

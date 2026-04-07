@@ -46,8 +46,8 @@ class _UpgradePromptSheet extends StatelessWidget {
     final currentTier = service.tier;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
@@ -84,13 +84,13 @@ class _UpgradePromptSheet extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
               const SizedBox(height: 8),
 
               Text(message,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
-                      fontSize: 14, color: HuddlColors.textSecondary)),
+                      fontSize: 14, color: context.hc.textSecondary)),
               const SizedBox(height: 24),
 
               // Quick tier previews
@@ -163,7 +163,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textDark),
+                              color: context.hc.textPrimary),
                         ),
                       ),
                     ],
@@ -201,7 +201,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                     style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.textHint)),
+                        color: context.hc.textTertiary)),
               ),
             ],
           ),
@@ -260,7 +260,7 @@ class _QuickTierPreview extends StatelessWidget {
                           style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark)),
+                              color: context.hc.textPrimary)),
                       const SizedBox(width: 6),
                       Text(price,
                           style: GoogleFonts.poppins(
@@ -273,7 +273,7 @@ class _QuickTierPreview extends StatelessWidget {
                   Text(
                     benefits.join(' \u2022 '),
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.textSecondary),
+                        fontSize: 11, color: context.hc.textSecondary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -313,7 +313,7 @@ class UpgradeBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 20),
+            Icon(Icons.auto_awesome, color: context.hc.surface, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,

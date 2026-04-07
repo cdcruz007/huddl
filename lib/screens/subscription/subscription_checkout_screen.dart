@@ -208,20 +208,20 @@ class _SubscriptionCheckoutScreenState
     final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Checkout',
             style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark)),
+                color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -242,7 +242,7 @@ class _SubscriptionCheckoutScreenState
                         style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark)),
+                            color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     _BillingOptionTile(
                       label: 'Monthly',
@@ -356,7 +356,7 @@ class _SubscriptionCheckoutScreenState
                         style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark)),
+                            color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     _PaymentMethodsSection(paymentService: _payService),
 
@@ -367,7 +367,7 @@ class _SubscriptionCheckoutScreenState
                         style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark)),
+                            color: context.hc.textPrimary)),
                     const SizedBox(height: 10),
                     ..._plan.highlights.map((h) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
@@ -384,7 +384,7 @@ class _SubscriptionCheckoutScreenState
                                 child: Text(h,
                                     style: GoogleFonts.poppins(
                                         fontSize: 13,
-                                        color: HuddlColors.textSecondary)),
+                                        color: context.hc.textSecondary)),
                               ),
                             ],
                           ),
@@ -418,7 +418,7 @@ class _SubscriptionCheckoutScreenState
                                 text: 'I agree to the ',
                                 style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: HuddlColors.textSecondary),
+                                    color: context.hc.textSecondary),
                                 children: [
                                   TextSpan(
                                     text: 'Terms of Service',
@@ -457,7 +457,7 @@ class _SubscriptionCheckoutScreenState
                         'You can manage or cancel your subscription in your '
                         'device\u2019s account settings at any time.',
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: HuddlColors.textHint),
+                            fontSize: 11, color: context.hc.textTertiary),
                       ),
                     ),
                   ],
@@ -469,7 +469,7 @@ class _SubscriptionCheckoutScreenState
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 boxShadow: [
                   BoxShadow(
                     color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -489,7 +489,7 @@ class _SubscriptionCheckoutScreenState
                             style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark)),
+                                color: context.hc.textPrimary)),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -499,7 +499,7 @@ class _SubscriptionCheckoutScreenState
                                 '\u00A3${_plan.monthlyPrice.toStringAsFixed(2)}/month',
                                 style: GoogleFonts.poppins(
                                     fontSize: 12,
-                                    color: HuddlColors.textHint,
+                                    color: context.hc.textTertiary,
                                     decoration: TextDecoration.lineThrough),
                               ),
                             ],
@@ -538,12 +538,12 @@ class _SubscriptionCheckoutScreenState
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(
+                                  SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2.5,
-                                      color: HuddlColors.white,
+                                      color: context.hc.surface,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -568,7 +568,7 @@ class _SubscriptionCheckoutScreenState
                                         ? Icons.lock_outline
                                         : Icons.payment,
                                     size: 18,
-                                    color: HuddlColors.white,
+                                    color: context.hc.surface,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -591,7 +591,7 @@ class _SubscriptionCheckoutScreenState
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textHint)),
+                              color: context.hc.textTertiary)),
                     ),
                   ],
                 ),
@@ -635,7 +635,7 @@ class _PaymentMethodsSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HuddlColors.gray200),
       ),
@@ -721,7 +721,7 @@ class _PaymentMethodsSection extends StatelessWidget {
           const SizedBox(height: 4),
           Text(label,
               style: GoogleFonts.poppins(
-                  fontSize: 9, color: HuddlColors.textHint)),
+                  fontSize: 9, color: HuddlColors.textTertiary)),
         ],
       ),
     );
@@ -787,7 +787,7 @@ class _PaymentProviderRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
           ),
           child:
-              Icon(_iconFor(method), color: HuddlColors.textDark, size: 20),
+              Icon(_iconFor(method), color: context.hc.textPrimary, size: 20),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -798,10 +798,10 @@ class _PaymentProviderRow extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
               Text(method.description,
                   style: GoogleFonts.poppins(
-                      fontSize: 12, color: HuddlColors.textSecondary)),
+                      fontSize: 12, color: context.hc.textSecondary)),
             ],
           ),
         ),
@@ -871,11 +871,11 @@ class _OrderSummaryCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark)),
+                        color: context.hc.textPrimary)),
                 const SizedBox(height: 2),
                 Text(plan.tagline,
                     style: GoogleFonts.poppins(
-                        fontSize: 12, color: HuddlColors.textSecondary)),
+                        fontSize: 12, color: context.hc.textSecondary)),
               ],
             ),
           ),
@@ -919,7 +919,7 @@ class _BillingOptionTile extends StatelessWidget {
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: isSelected ? HuddlColors.primary : HuddlColors.textHint,
+              color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
               size: 22,
             ),
             const SizedBox(width: 12),
@@ -931,10 +931,10 @@ class _BillingOptionTile extends StatelessWidget {
                       style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark)),
+                          color: context.hc.textPrimary)),
                   Text(price,
                       style: GoogleFonts.poppins(
-                          fontSize: 13, color: HuddlColors.textSecondary)),
+                          fontSize: 13, color: context.hc.textSecondary)),
                 ],
               ),
             ),
@@ -995,7 +995,7 @@ class _SuccessDialog extends StatelessWidget {
               style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark),
+                  color: context.hc.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -1004,7 +1004,7 @@ class _SuccessDialog extends StatelessWidget {
                   : 'Your subscription is now active. Enjoy all your new features!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                  fontSize: 14, color: HuddlColors.textSecondary),
+                  fontSize: 14, color: context.hc.textSecondary),
             ),
             if (isFoundingMember) ...[
               const SizedBox(height: 12),

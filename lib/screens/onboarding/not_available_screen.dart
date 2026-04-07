@@ -13,7 +13,7 @@ class NotAvailableScreen extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -40,12 +40,12 @@ class NotAvailableScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // ── Heading ────────────────────────────────────────────────
-              const Text(
+              Text(
                 'Coming soon to your area!',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.25,
                 ),
                 textAlign: TextAlign.center,

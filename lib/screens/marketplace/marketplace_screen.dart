@@ -679,13 +679,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           Text('Unlock More Offers', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 18)),
         ]),
         content: Text('You\'ve reached your daily deal limit on the Explorer plan. Upgrade to Neighbourhood for unlimited deals!',
-          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary)),
+          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Maybe Later', style: GoogleFonts.poppins(color: HuddlColors.textHint))),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Maybe Later', style: GoogleFonts.poppins(color: context.hc.textTertiary))),
           ElevatedButton(
             onPressed: () { Navigator.pop(ctx); Navigator.pushNamed(context, '/subscription_plans', arguments: {'highlightTier': 'neighbourhood'}); },
             style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-            child: Text('Upgrade Now', style: GoogleFonts.poppins(color: HuddlColors.white, fontWeight: FontWeight.w600)),
+            child: Text('Upgrade Now', style: GoogleFonts.poppins(color: context.hc.surface, fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -707,7 +707,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             const SizedBox(height: 16),
             Text(coupon.storeTitle, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Text(coupon.title, style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textSecondary), textAlign: TextAlign.center),
+            Text(coupon.title, style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary), textAlign: TextAlign.center),
             const SizedBox(height: 20),
             if (coupon.hasCode) ...[
               Container(
@@ -733,7 +733,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, foregroundColor: HuddlColors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               ),
             ),
-            if (coupon.expiryDate.isNotEmpty) ...[const SizedBox(height: 12), Text('Expires: ${coupon.expiryDate}', style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint))],
+            if (coupon.expiryDate.isNotEmpty) ...[const SizedBox(height: 12), Text('Expires: ${coupon.expiryDate}', style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary))],
             const SizedBox(height: 8),
           ],
         ),
@@ -1396,11 +1396,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               });
                             },
                             borderRadius: BorderRadius.circular(24),
-                            child: const SizedBox(
+                            child: SizedBox(
                               width: 48,
                               height: 48,
                               child: Icon(Icons.close,
-                                  size: 18, color: HuddlColors.textHint),
+                                  size: 18, color: context.hc.textTertiary),
                             ),
                           ),
                         ),

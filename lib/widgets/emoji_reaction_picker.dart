@@ -91,7 +91,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
       margin: const EdgeInsets.symmetric(horizontal: 32),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -113,10 +113,10 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
               height: 48,
               margin: const EdgeInsets.symmetric(horizontal: 2),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.add, color: HuddlColors.textSecondary, size: 20),
+              child: Icon(Icons.add, color: context.hc.textSecondary, size: 20),
             ),
           ),
         ],
@@ -154,7 +154,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
         maxHeight: MediaQuery.of(context).size.height * 0.55,
       ),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -177,7 +177,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -198,7 +198,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
             ),
           ),
           const SizedBox(height: 8),
-          const Divider(height: 1, color: HuddlColors.divider),
+          Divider(height: 1, color: context.hc.divider),
 
           // Category tabs
           SizedBox(
@@ -226,7 +226,7 @@ class _EmojiPickerDialogState extends State<_EmojiPickerDialog> {
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? HuddlColors.primary : HuddlColors.textHint,
+                        color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
                       ),
                     ),
                   ),
@@ -299,10 +299,10 @@ class EmojiReactionDisplay extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     width: 1,
                   ),
                   boxShadow: [
@@ -324,7 +324,7 @@ class EmojiReactionDisplay extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ],

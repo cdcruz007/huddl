@@ -179,16 +179,16 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.waving_hand_rounded,
+                    child: Icon(Icons.waving_hand_rounded,
                         size: 28, color: HuddlColors.onboardingOrange),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Welcome! What should we\ncall you?',
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                       height: 1.3,
                     ),
                     textAlign: TextAlign.center,
@@ -207,7 +207,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                   // Name text field
                   Container(
                     decoration: BoxDecoration(
-                      color: HuddlColors.inputBg,
+                      color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: HuddlColors.inputBorderLight, width: 1),
@@ -216,8 +216,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                       controller: nameCtrl,
                       autofocus: true,
                       textCapitalization: TextCapitalization.words,
-                      style: const TextStyle(
-                          fontSize: 16, color: HuddlColors.textDark),
+                      style: TextStyle(
+                          fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
                       decoration: const InputDecoration(
                         hintText: 'Your first name',
                         hintStyle: TextStyle(
@@ -342,7 +342,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -392,12 +392,12 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     const SizedBox(height: 24),
 
                     // ── Title ─────────────────────────────────────────
-                    const Text(
+                    Text(
                       'Verify it\'s you',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -445,7 +445,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                         padding:
                             const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: HuddlColors.inputBg,
+                          color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                               color: HuddlColors.inputBorderLight, width: 1),
@@ -550,7 +550,7 @@ class _OtpBoxRow extends StatelessWidget {
                           ? HuddlColors.errorLight
                           : filled
                               ? HuddlColors.onboardingOrange.withValues(alpha: 0.08)
-                              : HuddlColors.inputBg,
+                              : context.hc.inputBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: hasError
@@ -565,10 +565,10 @@ class _OtpBoxRow extends StatelessWidget {
                     child: filled
                         ? Text(
                             char,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           )
                         : i == controller.text.length

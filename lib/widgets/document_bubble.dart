@@ -63,7 +63,7 @@ class DocumentBubble extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isMe
                     ? HuddlColors.primary.withValues(alpha: 0.08)
-                    : HuddlColors.background,
+                    : context.hc.scaffold,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -79,7 +79,7 @@ class DocumentBubble extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -89,7 +89,7 @@ class DocumentBubble extends StatelessWidget {
                             '$ext  $sizeStr',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                       ],
@@ -103,7 +103,7 @@ class DocumentBubble extends StatelessWidget {
                         child: Icon(
                           Icons.shortcut_rounded,
                           size: 18,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ),
@@ -118,7 +118,7 @@ class DocumentBubble extends StatelessWidget {
                 _formatTime(timestamp),
                 style: GoogleFonts.poppins(
                   fontSize: 10,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ),

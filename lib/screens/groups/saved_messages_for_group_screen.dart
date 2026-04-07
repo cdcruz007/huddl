@@ -61,12 +61,12 @@ class _SavedMessagesForGroupScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HuddlColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -77,21 +77,21 @@ class _SavedMessagesForGroupScreenState
               style: GoogleFonts.poppins(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             Text(
               widget.groupName,
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: HuddlColors.textHint,
+                color: context.hc.textTertiary,
               ),
             ),
           ],
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: _isLoading
@@ -127,7 +127,7 @@ class _SavedMessagesForGroupScreenState
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
               const SizedBox(height: 10),
@@ -135,7 +135,7 @@ class _SavedMessagesForGroupScreenState
                 'You have no saved messages currently.\nLong press on any message in this group to save it.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -149,8 +149,8 @@ class _SavedMessagesForGroupScreenState
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: saved.length,
-      separatorBuilder: (_, __) => const Divider(
-          height: 1, indent: 16, endIndent: 16, color: HuddlColors.divider),
+      separatorBuilder: (_, __) => Divider(
+          height: 1, indent: 16, endIndent: 16, color: context.hc.divider),
       itemBuilder: (_, i) {
         final msg = saved[i];
         return Dismissible(
@@ -176,7 +176,7 @@ class _SavedMessagesForGroupScreenState
             }
           },
           child: Container(
-            color: HuddlColors.white,
+            color: context.hc.surface,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +193,7 @@ class _SavedMessagesForGroupScreenState
                         style: GoogleFonts.poppins(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                     ),
@@ -201,7 +201,7 @@ class _SavedMessagesForGroupScreenState
                       _formatDate(msg.savedAt),
                       style: GoogleFonts.poppins(
                         fontSize: 11,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                     ),
                   ],
@@ -212,7 +212,7 @@ class _SavedMessagesForGroupScreenState
                   msg.message,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: HuddlColors.textSecondary,
+                    color: context.hc.textSecondary,
                     height: 1.4,
                   ),
                   maxLines: 4,
@@ -224,7 +224,7 @@ class _SavedMessagesForGroupScreenState
                   'Sent ${_formatDate(msg.timestamp)}',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                   ),
                 ),
               ],

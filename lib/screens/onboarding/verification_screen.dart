@@ -312,16 +312,16 @@ class _VerificationScreenState extends State<VerificationScreen> {
   @override
   Widget build(BuildContext context) {
     const kOrange = HuddlColors.onboardingOrange;
-    const kTextDark = HuddlColors.textDark;
+    final kTextDark = Theme.of(context).colorScheme.onSurface;
     const kTextGray = HuddlColors.disabledText;
-    const kInputBg = HuddlColors.inputBg;
-    const kInputBorder = HuddlColors.inputBorder;
+    final kInputBg = Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg;
+    final kInputBorder = Theme.of(context).dividerColor;
     const kBtnDisabled = HuddlColors.disabled;
 
     final isWorking = _isVerifying;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -347,7 +347,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                     const SizedBox(height: 40),
 
                     // Title
-                    const Text(
+                    Text(
                       'Verify your number',
                       style: TextStyle(
                         fontSize: 26,
@@ -374,7 +374,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Code input
                     Container(
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: kInputBg,
                         border: Border(
                           bottom: BorderSide(color: kInputBorder, width: 1.2),
@@ -385,7 +385,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                         textAlign: TextAlign.center,
                         keyboardType: TextInputType.number,
                         maxLength: 6,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           color: kTextDark,
                           letterSpacing: 6,
@@ -481,7 +481,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       'Enter the code from your SMS, or tap Continue to create your account.',
                       style: TextStyle(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                         height: 1.4,
                       ),
                       textAlign: TextAlign.center,

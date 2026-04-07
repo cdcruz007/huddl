@@ -31,7 +31,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: HuddlColors.textDark,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               textAlign: TextAlign.center,
             ),
@@ -146,7 +146,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
-                                    color: HuddlColors.textDark,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                     height: 1.3,
                                   ),
                                 ),
@@ -206,7 +206,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.textDark,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),

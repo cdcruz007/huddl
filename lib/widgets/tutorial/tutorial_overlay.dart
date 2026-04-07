@@ -353,7 +353,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                           style: GoogleFonts.poppins(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                             height: 1.2,
                           ),
                         ),

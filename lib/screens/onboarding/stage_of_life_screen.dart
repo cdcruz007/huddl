@@ -66,7 +66,7 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -78,12 +78,12 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 36),
-                    const Text(
+                    Text(
                       'Your stage of life',
                       style: TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -180,7 +180,7 @@ class _StageCard extends StatelessWidget {
                   fontSize: 17,
                   fontWeight:
                       selected ? FontWeight.w600 : FontWeight.w500,
-                  color: HuddlColors.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),

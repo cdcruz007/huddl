@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:convert';
-import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
@@ -638,7 +638,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   },
                 ),
               const SizedBox(height: 4),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               _ActionTile(
                 icon: Icons.close,
                 label: 'Cancel',
@@ -679,7 +679,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -688,13 +688,13 @@ class _MessagesTabState extends State<_MessagesTab> {
                 'We are sad to see you go, but you can always come back or find another group that interests you in the Discover tab.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -717,7 +717,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   Container(
                     width: 1,
                     height: 40,
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                   ),
                   Expanded(
                     child: TextButton(
@@ -917,7 +917,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         child: Row(
                           children: [
                             const SizedBox(width: 14),
-                            Icon(Icons.search, size: 18, color: HuddlColors.textHint.withValues(alpha: 0.6)),
+                            Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.6)),
                             const SizedBox(width: 8),
                             if (_showSearch)
                               Expanded(
@@ -932,7 +932,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                       _applyFilter();
                                     });
                                   },
-                                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+                                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
                                   decoration: InputDecoration(
                                     hintText: 'Search chats...',
                                     border: InputBorder.none,
@@ -940,7 +940,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                     focusedBorder: InputBorder.none,
                                     contentPadding: EdgeInsets.zero,
                                     isDense: true,
-                                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
                                   ),
                                 ),
                               )
@@ -948,7 +948,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                               Expanded(
                                 child: Text(
                                   'Search chats...',
-                                  style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
                                 ),
                               ),
                             if (_searchQuery.isNotEmpty)
@@ -969,7 +969,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                                   child: Container(
                                     width: 32, height: 32,
                                     alignment: Alignment.center,
-                                    child: const Icon(Icons.close, size: 16, color: HuddlColors.textHint),
+                                    child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
                                   ),
                                 ),
                               ),
@@ -1033,10 +1033,10 @@ class _MessagesTabState extends State<_MessagesTab> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.textHint),
+                        Icon(Icons.auto_awesome, size: 12, color: context.hc.textTertiary),
                         const SizedBox(width: 4),
                         Text('Suggested', style: GoogleFonts.poppins(
-                          fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textHint,
+                          fontSize: 11, fontWeight: FontWeight.w600, color: context.hc.textTertiary,
                         )),
                       ],
                     ),
@@ -1229,7 +1229,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 ),
                 Text(
                   summary.overviewText,
-                  style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary, height: 1.3),
+                  style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary, height: 1.3),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -1268,9 +1268,9 @@ class _MessagesTabState extends State<_MessagesTab> {
             child: Semantics(
               label: 'Dismiss AI summary',
               button: true,
-              child: const SizedBox(
+              child: SizedBox(
                 width: 28, height: 28,
-                child: Icon(Icons.close, size: 14, color: HuddlColors.textHint),
+                child: Icon(Icons.close, size: 14, color: context.hc.textTertiary),
               ),
             ),
           ),
@@ -1332,7 +1332,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
               child: Text('Invitations', style: GoogleFonts.poppins(
                 fontSize: 11, fontWeight: FontWeight.w600,
-                color: HuddlColors.textHint, letterSpacing: 0.3,
+                color: context.hc.textTertiary, letterSpacing: 0.3,
               )),
             ),
             ..._pendingInvitations.map((inv) => _InvitationCard(
@@ -1462,7 +1462,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     ),
                   ),
                 if (index < unified.length - 1)
-                  const Divider(height: 1, indent: 80, color: HuddlColors.divider),
+                  Divider(height: 1, indent: 80, color: context.hc.divider),
               ],
             );
           }),
@@ -1516,14 +1516,14 @@ class _MessagesTabState extends State<_MessagesTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Try a different search term',
                 style: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.textHint),
+                    fontSize: 14, color: context.hc.textTertiary),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1617,8 +1617,8 @@ class _MessagesTabState extends State<_MessagesTab> {
                       ),
                     ),
                   ),
-                const Divider(
-                    height: 1, indent: 80, color: HuddlColors.divider),
+                Divider(
+                    height: 1, indent: 80, color: context.hc.divider),
               ],
             );
           }),
@@ -1668,7 +1668,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1716,8 +1716,8 @@ class _MessagesTabState extends State<_MessagesTab> {
                       ),
                     ),
                   ),
-                const Divider(
-                    height: 1, indent: 16, color: HuddlColors.divider),
+                Divider(
+                    height: 1, indent: 16, color: context.hc.divider),
               ],
             );
           }),
@@ -1744,7 +1744,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'Searching within messages...',
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -1821,13 +1821,13 @@ class _MessagesTabState extends State<_MessagesTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -1842,12 +1842,12 @@ class _MessagesTabState extends State<_MessagesTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
                   ),
-                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () async {
@@ -2008,7 +2008,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 },
               ),
               const SizedBox(height: 4),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               _ActionTile(
                 icon: Icons.close,
                 label: 'Cancel',
@@ -2184,7 +2184,7 @@ class _GroupMessageRow extends StatelessWidget {
                                       fontSize: 14,
                                       fontWeight:
                                           hasUnread ? FontWeight.w600 : FontWeight.w500,
-                                      color: HuddlColors.textDark,
+                                      color: context.hc.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -2196,7 +2196,7 @@ class _GroupMessageRow extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: HuddlColors.textHint.withValues(alpha: 0.12),
+                                      color: context.hc.textTertiary.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -2204,7 +2204,7 @@ class _GroupMessageRow extends StatelessWidget {
                                       style: GoogleFonts.poppins(
                                         fontSize: 9,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.textSecondary,
+                                        color: context.hc.textSecondary,
                                       ),
                                     ),
                                   ),
@@ -2214,15 +2214,15 @@ class _GroupMessageRow extends StatelessWidget {
                           ),
                           if (isMuted) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.notifications_off,
-                                size: 14, color: HuddlColors.textHint),
+                            Icon(Icons.notifications_off,
+                                size: 14, color: context.hc.textTertiary),
                           ],
                           const SizedBox(width: 6),
                           Text(
                             _formatTime(group.lastMessageTime),
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: hasUnread ? HuddlColors.primary : HuddlColors.textHint,
+                              color: hasUnread ? HuddlColors.primary : context.hc.textTertiary,
                               fontWeight:
                                   hasUnread ? FontWeight.w600 : FontWeight.w400,
                             ),
@@ -2237,7 +2237,7 @@ class _GroupMessageRow extends StatelessWidget {
                               group.lastMessage ?? 'Tap to start a conversation',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                color: hasUnread ? HuddlColors.textSecondary : HuddlColors.textHint,
+                                color: hasUnread ? HuddlColors.textSecondary : context.hc.textTertiary,
                                 fontWeight:
                                     hasUnread ? FontWeight.w500 : FontWeight.w400,
                               ),
@@ -2261,7 +2261,7 @@ class _GroupMessageRow extends StatelessWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: HuddlColors.white,
+                                    color: context.hc.surface,
                                   ),
                                 ),
                               ),
@@ -2314,7 +2314,7 @@ class _InvitationCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
         boxShadow: [
@@ -2353,7 +2353,7 @@ class _InvitationCard extends StatelessWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2382,7 +2382,7 @@ class _InvitationCard extends StatelessWidget {
                       '${invitation.invitedByName} invited you to join',
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                     ),
                   ],
@@ -2396,7 +2396,7 @@ class _InvitationCard extends StatelessWidget {
               invitation.groupDescription,
               style: GoogleFonts.poppins(
                 fontSize: 12,
-                color: HuddlColors.textSecondary,
+                color: context.hc.textSecondary,
                 height: 1.4,
               ),
               maxLines: 2,
@@ -2412,7 +2412,7 @@ class _InvitationCard extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: onDecline,
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: HuddlColors.divider),
+                      side: BorderSide(color: context.hc.divider),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -2422,7 +2422,7 @@ class _InvitationCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.textSecondary,
+                        color: context.hc.textSecondary,
                       ),
                     ),
                   ),
@@ -2446,7 +2446,7 @@ class _InvitationCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.white,
+                        color: context.hc.surface,
                       ),
                     ),
                   ),
@@ -2581,7 +2581,7 @@ class _DMMessageRow extends StatelessWidget {
                                 fontSize: 14,
                                 fontWeight:
                                     hasUnread ? FontWeight.w600 : FontWeight.w500,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -2589,8 +2589,8 @@ class _DMMessageRow extends StatelessWidget {
                           ),
                           if (isMuted) ...[
                             const SizedBox(width: 4),
-                            const Icon(Icons.notifications_off,
-                                size: 14, color: HuddlColors.textHint),
+                            Icon(Icons.notifications_off,
+                                size: 14, color: context.hc.textTertiary),
                           ],
                           const SizedBox(width: 6),
                           Text(
@@ -2652,7 +2652,7 @@ class _DMMessageRow extends StatelessWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w600,
-                                    color: HuddlColors.white,
+                                    color: context.hc.surface,
                                   ),
                                 ),
                               ),
@@ -2773,7 +2773,7 @@ class _GroupAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: _kOnline,
                   shape: BoxShape.circle,
-                  border: Border.all(color: HuddlColors.white, width: 2),
+                  border: Border.all(color: context.hc.surface, width: 2),
                 ),
               ),
             ),
@@ -3093,7 +3093,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 17,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
               ),
             ),
@@ -3105,7 +3105,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               : 'This group is private and only open to invited members. Ask the group admin for an invitation.',
           style: GoogleFonts.poppins(
             fontSize: 14,
-            color: HuddlColors.textSecondary,
+            color: context.hc.textSecondary,
             height: 1.5,
           ),
         ),
@@ -3311,9 +3311,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             HapticFeedback.lightImpact();
                             Navigator.pop(ctx);
                           },
-                          child: const SizedBox(
+                          child: SizedBox(
                             width: 48, height: 48, // P0: 48dp touch target
-                            child: Icon(Icons.close, size: 24, color: HuddlColors.textDark),
+                            child: Icon(Icons.close, size: 24, color: context.hc.textPrimary),
                           ),
                         ),
                       ),
@@ -3324,7 +3324,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                         ),
@@ -3363,7 +3363,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -3427,7 +3427,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -3517,7 +3517,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.white,
+                          color: context.hc.surface,
                         ),
                       ),
                     ),
@@ -3622,9 +3622,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       hintText: 'Search groups...',
                                       hintStyle: _adaptiveText(
                                           fontSize: 14,
-                                          color: HuddlColors.textHint),
-                                      prefixIcon: const Icon(Icons.search,
-                                          size: 20, color: HuddlColors.textHint),
+                                          color: context.hc.textTertiary),
+                                      prefixIcon: Icon(Icons.search,
+                                          size: 20, color: context.hc.textTertiary),
                                       suffixIcon: _searchQuery.isNotEmpty
                                           ? Semantics(
                                               label: 'Clear search',
@@ -3637,11 +3637,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                                     _searchQuery = '';
                                                   });
                                                 },
-                                                child: const SizedBox(
+                                                child: SizedBox(
                                                   width: 44, height: 44,
                                                   child: Icon(Icons.close,
                                                       size: 18,
-                                                      color: HuddlColors.textHint),
+                                                      color: context.hc.textTertiary),
                                                 ),
                                               ),
                                             )
@@ -3788,11 +3788,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       HapticFeedback.lightImpact();
                                       setState(() => _showSearchField = true);
                                     },
-                                    child: const SizedBox(
+                                    child: SizedBox(
                                       width: 48, height: 48,
                                       child: Icon(Icons.search,
                                           size: 22,
-                                          color: HuddlColors.textDark),
+                                          color: context.hc.textPrimary),
                                     ),
                                   ),
                                 ),
@@ -3925,7 +3925,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     color: HuddlColors.blue,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                        color: HuddlColors.white, width: 2),
+                                        color: context.hc.surface, width: 2),
                                   ),
                                   child: const Icon(Icons.add,
                                       size: 11, color: Colors.white),
@@ -3953,7 +3953,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 'Don\'t worry, add your own!',
                                 style: _adaptiveText(
                                   fontSize: 12,
-                                  color: HuddlColors.textHint,
+                                  color: context.hc.textTertiary,
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -3980,7 +3980,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                     style: _adaptiveText(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
-                                      color: HuddlColors.white,
+                                      color: context.hc.surface,
                                     ),
                                   ),
                                 ),
@@ -4192,7 +4192,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       const SizedBox(height: 8),
                       Text('Try adjusting your filters or search terms.',
                           style: _adaptiveText(
-                              fontSize: 14, color: HuddlColors.textHint),
+                              fontSize: 14, color: context.hc.textTertiary),
                           textAlign: TextAlign.center),
                       if (hasActiveFilters) ...[
                         const SizedBox(height: 16),
@@ -4423,14 +4423,14 @@ class _DiscoverGroupCard extends StatelessWidget {
                   ],
                   const Spacer(),
                   // Member count
-                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
                   const SizedBox(width: 4),
                   Text(
                     '${group.memberCount}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -4448,7 +4448,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -4459,7 +4459,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                       group.description,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -4480,7 +4480,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                             group.creatorBorough!,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -4543,7 +4543,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                           'Is this relevant?',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -4564,7 +4564,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                               child: Icon(
                                 aiFeedback == true ? Icons.thumb_up : Icons.thumb_up_outlined,
                                 size: 14,
-                                color: aiFeedback == true ? HuddlColors.teal : HuddlColors.textHint,
+                                color: aiFeedback == true ? HuddlColors.teal : context.hc.textTertiary,
                               ),
                             ),
                           ),
@@ -4587,7 +4587,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                               child: Icon(
                                 aiFeedback == false ? Icons.thumb_down : Icons.thumb_down_outlined,
                                 size: 14,
-                                color: aiFeedback == false ? HuddlColors.error : HuddlColors.textHint,
+                                color: aiFeedback == false ? HuddlColors.error : context.hc.textTertiary,
                               ),
                             ),
                           ),
@@ -4623,7 +4623,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.textSecondary,
+                            color: context.hc.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -4673,19 +4673,19 @@ class _DiscoverGroupCard extends StatelessWidget {
                               const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
                           decoration: BoxDecoration(
                             color: isJoined
-                                ? HuddlColors.background
+                                ? context.hc.scaffold
                                 : (!canAccess ? HuddlColors.textHint.withValues(alpha: 0.15) : null),
                             gradient: (isJoined || !canAccess) ? null : HuddlColors.primaryGradient,
                             borderRadius: BorderRadius.circular(20),
                             border: (isJoined || !canAccess)
-                                ? Border.all(color: HuddlColors.divider)
+                                ? Border.all(color: context.hc.divider)
                                 : null,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (!canAccess && !isJoined) ...[
-                                Icon(Icons.lock_outline, size: 14, color: HuddlColors.textHint),
+                                Icon(Icons.lock_outline, size: 14, color: context.hc.textTertiary),
                                 const SizedBox(width: 4),
                               ],
                               Text(
@@ -4957,13 +4957,13 @@ class _SavedTabState extends State<_SavedTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -4978,12 +4978,12 @@ class _SavedTabState extends State<_SavedTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
                   ),
-                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () async {
@@ -5059,13 +5059,13 @@ class _SavedTabState extends State<_SavedTab> {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Long-press a message to save it, or save\nan entire reply thread from a group.',
-              style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -5083,19 +5083,19 @@ class _SavedTabState extends State<_SavedTab> {
           child: Container(
             height: 44,
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: context.hc.scaffold,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
                 const SizedBox(width: 12),
-                const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                Icon(Icons.search, size: 20, color: context.hc.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _searchController,
                     onChanged: (v) => setState(() => _searchQuery = v.trim()),
-                    style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                    style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search saved messages\u2026',
                       border: InputBorder.none,
@@ -5103,7 +5103,7 @@ class _SavedTabState extends State<_SavedTab> {
                       focusedBorder: InputBorder.none,
                       contentPadding: EdgeInsets.zero,
                       isDense: true,
-                      hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                      hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
                     ),
                   ),
                 ),
@@ -5113,9 +5113,9 @@ class _SavedTabState extends State<_SavedTab> {
                       _searchController.clear();
                       setState(() => _searchQuery = '');
                     },
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(Icons.close, size: 18, color: HuddlColors.textHint),
+                      child: Icon(Icons.close, size: 18, color: context.hc.textTertiary),
                     ),
                   ),
               ],
@@ -5130,20 +5130,20 @@ class _SavedTabState extends State<_SavedTab> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.search_off, size: 48, color: HuddlColors.textHint),
+                      Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
                       const SizedBox(height: 12),
                       Text(
                         'No results for "$_searchQuery"',
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Try a different keyword',
-                        style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+                        style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
                       ),
                     ],
                   ),
@@ -5178,11 +5178,11 @@ class _SavedTabState extends State<_SavedTab> {
                           child: card,
                         ),
                         if (index < filtered.length - 1)
-                          const Divider(
+                          Divider(
                             height: 1,
                             indent: 16,
                             endIndent: 16,
-                            color: HuddlColors.divider,
+                            color: context.hc.divider,
                           ),
                       ],
                     );
@@ -5236,13 +5236,13 @@ class _SavedTabState extends State<_SavedTab> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -5257,12 +5257,12 @@ class _SavedTabState extends State<_SavedTab> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
                   ),
-                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () async {
@@ -5323,7 +5323,7 @@ class _SavedMessageCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5383,7 +5383,7 @@ class _SavedMessageCard extends StatelessWidget {
                   _formatSavedTime(savedMessage.savedAt),
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                   ),
                 ),
               ],
@@ -5394,7 +5394,7 @@ class _SavedMessageCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: HuddlColors.divider.withValues(alpha: 0.5),
@@ -5410,7 +5410,7 @@ class _SavedMessageCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -5418,7 +5418,7 @@ class _SavedMessageCard extends StatelessWidget {
                         _formatMessageTime(savedMessage.timestamp),
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -5428,7 +5428,7 @@ class _SavedMessageCard extends StatelessWidget {
                     savedMessage.message,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                       height: 1.4,
                     ),
                     maxLines: 4,
@@ -5442,13 +5442,13 @@ class _SavedMessageCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.open_in_new, size: 12, color: HuddlColors.textHint),
+                Icon(Icons.open_in_new, size: 12, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
                   'Tap to go to ${isGroup ? 'group' : 'conversation'}',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                   ),
                 ),
               ],
@@ -5502,7 +5502,7 @@ class _SavedThreadCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5549,7 +5549,7 @@ class _SavedThreadCard extends StatelessWidget {
                         'Thread from ${savedThread.groupName}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -5561,7 +5561,7 @@ class _SavedThreadCard extends StatelessWidget {
                   _formatSavedTime(savedThread.savedAt),
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                   ),
                 ),
               ],
@@ -5572,7 +5572,7 @@ class _SavedThreadCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(12),
                 border: Border(
                   left: BorderSide(color: HuddlColors.blue, width: 3),
@@ -5588,7 +5588,7 @@ class _SavedThreadCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -5596,7 +5596,7 @@ class _SavedThreadCard extends StatelessWidget {
                         _formatMessageTime(savedThread.rootTimestamp),
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -5606,7 +5606,7 @@ class _SavedThreadCard extends StatelessWidget {
                     savedThread.rootMessageText,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                       height: 1.4,
                     ),
                     maxLines: 2,
@@ -5636,13 +5636,13 @@ class _SavedThreadCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Icon(Icons.open_in_new, size: 12, color: HuddlColors.textHint),
+                Icon(Icons.open_in_new, size: 12, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
                   'Tap to open thread in group',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: HuddlColors.textHint,
+                    color: context.hc.textTertiary,
                   ),
                 ),
               ],
@@ -5865,13 +5865,13 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: color ?? HuddlColors.textDark),
+      leading: Icon(icon, color: color ?? context.hc.textPrimary),
       title: Text(
         label,
         style: GoogleFonts.poppins(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: color ?? HuddlColors.textDark,
+          color: color ?? context.hc.textPrimary,
         ),
       ),
       onTap: onTap,
@@ -5900,7 +5900,7 @@ class _SearchSectionHeader extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: HuddlColors.textHint,
+              color: context.hc.textTertiary,
               letterSpacing: 0.8,
             ),
           ),
@@ -5958,7 +5958,7 @@ class _DeepSearchResultRow extends StatelessWidget {
               child: Icon(
                 Icons.subdirectory_arrow_right,
                 size: 16,
-                color: HuddlColors.textHint.withValues(alpha: 0.6),
+                color: context.hc.textTertiary.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(width: 8),
@@ -5974,7 +5974,7 @@ class _DeepSearchResultRow extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                       const Spacer(),
@@ -5982,7 +5982,7 @@ class _DeepSearchResultRow extends StatelessWidget {
                         timeFormat(result.timestamp),
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -6015,7 +6015,7 @@ class _HighlightedText extends StatelessWidget {
     if (query.isEmpty) {
       return Text(
         text,
-        style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+        style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       );
@@ -6031,14 +6031,14 @@ class _HighlightedText extends StatelessWidget {
       if (idx == -1) {
         spans.add(TextSpan(
           text: text.substring(start),
-          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
         ));
         break;
       }
       if (idx > start) {
         spans.add(TextSpan(
           text: text.substring(start, idx),
-          style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
         ));
       }
       spans.add(TextSpan(
@@ -6092,13 +6092,13 @@ class _EmptyMessagesState extends StatelessWidget {
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Join a group to start chatting\nwith your community.',
-              style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -6132,7 +6132,7 @@ class _AiFeedbackRow extends StatelessWidget {
             width: 24, height: 24,
             alignment: Alignment.center,
             child: Icon(Icons.thumb_up_alt_outlined,
-                size: 12, color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                size: 12, color: context.hc.textTertiary.withValues(alpha: 0.5)),
           ),
         ),
         GestureDetector(
@@ -6141,7 +6141,7 @@ class _AiFeedbackRow extends StatelessWidget {
             width: 24, height: 24,
             alignment: Alignment.center,
             child: Icon(Icons.thumb_down_alt_outlined,
-                size: 12, color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                size: 12, color: context.hc.textTertiary.withValues(alpha: 0.5)),
           ),
         ),
       ],

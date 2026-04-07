@@ -104,7 +104,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.group, color: HuddlColors.white, size: 18),
+              Icon(Icons.group, color: context.hc.surface, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -151,7 +151,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   void _showMoreOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -166,7 +166,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   width: 40, height: 4,
                   margin: const EdgeInsets.only(bottom: 12),
                   decoration: BoxDecoration(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -266,7 +266,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   void _showManageAttendees() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -284,7 +284,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   width: 40, height: 4,
                   margin: const EdgeInsets.only(top: 12, bottom: 16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -372,7 +372,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Cancel Meet-up?', style: GoogleFonts.poppins(
           fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
@@ -384,7 +384,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Keep', style: GoogleFonts.poppins(
-              fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+              fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -432,8 +432,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 shape: BoxShape.circle,
               ),
               child: IconButton(
-                icon: const Icon(Icons.arrow_back,
-                    color: HuddlColors.white, size: 20),
+                icon: Icon(Icons.arrow_back,
+                    color: context.hc.surface, size: 20),
                 onPressed: () => Navigator.pop(context),
               ),
             ),
@@ -445,8 +445,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.share_outlined,
-                      color: HuddlColors.white, size: 20),
+                  icon: Icon(Icons.share_outlined,
+                      color: context.hc.surface, size: 20),
                   onPressed: _shareMeetup,
                 ),
               ),
@@ -457,8 +457,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.more_vert,
-                      color: HuddlColors.white, size: 20),
+                  icon: Icon(Icons.more_vert,
+                      color: context.hc.surface, size: 20),
                   onPressed: _showMoreOptions,
                 ),
               ),
@@ -512,7 +512,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white,
+                                  color: context.hc.surface,
                                 ),
                               ),
                             ],
@@ -533,7 +533,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.white,
+                              color: context.hc.surface,
                             ),
                           ),
                         ),
@@ -909,7 +909,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                 onPressed: _toggleGoing,
                 icon: Icon(
                   _meetup.isGoing ? Icons.check_circle : Icons.groups,
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                   size: 20,
                 ),
                 label: Text(
@@ -917,7 +917,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.white,
+                    color: context.hc.surface,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(

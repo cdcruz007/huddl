@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 
@@ -32,7 +33,10 @@ class PrimaryButton extends StatelessWidget {
       width: width ?? double.infinity,
       height: height,
       child: ElevatedButton(
-        onPressed: (enabled && !isLoading) ? onPressed : null,
+        onPressed: (enabled && !isLoading) ? () {
+          HapticFeedback.mediumImpact();
+          onPressed?.call();
+        } : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? HuddlColors.primary,
           disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.5),

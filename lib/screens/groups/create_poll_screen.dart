@@ -129,8 +129,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          decoration: const BoxDecoration(
-            color: HuddlColors.white,
+          decoration: BoxDecoration(
+            color: context.hc.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
@@ -139,8 +139,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               // Header with Done button
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
-                  border: Border(bottom: BorderSide(color: HuddlColors.divider)),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: context.hc.divider)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -151,7 +151,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                         'Cancel',
                         style: GoogleFonts.poppins(
                           fontSize: 15,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ),
@@ -160,7 +160,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark,
+                        color: context.hc.textPrimary,
                       ),
                     ),
                     GestureDetector(
@@ -235,13 +235,13 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         surfaceTintColor: HuddlColors.white,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: HuddlColors.textDark),
+          icon: Icon(Icons.close, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -249,7 +249,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -272,7 +272,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: HuddlColors.divider),
+          child: Container(height: 1, color: context.hc.divider),
         ),
       ),
       body: ListView(
@@ -311,7 +311,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -326,9 +326,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: HuddlColors.divider),
+              border: Border.all(color: context.hc.divider),
             ),
             child: Row(
               children: [
@@ -346,7 +346,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                 ),
@@ -366,7 +366,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -435,7 +435,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -445,9 +445,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: HuddlColors.divider),
+                border: Border.all(color: context.hc.divider),
               ),
               child: Row(
                 children: [
@@ -474,8 +474,8 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                   if (_expiresAt != null)
                     GestureDetector(
                       onTap: () => setState(() => _expiresAt = null),
-                      child: const Icon(Icons.close,
-                          size: 18, color: HuddlColors.textHint),
+                      child: Icon(Icons.close,
+                          size: 18, color: context.hc.textTertiary),
                     ),
                 ],
               ),
@@ -487,20 +487,20 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: HuddlColors.divider),
+              border: Border.all(color: context.hc.divider),
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_box_outlined,
-                    size: 20, color: HuddlColors.textHint),
+                Icon(Icons.check_box_outlined,
+                    size: 20, color: context.hc.textTertiary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     'Allow multiple answers',
                     style: GoogleFonts.poppins(
-                        fontSize: 14, color: HuddlColors.textDark),
+                        fontSize: 14, color: context.hc.textPrimary),
                   ),
                 ),
                 Switch(
@@ -532,7 +532,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                 ),
               ),
             ),
@@ -551,9 +551,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: HuddlColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Row(
           children: [
@@ -573,7 +573,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             Icon(
               Icons.calendar_today_outlined,
               size: 20,
-              color: date != null ? HuddlColors.primary : HuddlColors.textHint,
+              color: date != null ? HuddlColors.primary : context.hc.textTertiary,
             ),
           ],
         ),
@@ -588,20 +588,20 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.divider),
+        border: Border.all(color: context.hc.divider),
       ),
       child: TextField(
         controller: controller,
         maxLines: maxLines,
         style:
-            GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+            GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
         onChanged: (_) => setState(() {}),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle:
-              GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+              GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
           border: InputBorder.none,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

@@ -103,8 +103,8 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
       maxChildSize: 0.95,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: HuddlColors.white,
+          decoration: BoxDecoration(
+            color: context.hc.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
@@ -115,7 +115,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 child: Container(
                   width: 40, height: 4,
                   decoration: BoxDecoration(
-                    color: HuddlColors.divider,
+                    color: context.hc.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -131,7 +131,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         gradient: HuddlColors.aiGradient,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Icon(Icons.auto_awesome, color: HuddlColors.white, size: 22),
+                      child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 22),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -142,13 +142,13 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                             'AI Listing Generator',
                             style: GoogleFonts.poppins(
                               fontSize: 20, fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           Text(
                             'Photo to listing in 15 seconds',
                             style: GoogleFonts.poppins(
-                              fontSize: 12, color: HuddlColors.textSecondary,
+                              fontSize: 12, color: context.hc.textSecondary,
                             ),
                           ),
                         ],
@@ -156,12 +156,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close, color: HuddlColors.textHint),
+                      icon: Icon(Icons.close, color: context.hc.textTertiary),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               // Content
               Expanded(
                 child: ListView(
@@ -218,7 +218,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         Text(
                           'Identifying product, pricing, and category',
                           style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.textSecondary,
+                            fontSize: 12, color: context.hc.textSecondary,
                           ),
                         ),
                       ],
@@ -241,14 +241,14 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                           'Tap to take a photo',
                           style: GoogleFonts.poppins(
                             fontSize: 16, fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Our AI will generate everything for you',
                           style: GoogleFonts.poppins(
-                            fontSize: 12, color: HuddlColors.textSecondary,
+                            fontSize: 12, color: context.hc.textSecondary,
                           ),
                         ),
                       ],
@@ -262,7 +262,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           'Or describe what you\'re selling',
           style: GoogleFonts.poppins(
             fontSize: 13, fontWeight: FontWeight.w500,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -271,9 +271,9 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           style: GoogleFonts.poppins(fontSize: 14),
           decoration: InputDecoration(
             hintText: 'e.g. "Bugaboo Fox 3 pushchair" or "baby clothes 0-3m"',
-            hintStyle: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textHint),
+            hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
             filled: true,
-            fillColor: HuddlColors.background,
+            fillColor: context.hc.scaffold,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -291,7 +291,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           'Popular items to list',
           style: GoogleFonts.poppins(
             fontSize: 13, fontWeight: FontWeight.w500,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -320,9 +320,9 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: HuddlColors.divider),
+          border: Border.all(color: context.hc.divider),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -330,7 +330,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             Icon(icon, size: 16, color: HuddlColors.aiBlue),
             const SizedBox(width: 6),
             Text(label, style: GoogleFonts.poppins(
-              fontSize: 12, color: HuddlColors.textDark,
+              fontSize: 12, color: context.hc.textPrimary,
             )),
           ],
         ),
@@ -412,7 +412,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Smart Pricing', style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark,
+                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary,
               )),
               const SizedBox(height: 12),
               Row(
@@ -422,7 +422,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('AI suggested price',
-                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary)),
+                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary)),
                         Row(
                           children: [
                             Text(
@@ -456,12 +456,12 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text('Retail price',
-                        style: GoogleFonts.poppins(fontSize: 10, color: HuddlColors.textHint)),
+                        style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary)),
                       Text(
                         '\u00A3${draft.retailPrice.toStringAsFixed(0)}',
                         style: GoogleFonts.poppins(
                           fontSize: 16, fontWeight: FontWeight.w500,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
@@ -474,7 +474,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: HuddlColors.white,
+                    color: context.hc.surface,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -494,7 +494,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                               : comp.priceVerdict == 'above_avg'
                                   ? 'Slightly above average. Consider lowering for faster sale.'
                                   : 'Fair price for ${draft.suggestedCategory.label} in your area',
-                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textSecondary),
+                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
                         ),
                       ),
                     ],
@@ -525,11 +525,11 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           children: draft.tags.map((tag) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: context.hc.scaffold,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text('#$tag', style: GoogleFonts.poppins(
-              fontSize: 11, color: HuddlColors.textSecondary,
+              fontSize: 11, color: context.hc.textSecondary,
             )),
           )).toList(),
         ),
@@ -549,13 +549,13 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: HuddlColors.divider),
+                    border: Border.all(color: context.hc.divider),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
                     child: Text('Start Over', style: GoogleFonts.poppins(
                       fontSize: 14, fontWeight: FontWeight.w600,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     )),
                   ),
                 ),
@@ -576,11 +576,11 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.publish, color: HuddlColors.white, size: 20),
+                        Icon(Icons.publish, color: context.hc.surface, size: 20),
                         const SizedBox(width: 8),
                         Text('Publish Listing', style: GoogleFonts.poppins(
                           fontSize: 14, fontWeight: FontWeight.w600,
-                          color: HuddlColors.white,
+                          color: context.hc.surface,
                         )),
                       ],
                     ),
@@ -600,17 +600,17 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: GoogleFonts.poppins(
-          fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.textSecondary,
+          fontSize: 12, fontWeight: FontWeight.w500, color: context.hc.textSecondary,
         )),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
           maxLines: maxLines,
-          style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, size: 18, color: HuddlColors.aiBlue),
             filled: true,
-            fillColor: HuddlColors.background,
+            fillColor: context.hc.scaffold,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -626,7 +626,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: context.hc.scaffold,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -634,10 +634,10 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
           Icon(icon, size: 18, color: HuddlColors.aiBlue),
           const SizedBox(height: 4),
           Text(value, style: GoogleFonts.poppins(
-            fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.textDark,
+            fontSize: 10, fontWeight: FontWeight.w600, color: context.hc.textPrimary,
           ), textAlign: TextAlign.center, overflow: TextOverflow.ellipsis),
           Text(label, style: GoogleFonts.poppins(
-            fontSize: 9, color: HuddlColors.textHint,
+            fontSize: 9, color: context.hc.textTertiary,
           )),
         ],
       ),

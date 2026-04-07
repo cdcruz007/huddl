@@ -145,7 +145,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
     final digits = _normalise(_ctrl.text);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -157,17 +157,17 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 40),
-                    const Text(
+                    Text(
                       'What is your phone number?',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
-                    const Text(
+                    Text(
                       'Enter your UK mobile number to create your account.',
                       style: TextStyle(
                           fontSize: 14, color: HuddlColors.disabledText, height: 1.5),
@@ -178,7 +178,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     // Phone input row
                     Container(
                       decoration: BoxDecoration(
-                        color: HuddlColors.inputBg,
+                        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
                         border: Border(
                           bottom: BorderSide(
                             color: _errorText != null ? HuddlColors.error : HuddlColors.inputBorder,
@@ -194,15 +194,15 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                 horizontal: 14, vertical: 16),
                             child: Row(
                               children: [
-                                const Text(_flagUK,
+                                Text(_flagUK,
                                     style: TextStyle(fontSize: 22)),
                                 const SizedBox(width: 6),
                                 Text(
                                   _countryCode,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
-                                    color: HuddlColors.textDark,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -239,8 +239,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                     LengthLimitingTextInputFormatter(10),
                                   ],
                                   maxLength: 10,
-                                  style: const TextStyle(
-                                      fontSize: 16, color: HuddlColors.textDark),
+                                  style: TextStyle(
+                                      fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
                                   decoration: const InputDecoration(
                                     hintText: '7700 900 123',
                                     hintStyle: TextStyle(

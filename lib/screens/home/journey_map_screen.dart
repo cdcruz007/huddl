@@ -119,7 +119,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.white,
+                          color: context.hc.surface,
                         ),
                       ),
                     ),
@@ -133,7 +133,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -142,7 +142,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textSecondary,
+                              color: context.hc.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -150,7 +150,7 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                             journey.bio,
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textSecondary,
+                              color: context.hc.textSecondary,
                               height: 1.4,
                             ),
                           ),
@@ -417,9 +417,9 @@ class _StageCard extends StatelessWidget {
                                   child: Container(
                                     width: 5,
                                     height: 5,
-                                    decoration: const BoxDecoration(
+                                    decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: HuddlColors.textHint,
+                                      color: context.hc.textTertiary,
                                     ),
                                   ),
                                 ),

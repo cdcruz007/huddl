@@ -151,7 +151,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     final dmService = DMService();
     showModalBottomSheet(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -178,7 +178,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       child: Container(
                         width: 36, height: 4,
                         decoration: BoxDecoration(
-                          color: HuddlColors.divider,
+                          color: context.hc.divider,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -193,7 +193,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           const Spacer(),
@@ -224,13 +224,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             children: [
                               Icon(Icons.people_outline,
                                   size: 48,
-                                  color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                                  color: context.hc.textTertiary.withValues(alpha: 0.5)),
                               const SizedBox(height: 12),
                               Text(
                                 'No contacts yet',
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
-                                  color: HuddlColors.textHint,
+                                  color: context.hc.textTertiary,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -238,7 +238,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 'Share the group link to invite members',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: HuddlColors.textHint,
+                                  color: context.hc.textTertiary,
                                 ),
                               ),
                             ],
@@ -368,7 +368,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -377,13 +377,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 'We are sad to see you go, but you can always come back or find another group that interests you in the Discover tab.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -403,7 +403,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ),
                     ),
                   ),
-                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () async {
@@ -448,14 +448,14 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     final savedCount = _savedMessageService.getSavedForGroup(widget.groupId).length;
 
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       body: CustomScrollView(
         slivers: [
           // ── Hero image area ─────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
-            backgroundColor: HuddlColors.white,
+            backgroundColor: context.hc.surface,
             leading: _CircleButton(
               icon: Icons.arrow_back,
               onTap: () => Navigator.pop(context),
@@ -481,7 +481,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           // ── Group info ──────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,12 +538,12 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Group name',
                             hintStyle: GoogleFonts.poppins(
-                                fontSize: 22, color: HuddlColors.textHint),
+                                fontSize: 22, color: context.hc.textTertiary),
                             border: UnderlineInputBorder(
                               borderSide: BorderSide(
                                   color: HuddlColors.primary.withValues(alpha: 0.3)),
@@ -558,7 +558,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                         ),
                   const SizedBox(height: 8),
@@ -569,22 +569,22 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       Icon(
                         widget.isPrivate ? Icons.lock_outline : Icons.public,
                         size: 16,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         widget.isPrivate ? 'Private group' : 'Public group',
                         style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.textSecondary),
+                            fontSize: 13, color: context.hc.textSecondary),
                       ),
                       const SizedBox(width: 16),
-                      const Icon(Icons.people_outline,
-                          size: 16, color: HuddlColors.textHint),
+                      Icon(Icons.people_outline,
+                          size: 16, color: context.hc.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         '$memberCount member${memberCount != 1 ? 's' : ''}',
                         style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.textSecondary),
+                            fontSize: 13, color: context.hc.textSecondary),
                       ),
                     ],
                   ),
@@ -598,7 +598,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           // ── About section ───────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,7 +611,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       GestureDetector(
@@ -621,7 +621,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           _aboutExpanded
                               ? Icons.expand_less
                               : Icons.expand_more,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -633,13 +633,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           maxLines: null,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: HuddlColors.textSecondary,
+                            color: context.hc.textSecondary,
                             height: 1.5,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Group description',
                             hintStyle: GoogleFonts.poppins(
-                                fontSize: 14, color: HuddlColors.textHint),
+                                fontSize: 14, color: context.hc.textTertiary),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
@@ -655,7 +655,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           description,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: HuddlColors.textSecondary,
+                            color: context.hc.textSecondary,
                             height: 1.5,
                           ),
                           maxLines: _aboutExpanded ? null : 3,
@@ -672,7 +672,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           // ── Members section ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -685,7 +685,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       GestureDetector(
@@ -737,7 +737,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                             Text(
                               names[index],
                               style: GoogleFonts.poppins(
-                                  fontSize: 11, color: HuddlColors.textSecondary),
+                                  fontSize: 11, color: context.hc.textSecondary),
                             ),
                           ],
                         );
@@ -755,7 +755,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           if (_isJoined && savedCount > 0)
             SliverToBoxAdapter(
               child: Container(
-                color: HuddlColors.white,
+                color: context.hc.surface,
                 child: ListTile(
                   leading: Container(
                     width: 40,
@@ -770,13 +770,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   title: Text(
                     'Saved Messages',
                     style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.textDark),
+                        fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
                   ),
                   subtitle: Text(
                     '$savedCount saved message${savedCount != 1 ? 's' : ''}',
-                    style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                    style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
                   ),
-                  trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+                  trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
                   onTap: () {
                     Navigator.pushNamed(context, '/saved_messages_for_group', arguments: {
                       'groupId': widget.groupId,
@@ -793,7 +793,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           // ── Polls section ───────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               child: ListTile(
                 leading: Container(
                   width: 40,
@@ -808,13 +808,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 title: Text(
                   'Polls',
                   style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.textDark),
+                      fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
                 ),
                 subtitle: Text(
                   '2 active polls',
-                  style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.textHint),
+                  style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
                 ),
-                trailing: const Icon(Icons.chevron_right, color: HuddlColors.textHint),
+                trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
                 onTap: () {
                   // Navigate to group chat which contains the polls
                   Navigator.pushNamed(context, '/group_chat', arguments: {
@@ -834,7 +834,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           // ── Action buttons ──────────────────────────────────────────
           SliverToBoxAdapter(
             child: Container(
-              color: HuddlColors.white,
+              color: context.hc.surface,
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
@@ -862,7 +862,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.white,
+                            color: context.hc.surface,
                           ),
                         ),
                       ),
@@ -921,7 +921,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: HuddlColors.white,
+                                      color: context.hc.surface,
                                     ),
                                   ),
                                 ],
@@ -933,7 +933,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       'Join to start chatting with this group',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -1004,7 +1004,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   void _showMoreActions(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1017,7 +1017,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                  color: HuddlColors.divider, borderRadius: BorderRadius.circular(2)),
+                  color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
             // Info notice for public groups or non-admin private group members
@@ -1026,19 +1026,19 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.textHint.withValues(alpha: 0.08),
+                  color: context.hc.textTertiary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.lock_outline, size: 18, color: HuddlColors.textSecondary),
+                    Icon(Icons.lock_outline, size: 18, color: context.hc.textSecondary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'This is a public group. Group details cannot be changed by any member.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                           height: 1.4,
                         ),
                       ),
@@ -1051,19 +1051,19 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.textHint.withValues(alpha: 0.08),
+                  color: context.hc.textTertiary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.info_outline, size: 18, color: HuddlColors.textSecondary),
+                    Icon(Icons.info_outline, size: 18, color: context.hc.textSecondary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         'Only the group creator or admins can edit group details.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                           height: 1.4,
                         ),
                       ),
@@ -1074,7 +1074,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             // Edit option -- private-group admin/creator only
             if (_canEdit && _isJoined)
               ListTile(
-                leading: const Icon(Icons.edit_outlined, color: HuddlColors.textDark),
+                leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
                 title: Text('Edit group details',
                     style: GoogleFonts.poppins(
                         fontSize: 15, fontWeight: FontWeight.w500)),
@@ -1085,7 +1085,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
             ListTile(
               leading:
-                  const Icon(Icons.notifications_outlined, color: HuddlColors.textDark),
+                  Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
               title: Text('Mute notifications',
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w500)),
@@ -1097,7 +1097,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.bookmark_outline, color: HuddlColors.textDark),
+              leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
               title: Text('Saved messages',
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w500)),
@@ -1107,7 +1107,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.share_outlined, color: HuddlColors.textDark),
+              leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
               title: Text('Share group',
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w500)),
@@ -1175,7 +1175,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: context.hc.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -1184,13 +1184,13 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 'This will permanently delete the group and all messages. All members will be removed. This action cannot be undone.',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              const Divider(height: 1, color: HuddlColors.divider),
+              Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -1201,7 +1201,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
                     ),
                   ),
-                  Container(width: 1, height: 40, color: HuddlColors.divider),
+                  Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
                       onPressed: () {
@@ -1253,7 +1253,7 @@ class _CircleButton extends StatelessWidget {
             color: Colors.black.withValues(alpha: 0.3),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: HuddlColors.white, size: 20),
+          child: Icon(icon, color: context.hc.surface, size: 20),
         ),
       ),
     );

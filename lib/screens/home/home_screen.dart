@@ -484,8 +484,8 @@ class _HomeScreenState extends State<HomeScreen>
               SnackBar(
                 content: Row(
                   children: [
-                    const Icon(Icons.check_circle,
-                        color: HuddlColors.white, size: 18),
+                    Icon(Icons.check_circle,
+                        color: context.hc.surface, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text('Shared with $targetName',
@@ -527,8 +527,8 @@ class _HomeScreenState extends State<HomeScreen>
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle,
-                  color: HuddlColors.white, size: 18),
+              Icon(Icons.check_circle,
+                  color: context.hc.surface, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text('Welcome message sent to $recipientName!',
@@ -553,8 +553,8 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: HuddlColors.white,
+        decoration: BoxDecoration(
+          color: context.hc.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -626,13 +626,13 @@ class _HomeScreenState extends State<HomeScreen>
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: color ?? HuddlColors.textDark, size: 22),
+      leading: Icon(icon, color: color ?? context.hc.textPrimary, size: 22),
       title: Text(
         label,
         style: GoogleFonts.poppins(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: color ?? HuddlColors.textDark,
+          color: color ?? context.hc.textPrimary,
         ),
       ),
       onTap: onTap,
@@ -654,7 +654,7 @@ class _HomeScreenState extends State<HomeScreen>
             onPressed: () => Navigator.pop(ctx),
             child: Text('Cancel',
                 style:
-                    GoogleFonts.poppins(color: HuddlColors.textSecondary)),
+                    GoogleFonts.poppins(color: context.hc.textSecondary)),
           ),
           TextButton(
             onPressed: () {
@@ -916,10 +916,10 @@ class _HomeScreenState extends State<HomeScreen>
                               shaderCallback: (bounds) =>
                                   HuddlColors.aiGradient
                                       .createShader(bounds),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.auto_awesome,
                                 size: 22,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             ),
                           ),
@@ -1026,13 +1026,13 @@ class _HomeScreenState extends State<HomeScreen>
                             HapticFeedback.lightImpact();
                             _showFeedPreferences();
                           },
-                          child: const SizedBox(
+                          child: SizedBox(
                             width: 48,
                             height: 32,
                             child: Center(
                               child: Icon(Icons.tune,
                                   size: 16,
-                                  color: HuddlColors.textHint),
+                                  color: context.hc.textTertiary),
                             ),
                           ),
                         ),
@@ -1142,8 +1142,8 @@ class _HomeScreenState extends State<HomeScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.chevron_right,
-                      size: 16, color: HuddlColors.textHint),
+                  Icon(Icons.chevron_right,
+                      size: 16, color: context.hc.textTertiary),
                 ],
               ),
             )
@@ -1234,12 +1234,12 @@ class _HomeScreenState extends State<HomeScreen>
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: _isPosting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: HuddlColors.white,
+                                color: context.hc.surface,
                               ),
                             )
                           : const Icon(Icons.send_rounded,
@@ -1261,8 +1261,8 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        decoration: const BoxDecoration(
-          color: HuddlColors.white,
+        decoration: BoxDecoration(
+          color: context.hc.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -1278,7 +1278,7 @@ class _HomeScreenState extends State<HomeScreen>
                   Text('Feed Preferences',
                       style: GoogleFonts.poppins(
                           fontSize: 17, fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark)),
+                          color: context.hc.textPrimary)),
                 ],
               ),
             ),
@@ -1288,7 +1288,7 @@ class _HomeScreenState extends State<HomeScreen>
               child: Text(
                 'Your feed is curated by Huddl AI based on your interests, activity, and local community.',
                 style: GoogleFonts.poppins(
-                    fontSize: 12, color: HuddlColors.textSecondary),
+                    fontSize: 12, color: context.hc.textSecondary),
               ),
             ),
             const SizedBox(height: 12),
@@ -1345,14 +1345,14 @@ class _HomeScreenState extends State<HomeScreen>
       title: Text(title,
           style: GoogleFonts.poppins(
               fontSize: 13, fontWeight: FontWeight.w500,
-              color: HuddlColors.textDark)),
+              color: context.hc.textPrimary)),
       subtitle: Text(subtitle,
           style: GoogleFonts.poppins(
-              fontSize: 11, color: HuddlColors.textHint)),
+              fontSize: 11, color: context.hc.textTertiary)),
       trailing: Icon(
         enabled ? Icons.check_circle : Icons.circle_outlined,
         size: 20,
-        color: enabled ? HuddlColors.primary : HuddlColors.textHint,
+        color: enabled ? HuddlColors.primary : context.hc.textTertiary,
       ),
     );
   }
@@ -1412,7 +1412,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1421,7 +1421,7 @@ class _HomeScreenState extends State<HomeScreen>
                     nudge.subtitle,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                       height: 1.3,
                     ),
                     maxLines: 1,
@@ -1455,7 +1455,7 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
               color: HuddlColors.primary.withValues(alpha: 0.2)),
@@ -1520,7 +1520,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1530,7 +1530,7 @@ class _HomeScreenState extends State<HomeScreen>
                     '${meetup.timeDisplay} \u00B7 ${meetup.attendeeCount} going',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -1558,7 +1558,7 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
               color: HuddlColors.teal.withValues(alpha: 0.25)),
@@ -1660,7 +1660,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1670,14 +1670,14 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       Icon(Icons.calendar_today,
                           size: 11,
-                          color: HuddlColors.textHint),
+                          color: context.hc.textTertiary),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
                           '${event.dateDisplay} \u00B7 ${event.timeDisplay}',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -1691,14 +1691,14 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Icon(Icons.location_on,
                             size: 11,
-                            color: HuddlColors.textHint),
+                            color: context.hc.textTertiary),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             event.location,
                             style: GoogleFonts.poppins(
                               fontSize: 10,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -1733,7 +1733,7 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -1763,7 +1763,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1772,7 +1772,7 @@ class _HomeScreenState extends State<HomeScreen>
                     '${meetup.dateDisplay} \u00B7 ${item.reason}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -1797,20 +1797,20 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.only(right: 24),
         decoration: BoxDecoration(
-          color: HuddlColors.textHint.withValues(alpha: 0.12),
+          color: context.hc.textTertiary.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.visibility_off_outlined,
-                color: HuddlColors.textSecondary, size: 20),
+            Icon(Icons.visibility_off_outlined,
+                color: context.hc.textSecondary, size: 20),
             const SizedBox(height: 2),
             Text('Hide',
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                 )),
           ],
         ),
@@ -1860,7 +1860,7 @@ class _HomeScreenState extends State<HomeScreen>
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                             ),
                           ),
@@ -1897,7 +1897,7 @@ class _HomeScreenState extends State<HomeScreen>
                             a.timeAgo,
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -1937,12 +1937,12 @@ class _HomeScreenState extends State<HomeScreen>
                   button: true,
                   child: GestureDetector(
                     onTap: () => _showPostMenu(a),
-                    child: const SizedBox(
+                    child: SizedBox(
                       width: 48,
                       height: 48,
                       child: Center(
                         child: Icon(Icons.more_horiz,
-                            color: HuddlColors.textHint, size: 20),
+                            color: context.hc.textTertiary, size: 20),
                       ),
                     ),
                   ),
@@ -1957,7 +1957,7 @@ class _HomeScreenState extends State<HomeScreen>
                   : a.content,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
                 height: 1.45,
               ),
             ),
@@ -2013,7 +2013,7 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -2043,21 +2043,21 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.people_outline,
-                          size: 12, color: HuddlColors.textHint),
+                      Icon(Icons.people_outline,
+                          size: 12, color: context.hc.textTertiary),
                       const SizedBox(width: 4),
                       Text(
                         item.reason,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -2094,7 +2094,7 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
@@ -2128,7 +2128,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2139,7 +2139,7 @@ class _HomeScreenState extends State<HomeScreen>
                         f.timeAgo,
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                       if (item.reason.isNotEmpty) ...[
@@ -2147,8 +2147,8 @@ class _HomeScreenState extends State<HomeScreen>
                         Container(
                           width: 3,
                           height: 3,
-                          decoration: const BoxDecoration(
-                            color: HuddlColors.textHint,
+                          decoration: BoxDecoration(
+                            color: context.hc.textTertiary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -2157,7 +2157,7 @@ class _HomeScreenState extends State<HomeScreen>
                           item.reason,
                           style: GoogleFonts.poppins(
                             fontSize: 10,
-                            color: HuddlColors.textTertiary,
+                            color: context.hc.textTertiary,
                           ),
                         ),
                       ],
@@ -2249,7 +2249,7 @@ class _HomeScreenState extends State<HomeScreen>
           child: Text('Thanks!',
               style: GoogleFonts.poppins(
                 fontSize: 9,
-                color: HuddlColors.textHint,
+                color: context.hc.textTertiary,
               )),
         ),
       );
@@ -2262,12 +2262,12 @@ class _HomeScreenState extends State<HomeScreen>
             HapticFeedback.lightImpact();
             setState(() => _feedbackGiven.add(itemId));
           },
-          child: const SizedBox(
+          child: SizedBox(
             width: 32,
             height: 32,
             child: Center(
               child: Icon(Icons.thumb_up_alt_outlined,
-                  size: 14, color: HuddlColors.textHint),
+                  size: 14, color: context.hc.textTertiary),
             ),
           ),
         ),
@@ -2277,12 +2277,12 @@ class _HomeScreenState extends State<HomeScreen>
             setState(() => _feedbackGiven.add(itemId));
             // Negative feedback — could inform AI to reduce similar
           },
-          child: const SizedBox(
+          child: SizedBox(
             width: 32,
             height: 32,
             child: Center(
               child: Icon(Icons.thumb_down_alt_outlined,
-                  size: 14, color: HuddlColors.textHint),
+                  size: 14, color: context.hc.textTertiary),
             ),
           ),
         ),
@@ -2645,8 +2645,8 @@ class _AiAssistantSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.55,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: SafeArea(
@@ -2673,14 +2673,14 @@ class _AiAssistantSheet extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       Text(
                         'Your personal community assistant',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -2688,7 +2688,7 @@ class _AiAssistantSheet extends StatelessWidget {
                 ],
               ),
             ),
-            const Divider(height: 1, color: HuddlColors.divider),
+            Divider(height: 1, color: context.hc.divider),
             const SizedBox(height: 12),
             // Quick suggestions based on context
             Padding(
@@ -2701,7 +2701,7 @@ class _AiAssistantSheet extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -2761,7 +2761,7 @@ class _AiAssistantSheet extends StatelessWidget {
                 'AI suggestions are personalised based on your profile and community activity. You can always edit or override them.',
                 style: GoogleFonts.poppins(
                   fontSize: 10,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                   height: 1.3,
                 ),
                 textAlign: TextAlign.center,
@@ -2803,8 +2803,8 @@ class _AiAssistantSheet extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios,
-                    size: 12, color: HuddlColors.textHint),
+                Icon(Icons.arrow_forward_ios,
+                    size: 12, color: HuddlColors.textTertiary),
               ],
             ),
           ),
@@ -2873,8 +2873,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Padding(
@@ -2892,7 +2892,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -2900,14 +2900,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     '(${_comments.length})',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1, color: HuddlColors.divider),
+            Divider(height: 1, color: context.hc.divider),
             Flexible(
               child: _comments.isEmpty
                   ? Center(
@@ -2918,14 +2918,14 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           children: [
                             Icon(Icons.chat_bubble_outline,
                                 size: 40,
-                                color: HuddlColors.textHint
+                                color: context.hc.textTertiary
                                     .withValues(alpha: 0.5)),
                             const SizedBox(height: 12),
                             Text(
                               'No comments yet',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
-                                color: HuddlColors.textHint,
+                                color: context.hc.textTertiary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -2969,7 +2969,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         style: GoogleFonts.poppins(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
-                                          color: HuddlColors.textDark,
+                                          color: context.hc.textPrimary,
                                         ),
                                       ),
                                       const SizedBox(width: 6),
@@ -2977,7 +2977,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         c.timeAgo,
                                         style: GoogleFonts.poppins(
                                           fontSize: 11,
-                                          color: HuddlColors.textHint,
+                                          color: context.hc.textTertiary,
                                         ),
                                       ),
                                     ],
@@ -2987,7 +2987,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                     c.content,
                                     style: GoogleFonts.poppins(
                                       fontSize: 13,
-                                      color: HuddlColors.textDark,
+                                      color: context.hc.textPrimary,
                                       height: 1.4,
                                     ),
                                   ),
@@ -3076,7 +3076,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       },
                     ),
             ),
-            const Divider(height: 1, color: HuddlColors.divider),
+            Divider(height: 1, color: context.hc.divider),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Row(
@@ -3087,16 +3087,16 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                       decoration: InputDecoration(
                         hintText: 'Write a comment...',
                         hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: HuddlColors.textHint),
+                            fontSize: 14, color: context.hc.textTertiary),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                              color: HuddlColors.divider),
+                          borderSide: BorderSide(
+                              color: context.hc.divider),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                              color: HuddlColors.divider),
+                          borderSide: BorderSide(
+                              color: context.hc.divider),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -3108,7 +3108,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         isDense: true,
                       ),
                       style: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textDark),
+                          fontSize: 14, color: context.hc.textPrimary),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                     ),
@@ -3277,8 +3277,8 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -3297,7 +3297,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 if (unreadCount > 0) ...[
@@ -3314,7 +3314,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.white,
+                        color: context.hc.surface,
                       ),
                     ),
                   ),
@@ -3335,7 +3335,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
               ],
             ),
           ),
-          const Divider(height: 1, color: HuddlColors.divider),
+          Divider(height: 1, color: context.hc.divider),
           // Unread / All filter row
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -3355,7 +3355,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
               ],
             ),
           ),
-          const Divider(height: 1, color: HuddlColors.divider),
+          Divider(height: 1, color: context.hc.divider),
           Flexible(
             child: _displayedNotifs.isEmpty
                 ? Center(
@@ -3366,7 +3366,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                         children: [
                           Icon(Icons.notifications_none,
                               size: 48,
-                              color: HuddlColors.textHint
+                              color: context.hc.textTertiary
                                   .withValues(alpha: 0.4)),
                           const SizedBox(height: 12),
                           Text(
@@ -3376,7 +3376,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                             style: GoogleFonts.poppins(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textSecondary,
+                              color: context.hc.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -3384,7 +3384,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                             'You\'re all caught up!',
                             style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                         ],
@@ -3395,10 +3395,10 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shrinkWrap: true,
                     itemCount: _displayedNotifs.length,
-                    separatorBuilder: (_, __) => const Divider(
+                    separatorBuilder: (_, __) => Divider(
                         height: 1,
                         indent: 72,
-                        color: HuddlColors.divider),
+                        color: context.hc.divider),
                     itemBuilder: (_, index) {
                       final n = _displayedNotifs[index];
                       return _buildNotifTile(n);
@@ -3420,7 +3420,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         decoration: BoxDecoration(
           color: selected
               ? HuddlColors.primary.withValues(alpha: 0.12)
-              : HuddlColors.background,
+              : context.hc.scaffold,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected
@@ -3489,7 +3489,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                           color: n.bgColor,
                           shape: BoxShape.circle,
                           border: Border.all(
-                              color: HuddlColors.white, width: 1.5),
+                              color: context.hc.surface, width: 1.5),
                         ),
                         child:
                             Icon(n.icon, size: 11, color: n.color),
@@ -3510,7 +3510,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                         fontWeight: n.isRead
                             ? FontWeight.w400
                             : FontWeight.w600,
-                        color: HuddlColors.textDark,
+                        color: context.hc.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -3520,7 +3520,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                       n.subtitle,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -3769,8 +3769,8 @@ class _SharePostSheetState extends State<_SharePostSheet>
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -3789,7 +3789,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
               ],
@@ -3803,11 +3803,11 @@ class _SharePostSheetState extends State<_SharePostSheet>
               decoration: InputDecoration(
                 hintText: 'Search groups or people...',
                 hintStyle: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.textHint),
-                prefixIcon: const Icon(Icons.search,
-                    size: 20, color: HuddlColors.textHint),
+                    fontSize: 14, color: context.hc.textTertiary),
+                prefixIcon: Icon(Icons.search,
+                    size: 20, color: context.hc.textTertiary),
                 filled: true,
-                fillColor: HuddlColors.background,
+                fillColor: context.hc.scaffold,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -3817,7 +3817,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                 isDense: true,
               ),
               style: GoogleFonts.poppins(
-                  fontSize: 14, color: HuddlColors.textDark),
+                  fontSize: 14, color: context.hc.textPrimary),
             ),
           ),
           const SizedBox(height: 12),
@@ -3833,7 +3833,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                 fontSize: 14, fontWeight: FontWeight.w400),
             tabs: const [Tab(text: 'My Groups'), Tab(text: 'People')],
           ),
-          const Divider(height: 1, color: HuddlColors.divider),
+          Divider(height: 1, color: context.hc.divider),
           Flexible(
             child: TabBarView(
               controller: _tabCtrl,
@@ -3846,7 +3846,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                             'No groups to share with',
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
-                                color: HuddlColors.textHint),
+                                color: context.hc.textTertiary),
                           ),
                         ),
                       )
@@ -3854,10 +3854,10 @@ class _SharePostSheetState extends State<_SharePostSheet>
                         padding:
                             const EdgeInsets.symmetric(vertical: 8),
                         itemCount: _filteredGroups.length,
-                        separatorBuilder: (_, __) => const Divider(
+                        separatorBuilder: (_, __) => Divider(
                             height: 1,
                             indent: 72,
-                            color: HuddlColors.divider),
+                            color: context.hc.divider),
                         itemBuilder: (_, i) {
                           final g = _filteredGroups[i];
                           return ListTile(
@@ -3875,7 +3875,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -3884,7 +3884,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                               '${g.memberCount} members',
                               style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: HuddlColors.textHint),
+                                  color: context.hc.textTertiary),
                             ),
                             trailing: _sending
                                 ? const SizedBox(
@@ -3909,7 +3909,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                                       style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.white,
+                                        color: context.hc.surface,
                                       ),
                                     ),
                                   ),
@@ -3927,7 +3927,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                             'No people in ${widget.borough} to share with',
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
-                                color: HuddlColors.textHint),
+                                color: context.hc.textTertiary),
                           ),
                         ),
                       )
@@ -3935,10 +3935,10 @@ class _SharePostSheetState extends State<_SharePostSheet>
                         padding:
                             const EdgeInsets.symmetric(vertical: 8),
                         itemCount: _filteredMembers.length,
-                        separatorBuilder: (_, __) => const Divider(
+                        separatorBuilder: (_, __) => Divider(
                             height: 1,
                             indent: 72,
-                            color: HuddlColors.divider),
+                            color: context.hc.divider),
                         itemBuilder: (_, i) {
                           final m = _filteredMembers[i];
                           return ListTile(
@@ -3952,14 +3952,14 @@ class _SharePostSheetState extends State<_SharePostSheet>
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                             ),
                             subtitle: Text(
                               widget.borough,
                               style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: HuddlColors.textHint),
+                                  color: context.hc.textTertiary),
                             ),
                             trailing: _sending
                                 ? const SizedBox(
@@ -3984,7 +3984,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                                       style: GoogleFonts.poppins(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
-                                        color: HuddlColors.white,
+                                        color: context.hc.surface,
                                       ),
                                     ),
                                   ),
@@ -4055,8 +4055,8 @@ class _ActivityDetailSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.65,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -4087,7 +4087,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark,
+                          color: context.hc.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -4105,7 +4105,7 @@ class _ActivityDetailSheet extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: HuddlColors.divider),
+          Divider(height: 1, color: context.hc.divider),
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
@@ -4195,7 +4195,7 @@ class _ActivityDetailSheet extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: HuddlColors.textHint),
+        Icon(icon, size: 18, color: HuddlColors.textTertiary),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -4205,7 +4205,7 @@ class _ActivityDetailSheet extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textHint,
+                    color: HuddlColors.textTertiary,
                   )),
               const SizedBox(height: 2),
               Text(value,

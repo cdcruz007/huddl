@@ -82,7 +82,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
               width: 40, height: 4,
               margin: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -101,7 +101,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
@@ -110,7 +110,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   GestureDetector(
@@ -174,7 +174,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   // Minute wheel
@@ -223,7 +223,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                             decoration: BoxDecoration(
                               color: _isAM
                                   ? HuddlColors.primary
-                                  : HuddlColors.background,
+                                  : context.hc.scaffold,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('AM',
@@ -246,7 +246,7 @@ class _SimpleTimePickerSheetState extends State<_SimpleTimePickerSheet> {
                             decoration: BoxDecoration(
                               color: !_isAM
                                   ? HuddlColors.primary
-                                  : HuddlColors.background,
+                                  : context.hc.scaffold,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('PM',
@@ -309,12 +309,12 @@ class HuddlPrimaryButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           child: Center(
             child: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                     ),
                   )
                 : Text(
@@ -322,7 +322,7 @@ class HuddlPrimaryButton extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                     ),
                   ),
           ),
@@ -403,7 +403,7 @@ class HuddlTextField extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: HuddlColors.textDark,
+              color: context.hc.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -416,7 +416,7 @@ class HuddlTextField extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -500,7 +500,7 @@ class HuddlSectionHeader extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         if (actionText != null)
@@ -546,7 +546,7 @@ class HuddlChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? (backgroundColor ?? HuddlColors.primary)
-              : HuddlColors.background,
+              : context.hc.scaffold,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -582,20 +582,20 @@ class HuddlSearchBar extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: context.hc.scaffold,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
           const SizedBox(width: 12),
-          const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+          Icon(Icons.search, size: 20, color: context.hc.textTertiary),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
               onChanged: onChanged,
               style: GoogleFonts.poppins(
                 fontSize: 14,
-                color: HuddlColors.textDark,
+                color: context.hc.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: hint,
@@ -606,7 +606,7 @@ class HuddlSearchBar extends StatelessWidget {
                 isDense: true,
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ),
@@ -666,7 +666,7 @@ class HuddlImageCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: HuddlColors.white,
+          color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -707,7 +707,7 @@ class HuddlImageCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark,
+                            color: context.hc.textPrimary,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -723,7 +723,7 @@ class HuddlImageCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -836,7 +836,7 @@ class MemberAvatar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: const Color(0xFF34C759),
                 shape: BoxShape.circle,
-                border: Border.all(color: HuddlColors.white, width: 2),
+                border: Border.all(color: context.hc.surface, width: 2),
               ),
             ),
           ),
@@ -899,7 +899,7 @@ class HuddlBadge extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 8,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.white,
+                  color: context.hc.surface,
                 ),
                 textAlign: TextAlign.center,
               ),

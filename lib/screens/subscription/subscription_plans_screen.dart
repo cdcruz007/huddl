@@ -81,13 +81,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             title: Text('Downgrade to Explorer?',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
             content: Text(
               'You\'ll lose access to premium features at the end of your billing period. '
               'Your groups, conversations, and data will be preserved, but you\'ll '
               'be limited to Explorer tier features.',
               style: GoogleFonts.poppins(
-                  fontSize: 14, color: HuddlColors.textSecondary),
+                  fontSize: 14, color: context.hc.textSecondary),
             ),
             actions: [
               TextButton(
@@ -112,20 +112,20 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       appBar: AppBar(
-        backgroundColor: HuddlColors.white,
+        backgroundColor: context.hc.surface,
         elevation: 0,
         scrolledUnderElevation: 1,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: HuddlColors.textDark),
+          icon: Icon(Icons.close, color: context.hc.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text('Choose Your Plan',
             style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark)),
+                color: context.hc.textPrimary)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -189,7 +189,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.textHint)),
+                        color: context.hc.textTertiary)),
               ),
 
               // ── Apple 3.1.2 / Google Play required subscription disclosures ──
@@ -206,7 +206,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textSecondary),
+                          color: context.hc.textSecondary),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -337,7 +337,7 @@ class _GateBanner extends StatelessWidget {
                 style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textDark)),
+                    color: context.hc.textPrimary)),
           ),
         ],
       ),
@@ -380,12 +380,12 @@ class _TrialBanner extends StatelessWidget {
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.textDark)),
+                        color: context.hc.textPrimary)),
                 const SizedBox(height: 2),
                 Text(
                     'Unlimited groups, DMs, meetups & more. No card required.',
                     style: GoogleFonts.poppins(
-                        fontSize: 12, color: HuddlColors.textSecondary)),
+                        fontSize: 12, color: context.hc.textSecondary)),
               ],
             ),
           ),
@@ -472,7 +472,7 @@ class _FoundingMemberBanner extends StatelessWidget {
             children: [
               Text('$claimed of $cap claimed',
                   style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textSecondary)),
+                      fontSize: 11, color: context.hc.textSecondary)),
               Text('Only $remaining spots left!',
                   style: GoogleFonts.poppins(
                       fontSize: 11,
@@ -645,7 +645,7 @@ class _PlanCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
-                                  color: HuddlColors.textDark)),
+                                  color: context.hc.textPrimary)),
                           if (isCurrentPlan) ...[
                             const SizedBox(width: 8),
                             Container(
@@ -684,7 +684,7 @@ class _PlanCard extends StatelessWidget {
                       Text(plan.tagline,
                           style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textSecondary)),
+                              color: context.hc.textSecondary)),
                     ],
                   ),
                 ),
@@ -705,7 +705,7 @@ class _PlanCard extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.textDark),
+                      color: context.hc.textPrimary),
                 ),
                 if (!isFree) ...[
                   const SizedBox(width: 4),
@@ -716,7 +716,7 @@ class _PlanCard extends StatelessWidget {
                           ? '/month'
                           : '/year',
                       style: GoogleFonts.poppins(
-                          fontSize: 13, color: HuddlColors.textHint),
+                          fontSize: 13, color: context.hc.textTertiary),
                     ),
                   ),
                   if (period == BillingPeriod.annual && plan.annualSavingsPercent > 0) ...[
@@ -751,7 +751,7 @@ class _PlanCard extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
-                      color: HuddlColors.textHint)),
+                      color: context.hc.textTertiary)),
             ),
           ),
 
@@ -803,7 +803,7 @@ class _PlanCard extends StatelessWidget {
                               child: Text(h,
                                   style: GoogleFonts.poppins(
                                       fontSize: 13,
-                                      color: HuddlColors.textSecondary)),
+                                      color: context.hc.textSecondary)),
                             ),
                           ],
                         ),
@@ -884,11 +884,11 @@ class _FeatureComparisonTable extends StatelessWidget {
             style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: HuddlColors.textDark)),
+                color: context.hc.textPrimary)),
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: HuddlColors.white,
+            color: context.hc.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: HuddlColors.gray200),
           ),
@@ -911,14 +911,14 @@ class _FeatureComparisonTable extends StatelessWidget {
                             style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textHint))),
+                                color: context.hc.textTertiary))),
                     Expanded(
                         child: Text('Explorer',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textHint))),
+                                color: context.hc.textTertiary))),
                     Expanded(
                         child: Text('N’hood',
                             textAlign: TextAlign.center,
@@ -1011,7 +1011,7 @@ class _FeatureComparisonTable extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textHint))),
+                      color: HuddlColors.textTertiary))),
           Expanded(
               child: Text(neighbourhood,
                   textAlign: TextAlign.center,

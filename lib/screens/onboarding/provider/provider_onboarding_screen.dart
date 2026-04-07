@@ -43,7 +43,7 @@ class _ProviderOnboardingScreenState extends State<ProviderOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.background,
+      backgroundColor: context.hc.scaffold,
       body: SafeArea(
         child: Column(
           children: [

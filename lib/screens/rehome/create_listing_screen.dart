@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
@@ -92,7 +93,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -105,7 +106,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -113,7 +114,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark)),
+                    color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -126,8 +127,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               ),
               title: const Text('Choose from gallery',
                   style: TextStyle(fontWeight: FontWeight.w500)),
-              subtitle: const Text('Select multiple photos',
-                  style: TextStyle(fontSize: 12, color: HuddlColors.textHint)),
+              subtitle: Text('Select multiple photos',
+                  style: TextStyle(fontSize: 12, color: context.hc.textTertiary)),
               onTap: () {
                 Navigator.pop(ctx);
                 _pickMultipleFromGallery();
@@ -345,9 +346,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
@@ -360,7 +361,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
             ),
           ),
         ),
@@ -377,7 +378,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         bottom: PreferredSize(
@@ -420,7 +421,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     'Select the age group this item is suited for.',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: HuddlColors.textSecondary,
+                      color: context.hc.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -470,7 +471,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: HuddlColors.white,
+                      color: context.hc.surface,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: HuddlColors.gray300),
                     ),
@@ -540,7 +541,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected ? HuddlColors.primary : HuddlColors.textDark,
+                                color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
                               ),
                             ),
                           ],
@@ -634,10 +635,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextFormField(
                       controller: _titleController,
-                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'e.g. Silver Cross pram with accessories',
-                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
                         border: UnderlineInputBorder(
                           borderSide: BorderSide(color: HuddlColors.gray300),
                         ),
@@ -671,10 +672,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _priceController,
-                            style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                            style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                             decoration: InputDecoration(
                               hintText: '\u00A30.00',
-                              hintStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
+                              hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
                               border: UnderlineInputBorder(
                                 borderSide: BorderSide(color: HuddlColors.gray300),
                               ),
@@ -747,12 +748,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextFormField(
                       controller: _descriptionController,
-                      style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Describe the item \u2014 condition, brand, what\'s included...',
                         hintStyle: GoogleFonts.poppins(
                             fontSize: 13,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                             height: 1.4),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -806,7 +807,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       style: GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: HuddlColors.textDark,
+        color: context.hc.textPrimary,
       ),
     );
   }
@@ -874,7 +875,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 'Take photos or choose from gallery',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ],
@@ -1040,7 +1041,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
+        color: context.hc.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -1068,7 +1069,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textSecondary,
+                    color: context.hc.textSecondary,
                   ),
                 ),
               ),
@@ -1151,7 +1152,7 @@ class _AgeStageCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: (isSelected ? HuddlColors.primary : HuddlColors.textHint)
+                color: (isSelected ? HuddlColors.primary : context.hc.textTertiary)
                     .withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -1160,7 +1161,7 @@ class _AgeStageCard extends StatelessWidget {
                 ),
               ),
               child: Icon(age.icon,
-                  color: isSelected ? HuddlColors.primary : HuddlColors.textHint,
+                  color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
                   size: 22),
             ),
             const SizedBox(width: 16),
@@ -1173,7 +1174,7 @@ class _AgeStageCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? HuddlColors.primary : HuddlColors.textDark,
+                      color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -1181,7 +1182,7 @@ class _AgeStageCard extends StatelessWidget {
                     age.shortLabel,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -1238,7 +1239,7 @@ class _CategoryListTile extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? HuddlColors.primary : HuddlColors.textDark,
+                  color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
                 ),
               ),
             ),

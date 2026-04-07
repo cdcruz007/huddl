@@ -32,7 +32,7 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -45,13 +45,13 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                   children: [
                     const SizedBox(height: 36),
                     // Title
-                    const Center(
+                    Center(
                       child: Text(
                         'I am a...',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w700,
-                          color: HuddlColors.textDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -171,7 +171,7 @@ class _ParentTypeCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         decoration: BoxDecoration(
-          color: selected ? accentColor.withValues(alpha: 0.04) : Colors.white,
+          color: selected ? accentColor.withValues(alpha: 0.04) : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected ? accentColor : HuddlColors.divider,
@@ -208,7 +208,7 @@ class _ParentTypeCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: selected ? accentColor : HuddlColors.textDark,
+                      color: selected ? accentColor : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 2),

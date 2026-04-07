@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
@@ -304,7 +305,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -317,7 +318,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -325,7 +326,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark)),
+                    color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -627,7 +628,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark)),
+                      color: context.hc.textPrimary)),
             ),
           ),
         ),
@@ -638,7 +639,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         actions: [
@@ -698,7 +699,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             Text('Online event',
                                 style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: HuddlColors.textSecondary)),
+                                    color: context.hc.textSecondary)),
                             const SizedBox(width: 8),
                             Transform.scale(
                               scale: 0.8,
@@ -812,7 +813,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: HuddlColors.textDark)),
+                                color: context.hc.textPrimary)),
                         Transform.scale(
                           scale: 0.8,
                           child: CupertinoSwitch(
@@ -859,10 +860,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                 value: _repeatFrequency,
                                 isExpanded: true,
                                 icon: Icon(Icons.keyboard_arrow_down,
-                                    color: HuddlColors.textHint),
+                                    color: context.hc.textTertiary),
                                 style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    color: HuddlColors.textDark),
+                                    color: context.hc.textPrimary),
                                 items: _repeatOptions.map((opt) {
                                   return DropdownMenuItem(
                                     value: opt,
@@ -932,7 +933,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                           Text('Free',
                               style: GoogleFonts.poppins(
                                   fontSize: 14,
-                                  color: HuddlColors.textDark)),
+                                  color: context.hc.textPrimary)),
                         ],
                       ),
                     ),
@@ -964,13 +965,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       controller: _descriptionCtrl,
                       maxLines: 4,
                       style: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textDark),
+                          fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText:
                             'e.g. who this meetup is for, what attractions are planned.',
                         hintStyle: GoogleFonts.poppins(
                             fontSize: 13,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                             height: 1.4),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -1052,7 +1053,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                   Text(key,
                                       style: GoogleFonts.poppins(
                                           fontSize: 14,
-                                          color: HuddlColors.textDark)),
+                                          color: context.hc.textPrimary)),
                                 ],
                               ),
                             ),
@@ -1069,19 +1070,19 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                         Text('Min. age',
                                             style: GoogleFonts.poppins(
                                                 fontSize: 12,
-                                                color: HuddlColors.textHint)),
+                                                color: context.hc.textTertiary)),
                                         const SizedBox(height: 4),
                                         TextField(
                                           controller: _minAgeCtrl,
                                           keyboardType: TextInputType.number,
                                           style: GoogleFonts.poppins(
                                               fontSize: 14,
-                                              color: HuddlColors.textDark),
+                                              color: context.hc.textPrimary),
                                           decoration: InputDecoration(
                                             hintText: '0',
                                             hintStyle: GoogleFonts.poppins(
                                                 fontSize: 14,
-                                                color: HuddlColors.textHint),
+                                                color: context.hc.textTertiary),
                                             border: UnderlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: HuddlColors.gray300),
@@ -1112,19 +1113,19 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                         Text('Max. age',
                                             style: GoogleFonts.poppins(
                                                 fontSize: 12,
-                                                color: HuddlColors.textHint)),
+                                                color: context.hc.textTertiary)),
                                         const SizedBox(height: 4),
                                         TextField(
                                           controller: _maxAgeCtrl,
                                           keyboardType: TextInputType.number,
                                           style: GoogleFonts.poppins(
                                               fontSize: 14,
-                                              color: HuddlColors.textDark),
+                                              color: context.hc.textPrimary),
                                           decoration: InputDecoration(
                                             hintText: '17',
                                             hintStyle: GoogleFonts.poppins(
                                                 fontSize: 14,
-                                                color: HuddlColors.textHint),
+                                                color: context.hc.textTertiary),
                                             border: UnderlineInputBorder(
                                               borderSide: BorderSide(
                                                   color: HuddlColors.gray300),
@@ -1372,7 +1373,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       style: GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: HuddlColors.textDark,
+        color: context.hc.textPrimary,
       ),
     );
   }
@@ -1389,14 +1390,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       keyboardType: keyboardType,
       onChanged: (_) { setState(() {}); _saveDraft(); },
       style:
-          GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+          GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textHint),
+            fontSize: 14, color: context.hc.textTertiary),
         prefixText: prefix,
         prefixStyle: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textDark),
+            fontSize: 14, color: context.hc.textPrimary),
         border: UnderlineInputBorder(
           borderSide: BorderSide(color: HuddlColors.gray300),
         ),
@@ -1476,7 +1477,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ),
@@ -1517,7 +1518,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           children: [
             Icon(icon,
                 size: 16,
-                color: isSelected ? chipColor : HuddlColors.textHint),
+                color: isSelected ? chipColor : context.hc.textTertiary),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1590,7 +1591,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           const SizedBox(width: 10),
           Text(label,
               style: GoogleFonts.poppins(
-                  fontSize: 14, color: HuddlColors.textDark)),
+                  fontSize: 14, color: context.hc.textPrimary)),
         ],
       ),
     );
@@ -1642,13 +1643,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           isExpanded: true,
           hint: Text('Select a group',
               style: GoogleFonts.poppins(
-                  fontSize: 13, color: HuddlColors.textHint)),
+                  fontSize: 13, color: context.hc.textTertiary)),
           icon: Icon(Icons.keyboard_arrow_down,
               color: _selectedGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
           style:
-              GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+              GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
           items: _userGroups.map((g) {
             return DropdownMenuItem(
               value: g.id,
@@ -1671,7 +1672,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     child: Text(g.name,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.textDark)),
+                            fontSize: 13, color: context.hc.textPrimary)),
                   ),
                 ],
               ),
@@ -1788,7 +1789,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 'Members from ${_userBorough!}',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -1803,7 +1804,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1830,7 +1831,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       width: 40, height: 4,
                       margin: const EdgeInsets.only(top: 12, bottom: 8),
                       decoration: BoxDecoration(
-                        color: HuddlColors.divider,
+                        color: context.hc.divider,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -1845,7 +1846,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: HuddlColors.textDark,
+                              color: context.hc.textPrimary,
                             ),
                           ),
                           if (_selectedMemberIds.isNotEmpty)
@@ -1861,7 +1862,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.white,
+                                  color: context.hc.surface,
                                 ),
                               ),
                             ),
@@ -1877,7 +1878,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             'Members in ${_userBorough!}',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                         ),
@@ -1935,11 +1936,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search members...',
                           hintStyle: GoogleFonts.poppins(
-                              fontSize: 14, color: HuddlColors.textHint),
-                          prefixIcon: const Icon(Icons.search,
-                              color: HuddlColors.textHint, size: 20),
+                              fontSize: 14, color: context.hc.textTertiary),
+                          prefixIcon: Icon(Icons.search,
+                              color: context.hc.textTertiary, size: 20),
                           filled: true,
-                          fillColor: HuddlColors.background,
+                          fillColor: context.hc.scaffold,
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           border: OutlineInputBorder(
@@ -1977,14 +1978,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                               style: GoogleFonts.poppins(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
-                                color: HuddlColors.textDark,
+                                color: context.hc.textPrimary,
                               ),
                             ),
                             subtitle: Text(
                               member.parentType == 'mum' ? 'Mum' : 'Dad',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                color: HuddlColors.textHint,
+                                color: context.hc.textTertiary,
                               ),
                             ),
                             trailing: Icon(
@@ -2035,7 +2036,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.white,
+                              color: context.hc.surface,
                             ),
                           ),
                         ),
@@ -2111,12 +2112,12 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark)),
+                          color: context.hc.textPrimary)),
                   const SizedBox(height: 2),
                   Text(description,
                       style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                           height: 1.3)),
                 ],
               ),

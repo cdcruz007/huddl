@@ -75,7 +75,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,14 +94,14 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
             const SizedBox(height: 16),
 
             // ── Title (left-aligned, large) ────────────────────────────
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
                 'About you',
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w700,
-                  color: HuddlColors.textDark,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.2,
                 ),
               ),
@@ -129,10 +129,10 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: HuddlColors.inputBg,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
                     border: Border(
-                      bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2),
+                      bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2),
                     ),
                   ),
                   child: TextField(
@@ -140,9 +140,9 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                     maxLines: null,
                     expands: true,
                     textAlignVertical: TextAlignVertical.top,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
-                      color: HuddlColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                       height: 1.55,
                     ),
                     decoration: const InputDecoration(

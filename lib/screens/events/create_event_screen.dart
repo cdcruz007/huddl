@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
@@ -161,7 +162,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   void _showMoreOptions() {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -173,13 +174,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               width: 40, height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             ListTile(
               leading: Icon(_isCreating ? Icons.hourglass_top : Icons.save_outlined,
-                  color: HuddlColors.textDark),
+                  color: context.hc.textPrimary),
               title: Text(_isCreating ? 'Saving...' : 'Save as draft',
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w500)),
@@ -291,7 +292,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     if (!mounted) return;
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -304,7 +305,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: HuddlColors.divider,
+                color: context.hc.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -312,7 +313,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark)),
+                    color: context.hc.textPrimary)),
             const SizedBox(height: 16),
             ListTile(
               leading: Container(
@@ -544,7 +545,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           style: GoogleFonts.poppins(
             fontSize: 17,
             fontWeight: FontWeight.w600,
-            color: HuddlColors.textDark,
+            color: context.hc.textPrimary,
           ),
         ),
         actions: [
@@ -603,7 +604,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       Text('Online event',
                           style: GoogleFonts.poppins(
                               fontSize: 13,
-                              color: HuddlColors.textSecondary)),
+                              color: context.hc.textSecondary)),
                       const SizedBox(width: 8),
                       Transform.scale(
                         scale: 0.8,
@@ -731,7 +732,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     Text('Free',
                         style: GoogleFonts.poppins(
                             fontSize: 14,
-                            color: HuddlColors.textDark)),
+                            color: context.hc.textPrimary)),
                   ],
                 ),
               ),
@@ -762,13 +763,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 controller: _descriptionCtrl,
                 maxLines: 4,
                 style: GoogleFonts.poppins(
-                    fontSize: 14, color: HuddlColors.textDark),
+                    fontSize: 14, color: context.hc.textPrimary),
                 decoration: InputDecoration(
                   hintText:
                       'e.g. what people can expect, who this is for.',
                   hintStyle: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                       height: 1.4),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -835,7 +836,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       Text(key,
                           style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: HuddlColors.textDark)),
+                              color: context.hc.textPrimary)),
                       Transform.scale(
                         scale: 0.8,
                         child: CupertinoSwitch(
@@ -1063,7 +1064,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       style: GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: HuddlColors.textDark,
+        color: context.hc.textPrimary,
       ),
     );
   }
@@ -1080,14 +1081,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       keyboardType: keyboardType,
       onChanged: (_) { setState(() {}); _saveDraft(); },
       style:
-          GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
+          GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textHint),
+            fontSize: 14, color: context.hc.textTertiary),
         prefixText: prefix,
         prefixStyle: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textDark),
+            fontSize: 14, color: context.hc.textPrimary),
         border: UnderlineInputBorder(
           borderSide: BorderSide(color: HuddlColors.gray300),
         ),
@@ -1164,7 +1165,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: HuddlColors.textHint,
+                  color: context.hc.textTertiary,
                 ),
               ),
             ),
@@ -1201,7 +1202,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           children: [
             Icon(icon,
                 size: 16,
-                color: isSelected ? HuddlColors.blue : HuddlColors.textHint),
+                color: isSelected ? HuddlColors.blue : context.hc.textTertiary),
             const SizedBox(width: 6),
             Text(
               label,
@@ -1295,12 +1296,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.textDark)),
+                          color: context.hc.textPrimary)),
                   const SizedBox(height: 2),
                   Text(description,
                       style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textHint,
+                          color: context.hc.textTertiary,
                           height: 1.3)),
                 ],
               ),
@@ -1357,13 +1358,13 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           isExpanded: true,
           hint: Text('Select a group',
               style: GoogleFonts.poppins(
-                  fontSize: 13, color: HuddlColors.textHint)),
+                  fontSize: 13, color: context.hc.textTertiary)),
           icon: Icon(Icons.keyboard_arrow_down,
               color: _selectedGroupId != null
                   ? HuddlColors.primary
                   : HuddlColors.textHint),
           style:
-              GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textDark),
+              GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
           items: _userGroups.map((g) {
             return DropdownMenuItem(
               value: g.id,
@@ -1386,7 +1387,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     child: Text(g.name,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                            fontSize: 13, color: HuddlColors.textDark)),
+                            fontSize: 13, color: context.hc.textPrimary)),
                   ),
                 ],
               ),

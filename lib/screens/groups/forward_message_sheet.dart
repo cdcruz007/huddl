@@ -371,8 +371,8 @@ class _ForwardSheetState extends State<_ForwardSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: HuddlColors.white,
+      decoration: BoxDecoration(
+        color: context.hc.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
@@ -384,7 +384,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: HuddlColors.divider,
+              color: context.hc.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -400,7 +400,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 const Spacer(),
@@ -429,23 +429,23 @@ class _ForwardSheetState extends State<_ForwardSheet> {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             height: 44,
             decoration: BoxDecoration(
-              color: HuddlColors.background,
+              color: context.hc.scaffold,
               borderRadius: BorderRadius.circular(22),
             ),
             child: Row(
               children: [
                 const SizedBox(width: 14),
-                const Icon(Icons.search, size: 20, color: HuddlColors.textHint),
+                Icon(Icons.search, size: 20, color: context.hc.textTertiary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
                     style: GoogleFonts.poppins(
-                        fontSize: 14, color: HuddlColors.textDark),
+                        fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search list',
                       hintStyle: GoogleFonts.poppins(
-                          fontSize: 14, color: HuddlColors.textHint),
+                          fontSize: 14, color: context.hc.textTertiary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
@@ -458,10 +458,10 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                       _searchCtrl.clear();
                       _applyFilter('');
                     },
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.all(8),
                       child: Icon(Icons.close,
-                          size: 18, color: HuddlColors.textHint),
+                          size: 18, color: context.hc.textTertiary),
                     ),
                   ),
               ],
@@ -480,7 +480,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                         child: Text(
                           'No contacts or groups found',
                           style: GoogleFonts.poppins(
-                              fontSize: 14, color: HuddlColors.textHint),
+                              fontSize: 14, color: context.hc.textTertiary),
                         ),
                       )
                     : ListView(
@@ -495,7 +495,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textHint,
+                                  color: context.hc.textTertiary,
                                   letterSpacing: 1.0,
                                 ),
                               ),
@@ -512,10 +512,10 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                                     onSend: () => _onSend(target),
                                     onUndo: () => _onUndo(target),
                                   ),
-                                  const Divider(
+                                  Divider(
                                     height: 1,
                                     indent: 72,
-                                    color: HuddlColors.divider,
+                                    color: context.hc.divider,
                                   ),
                                 ],
                               );
@@ -530,7 +530,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.textHint,
+                                  color: context.hc.textTertiary,
                                   letterSpacing: 1.0,
                                 ),
                               ),
@@ -547,10 +547,10 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                                     onSend: () => _onSend(target),
                                     onUndo: () => _onUndo(target),
                                   ),
-                                  const Divider(
+                                  Divider(
                                     height: 1,
                                     indent: 72,
-                                    color: HuddlColors.divider,
+                                    color: context.hc.divider,
                                   ),
                                 ],
                               );
@@ -572,7 +572,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: context.hc.scaffold,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -603,7 +603,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   if (widget.messageText.isNotEmpty &&
@@ -612,7 +612,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                       widget.messageText,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.textSecondary,
+                        color: context.hc.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -631,7 +631,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: context.hc.scaffold,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -652,7 +652,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                 widget.locationLabel ?? 'Shared location',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -669,7 +669,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: context.hc.scaffold,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -694,7 +694,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                   ),
                   if (widget.contactPhone != null)
@@ -702,7 +702,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                       widget.contactPhone!,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                     ),
                 ],
@@ -719,7 +719,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: HuddlColors.background,
+          color: context.hc.scaffold,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -740,7 +740,7 @@ class _ForwardSheetState extends State<_ForwardSheet> {
                 widget.documentName!,
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: HuddlColors.textSecondary,
+                  color: context.hc.textSecondary,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -756,20 +756,20 @@ class _ForwardSheetState extends State<_ForwardSheet> {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: HuddlColors.background,
+        color: context.hc.scaffold,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          const Icon(Icons.chat_bubble_outline,
-              size: 16, color: HuddlColors.textHint),
+          Icon(Icons.chat_bubble_outline,
+              size: 16, color: context.hc.textTertiary),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               widget.messageText,
               style: GoogleFonts.poppins(
                 fontSize: 13,
-                color: HuddlColors.textSecondary,
+                color: context.hc.textSecondary,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -802,7 +802,7 @@ class _ForwardContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      color: HuddlColors.white,
+      color: context.hc.surface,
       child: Row(
         children: [
           // Avatar
@@ -818,7 +818,7 @@ class _ForwardContactTile extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -828,7 +828,7 @@ class _ForwardContactTile extends StatelessWidget {
                     'Group',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
               ],

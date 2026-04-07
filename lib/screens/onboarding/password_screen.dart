@@ -122,7 +122,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     final strength = _PasswordPolicy.strength(pw);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -136,12 +136,12 @@ class _PasswordScreenState extends State<PasswordScreen> {
                     const SizedBox(height: 36),
 
                     // Title
-                    const Text(
+                    Text(
                       'Create a password',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -371,12 +371,12 @@ class _RequirementsPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Password must contain:',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: HuddlColors.textDark,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 8),
@@ -418,7 +418,7 @@ class _Req extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: met ? HuddlColors.textDark : HuddlColors.disabledText,
+                color: met ? Theme.of(context).colorScheme.onSurface : HuddlColors.disabledText,
                 fontWeight: met ? FontWeight.w500 : FontWeight.w400,
               ),
             ),
@@ -449,9 +449,9 @@ class _PasswordInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: HuddlColors.inputBg,
-        border: Border(bottom: BorderSide(color: HuddlColors.inputBorder, width: 1.2)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
+        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,14 +460,14 @@ class _PasswordInput extends StatelessWidget {
             padding: const EdgeInsets.only(left: 16, top: 8),
             child: Text(
               hint,
-              style: const TextStyle(fontSize: 11, color: HuddlColors.disabledText),
+              style: TextStyle(fontSize: 11, color: HuddlColors.disabledText),
             ),
           ),
           TextField(
             controller: controller,
             obscureText: obscure,
             onChanged: onChanged,
-            style: const TextStyle(fontSize: 16, color: HuddlColors.textDark),
+            style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
             decoration: InputDecoration(
               border: InputBorder.none,
               contentPadding:

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
@@ -81,7 +81,7 @@ class _EventsScreenState extends State<EventsScreen>
     final goingEvents = _eventService.goingEvents;
     showModalBottomSheet(
       context: context,
-      backgroundColor: HuddlColors.white,
+      backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -97,7 +97,7 @@ class _EventsScreenState extends State<EventsScreen>
                   child: Container(
                     width: 36, height: 4,
                     decoration: BoxDecoration(
-                      color: HuddlColors.divider,
+                      color: context.hc.divider,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -108,7 +108,7 @@ class _EventsScreenState extends State<EventsScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.textDark,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -120,13 +120,13 @@ class _EventsScreenState extends State<EventsScreen>
                         children: [
                           Icon(Icons.notifications_off_outlined,
                               size: 48,
-                              color: HuddlColors.textHint.withValues(alpha: 0.5)),
+                              color: context.hc.textTertiary.withValues(alpha: 0.5)),
                           const SizedBox(height: 12),
                           Text(
                             'No upcoming reminders',
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -134,7 +134,7 @@ class _EventsScreenState extends State<EventsScreen>
                             'RSVP to meetups or register for events',
                             style: GoogleFonts.poppins(
                               fontSize: 12,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                         ],
@@ -168,11 +168,11 @@ class _EventsScreenState extends State<EventsScreen>
                           '${meetup.dateDisplay} · ${meetup.timeDisplay}',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
-                        trailing: const Icon(Icons.chevron_right,
-                            color: HuddlColors.textHint, size: 20),
+                        trailing: Icon(Icons.chevron_right,
+                            color: context.hc.textTertiary, size: 20),
                         onTap: () {
                           Navigator.pop(ctx);
                           Navigator.push(
@@ -210,11 +210,11 @@ class _EventsScreenState extends State<EventsScreen>
                           '${event.dateDisplay} · ${event.timeDisplay}',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                         ),
-                        trailing: const Icon(Icons.chevron_right,
-                            color: HuddlColors.textHint, size: 20),
+                        trailing: Icon(Icons.chevron_right,
+                            color: context.hc.textTertiary, size: 20),
                         onTap: () {
                           Navigator.pop(ctx);
                           Navigator.push(
@@ -306,9 +306,9 @@ class _EventsScreenState extends State<EventsScreen>
                                     gradient: HuddlColors.aiGradient,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.auto_awesome,
-                                    color: HuddlColors.white,
+                                    color: context.hc.surface,
                                     size: 18,
                                   ),
                                 ),
@@ -356,9 +356,9 @@ class _EventsScreenState extends State<EventsScreen>
                       decoration: InputDecoration(
                         hintText: 'Search meetups & events...',
                         hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: HuddlColors.textHint),
-                        prefixIcon: const Icon(Icons.search,
-                            color: HuddlColors.textHint, size: 20),
+                            fontSize: 14, color: context.hc.textTertiary),
+                        prefixIcon: Icon(Icons.search,
+                            color: context.hc.textTertiary, size: 20),
                         suffixIcon: _searchQuery.isNotEmpty
                             ? IconButton(
                                 icon: const Icon(Icons.clear, size: 18),
@@ -680,7 +680,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           Icon(
                             _filtersExpanded ? Icons.keyboard_arrow_left : Icons.tune,
                             size: 16,
-                            color: HuddlColors.textHint,
+                            color: context.hc.textTertiary,
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -688,7 +688,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                           ),
                         ],
@@ -823,7 +823,7 @@ class _SmartNudgeBanner extends StatelessWidget {
               child: Container(
                 width: 32, height: 32,
                 alignment: Alignment.center,
-                child: Icon(Icons.close, size: 15, color: HuddlColors.textHint.withValues(alpha: 0.6)),
+                child: Icon(Icons.close, size: 15, color: context.hc.textTertiary.withValues(alpha: 0.6)),
               ),
             ),
           ],
@@ -869,7 +869,7 @@ class _AiContextLine extends StatelessWidget {
             child: Text(
               _contextText,
               style: GoogleFonts.poppins(
-                fontSize: 11, color: HuddlColors.textHint, fontWeight: FontWeight.w400),
+                fontSize: 11, color: context.hc.textTertiary, fontWeight: FontWeight.w400),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1043,7 +1043,7 @@ class _ImGoingCard extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text('Keep', style: GoogleFonts.poppins(
-              fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+              fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1087,7 +1087,7 @@ class _ImGoingCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.close, color: HuddlColors.white, size: 22),
+            Icon(Icons.close, color: context.hc.surface, size: 22),
             const SizedBox(height: 2),
             Text(isPast ? 'Clear' : 'Cancel',
               style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.white)),
@@ -1270,7 +1270,7 @@ class _ImGoingCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: (isPast ? HuddlColors.textHint : HuddlColors.error)
+                                color: (isPast ? context.hc.textTertiary : HuddlColors.error)
                                     .withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -1402,7 +1402,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
             _SectionLabel(
               icon: Icons.history,
               label: 'Past',
-              color: HuddlColors.textHint,
+              color: context.hc.textTertiary,
             ),
             const SizedBox(height: 8),
             ...past.map((item) => _ImGoingCard(
@@ -1622,7 +1622,7 @@ class _EventsTabState extends State<_EventsTab> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: context.hc.scaffold,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _nlpFocusNode.hasFocus
@@ -1639,15 +1639,15 @@ class _EventsTabState extends State<_EventsTab> {
                       hintText: 'Try "free baby classes this weekend"',
                       hintStyle: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: HuddlColors.textHint,
+                        color: context.hc.textTertiary,
                       ),
                       prefixIcon: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 200),
                         child: _nlpQuery.isNotEmpty
                             ? const Icon(Icons.auto_awesome, key: ValueKey('ai'),
                                 size: 18, color: Color(0xFF3580F0))
-                            : const Icon(Icons.search, key: ValueKey('search'),
-                                size: 18, color: HuddlColors.textHint),
+                            : Icon(Icons.search, key: ValueKey('search'),
+                                size: 18, color: context.hc.textTertiary),
                       ),
                       suffixIcon: _nlpQuery.isNotEmpty
                           ? IconButton(
@@ -1721,7 +1721,7 @@ class _EventsTabState extends State<_EventsTab> {
                 ),
                 const SizedBox(width: 6),
                 Text('AI understood:', style: GoogleFonts.poppins(
-                  fontSize: 10, color: HuddlColors.textHint, fontWeight: FontWeight.w500)),
+                  fontSize: 10, color: context.hc.textTertiary, fontWeight: FontWeight.w500)),
                 const SizedBox(width: 6),
                 Expanded(
                   child: SingleChildScrollView(
@@ -1778,7 +1778,7 @@ class _EventsTabState extends State<_EventsTab> {
                   child: Text(
                     _invisibleAi.getContextExplanation(),
                     style: GoogleFonts.poppins(
-                      fontSize: 11, color: HuddlColors.textHint, fontWeight: FontWeight.w400),
+                      fontSize: 11, color: context.hc.textTertiary, fontWeight: FontWeight.w400),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1881,7 +1881,7 @@ class _EventsTabState extends State<_EventsTab> {
               ),
               const SizedBox(width: 6),
               Text('Suggested for you', style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textHint)),
+                fontSize: 11, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
             ],
           ),
           const SizedBox(height: 6),
@@ -1891,7 +1891,7 @@ class _EventsTabState extends State<_EventsTab> {
               margin: const EdgeInsets.only(bottom: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: HuddlColors.background,
+                color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -1903,13 +1903,13 @@ class _EventsTabState extends State<_EventsTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(s.query, style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textDark)),
+                          fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
                         Text(s.reason, style: GoogleFonts.poppins(
-                          fontSize: 11, color: HuddlColors.textHint)),
+                          fontSize: 11, color: context.hc.textTertiary)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.north_west, size: 14, color: HuddlColors.textHint),
+                  Icon(Icons.north_west, size: 14, color: context.hc.textTertiary),
                 ],
               ),
             ),
@@ -2163,7 +2163,7 @@ class _RecommendedCard extends StatelessWidget {
                             event.dateDisplay,
                             style: GoogleFonts.poppins(
                               fontSize: 10,
-                              color: HuddlColors.textHint,
+                              color: context.hc.textTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2392,14 +2392,14 @@ class _MeetupCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   // Attendees
-                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
                   const SizedBox(width: 4),
                   Text(
                     '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                 ],
@@ -2416,7 +2416,7 @@ class _MeetupCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2433,7 +2433,7 @@ class _MeetupCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -2444,7 +2444,7 @@ class _MeetupCard extends StatelessWidget {
                         meetup.timeDisplay,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textTertiary,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -2461,7 +2461,7 @@ class _MeetupCard extends StatelessWidget {
                           meetup.location,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.textTertiary,
+                            color: context.hc.textTertiary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -2499,7 +2499,7 @@ class _MeetupCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
-                            color: HuddlColors.textSecondary,
+                            color: context.hc.textSecondary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -2776,14 +2776,14 @@ class _EventListCardState extends State<_EventListCard> {
                   ],
                   const Spacer(),
                   // Attendees
-                  Icon(Icons.people_outline, size: 13, color: HuddlColors.textHint),
+                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
                   const SizedBox(width: 4),
                   Text(
                     '${event['attendees']} going',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.textHint,
+                      color: context.hc.textTertiary,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -2811,7 +2811,7 @@ class _EventListCardState extends State<_EventListCard> {
                       child: Icon(
                         isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                         size: 20,
-                        color: isBookmarked ? HuddlColors.accentAmber : HuddlColors.textHint,
+                        color: isBookmarked ? HuddlColors.accentAmber : context.hc.textTertiary,
                       ),
                     ),
                   ),
@@ -2829,7 +2829,7 @@ class _EventListCardState extends State<_EventListCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: HuddlColors.textDark,
+                      color: context.hc.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -2846,7 +2846,7 @@ class _EventListCardState extends State<_EventListCard> {
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: HuddlColors.textSecondary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -2857,7 +2857,7 @@ class _EventListCardState extends State<_EventListCard> {
                         event['time'] as String,
                         style: GoogleFonts.poppins(
                           fontSize: 12,
-                          color: HuddlColors.textTertiary,
+                          color: context.hc.textTertiary,
                         ),
                       ),
                     ],
@@ -2874,7 +2874,7 @@ class _EventListCardState extends State<_EventListCard> {
                           event['location'] as String,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.textTertiary,
+                            color: context.hc.textTertiary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -2931,7 +2931,7 @@ class _EventListCardState extends State<_EventListCard> {
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.textSecondary,
+                              color: context.hc.textSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -3055,7 +3055,7 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         Text(
           'AI pick',
           style: GoogleFonts.poppins(
-            fontSize: 10, color: HuddlColors.textHint, fontWeight: FontWeight.w500),
+            fontSize: 10, color: context.hc.textTertiary, fontWeight: FontWeight.w500),
         ),
         const Spacer(),
         if (_localFeedback != null)
@@ -3063,13 +3063,13 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             _localFeedback! ? 'Liked' : 'Not for me',
             style: GoogleFonts.poppins(
               fontSize: 10,
-              color: _localFeedback! ? HuddlColors.teal : HuddlColors.textHint,
+              color: _localFeedback! ? HuddlColors.teal : context.hc.textTertiary,
               fontWeight: FontWeight.w500,
             ),
           )
         else ...[
           Text('Helpful?', style: GoogleFonts.poppins(
-            fontSize: 10, color: HuddlColors.textHint)),
+            fontSize: 10, color: context.hc.textTertiary)),
           const SizedBox(width: 6),
           GestureDetector(
             onTap: () => _submit(true),
@@ -3097,18 +3097,18 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: HuddlColors.textHint.withValues(alpha: 0.06),
+                color: context.hc.textTertiary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: HuddlColors.textHint.withValues(alpha: 0.15)),
+                border: Border.all(color: context.hc.textTertiary.withValues(alpha: 0.15)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.thumb_down_alt_outlined, size: 12,
-                    color: HuddlColors.textHint.withValues(alpha: 0.7)),
+                    color: context.hc.textTertiary.withValues(alpha: 0.7)),
                   const SizedBox(width: 3),
                   Text('No', style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.textHint)),
+                    fontSize: 10, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
                 ],
               ),
             ),
@@ -3210,7 +3210,7 @@ class _AiAssistantSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('How it works', style: GoogleFonts.poppins(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
                     const SizedBox(height: 8),
                     _AssistantInfoRow(
                       icon: Icons.search, label: 'Type naturally',
@@ -3231,7 +3231,7 @@ class _AiAssistantSheet extends StatelessWidget {
 
               // Quick searches
               Text('Quick searches', style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.textDark)),
+                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -3241,9 +3241,9 @@ class _AiAssistantSheet extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: HuddlColors.background,
+                      color: context.hc.scaffold,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: HuddlColors.divider),
+                      border: Border.all(color: context.hc.divider),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -3252,7 +3252,7 @@ class _AiAssistantSheet extends StatelessWidget {
                         const SizedBox(width: 6),
                         Text(s.query, style: GoogleFonts.poppins(
                           fontSize: 12, fontWeight: FontWeight.w500,
-                          color: HuddlColors.textDark)),
+                          color: context.hc.textPrimary)),
                       ],
                     ),
                   ),
@@ -3265,7 +3265,7 @@ class _AiAssistantSheet extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HuddlColors.background,
+                    color: context.hc.scaffold,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -3275,7 +3275,7 @@ class _AiAssistantSheet extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Your feedback: $posCount likes, $negCount dislikes \u2014 AI is learning your taste',
-                          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.textHint),
+                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
                         ),
                       ),
                     ],
@@ -3287,19 +3287,19 @@ class _AiAssistantSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.background,
+                  color: context.hc.scaffold,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: HuddlColors.divider),
+                  border: Border.all(color: context.hc.divider),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: HuddlColors.textHint.withValues(alpha: 0.1),
+                        color: context.hc.textTertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.mic, size: 18, color: HuddlColors.textHint),
+                      child: Icon(Icons.mic, size: 18, color: context.hc.textTertiary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -3307,20 +3307,20 @@ class _AiAssistantSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Voice search', style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w500, color: HuddlColors.textSecondary)),
+                            fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textSecondary)),
                           Text('Coming soon \u2014 search by speaking', style: GoogleFonts.poppins(
-                            fontSize: 11, color: HuddlColors.textHint)),
+                            fontSize: 11, color: context.hc.textTertiary)),
                         ],
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: HuddlColors.textHint.withValues(alpha: 0.1),
+                        color: context.hc.textTertiary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text('SOON', style: GoogleFonts.poppins(
-                        fontSize: 9, fontWeight: FontWeight.w700, color: HuddlColors.textHint)),
+                        fontSize: 9, fontWeight: FontWeight.w700, color: context.hc.textTertiary)),
                     ),
                   ],
                 ),
@@ -3551,7 +3551,7 @@ class _EmptyState extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: HuddlColors.white,
+                    color: context.hc.surface,
                   ),
                 ),
               ),
