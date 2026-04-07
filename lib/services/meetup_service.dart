@@ -277,13 +277,48 @@ class MeetupService extends ChangeNotifier {
   }
 
   /// Creates a new meet-up and adds it to the list.
+  ///
+  /// HYPERLOCAL: Auto-tags with user's borough if not already set,
+  /// ensuring the meetup is visible in borough-filtered views.
   void createMeetup(Meetup meetup) {
-    _meetups.insert(0, meetup);
+    final toAdd = (meetup.borough == null || meetup.borough!.isEmpty)
+        ? Meetup(
+            id: meetup.id,
+            title: meetup.title,
+            description: meetup.description,
+            category: meetup.category,
+            dateDisplay: meetup.dateDisplay,
+            timeDisplay: meetup.timeDisplay,
+            dateTime: meetup.dateTime,
+            location: meetup.location,
+            organiserName: meetup.organiserName,
+            organiserId: meetup.organiserId,
+            attendeeCount: meetup.attendeeCount,
+            maxAttendees: meetup.maxAttendees,
+            isGoing: meetup.isGoing,
+            isFree: meetup.isFree,
+            price: meetup.price,
+            attendeeNames: meetup.attendeeNames,
+            imageUrl: meetup.imageUrl,
+            privacy: meetup.privacy,
+            repeat: meetup.repeat,
+            repeatDisplay: meetup.repeatDisplay,
+            repeatDays: meetup.repeatDays,
+            repeatEndDate: meetup.repeatEndDate,
+            groupId: meetup.groupId,
+            groupName: meetup.groupName,
+            invitees: meetup.invitees,
+            invitedMemberIds: meetup.invitedMemberIds,
+            borough: _guard.currentBorough,
+            createdAt: meetup.createdAt,
+          )
+        : meetup;
+    _meetups.insert(0, toAdd);
     notifyListeners();
     _persistUserMeetups();
     // Store base64 image separately (too large for main JSON list)
-    if (meetup.imageUrl.startsWith('data:')) {
-      _persistMeetupImage(meetup.id, meetup.imageUrl);
+    if (toAdd.imageUrl.startsWith('data:')) {
+      _persistMeetupImage(toAdd.id, toAdd.imageUrl);
     }
   }
 

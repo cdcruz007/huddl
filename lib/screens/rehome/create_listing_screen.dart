@@ -284,6 +284,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         listedAt: widget.existingItem!.listedAt,
         viewCount: widget.existingItem!.viewCount,
         offerCount: widget.existingItem!.offerCount,
+        borough: borough, // HYPERLOCAL: tag with user's borough
       );
       RehomeService().updateListing(updated);
       setState(() => _isCreating = false);
@@ -316,6 +317,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         sellerId: 'current_user',
         sellerLocation: locationStr,
         listedAt: DateTime.now(),
+        borough: borough, // HYPERLOCAL: tag with user's borough
       );
       RehomeService().addListing(newItem);
       setState(() => _isCreating = false);

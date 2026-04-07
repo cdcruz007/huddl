@@ -420,9 +420,34 @@ class RehomeService extends ChangeNotifier {
     }
   }
 
+  /// Add a new listing. Auto-tags with user's borough if not set.
+  ///
+  /// HYPERLOCAL: Items without a borough tag will be invisible in
+  /// borough-filtered views, so we ensure one is always set.
   void addListing(RehomeItem item) {
-    _items.insert(0, item);
-    _myListings.insert(0, item);
+    final toAdd = (item.borough == null || item.borough!.isEmpty)
+        ? RehomeItem(
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            ageStage: item.ageStage,
+            category: item.category,
+            condition: item.condition,
+            price: item.price,
+            imageUrls: item.imageUrls,
+            sellerName: item.sellerName,
+            sellerId: item.sellerId,
+            sellerLocation: item.sellerLocation,
+            listedAt: item.listedAt,
+            isSaved: item.isSaved,
+            isSold: item.isSold,
+            viewCount: item.viewCount,
+            offerCount: item.offerCount,
+            borough: _guard.currentBorough,
+          )
+        : item;
+    _items.insert(0, toAdd);
+    _myListings.insert(0, toAdd);
     notifyListeners();
   }
 
