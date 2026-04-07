@@ -25,6 +25,7 @@ import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
+import '../../services/gdpr_borough_data_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -2427,6 +2428,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       'Blocked Users': _blockService.blockedUserIds.isEmpty
           ? 'None'
           : _blockService.blockedUserIds.toList(),
+      'Borough Data (GDPR Art. 20)': {
+        'Current borough': _borough,
+        'Borough scope': 'Chat, DMs, Groups, Meetups, Marketplace, Matchmaker are borough-only',
+        'UK-wide features': 'Events only',
+        'Data isolation': 'Cross-borough access blocked by BoroughScopeGuard',
+      },
     };
   }
 
@@ -3252,6 +3259,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     await BrowserStorage.remove('pref_show_profile');
                     await BrowserStorage.remove('pref_show_groups');
                     await BrowserStorage.remove('pref_read_receipts');
+
+                    // 13. Borough-scoped data (GDPR Art. 17)
+                    await GdprBoroughDataService().deleteAllBoroughData();
+
                     if (mounted) {
                       Navigator.of(context)
                           .pushNamedAndRemoveUntil('/splash', (r) => false);
