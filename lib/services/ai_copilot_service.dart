@@ -7,6 +7,7 @@ import '../config/gemini_config.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI PARENTING COPILOT SERVICE  — HYPERLOCAL EDITION
@@ -75,7 +76,7 @@ class CopilotQuickAction {
   });
 }
 
-class AiCopilotService {
+class AiCopilotService with BoroughAiContext {
   static final AiCopilotService _instance = AiCopilotService._internal();
   factory AiCopilotService() => _instance;
   AiCopilotService._internal();

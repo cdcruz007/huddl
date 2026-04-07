@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // DISCOVER AI SERVICE
@@ -176,7 +177,7 @@ class _DiscoverBehaviour {
   }
 }
 
-class DiscoverAiService {
+class DiscoverAiService with BoroughAiContext {
   static final DiscoverAiService _instance = DiscoverAiService._internal();
   factory DiscoverAiService() => _instance;
   DiscoverAiService._internal();

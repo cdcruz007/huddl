@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'rehome_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI LISTING GENERATOR SERVICE  — HYPERLOCAL EDITION
@@ -57,7 +58,7 @@ class PriceComparison {
   });
 }
 
-class AiListingService {
+class AiListingService with BoroughAiContext {
   static final AiListingService _instance = AiListingService._internal();
   factory AiListingService() => _instance;
   AiListingService._internal();

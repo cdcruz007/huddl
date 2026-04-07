@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
 import 'gemini_system_prompt_builder.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI CHAT MESSAGE SUMMARISER & CATCH-UP SERVICE  — HYPERLOCAL EDITION
@@ -52,7 +53,7 @@ class ChatSummary {
   }) : generatedAt = generatedAt ?? DateTime.now();
 }
 
-class AiChatSummariserService {
+class AiChatSummariserService with BoroughAiContext {
   static final AiChatSummariserService _instance =
       AiChatSummariserService._internal();
   factory AiChatSummariserService() => _instance;

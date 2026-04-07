@@ -6,6 +6,7 @@ import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'revglue_service.dart';
+import 'borough_ai_context.dart';
 
 // =====================================================================================
 // HUDDL CONNECT -- AI DEALS CURATION SERVICE  — HYPERLOCAL EDITION (Gemini 2.0 Flash)
@@ -73,7 +74,7 @@ class AiSeasonalSpotlight {
   });
 }
 
-class AiOffersService {
+class AiOffersService with BoroughAiContext {
   // ---- Singleton ----
   static final AiOffersService _instance = AiOffersService._internal();
   factory AiOffersService() => _instance;

@@ -1,6 +1,7 @@
 import 'event_service.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI EVENT RECOMMENDER & SMART DISCOVERY ENGINE
@@ -47,7 +48,7 @@ class MatchReason {
   });
 }
 
-class AiEventRecommenderService {
+class AiEventRecommenderService with BoroughAiContext {
   static final AiEventRecommenderService _instance =
       AiEventRecommenderService._internal();
   factory AiEventRecommenderService() => _instance;

@@ -10,6 +10,7 @@ import 'postcode_service.dart';
 import 'meetup_service.dart';
 import 'default_group_service.dart';
 import 'community_feed_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI SMART FEED CURATION & NUDGE ENGINE  — HYPERLOCAL EDITION
@@ -68,7 +69,7 @@ class RankedFeedItem {
   });
 }
 
-class AiFeedService {
+class AiFeedService with BoroughAiContext {
   static final AiFeedService _instance = AiFeedService._internal();
   factory AiFeedService() => _instance;
   AiFeedService._internal();

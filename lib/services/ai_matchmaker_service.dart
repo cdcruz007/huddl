@@ -9,6 +9,7 @@ import 'postcode_service.dart';
 import 'meetup_service.dart';
 import 'default_group_service.dart';
 import 'borough_scope_guard.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // AI MEETUP MATCHMAKER SERVICE  — HYPERLOCAL EDITION
@@ -93,7 +94,7 @@ class SuggestedMeetup {
   });
 }
 
-class AiMatchmakerService {
+class AiMatchmakerService with BoroughAiContext {
   static final AiMatchmakerService _instance =
       AiMatchmakerService._internal();
   factory AiMatchmakerService() => _instance;

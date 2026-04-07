@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'browser_storage.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // MESSAGES AI SERVICE
@@ -162,7 +163,7 @@ class _UsageBehaviour {
   }
 }
 
-class MessagesAiService {
+class MessagesAiService with BoroughAiContext {
   static final MessagesAiService _instance = MessagesAiService._internal();
   factory MessagesAiService() => _instance;
   MessagesAiService._internal();

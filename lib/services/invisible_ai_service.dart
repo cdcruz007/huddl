@@ -3,6 +3,7 @@ import 'browser_storage.dart';
 import 'event_service.dart';
 import 'onboarding_data_service.dart';
 import 'ai_event_recommender_service.dart';
+import 'borough_ai_context.dart';
 
 // =============================================================================
 // INVISIBLE AI SERVICE
@@ -138,7 +139,7 @@ class _UserBehaviourProfile {
   }
 }
 
-class InvisibleAiService {
+class InvisibleAiService with BoroughAiContext {
   static final InvisibleAiService _instance = InvisibleAiService._internal();
   factory InvisibleAiService() => _instance;
   InvisibleAiService._internal();
