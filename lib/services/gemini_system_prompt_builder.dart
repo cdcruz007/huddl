@@ -16,7 +16,7 @@ import 'postcode_service.dart';
 //   - Step 2: AiLearningEngineService (user signals, borough engagement stats,
 //             global event preferences, topic affinities, maturity level)
 //   - OnboardingDataService           (name, parent type, postcode, children,
-//             stages of life, due date, family structure, support needs)
+//             stages of life, due date)
 //   - PostcodeService                 (postcode \u2192 borough resolution)
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
@@ -1006,7 +1006,7 @@ class GeminiSystemPromptBuilder {
   // ──── SHARED PROMPT BUILDING BLOCKS ────────────────────────────────────
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Build the user identity block (name, parent type, borough, children, family structure).
+  /// Build the user identity block (name, parent type, borough, children).
   String _buildUserIdentityBlock() {
     final buf = StringBuffer();
     buf.writeln('USER CONTEXT:');
@@ -1040,50 +1040,6 @@ class GeminiSystemPromptBuilder {
       } else {
         buf.writeln('- Child: $name');
       }
-    }
-
-    // ── Enriched V3: Family structure & support context ──────────────────
-    final familyStructure = _onboarding.familyStructure;
-    if (familyStructure != null) {
-      final structureLabels = {
-        'two_parent': 'Two-parent household',
-        'single_parent': 'Single parent',
-        'blended': 'Blended/stepfamily',
-        'adoptive': 'Adoptive family',
-        'foster': 'Foster family',
-        'kinship': 'Kinship carer',
-        'co_parenting': 'Co-parenting arrangement',
-      };
-      buf.writeln('- Family structure: ${structureLabels[familyStructure] ?? familyStructure}');
-    }
-    if (_onboarding.isSingleParent) {
-      buf.writeln('- NOTE: Single parent \u2014 be mindful of financial and time pressures. '
-          'Reference Gingerbread and single-parent-specific advice.');
-    }
-    if (_onboarding.isBlendedFamily) {
-      buf.writeln('- NOTE: Blended family \u2014 be sensitive to stepparenting dynamics. '
-          'Reference HappySteps blended family advice.');
-    }
-    if (_onboarding.isAdoptiveFoster) {
-      buf.writeln('- NOTE: Adoptive/foster family \u2014 be aware of attachment and identity needs. '
-          'Reference Adoption UK, CoramBAAF, and Home for Good (homeforgood.org.uk) support.');
-    }
-    if (_onboarding.hasSENChild) {
-      buf.writeln('- NOTE: Family has a child with SEN/disability \u2014 reference Contact '
-          '(381K families helped, 14,735 directly reached, 95% satisfied) '
-          'and Family Fund. Be mindful of additional care responsibilities.');
-    }
-    if (_onboarding.isSeparating) {
-      buf.writeln('- NOTE: Parent is separating/separated \u2014 be supportive and non-judgmental. '
-          'Reference Coram Family Lives helpline and OnlyMums & Dads.');
-    }
-    if (_onboarding.hasTeens) {
-      buf.writeln('- NOTE: Parent has teenagers \u2014 include teen-relevant advice from '
-          'HuffPost Parents, BBC Bitesize, and Care for the Family\'s Raising Teens resources.');
-    }
-    final supportNeeds = _onboarding.supportNeeds;
-    if (supportNeeds.isNotEmpty) {
-      buf.writeln('- Support interests: ${supportNeeds.join(", ")}');
     }
 
     buf.writeln();

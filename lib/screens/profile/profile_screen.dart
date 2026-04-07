@@ -58,13 +58,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _phone;
   String? _postcode;
 
-  // Enriched V3: Family structure & support fields
-  String? _familyStructure;
-  List<String> _supportNeeds = [];
-  bool _hasTeens = false;
-  bool _interestedInAdoption = false;
-  String? _separationStatus;
-
   // Groups the user belongs to
   List<Group> _userGroups = [];
   // Groups joined from Discover tab
@@ -173,11 +166,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _dueDate = _onboarding.dueDate;
         _phone = _onboarding.fullPhoneNumber;
         _postcode = _onboarding.postcode;
-        _familyStructure = _onboarding.familyStructure;
-        _supportNeeds = _onboarding.supportNeeds;
-        _hasTeens = _onboarding.hasTeens;
-        _interestedInAdoption = _onboarding.interestedInAdoption;
-        _separationStatus = _onboarding.separationStatus;
         _userGroups = defaultGroups;
         _discoveredGroups = discovered;
         _userEvents = userEvents;
@@ -571,57 +559,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 if (_bio != null && _bio!.trim().isNotEmpty)
-                  const SizedBox(height: 8),
-
-                // ── Family Structure & Support section (V3) ──────────────
-                if (_familyStructure != null || _supportNeeds.isNotEmpty || _hasTeens || _interestedInAdoption || (_separationStatus != null && _separationStatus != 'none'))
-                  Container(
-                    width: double.infinity,
-                    color: context.hc.surface,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Family & Support',
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: context.hc.textTertiary)),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            if (_familyStructure != null)
-                              _FamilyChip(
-                                icon: _familyStructureIcon(_familyStructure!),
-                                label: _familyStructureLabel(_familyStructure!),
-                              ),
-                            if (_hasTeens)
-                              const _FamilyChip(
-                                icon: Icons.school,
-                                label: 'Has Teens',
-                              ),
-                            if (_interestedInAdoption)
-                              const _FamilyChip(
-                                icon: Icons.favorite_border,
-                                label: 'Adoption Interest',
-                              ),
-                            if (_separationStatus != null && _separationStatus != 'none')
-                              _FamilyChip(
-                                icon: Icons.people_outline,
-                                label: _separationLabel(_separationStatus!),
-                              ),
-                            ..._supportNeeds.map((need) => _FamilyChip(
-                              icon: _supportNeedIcon(need),
-                              label: _supportNeedLabel(need),
-                            )),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                if (_familyStructure != null || _supportNeeds.isNotEmpty || _hasTeens || _interestedInAdoption || (_separationStatus != null && _separationStatus != 'none'))
                   const SizedBox(height: 8),
 
                 // ── My groups horizontal list ────────────────────────────
@@ -4618,77 +4555,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Icon(icon, color: HuddlColors.primary),
     );
   }
-
-  // ── V3: Family structure helper methods ──────────────────────────────
-
-  String _familyStructureLabel(String structure) {
-    const labels = {
-      'two_parent': 'Two-Parent',
-      'single_parent': 'Single Parent',
-      'blended': 'Blended Family',
-      'adoptive': 'Adoptive Family',
-      'foster': 'Foster Family',
-      'kinship': 'Kinship Carer',
-      'co_parenting': 'Co-Parenting',
-    };
-    return labels[structure] ?? structure;
-  }
-
-  IconData _familyStructureIcon(String structure) {
-    switch (structure) {
-      case 'single_parent':
-        return Icons.person;
-      case 'blended':
-        return Icons.group_add;
-      case 'adoptive':
-        return Icons.favorite;
-      case 'foster':
-        return Icons.home;
-      case 'kinship':
-        return Icons.family_restroom;
-      case 'co_parenting':
-        return Icons.swap_horiz;
-      default:
-        return Icons.family_restroom;
-    }
-  }
-
-  String _separationLabel(String status) {
-    const labels = {
-      'separating': 'Separating',
-      'separated': 'Separated',
-      'divorced': 'Divorced',
-    };
-    return labels[status] ?? status;
-  }
-
-  String _supportNeedLabel(String need) {
-    const labels = {
-      'sen': 'SEN Support',
-      'disability': 'Disability',
-      'digital_safety': 'Digital Safety',
-      'eco': 'Eco-Parenting',
-      'teen_challenges': 'Teen Challenges',
-    };
-    return labels[need] ?? need;
-  }
-
-  IconData _supportNeedIcon(String need) {
-    switch (need) {
-      case 'sen':
-        return Icons.accessibility_new;
-      case 'disability':
-        return Icons.wheelchair_pickup;
-      case 'digital_safety':
-        return Icons.shield;
-      case 'eco':
-        return Icons.eco;
-      case 'teen_challenges':
-        return Icons.school;
-      default:
-        return Icons.info_outline;
-    }
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4857,37 +4723,6 @@ class _CountBadge extends StatelessWidget {
         const SizedBox(width: 4),
         Icon(Icons.chevron_right, color: context.hc.textTertiary),
       ],
-    );
-  }
-}
-
-/// Compact chip for displaying family structure / support needs in the profile.
-class _FamilyChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _FamilyChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: HuddlColors.peachLight,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: HuddlColors.primary),
-          const SizedBox(width: 4),
-          Text(label,
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: HuddlColors.primary)),
-        ],
-      ),
     );
   }
 }

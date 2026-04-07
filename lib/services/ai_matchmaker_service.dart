@@ -22,9 +22,7 @@ import 'ai_learning_engine_service.dart';
 //   3. Match interactions recorded to learning engine for feedback loop
 //   4. Borough directory venues used for realistic location suggestions
 //   5. Maturity-aware matching: cold-start users get broader matches
-//   6. NEW V3: Family structure matching (single+single, blended+blended, etc.)
-//   7. NEW V3: Support need matching (SEN parents connect, adoption families)
-//   8. NEW V3: Richer parent profiles with interests from 25+ sources
+//   6. NEW V3: Richer parent profiles with interests from 25+ sources
 //
 // HYPERLOCAL RULE: Borough-only.
 // \u2022 Matches ONLY parents within the same borough
@@ -342,25 +340,6 @@ class AiMatchmakerService with BoroughAiContext {
       if (interestMatches > 0) {
         score += 0.15 * (interestMatches / parent.interests.length).clamp(0.0, 1.0);
       }
-    }
-
-    // V3: Family structure affinity boost (10%)
-    // Single parents match better with other single parents, etc.
-    if (_onboarding.isSingleParent &&
-        parent.groupIds.any((g) => g.contains('single'))) {
-      score += 0.10;
-    }
-    if (_onboarding.hasSENChild &&
-        parent.groupIds.any((g) => g.contains('sen'))) {
-      score += 0.10;
-    }
-    if (_onboarding.isBlendedFamily &&
-        parent.groupIds.any((g) => g.contains('blended'))) {
-      score += 0.10;
-    }
-    if (_onboarding.isAdoptiveFoster &&
-        parent.groupIds.any((g) => g.contains('adoptive') || g.contains('foster'))) {
-      score += 0.10;
     }
 
     return score.clamp(0.0, 1.0);

@@ -25,10 +25,9 @@ import 'ai_learning_engine_service.dart';
 //   4. Trending topics from Netmums as content nudges
 //   5. Dad-specific nudges for fathers (Dadsnet + DaddiLife content)
 //   6. Feed ranking uses learning engine topic affinities
-//   7. NEW V3: Family-structure-aware nudges (single parent, SEN, blended, etc.)
-//   8. NEW V3: Charity/support org nudges (Gingerbread, Contact, Adoption UK)
-//   9. NEW V3: Digital safety nudges (Parent Zone, BBC Bitesize)
-//  10. NEW V3: Emotional intelligence content (Parent Talk Podcast)
+//   7. NEW V3: Charity/support org nudges (Gingerbread, Contact, Adoption UK)
+//   8. NEW V3: Digital safety nudges (Parent Zone, BBC Bitesize)
+//   9. NEW V3: Emotional intelligence content (Parent Talk Podcast)
 // =============================================================================
 
 enum NudgeType {
@@ -44,12 +43,9 @@ enum NudgeType {
   seasonalActivity,     // Step 7: Netmums seasonal activity ideas
   knowledgeNudge,       // Step 7: KB article recommendation
   dadSpecific,          // Step 7: Dadsnet-sourced content for fathers
-  singleParentSupport,  // V3: Gingerbread single parent content
-  senDisabilitySupport, // V3: Contact/Family Fund content
   digitalSafetyTip,     // V3: Parent Zone / BBC Bitesize content
   charityEvent,         // V3: UK-wide charity events
   emotionalIntelligence, // V3: Parent Talk Podcast content
-  familyStructureSpecific, // V3: Blended/adoptive/foster-specific
 }
 
 class NudgeCard {
@@ -231,17 +227,6 @@ class AiFeedService with BoroughAiContext {
       if (isDad && itemText.contains('dad')) {
         score += 0.08;
         reason += ' \u00B7 For dads';
-      }
-
-      // V3: Family structure affinity boost
-      if (_onboarding.isSingleParent && itemText.contains('single')) {
-        score += 0.10;
-        reason += ' \u00B7 Single parent relevant';
-      }
-      if (_onboarding.hasSENChild &&
-          (itemText.contains('sen') || itemText.contains('disabilit') || itemText.contains('additional need'))) {
-        score += 0.10;
-        reason += ' \u00B7 SEN relevant';
       }
 
       return RankedFeedItem(
@@ -471,25 +456,16 @@ class AiFeedService with BoroughAiContext {
     _generateLearningDrivenNudge();
 
     // ═══════════════════════════════════════════════════════════════════════
-    // V3: ENRICHED NUDGES from 37 new sources
+    // V3: ENRICHED NUDGES from 40+ new sources
     // ═══════════════════════════════════════════════════════════════════════
 
-    // 15. Single parent support nudge (Gingerbread)
-    _generateSingleParentNudge();
-
-    // 16. SEN/Disability support nudge (Contact, Family Fund)
-    _generateSENNudge();
-
-    // 17. Digital safety nudge (Parent Zone)
+    // 15. Digital safety nudge (Parent Zone)
     _generateDigitalSafetyNudge();
 
-    // 18. Emotional intelligence nudge (Parent Talk Podcast)
+    // 16. Emotional intelligence nudge (Parent Talk Podcast)
     _generateEmotionalIntelligenceNudge();
 
-    // 19. Family structure nudge (blended, adoptive, co-parenting)
-    _generateFamilyStructureNudge();
-
-    // 20. UK-wide charity event nudge
+    // 17. UK-wide charity event nudge
     _generateCharityEventNudge();
   }
 
@@ -689,42 +665,6 @@ class AiFeedService with BoroughAiContext {
 
   // ── V3: Enriched Nudge Generators ─────────────────────────────────────
 
-  /// Single parent support nudge (Gingerbread content).
-  void _generateSingleParentNudge() {
-    if (!_onboarding.isSingleParent) return;
-    final borough = _getUserBorough();
-
-    _nudges.add(NudgeCard(
-      id: 'nudge_single_parent_v3',
-      type: NudgeType.singleParentSupport,
-      title: 'Single parent? You\'re amazing.',
-      subtitle: 'Gingerbread supports 800K+ single parents yearly. '
-          'Join Single Parents Connect in $borough for local tips and friendship.',
-      emoji: '\u{1F4AA}',
-      actionLabel: 'Join Group',
-      actionRoute: '/groups',
-      relevanceScore: 0.86,
-      meta: {'source': 'Gingerbread'},
-    ));
-  }
-
-  /// SEN/Disability support nudge (Contact, Family Fund, Sibs).
-  void _generateSENNudge() {
-    if (!_onboarding.hasSENChild) return;
-
-    _nudges.add(NudgeCard(
-      id: 'nudge_sen_support_v3',
-      type: NudgeType.senDisabilitySupport,
-      title: 'Support for your family',
-      subtitle: 'Contact helps 381,000 parent carers annually. '
-          '95% feel better informed. Explore SEN resources and local groups.',
-      emoji: '\u{1F49C}',
-      actionLabel: 'Learn More',
-      relevanceScore: 0.88,
-      meta: {'source': 'Contact / Family Fund'},
-    ));
-  }
-
   /// Digital safety tip (Parent Zone, BBC Bitesize).
   void _generateDigitalSafetyNudge() {
     final children = _onboarding.children;
@@ -736,7 +676,7 @@ class AiFeedService with BoroughAiContext {
         if (months != null && months > 48) hasOlderChild = true;
       }
     }
-    if (!hasOlderChild && !_onboarding.hasTeens) return;
+    if (!hasOlderChild) return;
 
     _nudges.add(NudgeCard(
       id: 'nudge_digital_safety_v3',
@@ -777,53 +717,6 @@ class AiFeedService with BoroughAiContext {
       relevanceScore: 0.74,
       meta: {'source': 'Parent Talk Podcast'},
     ));
-  }
-
-  /// Family structure nudge (blended/adoptive/foster families).
-  void _generateFamilyStructureNudge() {
-    final structure = _onboarding.familyStructure;
-    if (structure == null) return;
-    final borough = _getUserBorough();
-
-    if (_onboarding.isBlendedFamily) {
-      _nudges.add(NudgeCard(
-        id: 'nudge_blended_v3',
-        type: NudgeType.familyStructureSpecific,
-        title: 'Blended family support',
-        subtitle: 'HappySteps offers workshops and coaching for stepfamilies. '
-            'Join Blended Families Hub in $borough.',
-        emoji: '\u{1F3E0}',
-        actionLabel: 'Join Group',
-        actionRoute: '/groups',
-        relevanceScore: 0.78,
-        meta: {'source': 'HappySteps'},
-      ));
-    } else if (_onboarding.isAdoptiveFoster) {
-      _nudges.add(NudgeCard(
-        id: 'nudge_adoptive_v3',
-        type: NudgeType.familyStructureSpecific,
-        title: 'Adoptive & foster family community',
-        subtitle: 'Adoption UK offers events, family walks, and support. '
-            'Connect with other adoptive/foster families in $borough.',
-        emoji: '\u{2764}\uFE0F',
-        actionLabel: 'Join Group',
-        actionRoute: '/groups',
-        relevanceScore: 0.80,
-        meta: {'source': 'Adoption UK'},
-      ));
-    } else if (_onboarding.isSeparating) {
-      _nudges.add(NudgeCard(
-        id: 'nudge_separation_v3',
-        type: NudgeType.familyStructureSpecific,
-        title: 'Co-parenting support',
-        subtitle: 'OnlyMums & Dads helps families navigate separation. '
-            'Coram Family Lives 24/7 helpline is always available.',
-        emoji: '\u{1F91D}',
-        actionLabel: 'Resources',
-        relevanceScore: 0.82,
-        meta: {'source': 'OnlyMums & Dads / Coram Family Lives'},
-      ));
-    }
   }
 
   /// UK-wide charity event nudge.

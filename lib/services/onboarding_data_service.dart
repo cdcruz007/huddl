@@ -30,14 +30,6 @@ class OnboardingDataService {
   int _assignedGroupCount = 0; // Number of groups assigned during onboarding
   List<String> _assignedGroupNames = []; // Names of groups assigned during onboarding
 
-  // ── Enriched V3: Family structure dimensions ────────────────────────────
-  // From Gingerbread, HappySteps, OnlyMums&Dads, Adoption UK, Contact, Sibs
-  String? _familyStructure;          // 'two_parent', 'single_parent', 'blended', 'adoptive', 'foster', 'kinship', 'co_parenting'
-  List<String> _supportNeeds = [];   // e.g. ['sen', 'disability', 'digital_safety', 'eco', 'teen_challenges']
-  bool _hasTeens = false;            // From HuffPost, BBC Bitesize — teen-specific content
-  bool _interestedInAdoption = false; // From Adoption UK, CoramBAAF, Home for Good
-  String? _separationStatus;         // 'none', 'separating', 'separated', 'divorced'
-
   // ── Provider-specific fields ──────────────────────────────────────────────
   List<String> _serviceTypes = [];      // e.g. ['doula', 'babysitter']
   String? _businessName;                // Display name for their service
@@ -73,18 +65,6 @@ class OnboardingDataService {
 
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
-
-  // Enriched V3 getters
-  String? get familyStructure => _familyStructure;
-  List<String> get supportNeeds => _supportNeeds;
-  bool get hasTeens => _hasTeens;
-  bool get interestedInAdoption => _interestedInAdoption;
-  String? get separationStatus => _separationStatus;
-  bool get isSingleParent => _familyStructure == 'single_parent';
-  bool get isBlendedFamily => _familyStructure == 'blended';
-  bool get isAdoptiveFoster => _familyStructure == 'adoptive' || _familyStructure == 'foster' || _familyStructure == 'kinship';
-  bool get hasSENChild => _supportNeeds.contains('sen') || _supportNeeds.contains('disability');
-  bool get isSeparating => _separationStatus == 'separating' || _separationStatus == 'separated' || _separationStatus == 'divorced';
 
   // Provider getters
   List<String> get serviceTypes => _serviceTypes;
@@ -243,37 +223,6 @@ class OnboardingDataService {
     _saveToStorage();
   }
 
-  // ── Enriched V3 setters ──────────────────────────────────────────────────
-  void setFamilyStructure(String? structure) {
-    _familyStructure = structure;
-    _log('Family structure set: $structure');
-    _saveToStorage();
-  }
-
-  void setSupportNeeds(List<String> needs) {
-    _supportNeeds = needs;
-    _log('Support needs set: $needs');
-    _saveToStorage();
-  }
-
-  void setHasTeens(bool value) {
-    _hasTeens = value;
-    _log('Has teens set: $value');
-    _saveToStorage();
-  }
-
-  void setInterestedInAdoption(bool value) {
-    _interestedInAdoption = value;
-    _log('Interested in adoption set: $value');
-    _saveToStorage();
-  }
-
-  void setSeparationStatus(String? status) {
-    _separationStatus = status;
-    _log('Separation status set: $status');
-    _saveToStorage();
-  }
-
   // Check if user data is complete
   bool isComplete() {
     return _name != null &&
@@ -342,11 +291,6 @@ class OnboardingDataService {
     _experience = null;
     _hourlyRate = null;
     _serviceAreas = [];
-    _familyStructure = null;
-    _supportNeeds = [];
-    _hasTeens = false;
-    _interestedInAdoption = false;
-    _separationStatus = null;
     _log('All onboarding data cleared');
     await BrowserStorage.remove(_storageKey);
   }
@@ -400,11 +344,6 @@ class OnboardingDataService {
         _experience = data['experience'] as String?;
         _hourlyRate = data['hourly_rate'] as String?;
         _serviceAreas = List<String>.from(data['service_areas'] ?? []);
-        _familyStructure = data['family_structure'] as String?;
-        _supportNeeds = List<String>.from(data['support_needs'] ?? []);
-        _hasTeens = data['has_teens'] as bool? ?? false;
-        _interestedInAdoption = data['interested_in_adoption'] as bool? ?? false;
-        _separationStatus = data['separation_status'] as String?;
         
         if (kDebugMode) {
           debugPrint('OnboardingData loaded from storage');
@@ -451,11 +390,6 @@ class OnboardingDataService {
         'experience': _experience,
         'hourly_rate': _hourlyRate,
         'service_areas': _serviceAreas,
-        'family_structure': _familyStructure,
-        'support_needs': _supportNeeds,
-        'has_teens': _hasTeens,
-        'interested_in_adoption': _interestedInAdoption,
-        'separation_status': _separationStatus,
       };
       
       await BrowserStorage.setString(_storageKey, json.encode(data));

@@ -2,9 +2,9 @@
 // ENRICHED V3 COMPREHENSIVE TESTS
 //
 // Tests all 16 steps of the Enriched Parent Concierge v3 plan:
-//   - New KnowledgeCategories and articles from 37 sources
+//   - New KnowledgeCategories and articles from 40+ sources
 //   - New community templates (11 new types)
-//   - Onboarding family structure dimensions
+//   - Onboarding data service (provider fields)
 //   - Gemini prompt builder enriched user context
 //   - Feed service enriched nudge types
 //   - Matchmaker enriched parent profiles
@@ -14,7 +14,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:huddl_connect/services/ai_knowledge_base_service.dart';
-import 'package:huddl_connect/services/onboarding_data_service.dart';
 import 'package:huddl_connect/services/ai_learning_engine_service.dart';
 import 'package:huddl_connect/services/tutorial_service.dart';
 import 'package:huddl_connect/services/ai_feed_service.dart';
@@ -115,98 +114,33 @@ void main() {
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  // Step 2: Onboarding Enrichment Tests
-  // ═══════════════════════════════════════════════════════════════════════
-
-  group('Step 2: Enriched Onboarding', () {
-    test('Family structure field works', () {
-      final service = OnboardingDataService();
-      service.setFamilyStructure('single_parent');
-      expect(service.familyStructure, equals('single_parent'));
-      expect(service.isSingleParent, isTrue);
-      expect(service.isBlendedFamily, isFalse);
-    });
-
-    test('Blended family detection works', () {
-      final service = OnboardingDataService();
-      service.setFamilyStructure('blended');
-      expect(service.isBlendedFamily, isTrue);
-      expect(service.isSingleParent, isFalse);
-    });
-
-    test('Adoptive/foster family detection works', () {
-      final service = OnboardingDataService();
-      service.setFamilyStructure('adoptive');
-      expect(service.isAdoptiveFoster, isTrue);
-
-      service.setFamilyStructure('foster');
-      expect(service.isAdoptiveFoster, isTrue);
-
-      service.setFamilyStructure('kinship');
-      expect(service.isAdoptiveFoster, isTrue);
-    });
-
-    test('Support needs field works', () {
-      final service = OnboardingDataService();
-      service.setSupportNeeds(['sen', 'digital_safety']);
-      expect(service.supportNeeds, contains('sen'));
-      expect(service.hasSENChild, isTrue);
-    });
-
-    test('Has teens field works', () {
-      final service = OnboardingDataService();
-      service.setHasTeens(true);
-      expect(service.hasTeens, isTrue);
-    });
-
-    test('Separation status field works', () {
-      final service = OnboardingDataService();
-      service.setSeparationStatus('separating');
-      expect(service.separationStatus, equals('separating'));
-      expect(service.isSeparating, isTrue);
-
-      service.setSeparationStatus('none');
-      expect(service.isSeparating, isFalse);
-    });
-
-    test('Interested in adoption field works', () {
-      final service = OnboardingDataService();
-      service.setInterestedInAdoption(true);
-      expect(service.interestedInAdoption, isTrue);
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════════════
   // Step 7: Enriched Feed Nudge Types
   // ═══════════════════════════════════════════════════════════════════════
 
   group('Step 7: Enriched Feed Nudge Types', () {
     test('New V3 nudge types exist', () {
-      expect(NudgeType.values.contains(NudgeType.singleParentSupport), isTrue);
-      expect(NudgeType.values.contains(NudgeType.senDisabilitySupport), isTrue);
       expect(NudgeType.values.contains(NudgeType.digitalSafetyTip), isTrue);
       expect(NudgeType.values.contains(NudgeType.charityEvent), isTrue);
       expect(NudgeType.values.contains(NudgeType.emotionalIntelligence), isTrue);
-      expect(NudgeType.values.contains(NudgeType.familyStructureSpecific), isTrue);
     });
 
     test('NudgeCard construction works for new types', () {
       final card = NudgeCard(
-        id: 'nudge_test_sp',
-        type: NudgeType.singleParentSupport,
-        title: 'Single parent? You are amazing.',
-        subtitle: 'Gingerbread supports 800K+ single parents yearly.',
-        emoji: '\u{1F4AA}',
-        relevanceScore: 0.86,
-        meta: {'source': 'Gingerbread'},
+        id: 'nudge_test_ds',
+        type: NudgeType.digitalSafetyTip,
+        title: 'Is your child safe online?',
+        subtitle: 'Parent Zone and BBC Bitesize Parents offer practical guides.',
+        emoji: '\u{1F4F1}',
+        relevanceScore: 0.76,
+        meta: {'source': 'Parent Zone'},
       );
-      expect(card.type, equals(NudgeType.singleParentSupport));
-      expect(card.meta['source'], equals('Gingerbread'));
-      expect(card.relevanceScore, equals(0.86));
+      expect(card.type, equals(NudgeType.digitalSafetyTip));
+      expect(card.meta['source'], equals('Parent Zone'));
+      expect(card.relevanceScore, equals(0.76));
     });
 
-    test('Total nudge types count is 18', () {
-      expect(NudgeType.values.length, equals(18));
+    test('Total nudge types count is 15', () {
+      expect(NudgeType.values.length, equals(15));
     });
   });
 
@@ -219,23 +153,26 @@ void main() {
       expect(TutorialService.steps.length, equals(5));
     });
 
-    test('Home tutorial mentions 25+ sources', () {
+    test('Home tutorial mentions 40+ sources', () {
       final home = TutorialService.steps[0];
-      expect(home.body, contains('25+'));
+      expect(home.body, contains('40+'));
     });
 
-    test('Connect tutorial mentions new group types', () {
+    test('Connect tutorial mentions local groups', () {
       final connect = TutorialService.steps[1];
-      expect(connect.body, contains('Single Parents Connect'));
-      expect(connect.body, contains('SEN Support'));
-      expect(connect.body, contains('Blended Families'));
+      expect(connect.body, contains('Bumps & Babies'));
+      expect(connect.body, contains('Walk & Talk'));
     });
 
-    test('Discover tutorial mentions charity events', () {
+    test('Discover tutorial mentions charity events including new orgs', () {
       final discover = TutorialService.steps[2];
       expect(discover.body, contains('NCT'));
       expect(discover.body, contains('Adoption UK'));
       expect(discover.body, contains('Gingerbread'));
+      expect(discover.body, contains('Home for Good'));
+      expect(discover.body, contains('Barnardo'));
+      expect(discover.body, contains('Care for the Family'));
+      expect(discover.body, contains('Parentkind'));
     });
 
     test('Market tutorial mentions safety recalls', () {
@@ -243,9 +180,10 @@ void main() {
       expect(market.body, contains('Safety recalls'));
     });
 
-    test('Profile tutorial mentions family structure', () {
+    test('Profile tutorial mentions account settings', () {
       final profile = TutorialService.steps[4];
-      expect(profile.body, contains('family structure'));
+      expect(profile.body, contains('subscription'));
+      expect(profile.body, contains('notifications'));
     });
   });
 

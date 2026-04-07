@@ -58,8 +58,7 @@ class TutorialService {
       headline: 'Groups & conversations',
       body:
           'Your auto-assigned local groups and DMs. From Bumps & Babies to '
-          'Single Parents Connect, SEN Support, and Blended Families Hub \u2014 '
-          'all within your borough.',
+          'Walk & Talk and more \u2014 all within your borough.',
       ctaLabel: 'Tap a group to start chatting',
       iconName: 'people',
     ),
@@ -94,9 +93,8 @@ class TutorialService {
       title: 'PROFILE',
       headline: 'Your account & settings',
       body:
-          'Manage your family structure (single, blended, adoptive, foster), '
-          'support needs (SEN, digital safety, eco), subscription, '
-          'notifications and privacy. Re-run this tour any time from here.',
+          'Manage your subscription, notifications, privacy, '
+          'and account settings. Re-run this tour any time from here.',
       ctaLabel: 'Scroll down for settings',
       iconName: 'person',
     ),
