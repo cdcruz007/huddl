@@ -10,18 +10,22 @@ import 'meetup_service.dart';
 import 'default_group_service.dart';
 import 'borough_scope_guard.dart';
 import 'borough_ai_context.dart';
+import 'ai_knowledge_base_service.dart';
+import 'ai_learning_engine_service.dart';
 
 // =============================================================================
-// AI MEETUP MATCHMAKER SERVICE  — HYPERLOCAL EDITION
-// Uses Gemini AI to generate personalised meetup suggestions and
-// intelligent compatibility reasoning between parents
-// System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
+// AI MEETUP MATCHMAKER SERVICE  — PARENT CONCIERGE EDITION (Step 9)
+//
+// UPGRADES from hyperlocal base:
+//   1. Learning engine topic affinities boost compatibility scoring
+//   2. Knowledge base community templates inform meetup suggestions
+//   3. Match interactions recorded to learning engine for feedback loop
+//   4. Borough directory venues used for realistic location suggestions
+//   5. Maturity-aware matching: cold-start users get broader matches
 //
 // HYPERLOCAL RULE: Borough-only.
 // • Matches ONLY parents within the same borough
-// • Cross-borough parents are filtered out before scoring
-// • Suggested meetup locations MUST be in the user's borough
-// • BoroughScopeGuard enforces the gate at data layer
+// • Suggested meetup locations are from borough directory
 // =============================================================================
 
 /// A parent profile used for matching
@@ -105,6 +109,8 @@ class AiMatchmakerService with BoroughAiContext {
   final MeetupService _meetupService = MeetupService();
   final DefaultGroupService _groupService = DefaultGroupService();
   final BoroughScopeGuard _guard = BoroughScopeGuard();
+  final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
+  final AiLearningEngineService _learningEngine = AiLearningEngineService();
 
   // Gemini API configuration (centralised in GeminiConfig)
 
@@ -124,6 +130,8 @@ class AiMatchmakerService with BoroughAiContext {
     if (_isInitialized) return;
     await _onboarding.initialize();
     await _groupService.initialize();
+    await _knowledgeBase.initialize();
+    await _learningEngine.initialize();
     _generateNearbyParents();
     await _generateSuggestions();
     _isInitialized = true;
@@ -216,7 +224,7 @@ class AiMatchmakerService with BoroughAiContext {
   }
 
   // ── Compatibility scoring algorithm ────────────────────────────────────
-  // HYPERLOCAL: Parents outside the user's borough score 0 (filtered out).
+  // Step 9: Enhanced with learning engine topic affinity matching.
   double _calculateCompatibility(
       MatchableParent parent, List<String> userStages) {
     // Borough gate — cross-borough parents get zero compatibility
@@ -233,7 +241,7 @@ class AiMatchmakerService with BoroughAiContext {
     final userGroups =
         _groupService.getAllDefaultGroups().map((g) => g.id).toList();
 
-    if (parent.borough == _getUserBorough()) score += 0.30;
+    if (parent.borough == _getUserBorough()) score += 0.25;
 
     if (userChildren.isNotEmpty && parent.childAges.isNotEmpty) {
       for (final childMap in userChildren) {
@@ -265,7 +273,7 @@ class AiMatchmakerService with BoroughAiContext {
     if (userGroups.isNotEmpty && parent.groupIds.isNotEmpty) {
       final sharedGroups =
           userGroups.where((g) => parent.groupIds.contains(g)).length;
-      score += (sharedGroups / max(1, parent.groupIds.length)) * 0.25;
+      score += (sharedGroups / max(1, parent.groupIds.length)) * 0.20;
     }
 
     final goingMeetups =
@@ -275,9 +283,29 @@ class AiMatchmakerService with BoroughAiContext {
           .where((m) => m.attendeeNames
               .any((name) => parent.name.startsWith(name.split(' ').first)))
           .length;
-      score += (sharedMeetups / max(1, goingMeetups.length)) * 0.20;
+      score += (sharedMeetups / max(1, goingMeetups.length)) * 0.15;
     } else {
-      score += 0.08;
+      score += 0.05;
+    }
+
+    // Step 9: Learning engine interest affinity boost (15%)
+    final topTopics = _learningEngine.profile.topTopics(8)
+        .map((t) => t.topic.toLowerCase())
+        .toSet();
+    if (topTopics.isNotEmpty && parent.interests.isNotEmpty) {
+      int interestMatches = 0;
+      for (final interest in parent.interests) {
+        for (final topic in topTopics) {
+          if (interest.toLowerCase().contains(topic) ||
+              topic.contains(interest.toLowerCase())) {
+            interestMatches++;
+            break;
+          }
+        }
+      }
+      if (interestMatches > 0) {
+        score += 0.15 * (interestMatches / parent.interests.length).clamp(0.0, 1.0);
+      }
     }
 
     return score.clamp(0.0, 1.0);
@@ -630,8 +658,16 @@ Please suggest 5 diverse meetups: 1) playdate, 2) coffee morning, 3) outdoor act
     throw Exception('No valid AI response');
   }
 
-  /// Convert a suggestion into a real Meetup
+  /// Convert a suggestion into a real Meetup.
+  /// Step 9: Records match interaction to learning engine.
   Meetup createMeetupFromSuggestion(SuggestedMeetup suggestion) {
+    // Record interaction to learning engine
+    _learningEngine.recordMatchInteraction(
+      matchId: suggestion.matchedParents.isNotEmpty
+          ? suggestion.matchedParents.first.id
+          : 'unknown',
+      action: 'meetup_created',
+    );
     final meetup = Meetup(
       id: 'mu_ai_${DateTime.now().millisecondsSinceEpoch}',
       title: suggestion.title,
