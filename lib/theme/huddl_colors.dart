@@ -92,10 +92,10 @@ import 'package:flutter/material.dart';
 // =============================================================================
 
 class HuddlColors {
-  // Primary
-  static const Color primary = Color(0xFFFF975C);
-  static const Color primaryLight = Color(0xFFFFAD7F);
-  static const Color primaryDark = Color(0xFFFF8A47);
+  // Primary — unified to the warm Huddl orange
+  static const Color primary = Color(0xFFFCA878);
+  static const Color primaryLight = Color(0xFFFFCBA0);
+  static const Color primaryDark = Color(0xFFE8935E);
 
   // Secondary / Accent
   static const Color teal = Color(0xFF199A85);
@@ -172,8 +172,8 @@ class HuddlColors {
   static const Color inputBorder = Color(0xFFDDDDDD);
   static const Color inputBorderLight = Color(0xFFE0E0E0);
 
-  // Onboarding — unified with primary brand orange for consistency
-  static const Color onboardingOrange = primary; // was Color(0xFFFCA878)
+  // Onboarding
+  static const Color onboardingOrange = Color(0xFFFCA878);
   static const Color avatarBg = Color(0xFFFFF9D6);
   static const Color avatarIcon = Color(0xFFE8A87C);
 
@@ -222,14 +222,14 @@ class HuddlColors {
   static const Color attachPollBg = Color(0xFFFFF3E0);
 
   // Gradient helpers
-  static const Color coralGradientEnd = Color(0xFFFF975C);
+  static const Color coralGradientEnd = Color(0xFFFCA878);
 
   // Divider
   static const Color divider = Color(0xFFE8E8E8);
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFFF975C), Color(0xFFFFAD7F)],
+    colors: [Color(0xFFFCA878), Color(0xFFFFCBA0)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
