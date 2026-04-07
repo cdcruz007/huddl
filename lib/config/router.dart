@@ -104,8 +104,7 @@ class AppRouter {
         return FadePageRoute(
           page: LoginOtpScreen(
             phoneNumber: args?['phoneNumber'] ?? '',
-            generatedOtp: args?['generatedOtp'] ?? '123456',
-            isTestAccount: args?['isTestAccount'] == 'true',
+            generatedOtp: args?['generatedOtp'] ?? '',
           ),
         );
 

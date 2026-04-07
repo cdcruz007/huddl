@@ -2,25 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
-import '../../services/test_account_service.dart';
 import '../../services/onboarding_data_service.dart';
-import '../../services/subscription_service.dart';
-import '../../models/subscription.dart';
 
 
 /// OTP verification screen shown after successful phone+password login.
 /// Accepts [phoneNumber] (display) and [generatedOtp] (the 6-digit code
-/// produced by LoginScreen).  In production this would be the SMS code.
+/// sent via SMS).  User enters the code to complete login.
 class LoginOtpScreen extends StatefulWidget {
   final String phoneNumber;
   final String generatedOtp;
-  final bool isTestAccount;
 
   const LoginOtpScreen({
     super.key,
     required this.phoneNumber,
     required this.generatedOtp,
-    this.isTestAccount = false,
   });
 
   @override
@@ -42,8 +37,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     _currentOtp = widget.generatedOtp;
     _codeController.addListener(_onCodeChanged);
     _tickTimer();
-    // Show the demo OTP as a snackbar after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showOtpSnackbar());
+    // Notify user that code was sent
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showCodeSentSnackbar());
   }
 
   void _onCodeChanged() {
@@ -76,19 +71,15 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     return List.generate(6, (_) => rng.nextInt(10)).join();
   }
 
-  void _showOtpSnackbar() {
+  void _showCodeSentSnackbar() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          widget.isTestAccount
-              ? 'Test account \u2014 use code ${TestAccountService.testOtp}'
-              : 'Verification code sent to ${widget.phoneNumber}',
+          'Verification code sent to ${widget.phoneNumber}',
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
-        backgroundColor: widget.isTestAccount
-            ? const Color(0xFF7C4DFF)
-            : HuddlColors.onboardingOrange,
+        backgroundColor: HuddlColors.onboardingOrange,
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -105,13 +96,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
     if (!mounted) return;
 
-    // Accept the generated OTP or universal demo code 123456
-    if (entered == _currentOtp || entered == '123456') {
-      // ── Test account: populate onboarding data from pre-set profile ──
-      if (widget.isTestAccount) {
-        await _populateTestAccountData();
-        await _activateTestAccountSubscription();
-      }
+    // Verify the entered code matches the OTP sent via SMS
+    if (entered == _currentOtp) {
       if (!mounted) return;
 
       // Check if the user has a name set — if not, prompt for one
@@ -269,63 +255,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     );
   }
 
-  /// Activate Inner Circle subscription for test accounts so all features
-  /// and functionality can be tested without manual upgrade.
-  Future<void> _activateTestAccountSubscription() async {
-    final subService = SubscriptionService();
-    await subService.initialize();
-    await subService.purchase(
-      SubscriptionTier.innerCircle,
-      BillingPeriod.annual,
-    );
-  }
-
-  /// Fill OnboardingDataService with the test account's pre-set profile,
-  /// but ONLY for fields that the user hasn't already set during onboarding.
-  /// This ensures user-entered data (e.g. their real name) is preserved.
-  Future<void> _populateTestAccountData() async {
-    final profile = TestAccountService.getTestProfileFull(widget.phoneNumber);
-    if (profile == null) return;
-
-    final data = OnboardingDataService();
-    await data.initialize();
-
-    // Only set fields that are still empty — respect user-entered data
-    if (data.name == null || data.name!.isEmpty) {
-      data.setName(profile['name'] as String);
-    }
-    if (data.parentType == null || data.parentType!.isEmpty) {
-      data.setParentType(profile['parentType'] as String);
-    }
-    if (data.stagesOfLife.isEmpty) {
-      data.setStagesOfLife(List<String>.from(profile['stagesOfLife'] ?? []));
-    }
-    if (data.postcode == null || data.postcode!.isEmpty) {
-      data.setPostcode(profile['postcode'] as String);
-    }
-    if (data.phoneNumber == null || data.phoneNumber!.isEmpty) {
-      data.setPhoneNumber(
-        profile['phoneNumber'] as String,
-        countryCode: profile['countryCode'] as String,
-      );
-    }
-    data.setPhoneVerified(true);
-    if ((data.bio == null || data.bio!.isEmpty) && profile['bio'] != null) {
-      data.setBio(profile['bio'] as String);
-    }
-    if ((data.dueDate == null || data.dueDate!.isEmpty) && profile['dueDate'] != null) {
-      data.setDueDate(profile['dueDate'] as String);
-    }
-    if (data.children.isEmpty) {
-      final children = profile['children'] as List<dynamic>?;
-      if (children != null && children.isNotEmpty) {
-        data.setChildren(
-          children.map((c) => Map<String, String>.from(c as Map)).toList(),
-        );
-      }
-    }
-  }
-
   void _resendCode() {
     if (_resendTimer > 0) return;
     final newOtp = _generateOtp();
@@ -336,7 +265,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     });
     _codeController.clear();
     _tickTimer();
-    _showOtpSnackbar();
+    _showCodeSentSnackbar();
   }
 
   @override

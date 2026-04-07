@@ -5,7 +5,6 @@ import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/firebase_auth_service.dart';
-import '../../services/test_account_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,16 +84,8 @@ class _LoginScreenState extends State<LoginScreen> {
     return true;
   }
 
-  /// Whether the current phone number is a recognised test account.
-  bool get _isTestPhone {
-    final digits = _normalise(_phoneController.text);
-    return digits.length == 10 && TestAccountService.isTestAccount(digits);
-  }
-
   bool get _canLogin {
     if (!_isPhoneValid) return false;
-    // Test accounts don't require a password
-    if (_isTestPhone) return true;
     return _isPasswordValid;
   }
 
@@ -108,27 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final digits = _normalise(_phoneController.text);
-
-    // ── Test account bypass ───────────────────────────────────────────
-    // For designated test accounts, skip Firebase phone OTP
-    // and go straight to the OTP verification screen with test OTP.
-    if (TestAccountService.isTestAccount(digits)) {
-      setState(() => _isLoading = false);
-      if (!mounted) return;
-      Navigator.pushNamed(
-        context,
-        '/login_otp',
-        arguments: {
-          'phoneNumber': '$_countryCode$digits',
-          'generatedOtp': TestAccountService.testOtp,
-          'isTestAccount': 'true',
-        },
-      );
-      return;
-    }
-    // ────────────────────────────────────────────────────────────────
-
-    // Phone-only auth: initiate Firebase phone verification (sends SMS OTP)
     final fullPhone = '$_countryCode$digits';
 
     try {
@@ -156,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
           arguments: {
             'phoneNumber': fullPhone,
             'generatedOtp': '',
-            'isTestAccount': 'false',
           },
         );
       } else {
@@ -311,51 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 32),
 
-              // ── Test account badge (shown when test number detected) ──
-              if (_isTestPhone) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEDE7F6),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF7C4DFF).withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.science_outlined, color: const Color(0xFF7C4DFF), size: 22),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Test Account Detected',
-                              style: AppTextStyles.body2.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF7C4DFF),
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'No password needed. You\'ll verify with OTP 123456.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: const Color(0xFF7C4DFF).withValues(alpha: 0.8),
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // ── Password field (hidden for test accounts) ─────────
-              if (!_isTestPhone) ...[
+              // ── Password field ──────────────────────────────────────────────────
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -423,8 +348,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-              ],
-
               const SizedBox(height: 8),
 
               // ── Error message ────────────────────────────────
@@ -461,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     )
                   : PrimaryButton(
-                      text: _isTestPhone ? 'Continue to OTP' : 'Log in',
+                      text: 'Log in',
                       onPressed: _canLogin ? _handleLogin : null,
                     ),
 

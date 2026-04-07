@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'test_account_service.dart';
 
 class OTPService {
   static final OTPService _instance = OTPService._internal();
@@ -25,12 +24,7 @@ class OTPService {
   }) async {
     try {
       final fullNumber = '${countryCode ?? '+44'}$phoneNumber';
-
-      // For designated test accounts always use the fixed test OTP.
-      // For regular accounts also use 123456 in the demo environment.
-      final otp = TestAccountService.isTestAccountFull(fullNumber)
-          ? TestAccountService.testOtp
-          : '123456';
+      final otp = generateOTP();
       final expiryTime = DateTime.now().add(const Duration(minutes: 5));
       
       // Store OTP data
@@ -41,20 +35,19 @@ class OTPService {
         attempts: 0,
       );
       
-      // Simulate sending OTP (in production, call SMS API)
+      // TODO: Replace with real SMS API integration (e.g. Twilio, Vonage)
+      // In production, send the OTP via SMS to the user's phone number.
       if (kDebugMode) {
-        debugPrint('📱 OTP Service: Sending OTP to $fullNumber');
-        debugPrint('🔐 OTP Code: $otp (FIXED FOR TESTING)');
-        debugPrint('⏰ Expires at: $expiryTime');
+        debugPrint('OTP Service: Code generated for $fullNumber');
       }
       
-      // Simulate network delay
+      // Simulate network delay for SMS delivery
       await Future.delayed(const Duration(milliseconds: 500));
       
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ Error sending OTP: $e');
+        debugPrint('Error sending OTP: $e');
       }
       return false;
     }
@@ -67,27 +60,8 @@ class OTPService {
     String? countryCode,
   }) async {
     try {
-      // ── Universal test bypass ─────────────────────────────────────────
-      // Accept '123456' as a valid code in ALL build modes so testers can
-      // always proceed through the verification screen without a real SMS.
-      if (otp == '123456') {
-        return OTPVerificationResult(
-          success: true,
-          message: 'Phone number verified successfully!',
-        );
-      }
-      // ─────────────────────────────────────────────────────────────────
-
       final fullNumber = '${countryCode ?? '+44'}$phoneNumber';
       final otpData = _otpStorage[fullNumber];
-      
-      // Debug logging
-      if (kDebugMode) {
-        debugPrint('🔍 Verifying OTP for: $fullNumber');
-        debugPrint('🔍 Entered OTP: $otp');
-        debugPrint('🔍 Stored OTPs: ${_otpStorage.keys.toList()}');
-        debugPrint('🔍 Found OTP data: ${otpData?.otp}');
-      }
       
       // Check if OTP exists
       if (otpData == null) {
@@ -176,14 +150,6 @@ class OTPService {
     _otpStorage.remove(fullNumber);
   }
   
-  // Get OTP for testing/debugging (DO NOT USE IN PRODUCTION)
-  String? getOTPForTesting(String phoneNumber, {String? countryCode}) {
-    if (!kDebugMode) return null; // Only available in debug mode
-    
-    final fullNumber = phoneNumber.startsWith('+') ? phoneNumber : '${countryCode ?? '+44'}$phoneNumber';
-    final otpData = _otpStorage[fullNumber];
-    return otpData?.otp;
-  }
 }
 
 // OTP Data Model

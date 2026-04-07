@@ -7,9 +7,7 @@ import '../../widgets/common/huddl_header_logo.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
-import '../../services/test_account_service.dart';
-import '../../services/subscription_service.dart';
-import '../../models/subscription.dart';
+
 
 class VerificationScreen extends StatefulWidget {
   const VerificationScreen({super.key});
@@ -27,19 +25,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
   final FirebaseAuthService _authService = FirebaseAuthService();
   final OnboardingDataService _onboardingData = OnboardingDataService();
 
-  bool _isTestAccount = false;
-
   @override
   void initState() {
     super.initState();
     _startResendTimer();
 
-    // Check if this is a test account — skip real SMS if so
-    final phone = _onboardingData.phoneNumber;
-    if (phone != null && TestAccountService.isTestAccount(phone)) {
-      _isTestAccount = true;
-      // No real SMS needed; user just enters 123456
-    } else if (kIsWeb) {
+    if (kIsWeb) {
       // On web, Firebase phone auth (reCAPTCHA) cannot work in sandboxed
       // environments. Show instruction to enter any code.
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -128,28 +119,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
       _errorMessage = null;
     });
 
-    // ── Test account bypass ───────────────────────────────────────────
-    if (_isTestAccount) {
-      if (TestAccountService.verifyTestOtp(code)) {
-        _onboardingData.setPhoneVerified(true);
-        // Populate extra profile data from the test profile
-        final profile = TestAccountService.getTestProfile(
-          _onboardingData.phoneNumber ?? '',
-        );
-        if (profile != null) {
-          if (profile['bio'] != null) _onboardingData.setBio(profile['bio'] as String);
-        }
-        await _completeSignUp();
-      } else {
-        setState(() {
-          _isVerifying = false;
-          _errorMessage = 'Incorrect code. Use 123456 for test accounts.';
-        });
-      }
-      return;
-    }
-    // ────────────────────────────────────────────────────────────────
-
     // On web, phone OTP cannot be verified via Firebase (reCAPTCHA
     // doesn't work in sandboxed environments). Just mark verified
     // locally and proceed.
@@ -191,20 +160,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       await _onboardingData.initialize()
           .timeout(const Duration(seconds: 5), onTimeout: () {});
-
-      // Activate Inner Circle subscription for test accounts
-      if (_isTestAccount) {
-        try {
-          final subService = SubscriptionService();
-          await subService.initialize();
-          await subService.purchase(
-            SubscriptionTier.innerCircle,
-            BillingPeriod.annual,
-          );
-        } catch (_) {
-          // Subscription activation failed — proceed anyway
-        }
-      }
 
       final groupService = DefaultGroupService();
       final userId = _authService.uid ??
