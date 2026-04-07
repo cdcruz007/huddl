@@ -17,6 +17,8 @@ import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
+import '../../widgets/borough_badge.dart';
+import '../../services/borough_scope_guard.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISCOVER SCREEN — main entry with 3 tabs: Meetups · Events · Groups
@@ -376,6 +378,24 @@ class _EventsScreenState extends State<EventsScreen>
                   ),
                 ],
               ),
+            ),
+            // ── Borough scope context bar ───────────────────────
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: _tabController.index == 2
+                  ? const BoroughHeader(
+                      key: ValueKey('uk-wide'),
+                      feature: HuddlFeature.events,
+                    )
+                  : _tabController.index == 1
+                      ? const BoroughHeader(
+                          key: ValueKey('meetups-borough'),
+                          feature: HuddlFeature.meetups,
+                        )
+                      : const BoroughHeader(
+                          key: ValueKey('groups-borough'),
+                          feature: HuddlFeature.groups,
+                        ),
             ),
             // ── Tab content ─────────────────────────────────────────
             Expanded(

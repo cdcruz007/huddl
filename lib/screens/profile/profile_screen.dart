@@ -467,9 +467,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                       const SizedBox(height: 4),
-                      Text(_borough,
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: context.hc.textTertiary)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.location_on_outlined,
+                              size: 16, color: HuddlColors.textHint),
+                          const SizedBox(width: 4),
+                          Text(_borough,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14, color: context.hc.textTertiary)),
+                        ],
+                      ),
                       const SizedBox(height: 6),
                       if (_stageLabel.isNotEmpty)
                         Container(

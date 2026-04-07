@@ -23,6 +23,8 @@ import '../events/event_detail_screen.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
+import '../../widgets/borough_badge.dart';
+import '../../services/borough_scope_guard.dart';
 
 
 // =============================================================================
@@ -1051,16 +1053,26 @@ class _HomeScreenState extends State<HomeScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Greeting row
-          Semantics(
-            header: true,
-            child: Text(
-              '$_greeting, $_name!',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: hc.textPrimary,
+          Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    '$_greeting, $_name!',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textPrimary,
+                    ),
+                  ),
+                ),
               ),
-            ),
+              BoroughBadge(
+                borough: _borough,
+                size: BoroughBadgeSize.medium,
+              ),
+            ],
           ),
           const SizedBox(height: 2),
           // Contextual subtitle with AI nudge embedded
@@ -1443,6 +1455,11 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                       ),
+                      const SizedBox(width: 6),
+                      BoroughBadge(
+                        borough: meetup.borough,
+                        feature: HuddlFeature.meetups,
+                      ),
                       const Spacer(),
                       const Icon(Icons.check_circle,
                           size: 14, color: HuddlColors.primary),
@@ -1566,22 +1583,9 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
-                        decoration: BoxDecoration(
-                          color: HuddlColors.teal
-                              .withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'Event',
-                          style: GoogleFonts.poppins(
-                            fontSize: 8,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.teal,
-                          ),
-                        ),
+                      const BoroughBadge(
+                        feature: HuddlFeature.events,
+                        forceUkWide: true,
                       ),
                       const Spacer(),
                       Icon(Icons.check_circle,
@@ -1709,12 +1713,23 @@ class _HomeScreenState extends State<HomeScreen>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    '${meetup.dateDisplay} \u00B7 ${item.reason}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: context.hc.textTertiary,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${meetup.dateDisplay} \u00B7 ${item.reason}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: context.hc.textTertiary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      BoroughBadge(
+                        borough: meetup.borough,
+                        feature: HuddlFeature.meetups,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -2000,6 +2015,11 @@ class _HomeScreenState extends State<HomeScreen>
                           fontSize: 11,
                           color: context.hc.textTertiary,
                         ),
+                      ),
+                      const SizedBox(width: 6),
+                      BoroughBadge(
+                        borough: g.creatorBorough ?? _borough,
+                        feature: HuddlFeature.groups,
                       ),
                     ],
                   ),

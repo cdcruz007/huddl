@@ -13,6 +13,8 @@ import '../../services/ai_offers_service.dart';
 import '../../models/subscription.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
+import '../../widgets/borough_badge.dart';
+import '../../services/borough_scope_guard.dart';
 
 
 
@@ -1040,6 +1042,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
           const SizedBox(height: 8),
+          // Borough scope context for marketplace (Buy/Sell = borough-only, Offers = borough-aware)
+          BoroughHeader(
+            feature: _tabController.index == 2
+                ? HuddlFeature.communityFeed // Offers = borough-aware
+                : HuddlFeature.marketplace,  // Buy/Sell = borough-only
+          ),
           TabBar(
             controller: _tabController,
             tabs: const [

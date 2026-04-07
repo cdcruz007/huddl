@@ -18,6 +18,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../widgets/borough_badge.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE MEETUP — single-page scrollable form matching design screenshots
@@ -718,6 +719,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+                  // ─────────── BOROUGH SCOPE NOTE ───────────
+                  const BoroughGateMessage(
+                    featureLabel: 'Meetups',
+                  ),
                   // ─────────── PHOTO UPLOAD ───────────
                   _buildPhotoUpload(),
                   const SizedBox(height: 16),

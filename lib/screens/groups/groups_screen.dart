@@ -24,6 +24,8 @@ import '../../services/messages_ai_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../services/discover_ai_service.dart';
 import '../events/events_screen.dart' show ImGoingTab;
+import '../../widgets/borough_badge.dart';
+import '../../services/borough_scope_guard.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
@@ -128,6 +130,10 @@ class _GroupsScreenState extends State<GroupsScreen>
                           fontWeight: FontWeight.w700,
                           color: context.hc.textPrimary,
                         ),
+                      ),
+                      const SizedBox(width: 8),
+                      const BoroughScopeChip(
+                        feature: HuddlFeature.chat,
                       ),
                       const Spacer(),
                       // ── Tab bar (inline, compact) ──────────────────
