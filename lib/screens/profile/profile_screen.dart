@@ -23,6 +23,7 @@ import '../../services/tutorial_service.dart';
 import '../../services/feedback_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
+import '../../utils/borough_migration_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -1449,6 +1450,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _onboarding.setPreviousBorough(_borough);
                 }
                 _onboarding.setPostcode(newPc);
+
+                // Cascade borough update through all services
+                await BoroughMigrationService().migrate(
+                  newPostcode: newPc,
+                  previousBoroughName: previousBorough,
+                );
 
                 setState(() {
                   _postcode = newPc;
