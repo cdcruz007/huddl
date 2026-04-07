@@ -989,15 +989,12 @@ class _ImGoingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final accentColor =
         item.isMeetup ? HuddlColors.primary : HuddlColors.blue;
-    final fallbackIcon =
-        item.isMeetup ? Icons.groups : Icons.event;
 
-    // Swipe-to-dismiss for one-handed usability
+    // ── Messages-tab identical row card ──────────────────────────────
     return Dismissible(
       key: ValueKey('going_${item.id}'),
       direction: DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: isPast ? HuddlColors.textSecondary : HuddlColors.error,
           borderRadius: BorderRadius.circular(16),
@@ -1020,201 +1017,252 @@ class _ImGoingCard extends StatelessWidget {
       },
       onDismissed: (_) => onCancel(),
       child: Opacity(
-      opacity: isPast ? 0.55 : 1.0,
-      child: Semantics(
-        label: '${item.isMeetup ? "Meetup" : "Event"}: ${item.title}, ${item.dateDisplay} ${item.timeDisplay} at ${item.location}${isPast ? " (Past)" : ""}. Swipe left to ${isPast ? "clear" : "cancel"}.',
-        button: true,
-        child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: context.hc.cardBorder,
-          boxShadow: [
-            BoxShadow(
-              color: context.hc.shadow,
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Cover image banner (clean, no overlay tags) ──────────
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: SizedBox(
-                height: 120,
-                width: double.infinity,
-                child: _buildCoverImage(
-                  imageUrl: item.imageUrl,
-                  fallbackIcon: fallbackIcon,
-                  fallbackColor: accentColor,
-                ),
-              ),
-            ),
-
-            // ── Card body ────────────────────────────────────────
-            InkWell(
-              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-              onTap: () {
-                if (item.isMeetup && item.meetup != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => MeetupDetailScreen(meetup: item.meetup!),
-                    ),
-                  );
-                } else if (item.event != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          EventDetailScreen(event: item.event!.toMap()),
-                    ),
-                  );
-                }
-              },
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      item.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary,
+        opacity: isPast ? 0.55 : 1.0,
+        child: Semantics(
+          label: '${item.isMeetup ? "Meetup" : "Event"}: ${item.title}, ${item.dateDisplay} ${item.timeDisplay} at ${item.location}${isPast ? " (Past)" : ""}. Swipe left to ${isPast ? "clear" : "cancel"}.',
+          button: true,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Material(
+              color: HuddlColors.white,
+              borderRadius: BorderRadius.circular(16),
+              elevation: 1,
+              shadowColor: Colors.black.withValues(alpha: 0.08),
+              child: InkWell(
+                onTap: () {
+                  if (item.isMeetup && item.meetup != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => MeetupDetailScreen(meetup: item.meetup!),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    // Date + time row
-                    Row(
-                      children: [
-                        Icon(Icons.calendar_today_outlined,
-                            size: 13, color: accentColor),
-                        const SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            '${item.dateDisplay}  ·  ${item.timeDisplay}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Location row
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined,
-                            size: 13, color: accentColor),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            item.location,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textTertiary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    // Organiser + attendees row
-                    if (item.organiser.isNotEmpty || item.attendees > 0) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          if (item.organiser.isNotEmpty) ...[
-                            Icon(Icons.person_outline,
-                                size: 13, color: context.hc.textTertiary),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                item.organiser,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: context.hc.textTertiary,
+                    );
+                  } else if (item.event != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            EventDetailScreen(event: item.event!.toMap()),
+                      ),
+                    );
+                  }
+                },
+                onLongPress: () => _confirmCancel(context),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      // ── Rounded-square thumbnail (matches Messages _GroupAvatar) ──
+                      _GoingAvatar(
+                        imageUrl: item.imageUrl,
+                        accentColor: accentColor,
+                        isMeetup: item.isMeetup,
+                        category: item.category,
+                      ),
+                      const SizedBox(width: 12),
+
+                      // ── Name + subtitle (same 2-row layout as _GroupMessageRow) ──
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Row 1: title + type badge + countdown (mirrors name + timestamp)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          item.title,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: context.hc.textPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (item.isMeetup) ...[
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: context.hc.textTertiary.withValues(alpha: 0.12),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            'Meetup',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w600,
+                                              color: context.hc.textSecondary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: _countdownColor(item.daysUntil, isPast)
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    item.countdownLabel,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: _countdownColor(item.daysUntil, isPast),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+
+                            // Row 2: date/location summary + attendee badge (mirrors last-message row)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${item.dateDisplay}  \u00b7  ${item.timeDisplay}  \u00b7  ${item.location}',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: context.hc.textTertiary,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (item.attendees > 0) ...[
+                                  const SizedBox(width: 8),
+                                  Semantics(
+                                    label: '${item.attendees} attending',
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: accentColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Text(
+                                        '${item.attendees}',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.hc.surface,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ],
-                          if (item.organiser.isNotEmpty && item.attendees > 0)
-                            Text(
-                              '  ·  ',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: context.hc.textTertiary,
-                              ),
-                            ),
-                          if (item.attendees > 0) ...[
-                            Icon(Icons.groups_outlined,
-                                size: 13, color: context.hc.textTertiary),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${item.attendees} going',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: context.hc.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     ],
-                    // Cancel row
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => _confirmCancel(context),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: (isPast ? context.hc.textTertiary : HuddlColors.error)
-                                    .withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                isPast ? 'Clear' : 'Cancel attendance',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isPast ? HuddlColors.textTertiary : HuddlColors.error,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  /// Colour for countdown badge based on urgency.
+  static Color _countdownColor(int daysUntil, bool isPast) {
+    if (isPast) return HuddlColors.textSecondary;
+    if (daysUntil <= 0) return HuddlColors.error;
+    if (daysUntil <= 2) return HuddlColors.accentAmber;
+    return HuddlColors.teal;
+  }
+}
+
+/// 54px rounded-square avatar matching the Messages tab _GroupAvatar style
+/// exactly — same borderRadius, peachLight bg, fallback icon pattern.
+class _GoingAvatar extends StatelessWidget {
+  final String imageUrl;
+  final Color accentColor;
+  final bool isMeetup;
+  final String category;
+
+  const _GoingAvatar({
+    required this.imageUrl,
+    required this.accentColor,
+    required this.isMeetup,
+    this.category = '',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: HuddlColors.peachLight,
       ),
+      clipBehavior: Clip.antiAlias,
+      child: _buildImage(),
+    );
+  }
+
+  Widget _buildImage() {
+    if (imageUrl.startsWith('data:')) {
+      try {
+        final dataUri = Uri.parse(imageUrl);
+        final bytes = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover, width: 54, height: 54,
+            errorBuilder: (_, __, ___) => _fallbackIcon(),
+          );
+        }
+      } catch (_) {
+        // fall through
+      }
+      return _fallbackIcon();
+    }
+    if (imageUrl.startsWith('http')) {
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover, width: 54, height: 54,
+        errorBuilder: (_, __, ___) => _fallbackIcon(),
+      );
+    }
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover, width: 54, height: 54,
+        errorBuilder: (_, __, ___) => _fallbackIcon(),
+      );
+    }
+    return _fallbackIcon();
+  }
+
+  Widget _fallbackIcon() {
+    return Container(
+      color: HuddlColors.peachLight,
+      child: Center(
+        child: Icon(
+          isMeetup ? Icons.groups : Icons.event,
+          size: 54 * 0.45,
+          color: HuddlColors.primary,
+        ),
       ),
     );
   }
@@ -1302,7 +1350,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
       color: HuddlColors.primary,
       child: ListView(
         key: ValueKey('im_going_list_$_rebuildKey'),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         children: [
           if (upcoming.isNotEmpty) ...[
             _SectionLabel(
@@ -2023,27 +2071,30 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
           ),
-          child: Icon(icon, size: 16, color: color),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: context.hc.textPrimary,
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: context.hc.textPrimary,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
