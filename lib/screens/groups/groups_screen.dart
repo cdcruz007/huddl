@@ -227,6 +227,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     _loadDemoSummaries();
     _aiService.initialize();
     _dmService.addListener(_onDMUpdate);
+    _invitationService.addListener(_onGroupsChanged);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
 
@@ -234,6 +235,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   void dispose() {
     _searchDebounce?.cancel();
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
+    _invitationService.removeListener(_onGroupsChanged);
     _searchController.dispose();
     _dmService.removeListener(_onDMUpdate);
     super.dispose();

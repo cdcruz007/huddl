@@ -138,7 +138,7 @@ class GroupSystemMessage {
 ///
 /// In a real app these would be in Firestore / a backend.
 /// Here we simulate with local storage so the demo flows end-to-end.
-class InvitationService {
+class InvitationService extends ChangeNotifier {
   static final InvitationService _instance = InvitationService._internal();
   factory InvitationService() => _instance;
   InvitationService._internal();
@@ -258,6 +258,7 @@ class InvitationService {
       _invitations.add(inv);
     }
     await _saveInvitations();
+    notifyListeners();
     _log('Sent ${invitedMemberIds.length} invitation(s) for group "${group.name}"');
   }
 
@@ -277,6 +278,7 @@ class InvitationService {
         type: 'joined',
       );
 
+      notifyListeners();
       _log('Accepted invitation: $invitationId');
     }
   }
@@ -312,6 +314,7 @@ class InvitationService {
       type: 'joined',
     );
 
+    notifyListeners();
     _log('Joined public group: "${group.name}"');
   }
 
@@ -337,6 +340,7 @@ class InvitationService {
       type: 'left',
     );
 
+    notifyListeners();
     _log('Left group: $groupId');
   }
 
