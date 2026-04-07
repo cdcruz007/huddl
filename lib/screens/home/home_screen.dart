@@ -15,7 +15,6 @@ import '../../services/member_photo_service.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import '../../services/invitation_service.dart';
-import '../ai/ai_copilot_screen.dart';
 import '../../services/dm_service.dart';
 import '../../services/browser_storage.dart';
 import '../main_shell.dart';
@@ -815,43 +814,7 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  // ── AI assistant bottom sheet (progressive disclosure) ────────────────────
-  void _openAiAssistant() {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AiAssistantSheet(
-        borough: _borough,
-        name: _name,
-        onNavigateToFullAi: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AiCopilotScreen()),
-          );
-        },
-        onQuickAction: (String action) {
-          Navigator.pop(context);
-          switch (action) {
-            case 'meetups':
-              _switchToTab(2);
-              break;
-            case 'groups':
-              _switchToTab(2); // Discover screen (Groups tab is under Discover)
-              break;
-            case 'marketplace':
-              _switchToTab(3);
-              break;
-            case 'post':
-              _postController.text = action;
-              break;
-          }
-        },
-      ),
-    );
-  }
+  // AI assistant removed from header — AI works invisibly now.
 
   // ═══════════════════════════════════════════════════════════════════════════
   // BUILD
@@ -902,29 +865,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                       ),
                       const Spacer(),
-                      // Sparkle — progressive disclosure AI entry point
-                      Semantics(
-                        label: 'AI assistant',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: _openAiAssistant,
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            alignment: Alignment.center,
-                            child: ShaderMask(
-                              shaderCallback: (bounds) =>
-                                  HuddlColors.aiGradient
-                                      .createShader(bounds),
-                              child: Icon(
-                                Icons.auto_awesome,
-                                size: 22,
-                                color: context.hc.surface,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+
                       // Notification bell
                       Semantics(
                         label:
@@ -1007,7 +948,7 @@ class _HomeScreenState extends State<HomeScreen>
                         ShaderMask(
                           shaderCallback: (bounds) =>
                               HuddlColors.aiGradient.createShader(bounds),
-                          child: const Icon(Icons.auto_awesome,
+                          child: const Icon(Icons.lightbulb_outline,
                               size: 14, color: HuddlColors.white),
                         ),
                         const SizedBox(width: 6),
@@ -1286,7 +1227,7 @@ class _HomeScreenState extends State<HomeScreen>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Your feed is curated by Huddl AI based on your interests, activity, and local community.',
+                'Your feed is personalised based on your interests, activity, and local community.',
                 style: GoogleFonts.poppins(
                     fontSize: 12, color: context.hc.textSecondary),
               ),
@@ -1301,8 +1242,8 @@ class _HomeScreenState extends State<HomeScreen>
                 'Pinned posts and popular activity', true),
             _feedPrefTile(Icons.group_add, 'Suggested meetups & groups',
                 'New meetups and groups near you', true),
-            _feedPrefTile(Icons.auto_awesome, 'AI nudges & tips',
-                'Personalised suggestions from Huddl AI', true),
+            _feedPrefTile(Icons.lightbulb_outline, 'Tips & suggestions',
+                'Personalised suggestions based on your activity', true),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1913,7 +1854,7 @@ class _HomeScreenState extends State<HomeScreen>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.auto_awesome,
+                                const Icon(Icons.lightbulb_outline,
                                     size: 8,
                                     color: HuddlColors.blue),
                                 const SizedBox(width: 3),
@@ -2624,196 +2565,6 @@ class _SmartFeedItem {
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI ASSISTANT BOTTOM SHEET (Progressive Disclosure)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _AiAssistantSheet extends StatelessWidget {
-  final String borough;
-  final String name;
-  final VoidCallback onNavigateToFullAi;
-  final void Function(String action) onQuickAction;
-
-  const _AiAssistantSheet({
-    required this.borough,
-    required this.name,
-    required this.onNavigateToFullAi,
-    required this.onQuickAction,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.55,
-      ),
-      decoration: BoxDecoration(
-        color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const HuddlBottomSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-              child: Row(
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) =>
-                        HuddlColors.aiGradient.createShader(bounds),
-                    child: const Icon(Icons.auto_awesome,
-                        size: 24, color: HuddlColors.white),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Huddl AI',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Your personal community assistant',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Divider(height: 1, color: context.hc.divider),
-            const SizedBox(height: 12),
-            // Quick suggestions based on context
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'What can I help with?',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _quickSuggestion(
-                    icon: Icons.event,
-                    label: 'Find a meetup near $borough',
-                    onTap: () => onQuickAction('meetups'),
-                  ),
-                  _quickSuggestion(
-                    icon: Icons.people,
-                    label: 'Discover groups for my family',
-                    onTap: () => onQuickAction('groups'),
-                  ),
-                  _quickSuggestion(
-                    icon: Icons.storefront,
-                    label: 'Search market items',
-                    onTap: () => onQuickAction('marketplace'),
-                  ),
-                  _quickSuggestion(
-                    icon: Icons.lightbulb_outline,
-                    label: 'Get parenting tips for my child\'s age',
-                    onTap: onNavigateToFullAi,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Full AI chat button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: onNavigateToFullAi,
-                  icon: const Icon(Icons.chat, size: 18),
-                  label: Text('Open full AI assistant',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      )),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.blue,
-                    foregroundColor: HuddlColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            // AI transparency note
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'AI suggestions are personalised based on your profile and community activity. You can always edit or override them.',
-                style: GoogleFonts.poppins(
-                  fontSize: 10,
-                  color: context.hc.textTertiary,
-                  height: 1.3,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _quickSuggestion({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Material(
-        color: HuddlColors.background,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Icon(icon, size: 18, color: HuddlColors.blue),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: HuddlColors.textDark,
-                    ),
-                  ),
-                ),
-                Icon(Icons.arrow_forward_ios,
-                    size: 12, color: HuddlColors.textTertiary),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // BOTTOM SHEETS & FULL-SCREEN PAGES
 // (Retained from previous implementation — comments, notifications, share, etc.)

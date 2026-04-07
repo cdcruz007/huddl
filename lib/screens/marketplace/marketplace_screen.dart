@@ -13,7 +13,7 @@ import '../../services/ai_offers_service.dart';
 import '../../models/subscription.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
-import '../ai/ai_copilot_screen.dart';
+
 
 
 // =============================================================================
@@ -312,13 +312,13 @@ class _InvisibleAiEngine {
   // Contextual sell subtitle — persona-aware encouragement
   String sellSubtitle() {
     if (_totalListings == 0) {
-      return 'AI writes the title, price & description for you';
+      return 'We\'ll auto-fill the title, price & description for you';
     }
     final predictedCat = predictNextCategory();
     if (predictedCat != null) {
       return 'Pre-fills ${predictedCat.label.toLowerCase()} from your history';
     }
-    return 'AI pre-fills from your previous listings';
+    return 'Auto-fills from your previous listings';
   }
 
   // ── Seller Performance Summary (adaptive interface) ──
@@ -956,40 +956,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
-  // ── Progressive disclosure: Sparkle → AI assistant ──
-  void _openAiAssistant() {
-    HapticFeedback.lightImpact();
-    final isSellTab = _tabController.index == 1;
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _AiAssistantSheet(
-        isSellContext: isSellTab,
-        onNavigateToSearch: (query) {
-          Navigator.pop(context);
-          _tabController.animateTo(0);
-          _searchController.text = query;
-          setState(() {
-            _searchQuery = query;
-            _showSuggestions = false;
-          });
-          _ai.recordSearch(query);
-        },
-        onNavigateToListing: () {
-          Navigator.pop(context);
-          _openCreateListing();
-        },
-        onOpenFullCopilot: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AiCopilotScreen()),
-          );
-        },
-      ),
-    );
-  }
+  // AI assistant removed — AI works invisibly behind the scenes.
 
   @override
   Widget build(BuildContext context) {
@@ -1048,10 +1015,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               // Subtle sparkle — progressive disclosure entry point
               // Minimal, no gradient, no AI branding. Just a quiet affordance.
               Semantics(
-                label: 'Ask for help',
+                label: 'Search',
                 button: true,
                 child: InkWell(
-                  onTap: _openAiAssistant,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    // Focus the search bar on the current tab
+                  },
                   customBorder: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   child: SizedBox(
@@ -1059,7 +1029,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     height: 48,
                     child: Center(
                       child: Icon(
-                        Icons.auto_awesome,
+                        Icons.search,
                         color: hc.textTertiary,
                         size: 20,
                       ),
@@ -1651,7 +1621,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   hc: hc,
                   icon: Icons.storefront_outlined,
                   title: 'No listings yet',
-                  subtitle: 'Tap above to snap a photo and list your first item.\nAI handles the rest.',
+                  subtitle: 'Tap above to snap a photo and list your first item.',
                 ),
               ),
             ),
@@ -2452,7 +2422,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                child: const Icon(Icons.flash_on_rounded, color: Colors.white, size: 16),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -2487,7 +2457,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               ),
               child: Column(
                 children: [
-                  Icon(Icons.auto_awesome, size: 36, color: hc.textTertiary),
+                  Icon(Icons.storefront_outlined, size: 36, color: hc.textTertiary),
                   const SizedBox(height: 10),
                   Text('AI is learning your preferences',
                       style: _adaptiveText(color: hc.textTertiary, fontSize: 13)),
@@ -2582,7 +2552,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               gradient: LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFEDE5FF)]),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, size: 28, color: Color(0xFF3580F0)),
+            child: const Icon(Icons.flash_on_rounded, size: 28, color: Color(0xFF3580F0)),
           ),
           const SizedBox(height: 12),
           Text('AI is finding your best deals...',
@@ -2909,271 +2879,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 //
 // Accessed via the subtle sparkle icon. Context-aware:
 // - On Buy tab: search, voice search, chat
-// - On Sell tab: quick list, pricing help, voice command, sell analytics
-// - Transparency: "Suggestions are personalised based on your browsing."
-// - Feedback loop: easy override/edit of AI suggestions
-// =============================================================================
-
-class _AiAssistantSheet extends StatelessWidget {
-  final void Function(String query) onNavigateToSearch;
-  final VoidCallback onNavigateToListing;
-  final VoidCallback onOpenFullCopilot;
-  final bool isSellContext;
-
-  const _AiAssistantSheet({
-    required this.onNavigateToSearch,
-    required this.onNavigateToListing,
-    required this.onOpenFullCopilot,
-    this.isSellContext = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Container(
-      decoration: BoxDecoration(
-        color: hc.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const HuddlBottomSheetHandle(),
-              const SizedBox(height: 12),
-              // Header
-              Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.auto_awesome,
-                        size: 20, color: HuddlColors.primary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'How can I help?',
-                          style: _adaptiveText(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: hc.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Your Market assistant',
-                          style: _adaptiveText(
-                            fontSize: 12,
-                            color: hc.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Quick actions — context-aware, no AI branding
-              if (isSellContext) ...[
-                // Sell-specific actions
-                _AssistantAction(
-                  icon: Icons.camera_alt_outlined,
-                  title: 'Quick list an item',
-                  subtitle: 'Take a photo, I\'ll write the listing',
-                  onTap: onNavigateToListing,
-                ),
-                const SizedBox(height: 8),
-                _AssistantAction(
-                  icon: Icons.sell_outlined,
-                  title: 'Pricing help',
-                  subtitle: 'See what similar items sold for',
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.auto_awesome, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('AI pricing analysis coming soon'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.blue,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                _AssistantAction(
-                  icon: Icons.mic_outlined,
-                  title: 'Voice listing',
-                  subtitle: 'Describe your item and I\'ll list it',
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.mic, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Voice listing coming soon'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-              ] else ...[
-                // Buy-specific actions
-                _AssistantAction(
-                  icon: Icons.search,
-                  title: 'Find something specific',
-                  subtitle: 'Describe what you need and I\'ll search',
-                  onTap: () => onNavigateToSearch(''),
-                ),
-                const SizedBox(height: 8),
-                _AssistantAction(
-                  icon: Icons.camera_alt_outlined,
-                  title: 'Quick list an item',
-                  subtitle: 'Take a photo, I\'ll write the listing',
-                  onTap: onNavigateToListing,
-                ),
-                const SizedBox(height: 8),
-                _AssistantAction(
-                  icon: Icons.mic_outlined,
-                  title: 'Voice search',
-                  subtitle: 'Tell me what you\'re looking for',
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Row(
-                          children: [
-                            Icon(Icons.mic, color: Colors.white, size: 18),
-                            SizedBox(width: 8),
-                            Text('Voice search coming soon'),
-                          ],
-                        ),
-                        backgroundColor: HuddlColors.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(height: 8),
-              _AssistantAction(
-                icon: Icons.chat_outlined,
-                title: 'Chat with Huddl',
-                subtitle: 'Ask anything about parenting and market items',
-                onTap: onOpenFullCopilot,
-              ),
-              const SizedBox(height: 12),
-              // Transparency note
-              Text(
-                'Suggestions are personalised based on your browsing.',
-                style: _adaptiveText(
-                  fontSize: 11,
-                  color: hc.textTertiary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AssistantAction extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _AssistantAction({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Semantics(
-      label: '$title: $subtitle',
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          constraints: const BoxConstraints(minHeight: 48),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: hc.divider),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 22, color: hc.textSecondary),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: _adaptiveText(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: hc.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: _adaptiveText(
-                        fontSize: 12,
-                        color: hc.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.arrow_forward_ios, size: 14, color: hc.textTertiary),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // =============================================================================
 // FILTER CHIP -- 48dp minimum touch target, accessible, dark-mode aware
 // =============================================================================
@@ -4642,7 +4347,7 @@ class _OffersCouponCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome, color: Colors.white, size: 11),
+                      const Icon(Icons.trending_up, color: Colors.white, size: 11),
                       const SizedBox(width: 3),
                       Text('AI Top Pick', style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
                     ],
@@ -4716,7 +4421,7 @@ class _OffersCouponCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 13, color: Color(0xFF3580F0)),
+                    const Icon(Icons.lightbulb_outline, size: 13, color: Color(0xFF3580F0)),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Column(
@@ -4787,7 +4492,7 @@ class _OffersSpotlightCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(9),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.flash_on_rounded, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 8),
               Expanded(

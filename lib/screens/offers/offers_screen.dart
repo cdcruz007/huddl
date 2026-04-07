@@ -417,7 +417,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
-                Icons.auto_awesome,
+                Icons.local_offer,
                 color: context.hc.surface,
                 size: 18,
               ),
@@ -579,7 +579,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                   gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.auto_awesome, color: context.hc.surface, size: 18),
+                child: Icon(Icons.local_offer, color: context.hc.surface, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -614,7 +614,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.auto_awesome, size: 40, color: HuddlColors.gray300),
+                  const Icon(Icons.local_offer, size: 40, color: HuddlColors.gray300),
                   const SizedBox(height: 12),
                   Text('AI is learning your preferences',
                       style: GoogleFonts.poppins(color: context.hc.textTertiary, fontSize: 14)),
@@ -1275,7 +1275,7 @@ class _CouponCard extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome, color: context.hc.surface, size: 12),
+                      Icon(Icons.local_offer, color: context.hc.surface, size: 12),
                       const SizedBox(width: 4),
                       Text('AI Top Pick', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.white)),
                     ],
@@ -1359,7 +1359,7 @@ class _CouponCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF3580F0)),
+                    const Icon(Icons.local_offer, size: 14, color: Color(0xFF3580F0)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -1447,7 +1447,7 @@ class _AiSpotlightCard extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                child: const Icon(Icons.local_offer, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1738,7 +1738,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.auto_awesome, size: 32, color: Color(0xFF3580F0)),
+              child: const Icon(Icons.local_offer, size: 32, color: Color(0xFF3580F0)),
             ),
           ),
           const SizedBox(height: 16),

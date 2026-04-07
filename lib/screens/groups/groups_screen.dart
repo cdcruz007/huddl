@@ -22,9 +22,7 @@ import '../../services/subscription_service.dart';
 import '../../services/ai_chat_summariser_service.dart';
 import '../../services/messages_ai_service.dart';
 import '../../widgets/upgrade_prompt.dart';
-import '../../widgets/ai_assistant_sheet.dart';
 import '../../services/discover_ai_service.dart';
-import '../ai/ai_copilot_screen.dart';
 import '../events/events_screen.dart' show ImGoingTab;
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
@@ -885,11 +883,6 @@ class _MessagesTabState extends State<_MessagesTab> {
       recentDMNames: _dmConversations.take(5).map((d) => d.recipientName).toList(),
     );
 
-    final aiActions = _aiService.getQuickActions(
-      totalUnread: unified.fold<int>(0, (s, i) => s + i.unreadCount),
-      hasPendingInvitations: _pendingInvitations.isNotEmpty,
-    );
-
     return Stack(
       children: [
         Column(
@@ -999,25 +992,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     ),
                   ] else ...[
                     const SizedBox(width: 4),
-                    // ── AI Sparkle button (progressive disclosure) ────
-                    Semantics(
-                      label: 'AI Assistant',
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          _showAiAssistant(context, aiActions, aiSuggestions);
-                        },
-                        child: Container(
-                          width: 40, height: 40,
-                          decoration: BoxDecoration(
-                            gradient: HuddlColors.aiGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.auto_awesome, color: Colors.white, size: 17),
-                        ),
-                      ),
-                    ),
+
                   ],
                 ],
               ),
@@ -1031,15 +1006,9 @@ class _MessagesTabState extends State<_MessagesTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome, size: 12, color: context.hc.textTertiary),
-                        const SizedBox(width: 4),
-                        Text('Suggested', style: GoogleFonts.poppins(
-                          fontSize: 11, fontWeight: FontWeight.w600, color: context.hc.textTertiary,
-                        )),
-                      ],
-                    ),
+                    Text('Suggested', style: GoogleFonts.poppins(
+                          fontSize: 11, fontWeight: FontWeight.w500, color: context.hc.textTertiary,
+                    )),
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 6,
@@ -1119,61 +1088,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
-  /// Show the AI Assistant bottom sheet (progressive disclosure).
-  void _showAiAssistant(
-    BuildContext context,
-    List<AiQuickAction> actions,
-    List<AiSearchSuggestion> suggestions,
-  ) async {
-    final result = await showAiAssistantSheet(
-      context,
-      quickActions: actions,
-      suggestions: suggestions,
-      totalUnread: _unifiedMessageList.fold<int>(0, (s, i) => s + i.unreadCount),
-    );
-
-    if (result != null && mounted) {
-      switch (result.action) {
-        case 'search':
-          setState(() {
-            _showSearch = true;
-            _searchQuery = result.query ?? '';
-            _searchController.text = _searchQuery;
-            _applyFilter();
-          });
-          break;
-        case 'catch_up':
-          // Navigate to AI Copilot
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const AiCopilotScreen()));
-          break;
-        case 'navigate':
-          // Try to find the conversation and navigate
-          final target = result.query?.toLowerCase() ?? '';
-          final match = _unifiedMessageList.firstWhere(
-            (i) => i.name.toLowerCase().contains(target),
-            orElse: () => _unifiedMessageList.first,
-          );
-          if (match.isGroup && match.groupItem != null) {
-            Navigator.pushNamed(context, '/group_chat', arguments: {
-              'groupId': match.groupItem!.id,
-              'groupName': match.groupItem!.name,
-              'groupImageUrl': match.groupItem!.imageUrl,
-              'isDefaultGroup': match.groupItem!.isDefault,
-            });
-          } else if (match.dmConversation != null) {
-            Navigator.pushNamed(context, '/dm_chat', arguments: {
-              'recipientId': match.dmConversation!.recipientId,
-              'recipientName': match.dmConversation!.recipientName,
-              'recipientAvatarColor': match.dmConversation!.recipientAvatarColor,
-              'conversationId': match.dmConversation!.id,
-            });
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
+  // AI Assistant sheet removed — AI is now invisible. Kept for future use.
 
   /// Build the normal conversation list (no search active).
   Widget _buildAiCatchUpCard() {
@@ -1205,14 +1120,14 @@ class _MessagesTabState extends State<_MessagesTab> {
       ),
       child: Row(
         children: [
-          // AI icon
+          // Unread badge
           Container(
             width: 32, height: 32,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+              color: HuddlColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.auto_awesome, size: 15, color: Colors.white),
+            child: const Icon(Icons.mark_chat_unread_outlined, size: 15, color: HuddlColors.primary),
           ),
           const SizedBox(width: 10),
           // Summary text
@@ -1266,7 +1181,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               setState(() {});
             },
             child: Semantics(
-              label: 'Dismiss AI summary',
+              label: 'Dismiss summary',
               button: true,
               child: SizedBox(
                 width: 28, height: 28,
@@ -3540,7 +3455,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       case 'A-Z':
         return Icons.sort_by_alpha;
       default:
-        return Icons.auto_awesome;
+        return Icons.explore;
     }
   }
 
@@ -3723,7 +3638,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.teal),
+                                            Icon(Icons.search, size: 11, color: HuddlColors.teal),
                                             const SizedBox(width: 4),
                                             Text(s.query, style: _adaptiveText(
                                               fontSize: 11, fontWeight: FontWeight.w500,
@@ -3819,7 +3734,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.auto_awesome, size: 12, color: HuddlColors.teal),
+                          const Icon(Icons.search, size: 12, color: HuddlColors.teal),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(contextLine,
@@ -4014,7 +3929,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         ),
                         const SizedBox(width: 6),
                         Semantics(
-                          label: 'AI-powered suggestions',
+                          label: 'Suggested groups',
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -4024,7 +3939,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.teal),
+                                const Icon(Icons.explore, size: 10, color: HuddlColors.teal),
                                 const SizedBox(width: 3),
                                 Text('AI', style: _adaptiveText(
                                   fontSize: 9, fontWeight: FontWeight.w700,
@@ -4035,11 +3950,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           ),
                         ),
                         const Spacer(),
-                        // AI toggle (human override)
+                        // Sort toggle
                         Semantics(
                           label: _aiRecommendationsEnabled
-                              ? 'AI recommendations on. Tap to see default order.'
-                              : 'AI recommendations off. Tap to enable.',
+                              ? 'Smart sort on. Tap to see default order.'
+                              : 'Default order. Tap for smart sort.',
                           button: true,
                           child: GestureDetector(
                             onTap: () {
@@ -4062,8 +3977,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 children: [
                                   Icon(
                                     _aiRecommendationsEnabled
-                                        ? Icons.auto_awesome
-                                        : Icons.auto_awesome_outlined,
+                                        ? Icons.sort
+                                        : Icons.sort,
                                     size: 12,
                                     color: _aiRecommendationsEnabled
                                         ? HuddlColors.teal
@@ -4071,7 +3986,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                   ),
                                   const SizedBox(width: 3),
                                   Text(
-                                    _aiRecommendationsEnabled ? 'Smart' : 'Default',
+                                    _aiRecommendationsEnabled ? 'Smart sort' : 'Default',
                                     style: _adaptiveText(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -4498,7 +4413,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                         Expanded(
                           child: Row(
                             children: [
-                              const Icon(Icons.auto_awesome, size: 11, color: HuddlColors.teal),
+                              const Icon(Icons.star_rounded, size: 11, color: HuddlColors.teal),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(

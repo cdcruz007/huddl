@@ -393,7 +393,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       color: context.hc.textPrimary)),
               const SizedBox(height: 12),
               _UsageCard(
-                icon: Icons.auto_awesome,
+                icon: Icons.star_rounded,
                 label: 'AI Copilot Chats Today',
                 used: _service.aiCopilotChatsToday,
                 limit: limits.maxAiCopilotChatsPerDay,

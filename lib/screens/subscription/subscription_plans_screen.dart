@@ -369,7 +369,7 @@ class _TrialBanner extends StatelessWidget {
               color: HuddlColors.primary.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.auto_awesome, color: HuddlColors.primary, size: 24),
+            child: const Icon(Icons.star_rounded, color: HuddlColors.primary, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(

@@ -154,7 +154,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.auto_awesome,
+                      const Icon(Icons.star_rounded,
                           color: HuddlColors.primary, size: 20),
                       const SizedBox(width: 10),
                       Expanded(
@@ -313,7 +313,7 @@ class UpgradeBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.auto_awesome, color: context.hc.surface, size: 20),
+            Icon(Icons.star_rounded, color: context.hc.surface, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(message,

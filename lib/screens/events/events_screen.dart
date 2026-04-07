@@ -13,7 +13,6 @@ import 'create_meetup_screen.dart';
 import 'meetup_detail_screen.dart';
 import 'event_detail_screen.dart';
 import '../../services/meetup_ai_service.dart';
-import '../ai/ai_copilot_screen.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
@@ -285,36 +284,6 @@ class _EventsScreenState extends State<EventsScreen>
                       ),
                       Row(
                         children: [
-                          Semantics(
-                            label: 'Open AI Copilot',
-                            button: true,
-                            child: GestureDetector(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const AiCopilotScreen(),
-                                ),
-                              ),
-                              child: Container(
-                                width: 48,
-                                height: 48,
-                                alignment: Alignment.center,
-                                child: Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    gradient: HuddlColors.aiGradient,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Icon(
-                                    Icons.auto_awesome,
-                                    color: context.hc.surface,
-                                    size: 18,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
                           IconButton(
                             icon: Icon(
                               _isSearching ? Icons.close : Icons.search,
@@ -712,12 +681,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             onCreateMeetup: widget.onCreateMeetup,
           ),
 
-        // ── AI context line (transparency about sort) ────────────
-        if (_aiReady && widget.searchQuery.isEmpty && scored.isNotEmpty)
-          _AiContextLine(
-            preferredCategories: _aiService.preferredCategories,
-          ),
-
         // ── List ─────────────────────────────────────────────────
         Expanded(
           child: filtered.isEmpty
@@ -833,52 +796,6 @@ class _SmartNudgeBanner extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// AI CONTEXT LINE — subtle transparency about sort order
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _AiContextLine extends StatelessWidget {
-  final List<String> preferredCategories;
-
-  const _AiContextLine({required this.preferredCategories});
-
-  String get _contextText {
-    if (preferredCategories.isNotEmpty) {
-      return 'Sorted by relevance \u00B7 ${preferredCategories.first} preference detected';
-    }
-    return 'Sorted by relevance to you';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: context.hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: const Icon(Icons.auto_awesome, size: 10, color: HuddlColors.primary),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _contextText,
-              style: GoogleFonts.poppins(
-                fontSize: 11, color: context.hc.textTertiary, fontWeight: FontWeight.w400),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EVENTS TAB — 3rd party / company advertised events (mostly paid)
@@ -1477,17 +1394,9 @@ class _EventsTabState extends State<_EventsTab> {
       if (count > 0) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Found $count new events near you',
-                    style: GoogleFonts.poppins(fontSize: 13),
-                  ),
-                ),
-              ],
+            content: Text(
+              'Found $count new events near you',
+              style: GoogleFonts.poppins(fontSize: 13),
             ),
             backgroundColor: const Color(0xFF3580F0),
             behavior: SnackBarBehavior.floating,
@@ -1540,22 +1449,7 @@ class _EventsTabState extends State<_EventsTab> {
     _nlpFocusNode.unfocus();
   }
 
-  void _showAiAssistantSheet() {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => _AiAssistantSheet(
-        invisibleAi: _invisibleAi,
-        onSuggestionTap: (query) {
-          Navigator.pop(context);
-          _nlpController.text = query;
-          _onNlpQueryChanged(query);
-        },
-      ),
-    );
-  }
+  // AI assistant sheet removed — AI now works invisibly behind the scenes.
 
   @override
   Widget build(BuildContext context) {
@@ -1641,14 +1535,8 @@ class _EventsTabState extends State<_EventsTab> {
                         fontSize: 13,
                         color: context.hc.textTertiary,
                       ),
-                      prefixIcon: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: _nlpQuery.isNotEmpty
-                            ? const Icon(Icons.auto_awesome, key: ValueKey('ai'),
-                                size: 18, color: Color(0xFF3580F0))
-                            : Icon(Icons.search, key: ValueKey('search'),
+                      prefixIcon: Icon(Icons.search,
                                 size: 18, color: context.hc.textTertiary),
-                      ),
                       suffixIcon: _nlpQuery.isNotEmpty
                           ? IconButton(
                               icon: const Icon(Icons.close, size: 18),
@@ -1661,31 +1549,7 @@ class _EventsTabState extends State<_EventsTab> {
                   ),
                 ),
               ),
-              // ── Sparkle entry point (progressive disclosure) ──
-              Semantics(
-                label: 'AI Assistant',
-                button: true,
-                child: GestureDetector(
-                  onTap: _showAiAssistantSheet,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    margin: const EdgeInsets.only(left: 4),
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                        ),
-                        borderRadius: BorderRadius.circular(11),
-                      ),
-                      child: const Icon(Icons.auto_awesome, size: 17, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
+
               // ── Toggle manual filters ──
               IconButton(
                 icon: Icon(
@@ -1711,17 +1575,7 @@ class _EventsTabState extends State<_EventsTab> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
             child: Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
-                ),
-                const SizedBox(width: 6),
-                Text('AI understood:', style: GoogleFonts.poppins(
-                  fontSize: 10, color: context.hc.textTertiary, fontWeight: FontWeight.w500)),
+                Icon(Icons.filter_list_rounded, size: 14, color: context.hc.textTertiary),
                 const SizedBox(width: 6),
                 Expanded(
                   child: SingleChildScrollView(
@@ -1758,39 +1612,7 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
 
-        // ── AI Context line (transparent about what AI is doing) ──
-        if (_recommenderReady && _nlpQuery.isEmpty && !_isDiscovering && parentQuery.isEmpty)
-          Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF3580F0).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: const Icon(Icons.auto_awesome, size: 11, color: Color(0xFF3580F0)),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _invisibleAi.getContextExplanation(),
-                    style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textTertiary, fontWeight: FontWeight.w400),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (_isDiscovering)
-                  const SizedBox(
-                    width: 12, height: 12,
-                    child: CircularProgressIndicator(strokeWidth: 1.5, color: Color(0xFF3580F0)),
-                  ),
-              ],
-            ),
-          ),
+
 
         // ── Discovering indicator ─────────────────────────────
         if (_isDiscovering)
@@ -1869,21 +1691,8 @@ class _EventsTabState extends State<_EventsTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
-              ),
-              const SizedBox(width: 6),
-              Text('Suggested for you', style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
-            ],
-          ),
+          Text('Try searching for', style: GoogleFonts.poppins(
+                fontSize: 11, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
           const SizedBox(height: 6),
           ...suggestions.map((s) => GestureDetector(
             onTap: () => _applySuggestion(s),
@@ -1966,66 +1775,26 @@ class _RecommendedCarousel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
+        // Section header — clean, no AI branding
         Container(
           margin: const EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 32, height: 32,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.star_rounded, size: 18, color: HuddlColors.primary),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recommended For You',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'AI-matched to your family profile',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.auto_awesome, size: 11, color: Colors.white),
-                    const SizedBox(width: 3),
-                    Text(
-                      'AI',
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+              Text(
+                'Picked for you',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: context.hc.textPrimary,
                 ),
               ),
             ],
@@ -2469,24 +2238,7 @@ class _MeetupCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  // ── AI boost reason sparkle (subtle, invisible AI) ────
-                  if (boostReason != null) ...[                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(Icons.auto_awesome, size: 12,
-                          color: HuddlColors.primary.withValues(alpha: 0.7)),
-                        const SizedBox(width: 5),
-                        Text(
-                          boostReason!,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: HuddlColors.primary.withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+
                   const SizedBox(height: 10),
                   // Organiser row + share button
                   Row(
@@ -2619,33 +2371,7 @@ class _EventListCardState extends State<_EventListCard> {
         spacing: 6,
         runSpacing: 4,
         children: [
-          // AI score badge
-          if (widget.aiScore >= 50)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.auto_awesome, size: 11, color: Colors.white),
-                  const SizedBox(width: 3),
-                  Text(
-                    '${widget.aiScore.round()}% match',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          // Reason tags
+          // Reason tags (AI score hidden — works invisibly)
           ...reasons.map((reason) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
@@ -2953,7 +2679,7 @@ class _EventListCardState extends State<_EventListCard> {
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(Icons.auto_awesome, size: 10, color: Colors.white),
+                          child: const Icon(Icons.language, size: 10, color: Colors.white),
                         ),
                         const SizedBox(width: 6),
                         Icon(
@@ -2977,14 +2703,7 @@ class _EventListCardState extends State<_EventListCard> {
                       ],
                     ),
                   ],
-                  // ── AI Feedback thumbs (human-in-the-loop) ──
-                  if (widget.invisibleAi != null && widget.aiScore >= 40) ...[
-                    const SizedBox(height: 8),
-                    _AiFeedbackRow(
-                      eventId: eventId,
-                      invisibleAi: widget.invisibleAi!,
-                    ),
-                  ],
+
                 ],
               ),
             ),
@@ -3049,11 +2768,11 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
             color: const Color(0xFF3580F0).withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.auto_awesome, size: 10, color: Color(0xFF3580F0)),
+          child: const Icon(Icons.insights, size: 10, color: Color(0xFF3580F0)),
         ),
         const SizedBox(width: 5),
         Text(
-          'AI pick',
+          'Pick',
           style: GoogleFonts.poppins(
             fontSize: 10, color: context.hc.textTertiary, fontWeight: FontWeight.w500),
         ),
@@ -3115,264 +2834,6 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
           ),
         ],
       ],
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AI ASSISTANT BOTTOM-SHEET — progressive disclosure via sparkle icon
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _AiAssistantSheet extends StatelessWidget {
-  final InvisibleAiService invisibleAi;
-  final void Function(String query) onSuggestionTap;
-
-  const _AiAssistantSheet({
-    required this.invisibleAi,
-    required this.onSuggestionTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final suggestions = invisibleAi.getSearchSuggestions();
-    final posCount = invisibleAi.totalPositiveFeedback;
-    final negCount = invisibleAi.totalNegativeFeedback;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: context.hc.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle bar
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: context.hc.divider,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AI Event Assistant',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18, fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Finding the perfect events for your family',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textTertiary),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // How AI works (transparency)
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.1)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('How it works', style: GoogleFonts.poppins(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
-                    const SizedBox(height: 8),
-                    _AssistantInfoRow(
-                      icon: Icons.search, label: 'Type naturally',
-                      detail: 'e.g. "free baby classes this weekend"'),
-                    _AssistantInfoRow(
-                      icon: Icons.auto_awesome, label: 'AI understands intent',
-                      detail: 'Automatically applies price, time, age filters'),
-                    _AssistantInfoRow(
-                      icon: Icons.thumb_up_alt_outlined, label: 'You give feedback',
-                      detail: 'Thumbs up/down helps AI learn your preferences'),
-                    _AssistantInfoRow(
-                      icon: Icons.sort, label: 'Smart sorting',
-                      detail: 'Events are ranked by relevance to your family'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Quick searches
-              Text('Quick searches', style: GoogleFonts.poppins(
-                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: suggestions.map((s) => GestureDetector(
-                  onTap: () => onSuggestionTap(s.query),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: context.hc.scaffold,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: context.hc.divider),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(s.icon, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 6),
-                        Text(s.query, style: GoogleFonts.poppins(
-                          fontSize: 12, fontWeight: FontWeight.w500,
-                          color: context.hc.textPrimary)),
-                      ],
-                    ),
-                  ),
-                )).toList(),
-              ),
-              const SizedBox(height: 16),
-
-              // Feedback stats (transparency)
-              if (posCount + negCount > 0)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.hc.scaffold,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.insights, size: 18, color: Color(0xFF3580F0)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Your feedback: $posCount likes, $negCount dislikes \u2014 AI is learning your taste',
-                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Voice command placeholder
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: context.hc.divider),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: context.hc.textTertiary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.mic, size: 18, color: context.hc.textTertiary),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Voice search', style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textSecondary)),
-                          Text('Coming soon \u2014 search by speaking', style: GoogleFonts.poppins(
-                            fontSize: 11, color: context.hc.textTertiary)),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: context.hc.textTertiary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text('SOON', style: GoogleFonts.poppins(
-                        fontSize: 9, fontWeight: FontWeight.w700, color: context.hc.textTertiary)),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AssistantInfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String detail;
-
-  const _AssistantInfoRow({
-    required this.icon,
-    required this.label,
-    required this.detail,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28, height: 28,
-            decoration: BoxDecoration(
-              color: const Color(0xFF3580F0).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 14, color: const Color(0xFF3580F0)),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: GoogleFonts.poppins(
-                  fontSize: 12, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
-                Text(detail, style: GoogleFonts.poppins(
-                  fontSize: 11, color: context.hc.textTertiary)),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

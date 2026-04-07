@@ -168,7 +168,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Huddl AI',
+                        'Huddl',
                         style: GoogleFonts.poppins(
                           fontSize: 16, fontWeight: FontWeight.w700,
                           color: context.hc.textPrimary,

@@ -638,7 +638,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 14),
+                child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -872,7 +872,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -977,7 +977,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1063,7 +1063,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.auto_awesome, size: 12, color: Colors.white),
+                          const Icon(Icons.star_rounded, size: 12, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
                             'AI Found',
