@@ -114,7 +114,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final e = widget.event;
-    final Color color = e['color'] as Color;
+    // Always use the brand primary for interactive elements (buttons, outlines)
+    const Color color = HuddlColors.primary;
     final bool isFree = e['isFree'] == true;
     final String organiser = e['organiser'] as String? ?? 'Unknown';
     final bool isOnline = e['isOnline'] == true;

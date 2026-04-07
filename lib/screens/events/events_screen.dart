@@ -1967,7 +1967,7 @@ class _RecommendedCard extends StatelessWidget {
                 child: _buildCoverImage(
                   imageUrl: event.imageUrl,
                   fallbackIcon: event.icon,
-                  fallbackColor: event.color,
+                  fallbackColor: HuddlColors.primary,
                 ),
               ),
             ),
@@ -1991,7 +1991,7 @@ class _RecommendedCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 11, color: event.color),
+                        const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -2010,7 +2010,7 @@ class _RecommendedCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: event.isFree ? HuddlColors.blue : event.color,
+                            color: event.isFree ? HuddlColors.blue : HuddlColors.primary,
                           ),
                         ),
                       ],
@@ -2475,7 +2475,8 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    final Color eventColor = event['color'] as Color;
+    // Always use brand primary for consistency across all event cards
+    const Color eventColor = HuddlColors.primary;
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
     final String organiser = event['organiser'] as String? ?? '';
