@@ -11,7 +11,7 @@ import 'postcode_service.dart';
 // AI service in Huddl.  It pulls together:
 //   - Step 1: AiKnowledgeBaseService  (articles, milestones, community templates,
 //             borough directories, hyperlocal rules, safety guardrails)
-//             NOW with 25+ sources including Gingerbread, Parent Zone, Contact,
+//             NOW with 40+ sources including Gingerbread, Parent Zone, Contact,
 //             Adoption UK, Coram Family Lives, DaddiLife, and more
 //   - Step 2: AiLearningEngineService (user signals, borough engagement stats,
 //             global event preferences, topic affinities, maturity level)
@@ -1066,10 +1066,11 @@ class GeminiSystemPromptBuilder {
     }
     if (_onboarding.isAdoptiveFoster) {
       buf.writeln('- NOTE: Adoptive/foster family \u2014 be aware of attachment and identity needs. '
-          'Reference Adoption UK and CoramBAAF support.');
+          'Reference Adoption UK, CoramBAAF, and Home for Good (homeforgood.org.uk) support.');
     }
     if (_onboarding.hasSENChild) {
       buf.writeln('- NOTE: Family has a child with SEN/disability \u2014 reference Contact '
+          '(381K families helped, 14,735 directly reached, 95% satisfied) '
           'and Family Fund. Be mindful of additional care responsibilities.');
     }
     if (_onboarding.isSeparating) {
@@ -1116,7 +1117,7 @@ class GeminiSystemPromptBuilder {
     buf.writeln(
         '  \u2192 Parents travelling can see events at their destination');
     buf.writeln(
-        '- **Tutorials**: Parenting resources from 25+ trusted UK sources');
+        '- **Tutorials**: Parenting resources from 40+ trusted UK sources');
     buf.writeln(
         '  \u2192 Includes: NHS, NCT, Coram Family Lives courses, BBC Bitesize, '
         'Parent Talk Podcast, DaddiLife, Parentkind webinars');

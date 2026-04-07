@@ -418,6 +418,22 @@ class AiFeedService with BoroughAiContext {
       ));
     }
 
+    // 7b. NCT First 1,000 Days nudge for expecting/newborn parents
+    if (stages.contains('expecting') || stages.contains('new_parent')) {
+      _nudges.add(NudgeCard(
+        id: 'nudge_first_1000_days',
+        type: NudgeType.knowledgeNudge,
+        title: 'The First 1,000 Days',
+        subtitle: '80% of brain development happens before age 2. '
+            'Discover what matters most right now \u2014 from NCT\u2019s research.',
+        emoji: '\u{1F9E0}',
+        actionLabel: 'Learn More',
+        actionRoute: '/copilot',
+        relevanceScore: 0.92,
+        meta: {'source': 'NCT', 'url': 'https://www.nct.org.uk/first-1000-days'},
+      ));
+    }
+
     // 8. Trending marketplace item
     _nudges.add(NudgeCard(
       id: 'nudge_trending_market',
@@ -820,6 +836,9 @@ class AiFeedService with BoroughAiContext {
       {'title': 'Gingerbread virtual comedy show', 'emoji': '\u{1F3AD}', 'source': 'Gingerbread'},
       {'title': 'Care for the Family tour event', 'emoji': '\u{1F3A4}', 'source': 'Care for the Family'},
       {'title': 'Parentkind webinar on school support', 'emoji': '\u{1F4DA}', 'source': 'Parentkind'},
+      {'title': 'Home for Good fostering information evening', 'emoji': '\u{1F3E0}', 'source': 'Home for Good'},
+      {'title': 'Barnardo\'s children\'s safety workshop', 'emoji': '\u{1F6E1}', 'source': 'Barnardo\'s'},
+      {'title': 'CoramBAAF adoption conference', 'emoji': '\u{1F4CB}', 'source': 'CoramBAAF'},
     ];
     final event = charityEvents[rng.nextInt(charityEvents.length)];
 
