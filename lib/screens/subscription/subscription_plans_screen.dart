@@ -722,7 +722,7 @@ class _FoundingMemberBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [HuddlColors.premiumPurpleBg, Color(0xFFFAF5FF)],
+          colors: [HuddlColors.premiumPurpleBg, HuddlColors.premiumPurpleLight],
         ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),

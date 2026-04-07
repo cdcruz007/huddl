@@ -190,10 +190,39 @@ class HuddlColors {
 
   // Subscription / Premium
   static const Color premiumPurpleBg = Color(0xFFF5F0FF);
+  static const Color premiumPurpleLight = Color(0xFFFAF5FF);
+  static const Color premiumPurpleMid = Color(0xFFEDE5FF);
   static const Color premiumBlue = Color(0xFF3B82F6);
   static const Color coralSoft = Color(0xFFFF6B6B);
   static const Color peachBg = Color(0xFFFFF0E6);
   static const Color disabledBorder = Color(0xFFE9E9EA);
+
+  // Category dynamic colours (marketplace / offers)
+  static const Color categoryBaby = Color(0xFFFF6B9D);
+  static const Color categorySport = Color(0xFF10B981);
+  static const Color categoryTech = Color(0xFF6366F1);
+  static const Color actionSkip = Color(0xFFEF4444);
+  static const Color actionGreen = Color(0xFF34C759);
+  static const Color pinkSoft = Color(0xFFFF69B4);
+  static const Color amberWarm = Color(0xFFE8A838);
+  static const Color purpleAccent = Color(0xFFA16AE9);
+  static const Color checkoutSuccessBg = Color(0xFFE6F5F3);
+  static const Color checkoutSuccessBgLight = Color(0xFFF0FAF8);
+
+  // Attachment sheet colours
+  static const Color attachPhoto = Color(0xFFFF5C6A);
+  static const Color attachPhotoBg = Color(0xFFFFE8EA);
+  static const Color attachFile = Color(0xFF7C4DFF);
+  static const Color attachFileBg = Color(0xFFF0EAFF);
+  static const Color attachLocation = Color(0xFF2979FF);
+  static const Color attachLocationBg = Color(0xFFE3F0FF);
+  static const Color attachContact = Color(0xFF00C853);
+  static const Color attachContactBg = Color(0xFFE0F8EA);
+  static const Color attachPoll = Color(0xFFFF9100);
+  static const Color attachPollBg = Color(0xFFFFF3E0);
+
+  // Gradient helpers
+  static const Color coralGradientEnd = Color(0xFFFF975C);
 
   // Divider
   static const Color divider = Color(0xFFE8E8E8);

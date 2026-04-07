@@ -2169,7 +2169,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Container(
                 width: 36, height: 36,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [HuddlColors.coralSoft, Color(0xFFFF975C)]),
+                  gradient: const LinearGradient(colors: [HuddlColors.coralSoft, HuddlColors.primary]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.local_offer_rounded, color: Colors.white, size: 18),
@@ -2320,7 +2320,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [HuddlColors.premiumPurpleBg, Color(0xFFFAF5FF)]),
+                              gradient: const LinearGradient(colors: [HuddlColors.premiumPurpleBg, HuddlColors.premiumPurpleLight]),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
                             ),
@@ -2557,7 +2557,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           Container(
             padding: const EdgeInsets.all(14),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [HuddlColors.premiumPurpleBg, Color(0xFFEDE5FF)]),
+              gradient: LinearGradient(colors: [HuddlColors.premiumPurpleBg, HuddlColors.premiumPurpleMid]),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.flash_on_rounded, size: 28, color: HuddlColors.blue),
@@ -2668,7 +2668,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), HuddlColors.peachVeryLight]),
+                gradient: const LinearGradient(colors: [HuddlColors.peachLight, HuddlColors.peachVeryLight]),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
               ),
@@ -4295,14 +4295,14 @@ class _OffersCategoryTile extends StatelessWidget {
 
   Color _catColor(String title) {
     final t = title.toLowerCase();
-    if (t.contains('baby') || t.contains('child')) return const Color(0xFFFF6B9D);
+    if (t.contains('baby') || t.contains('child')) return HuddlColors.categoryBaby;
     if (t.contains('travel') || t.contains('holiday')) return HuddlColors.blue;
     if (t.contains('food') || t.contains('grocery')) return HuddlColors.successGreen;
     if (t.contains('fashion') || t.contains('cloth')) return HuddlColors.lightBlue;
     if (t.contains('home') || t.contains('garden')) return HuddlColors.warning;
     if (t.contains('health') || t.contains('beauty')) return HuddlColors.coralSoft;
-    if (t.contains('sport') || t.contains('fitness')) return const Color(0xFF10B981);
-    if (t.contains('tech') || t.contains('electronic')) return const Color(0xFF6366F1);
+    if (t.contains('sport') || t.contains('fitness')) return HuddlColors.categorySport;
+    if (t.contains('tech') || t.contains('electronic')) return HuddlColors.categoryTech;
     return HuddlColors.primary;
   }
 
@@ -4473,7 +4473,7 @@ class _OffersCouponCard extends StatelessWidget {
       case 'great deal': return HuddlColors.successGreen;
       case 'worth it': return HuddlColors.premiumBlue;
       case 'decent': return HuddlColors.warning;
-      case 'skip it': return const Color(0xFFEF4444);
+      case 'skip it': return HuddlColors.actionSkip;
       default: return HuddlColors.textSecondary;
     }
   }

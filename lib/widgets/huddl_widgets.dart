@@ -834,7 +834,7 @@ class MemberAvatar extends StatelessWidget {
               width: size * 0.28,
               height: size * 0.28,
               decoration: BoxDecoration(
-                color: const Color(0xFF34C759),
+                color: HuddlColors.actionGreen,
                 shape: BoxShape.circle,
                 border: Border.all(color: context.hc.surface, width: 2),
               ),

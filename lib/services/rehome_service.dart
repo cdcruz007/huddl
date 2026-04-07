@@ -185,21 +185,21 @@ extension ItemCategoryExt on ItemCategory {
       case ItemCategory.boysClothes:
         return HuddlColors.blue;
       case ItemCategory.girlsClothes:
-        return const Color(0xFFFF69B4);
+        return HuddlColors.pinkSoft;
       case ItemCategory.toysAndGames:
-        return const Color(0xFFFF975C);
+        return HuddlColors.primary;
       case ItemCategory.pushchairsAndPrams:
-        return const Color(0xFFE8A838);
+        return HuddlColors.amberWarm;
       case ItemCategory.forTheCar:
         return HuddlColors.textSecondary;
       case ItemCategory.furniture:
-        return const Color(0xFFA16AE9);
+        return HuddlColors.purpleAccent;
       case ItemCategory.books:
         return HuddlColors.teal;
       case ItemCategory.maternity:
-        return const Color(0xFFFF69B4);
+        return HuddlColors.pinkSoft;
       case ItemCategory.babyCareAndAccessories:
-        return const Color(0xFF34C759);
+        return HuddlColors.actionGreen;
       case ItemCategory.other:
         return HuddlColors.textHint;
     }
@@ -233,7 +233,7 @@ extension ItemConditionExt on ItemCondition {
       case ItemCondition.likeNew:
         return HuddlColors.blue;
       case ItemCondition.good:
-        return const Color(0xFFE8A838);
+        return HuddlColors.amberWarm;
       case ItemCondition.wellUsed:
         return HuddlColors.textHint;
     }

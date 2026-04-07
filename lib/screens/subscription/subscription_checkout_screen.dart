@@ -944,7 +944,7 @@ class _OrderSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isInnerCircle
-              ? [const Color(0xFFE6F5F3), const Color(0xFFF0FAF8)]
+              ? [HuddlColors.checkoutSuccessBg, HuddlColors.checkoutSuccessBgLight]
               : [HuddlColors.peachBg, HuddlColors.peachVeryLight],
         ),
         borderRadius: BorderRadius.circular(20),
