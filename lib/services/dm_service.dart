@@ -3,8 +3,13 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/direct_message.dart';
+import 'borough_scope_guard.dart';
 
 /// Singleton service that manages DM conversations and messages.
+///
+/// HYPERLOCAL RULE: DMs are borough-only.
+/// Users can only start conversations with other parents in the same
+/// borough. The guard check is performed at conversation creation time.
 ///
 /// In production these would live in Firestore with real-time listeners.
 /// Here we use BrowserStorage + simulated replies so the demo is end-to-end.
@@ -16,6 +21,7 @@ class DMService {
   static const String _conversationsKey = 'dm_conversations_v2';
   static const String _messagesKeyPrefix = 'dm_messages_'; // + conversationId
   bool _isInitialized = false;
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   List<DMConversation> _conversations = [];
 
@@ -121,6 +127,7 @@ class DMService {
     required String recipientId,
     required String recipientName,
     String? avatarColor,
+    String? recipientBorough,
   }) async {
     await initialize();
     final existing = _conversations.firstWhere(
@@ -133,6 +140,24 @@ class DMService {
       ),
     );
     if (existing.id.isNotEmpty) return existing;
+
+    // ── HYPERLOCAL GATE: block cross-borough DMs ─────────────────────
+    // If we know the recipient's borough and it doesn't match, block.
+    if (recipientBorough != null && recipientBorough.isNotEmpty) {
+      if (!_guard.canInteract(
+        feature: HuddlFeature.directMessages,
+        targetBorough: recipientBorough,
+        targetName: recipientName,
+      )) {
+        // Return a placeholder that signals "blocked" to the UI
+        return DMConversation(
+          id: 'blocked',
+          recipientId: recipientId,
+          recipientName: recipientName,
+          recipientAvatarColor: avatarColor ?? _colorForName(recipientName),
+        );
+      }
+    }
 
     // Assign a consistent color based on name hash
     final color = avatarColor ?? _colorForName(recipientName);

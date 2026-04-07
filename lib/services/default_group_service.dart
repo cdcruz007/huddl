@@ -4,6 +4,7 @@ import '../models/group.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
 import 'browser_storage.dart';
+import 'borough_scope_guard.dart';
 
 class DefaultGroupService {
   static final DefaultGroupService _instance = DefaultGroupService._internal();
@@ -12,6 +13,7 @@ class DefaultGroupService {
 
   final PostcodeService _postcodeService = PostcodeService();
   final OnboardingDataService _onboardingService = OnboardingDataService();
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   // Store all default groups (simulating database)
   final Map<String, Group> _defaultGroups = {};
@@ -548,9 +550,26 @@ class DefaultGroupService {
     return updatedGroups;
   }
 
-  /// Get all default groups
+  /// Get all default groups.
+  /// Returns ALL groups (unfiltered) — used internally by services like
+  /// the matchmaker that need the complete set.
   List<Group> getAllDefaultGroups() {
     return _defaultGroups.values.toList();
+  }
+
+  /// Get all default groups visible to the current user.
+  ///
+  /// HYPERLOCAL RULE: Groups are borough-only.
+  /// Only returns groups whose name contains the user's current borough.
+  /// If the user's borough cannot be determined, returns all groups
+  /// (graceful degradation during onboarding).
+  List<Group> getVisibleGroups() {
+    final borough = _guard.currentBorough;
+    if (borough == null || borough.isEmpty) return getAllDefaultGroups();
+    final lowerBorough = borough.toLowerCase();
+    return _defaultGroups.values
+        .where((g) => g.name.toLowerCase().contains(lowerBorough))
+        .toList();
   }
 
   /// Get user's assigned groups
@@ -564,11 +583,25 @@ class DefaultGroupService {
         .toList();
   }
 
-  /// Join a user to an existing group
+  /// Join a user to an existing group.
+  ///
+  /// HYPERLOCAL RULE: A user can only join groups that belong to their
+  /// current borough. Cross-borough joins are silently blocked and logged.
   void joinGroup(String userId, String groupId) {
     if (!_defaultGroups.containsKey(groupId)) {
       _log('Group not found: $groupId');
       return;
+    }
+
+    // ── Borough gate ──────────────────────────────────────────────────
+    final group = _defaultGroups[groupId]!;
+    final userBorough = _guard.currentBorough;
+    if (userBorough != null && userBorough.isNotEmpty) {
+      if (!group.name.toLowerCase().contains(userBorough.toLowerCase())) {
+        _log('BLOCKED: User $userId attempted to join cross-borough group '
+            '"${group.name}" (user borough: $userBorough)');
+        return;
+      }
     }
 
     final userGroups = _userGroupMemberships[userId] ?? [];

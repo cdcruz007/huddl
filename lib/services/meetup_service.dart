@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
+import 'borough_scope_guard.dart';
 
 /// Privacy level for a meetup
 enum MeetupPrivacy { public, group, private_ }
@@ -241,6 +242,10 @@ class Meetup {
 }
 
 /// Manages the list of meet-ups. Singleton with ChangeNotifier.
+///
+/// HYPERLOCAL RULE: Meetups are borough-only.
+/// Only meetups tagged with the current user's borough are visible.
+/// Users cannot create meetups outside their home borough.
 class MeetupService extends ChangeNotifier {
   static final MeetupService _instance = MeetupService._internal();
   factory MeetupService() => _instance;
@@ -251,8 +256,25 @@ class MeetupService extends ChangeNotifier {
 
   static const String _storageKey = 'huddl_user_meetups';
   final List<Meetup> _meetups = [];
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
-  List<Meetup> get meetups => List.unmodifiable(_meetups);
+  /// All meetups (unfiltered) — used internally.
+  List<Meetup> get allMeetups => List.unmodifiable(_meetups);
+
+  /// Meetups visible to the current user (borough-filtered).
+  ///
+  /// HYPERLOCAL: Only returns meetups in the user's home borough.
+  /// If borough is not set, falls back to showing all (graceful degradation).
+  List<Meetup> get meetups {
+    final borough = _guard.currentBorough;
+    if (borough == null || borough.isEmpty) return List.unmodifiable(_meetups);
+    return List.unmodifiable(
+      _guard.filterByUserBorough<Meetup>(
+        _meetups,
+        (m) => m.borough,
+      ),
+    );
+  }
 
   /// Creates a new meet-up and adds it to the list.
   void createMeetup(Meetup meetup) {

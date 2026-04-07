@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'borough_scope_guard.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AGE STAGE — the primary filter dimension ("Who is this for?")
@@ -265,6 +266,7 @@ class RehomeItem {
   bool isSold;
   int viewCount;
   int offerCount;
+  final String? borough; // Borough this item belongs to for hyperlocal visibility
 
   RehomeItem({
     required this.id,
@@ -283,6 +285,7 @@ class RehomeItem {
     this.isSold = false,
     this.viewCount = 0,
     this.offerCount = 0,
+    this.borough,
   });
 
   bool get isFree => price == 0;
@@ -332,6 +335,9 @@ class RehomeOffer {
 // REHOME SERVICE — singleton with sample data
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/// HYPERLOCAL RULE: Marketplace is borough-only.
+/// Listings are only visible to parents in the same borough as the seller.
+/// Users cannot browse or buy from outside their home borough.
 class RehomeService extends ChangeNotifier {
   static final RehomeService _instance = RehomeService._internal();
   factory RehomeService() => _instance;
@@ -342,16 +348,37 @@ class RehomeService extends ChangeNotifier {
   final List<RehomeItem> _items = [];
   final List<RehomeItem> _myListings = [];
   final List<RehomeOffer> _offers = [];
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
-  List<RehomeItem> get items => List.unmodifiable(_items);
+  /// All items (unfiltered) — used internally by AI services.
+  List<RehomeItem> get allItems => List.unmodifiable(_items);
+
+  /// Items visible to the current user (borough-filtered).
+  ///
+  /// HYPERLOCAL: Only returns items in the user's home borough.
+  /// If borough is not set, falls back to showing all (graceful degradation).
+  List<RehomeItem> get items {
+    final borough = _guard.currentBorough;
+    if (borough == null || borough.isEmpty) return List.unmodifiable(_items);
+    return List.unmodifiable(
+      _guard.filterByUserBorough<RehomeItem>(
+        _items,
+        (item) => item.borough,
+      ),
+    );
+  }
+
   List<RehomeItem> get myListings => List.unmodifiable(_myListings);
   List<RehomeItem> get savedItems =>
-      _items.where((i) => i.isSaved).toList();
+      items.where((i) => i.isSaved).toList();
   List<RehomeOffer> get offers => List.unmodifiable(_offers);
   List<RehomeOffer> get pendingOffers =>
       _offers.where((o) => o.status == 'pending').toList();
 
   /// Filter items by age stage and optionally by category, condition, price.
+  ///
+  /// HYPERLOCAL: Always filters by the user's borough first, then applies
+  /// the additional category/condition/price/query filters on top.
   List<RehomeItem> filter({
     AgeStage? ageStage,
     ItemCategory? category,
@@ -359,7 +386,9 @@ class RehomeService extends ChangeNotifier {
     PriceType? priceType,
     String? query,
   }) {
-    return _items.where((item) {
+    // Start from borough-filtered items
+    final boroughItems = items; // uses the borough-filtered getter
+    return boroughItems.where((item) {
       if (item.isSold) return false;
       if (ageStage != null &&
           ageStage != AgeStage.allAges &&
@@ -481,6 +510,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_sophie',
         sellerLocation: 'Islington, 1.2km',
         listedAt: now.subtract(const Duration(hours: 3)),
+        borough: 'Cambridge',
         viewCount: 34,
         offerCount: 2,
       ),
@@ -500,6 +530,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_emma',
         sellerLocation: 'Camden, 0.8km',
         listedAt: now.subtract(const Duration(hours: 5)),
+        borough: 'Cambridge',
         viewCount: 21,
       ),
       RehomeItem(
@@ -518,6 +549,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_anna',
         sellerLocation: 'Hackney, 2.1km',
         listedAt: now.subtract(const Duration(hours: 8)),
+        borough: 'Cambridge',
         viewCount: 47,
         offerCount: 1,
       ),
@@ -537,6 +569,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_lucy',
         sellerLocation: 'Stoke Newington, 1.8km',
         listedAt: now.subtract(const Duration(hours: 18)),
+        borough: 'Cambridge',
         viewCount: 56,
         offerCount: 3,
       ),
@@ -556,6 +589,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_sarah',
         sellerLocation: 'Highbury, 1.9km',
         listedAt: now.subtract(const Duration(days: 1, hours: 2)),
+        borough: 'Cambridge',
         viewCount: 18,
       ),
 
@@ -576,6 +610,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_james',
         sellerLocation: 'Shoreditch, 1.5km',
         listedAt: now.subtract(const Duration(hours: 12)),
+        borough: 'Cambridge',
         viewCount: 28,
       ),
       RehomeItem(
@@ -594,6 +629,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_kate',
         sellerLocation: 'Dalston, 2.5km',
         listedAt: now.subtract(const Duration(days: 1)),
+        borough: 'Cambridge',
         viewCount: 63,
         offerCount: 2,
       ),
@@ -613,6 +649,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_lucy',
         sellerLocation: 'Stoke Newington, 1.8km',
         listedAt: now.subtract(const Duration(days: 1, hours: 6)),
+        borough: 'Cambridge',
         viewCount: 19,
       ),
 
@@ -633,6 +670,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_sarah',
         sellerLocation: 'Highbury, 1.9km',
         listedAt: now.subtract(const Duration(days: 2)),
+        borough: 'Cambridge',
         viewCount: 89,
         offerCount: 4,
       ),
@@ -652,6 +690,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_olivia',
         sellerLocation: 'Angel, 3.2km',
         listedAt: now.subtract(const Duration(days: 2, hours: 4)),
+        borough: 'Cambridge',
         viewCount: 72,
         offerCount: 0,
       ),
@@ -673,6 +712,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_mark',
         sellerLocation: 'Bethnal Green, 2.8km',
         listedAt: now.subtract(const Duration(days: 3)),
+        borough: 'Cambridge',
         viewCount: 45,
         offerCount: 1,
       ),
@@ -692,6 +732,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_david',
         sellerLocation: 'Clerkenwell, 4.1km',
         listedAt: now.subtract(const Duration(days: 3, hours: 8)),
+        borough: 'Cambridge',
         viewCount: 31,
       ),
       RehomeItem(
@@ -710,6 +751,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_tom',
         sellerLocation: 'Finsbury Park, 3.5km',
         listedAt: now.subtract(const Duration(days: 4)),
+        borough: 'Cambridge',
         viewCount: 22,
       ),
 
@@ -730,6 +772,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_sophie',
         sellerLocation: 'Islington, 1.2km',
         listedAt: now.subtract(const Duration(days: 5)),
+        borough: 'Cambridge',
         viewCount: 38,
         offerCount: 1,
       ),
@@ -751,6 +794,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_luke',
         sellerLocation: 'Holloway, 5.0km',
         listedAt: now.subtract(const Duration(days: 5, hours: 12)),
+        borough: 'Cambridge',
         viewCount: 54,
         offerCount: 2,
       ),
@@ -772,6 +816,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_emma',
         sellerLocation: 'Camden, 0.8km',
         listedAt: now.subtract(const Duration(days: 6)),
+        borough: 'Cambridge',
         viewCount: 41,
       ),
       RehomeItem(
@@ -790,6 +835,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_anna',
         sellerLocation: 'Hackney, 2.1km',
         listedAt: now.subtract(const Duration(days: 7)),
+        borough: 'Cambridge',
         viewCount: 66,
         offerCount: 3,
       ),
@@ -811,6 +857,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'mem_kate',
         sellerLocation: 'Dalston, 2.5km',
         listedAt: now.subtract(const Duration(days: 4, hours: 6)),
+        borough: 'Cambridge',
         viewCount: 29,
       ),
     ]);
@@ -833,6 +880,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'current_user',
         sellerLocation: 'Your area',
         listedAt: now.subtract(const Duration(days: 3)),
+        borough: 'Cambridge',
         viewCount: 87,
         offerCount: 3,
       ),
@@ -852,6 +900,7 @@ class RehomeService extends ChangeNotifier {
         sellerId: 'current_user',
         sellerLocation: 'Your area',
         listedAt: now.subtract(const Duration(days: 5)),
+        borough: 'Cambridge',
         viewCount: 43,
         offerCount: 1,
       ),

@@ -127,6 +127,19 @@ class Event {
 }
 
 /// Manages the list of events. Singleton with ChangeNotifier.
+///
+/// UK-WIDE FEATURE \u2014 the ONLY feature that crosses borough boundaries.
+///
+/// Events are intentionally NOT borough-filtered. Parents can browse, RSVP,
+/// and attend events in ANY borough across the UK. This supports the
+/// real-world need for travelling parents to discover activities outside
+/// their home area (e.g. holidays, day trips, visiting family).
+///
+/// The `borough` field on each Event is used for:
+///   \u2022 Default sorting (local events ranked higher)
+///   \u2022 AI event recommendation scoring (borough proximity = bonus points)
+///   \u2022 Display labels (\"In your borough\" badge)
+/// But it is NOT used as an access-control gate.
 class EventService extends ChangeNotifier {
   static final EventService _instance = EventService._internal();
   factory EventService() => _instance;

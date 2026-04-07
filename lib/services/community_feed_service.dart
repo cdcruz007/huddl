@@ -96,6 +96,10 @@ class UpcomingEvent {
 
 /// Singleton that aggregates community activity into a single feed.
 ///
+/// BOROUGH-AWARE: The feed is primarily local \u2014 groups, meetups,
+/// marketplace items, and parent joins are scoped to the user's borough.
+/// Events are the exception: they appear from any borough (UK-wide).
+///
 /// The feed is seeded with realistic sample data on first run and
 /// persisted via BrowserStorage. It reads from DefaultGroupService and
 /// OnboardingDataService to reflect the user's actual borough context.

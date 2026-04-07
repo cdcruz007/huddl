@@ -8,13 +8,19 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'meetup_service.dart';
 import 'default_group_service.dart';
+import 'borough_scope_guard.dart';
 
 // =============================================================================
 // AI MEETUP MATCHMAKER SERVICE  — HYPERLOCAL EDITION
 // Uses Gemini AI to generate personalised meetup suggestions and
 // intelligent compatibility reasoning between parents
 // System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
-// Borough-only: matches ONLY parents within the same borough
+//
+// HYPERLOCAL RULE: Borough-only.
+// • Matches ONLY parents within the same borough
+// • Cross-borough parents are filtered out before scoring
+// • Suggested meetup locations MUST be in the user's borough
+// • BoroughScopeGuard enforces the gate at data layer
 // =============================================================================
 
 /// A parent profile used for matching
@@ -97,6 +103,7 @@ class AiMatchmakerService {
   final PostcodeService _postcode = PostcodeService();
   final MeetupService _meetupService = MeetupService();
   final DefaultGroupService _groupService = DefaultGroupService();
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   // Gemini API configuration (centralised in GeminiConfig)
 
@@ -105,6 +112,11 @@ class AiMatchmakerService {
   bool _isInitialized = false;
 
   List<SuggestedMeetup> get suggestions => List.unmodifiable(_suggestions);
+
+  /// Nearby parents in the same borough only.
+  ///
+  /// HYPERLOCAL: All parents returned are guaranteed to be in the user's
+  /// home borough. Cross-borough parents are excluded during generation.
   List<MatchableParent> get nearbyParents => List.unmodifiable(_nearbyParents);
 
   Future<void> initialize() async {
@@ -122,6 +134,8 @@ class AiMatchmakerService {
   }
 
   // ── Generate simulated nearby parents ──────────────────────────────────
+  // HYPERLOCAL: Only generates parents in the user's current borough.
+  // In production, this would query Firestore with a borough == filter.
   void _generateNearbyParents() {
     final borough = _getUserBorough();
     final userStages = _onboarding.stagesOfLife;
@@ -201,8 +215,18 @@ class AiMatchmakerService {
   }
 
   // ── Compatibility scoring algorithm ────────────────────────────────────
+  // HYPERLOCAL: Parents outside the user's borough score 0 (filtered out).
   double _calculateCompatibility(
       MatchableParent parent, List<String> userStages) {
+    // Borough gate — cross-borough parents get zero compatibility
+    if (!_guard.canInteract(
+      feature: HuddlFeature.matchmaker,
+      targetBorough: parent.borough,
+      targetName: parent.name,
+    )) {
+      return 0.0;
+    }
+
     double score = 0.0;
     final userChildren = _onboarding.children;
     final userGroups =
