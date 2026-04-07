@@ -2889,7 +2889,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       id: 'disc_travel_tribe',
       name: 'Travel Tribe',
       description:
-          'Plan family-friendly adventures, share travel tips, discover kid-approved destinations and swap holiday hacks with fellow parent explorers.',
+          'Share travel advice and real experiences with other parents — from kid-friendly destinations and flight survival tips to honest hotel reviews and packing hacks.',
       imageUrl:
           'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
       memberCount: 1893,

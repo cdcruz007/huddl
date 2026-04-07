@@ -236,8 +236,8 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Show FAB only on Meetups tab (index 0)
-    final showFab = _tabController.index == 0;
+    // Show FAB only on Meetups tab (index 1)
+    final showFab = _tabController.index == 1;
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
