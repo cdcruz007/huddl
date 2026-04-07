@@ -7,17 +7,23 @@ import 'postcode_service.dart';
 import 'ai_knowledge_base_service.dart';
 
 // =============================================================================
-// AI LEARNING ENGINE SERVICE  — ENRICHED V3
+// AI LEARNING ENGINE SERVICE  — ENRICHED V4
 //
 // Centralised user-behaviour learning system for Huddl.
 //
-// V3 enrichment: Now tracks family-structure-specific engagement:
+// V4 enrichment: Tracks engagement across 50+ source categories:
 //   - Single parent group/content interactions (Gingerbread)
 //   - SEN/disability content engagement (Contact, Family Fund, Sibs)
-//   - Digital safety content engagement (Parent Zone)
-//   - Adoption/fostering content engagement (Adoption UK, CoramBAAF)
+//   - Digital safety content engagement (Parent Zone, BBC Bitesize)
+//   - Adoption/fostering content engagement (Adoption UK, CoramBAAF, Home for Good)
 //   - Emotional intelligence content engagement (Parent Talk Podcast)
 //   - Blended family content engagement (HappySteps)
+//   - Eco-parenting content engagement (Green Parent, Berkshire Mummies)
+//   - School-readiness content engagement (Parentkind, National Parent Survey)
+//   - Sibling support content engagement (Sibs)
+//   - Family lifestyle content engagement (MyBaba, Mamas & Papas)
+//   - Separation/co-parenting content engagement (OnlyMums & Dads)
+//   - Mental health signposting engagement (Selmind, Coram Family Lives)
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
 // │ HYPERLOCAL ARCHITECTURE — BOROUGH IS THE PRIMARY PARTITION KEY          │
@@ -41,7 +47,7 @@ import 'ai_knowledge_base_service.dart';
 // │    4. HyperlocalRules enforcement statement                             │
 // └──────────────────────────────────────────────────────────────────────────┘
 //
-// Signal sources (11):
+// Signal sources (12):
 //   - Copilot conversations       (query topics, follow-ups, satisfaction)
 //   - Chat / DMs                  (activity, sentiment keywords, response speed)
 //   - Groups                      (views, joins, posts, reactions)

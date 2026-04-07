@@ -14,15 +14,19 @@ import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
 // =============================================================================
-// AI MEETUP MATCHMAKER SERVICE  — ENRICHED V3 (Steps 5,9)
+// AI MEETUP MATCHMAKER SERVICE  — ENRICHED V4 (Steps 5,9)
 //
-// UPGRADES from v2:
+// UPGRADES from v3:
 //   1. Learning engine topic affinities boost compatibility scoring
 //   2. Knowledge base community templates inform meetup suggestions
 //   3. Match interactions recorded to learning engine for feedback loop
 //   4. Borough directory venues used for realistic location suggestions
 //   5. Maturity-aware matching: cold-start users get broader matches
-//   6. NEW V3: Richer parent profiles with interests from 25+ sources
+//   6. V3: Richer parent profiles with interests from 50+ sources
+//   7. NEW V4: Eco-parenting interest matching (Green Parent community)
+//   8. NEW V4: School-readiness interest matching (Parentkind insights)
+//   9. NEW V4: Sibling support interest matching (Sibs)
+//  10. NEW V4: MyBaba family lifestyle interest matching
 //
 // HYPERLOCAL RULE: Borough-only.
 // \u2022 Matches ONLY parents within the same borough
@@ -247,6 +251,31 @@ class AiMatchmakerService with BoroughAiContext {
         childAges: ['2 years'],
         groupIds: ['disc_adoptive_foster', 'disc_toddler_group'],
         interests: ['Adoption support', 'Attachment parenting', 'Story time'],
+      ),
+      // V4: Enriched profiles from 50+ sources
+      MatchableParent(
+        id: 'match_13', name: 'Zara Patel',
+        avatarUrl: 'https://i.pravatar.cc/150?img=32',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['3 years', '6 years'],
+        groupIds: ['disc_eco_parents', 'disc_school_ready'],
+        interests: ['Eco-parenting', 'Forest school', 'Plastic-free living'],
+      ),
+      MatchableParent(
+        id: 'match_14', name: 'Ollie & Jen Brooks',
+        avatarUrl: 'https://i.pravatar.cc/150?img=35',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['11 years', '14 years'],
+        groupIds: ['disc_teen_parents', 'disc_digital_families'],
+        interests: ['Teen wellbeing', 'Screen time balance', 'Family travel'],
+      ),
+      MatchableParent(
+        id: 'match_15', name: 'Fiona Douglas',
+        avatarUrl: 'https://i.pravatar.cc/150?img=38',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['4 years', '6 years'],
+        groupIds: ['disc_co_parenting', 'disc_school_ready'],
+        interests: ['Co-parenting tips', 'School readiness', 'Weekend activities'],
       ),
     ];
 

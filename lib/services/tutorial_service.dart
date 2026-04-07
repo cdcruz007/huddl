@@ -46,8 +46,8 @@ class TutorialService {
       body:
           'AI-curated feed with events, groups and community updates '
           'tailored to your children\'s ages, your area, and your family\'s needs. '
-          'Powered by insights from 40+ trusted UK sources including NHS, NCT, '
-          'BBC Bitesize, Gingerbread, Contact, and more.',
+          'Powered by insights from 50+ trusted UK sources including NHS, NCT, '
+          'BBC Bitesize, Gingerbread, Contact, Parentkind, MyBaba, and more.',
       ctaLabel: 'Tap cards to explore',
       iconName: 'home',
     ),
@@ -70,7 +70,8 @@ class TutorialService {
       body:
           'AI discovers local events daily. Browse borough meetups and UK-wide '
           'charity events from NCT, Adoption UK, Gingerbread, Home for Good, '
-          'Barnardo\'s, Care for the Family, and Parentkind. '
+          'Barnardo\'s, Care for the Family, Parentkind, Sibs, and '
+          'Coram Family Lives. '
           'Create your own meetup with the + button.',
       ctaLabel: 'Tap + to create a meetup',
       iconName: 'groups',

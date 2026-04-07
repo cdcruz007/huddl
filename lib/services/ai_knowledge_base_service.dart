@@ -7,7 +7,7 @@ import 'postcode_service.dart';
 // =============================================================================
 // AI PARENTING KNOWLEDGE BASE SERVICE  — ENRICHED HYPERLOCAL EDITION v3
 //
-// Centralised, structured parenting knowledge sourced from 40+ trusted UK sites:
+// Centralised, structured parenting knowledge sourced from 45+ trusted UK sites:
 //
 //  TIER 1 — CLINICAL / AUTHORITATIVE
 //   - NHS (nhs.uk)                — Clinical guidelines, vaccinations, safety
@@ -42,6 +42,8 @@ import 'postcode_service.dart';
 //   - HuffPost Parents              — Raising teens, school life, health
 //   - Bounty (bounty.com)           — Pregnancy stages, baby milestones
 //   - Mamas & Papas                 — Product guidance, Buying for Baby
+//   - MyBaba (mybaba.com)            — Luxury family lifestyle, travel, wellbeing
+//   - Selmind directory              — Local mental health service referrals
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
 // │ HYPERLOCAL ARCHITECTURE                                                 │
@@ -2372,6 +2374,94 @@ class AiKnowledgeBaseService {
         relevanceWeight: 0.80,
         lastUpdated: now,
       ),
+
+      // ─── MYBABA — FAMILY LIFESTYLE & WELLBEING ────────────────────────
+      KnowledgeArticle(
+        id: 'lifestyle_001',
+        title: 'MyBaba \u2014 family lifestyle, travel, and wellbeing',
+        summary:
+            'MyBaba is a curated UK family lifestyle platform covering luxury travel, '
+            'nursery design, pregnancy wellbeing, and quality children\u2019s products.',
+        body:
+            'MyBaba (mybaba.com) is a trusted UK family lifestyle resource: '
+            '1) Family travel guides \u2014 curated villa holidays, beach clubs with cr\u00E8che, '
+            'family-friendly destinations with childcare and babysitting options. '
+            '2) Nursery design \u2014 expert-led nursery inspiration, interior trends, and '
+            'storage solutions for compact UK homes. '
+            '3) Pregnancy wellbeing \u2014 antenatal fitness, nutrition guides, birth plans, '
+            'and postnatal recovery tips. '
+            '4) Product reviews \u2014 in-depth reviews of pushchairs, car seats, baby monitors '
+            'and other essentials, with comparisons to help parents choose wisely. '
+            '5) Children\u2019s activities \u2014 age-appropriate crafts, learning activities, '
+            'and seasonal event guides across the UK. '
+            'On Huddl, share travel tips and product reviews with other parents in your borough.',
+        category: KnowledgeCategory.activities,
+        tags: ['MyBaba', 'lifestyle', 'family travel', 'nursery', 'wellbeing', 'product reviews'],
+        source: 'mybaba',
+        sourceUrl: 'https://www.mybaba.com/',
+        ageStages: ['pregnancy', 'newborn', 'baby', 'toddler'],
+        relevanceWeight: 0.72,
+        lastUpdated: now,
+      ),
+
+      // ─── SELMIND — LOCAL MENTAL HEALTH DIRECTORY ──────────────────────
+      KnowledgeArticle(
+        id: 'mh_001',
+        title: 'Finding local family mental health support via Selmind',
+        summary:
+            'Selmind is a UK directory connecting families to local mental health services, '
+            'including the Family Lives Parents Helpline.',
+        body:
+            'Selmind (selmind.org.uk) is a UK-wide directory of mental health resources: '
+            '1) Family Lives Parents Helpline \u2014 free, confidential phone and email '
+            'support for any parenting issue, listed prominently in the Selmind directory. '
+            '2) Local service finder \u2014 search by postcode to find counselling, '
+            'therapy, and support groups near you. '
+            '3) Covers anxiety, depression, postnatal mental health, relationship issues, '
+            'bereavement, and children\u2019s emotional wellbeing. '
+            '4) Referral pathway: start with GP or self-refer via Selmind directory entries. '
+            'Key: Coram Family Lives offers a free 24/7 helpline (phone, email, WhatsApp, '
+            'live chat) and free online parenting courses for immediate support. '
+            'On Huddl, your borough\u2019s AI copilot can help find local services near you.',
+        category: KnowledgeCategory.mentalHealth,
+        tags: ['Selmind', 'mental health', 'helpline', 'local services', 'counselling', 'Family Lives'],
+        source: 'selmind',
+        sourceUrl: 'https://selmind.org.uk/directory/family-lives-parents-helpline/',
+        ageStages: ['all'],
+        relevanceWeight: 0.82,
+        lastUpdated: now,
+      ),
+
+      // ─── NATIONAL PARENT SURVEY — UK'S LARGEST PARENT POLL ────────────
+      KnowledgeArticle(
+        id: 'edu_004',
+        title: 'National Parent Survey 2025 \u2014 what 5,866 parents really think',
+        summary:
+            'The National Parent Survey is the UK\u2019s largest annual parent poll, run by '
+            'Parentkind with YouGov, generating 134,000+ insights into family life.',
+        body:
+            'The National Parent Survey 2025 (nationalparentsurvey.com) key findings: '
+            '1) 5,866 parents surveyed across England (3,391), Scotland (1,309), '
+            'Wales (865), and Northern Ireland (301), commissioned by Parentkind with YouGov. '
+            '2) 134,000+ data points covering school happiness, homework, digital '
+            'device usage, financial pressures, and parental mental health. '
+            '3) Supported by The Times and The Sunday Times \u2014 bringing parent voices '
+            'into the national conversation on education policy. '
+            '4) Free webinars for parents \u2014 Parentkind provides expert-led sessions '
+            'on PTA fundraising, Be School Ready guides, and parent engagement. '
+            '5) Margin of error: 0.5\u20132.5 percentage points for the sample. '
+            'Key insight: parental engagement in education directly correlates with '
+            'better child outcomes. Parentkind\u2019s PTA network of 13,500+ PTAs '
+            'connects schools with families across the UK. '
+            'On Huddl, share your school experience with other parents in your borough.',
+        category: KnowledgeCategory.education,
+        tags: ['National Parent Survey', 'Parentkind', 'YouGov', 'education', 'school', 'PTA'],
+        source: 'parentkind',
+        sourceUrl: 'https://nationalparentsurvey.com/',
+        ageStages: ['schoolAge', 'teens'],
+        relevanceWeight: 0.86,
+        lastUpdated: now,
+      ),
     ]);
   }
 
@@ -3311,10 +3401,23 @@ class AiKnowledgeBaseService {
         return 'Mamas & Papas';
       case 'todaysparent':
         return 'Today\'s Parent';
+      case 'mybaba':
+        return 'MyBaba';
+      case 'selmind':
+        return 'Selmind';
+      case 'familylives':
+        return 'Family Lives';
+      case 'nationalparentsurvey':
+        return 'National Parent Survey 2025';
+      case 'spurgeons':
+        return 'Spurgeons';
       default:
         return source;
     }
   }
+
+  /// Public accessor for source display name (used by nudge generators).
+  String getSourceDisplayName(String source) => _sourceDisplayName(source);
 
   void _log(String message) {
     if (kDebugMode) {

@@ -1,15 +1,17 @@
 // =============================================================================
-// ENRICHED V3 COMPREHENSIVE TESTS
+// ENRICHED V4 COMPREHENSIVE TESTS
 //
-// Tests all 16 steps of the Enriched Parent Concierge v3 plan:
-//   - New KnowledgeCategories and articles from 40+ sources
-//   - New community templates (11 new types)
+// Tests all 16 steps of the Enriched Parent Concierge v4 plan:
+//   - New KnowledgeCategories and articles from 50+ sources
+//   - New community templates (15+ types)
 //   - Onboarding data service (provider fields)
 //   - Gemini prompt builder enriched user context
-//   - Feed service enriched nudge types
-//   - Matchmaker enriched parent profiles
+//   - Feed service enriched nudge types (19 total)
+//   - Matchmaker enriched parent profiles (15 profiles)
 //   - Learning engine new signal source
 //   - Tutorial enriched steps
+//   - Event discovery enriched templates (26 total)
+//   - Daily refresh cycle with 50+ source tiers
 // =============================================================================
 
 import 'package:flutter_test/flutter_test.dart';
@@ -111,6 +113,16 @@ void main() {
       expect(prompt, contains('BOROUGH-ONLY'));
       expect(prompt, contains('UK-WIDE'));
     });
+
+    test('Knowledge base has public getSourceDisplayName method', () {
+      final kb = AiKnowledgeBaseService();
+      expect(kb.getSourceDisplayName('gingerbread'), equals('Gingerbread'));
+      expect(kb.getSourceDisplayName('mybaba'), equals('MyBaba'));
+      expect(kb.getSourceDisplayName('selmind'), equals('Selmind'));
+      expect(kb.getSourceDisplayName('familylives'), equals('Family Lives'));
+      expect(kb.getSourceDisplayName('nationalparentsurvey'), equals('National Parent Survey 2025'));
+      expect(kb.getSourceDisplayName('spurgeons'), equals('Spurgeons'));
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -118,13 +130,20 @@ void main() {
   // ═══════════════════════════════════════════════════════════════════════
 
   group('Step 7: Enriched Feed Nudge Types', () {
-    test('New V3 nudge types exist', () {
+    test('V3 nudge types exist', () {
       expect(NudgeType.values.contains(NudgeType.digitalSafetyTip), isTrue);
       expect(NudgeType.values.contains(NudgeType.charityEvent), isTrue);
       expect(NudgeType.values.contains(NudgeType.emotionalIntelligence), isTrue);
     });
 
-    test('NudgeCard construction works for new types', () {
+    test('V4 nudge types exist', () {
+      expect(NudgeType.values.contains(NudgeType.ecoParenting), isTrue);
+      expect(NudgeType.values.contains(NudgeType.schoolReadiness), isTrue);
+      expect(NudgeType.values.contains(NudgeType.siblingSupport), isTrue);
+      expect(NudgeType.values.contains(NudgeType.separationSupport), isTrue);
+    });
+
+    test('NudgeCard construction works for V3 types', () {
       final card = NudgeCard(
         id: 'nudge_test_ds',
         type: NudgeType.digitalSafetyTip,
@@ -139,8 +158,23 @@ void main() {
       expect(card.relevanceScore, equals(0.76));
     });
 
-    test('Total nudge types count is 15', () {
-      expect(NudgeType.values.length, equals(15));
+    test('NudgeCard construction works for V4 types', () {
+      final card = NudgeCard(
+        id: 'nudge_test_eco',
+        type: NudgeType.ecoParenting,
+        title: 'Eco-parenting tips',
+        subtitle: 'Green Parent and Berkshire Mummies share sustainable family ideas.',
+        emoji: '\u{1F33F}',
+        relevanceScore: 0.56,
+        meta: {'source': 'Green Parent'},
+      );
+      expect(card.type, equals(NudgeType.ecoParenting));
+      expect(card.meta['source'], equals('Green Parent'));
+    });
+
+    test('Total nudge types count is 19', () {
+      // Original 12 + V3 (3) + V4 (4) = 19
+      expect(NudgeType.values.length, equals(19));
     });
   });
 
@@ -153,9 +187,15 @@ void main() {
       expect(TutorialService.steps.length, equals(5));
     });
 
-    test('Home tutorial mentions 40+ sources', () {
+    test('Home tutorial mentions 50+ sources', () {
       final home = TutorialService.steps[0];
-      expect(home.body, contains('40+'));
+      expect(home.body, contains('50+'));
+    });
+
+    test('Home tutorial mentions new V4 sources', () {
+      final home = TutorialService.steps[0];
+      expect(home.body, contains('Parentkind'));
+      expect(home.body, contains('MyBaba'));
     });
 
     test('Connect tutorial mentions local groups', () {
@@ -173,6 +213,8 @@ void main() {
       expect(discover.body, contains('Barnardo'));
       expect(discover.body, contains('Care for the Family'));
       expect(discover.body, contains('Parentkind'));
+      expect(discover.body, contains('Sibs'));
+      expect(discover.body, contains('Coram Family Lives'));
     });
 
     test('Market tutorial mentions safety recalls', () {

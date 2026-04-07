@@ -25,9 +25,10 @@ import 'ai_learning_engine_service.dart';
 //   4. Trending topics from Netmums as content nudges
 //   5. Dad-specific nudges for fathers (Dadsnet + DaddiLife content)
 //   6. Feed ranking uses learning engine topic affinities
-//   7. NEW V3: Charity/support org nudges (Gingerbread, Contact, Adoption UK)
+//   7. NEW V3: Charity/support org nudges (Gingerbread, Contact, Adoption UK, MyBaba)
 //   8. NEW V3: Digital safety nudges (Parent Zone, BBC Bitesize)
 //   9. NEW V3: Emotional intelligence content (Parent Talk Podcast)
+//  10. NEW V3: Mental health signposting (Selmind directory, Coram Family Lives)
 // =============================================================================
 
 enum NudgeType {
@@ -46,6 +47,10 @@ enum NudgeType {
   digitalSafetyTip,     // V3: Parent Zone / BBC Bitesize content
   charityEvent,         // V3: UK-wide charity events
   emotionalIntelligence, // V3: Parent Talk Podcast content
+  ecoParenting,         // V4: Green Parent / Berkshire Mummies eco tips
+  schoolReadiness,      // V4: Parentkind National Parent Survey insights
+  siblingSupport,       // V4: Sibs.org.uk sibling support content
+  separationSupport,    // V4: OnlyMums & Dads / HappySteps content
 }
 
 class NudgeCard {
@@ -467,6 +472,22 @@ class AiFeedService with BoroughAiContext {
 
     // 17. UK-wide charity event nudge
     _generateCharityEventNudge();
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // V4: ENRICHED NUDGES from 50+ sources
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // 18. Eco-parenting nudge (Green Parent)
+    _generateEcoParentingNudge();
+
+    // 19. School-readiness nudge (Parentkind)
+    _generateSchoolReadinessNudge();
+
+    // 20. Sibling support nudge (Sibs)
+    _generateSiblingSupportNudge();
+
+    // 21. Separation/co-parenting support nudge
+    _generateSeparationSupportNudge();
   }
 
   // ── Step 7: Knowledge Base Nudge Generators ────────────────────────────
@@ -746,6 +767,96 @@ class AiFeedService with BoroughAiContext {
       actionRoute: '/events',
       relevanceScore: 0.58,
       meta: {'source': event['source']!},
+    ));
+  }
+
+  // ── V4: Enriched Nudge Generators ─────────────────────────────────────
+
+  /// Eco-parenting nudge (Green Parent, Berkshire Mummies).
+  void _generateEcoParentingNudge() {
+    final ecoArticles =
+        _knowledgeBase.getArticlesByCategory(KnowledgeCategory.ecoParenting);
+    if (ecoArticles.isEmpty) return;
+
+    final article = ecoArticles[Random().nextInt(ecoArticles.length)];
+    _nudges.add(NudgeCard(
+      id: 'nudge_eco_v4_${article.id}',
+      type: NudgeType.ecoParenting,
+      title: article.title,
+      subtitle: '${article.summary} '
+          '(Source: ${_knowledgeBase.getSourceDisplayName(article.source)})',
+      emoji: '\u{1F33F}',
+      actionLabel: 'Read',
+      relevanceScore: 0.56,
+      meta: {'articleId': article.id, 'source': article.source},
+    ));
+  }
+
+  /// School-readiness nudge (Parentkind National Parent Survey 2025).
+  /// Shown when a child is approaching school age (3-5 years).
+  void _generateSchoolReadinessNudge() {
+    final children = _onboarding.children;
+    bool hasPreschooler = false;
+    for (final child in children) {
+      final birthday = child['birthday'];
+      if (birthday != null) {
+        final months = _parseAgeMonthsFromBirthday(birthday);
+        if (months != null && months >= 36 && months <= 60) {
+          hasPreschooler = true;
+        }
+      }
+    }
+    if (!hasPreschooler) return;
+
+    final borough = _getUserBorough();
+    _nudges.add(NudgeCard(
+      id: 'nudge_school_ready_v4',
+      type: NudgeType.schoolReadiness,
+      title: 'Is your child school-ready?',
+      subtitle: 'Parentkind\'s National Parent Survey (5,866 parents, 134k+ insights) '
+          'reveals what matters most. Get tips from $borough parents too.',
+      emoji: '\u{1F3EB}',
+      actionLabel: 'Explore',
+      relevanceScore: 0.72,
+      meta: {'source': 'Parentkind National Parent Survey 2025'},
+    ));
+  }
+
+  /// Sibling support nudge (Sibs.org.uk).
+  /// Shown when user has multiple children or a child with SEN.
+  void _generateSiblingSupportNudge() {
+    if (_onboarding.children.length < 2) return;
+
+    _nudges.add(NudgeCard(
+      id: 'nudge_sibling_v4',
+      type: NudgeType.siblingSupport,
+      title: 'Supporting your children as siblings',
+      subtitle: 'Sibs offers guidance for families with brothers and sisters \u2014 '
+          'including when one child has additional needs or a disability.',
+      emoji: '\u{1F46B}',
+      actionLabel: 'Learn More',
+      relevanceScore: 0.54,
+      meta: {'source': 'Sibs'},
+    ));
+  }
+
+  /// Separation/co-parenting support nudge (OnlyMums & Dads, HappySteps).
+  void _generateSeparationSupportNudge() {
+    final sepArticles = _knowledgeBase
+        .getArticlesByCategory(KnowledgeCategory.separationCoParenting);
+    if (sepArticles.isEmpty) return;
+
+    final article = sepArticles[Random().nextInt(sepArticles.length)];
+    _nudges.add(NudgeCard(
+      id: 'nudge_separation_v4_${article.id}',
+      type: NudgeType.separationSupport,
+      title: article.title,
+      subtitle: '${article.summary} '
+          '(Source: ${_knowledgeBase.getSourceDisplayName(article.source)})',
+      emoji: '\u{1F91D}',
+      actionLabel: 'Read',
+      relevanceScore: 0.52,
+      meta: {'articleId': article.id, 'source': article.source},
     ));
   }
 

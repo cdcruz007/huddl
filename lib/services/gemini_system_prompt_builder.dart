@@ -5,14 +5,15 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
 // =============================================================================
-// GEMINI SYSTEM PROMPT BUILDER  — ENRICHED V3, HYPERLOCAL EDITION
+// GEMINI SYSTEM PROMPT BUILDER  — ENRICHED V4, HYPERLOCAL EDITION
 //
 // The single orchestrator that assembles Gemini system prompts for EVERY
 // AI service in Huddl.  It pulls together:
 //   - Step 1: AiKnowledgeBaseService  (articles, milestones, community templates,
 //             borough directories, hyperlocal rules, safety guardrails)
-//             NOW with 40+ sources including Gingerbread, Parent Zone, Contact,
-//             Adoption UK, Coram Family Lives, DaddiLife, and more
+//             NOW with 50+ sources including Gingerbread, Parent Zone, Contact,
+//             Adoption UK, Coram Family Lives, DaddiLife, MyBaba, Selmind,
+//             Parentkind National Parent Survey 2025, Family Lives, and more
 //   - Step 2: AiLearningEngineService (user signals, borough engagement stats,
 //             global event preferences, topic affinities, maturity level)
 //   - OnboardingDataService           (name, parent type, postcode, children,
@@ -1069,14 +1070,17 @@ class GeminiSystemPromptBuilder {
         '- **Events**: Browse family events across the WHOLE UK (the only cross-borough feature)');
     buf.writeln(
         '  \u2192 Includes: NCT sales, Adoption UK walks, CoramBAAF conferences, '
-        'Family Fund events, Gingerbread comedy shows, Care for the Family tours');
+        'Family Fund face-to-face support events, Gingerbread comedy shows, '
+        'Care for the Family tours, Parentkind webinars, Sibs sibling workshops, '
+        'Home for Good fostering evenings');
     buf.writeln(
         '  \u2192 Parents travelling can see events at their destination');
     buf.writeln(
-        '- **Tutorials**: Parenting resources from 40+ trusted UK sources');
+        '- **Tutorials**: Parenting resources from 50+ trusted UK sources');
     buf.writeln(
         '  \u2192 Includes: NHS, NCT, Coram Family Lives courses, BBC Bitesize, '
-        'Parent Talk Podcast, DaddiLife, Parentkind webinars');
+        'Parent Talk Podcast, DaddiLife, Parentkind (National Parent Survey 2025), '
+        'MyBaba, Selmind, Green Parent, Barnardo\'s, Family Lives, HappySteps');
     buf.writeln();
     return buf.toString();
   }

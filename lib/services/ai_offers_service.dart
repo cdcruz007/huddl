@@ -11,19 +11,23 @@ import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
 // =====================================================================================
-// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — ENRICHED V3 (Steps 5,10)
+// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — ENRICHED V4 (Steps 5,10)
 // =====================================================================================
 //
-// UPGRADES from v2:
+// UPGRADES from v3:
 //   1. Learning engine records offer interactions for personalisation loop
 //   2. Knowledge base seasonal tips inform seasonal spotlight generation
 //   3. Stage-aware deal scoring uses precise child ages (not just keywords)
 //   4. Safety recall awareness: flags recalled products in deal recommendations
 //   5. Maturity-aware deal curation: cold-start gets popular picks,
 //      mature gets learning-engine-personalised recommendations
-//   6. NEW V3: Charity-partner awareness (Gingerbread, Contact, Family Fund)
-//   7. NEW V3: Eco-product suggestions from Green Parent insights
-//   8. NEW V3: Mamas & Papas product deals and Buying for Baby appointments
+//   6. V3: Charity-partner awareness (Gingerbread, Contact, Family Fund)
+//   7. V3: Eco-product suggestions from Green Parent insights
+//   8. V3: Mamas & Papas product deals and Buying for Baby appointments
+//   9. V3: MyBaba curated family lifestyle products and travel deals
+//  10. NEW V4: Parentkind school-uniform and back-to-school deal awareness
+//  11. NEW V4: Family Lives free parenting course signposting
+//  12. NEW V4: Sibs-recommended activity and support-product awareness
 // =====================================================================================
 
 /// A single AI-scored deal recommendation
