@@ -7,9 +7,17 @@ import 'postcode_service.dart';
 import 'ai_knowledge_base_service.dart';
 
 // =============================================================================
-// AI LEARNING ENGINE SERVICE  — HYPERLOCAL EDITION
+// AI LEARNING ENGINE SERVICE  — ENRICHED V3
 //
 // Centralised user-behaviour learning system for Huddl.
+//
+// V3 enrichment: Now tracks family-structure-specific engagement:
+//   - Single parent group/content interactions (Gingerbread)
+//   - SEN/disability content engagement (Contact, Family Fund, Sibs)
+//   - Digital safety content engagement (Parent Zone)
+//   - Adoption/fostering content engagement (Adoption UK, CoramBAAF)
+//   - Emotional intelligence content engagement (Parent Talk Podcast)
+//   - Blended family content engagement (HappySteps)
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
 // │ HYPERLOCAL ARCHITECTURE — BOROUGH IS THE PRIMARY PARTITION KEY          │
@@ -76,6 +84,7 @@ enum SignalSource {
   knowledgeBase,
   offers,
   matchmaker,
+  supportOrg, // V3: Interactions with charity/support org content
 }
 
 /// Whether a signal source is borough-scoped or UK-wide.
@@ -94,6 +103,7 @@ bool isSignalBoroughScoped(SignalSource source) {
     case SignalSource.knowledgeBase:
     case SignalSource.offers:
     case SignalSource.matchmaker:
+    case SignalSource.supportOrg:
       return true; // Everything else is borough-scoped
   }
 }
@@ -1536,6 +1546,7 @@ class AiLearningEngineService {
         break;
       case SignalSource.profile:
       case SignalSource.offers:
+      case SignalSource.supportOrg:
         break; // no specific format mapping
     }
   }
