@@ -7,7 +7,7 @@ import 'postcode_service.dart';
 // =============================================================================
 // AI PARENTING KNOWLEDGE BASE SERVICE  — ENRICHED HYPERLOCAL EDITION v3
 //
-// Centralised, structured parenting knowledge sourced from 25+ trusted UK sites:
+// Centralised, structured parenting knowledge sourced from 40+ trusted UK sites:
 //
 //  TIER 1 — CLINICAL / AUTHORITATIVE
 //   - NHS (nhs.uk)                — Clinical guidelines, vaccinations, safety
@@ -1750,7 +1750,8 @@ class AiKnowledgeBaseService {
             'If your child has a disability, special educational need, or long-term condition, '
             'there is significant UK-wide support: '
             '1) Contact (contact.org.uk) \u2014 advice, community, and advocacy. 381,000 parent carers '
-            'helped annually. 97% would recommend. Covers education, benefits, local services. '
+            'helped annually; 14,735 families directly reached through programmes; 95% felt satisfied '
+            'with their service. 97% would recommend. Covers education, benefits, local services. '
             '2) Family Fund (familyfund.org.uk) \u2014 grants for essentials, face-to-face events '
             'in cities across the UK. "Cost of Caring" research surveyed 2,000+ families. '
             '3) Sibs (sibs.org.uk) \u2014 support specifically for siblings. A child like Amelia, 5, '
@@ -1792,6 +1793,7 @@ class AiKnowledgeBaseService {
         tags: ['adoption', 'fostering', 'kinship', 'care', 'Home for Good', 'CoramBAAF'],
         source: 'adoptionuk',
         sourceUrl: 'https://www.adoptionuk.org/',
+        // Also: Home for Good → https://www.homeforgood.org.uk/
         ageStages: ['all'],
         relevanceWeight: 0.82,
         lastUpdated: now,
@@ -2143,6 +2145,231 @@ class AiKnowledgeBaseService {
         sourceUrl: 'https://www.daddilife.com/',
         ageStages: ['preschool', 'schoolAge', 'teens'],
         relevanceWeight: 0.72,
+        lastUpdated: now,
+      ),
+
+      // ─── NCT FIRST 1,000 DAYS (nct.org.uk) ─────────────────────────────
+      KnowledgeArticle(
+        id: 'nct_002',
+        title: 'NCT First 1,000 Days \u2014 critical early development',
+        summary:
+            'The first 1,000 days (conception to age 2) are the most critical window for brain '
+            'development, attachment, and lifelong health outcomes.',
+        body:
+            'NCT\u2019s First 1,000 Days programme (nct.org.uk/first-1000-days) highlights: '
+            '1) 80% of brain development occurs in the first 1,000 days of life. '
+            '2) Secure attachment in this period predicts emotional resilience for life. '
+            '3) Nutrition: breast milk or formula \u2192 weaning at 6 months \u2192 family food by 12 months. '
+            '4) Language: babies exposed to rich talk and reading develop 30% larger vocabularies by age 3. '
+            '5) NCT offers antenatal courses, postnatal groups, Baby Caf\u00E9, and Walk & Talk \u2014 '
+            'all designed to support parents during this critical period. '
+            '6) NHS Start for Life reinforces: skin-to-skin, responsive feeding, and tummy time '
+            'are the foundation blocks. '
+            'On Huddl, your borough\u2019s Bumps & Babies and Walk & Talk groups provide peer support '
+            'throughout the first 1,000 days.',
+        category: KnowledgeCategory.development,
+        tags: ['first 1000 days', 'brain development', 'attachment', 'NCT', 'early years'],
+        source: 'nct',
+        sourceUrl: 'https://www.nct.org.uk/first-1000-days',
+        ageStages: ['pregnancy', 'newborn', 'baby'],
+        relevanceWeight: 0.95,
+        lastUpdated: now,
+      ),
+
+      // ─── HOME FOR GOOD \u2014 FOSTERING & ADOPTION (homeforgood.org.uk) ──────
+      KnowledgeArticle(
+        id: 'af_002',
+        title: 'Home for Good \u2014 every child deserves a loving home',
+        summary:
+            'Home for Good coordinates a national movement ensuring every child who needs '
+            'a family finds one. Works with churches, individuals, and local authorities.',
+        body:
+            'Home for Good (homeforgood.org.uk) is a UK charity dedicated to finding loving '
+            'homes for children in the care system: '
+            '1) National network of foster carers, adopters, and supported lodgings hosts. '
+            '2) Advocacy for children in care \u2014 every 15 minutes a child enters care in the UK. '
+            '3) Church mobilisation \u2014 helps congregations become fostering-friendly communities. '
+            '4) Resources for prospective foster carers and adopters at every stage of the journey. '
+            '5) Regional events and information sessions across England, Scotland, Wales, and NI. '
+            '6) Partnership with First4Adoption (first4adoption.org.uk) for initial guidance. '
+            'Key: Many children in care have experienced trauma. Therapeutic parenting training '
+            'from Adoption UK and CoramBAAF helps families understand and respond to challenging behaviour. '
+            'On Huddl, our Adoptive & Foster Families groups in your borough connect you '
+            'with families who understand the unique rewards and challenges.',
+        category: KnowledgeCategory.adoptionFostering,
+        tags: ['fostering', 'adoption', 'Home for Good', 'care system', 'church', 'kinship'],
+        source: 'homeforgood',
+        sourceUrl: 'https://www.homeforgood.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.83,
+        lastUpdated: now,
+      ),
+
+      // ─── DAD.INFO \u2014 DEDICATED FATHERHOOD RESOURCE ─────────────────────
+      KnowledgeArticle(
+        id: 'dad_004',
+        title: 'Dad.info \u2014 practical support for fathers',
+        summary:
+            'Dad.info provides practical guidance, emotional support, and a community for fathers '
+            'navigating all stages of parenting.',
+        body:
+            'Dad.info (dad.info) is a dedicated UK fatherhood resource: '
+            '1) Mental health support \u2014 1 in 10 new fathers experience postnatal depression; '
+            'Dad.info provides guidance on recognising symptoms and seeking help. '
+            '2) Practical fatherhood \u2014 step-by-step guides on nappy changing, bottle feeding, '
+            'bath time, and night routines from a dad\u2019s perspective. '
+            '3) Relationships \u2014 maintaining a strong partnership after baby arrives, co-parenting '
+            'after separation, and managing blended family dynamics. '
+            '4) Legal rights \u2014 paternity leave (1\u20132 weeks at \u00A3184.03/week), shared parental leave, '
+            'and flexible working requests. '
+            '5) Community \u2014 forums where dads share experiences without judgement. '
+            'Care for the Family\u2019s "The Dad Cave" podcast complements with real-dad stories. '
+            'On Huddl, borough-specific Dad & Kids Saturday Club and Dad Brunch Club meetups '
+            'connect fathers locally.',
+        category: KnowledgeCategory.dadSpecific,
+        tags: ['dad.info', 'fatherhood', 'mental health', 'paternity', 'dad support'],
+        source: 'dadinfo',
+        sourceUrl: 'https://www.dad.info/',
+        ageStages: ['all', 'dad'],
+        relevanceWeight: 0.84,
+        lastUpdated: now,
+      ),
+
+      // ─── BBC BITESIZE PARENTS \u2014 EDUCATION & TEEN SUPPORT ────────────────
+      KnowledgeArticle(
+        id: 'edu_003',
+        title: 'BBC Bitesize Parents \u2014 supporting learning at every stage',
+        summary:
+            'BBC Bitesize Parents provides curriculum-aligned resources, teen parenting guides, '
+            'and online safety advice trusted by millions of UK families.',
+        body:
+            'BBC Bitesize Parents (bbc.co.uk/bitesize/parents) offers: '
+            '1) Curriculum-aligned learning \u2014 maths, English, science activities for KS1\u2013KS4. '
+            '2) "Parenting Teens" podcast \u2014 expert guidance on education, digital life, and wellbeing. '
+            '3) Online safety advice \u2014 age-appropriate conversations about social media, gaming, '
+            'and screen time. Complemented by Parent Zone\u2019s digital safety resources. '
+            '4) Exam support \u2014 revision guides, mental health during exams, and managing expectations. '
+            '5) SEN/SEND support \u2014 resources for parents of children with additional needs, '
+            'supporting learning differences at home. '
+            '6) Film and video content making complex topics accessible for parents. '
+            'Key fact: children who receive parental support with homework show measurably '
+            'better academic outcomes (Parentkind National Parent Survey 2025, 5,866 parents).',
+        category: KnowledgeCategory.education,
+        tags: ['BBC Bitesize', 'education', 'curriculum', 'teens', 'online safety', 'exams'],
+        source: 'bbcbitesize',
+        sourceUrl: 'https://www.bbc.co.uk/bitesize/parents',
+        ageStages: ['schoolAge', 'teens'],
+        relevanceWeight: 0.88,
+        lastUpdated: now,
+      ),
+
+      // ─── BARNARDO\u2019S \u2014 CHILD SAFETY & WELLBEING ─────────────────────────
+      KnowledgeArticle(
+        id: 'safe_003',
+        title: 'Barnardo\u2019s \u2014 protecting children, supporting families',
+        summary:
+            'Barnardo\u2019s is the UK\u2019s largest children\u2019s charity, providing child safety advice, '
+            'emotional wellbeing resources, and local family services.',
+        body:
+            'Barnardo\u2019s (barnardos.org.uk) supports children and families across the UK: '
+            '1) Child safety \u2014 accident prevention guides for every room in the home. '
+            '2) Emotional wellbeing \u2014 helping children manage anxiety, anger, and transitions. '
+            '3) Anti-bullying \u2014 resources for parents dealing with bullying and cyberbullying. '
+            '4) Young carers \u2014 support for children caring for family members. '
+            '5) Child sexual exploitation (CSE) awareness \u2014 signs to look for and how to report. '
+            '6) Local services \u2014 children\u2019s centres, family hubs, and youth programmes in many boroughs. '
+            'Key stat: Barnardo\u2019s reaches over 300,000 children, young people, and families annually. '
+            'On Huddl, safety tips from Barnardo\u2019s inform our AI safety guardrails and product '
+            'recall checking in the marketplace.',
+        category: KnowledgeCategory.safety,
+        tags: ['barnardos', 'child safety', 'wellbeing', 'bullying', 'young carers'],
+        source: 'barnardos',
+        sourceUrl: 'https://www.barnardos.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.88,
+        lastUpdated: now,
+      ),
+
+      // ─── CARE FOR THE FAMILY \u2014 FAMILY SUPPORT ─────────────────────────
+      KnowledgeArticle(
+        id: 'pw_002',
+        title: 'Care for the Family \u2014 strengthening family life',
+        summary:
+            'Since 2021 Care for the Family has helped 3,881 families with UK-wide events, '
+            'podcasts (The Dad Cave, Parentalk), and bereavement support.',
+        body:
+            'Care for the Family (careforthefamily.org.uk) is a UK charity focused on '
+            'strengthening family life: '
+            '1) Tour events: "Tweens and Teens" live events, "The Mum Show", and couple support evenings. '
+            '2) Podcasts: The Dad Cave (for fathers), Parentalk (general), Family Life, Raising Teens. '
+            '3) Bereavement support \u2014 for families who have lost a child or partner. '
+            '4) Single parent support \u2014 alongside Gingerbread, provides networks and events. '
+            '5) Couple support \u2014 date night ideas, communication tools, and relationship courses. '
+            '6) "Left to Their Own Devices?" \u2014 events on managing children\u2019s screen time. '
+            'Since 2021: 3,881 families supported, \u00A355,608 spent on UK-wide family support. '
+            'On Huddl, Care for the Family tour events appear in our UK-wide events calendar.',
+        category: KnowledgeCategory.parentalWellbeing,
+        tags: ['Care for the Family', 'bereavement', 'couple support', 'tour events', 'podcasts'],
+        source: 'careforthefamily',
+        sourceUrl: 'https://www.careforthefamily.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.82,
+        lastUpdated: now,
+      ),
+
+      // ─── SLUMMY SINGLE MUMMY \u2014 SINGLE PARENT VOICE ───────────────────
+      KnowledgeArticle(
+        id: 'sp_002',
+        title: 'Slummy Single Mummy \u2014 real talk for single parents',
+        summary:
+            'Jo Middleton\u2019s Slummy Single Mummy blog offers financial tips, rainy day activities, '
+            'and honest perspectives on solo parenting.',
+        body:
+            'Slummy Single Mummy (slummysinglemummy.com) provides: '
+            '1) Finance \u2014 "How to cope with Christmas on a budget" and money-saving hacks '
+            'for single-income households. '
+            '2) Activities \u2014 "The Ultimate Guide to Rainy Day Activities" and '
+            '"Low-Effort Garden Wins for Busy Parents" for time-poor families. '
+            '3) Wellbeing \u2014 "The Audacity of Being Awake at 3am" on perimenopause and '
+            'parenting exhaustion. '
+            '4) Real talk \u2014 honest, witty perspectives on dating as a single parent, '
+            'co-parenting challenges, and self-care without guilt. '
+            'Gingerbread (gingerbread.org.uk) complements with policy advocacy, reaching '
+            '\u007E800,000 single parents annually with advice, volunteer support groups, and campaigns. '
+            'On Huddl, Single Parents Connect groups in your borough offer local solidarity.',
+        category: KnowledgeCategory.singleParent,
+        tags: ['single parent', 'Slummy Single Mummy', 'budget', 'activities', 'real talk'],
+        source: 'slummysinglemummy',
+        sourceUrl: 'https://www.slummysinglemummy.com/',
+        ageStages: ['all'],
+        relevanceWeight: 0.78,
+        lastUpdated: now,
+      ),
+
+      // ─── MAMAS & PAPAS \u2014 PRODUCT GUIDANCE ─────────────────────────────
+      KnowledgeArticle(
+        id: 'market_002',
+        title: 'Mamas & Papas \u2014 Buying for Baby guidance',
+        summary:
+            'Free "Buying for Baby" appointments with up to 40% savings. Expert car seat fittings '
+            'and new parent support from the UK\u2019s leading baby retailer.',
+        body:
+            'Mamas & Papas (mamasandpapas.com) offers: '
+            '1) Free "Buying for Baby" appointment \u2014 personal shopping with up to 40% off. '
+            '2) Car seat appointments \u2014 expert fitting to ensure safety compliance. '
+            '3) Nursery planning \u2014 room layouts, essential lists, and budget guidance. '
+            '4) New parent support \u2014 step-by-step guides from pregnancy through first year. '
+            '5) Mamas & Papas app (iOS/Android) with product reviews and wishlists. '
+            '6) Trade-in scheme \u2014 bring in old pushchairs for money off new ones. '
+            'Key marketplace advice: always check product recalls before buying second-hand. '
+            'On Huddl, our AI marketplace checks every listed item against known safety recalls '
+            'and suggests fair pricing based on your borough\u2019s local market.',
+        category: KnowledgeCategory.marketplace,
+        tags: ['Mamas & Papas', 'baby products', 'car seats', 'nursery', 'shopping'],
+        source: 'mamasandpapas',
+        sourceUrl: 'https://www.mamasandpapas.com/',
+        ageStages: ['pregnancy', 'newborn', 'baby'],
+        relevanceWeight: 0.80,
         lastUpdated: now,
       ),
     ]);
