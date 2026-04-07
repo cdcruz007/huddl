@@ -638,7 +638,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.event_outlined,
                       title: 'My Meetups',
-                      iconColor: HuddlColors.accentAmber,
                       trailing: _CountBadge(count: _userEvents.length + _userMeetups.length),
                       onTap: _showMyEventsSheet,
                     ),
@@ -651,7 +650,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.bookmark_border,
                       title: 'Saved',
-                      iconColor: HuddlColors.accentAmber,
                       onTap: _showSavedSheet,
                     ),
                   ],
@@ -681,7 +679,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.feedback_outlined,
                       title: 'Feedback & Rating',
                       subtitle: 'Tell us what you think',
-                      iconColor: HuddlColors.accentAmber,
                       onTap: _openFeedbackScreen,
                     ),
                     _MenuItem(
@@ -693,7 +690,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.school_outlined,
                       title: 'Run Tutorial',
                       subtitle: 'Walk through the app again',
-                      iconColor: const Color(0xFF7C4DFF),
                       onTap: _rerunTutorial,
                     ),
                     _MenuItem(
@@ -4627,7 +4623,6 @@ class _MenuItem extends StatelessWidget {
   final String? subtitle;
   final Widget? trailing;
   final VoidCallback onTap;
-  final Color? iconColor;
 
   const _MenuItem({
     required this.icon,
@@ -4635,7 +4630,6 @@ class _MenuItem extends StatelessWidget {
     this.subtitle,
     this.trailing,
     required this.onTap,
-    this.iconColor,
   });
 
   @override
@@ -4648,7 +4642,7 @@ class _MenuItem extends StatelessWidget {
         decoration: BoxDecoration(
             color: context.hc.scaffold,
             borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, size: 20, color: iconColor ?? context.hc.textPrimary),
+        child: Icon(icon, size: 20, color: context.hc.textPrimary),
       ),
       title: Text(title,
           style: GoogleFonts.poppins(
