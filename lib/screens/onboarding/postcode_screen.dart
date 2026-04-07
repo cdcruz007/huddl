@@ -96,7 +96,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           _canContinue
-                              ? '✓ Valid UK postcode'
+                              ? '✓ ${PostcodeService().getBoroughFromPostcode(_ctrl.text.trim().toUpperCase()) ?? 'Valid UK postcode'}'
                               : 'Enter a complete UK postcode (e.g. CB3 9DF)',
                           style: TextStyle(
                             fontSize: 12,
