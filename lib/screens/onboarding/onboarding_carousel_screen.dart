@@ -232,10 +232,24 @@ class _HuddlIconOnly extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final logo = Image.asset(
       'assets/images/logo_huddl_splash.png',
       height: 34,
       fit: BoxFit.contain,
+    );
+
+    if (!isDark) return logo;
+
+    // Brighten the dark-grey wordmark for dark-mode contrast
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(<double>[
+        2.0, 0, 0, 0, 60,
+        0, 2.0, 0, 0, 60,
+        0, 0, 2.0, 0, 60,
+        0, 0, 0, 1.0, 0,
+      ]),
+      child: logo,
     );
   }
 }
