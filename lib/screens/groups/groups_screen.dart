@@ -26,6 +26,7 @@ import '../../services/discover_ai_service.dart';
 import '../events/events_screen.dart' show ImGoingTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
+import '../../utils/borough_ui_helpers.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
@@ -3162,6 +3163,21 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
 
     final group = _allDiscoverGroups.firstWhere((g) => g.id == groupId);
+
+    // Borough gate: block cross-borough group joins with user feedback
+    if (!BoroughUiHelpers.canAct(
+      feature: HuddlFeature.groups,
+      targetBorough: group.creatorBorough,
+    )) {
+      if (mounted) {
+        BoroughUiHelpers.showBlockedSnackBar(
+          context,
+          featureLabel: 'Groups',
+          targetBorough: group.creatorBorough,
+        );
+      }
+      return;
+    }
 
     // Get user name
     final userName = _onboardingService.name ?? 'You';
