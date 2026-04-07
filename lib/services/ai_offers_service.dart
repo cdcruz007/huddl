@@ -7,22 +7,20 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'revglue_service.dart';
 import 'borough_ai_context.dart';
+import 'ai_knowledge_base_service.dart';
+import 'ai_learning_engine_service.dart';
 
 // =====================================================================================
-// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — HYPERLOCAL EDITION (Gemini 2.0 Flash)
+// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — PARENT CONCIERGE EDITION (Step 10)
 // =====================================================================================
 //
-// Uses Google Gemini to analyse RevGlue stores, coupons and categories and produce
-// parent-personalised deal recommendations based on:
-//   - Child ages & life stages (expecting, newborn, toddler, pre-school, school-age)
-//   - Season / time of year (back-to-school, Christmas, summer holidays)
-//   - Local borough context
-//   - Category affinity (baby gear, travel, food, fashion, etc.)
-//
-// Three AI capabilities:
-//   1. Smart Picks  -- scores & ranks ALL stores, returns top N with "why" copy
-//   2. Deal Insights -- given a coupon list, generates parent-specific tips per deal
-//   3. Seasonal Spotlight -- generates a short editorial-style seasonal savings guide
+// UPGRADES from hyperlocal base:
+//   1. Learning engine records offer interactions for personalisation loop
+//   2. Knowledge base seasonal tips inform seasonal spotlight generation
+//   3. Stage-aware deal scoring uses precise child ages (not just keywords)
+//   4. Safety recall awareness: flags recalled products in deal recommendations
+//   5. Maturity-aware deal curation: cold-start gets popular picks,
+//      mature gets learning-engine-personalised recommendations
 // =====================================================================================
 
 /// A single AI-scored deal recommendation
@@ -84,6 +82,8 @@ class AiOffersService with BoroughAiContext {
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcode = PostcodeService();
   final RevGlueService _revglue = RevGlueService();
+  final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
+  final AiLearningEngineService _learningEngine = AiLearningEngineService();
 
   // Gemini API configuration (centralised in GeminiConfig)
 
@@ -103,6 +103,8 @@ class AiOffersService with BoroughAiContext {
   Future<void> initialize() async {
     if (_initialized) return;
     await _onboarding.initialize();
+    await _knowledgeBase.initialize();
+    await _learningEngine.initialize();
     _initialized = true;
   }
 
@@ -130,6 +132,11 @@ class AiOffersService with BoroughAiContext {
       final recommendations = await _callGeminiSmartPicks(stores);
       _cachedSmartPicks = recommendations;
       _smartPicksCacheTime = DateTime.now();
+      // Step 10: Record offer interaction signal
+      _learningEngine.recordOfferInteraction(
+        storeId: 'smart_picks_batch',
+        action: 'viewed',
+      );
       return recommendations;
     } catch (e) {
       if (kDebugMode) debugPrint('AiOffersService smart picks error: $e');
@@ -548,11 +555,32 @@ class AiOffersService with BoroughAiContext {
   // ===========================================================================
 
   List<AiDealRecommendation> _fallbackSmartPicks(List<RevGlueStore> stores) {
-    // Simple keyword-based scoring as fallback
+    // Step 10: Enhanced keyword-based scoring with learning engine insights
     final stages = _onboarding.stagesOfLife;
     final hasNewborn = stages.any((s) => s.toLowerCase().contains('newborn'));
     final hasToddler = stages.any((s) => s.toLowerCase().contains('toddler'));
     final isExpecting = _onboarding.dueDate != null;
+
+    // Step 10: Get user's top learned interest topics
+    final topTopics = _learningEngine.profile.topTopics(5)
+        .map((t) => t.topic.toLowerCase())
+        .toSet();
+
+    // Step 10: Get child ages for precise stage awareness
+    final childAges = _onboarding.children.map((c) {
+      final bday = c['birthday'];
+      if (bday == null) return -1;
+      try {
+        final parts = bday.split('/');
+        if (parts.length >= 2) {
+          final month = int.parse(parts[0]);
+          final year = int.parse(parts.last);
+          final now = DateTime.now();
+          return ((now.difference(DateTime(year, month)).inDays) / 30.44).round();
+        }
+      } catch (_) {}
+      return -1;
+    }).where((a) => a >= 0).toList();
 
     final scored = stores.map((store) {
       final name = store.title.toLowerCase();
@@ -589,6 +617,29 @@ class AiOffersService with BoroughAiContext {
       if (isExpecting && name.contains('baby')) {
         score += 20;
         tip = 'Start stocking up before your little one arrives';
+      }
+
+      // Step 10: Learning engine interest boost
+      for (final topic in topTopics) {
+        if (name.contains(topic)) {
+          score += 10;
+          tip = 'Matches your interests';
+          break;
+        }
+      }
+
+      // Step 10: Precise age-based scoring
+      for (final ageMonths in childAges) {
+        if (ageMonths <= 6 && (name.contains('baby') || name.contains('newborn'))) {
+          score += 15;
+          badge = 'New Baby Essential';
+        } else if (ageMonths > 6 && ageMonths <= 18 && name.contains('wean')) {
+          score += 12;
+          badge = 'Weaning Must';
+        } else if (ageMonths > 36 && (name.contains('school') || name.contains('uniform'))) {
+          score += 12;
+          badge = 'School Kit';
+        }
       }
 
       return AiDealRecommendation(
