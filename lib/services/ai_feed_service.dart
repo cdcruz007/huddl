@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
 
+import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'meetup_service.dart';
@@ -11,7 +12,7 @@ import 'default_group_service.dart';
 import 'community_feed_service.dart';
 
 // =============================================================================
-// AI SMART FEED CURATION & NUDGE ENGINE
+// AI SMART FEED CURATION & NUDGE ENGINE  — HYPERLOCAL EDITION
 // Uses Gemini AI to generate personalised, context-aware nudge cards
 // and intelligently rank community feed items
 // =============================================================================
@@ -387,34 +388,35 @@ class AiFeedService {
       }
     }
 
-    final systemPrompt = '''You are a notification copywriter for huddl, a UK parents' community app. Generate short, warm, personalised nudge card text.
-
-RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
-{
-  "meetup_title": "Short compelling title about a nearby meetup (max 40 chars)",
-  "meetup_subtitle": "Brief context about the meetup (max 80 chars)",
-  "reengage_title": "Warm re-engagement message using their name (max 40 chars)",
-  "reengage_subtitle": "What they missed (max 80 chars)",
-  "group_title": "Encouraging title to join a group (max 40 chars)",
-  "group_subtitle": "Benefit of joining groups (max 80 chars)",
-  "weather_rainy_title": "Rainy day activity suggestion (max 40 chars)",
-  "weather_rainy_subtitle": "Indoor plan suggestion (max 80 chars)",
-  "weather_sunny_title": "Sunny day activity suggestion (max 40 chars)",
-  "weather_sunny_subtitle": "Outdoor plan suggestion (max 80 chars)",
-  "weekly_title": "Weekly digest title (max 40 chars)",
-  "weekly_subtitle": "Summary of the week (max 80 chars)",
-  "expecting_title": "Message for expecting parents (max 40 chars)",
-  "expecting_subtitle": "Encouragement to connect (max 80 chars)",
-  "trending_title": "Trending marketplace item (max 40 chars)",
-  "trending_subtitle": "Item appeal text (max 80 chars)"
-}
-
-RULES:
-- British English
-- Warm, friendly tone
-- Personalise using the user's name ($userName) and borough ($borough)
-- Keep text short \u2014 these are mobile notification-style cards
-- Make each one feel unique and engaging''';
+    final basePrompt = GeminiSystemPromptBuilder().buildFeedNudgePrompt(
+      nudgeType: 'batch_generation',
+      feedContext:
+          'User: $userName in $borough. Stages: ${stages.join(", ")}. Children: ${childInfo.isNotEmpty ? childInfo.toString() : "none specified"}',
+    );
+    final systemPrompt = '$basePrompt\n'
+        'RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):\n'
+        '{\n'
+        '  "meetup_title": "Short compelling title about a nearby meetup (max 40 chars)",\n'
+        '  "meetup_subtitle": "Brief context about the meetup (max 80 chars)",\n'
+        '  "reengage_title": "Warm re-engagement message using their name (max 40 chars)",\n'
+        '  "reengage_subtitle": "What they missed (max 80 chars)",\n'
+        '  "group_title": "Encouraging title to join a group (max 40 chars)",\n'
+        '  "group_subtitle": "Benefit of joining groups (max 80 chars)",\n'
+        '  "weather_rainy_title": "Rainy day activity suggestion (max 40 chars)",\n'
+        '  "weather_rainy_subtitle": "Indoor plan suggestion (max 80 chars)",\n'
+        '  "weather_sunny_title": "Sunny day activity suggestion (max 40 chars)",\n'
+        '  "weather_sunny_subtitle": "Outdoor plan suggestion (max 80 chars)",\n'
+        '  "weekly_title": "Weekly digest title (max 40 chars)",\n'
+        '  "weekly_subtitle": "Summary of the week (max 80 chars)",\n'
+        '  "expecting_title": "Message for expecting parents (max 40 chars)",\n'
+        '  "expecting_subtitle": "Encouragement to connect (max 80 chars)",\n'
+        '  "trending_title": "Trending marketplace item (max 40 chars)",\n'
+        '  "trending_subtitle": "Item appeal text (max 80 chars)"\n'
+        '}\n\n'
+        'ADDITIONAL RULES:\n'
+        '- Make each one feel unique and engaging\n'
+        '- For borough-scoped features: frame within $borough\n'
+        '- For events: can reference other boroughs if about travel';
 
     final requestBody = {
       'system_instruction': {

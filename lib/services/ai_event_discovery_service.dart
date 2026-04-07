@@ -6,12 +6,13 @@ import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
 import '../theme/huddl_colors.dart';
 import 'event_service.dart';
+import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'browser_storage.dart';
 
 // =============================================================================
-// AI EVENT DISCOVERY SERVICE
+// AI EVENT DISCOVERY SERVICE  — HYPERLOCAL EDITION
 //
 // Uses Gemini AI to generate rich, borough-specific family event descriptions.
 // Combines AI-generated content with structured event metadata to create
@@ -173,27 +174,23 @@ class AiEventDiscoveryService {
           '${i + 1}. "${t.titleTemplate.replaceAll('{borough}', borough)}" - ${t.descriptionHint} (${t.category}, at ${t.locationSuffix})');
     }
 
-    final systemPrompt = '''You are a community event copywriter for a UK parents' app called huddl, based in $borough.
-
-Generate engaging, natural descriptions for each event listed below. Each description should be 3-4 sentences, written in British English, and feel like it was written by a real local event organiser.
-
-RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
-{
-  "descriptions": [
-    "Description for event 1...",
-    "Description for event 2...",
-    ...
-  ]
-}
-
-RULES:
-- Use British English (nursery, pushchair, nappy, mum, etc.)
-- Mention the borough ($borough) naturally where appropriate
-- Include practical details parents would want to know
-- Sound warm and community-focused, not corporate
-- Each description should be unique and specific to the event type
-- Mention age suitability naturally in the text
-- Include a welcoming line like "No booking required" or "Spaces limited" as appropriate''';
+    final basePrompt = GeminiSystemPromptBuilder().buildEventsPrompt(
+      targetBorough: borough,
+      isEventCreation: true,
+    );
+    final systemPrompt = '$basePrompt\n'
+        'Generate engaging, natural descriptions for each event listed below. '
+        'Each description should be 3-4 sentences, written in British English, '
+        'and feel like it was written by a real local event organiser.\n\n'
+        'RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):\n'
+        '{\n  "descriptions": [\n    "Description for event 1...",\n'
+        '    "Description for event 2...",\n    ...\n  ]\n}\n\n'
+        'ADDITIONAL RULES:\n'
+        '- Include practical details parents would want to know\n'
+        '- Sound warm and community-focused, not corporate\n'
+        '- Each description should be unique and specific to the event type\n'
+        '- Mention age suitability naturally in the text\n'
+        '- Include a welcoming line like "No booking required" or "Spaces limited" as appropriate';
 
     try {
       final requestBody = {

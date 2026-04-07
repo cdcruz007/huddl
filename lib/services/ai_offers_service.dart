@@ -2,12 +2,13 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'revglue_service.dart';
 
 // =====================================================================================
-// HUDDL CONNECT -- AI DEALS CURATION SERVICE  (Gemini 2.0 Flash)
+// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — HYPERLOCAL EDITION (Gemini 2.0 Flash)
 // =====================================================================================
 //
 // Uses Google Gemini to analyse RevGlue stores, coupons and categories and produce
@@ -137,7 +138,6 @@ class AiOffersService {
 
   Future<List<AiDealRecommendation>> _callGeminiSmartPicks(
       List<RevGlueStore> stores) async {
-    final userContext = _buildUserContext();
     final season = _currentSeason();
 
     // Build a concise store list for the prompt
@@ -147,33 +147,22 @@ class AiOffersService {
             '{"id":"${s.id}","name":"${s.title}","offers":"${s.offerCouponStr}"}')
         .join(',\n');
 
-    final systemPrompt = '''
-You are Huddl's AI Offers Curator for UK parents. Your job is to analyse retail stores
-and their current offers, then rank them by relevance for THIS specific parent.
-
-USER CONTEXT:
-$userContext
-
-CURRENT SEASON: $season
-
-TASK:
-From the store list below, select the TOP 8 most relevant stores for this parent.
-For each, provide:
-- relevanceScore (0-100): how useful this deal is for this parent right now
-- parentTip: a short (max 15 words), warm, practical British English tip explaining WHY
-  this deal matters for them specifically. Reference their child's age/stage if relevant.
-- badge: a short label (2-3 words) like "Nappy Saver", "Weaning Must", "Travel Deal",
-  "School Kit", "Mum Treat", "Baby Essential", "Top Pick", "Budget Win"
-- tags: 2-3 short tags relevant to the deal
-
-RESPONSE FORMAT (strict JSON array, no markdown):
-[
-  {"storeId":"...","storeName":"...","relevanceScore":85,"parentTip":"...","badge":"...","tags":["...","..."]}
-]
-
-STORES:
-[$storeList]
-''';
+    final basePrompt = GeminiSystemPromptBuilder().buildOffersPrompt(
+      offerContext: 'Smart Picks ranking task. Season: $season.\nStores: [$storeList]',
+      isPersonalisation: true,
+    );
+    final systemPrompt = '$basePrompt\n'
+        'TASK:\n'
+        'From the store list in the context above, select the TOP 8 most relevant stores for this parent.\n'
+        'For each, provide:\n'
+        '- relevanceScore (0-100): how useful this deal is for this parent right now\n'
+        '- parentTip: a short (max 15 words), warm, practical British English tip explaining WHY\n'
+        '  this deal matters for them specifically. Reference their child\'s age/stage if relevant.\n'
+        '- badge: a short label (2-3 words) like "Nappy Saver", "Weaning Must", "Travel Deal",\n'
+        '  "School Kit", "Mum Treat", "Baby Essential", "Top Pick", "Budget Win"\n'
+        '- tags: 2-3 short tags relevant to the deal\n\n'
+        'RESPONSE FORMAT (strict JSON array, no markdown):\n'
+        '[{"storeId":"...","storeName":"...","relevanceScore":85,"parentTip":"...","badge":"...","tags":["...","..."]}]';
 
     final response = await _callGemini(systemPrompt);
     return _parseSmartPicksResponse(response, stores);
@@ -237,7 +226,6 @@ STORES:
     String storeId,
     List<RevGlueCoupon> coupons,
   ) async {
-    final userContext = _buildUserContext();
 
     final couponList = coupons
         .take(10)
@@ -248,32 +236,20 @@ STORES:
     final storeName =
         coupons.isNotEmpty ? coupons.first.storeTitle : 'this store';
 
-    final systemPrompt = '''
-You are Huddl's AI Offers Advisor for UK parents. Analyse these coupons from $storeName
-and provide personalised money-saving insights.
-
-USER CONTEXT:
-$userContext
-
-TASK:
-For each coupon, provide:
-- savvyTip: a short (max 20 words), practical, warm British English tip for this parent.
-  Think "savvy mum/dad advice" -- combine the offer with what the parent actually needs.
-  Examples: "Pair this with their 20% baby event for double savings on formula"
-  or "Stock up on nappies now -- this code rarely comes around"
-- worthItVerdict: one of "Must-grab", "Great deal", "Worth it", "Decent", "Skip it"
-- isTopPick: true if this is the standout deal from this store for this parent
-
-RESPONSE FORMAT (strict JSON array, no markdown):
-[
-  {"couponId":"...","savvyTip":"...","worthItVerdict":"...","isTopPick":false}
-]
-
-Mark exactly ONE coupon as isTopPick: true (the best one for this parent).
-
-COUPONS:
-[$couponList]
-''';
+    final basePrompt = GeminiSystemPromptBuilder().buildOffersPrompt(
+      offerContext:
+          'Coupon Insights for $storeName.\nCoupons: [$couponList]',
+    );
+    final systemPrompt = '$basePrompt\n'
+        'TASK:\n'
+        'For each coupon, provide:\n'
+        '- savvyTip: a short (max 20 words), practical, warm British English tip for this parent.\n'
+        '  Think "savvy mum/dad advice" -- combine the offer with what the parent actually needs.\n'
+        '- worthItVerdict: one of "Must-grab", "Great deal", "Worth it", "Decent", "Skip it"\n'
+        '- isTopPick: true if this is the standout deal from this store for this parent\n\n'
+        'RESPONSE FORMAT (strict JSON array, no markdown):\n'
+        '[{"couponId":"...","savvyTip":"...","worthItVerdict":"...","isTopPick":false}]\n\n'
+        'Mark exactly ONE coupon as isTopPick: true (the best one for this parent).';
 
     final response = await _callGemini(systemPrompt);
     return _parseCouponInsightsResponse(response, coupons);
@@ -332,36 +308,27 @@ COUPONS:
 
   Future<AiSeasonalSpotlight> _callGeminiSeasonalSpotlight(
       List<RevGlueStore> stores) async {
-    final userContext = _buildUserContext();
     final season = _currentSeason();
     final month = _currentMonth();
 
     final storeNames = stores.take(25).map((s) => s.title).join(', ');
 
-    final systemPrompt = '''
-You are Huddl's AI Offers Editor for UK parents. Write a short seasonal savings spotlight
-personalised for this parent.
-
-USER CONTEXT:
-$userContext
-
-CURRENT MONTH: $month
-SEASON: $season
-AVAILABLE STORES: $storeNames
-
-TASK:
-Create a seasonal savings spotlight with:
-- title: catchy seasonal title (max 6 words), reference the season and parenting stage
-- summary: 2-3 sentences of warm, practical British English editorial copy. Address the
-  parent directly. Mention their child's age/stage. Include specific saving strategies
-  for this time of year. Sound like a savvy parent friend, not a marketing bot.
-- topStoreNames: 3-4 store names from the available list most relevant right now
-- savingTips: 4 short (max 12 words each) actionable money-saving tips for this parent
-  this season. Be specific to their child's needs.
-
-RESPONSE FORMAT (strict JSON, no markdown):
-{"title":"...","summary":"...","topStoreNames":["..."],"savingTips":["..."]}
-''';
+    final basePrompt = GeminiSystemPromptBuilder().buildOffersPrompt(
+      offerContext:
+          'Seasonal Spotlight task. Month: $month, Season: $season.\nAvailable stores: $storeNames',
+    );
+    final systemPrompt = '$basePrompt\n'
+        'TASK:\n'
+        'Create a seasonal savings spotlight with:\n'
+        '- title: catchy seasonal title (max 6 words), reference the season and parenting stage\n'
+        '- summary: 2-3 sentences of warm, practical British English editorial copy. Address the\n'
+        '  parent directly. Mention their child\'s age/stage. Include specific saving strategies\n'
+        '  for this time of year. Sound like a savvy parent friend, not a marketing bot.\n'
+        '- topStoreNames: 3-4 store names from the available list most relevant right now\n'
+        '- savingTips: 4 short (max 12 words each) actionable money-saving tips for this parent\n'
+        '  this season. Be specific to their child\'s needs.\n\n'
+        'RESPONSE FORMAT (strict JSON, no markdown):\n'
+        '{"title":"...","summary":"...","topStoreNames":["..."],"savingTips":["..."]}';
 
     final response = await _callGemini(systemPrompt);
     return _parseSpotlightResponse(response);
@@ -455,9 +422,11 @@ RESPONSE FORMAT (strict JSON, no markdown):
   }
 
   // ===========================================================================
-  // USER CONTEXT BUILDER
+  // USER CONTEXT BUILDER (now handled by GeminiSystemPromptBuilder)
+  // Retained for potential local fallback usage.
   // ===========================================================================
 
+  // ignore: unused_element
   String _buildUserContext() {
     final parts = <String>[];
 

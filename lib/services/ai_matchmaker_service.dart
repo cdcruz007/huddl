@@ -3,15 +3,18 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'meetup_service.dart';
 import 'default_group_service.dart';
 
 // =============================================================================
-// AI MEETUP MATCHMAKER SERVICE
+// AI MEETUP MATCHMAKER SERVICE  — HYPERLOCAL EDITION
 // Uses Gemini AI to generate personalised meetup suggestions and
 // intelligent compatibility reasoning between parents
+// System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
+// Borough-only: matches ONLY parents within the same borough
 // =============================================================================
 
 /// A parent profile used for matching
@@ -518,20 +521,26 @@ class AiMatchmakerService {
             '${p.name} (${p.childAges.join(", ")}, interests: ${p.interests.join(", ")})')
         .join('\n');
 
-    final systemPrompt = '''You are the huddl AI Matchmaker for a UK parents' community app. Generate personalised meetup suggestions based on parent compatibility.
-
-RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
-{
-  "meetups": [
-    {
-      "title": "Creative meetup title",
-      "description": "2-3 sentence engaging description that mentions specific matched parents and why they'd get along",
-      "reasoning": "1 sentence explaining the AI matching logic"
-    }
-  ]
-}
-
-Generate exactly 5 meetup suggestions. Use British English. Be warm, specific and mention real parent names from the matches.''';
+    final basePrompt = GeminiSystemPromptBuilder().buildMatchmakerPrompt(
+      matchProfileSummary:
+          'Top compatible parents nearby:\n$matchContext',
+      matchBorough: borough,
+    );
+    final systemPrompt = '$basePrompt\n'
+        'RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):\n'
+        '{\n'
+        '  "meetups": [\n'
+        '    {\n'
+        '      "title": "Creative meetup title",\n'
+        '      "description": "2-3 sentence engaging description that mentions specific '
+        'matched parents and why they\'d get along",\n'
+        '      "reasoning": "1 sentence explaining the AI matching logic"\n'
+        '    }\n'
+        '  ]\n'
+        '}\n\n'
+        'Generate exactly 5 meetup suggestions. Be warm, specific and mention real parent '
+        'names from the matches.\n'
+        'All meetup locations MUST be within $borough.';
 
     final requestBody = {
       'system_instruction': {

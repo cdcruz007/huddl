@@ -4,13 +4,18 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
 // =============================================================================
-// AI PARENTING COPILOT SERVICE
+// AI PARENTING COPILOT SERVICE  — HYPERLOCAL EDITION
 // Real conversational AI using Google Gemini API
 // Cross-feature assistant that understands the parent's complete context
+//
+// System prompt is now assembled by GeminiSystemPromptBuilder (Step 3),
+// which injects HyperlocalRules, borough directory, knowledge base,
+// learning engine context, empathy & safety guardrails.
 // =============================================================================
 
 enum CopilotCategory {
@@ -77,6 +82,8 @@ class AiCopilotService {
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcode = PostcodeService();
+  final GeminiSystemPromptBuilder _promptBuilder =
+      GeminiSystemPromptBuilder();
 
   final List<CopilotMessage> _messages = [];
   bool _isInitialized = false;
@@ -186,6 +193,7 @@ class AiCopilotService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     await _onboarding.initialize();
+    await _promptBuilder.initialize();
     // Validate the Gemini key in the background so the UI can reflect status
     _isApiOnline = await GeminiConfig.validateKey();
     _isInitialized = true;
@@ -247,7 +255,8 @@ class AiCopilotService {
 
   /// Call Gemini API with full conversation context
   Future<CopilotMessage> _callGeminiApi(String query) async {
-    final systemPrompt = _buildSystemPrompt();
+    // ── System prompt from centralised builder (hyperlocal-aware) ─────
+    final systemPrompt = _promptBuilder.buildCopilotPrompt();
 
     // Build contents with system instruction + conversation history
     final contents = <Map<String, dynamic>>[];
@@ -354,95 +363,15 @@ class AiCopilotService {
     }
   }
 
-  /// Build a rich system prompt with user context
-  String _buildSystemPrompt() {
-    final userName = _onboarding.name ?? 'there';
-    final borough = _getUserBorough();
-    final parentType = _onboarding.parentType ?? 'parent';
-    final children = _onboarding.children;
-    final stages = _onboarding.stagesOfLife;
-
-    final buffer = StringBuffer();
-    buffer.writeln(
-        'You are the huddl AI Parenting Copilot \u2014 a warm, knowledgeable, '
-        'and supportive AI assistant built into the huddl app. huddl is a '
-        'community platform for parents in the UK.');
-    buffer.writeln();
-    buffer.writeln('YOUR PERSONALITY:');
-    buffer.writeln(
-        '- Warm, friendly, and empathetic \u2014 like talking to a knowledgeable friend');
-    buffer.writeln(
-        '- Supportive and non-judgmental \u2014 every parenting style is valid');
-    buffer.writeln('- Concise but thorough \u2014 give actionable advice');
-    buffer.writeln(
-        '- Use a casual British English tone (e.g. "nursery" not "daycare", '
-        '"pushchair" not "stroller", "nappy" not "diaper")');
-    buffer.writeln(
-        '- Use bullet points and bold text (**text**) to structure responses');
-    buffer.writeln(
-        '- Keep responses focused and helpful, typically 3-6 paragraphs');
-    buffer.writeln();
-    buffer.writeln('USER CONTEXT:');
-    buffer.writeln('- Name: $userName');
-    buffer.writeln('- Parent type: $parentType');
-    buffer.writeln('- Location: $borough, UK');
-
-    if (stages.isNotEmpty) {
-      buffer.writeln('- Life stage: ${stages.join(", ")}');
-    }
-
-    if (_onboarding.dueDate != null) {
-      buffer.writeln('- Due date: ${_onboarding.dueDate}');
-    }
-
-    if (children.isNotEmpty) {
-      for (int i = 0; i < children.length; i++) {
-        final child = children[i];
-        final name = child['name'] ?? 'Child ${i + 1}';
-        final birthday = child['birthday'];
-        if (birthday != null) {
-          final months = _parseAgeMonths(birthday);
-          if (months < 12) {
-            buffer.writeln('- Child: $name, $months months old');
-          } else {
-            buffer.writeln(
-                '- Child: $name, ${months ~/ 12} year(s) old');
-          }
-        } else {
-          buffer.writeln('- Child: $name');
-        }
-      }
-    }
-
-    buffer.writeln();
-    buffer.writeln('HUDDL APP FEATURES (mention when relevant):');
-    buffer.writeln(
-        '- **Groups**: Local community groups for parents in their borough');
-    buffer.writeln(
-        '- **Meetups**: Organise and join meetups with local parents');
-    buffer.writeln(
-        '- **Market**: Buy & sell baby/children items with AI listing generator');
-    buffer.writeln(
-        '- **AI Matchmaker**: Matches compatible parents based on interests & child ages');
-    buffer.writeln(
-        '- **DMs & Group Chats**: Message other parents directly or in groups');
-    buffer.writeln();
-    buffer.writeln('GUIDELINES:');
-    buffer.writeln(
-        '- For medical questions: Always recommend consulting NHS 111, their GP, or health visitor. Never diagnose.');
-    buffer.writeln(
-        '- For safety concerns: Direct to emergency services (999) if urgent.');
-    buffer.writeln(
-        '- Reference the user\'s local area ($borough) when relevant.');
-    buffer.writeln(
-        '- Suggest relevant huddl app features naturally when they fit the conversation.');
-    buffer.writeln(
-        '- Keep responses grounded and practical, avoiding overly generic advice.');
-    buffer.writeln(
-        '- If you do not know something specific, say so honestly rather than making up data.');
-
-    return buffer.toString();
-  }
+  // NOTE: _buildSystemPrompt() has been replaced by
+  // GeminiSystemPromptBuilder.buildCopilotPrompt() which includes:
+  //   - HyperlocalRules (borough-scoped feature enforcement)
+  //   - Borough local directory (parks, libraries, cafes)
+  //   - Knowledge base articles, milestones, vaccinations, seasonal tips
+  //   - Learning engine context (borough engagement stats, event prefs)
+  //   - Empathy & safety guardrails
+  //   - Huddl features block (hyperlocal-aware)
+  //   - Borough change detection for recently-moved parents
 
   /// Detect the category of a user query
   CopilotCategory _detectCategory(String query) {

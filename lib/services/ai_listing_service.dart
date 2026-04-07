@@ -3,12 +3,14 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import 'gemini_system_prompt_builder.dart';
 import 'rehome_service.dart';
 
 // =============================================================================
-// AI LISTING GENERATOR SERVICE
+// AI LISTING GENERATOR SERVICE  — HYPERLOCAL EDITION
 // Uses Gemini AI for genuine product analysis, description generation,
 // smart pricing, and auto-categorisation from user input
+// System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
 // =============================================================================
 
 class AiListingDraft {
@@ -94,36 +96,29 @@ class AiListingService {
 
   /// Call Gemini to generate a complete listing from product description
   Future<AiListingDraft> _callGeminiForListing(String userInput) async {
-    final systemPrompt = '''You are a marketplace listing expert for a UK-based parents' community app called huddl Market.
-
-Given a user's description of a baby/children's item they want to sell, generate a complete listing.
-
-RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
-{
-  "title": "Brand Product Name",
-  "description": "A compelling 2-3 sentence marketplace listing description. Mention condition, key features, and why it's a great buy. Use British English.",
-  "suggestedPrice": 45.0,
-  "retailPrice": 120.0,
-  "savingsPercent": 63,
-  "category": "one of: pushchairsAndPrams, forTheCar, furniture, toysAndGames, babyCareAndAccessories, boysClothes, girlsClothes, maternity, books, other",
-  "ageStage": "one of: newborn, baby0to12, toddler, preschool, schoolAge, allAges, maternity",
-  "condition": "one of: brandNew, likeNew, good, wellUsed",
-  "safetyNote": null or "safety warning text if the item appears on a recall list",
-  "tags": ["tag1", "tag2", "tag3", "preloved"],
-  "confidence": 0.85
-}
-
-PRICING RULES:
-- Brand new items: 60-70% of retail
-- Like new: 45-55% of retail
-- Good: 30-45% of retail
-- Well used: 15-30% of retail
-- Research typical UK retail prices for the brand/product
-- Round prices to whole pounds
-
-SAFETY: Flag these recalled items: Fisher-Price Rock 'n Play Sleeper, Kids2 Rocking Sleeper, Boppy Lounger.
-
-Be specific about the product. If the user mentions a brand, include it. If they don't, infer the most likely product type.''';
+    final basePrompt = GeminiSystemPromptBuilder().buildMarketplacePrompt(
+      itemDescription: userInput,
+      isListingGeneration: true,
+    );
+    final systemPrompt = '$basePrompt\n'
+        'RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):\n'
+        '{\n'
+        '  "title": "Brand Product Name",\n'
+        '  "description": "A compelling 2-3 sentence marketplace listing description. '
+        'Mention condition, key features, and why it\'s a great buy. Use British English.",\n'
+        '  "suggestedPrice": 45.0,\n'
+        '  "retailPrice": 120.0,\n'
+        '  "savingsPercent": 63,\n'
+        '  "category": "one of: pushchairsAndPrams, forTheCar, furniture, toysAndGames, '
+        'babyCareAndAccessories, boysClothes, girlsClothes, maternity, books, other",\n'
+        '  "ageStage": "one of: newborn, baby0to12, toddler, preschool, schoolAge, allAges, maternity",\n'
+        '  "condition": "one of: brandNew, likeNew, good, wellUsed",\n'
+        '  "safetyNote": null or "safety warning text if the item appears on a recall list",\n'
+        '  "tags": ["tag1", "tag2", "tag3", "preloved"],\n'
+        '  "confidence": 0.85\n'
+        '}\n\n'
+        'Be specific about the product. If the user mentions a brand, include it. '
+        'If they don\'t, infer the most likely product type.';
 
     final requestBody = {
       'system_instruction': {

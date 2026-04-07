@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import 'gemini_system_prompt_builder.dart';
 
 // =============================================================================
-// AI CHAT MESSAGE SUMMARISER & CATCH-UP SERVICE
+// AI CHAT MESSAGE SUMMARISER & CATCH-UP SERVICE  — HYPERLOCAL EDITION
 // Uses Gemini AI to generate intelligent summaries of unread group messages
+// System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
 // =============================================================================
 
 class MessageSummaryPoint {
@@ -55,6 +57,9 @@ class AiChatSummariserService {
       AiChatSummariserService._internal();
   factory AiChatSummariserService() => _instance;
   AiChatSummariserService._internal();
+
+  final GeminiSystemPromptBuilder _promptBuilder =
+      GeminiSystemPromptBuilder();
 
   // Gemini API configuration (centralised in GeminiConfig)
 
@@ -124,32 +129,33 @@ class AiChatSummariserService {
       messageText.writeln('$author: $text');
     }
 
-    final systemPrompt = '''You are a chat summariser for a UK parents' community app called huddl. 
-You summarise unread group messages into a concise, friendly catch-up.
-
-RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):
-{
-  "overview": "A 1-2 sentence friendly summary starting with 'While you were away:' that captures the conversation highlights",
-  "keyPoints": [
-    {
-      "text": "Brief summary of this point",
-      "authorName": "Author name if clear",
-      "category": "one of: recommendation, discussion, question, plan, share"
-    }
-  ],
-  "topics": ["topic1", "topic2", "topic3"],
-  "hasActionItems": true or false,
-  "upcomingPlan": "Description of any planned meetup/event discussed, or null"
-}
-
-RULES:
-- Maximum 5 key points, ordered by importance
-- Use British English
-- Highlight plans, recommendations, questions, and shared experiences
-- Be warm and conversational in the overview
-- Detect any upcoming plans (meetups, playdates, events)
-- Extract 3-5 mentioned topics
-- Flag if there are action items the user should respond to''';
+    final basePrompt = _promptBuilder.buildChatSummariserPrompt(
+      chatType: 'group',
+      groupName: groupName,
+      messageCount: unreadMessages.length,
+    );
+    final systemPrompt = '$basePrompt\n'
+        'RESPOND IN EXACT JSON FORMAT (no markdown, no backticks, just raw JSON):\n'
+        '{\n'
+        '  "overview": "A 1-2 sentence friendly summary starting with \'While you were away:\' that captures the conversation highlights",\n'
+        '  "keyPoints": [\n'
+        '    {\n'
+        '      "text": "Brief summary of this point",\n'
+        '      "authorName": "Author name if clear",\n'
+        '      "category": "one of: recommendation, discussion, question, plan, share"\n'
+        '    }\n'
+        '  ],\n'
+        '  "topics": ["topic1", "topic2", "topic3"],\n'
+        '  "hasActionItems": true or false,\n'
+        '  "upcomingPlan": "Description of any planned meetup/event discussed, or null"\n'
+        '}\n\n'
+        'ADDITIONAL RULES:\n'
+        '- Maximum 5 key points, ordered by importance\n'
+        '- Highlight plans, recommendations, questions, and shared experiences\n'
+        '- Be warm and conversational in the overview\n'
+        '- Detect any upcoming plans (meetups, playdates, events)\n'
+        '- Extract 3-5 mentioned topics\n'
+        '- Flag if there are action items the user should respond to';
 
     final requestBody = {
       'system_instruction': {
