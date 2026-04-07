@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -182,7 +183,7 @@ extension ItemCategoryExt on ItemCategory {
   Color get color {
     switch (this) {
       case ItemCategory.boysClothes:
-        return const Color(0xFF3580F0);
+        return HuddlColors.blue;
       case ItemCategory.girlsClothes:
         return const Color(0xFFFF69B4);
       case ItemCategory.toysAndGames:
@@ -190,17 +191,17 @@ extension ItemCategoryExt on ItemCategory {
       case ItemCategory.pushchairsAndPrams:
         return const Color(0xFFE8A838);
       case ItemCategory.forTheCar:
-        return const Color(0xFF6C6C6C);
+        return HuddlColors.textSecondary;
       case ItemCategory.furniture:
         return const Color(0xFFA16AE9);
       case ItemCategory.books:
-        return const Color(0xFF199A85);
+        return HuddlColors.teal;
       case ItemCategory.maternity:
         return const Color(0xFFFF69B4);
       case ItemCategory.babyCareAndAccessories:
         return const Color(0xFF34C759);
       case ItemCategory.other:
-        return const Color(0xFF949494);
+        return HuddlColors.textHint;
     }
   }
 }
@@ -228,13 +229,13 @@ extension ItemConditionExt on ItemCondition {
   Color get color {
     switch (this) {
       case ItemCondition.brandNew:
-        return const Color(0xFF199A85);
+        return HuddlColors.teal;
       case ItemCondition.likeNew:
-        return const Color(0xFF3580F0);
+        return HuddlColors.blue;
       case ItemCondition.good:
         return const Color(0xFFE8A838);
       case ItemCondition.wellUsed:
-        return const Color(0xFF949494);
+        return HuddlColors.textHint;
     }
   }
 }

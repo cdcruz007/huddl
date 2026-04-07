@@ -2169,7 +2169,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Container(
                 width: 36, height: 36,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFFFF6B6B), Color(0xFFFF975C)]),
+                  gradient: const LinearGradient(colors: [HuddlColors.coralSoft, Color(0xFFFF975C)]),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.local_offer_rounded, color: Colors.white, size: 18),
@@ -2320,19 +2320,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)]),
+                              gradient: const LinearGradient(colors: [HuddlColors.premiumPurpleBg, Color(0xFFFAF5FF)]),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
+                              border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
                             ),
                             child: Row(
                               children: [
                                 const SizedBox(
                                   width: 16, height: 16,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: HuddlColors.blue),
                                 ),
                                 const SizedBox(width: 10),
                                 Text('AI is analysing these deals for you...',
-                                    style: _adaptiveText(fontSize: 12, color: const Color(0xFF3580F0))),
+                                    style: _adaptiveText(fontSize: 12, color: HuddlColors.blue)),
                               ],
                             ),
                           );
@@ -2427,7 +2427,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                  gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
                   borderRadius: BorderRadius.circular(9),
                 ),
                 child: const Icon(Icons.flash_on_rounded, color: Colors.white, size: 16),
@@ -2447,7 +2447,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               if (_aiOffersLoading)
                 const SizedBox(
                   width: 18, height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: HuddlColors.blue),
                 ),
             ],
           ),
@@ -2499,7 +2499,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             const SizedBox(height: 16),
             Row(
               children: [
-                const Icon(Icons.lightbulb_outline, color: Color(0xFFF59E0B), size: 18),
+                const Icon(Icons.lightbulb_outline, color: HuddlColors.warning, size: 18),
                 const SizedBox(width: 6),
                 Text('AI Saving Tips',
                     style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary)),
@@ -2521,12 +2521,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         Container(
                           width: 22, height: 22,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            color: HuddlColors.warning.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text('${entry.key + 1}',
-                                style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFFF59E0B))),
+                                style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w700, color: HuddlColors.warning)),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -2550,28 +2550,28 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       decoration: BoxDecoration(
         color: hc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.15)),
+        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(14),
             decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFEDE5FF)]),
+              gradient: LinearGradient(colors: [HuddlColors.premiumPurpleBg, Color(0xFFEDE5FF)]),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.flash_on_rounded, size: 28, color: Color(0xFF3580F0)),
+            child: const Icon(Icons.flash_on_rounded, size: 28, color: HuddlColors.blue),
           ),
           const SizedBox(height: 12),
           Text('AI is finding your best deals...',
-              style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF3580F0))),
+              style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.blue)),
           const SizedBox(height: 6),
           Text('Analysing stores and offers for your family',
               style: _adaptiveText(fontSize: 12, color: hc.textSecondary)),
           const SizedBox(height: 12),
           const SizedBox(
             width: 22, height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF3580F0)),
+            child: CircularProgressIndicator(strokeWidth: 2.5, color: HuddlColors.blue),
           ),
         ],
       ),
@@ -2668,7 +2668,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)]),
+                gradient: const LinearGradient(colors: [Color(0xFFFFF3ED), HuddlColors.peachVeryLight]),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
               ),
@@ -4296,11 +4296,11 @@ class _OffersCategoryTile extends StatelessWidget {
   Color _catColor(String title) {
     final t = title.toLowerCase();
     if (t.contains('baby') || t.contains('child')) return const Color(0xFFFF6B9D);
-    if (t.contains('travel') || t.contains('holiday')) return const Color(0xFF3580F0);
-    if (t.contains('food') || t.contains('grocery')) return const Color(0xFF22C55E);
-    if (t.contains('fashion') || t.contains('cloth')) return const Color(0xFF5B9DFF);
-    if (t.contains('home') || t.contains('garden')) return const Color(0xFFF59E0B);
-    if (t.contains('health') || t.contains('beauty')) return const Color(0xFFFF6B6B);
+    if (t.contains('travel') || t.contains('holiday')) return HuddlColors.blue;
+    if (t.contains('food') || t.contains('grocery')) return HuddlColors.successGreen;
+    if (t.contains('fashion') || t.contains('cloth')) return HuddlColors.lightBlue;
+    if (t.contains('home') || t.contains('garden')) return HuddlColors.warning;
+    if (t.contains('health') || t.contains('beauty')) return HuddlColors.coralSoft;
     if (t.contains('sport') || t.contains('fitness')) return const Color(0xFF10B981);
     if (t.contains('tech') || t.contains('electronic')) return const Color(0xFF6366F1);
     return HuddlColors.primary;
@@ -4343,7 +4343,7 @@ class _OffersCouponCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: isTopPick ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5) : hc.cardBorder,
+          border: isTopPick ? Border.all(color: HuddlColors.blue.withValues(alpha: 0.4), width: 1.5) : hc.cardBorder,
           boxShadow: [BoxShadow(color: hc.shadow, blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Column(
@@ -4355,7 +4355,7 @@ class _OffersCouponCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                    gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -4429,19 +4429,19 @@ class _OffersCouponCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
+                  color: HuddlColors.premiumPurpleBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.lightbulb_outline, size: 13, color: Color(0xFF3580F0)),
+                    const Icon(Icons.lightbulb_outline, size: 13, color: HuddlColors.blue),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(insight!.savvyTip, style: _adaptiveText(fontSize: 11, color: const Color(0xFF3580F0))),
+                          Text(insight!.savvyTip, style: _adaptiveText(fontSize: 11, color: HuddlColors.blue)),
                           const SizedBox(height: 3),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -4469,10 +4469,10 @@ class _OffersCouponCard extends StatelessWidget {
 
   Color _verdictColor(String verdict) {
     switch (verdict.toLowerCase()) {
-      case 'must-grab': return const Color(0xFF3580F0);
-      case 'great deal': return const Color(0xFF22C55E);
-      case 'worth it': return const Color(0xFF3B82F6);
-      case 'decent': return const Color(0xFFF59E0B);
+      case 'must-grab': return HuddlColors.blue;
+      case 'great deal': return HuddlColors.successGreen;
+      case 'worth it': return HuddlColors.premiumBlue;
+      case 'decent': return HuddlColors.warning;
       case 'skip it': return const Color(0xFFEF4444);
       default: return HuddlColors.textSecondary;
     }
@@ -4490,10 +4490,10 @@ class _OffersSpotlightCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+          colors: [HuddlColors.blue, HuddlColors.lightBlue],
         ),
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: const Color(0xFF3580F0).withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 5))],
+        boxShadow: [BoxShadow(color: HuddlColors.blue.withValues(alpha: 0.3), blurRadius: 14, offset: const Offset(0, 5))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4560,7 +4560,7 @@ class _OffersPickCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: hc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: rank == 1 ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5) : hc.cardBorder,
+          border: rank == 1 ? Border.all(color: HuddlColors.blue.withValues(alpha: 0.4), width: 1.5) : hc.cardBorder,
           boxShadow: [BoxShadow(color: hc.shadow, blurRadius: 8, offset: const Offset(0, 2))],
         ),
         child: Row(
@@ -4568,7 +4568,7 @@ class _OffersPickCard extends StatelessWidget {
             Container(
               width: 32, height: 32,
               decoration: BoxDecoration(
-                gradient: rank <= 3 ? const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]) : null,
+                gradient: rank <= 3 ? const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]) : null,
                 color: rank > 3 ? hc.surfaceAlt : null,
                 shape: BoxShape.circle,
               ),
@@ -4604,10 +4604,10 @@ class _OffersPickCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3580F0).withValues(alpha: 0.1),
+                          color: HuddlColors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(5),
                         ),
-                        child: Text(recommendation.badge, style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w600, color: const Color(0xFF3580F0))),
+                        child: Text(recommendation.badge, style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.blue)),
                       ),
                     ],
                   ),
@@ -4644,9 +4644,9 @@ class _OffersPickCard extends StatelessWidget {
   }
 
   Color _scoreColor(int score) {
-    if (score >= 80) return const Color(0xFF22C55E);
-    if (score >= 60) return const Color(0xFF3B82F6);
-    if (score >= 40) return const Color(0xFFF59E0B);
+    if (score >= 80) return HuddlColors.successGreen;
+    if (score >= 60) return HuddlColors.premiumBlue;
+    if (score >= 40) return HuddlColors.warning;
     return HuddlColors.textHint;
   }
 }

@@ -384,7 +384,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
           Container(
             width: 42, height: 42,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFFFF6B6B), Color(0xFFFF975C)]),
+              gradient: const LinearGradient(colors: [HuddlColors.coralSoft, Color(0xFFFF975C)]),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Icon(Icons.local_offer_rounded, color: context.hc.surface, size: 22),
@@ -576,7 +576,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                  gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.local_offer, color: context.hc.surface, size: 18),
@@ -596,7 +596,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               if (_aiLoading)
                 const SizedBox(
                   width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: HuddlColors.blue),
                 ),
             ],
           ),
@@ -655,7 +655,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
             const SizedBox(height: 20),
             Row(
               children: [
-                const Icon(Icons.lightbulb_outline, color: Color(0xFFF59E0B), size: 20),
+                const Icon(Icons.lightbulb_outline, color: HuddlColors.warning, size: 20),
                 const SizedBox(width: 8),
                 Text('AI Saving Tips',
                     style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.textPrimary)),
@@ -677,12 +677,12 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                         Container(
                           width: 24, height: 24,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                            color: HuddlColors.warning.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: Text('${entry.key + 1}',
-                                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFFF59E0B))),
+                                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: HuddlColors.warning)),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -812,7 +812,7 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFF3ED), Color(0xFFFFF8F0)],
+                  colors: [Color(0xFFFFF3ED), HuddlColors.peachVeryLight],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
@@ -970,19 +970,19 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)]),
+                                gradient: const LinearGradient(colors: [HuddlColors.premiumPurpleBg, Color(0xFFFAF5FF)]),
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
+                                border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
                               ),
                               child: Row(
                                 children: [
                                   const SizedBox(
                                     width: 16, height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF3580F0)),
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: HuddlColors.blue),
                                   ),
                                   const SizedBox(width: 10),
                                   Text('AI is analysing these deals for you...',
-                                      style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF3580F0))),
+                                      style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.blue)),
                                 ],
                               ),
                             );
@@ -1204,11 +1204,11 @@ class _CategoryTile extends StatelessWidget {
   Color _categoryColor(String title) {
     final t = title.toLowerCase();
     if (t.contains('baby') || t.contains('child')) return const Color(0xFFFF6B9D);
-    if (t.contains('travel') || t.contains('holiday')) return const Color(0xFF3580F0);
-    if (t.contains('food') || t.contains('grocery')) return const Color(0xFF22C55E);
-    if (t.contains('fashion') || t.contains('cloth')) return const Color(0xFF5B9DFF);
-    if (t.contains('home') || t.contains('garden')) return const Color(0xFFF59E0B);
-    if (t.contains('health') || t.contains('beauty')) return const Color(0xFFFF6B6B);
+    if (t.contains('travel') || t.contains('holiday')) return HuddlColors.blue;
+    if (t.contains('food') || t.contains('grocery')) return HuddlColors.successGreen;
+    if (t.contains('fashion') || t.contains('cloth')) return HuddlColors.lightBlue;
+    if (t.contains('home') || t.contains('garden')) return HuddlColors.warning;
+    if (t.contains('health') || t.contains('beauty')) return HuddlColors.coralSoft;
     if (t.contains('sport') || t.contains('fitness')) return const Color(0xFF10B981);
     if (t.contains('tech') || t.contains('electronic')) return const Color(0xFF6366F1);
     return HuddlColors.primary;
@@ -1250,7 +1250,7 @@ class _CouponCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
-          border: isTopPick ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5) : null,
+          border: isTopPick ? Border.all(color: HuddlColors.blue.withValues(alpha: 0.4), width: 1.5) : null,
           boxShadow: [
             BoxShadow(
               color: HuddlColors.gray900.withValues(alpha: 0.06),
@@ -1269,7 +1269,7 @@ class _CouponCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                    gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1353,13 +1353,13 @@ class _CouponCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF5F0FF),
+                  color: HuddlColors.premiumPurpleBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.local_offer, size: 14, color: Color(0xFF3580F0)),
+                    const Icon(Icons.local_offer, size: 14, color: HuddlColors.blue),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -1367,7 +1367,7 @@ class _CouponCard extends StatelessWidget {
                         children: [
                           Text(
                             insight!.savvyTip,
-                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF3580F0)),
+                            style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.blue),
                           ),
                           const SizedBox(height: 4),
                           Container(
@@ -1397,13 +1397,13 @@ class _CouponCard extends StatelessWidget {
   Color _verdictColor(String verdict) {
     switch (verdict.toLowerCase()) {
       case 'must-grab':
-        return const Color(0xFF3580F0);
+        return HuddlColors.blue;
       case 'great deal':
-        return const Color(0xFF22C55E);
+        return HuddlColors.successGreen;
       case 'worth it':
-        return const Color(0xFF3B82F6);
+        return HuddlColors.premiumBlue;
       case 'decent':
-        return const Color(0xFFF59E0B);
+        return HuddlColors.warning;
       case 'skip it':
         return const Color(0xFFEF4444);
       default:
@@ -1425,12 +1425,12 @@ class _AiSpotlightCard extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF3580F0), Color(0xFF3580F0), Color(0xFF5B9DFF)],
+          colors: [HuddlColors.blue, HuddlColors.blue, HuddlColors.lightBlue],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3580F0).withValues(alpha: 0.3),
+            color: HuddlColors.blue.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -1524,7 +1524,7 @@ class _AiPickCard extends StatelessWidget {
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: rank == 1
-              ? Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.4), width: 1.5)
+              ? Border.all(color: HuddlColors.blue.withValues(alpha: 0.4), width: 1.5)
               : null,
           boxShadow: [
             BoxShadow(
@@ -1542,7 +1542,7 @@ class _AiPickCard extends StatelessWidget {
               height: 36,
               decoration: BoxDecoration(
                 gradient: rank <= 3
-                    ? const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)])
+                    ? const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue])
                     : null,
                 color: rank > 3 ? HuddlColors.gray100 : null,
                 shape: BoxShape.circle,
@@ -1605,7 +1605,7 @@ class _AiPickCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3580F0).withValues(alpha: 0.1),
+                          color: HuddlColors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1613,7 +1613,7 @@ class _AiPickCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF3580F0),
+                            color: HuddlColors.blue,
                           ),
                         ),
                       ),
@@ -1677,9 +1677,9 @@ class _AiPickCard extends StatelessWidget {
   }
 
   Color _scoreColor(int score) {
-    if (score >= 80) return const Color(0xFF22C55E);
-    if (score >= 60) return const Color(0xFF3B82F6);
-    if (score >= 40) return const Color(0xFFF59E0B);
+    if (score >= 80) return HuddlColors.successGreen;
+    if (score >= 60) return HuddlColors.premiumBlue;
+    if (score >= 40) return HuddlColors.warning;
     return HuddlColors.textHint;
   }
 }
@@ -1720,7 +1720,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
       decoration: BoxDecoration(
         color: context.hc.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.15)),
+        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
@@ -1734,11 +1734,11 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFF5F0FF), Color(0xFFEDE5FF)],
+                  colors: [HuddlColors.premiumPurpleBg, Color(0xFFEDE5FF)],
                 ),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.local_offer, size: 32, color: Color(0xFF3580F0)),
+              child: const Icon(Icons.local_offer, size: 32, color: HuddlColors.blue),
             ),
           ),
           const SizedBox(height: 16),
@@ -1747,7 +1747,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF3580F0),
+              color: HuddlColors.blue,
             ),
           ),
           const SizedBox(height: 8),
@@ -1764,7 +1764,7 @@ class _AiThinkingCardState extends State<_AiThinkingCard>
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2.5,
-              color: Color(0xFF3580F0),
+              color: HuddlColors.blue,
             ),
           ),
         ],

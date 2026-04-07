@@ -612,7 +612,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           value: _isOnline,
                           onChanged: (v) => setState(() => _isOnline = v),
                           activeTrackColor: HuddlColors.teal,
-                          inactiveTrackColor: const Color(0xFFE9E9EA),
+                          inactiveTrackColor: HuddlColors.disabledBorder,
                         ),
                       ),
                     ],
@@ -844,7 +844,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                           onChanged: (v) =>
                               setState(() => _participants[key] = v),
                           activeTrackColor: HuddlColors.teal,
-                          inactiveTrackColor: const Color(0xFFE9E9EA),
+                          inactiveTrackColor: HuddlColors.disabledBorder,
                         ),
                       ),
                     ],

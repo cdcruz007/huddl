@@ -188,6 +188,13 @@ class HuddlColors {
   static const Color gray800 = Color(0xFF2D2D2D);
   static const Color gray900 = Color(0xFF1A1A1A);
 
+  // Subscription / Premium
+  static const Color premiumPurpleBg = Color(0xFFF5F0FF);
+  static const Color premiumBlue = Color(0xFF3B82F6);
+  static const Color coralSoft = Color(0xFFFF6B6B);
+  static const Color peachBg = Color(0xFFFFF0E6);
+  static const Color disabledBorder = Color(0xFFE9E9EA);
+
   // Divider
   static const Color divider = Color(0xFFE8E8E8);
 

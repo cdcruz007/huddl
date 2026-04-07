@@ -146,7 +146,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0)],
+                      colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
                     ),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(

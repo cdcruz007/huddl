@@ -1469,7 +1469,7 @@ class _EventsTabState extends State<_EventsTab> {
               'Found $count new events near you',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
-            backgroundColor: const Color(0xFF3580F0),
+            backgroundColor: HuddlColors.blue,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
@@ -1591,7 +1591,7 @@ class _EventsTabState extends State<_EventsTab> {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: _nlpFocusNode.hasFocus
-                          ? const Color(0xFF3580F0).withValues(alpha: 0.4)
+                          ? HuddlColors.blue.withValues(alpha: 0.4)
                           : HuddlColors.divider,
                     ),
                   ),
@@ -1626,7 +1626,7 @@ class _EventsTabState extends State<_EventsTab> {
                 icon: Icon(
                   _filtersExpanded ? Icons.tune : Icons.tune_outlined,
                   size: 20,
-                  color: _filtersExpanded ? const Color(0xFF3580F0) : HuddlColors.textHint,
+                  color: _filtersExpanded ? HuddlColors.blue : HuddlColors.textHint,
                 ),
                 tooltip: 'Filters',
                 onPressed: () => setState(() => _filtersExpanded = !_filtersExpanded),
@@ -1695,13 +1695,13 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(
                   width: 14, height: 14,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2, color: Color(0xFF3580F0)),
+                    strokeWidth: 2, color: HuddlColors.blue),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Finding events for you\u2026',
                   style: GoogleFonts.poppins(
-                    fontSize: 12, color: const Color(0xFF3580F0), fontWeight: FontWeight.w500),
+                    fontSize: 12, color: HuddlColors.blue, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -1817,7 +1817,7 @@ class _EventsTabState extends State<_EventsTab> {
       ));
     }
 
-    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, const Color(0xFF3580F0));
+    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, HuddlColors.blue);
     if (p.containsKey('formatFilter')) addChip(p['formatFilter'] as String, HuddlColors.teal);
     if (p.containsKey('timeFilter')) addChip(p['timeFilter'] as String, HuddlColors.primaryDark);
     if (p.containsKey('category')) addChip(p['category'] as String, HuddlColors.accentAmber);
@@ -2030,10 +2030,10 @@ class _RecommendedCard extends StatelessWidget {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                              color: HuddlColors.blue.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: const Color(0xFF3580F0).withValues(alpha: 0.2),
+                                color: HuddlColors.blue.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Row(
@@ -2050,7 +2050,7 @@ class _RecommendedCard extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF3580F0),
+                                      color: HuddlColors.blue,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -2450,10 +2450,10 @@ class _EventListCardState extends State<_EventListCard> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                color: HuddlColors.blue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.2),
+                  color: HuddlColors.blue.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -2466,7 +2466,7 @@ class _EventListCardState extends State<_EventListCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF3580F0),
+                      color: HuddlColors.blue,
                     ),
                   ),
                 ],
@@ -2749,7 +2749,7 @@ class _EventListCardState extends State<_EventListCard> {
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+                              colors: [HuddlColors.blue, HuddlColors.lightBlue],
                             ),
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -2759,7 +2759,7 @@ class _EventListCardState extends State<_EventListCard> {
                         Icon(
                           event['aiSourceIcon'] as IconData? ?? Icons.language,
                           size: 12,
-                          color: const Color(0xFF3580F0),
+                          color: HuddlColors.blue,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -2768,7 +2768,7 @@ class _EventListCardState extends State<_EventListCard> {
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF3580F0),
+                              color: HuddlColors.blue,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2839,10 +2839,10 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+            color: HuddlColors.blue.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.insights, size: 10, color: Color(0xFF3580F0)),
+          child: const Icon(Icons.insights, size: 10, color: HuddlColors.blue),
         ),
         const SizedBox(width: 5),
         Text(

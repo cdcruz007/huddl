@@ -281,10 +281,10 @@ class _SubscriptionCheckoutScreenState
                         width: double.infinity,
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3580F0).withValues(alpha: 0.06),
+                          color: HuddlColors.blue.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
+                              color: HuddlColors.blue.withValues(alpha: 0.2)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +292,7 @@ class _SubscriptionCheckoutScreenState
                             Row(
                               children: [
                                 const Icon(Icons.schedule,
-                                    color: Color(0xFF3580F0), size: 20),
+                                    color: HuddlColors.blue, size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
@@ -300,7 +300,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF3580F0)),
+                                        color: HuddlColors.blue),
                                   ),
                                 ),
                               ],
@@ -322,7 +322,7 @@ class _SubscriptionCheckoutScreenState
                                 style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
-                                    color: const Color(0xFF3580F0)),
+                                    color: HuddlColors.blue),
                               ),
                             ],
                           ],
@@ -376,12 +376,12 @@ class _SubscriptionCheckoutScreenState
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: _useFoundingRate
-                                ? const Color(0xFFF5F0FF)
+                                ? HuddlColors.premiumPurpleBg
                                 : HuddlColors.white,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: _useFoundingRate
-                                  ? const Color(0xFF3580F0)
+                                  ? HuddlColors.blue
                                   : HuddlColors.gray200,
                               width: _useFoundingRate ? 2 : 1,
                             ),
@@ -393,7 +393,7 @@ class _SubscriptionCheckoutScreenState
                                     ? Icons.check_circle
                                     : Icons.circle_outlined,
                                 color: _useFoundingRate
-                                    ? const Color(0xFF3580F0)
+                                    ? HuddlColors.blue
                                     : HuddlColors.textHint,
                                 size: 22,
                               ),
@@ -409,11 +409,11 @@ class _SubscriptionCheckoutScreenState
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
                                                 color:
-                                                    const Color(0xFF3580F0))),
+                                                    HuddlColors.blue)),
                                         const SizedBox(width: 6),
                                         const Icon(
                                             Icons.local_fire_department,
-                                            color: Color(0xFF3580F0),
+                                            color: HuddlColors.blue,
                                             size: 16),
                                       ],
                                     ),
@@ -430,7 +430,7 @@ class _SubscriptionCheckoutScreenState
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF3580F0)
+                                  color: HuddlColors.blue
                                       .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -439,7 +439,7 @@ class _SubscriptionCheckoutScreenState
                                     style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF3580F0))),
+                                        color: HuddlColors.blue)),
                               ),
                             ],
                           ),
@@ -607,7 +607,7 @@ class _SubscriptionCheckoutScreenState
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: _useFoundingRate
-                                      ? const Color(0xFF3580F0)
+                                      ? HuddlColors.blue
                                       : HuddlColors.textDark),
                             ),
                           ],
@@ -621,7 +621,7 @@ class _SubscriptionCheckoutScreenState
                         onPressed: _isProcessing ? null : _completePurchase,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _useFoundingRate
-                              ? const Color(0xFF3580F0)
+                              ? HuddlColors.blue
                               : color,
                           foregroundColor: HuddlColors.white,
                           disabledBackgroundColor:
@@ -945,7 +945,7 @@ class _OrderSummaryCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: isInnerCircle
               ? [const Color(0xFFE6F5F3), const Color(0xFFF0FAF8)]
-              : [const Color(0xFFFFF0E6), const Color(0xFFFFF8F0)],
+              : [HuddlColors.peachBg, HuddlColors.peachVeryLight],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3)),
@@ -1070,7 +1070,7 @@ class _SuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
     final color = isFoundingMember
-        ? const Color(0xFF3580F0)
+        ? HuddlColors.blue
         : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
 
     return Dialog(
@@ -1114,20 +1114,20 @@ class _SuccessDialog extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.1),
+                  color: HuddlColors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.verified,
-                        color: Color(0xFF3580F0), size: 16),
+                        color: HuddlColors.blue, size: 16),
                     const SizedBox(width: 6),
                     Text('Founding Member Badge Unlocked',
                         style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF3580F0))),
+                            color: HuddlColors.blue)),
                   ],
                 ),
               ),
@@ -1173,7 +1173,7 @@ class _ScheduledSuccessDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
     final color = isFoundingMember
-        ? const Color(0xFF3580F0)
+        ? HuddlColors.blue
         : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
 
     String dateStr = 'your next billing cycle';

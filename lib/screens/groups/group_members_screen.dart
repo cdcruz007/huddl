@@ -4,7 +4,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
-const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
+const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
 
 class GroupMembersScreen extends StatefulWidget {
   final String groupName;

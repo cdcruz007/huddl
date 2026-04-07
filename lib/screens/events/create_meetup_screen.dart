@@ -761,7 +761,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                 value: _isOnline,
                                 onChanged: (v) => setState(() => _isOnline = v),
                                 activeTrackColor: HuddlColors.teal,
-                                inactiveTrackColor: const Color(0xFFE9E9EA),
+                                inactiveTrackColor: HuddlColors.disabledBorder,
                               ),
                             ),
                           ],
@@ -880,7 +880,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                               }
                             }),
                             activeTrackColor: HuddlColors.teal,
-                            inactiveTrackColor: const Color(0xFFE9E9EA),
+                            inactiveTrackColor: HuddlColors.disabledBorder,
                           ),
                         ),
                       ],

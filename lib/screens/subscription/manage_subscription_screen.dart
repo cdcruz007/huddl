@@ -388,7 +388,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Messages This Month',
                 used: _service.messagesThisMonth,
                 limit: limits.maxMessagesPerMonth,
-                color: const Color(0xFF3580F0),
+                color: HuddlColors.blue,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -461,7 +461,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0)],
+                      colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
                     ),
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
@@ -896,7 +896,7 @@ class _CurrentPlanCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF3580F0)
+                              color: HuddlColors.blue
                                   .withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -904,13 +904,13 @@ class _CurrentPlanCard extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(Icons.local_fire_department,
-                                    color: Color(0xFF3580F0), size: 10),
+                                    color: HuddlColors.blue, size: 10),
                                 const SizedBox(width: 2),
                                 Text('Founding',
                                     style: GoogleFonts.poppins(
                                         fontSize: 10,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF3580F0))),
+                                        color: HuddlColors.blue)),
                               ],
                             ),
                           ),
@@ -1078,7 +1078,7 @@ class _ManageScheduledBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCancellation = subscription.isPendingCancellation;
     final color =
-        isCancellation ? HuddlColors.error : const Color(0xFF3580F0);
+        isCancellation ? HuddlColors.error : HuddlColors.blue;
 
     return Container(
       padding: const EdgeInsets.all(14),

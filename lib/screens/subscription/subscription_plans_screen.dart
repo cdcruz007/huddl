@@ -531,10 +531,10 @@ class _ScheduledChangeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isCancellation ? HuddlColors.error : const Color(0xFF3580F0);
+        isCancellation ? HuddlColors.error : HuddlColors.blue;
     final bgColor = isCancellation
         ? HuddlColors.error.withValues(alpha: 0.06)
-        : const Color(0xFF3580F0).withValues(alpha: 0.06);
+        : HuddlColors.blue.withValues(alpha: 0.06);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -652,7 +652,7 @@ class _TrialBanner extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0)],
+          colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
         ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
@@ -722,10 +722,10 @@ class _FoundingMemberBanner extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFF5F0FF), Color(0xFFFAF5FF)],
+          colors: [HuddlColors.premiumPurpleBg, Color(0xFFFAF5FF)],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
+        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -734,11 +734,11 @@ class _FoundingMemberBanner extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.12),
+                  color: HuddlColors.blue.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.local_fire_department,
-                    color: Color(0xFF3580F0), size: 18),
+                    color: HuddlColors.blue, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -747,7 +747,7 @@ class _FoundingMemberBanner extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3580F0)),
+                      color: HuddlColors.blue),
                 ),
               ),
             ],
@@ -757,8 +757,8 @@ class _FoundingMemberBanner extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFF3580F0).withValues(alpha: 0.1),
-              color: const Color(0xFF3580F0),
+              backgroundColor: HuddlColors.blue.withValues(alpha: 0.1),
+              color: HuddlColors.blue,
               minHeight: 6,
             ),
           ),
@@ -773,7 +773,7 @@ class _FoundingMemberBanner extends StatelessWidget {
                   style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF3580F0))),
+                      color: HuddlColors.blue)),
             ],
           ),
         ],
@@ -897,8 +897,8 @@ class _PlanCard extends StatelessWidget {
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isScheduledTarget) {
-      borderColor = const Color(0xFF3580F0);
-      bgColor = const Color(0xFFF5F0FF);
+      borderColor = HuddlColors.blue;
+      bgColor = HuddlColors.premiumPurpleBg;
     } else if (isHighlighted && !isCurrentPlan) {
       borderColor = HuddlColors.primary;
       bgColor = HuddlColors.peachVeryLight;
@@ -980,7 +980,7 @@ class _PlanCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF3580F0),
+                                color: HuddlColors.blue,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Scheduled',
@@ -1090,20 +1090,20 @@ class _PlanCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                  color: HuddlColors.blue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.local_fire_department,
-                        color: Color(0xFF3580F0), size: 14),
+                        color: HuddlColors.blue, size: 14),
                     const SizedBox(width: 4),
                     Text('Founding: \u00A33.99/mo locked for life',
                         style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF3580F0))),
+                            color: HuddlColors.blue)),
                   ],
                 ),
               ),
@@ -1176,20 +1176,20 @@ class _PlanCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                  color: HuddlColors.blue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.schedule,
-                        color: Color(0xFF3580F0), size: 16),
+                        color: HuddlColors.blue, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         scheduledSummary ?? 'Scheduled for next billing cycle',
                         style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: const Color(0xFF3580F0)),
+                            color: HuddlColors.blue),
                       ),
                     ),
                   ],

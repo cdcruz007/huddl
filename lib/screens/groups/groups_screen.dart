@@ -29,7 +29,7 @@ import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
-const Color _kOnline = Color(0xFF199A85); // HuddlColors.teal — online = positive status
+const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
 
 // ── Cambridge-area image assets (same pool as DefaultGroupService) ────────
 const List<String> _cambridgeImages = [
@@ -1118,14 +1118,14 @@ class _MessagesTabState extends State<_MessagesTab> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF3580F0).withValues(alpha: 0.06),
-            const Color(0xFF5B9DFF).withValues(alpha: 0.04),
+            HuddlColors.blue.withValues(alpha: 0.06),
+            HuddlColors.lightBlue.withValues(alpha: 0.04),
           ],
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF5B9DFF).withValues(alpha: 0.12)),
+        border: Border.all(color: HuddlColors.lightBlue.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -1148,7 +1148,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   '${summary.unreadCount} unread in ${summary.groupName}',
                   style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: const Color(0xFF3580F0),
+                    color: HuddlColors.blue,
                   ),
                 ),
                 Text(
@@ -1173,7 +1173,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)]),
+                gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View', style: GoogleFonts.poppins(
