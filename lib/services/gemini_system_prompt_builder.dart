@@ -5,17 +5,19 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
 // =============================================================================
-// GEMINI SYSTEM PROMPT BUILDER  — STEP 3, HYPERLOCAL EDITION
+// GEMINI SYSTEM PROMPT BUILDER  — ENRICHED V3, HYPERLOCAL EDITION
 //
 // The single orchestrator that assembles Gemini system prompts for EVERY
 // AI service in Huddl.  It pulls together:
 //   - Step 1: AiKnowledgeBaseService  (articles, milestones, community templates,
 //             borough directories, hyperlocal rules, safety guardrails)
+//             NOW with 25+ sources including Gingerbread, Parent Zone, Contact,
+//             Adoption UK, Coram Family Lives, DaddiLife, and more
 //   - Step 2: AiLearningEngineService (user signals, borough engagement stats,
 //             global event preferences, topic affinities, maturity level)
 //   - OnboardingDataService           (name, parent type, postcode, children,
-//             stages of life, due date)
-//   - PostcodeService                 (postcode → borough resolution)
+//             stages of life, due date, family structure, support needs)
+//   - PostcodeService                 (postcode \u2192 borough resolution)
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
 // │ HYPERLOCAL ARCHITECTURE — PROMPT FIRST PRINCIPLES                      │
@@ -1004,7 +1006,7 @@ class GeminiSystemPromptBuilder {
   // ──── SHARED PROMPT BUILDING BLOCKS ────────────────────────────────────
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Build the user identity block (name, parent type, borough, children).
+  /// Build the user identity block (name, parent type, borough, children, family structure).
   String _buildUserIdentityBlock() {
     final buf = StringBuffer();
     buf.writeln('USER CONTEXT:');
@@ -1039,6 +1041,50 @@ class GeminiSystemPromptBuilder {
         buf.writeln('- Child: $name');
       }
     }
+
+    // ── Enriched V3: Family structure & support context ──────────────────
+    final familyStructure = _onboarding.familyStructure;
+    if (familyStructure != null) {
+      final structureLabels = {
+        'two_parent': 'Two-parent household',
+        'single_parent': 'Single parent',
+        'blended': 'Blended/stepfamily',
+        'adoptive': 'Adoptive family',
+        'foster': 'Foster family',
+        'kinship': 'Kinship carer',
+        'co_parenting': 'Co-parenting arrangement',
+      };
+      buf.writeln('- Family structure: ${structureLabels[familyStructure] ?? familyStructure}');
+    }
+    if (_onboarding.isSingleParent) {
+      buf.writeln('- NOTE: Single parent \u2014 be mindful of financial and time pressures. '
+          'Reference Gingerbread and single-parent-specific advice.');
+    }
+    if (_onboarding.isBlendedFamily) {
+      buf.writeln('- NOTE: Blended family \u2014 be sensitive to stepparenting dynamics. '
+          'Reference HappySteps blended family advice.');
+    }
+    if (_onboarding.isAdoptiveFoster) {
+      buf.writeln('- NOTE: Adoptive/foster family \u2014 be aware of attachment and identity needs. '
+          'Reference Adoption UK and CoramBAAF support.');
+    }
+    if (_onboarding.hasSENChild) {
+      buf.writeln('- NOTE: Family has a child with SEN/disability \u2014 reference Contact '
+          'and Family Fund. Be mindful of additional care responsibilities.');
+    }
+    if (_onboarding.isSeparating) {
+      buf.writeln('- NOTE: Parent is separating/separated \u2014 be supportive and non-judgmental. '
+          'Reference Coram Family Lives helpline and OnlyMums & Dads.');
+    }
+    if (_onboarding.hasTeens) {
+      buf.writeln('- NOTE: Parent has teenagers \u2014 include teen-relevant advice from '
+          'HuffPost Parents, BBC Bitesize, and Care for the Family\'s Raising Teens resources.');
+    }
+    final supportNeeds = _onboarding.supportNeeds;
+    if (supportNeeds.isNotEmpty) {
+      buf.writeln('- Support interests: ${supportNeeds.join(", ")}');
+    }
+
     buf.writeln();
     return buf.toString();
   }
@@ -1052,6 +1098,9 @@ class GeminiSystemPromptBuilder {
     buf.writeln(
         '- **Groups**: Local community groups ONLY for parents in $borough');
     buf.writeln(
+        '  \u2192 Includes: Bumps & Babies, Walk & Talk, Single Parents Connect, '
+        'SEN Support, Blended Families, Digital Families, Green Parents, and more');
+    buf.writeln(
         '- **Meetups**: Organise and join meetups ONLY with parents in $borough');
     buf.writeln(
         '- **Market**: Buy & sell baby/children items ONLY with parents in $borough');
@@ -1062,7 +1111,15 @@ class GeminiSystemPromptBuilder {
     buf.writeln(
         '- **Events**: Browse family events across the WHOLE UK (the only cross-borough feature)');
     buf.writeln(
+        '  \u2192 Includes: NCT sales, Adoption UK walks, CoramBAAF conferences, '
+        'Family Fund events, Gingerbread comedy shows, Care for the Family tours');
+    buf.writeln(
         '  \u2192 Parents travelling can see events at their destination');
+    buf.writeln(
+        '- **Tutorials**: Parenting resources from 25+ trusted UK sources');
+    buf.writeln(
+        '  \u2192 Includes: NHS, NCT, Coram Family Lives courses, BBC Bitesize, '
+        'Parent Talk Podcast, DaddiLife, Parentkind webinars');
     buf.writeln();
     return buf.toString();
   }
