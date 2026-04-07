@@ -161,8 +161,8 @@ void main() {
       expect(LearningMaturity.values, contains(LearningMaturity.mature));
     });
 
-    test('SignalSource enum has 11 categories', () {
-      expect(SignalSource.values.length, 11);
+    test('SignalSource enum has 12 categories', () {
+      expect(SignalSource.values.length, 12);
       expect(SignalSource.values, contains(SignalSource.copilot));
       expect(SignalSource.values, contains(SignalSource.chat));
       expect(SignalSource.values, contains(SignalSource.group));
