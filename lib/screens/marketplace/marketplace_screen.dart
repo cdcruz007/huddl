@@ -1075,7 +1075,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       color: hc.surface,
       padding: const EdgeInsets.only(top: 4, bottom: 10),
       child: SizedBox(
-        height: 48,
+        height: 44,
         child: ListView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -2922,7 +2922,8 @@ class _FilterChip extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(24),
         child: Container(
-          height: 48,
+          height: 40,
+          alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: bgColor,
@@ -2935,6 +2936,7 @@ class _FilterChip extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(icon, size: 16, color: fgColor),
               const SizedBox(width: 6),

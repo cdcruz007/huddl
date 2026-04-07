@@ -2507,7 +2507,7 @@ class _HomeScreenState extends State<HomeScreen>
       ),
       child: ClipOval(
         child: Image.asset(
-          _onboarding.parentType == 'dad'
+          _onboarding.parentType?.toLowerCase() == 'dad'
               ? 'assets/images/avatars/John.png'
               : 'assets/images/avatars/Emma.png',
           width: size,

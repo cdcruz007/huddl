@@ -2331,6 +2331,8 @@ class _InvitationCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.center,
                     ),
                     child: Text(
                       'Decline',
@@ -2338,7 +2340,9 @@ class _InvitationCard extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: context.hc.textSecondary,
+                        height: 1.0,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -2355,6 +2359,8 @@ class _InvitationCard extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
+                      padding: EdgeInsets.zero,
+                      alignment: Alignment.center,
                     ),
                     child: Text(
                       'Accept',
@@ -2362,7 +2368,9 @@ class _InvitationCard extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: context.hc.surface,
+                        height: 1.0,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),

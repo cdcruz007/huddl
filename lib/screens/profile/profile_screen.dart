@@ -501,9 +501,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Container(
                               width: 1, height: 32, color: context.hc.divider),
                           _StatItem(
-                            count: _parentType == 'mum'
+                            count: _parentType.toLowerCase() == 'mum'
                                 ? 'Mum'
-                                : _parentType == 'dad'
+                                : _parentType.toLowerCase() == 'dad'
                                     ? 'Dad'
                                     : _parentType.isNotEmpty
                                         ? _parentType[0].toUpperCase() +
@@ -842,7 +842,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _parentType == 'dad' ? Icons.face : Icons.face_3,
+                          _parentType.toLowerCase() == 'dad' ? Icons.face : Icons.face_3,
                           size: 22,
                           color: HuddlColors.primary,
                         ),
@@ -3816,12 +3816,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         color: HuddlColors.peachLight,
         border: Border.all(color: HuddlColors.primary, width: 2),
       ),
-      child: Center(
-        child: Text(_name.isNotEmpty ? _name[0].toUpperCase() : 'U',
-            style: GoogleFonts.poppins(
-                fontSize: 36,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.primary)),
+      child: ClipOval(
+        child: Image.asset(
+          _parentType.toLowerCase() == 'dad'
+              ? 'assets/images/avatars/John.png'
+              : 'assets/images/avatars/Emma.png',
+          width: 84,
+          height: 84,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Center(
+            child: Text(_name.isNotEmpty ? _name[0].toUpperCase() : 'U',
+                style: GoogleFonts.poppins(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary)),
+          ),
+        ),
       ),
     );
   }

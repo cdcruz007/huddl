@@ -84,8 +84,8 @@ class OnboardingDataService {
   }
 
   void setParentType(String type) {
-    _parentType = type;
-    _log('Parent type set: $type');
+    _parentType = type.toLowerCase();
+    _log('Parent type set: $_parentType');
     _saveToStorage();
   }
 

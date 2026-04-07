@@ -607,7 +607,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           color: context.hc.surface,
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: SizedBox(
-            height: 44,
+            height: 40,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -636,8 +636,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 250),
-                      constraints: const BoxConstraints(minHeight: 40),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      height: 36,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
                         color: context.hc.surfaceAlt,
                         borderRadius: BorderRadius.circular(20),
@@ -1593,7 +1594,7 @@ class _EventsTabState extends State<_EventsTab> {
             color: context.hc.surface,
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: SizedBox(
-              height: 36,
+              height: 40,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2906,8 +2907,9 @@ class _FilterChipState extends State<_FilterChip>
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             // 48dp minimum touch target height
-            constraints: const BoxConstraints(minHeight: 40),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            height: 36,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: widget.isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
               borderRadius: BorderRadius.circular(20),
