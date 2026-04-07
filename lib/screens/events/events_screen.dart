@@ -240,31 +240,26 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Show FAB only on Meetups tab (index 1)
-    final showFab = _tabController.index == 1;
+    // FAB logic per tab:
+    //   0 (Groups)  → circular + → create group
+    //   1 (Meetups)  → circular + → create meetup
+    //   2 (Events)  → no FAB
+    final tabIndex = _tabController.index;
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
-      // ── Material You FAB for Create Meet-up (always accessible) ──
-      floatingActionButton: showFab
-          ? FloatingActionButton.extended(
-              onPressed: _navigateToCreateMeetup,
+      floatingActionButton: tabIndex == 2
+          ? null // No FAB on Events tab
+          : FloatingActionButton(
+              onPressed: tabIndex == 0
+                  ? () => Navigator.pushNamed(context, '/create_group')
+                  : _navigateToCreateMeetup,
               backgroundColor: HuddlColors.primary,
               foregroundColor: HuddlColors.white,
-              elevation: 3,
-              icon: const Icon(Icons.add, size: 20),
-              label: Text(
-                'Create',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            )
-          : null,
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, size: 28),
+            ),
       body: SafeArea(
         child: Column(
           children: [

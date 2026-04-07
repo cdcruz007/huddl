@@ -4040,36 +4040,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           ],
         ),
 
-        // ── FAB (Create group — bottom-right, circle) ─────────────
-        Positioned(
-          bottom: 24,
-          right: 16,
-          child: Semantics(
-            label: 'Create a new group',
-            button: true,
-            child: Material(
-              elevation: 6,
-              shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-              shape: const CircleBorder(),
-              color: HuddlColors.primary,
-              child: InkWell(
-                onTap: () async {
-                  HapticFeedback.lightImpact();
-                  final result = await Navigator.pushNamed(context, '/create_group');
-                  if (result != null) {
-                    widget.groupsChangedNotifier.value++;
-                  }
-                },
-                customBorder: const CircleBorder(),
-                child: const SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: Icon(Icons.add, color: Colors.white, size: 28),
-                ),
-              ),
-            ),
-          ),
-        ),
+        // FAB removed — now handled by the parent Scaffold in events_screen.dart
 
 
       ],
