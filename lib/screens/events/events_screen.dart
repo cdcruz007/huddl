@@ -46,7 +46,9 @@ class _EventsScreenState extends State<EventsScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      if (!_tabController.indexIsChanging) setState(() {});
+      // Rebuild on every index change (both tap and swipe) so the FAB
+      // visibility and action always reflect the active tab.
+      setState(() {});
     });
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
@@ -251,9 +253,16 @@ class _EventsScreenState extends State<EventsScreen>
       floatingActionButton: tabIndex == 2
           ? null // No FAB on Events tab
           : FloatingActionButton(
-              onPressed: tabIndex == 0
-                  ? () => Navigator.pushNamed(context, '/create_group')
-                  : _navigateToCreateMeetup,
+              onPressed: () {
+                // Read index at tap-time (not build-time) so swipe
+                // transitions always route to the correct action.
+                final currentTab = _tabController.index;
+                if (currentTab == 0) {
+                  Navigator.pushNamed(context, '/create_group');
+                } else if (currentTab == 1) {
+                  _navigateToCreateMeetup();
+                }
+              },
               backgroundColor: HuddlColors.primary,
               foregroundColor: HuddlColors.white,
               elevation: 4,
