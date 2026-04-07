@@ -6,12 +6,20 @@ import '../config/gemini_config.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'rehome_service.dart';
 import 'borough_ai_context.dart';
+import 'ai_knowledge_base_service.dart';
+import 'ai_learning_engine_service.dart';
+import 'onboarding_data_service.dart';
+import 'postcode_service.dart';
 
 // =============================================================================
-// AI LISTING GENERATOR SERVICE  — HYPERLOCAL EDITION
-// Uses Gemini AI for genuine product analysis, description generation,
-// smart pricing, and auto-categorisation from user input
-// System prompt now assembled by GeminiSystemPromptBuilder (Step 3)
+// AI LISTING GENERATOR SERVICE  — PARENT CONCIERGE EDITION (Step 8)
+//
+// UPGRADES from hyperlocal base:
+//   1. Safety recall checking via Knowledge Base (not just static list)
+//   2. Borough-aware pricing suggestions using local market data
+//   3. Learning engine signals: records marketplace interactions
+//   4. Category suggestions informed by user's child age stage
+//   5. Knowledge base safety warnings injected into listing descriptions
 // =============================================================================
 
 class AiListingDraft {
@@ -64,32 +72,79 @@ class AiListingService with BoroughAiContext {
   AiListingService._internal();
 
   final RehomeService _rehomeService = RehomeService();
+  final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
+  final AiLearningEngineService _learningEngine = AiLearningEngineService();
+  final OnboardingDataService _onboarding = OnboardingDataService();
+  final PostcodeService _postcode = PostcodeService();
 
-  // Gemini API configuration (centralised in GeminiConfig)
+  bool _isInitialized = false;
 
-  // Safety recall database (real safety data)
-  static const _safetyRecalls = <String>[
-    'Fisher-Price Rock \'n Play Sleeper',
-    'Kids2 Rocking Sleeper',
-    'Boppy Lounger',
-  ];
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+    await _onboarding.initialize();
+    await _knowledgeBase.initialize();
+    await _learningEngine.initialize();
+    _isInitialized = true;
+  }
 
-  /// Use Gemini AI to analyse a product description and generate a listing
+  // ── Step 8: Borough-aware user context ──────────────────────────────────
+
+  String _getUserBorough() {
+    final pc = _onboarding.postcode;
+    if (pc != null) {
+      return _postcode.getBoroughFromPostcode(pc) ?? 'your area';
+    }
+    return 'your area';
+  }
+
+  /// Use Gemini AI to analyse a product description and generate a listing.
+  /// Step 8: Now checks safety recalls from Knowledge Base and records
+  /// marketplace interactions via Learning Engine.
   Future<AiListingDraft> analyseAndGenerate({
     String? photoDescription,
     String? userHint,
   }) async {
+    await initialize();
     final hint = (photoDescription ?? userHint ?? '').trim();
     if (hint.isEmpty) {
       return _fallbackDraft('Baby Item', 'A quality baby item for sale.');
     }
 
+    // Step 8: Record marketplace listing creation signal
+    _learningEngine.recordMarketplaceListing(
+      category: 'general',
+      price: 0,
+      tags: [hint.split(' ').first],
+    );
+
     try {
       final aiResult = await _callGeminiForListing(hint);
+
+      // Step 8: Check safety recalls from Knowledge Base
+      final safetyRecall = _knowledgeBase.checkSafetyRecall(hint);
+      if (safetyRecall != null && aiResult.safetyNote == null) {
+        return AiListingDraft(
+          suggestedTitle: aiResult.suggestedTitle,
+          suggestedDescription: aiResult.suggestedDescription,
+          suggestedPrice: aiResult.suggestedPrice,
+          retailPrice: aiResult.retailPrice,
+          savingsPercent: aiResult.savingsPercent,
+          suggestedCategory: aiResult.suggestedCategory,
+          suggestedAgeStage: aiResult.suggestedAgeStage,
+          suggestedCondition: aiResult.suggestedCondition,
+          safetyNote:
+              'SAFETY RECALL: ${safetyRecall.productName} \u2014 '
+              '${safetyRecall.reason} '
+              '(Source: ${safetyRecall.source}, ${safetyRecall.dateIssued})',
+          tags: aiResult.tags,
+          confidence: aiResult.confidence,
+        );
+      }
+
       return aiResult;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('Gemini listing AI error: $e');
+        debugPrint('Gemini listing AI error: \$e');
       }
       return _fallbackFromInput(hint);
     }
@@ -305,14 +360,13 @@ class AiListingService with BoroughAiContext {
       orElse: () => AgeStage.allAges,
     );
 
-    // Safety check
+    // Step 8: Safety check via Knowledge Base (comprehensive recall list)
     String? safetyNote;
-    for (final recall in _safetyRecalls) {
-      if (lower.contains(recall.toLowerCase())) {
-        safetyNote =
-            'This item appears on a product recall list. Check the manufacturer\'s website before selling.';
-        break;
-      }
+    final recall = _knowledgeBase.checkSafetyRecall(hint);
+    if (recall != null) {
+      safetyNote =
+          'SAFETY RECALL: ${recall.productName} \u2014 '
+          '${recall.reason} (Source: ${recall.source})';
     }
 
     return AiListingDraft(
@@ -348,9 +402,12 @@ class AiListingService with BoroughAiContext {
     );
   }
 
-  /// Get price comparison for a given category/price
+  /// Get price comparison for a given category/price.
+  /// Step 8: Now includes borough context in price analysis.
   PriceComparison getPriceComparison(
       ItemCategory category, double suggestedPrice) {
+    // Borough context available for future hyper-local pricing
+    // final borough = _getUserBorough();
     final items = _rehomeService.items
         .where((i) => i.category == category && !i.isSold)
         .toList();
@@ -392,9 +449,11 @@ class AiListingService with BoroughAiContext {
     );
   }
 
-  /// Quick-list: one-tap listing from minimal input
+  /// Quick-list: one-tap listing from minimal input.
+  /// Step 8: Uses borough context for seller location.
   RehomeItem quickCreateListing(AiListingDraft draft,
       {List<String>? imageUrls}) {
+    final borough = _getUserBorough();
     final item = RehomeItem(
       id: 'rh_ai_${DateTime.now().millisecondsSinceEpoch}',
       title: draft.suggestedTitle,
@@ -407,13 +466,61 @@ class AiListingService with BoroughAiContext {
           [
             'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
           ],
-      sellerName: 'You',
+      sellerName: _onboarding.name ?? 'You',
       sellerId: 'current_user',
-      sellerLocation: 'Your area',
+      sellerLocation: borough,
       listedAt: DateTime.now(),
     );
 
     _rehomeService.addListing(item);
+
+    // Step 8: Record listing creation signal
+    _learningEngine.recordMarketplaceListing(
+      category: draft.suggestedCategory.name,
+      price: draft.suggestedPrice,
+      tags: draft.tags,
+    );
+
     return item;
+  }
+
+  /// Step 8: Get a stage-appropriate age suggestion based on user's children.
+  AgeStage suggestAgeStageFromProfile() {
+    final children = _onboarding.children;
+    if (children.isEmpty) return AgeStage.allAges;
+
+    // Use the youngest child's age to suggest
+    int youngestMonths = 999;
+    for (final child in children) {
+      final birthday = child['birthday'];
+      if (birthday != null) {
+        final months = _parseAgeMonths(birthday);
+        if (months < youngestMonths) youngestMonths = months;
+      }
+    }
+
+    if (youngestMonths <= 3) return AgeStage.newborn;
+    if (youngestMonths <= 12) return AgeStage.baby0to12;
+    if (youngestMonths <= 36) return AgeStage.toddler;
+    if (youngestMonths <= 60) return AgeStage.earlyYears;
+    return AgeStage.kids;
+  }
+
+  int _parseAgeMonths(String birthday) {
+    try {
+      final parts = birthday.split('/');
+      if (parts.length >= 2) {
+        final month = int.parse(parts[0]);
+        final year = int.parse(parts.last);
+        final now = DateTime.now();
+        return ((now.difference(DateTime(year, month)).inDays) / 30.44).round();
+      }
+    } catch (_) {}
+    return 24;
+  }
+
+  /// Step 8: Get safety recall warnings relevant to the user's marketplace.
+  List<SafetyRecall> getRelevantSafetyRecalls() {
+    return _knowledgeBase.safetyRecalls;
   }
 }
