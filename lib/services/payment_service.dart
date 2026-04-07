@@ -116,9 +116,10 @@ class HuddlProductIds {
 class StripeConfig {
   StripeConfig._();
 
-  // Stripe publishable key (set via environment or replace before release)
+  // Stripe publishable key — must be provided via --dart-define=STRIPE_PK=pk_live_xxx
+  // In production, NEVER use a test key. Obtain your live key from Stripe Dashboard.
   static const String publishableKey =
-      String.fromEnvironment('STRIPE_PK', defaultValue: 'pk_test_YOUR_KEY_HERE');
+      String.fromEnvironment('STRIPE_PK', defaultValue: '');
 
   // Backend endpoints (handled by BackendApiService — no hard-coded URLs needed)
   static String get checkoutSessionUrl =>

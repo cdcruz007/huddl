@@ -7,6 +7,11 @@ import 'package:flutter/foundation.dart'
 /// Generated from:
 ///   - google-services.json  (Android)
 ///   - Firebase Console       (Web)
+///
+/// NOTE: Firebase API keys are designed to be included in client code.
+/// Security is enforced via Firebase Security Rules and domain/app restrictions
+/// configured in the Firebase Console, not by keeping these keys secret.
+/// See: https://firebase.google.com/docs/projects/api-keys
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {

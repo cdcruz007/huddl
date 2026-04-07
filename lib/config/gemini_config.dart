@@ -6,12 +6,21 @@ import 'package:http/http.dart' as http;
 ///
 /// All AI services must import their key, model, and base URL from here so
 /// that a single edit is all that is needed when the key rotates.
+///
+/// The API key is loaded from the GEMINI_API_KEY environment variable at
+/// build time via --dart-define. For local development, pass:
+///   flutter run --dart-define=GEMINI_API_KEY=your_key_here
+/// For CI/CD, set the env var in your build pipeline.
 class GeminiConfig {
   GeminiConfig._();
 
   // ── API credentials ────────────────────────────────────────────────────
-  static const String apiKey =
-      'AIzaSyAbqDOrDBgR4o-HyCITHUSndq0TrxXJr5Y';
+  // Loaded from build-time environment variable for security.
+  // Never commit API keys directly in source code.
+  static const String apiKey = String.fromEnvironment(
+    'GEMINI_API_KEY',
+    defaultValue: '',
+  );
 
   static const String model = 'gemini-2.0-flash';
   static const String baseUrl =
@@ -31,11 +40,25 @@ class GeminiConfig {
   /// Whether the last validation succeeded.
   static bool get isKeyValid => _isValid;
 
+  /// Whether the API key has been provided via build-time environment.
+  static bool get hasKey => apiKey.isNotEmpty;
+
   /// Light-weight ping to verify the key is accepted by Google.
   /// Returns `true` when the key works, `false` otherwise.
   /// Safe to call multiple times - only hits the network once.
   static Future<bool> validateKey() async {
     if (_validated) return _isValid;
+
+    if (!hasKey) {
+      _validated = true;
+      _isValid = false;
+      if (kDebugMode) {
+        debugPrint(
+            'GeminiConfig: No API key provided. '
+            'Pass --dart-define=GEMINI_API_KEY=your_key to enable AI features.');
+      }
+      return false;
+    }
 
     try {
       final url = Uri.parse(generateContentUrl);
