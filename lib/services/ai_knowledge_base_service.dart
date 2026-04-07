@@ -5,14 +5,43 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
 // =============================================================================
-// AI PARENTING KNOWLEDGE BASE SERVICE  — HYPERLOCAL EDITION
+// AI PARENTING KNOWLEDGE BASE SERVICE  — ENRICHED HYPERLOCAL EDITION v3
 //
-// Centralised, structured parenting knowledge sourced from trusted UK websites:
-//   - NHS (nhs.uk)           — Clinical guidelines, vaccinations, safety
-//   - NCT (nct.org.uk)       — Antenatal, postnatal, groups & workshops
-//   - Bounty (bounty.com)    — Pregnancy stages, baby milestones, vouchers
-//   - Netmums (netmums.com)  — Real-parent advice, activities, local tips
-//   - Dadsnet (dadsnet.com)  — Father-focused parenting, mental health, play
+// Centralised, structured parenting knowledge sourced from 25+ trusted UK sites:
+//
+//  TIER 1 — CLINICAL / AUTHORITATIVE
+//   - NHS (nhs.uk)                — Clinical guidelines, vaccinations, safety
+//   - NCT (nct.org.uk)            — Antenatal, postnatal, groups & workshops
+//   - BBC Bitesize Parents        — Education support, teen parenting
+//
+//  TIER 2 — COMMUNITY / CHARITY
+//   - Coram Family Lives           — Helpline, online courses, ParentChannel TV
+//   - Barnardo's                   — Child safety, emotional wellbeing
+//   - Gingerbread                  — Single parent support (800K+ reached/yr)
+//   - Care for the Family          — Dad Cave podcast, bereavement support
+//   - Parent Zone                  — Digital safety, Online Safety Act
+//   - Parentkind                   — PTAs, National Parent Survey (5,866 parents)
+//   - Contact                      — Families with disabled children (381K helped)
+//   - Family Fund                  — Disabled/seriously ill children support
+//   - Sibs                         — Sibling support for SEN families
+//   - Home for Good / Adoption UK  — Fostering & adoption support
+//   - OnlyMums & Dads              — Family separation & co-parenting
+//   - HappySteps                   — Stepfamily / blended family coaching
+//
+//  TIER 3 — PARENT VOICES / BLOGS
+//   - Netmums (netmums.com)        — Real-parent advice, activities, local tips
+//   - Dadsnet (dadsnet.com)        — Father-focused parenting, mental health
+//   - DaddiLife (daddilife.com)     — Father-specific content, sleep training
+//   - Dad.info                      — Dad mental health, practical guidance
+//   - Parent Talk Podcast           — Emotional intelligence, resilience
+//   - Today's Parent                — Executive function, anti-racist parenting
+//   - Green Parent                  — Eco-parenting, nature, parental isolation
+//   - Slummy Single Mummy          — Single parent perspective, low-effort wins
+//   - Berkshire Mummies             — Hyperlocal model: What's On, soft play
+//   - MummyPages                    — Pregnancy tips, seasonal activities
+//   - HuffPost Parents              — Raising teens, school life, health
+//   - Bounty (bounty.com)           — Pregnancy stages, baby milestones
+//   - Mamas & Papas                 — Product guidance, Buying for Baby
 //
 // ┌──────────────────────────────────────────────────────────────────────────┐
 // │ HYPERLOCAL ARCHITECTURE                                                 │
@@ -44,6 +73,7 @@ enum KnowledgeCategory {
   toddler, // 1-3 years
   preschool, // 3-5 years
   schoolAge, // 5+
+  teens, // 10-18 years — new from HuffPost, BBC Bitesize
   feeding,
   sleep,
   health,
@@ -56,6 +86,15 @@ enum KnowledgeCategory {
   dadSpecific,
   marketplace,
   socialConnection,
+  singleParent, // new — Gingerbread, SlummySingleMummy
+  digitalSafety, // new — Parent Zone, BBC Bitesize
+  senDisability, // new — Contact, Family Fund, Sibs
+  adoptionFostering, // new — Adoption UK, CoramBAAF, Home for Good
+  stepfamily, // new — HappySteps
+  separationCoParenting, // new — OnlyMums & Dads
+  emotionalIntelligence, // new — Parent Talk Podcast
+  ecoParenting, // new — Green Parent
+  parentalWellbeing, // new — Coram Family Lives, Care for the Family
 }
 
 /// Scope of a piece of content — hyperlocal vs UK-wide.
@@ -755,12 +794,15 @@ class AiKnowledgeBaseService {
     buffer.writeln(
         '- Acknowledge that parenting is hard work. Celebrate small wins.');
     buffer.writeln(
-        '- Use inclusive language. Avoid assumptions about family structure.');
+        '- Use inclusive language. Avoid assumptions about family structure '
+        '(single parents, blended families, adoptive/foster families, co-parents '
+        'are all equally valid).');
     if (isDad) {
       buffer.writeln(
           '- This user is a dad. Be mindful that dads can feel excluded from parenting '
           'conversations. Be encouraging and affirming of their role. Reference dad-specific '
-          'advice when relevant (from Dadsnet and similar communities).');
+          'advice when relevant (from Dadsnet, DaddiLife, Dad.info, and Care for the Family\'s '
+          'Dad Cave podcast).');
     }
     if (borough != null) {
       buffer.writeln(
@@ -777,8 +819,18 @@ class AiKnowledgeBaseService {
     buffer.writeln(
         '- For safety emergencies: Direct to 999 immediately.');
     buffer.writeln(
+        '- For mental health crises: PANDAS Foundation (0808 196 1776), '
+        'Coram Family Lives helpline (24/7), or NHS talking therapies.');
+    buffer.writeln(
+        '- For single parent support: Gingerbread helpline and local groups.');
+    buffer.writeln(
+        '- For families with disabled children: Contact (contact.org.uk, 381K families helped).');
+    buffer.writeln(
+        '- For separation/co-parenting: OnlyMums & Dads, Coram Family Lives helpline.');
+    buffer.writeln(
         '- Reference trusted UK sources where appropriate: "According to NHS guidelines...", '
-        '"Many parents on Netmums have found...", "NCT recommends..."');
+        '"Many parents on Netmums have found...", "NCT recommends...", '
+        '"Parent Talk Podcast discusses...", "Gingerbread advises..."');
     buffer.writeln(
         '- Use British English (nappy, pushchair, nursery, dummy, cot, mum/dad).');
     buffer.writeln();
@@ -809,7 +861,19 @@ class AiKnowledgeBaseService {
     buffer.writeln(
         '- NEVER recommend leaving a child unattended.');
     buffer.writeln(
-        '- For mental health concerns: suggest NHS talking therapies, health visitor, or PANDAS Foundation helpline.');
+        '- For mental health concerns: suggest NHS talking therapies, health visitor, '
+        'PANDAS Foundation helpline (0808 196 1776), or Coram Family Lives helpline (24/7).');
+    buffer.writeln(
+        '- For family breakdown: suggest Coram Family Lives (24/7), '
+        'OnlyMums & Dads, or Gingerbread for single parents.');
+    buffer.writeln(
+        '- For disabled children support: suggest Contact (contact.org.uk) or Family Fund.');
+    buffer.writeln(
+        '- For online safety concerns: suggest Parent Zone or CEOP.');
+    buffer.writeln(
+        '- For adoption/fostering queries: suggest Adoption UK, CoramBAAF, or Home for Good.');
+    buffer.writeln(
+        '- For bereavement: suggest Care for the Family bereavement support.');
     buffer.writeln();
 
     return buffer.toString();
@@ -860,10 +924,14 @@ class AiKnowledgeBaseService {
     }
     buffer.writeln(
         '- Group types: Bumps & Babies, Walk & Talk, First Aid, Feeding Support, '
-        'Dad Meetups, Wellbeing Circle, Nearly New Sales, Activity Swaps.');
+        'Dad Meetups, Wellbeing Circle, Nearly New Sales, Activity Swaps, '
+        'Single Parents Connect, Digital Families, SEN Support, Adoption & Fostering, '
+        'Blended Families, Co-Parenting Support, Green Parents, School Network, '
+        'Raising Teens, Emotions & Resilience Workshop.');
     buffer.writeln(
         '- Meetup types: Playdate, Coffee morning, Park walk, Swimming, '
-        'Soft play, Library rhyme time, Dad & Kids outing.');
+        'Soft play, Library rhyme time, Dad & Kids outing, Bluebell walk, '
+        'Nature trail, Charity event, PTA fundraiser, Nearly New Sale.');
     buffer.writeln();
 
     return buffer.toString();
@@ -887,7 +955,10 @@ class AiKnowledgeBaseService {
     }
     buffer.writeln(
         '- Event types: Library sessions, baby classes, swimming, music, '
-        'soft play, farm visits, museum activities, festivals, NCT events.');
+        'soft play, farm visits, museum activities, festivals, NCT events, '
+        'Adoption UK family walks, CoramBAAF conferences, Family Fund face-to-face support, '
+        'Gingerbread virtual comedy shows, Care for the Family tours, '
+        'Barnardo\'s workshops, Parentkind webinars, charity fundraising events.');
     buffer.writeln();
 
     return buffer.toString();
@@ -1605,6 +1676,475 @@ class AiKnowledgeBaseService {
         relevanceWeight: 0.82,
         lastUpdated: now,
       ),
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // ENRICHED V3: New articles from 37 additional UK parenting sources
+      // ═══════════════════════════════════════════════════════════════════════
+
+      // ─── SINGLE PARENT SUPPORT (Gingerbread, Slummy Single Mummy) ──────
+      KnowledgeArticle(
+        id: 'sp_001',
+        title: 'Single parent support \u2014 you are not alone',
+        summary:
+            'Nearly 800,000 single parents access Gingerbread\'s online info each year. '
+            'Over 50 volunteer-led groups operate across England and Wales.',
+        body:
+            'Being a single parent comes with unique challenges, but there is a huge '
+            'community of support. Gingerbread (gingerbread.org.uk) is the leading charity for '
+            'single parents, offering advice on benefits, housing, legal rights, employment, '
+            'and emotional support. They run local volunteer-led groups in many boroughs. '
+            'Key resources: 1) Benefits calculator to check your entitlements. '
+            '2) Legal advice on child maintenance, custody, and co-parenting. '
+            '3) Virtual comedy shows and community events for single parents. '
+            '4) Policy updates (e.g. April changes to wages, sick pay, Universal Credit). '
+            'Financial planning tip from Slummy Single Mummy: meal planning and growing '
+            'vegetables with your kids can save money and build confidence. '
+            'On Huddl, connect with other single parents in your borough for local support.',
+        category: KnowledgeCategory.singleParent,
+        tags: ['single parent', 'gingerbread', 'benefits', 'support', 'financial planning'],
+        source: 'gingerbread',
+        sourceUrl: 'https://www.gingerbread.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.88,
+        lastUpdated: now,
+      ),
+
+      // ─── DIGITAL SAFETY (Parent Zone, BBC Bitesize) ────────────────────
+      KnowledgeArticle(
+        id: 'ds_001',
+        title: 'Online safety for children \u2014 a parent\'s guide',
+        summary:
+            'Parent Zone provides resources on screen time, social media, and the Online '
+            'Safety Act. BBC Bitesize helps parents support children\'s digital learning.',
+        body:
+            'As the government considers social media bans for under-16s, there are practical '
+            'steps parents can take now. Parent Zone (parentzone.org.uk) offers: '
+            '1) Everyday Digital programme \u2014 plug-and-play resources for digital family life. '
+            '2) Tech Shock podcast \u2014 the latest on smartphone bans and online safety legislation. '
+            '3) UK curriculum reforms on AI and Media Literacy guidance for schools. '
+            'BBC Bitesize Parents (bbc.co.uk/bitesize/parents) covers: '
+            '1) Life online safety tips. 2) Digital resilience building. '
+            '3) Age-appropriate content recommendations. '
+            'DaddiLife advises on "What is digital resilience?" with internet safety tips for kids. '
+            'Key rules: Set clear screen time limits, use parental controls, watch content together, '
+            'have open conversations about online experiences. '
+            'For teens: know the apps they use, understand teen slang (HuffPost Parents has a guide), '
+            'and create a family digital agreement.',
+        category: KnowledgeCategory.digitalSafety,
+        tags: ['online safety', 'screen time', 'social media', 'digital resilience', 'teens'],
+        source: 'parentzone',
+        sourceUrl: 'https://parentzone.org.uk/',
+        ageStages: ['preschool', 'schoolAge', 'teens'],
+        relevanceWeight: 0.85,
+        lastUpdated: now,
+      ),
+
+      // ─── SEN & DISABILITY (Contact, Family Fund, Sibs) ────────────────
+      KnowledgeArticle(
+        id: 'sen_001',
+        title: 'Support for families with disabled children',
+        summary:
+            'Contact helps 381,000 parent carers annually. 95% feel better informed after '
+            'their support. Family Fund provides grants for families raising disabled children.',
+        body:
+            'If your child has a disability, special educational need, or long-term condition, '
+            'there is significant UK-wide support: '
+            '1) Contact (contact.org.uk) \u2014 advice, community, and advocacy. 381,000 parent carers '
+            'helped annually. 97% would recommend. Covers education, benefits, local services. '
+            '2) Family Fund (familyfund.org.uk) \u2014 grants for essentials, face-to-face events '
+            'in cities across the UK. "Cost of Caring" research surveyed 2,000+ families. '
+            '3) Sibs (sibs.org.uk) \u2014 support specifically for siblings. A child like Amelia, 5, '
+            'who misses activities because they upset her autistic brother, can find understanding here. '
+            'Supports young siblings (7-17) and adult siblings (18+). '
+            '4) Barnardo\'s (barnardos.org.uk) \u2014 practical advice on preventing home accidents, '
+            'supporting emotional wellbeing, addressing bullying and cyberbullying. '
+            'On Huddl, our SEN Parent Support groups connect you with local families who understand.',
+        category: KnowledgeCategory.senDisability,
+        tags: ['SEN', 'disability', 'SEND', 'contact', 'family fund', 'sibs', 'additional needs'],
+        source: 'contact',
+        sourceUrl: 'https://contact.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.87,
+        lastUpdated: now,
+      ),
+
+      // ─── ADOPTION & FOSTERING (Home for Good, Adoption UK, CoramBAAF) ──
+      KnowledgeArticle(
+        id: 'af_001',
+        title: 'Fostering and adoption \u2014 finding loving homes',
+        summary:
+            'Every 15 minutes a child enters care in the UK. Adoption UK, CoramBAAF, '
+            'and Home for Good help families explore fostering and adoption.',
+        body:
+            'Every 15 minutes a child enters care in the UK. If you are considering '
+            'fostering or adoption: '
+            '1) Home for Good (homeforgood.org.uk) \u2014 coordinates a national network to ensure '
+            'every child finds a loving home. Supports individuals, churches, and local movements. '
+            '2) Adoption UK (adoptionuk.org) \u2014 the leading UK charity for adopted and care-experienced '
+            'people, founded 1971. Offers membership, community events, family walks, parent dinners, '
+            'and advocacy. Recent focus on SEND reforms and forced adoption survivors. '
+            '3) CoramBAAF (corambaaf.org.uk) \u2014 the UK\'s leading adoption/fostering membership body. '
+            'Runs adoption conferences, effective panels courses, and publishes starter packs. '
+            'New: kinship allowance pilot backed by \u00A3126 million reaching ~5,000 children. '
+            '4) First4Adoption (first4adoption.org.uk) \u2014 a helpful first stop for adoption info. '
+            'On Huddl, adoptive and foster families can find local support groups in their borough.',
+        category: KnowledgeCategory.adoptionFostering,
+        tags: ['adoption', 'fostering', 'kinship', 'care', 'Home for Good', 'CoramBAAF'],
+        source: 'adoptionuk',
+        sourceUrl: 'https://www.adoptionuk.org/',
+        ageStages: ['all'],
+        relevanceWeight: 0.82,
+        lastUpdated: now,
+      ),
+
+      // ─── STEPFAMILY (HappySteps) ───────────────────────────────────────
+      KnowledgeArticle(
+        id: 'sf_001',
+        title: 'Blended families \u2014 navigating stepparenting',
+        summary:
+            'Dr Lisa Doodson\'s HappySteps offers workshops, coaching, and step-mum meet-ups. '
+            'Stepparenting is rewarding but comes with unique challenges.',
+        body:
+            'Blended families are increasingly common in the UK. Dr Lisa Doodson '
+            '(happysteps.co.uk) is one of the UK\'s leading stepfamily experts: '
+            '1) 4-week group workshops via video call (recordings provided). '
+            '2) 1-to-1 and couple coaching for specific challenges. '
+            '3) Step-mum meet-ups for peer support. '
+            '4) Books: "How to Be a Happy Stepmum" and "Understanding Stepfamilies" '
+            '(professional guide for counsellors). '
+            'Key tips: Take things slowly \u2014 building trust takes time. '
+            'Don\'t try to replace the other parent. Communicate with your partner about '
+            'discipline and boundaries. Celebrate the positives of your blended family. '
+            'Coram Family Lives also offers leaflets on stepfamily guidance. '
+            'On Huddl, stepfamilies can find understanding and local support within their borough.',
+        category: KnowledgeCategory.stepfamily,
+        tags: ['stepfamily', 'blended family', 'stepparent', 'happysteps'],
+        source: 'happysteps',
+        sourceUrl: 'https://happysteps.co.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.78,
+        lastUpdated: now,
+      ),
+
+      // ─── SEPARATION & CO-PARENTING (OnlyMums & Dads) ──────────────────
+      KnowledgeArticle(
+        id: 'sep_001',
+        title: 'Separating with children \u2014 practical support',
+        summary:
+            'OnlyMums & Dads is a UK social enterprise supporting families going through '
+            'separation with one-to-one meetings, publications, and guidance.',
+        body:
+            'If you are going through a separation or divorce with children, you are not alone. '
+            'OnlyMums & Dads (onlymumsanddads.org) is a social enterprise offering: '
+            '1) One-to-one online meetings for parents starting their separation journey. '
+            '2) "Separating With Children 101" publication for practical guidance. '
+            '3) "Almost Anything But Family Court" guide to explore alternatives. '
+            '4) Family Separation Support Hub with comprehensive resources. '
+            'Coram Family Lives also offers: free 24/7 helpline (phone, email, WhatsApp, chat), '
+            'online parenting courses, and a links directory. Their "Outsiders" booklets cover '
+            'imprisonment impact on children and families. '
+            'Key advice: Keep children\'s wellbeing central, maintain routines, '
+            'never speak negatively about the other parent in front of children, '
+            'and seek professional mediation where possible.',
+        category: KnowledgeCategory.separationCoParenting,
+        tags: ['separation', 'divorce', 'co-parenting', 'family court', 'mediation'],
+        source: 'onlymumsanddads',
+        sourceUrl: 'https://www.onlymumsanddads.org/',
+        ageStages: ['all'],
+        relevanceWeight: 0.80,
+        lastUpdated: now,
+      ),
+
+      // ─── EMOTIONAL INTELLIGENCE (Parent Talk Podcast) ──────────────────
+      KnowledgeArticle(
+        id: 'ei_001',
+        title: 'Emotion regulation and resilience in children',
+        summary:
+            'Parent Talk Podcast covers vital topics: how toddlers think, building resilience, '
+            'what to do when your child says "I hate you", and emotion regulation techniques.',
+        body:
+            'Parent Talk Podcast (parenttalkpodcast.com) is a treasure trove of expert insights: '
+            '1) "When My Child Says I Hate You" \u2014 understanding it\'s an emotional expression, not fact. '
+            'Stay calm, acknowledge feelings ("I can see you\'re really upset"), give space, reconnect later. '
+            '2) "How Toddlers Think" \u2014 toddlers are not being manipulative; their brains are '
+            'developing and they cannot yet regulate emotions. Meltdowns are learning opportunities. '
+            '3) "Resilience" \u2014 building resilience means allowing age-appropriate risk, '
+            'letting children experience failure safely, and modelling problem-solving. '
+            '4) "Emotion Regulation" \u2014 teach children to name their feelings. '
+            'Use a feelings chart or traffic light system. DaddiLife highlights that be-calmer '
+            'parenting resolutions don\'t work \u2014 try practical alternatives instead. '
+            'Today\'s Parent covers executive function development \u2014 the brain\'s air traffic controller '
+            'that helps children plan, focus, and manage impulses.',
+        category: KnowledgeCategory.emotionalIntelligence,
+        tags: ['emotion regulation', 'resilience', 'toddler behaviour', 'feelings', 'podcast'],
+        source: 'parenttalk',
+        sourceUrl: 'https://parenttalkpodcast.com/',
+        ageStages: ['toddler', 'preschool', 'schoolAge'],
+        relevanceWeight: 0.86,
+        lastUpdated: now,
+      ),
+
+      // ─── ECO-PARENTING (Green Parent) ──────────────────────────────────
+      KnowledgeArticle(
+        id: 'eco_001',
+        title: 'Green parenting \u2014 sustainable family life',
+        summary:
+            'The Green Parent covers eco-parenting, nature walks, and tackling parental isolation '
+            'through outdoor connection. English Heritage launched "bonding benches".',
+        body:
+            'The Green Parent (thegreenparent.co.uk) champions sustainable family living: '
+            '1) "Step Into Spring: Best Bluebell Walks Across the UK" \u2014 nature connection '
+            'for families with route guides suitable for pushchairs. '
+            '2) "When the Clocks Change, Kids Feel it Most" \u2014 managing sleep transitions. '
+            '3) "English Heritage launches bonding benches to tackle parental isolation" \u2014 '
+            'designated benches where new parents can sit and connect with others. '
+            '4) "Hidden Dyslexia" \u2014 recognising signs that may be missed in young children. '
+            'Practical eco tips: use cloth nappies (saves ~\u00A31,000 over potty training), '
+            'buy preloved on Huddl Market, walk or cycle for short trips, '
+            'grow vegetables with your kids (Slummy Single Mummy: "saves money and builds confidence"), '
+            'and choose wooden toys over plastic where possible.',
+        category: KnowledgeCategory.ecoParenting,
+        tags: ['eco', 'sustainable', 'nature', 'green parent', 'environment'],
+        source: 'greenparent',
+        sourceUrl: 'https://thegreenparent.co.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.72,
+        lastUpdated: now,
+      ),
+
+      // ─── PARENTAL WELLBEING (Coram Family Lives, Care for the Family) ──
+      KnowledgeArticle(
+        id: 'pw_001',
+        title: 'Parental wellbeing \u2014 looking after yourself matters',
+        summary:
+            'Coram Family Lives offers free 24/7 helpline support. Care for the Family '
+            'provides couple, bereavement, and parenting support across the UK.',
+        body:
+            'Looking after yourself is essential for looking after your children: '
+            '1) Coram Family Lives (coramfamilylives.org.uk) \u2014 national helpline (phone, email, '
+            'WhatsApp, chat) available 24/7. Free online parenting courses created by professionals. '
+            'ParentChannel TV with 200+ expert videos. Leaflets on resilience, discipline, '
+            'teen anger, school transitions, and gangs awareness. London-based Independent Support '
+            'projects for SEND families at Portman Early Childhood Centre. '
+            '2) Care for the Family (careforthefamily.org.uk) \u2014 since 2021 has helped 3,881 families, '
+            'spending \u00A355,608 on UK-wide family support. Offers parent support, couple support, '
+            'and bereavement support. Podcasts: The Dad Cave, Parentalk, Family Life, Raising Teens. '
+            'Tour events: Tweens and Teens, The Mum Show. '
+            '3) Selmind directory lists Family Lives Parents Helpline for local referrals. '
+            '4) Perimenopause and sleep: Slummy Single Mummy addresses "the audacity of being awake at 3am" '
+            '\u2014 hormone changes affect parenting energy. Speak to your GP if struggling.',
+        category: KnowledgeCategory.parentalWellbeing,
+        tags: ['wellbeing', 'helpline', 'self-care', 'support', 'courses', 'mental health'],
+        source: 'coramfamilylives',
+        sourceUrl: 'https://www.coramfamilylives.org.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.90,
+        lastUpdated: now,
+      ),
+
+      // ─── TEEN PARENTING (HuffPost, BBC Bitesize) ───────────────────────
+      KnowledgeArticle(
+        id: 'teen_001',
+        title: 'Raising teens \u2014 navigating the teenage years',
+        summary:
+            'HuffPost Parents and BBC Bitesize cover teen-specific topics from school life '
+            'to teen slang. Care for the Family\'s "Raising Teens: Off Script" offers guidance.',
+        body:
+            'Parenting teenagers brings a whole new set of challenges: '
+            '1) HuffPost Parents (huffingtonpost.co.uk/parents) covers: Life as a Parent, '
+            'Raising Teens, Teen Slang Explained, School Life, and Children\'s Health. '
+            '2) BBC Bitesize Parents has a dedicated "Parenting Teens" podcast covering '
+            'education support and navigating digital life. '
+            '3) Care for the Family offers "Raising Teens: Off Script" \u2014 a 3-part series, '
+            'plus "Left to Their Own Devices?" on online safety events. '
+            '4) Parent Zone highlights the social media ban debate for under-16s. '
+            '5) Barnardo\'s addresses teenage risky behaviour, self-harm, and anxiety. '
+            'Key principles: maintain open communication, choose your battles wisely, '
+            'respect their growing independence, stay connected even when they push you away, '
+            'and know the warning signs of mental health issues (withdrawal, self-harm, '
+            'eating changes, substance use). CAMHS referral via GP if needed.',
+        category: KnowledgeCategory.teens,
+        tags: ['teenagers', 'teens', 'school', 'social media', 'mental health', 'independence'],
+        source: 'huffpost',
+        sourceUrl: 'https://www.huffingtonpost.co.uk/parents/',
+        ageStages: ['teens', 'schoolAge'],
+        relevanceWeight: 0.83,
+        lastUpdated: now,
+      ),
+
+      // ─── DAD-SPECIFIC ENRICHMENT (DaddiLife, Dad.info) ─────────────────
+      KnowledgeArticle(
+        id: 'dad_003',
+        title: 'DaddiLife \u2014 things to do with kids & keeping healthy',
+        summary:
+            'DaddiLife covers gratitude journaling, phonics activities, sleep training, '
+            'parenting hacks for chores, and child development milestones.',
+        body:
+            'DaddiLife (daddilife.com) is a vibrant UK dad community covering: '
+            '1) Things to do with kids: Pok\u00E9mon guides, gratitude journaling (7 reasons your kids '
+            'should use one), 16 engaging phonics activities, 75 gratitude quotes for kids. '
+            '2) Sleep training: "Cry It Out Method" review, "Baby Sleep Course from The Bedtime Champ" '
+            'review, best nursery night lights guide. '
+            '3) Parenting hacks: Getting chores done, home education resources, '
+            '"33 Ways To Prepare For Fatherhood" from practical to emotional. '
+            '4) Dad Heroes: "Three things I wish I knew before my kids were born" (Chris Ashton). '
+            '5) Father\'s Day gift guides and man cave ideas. '
+            'Dad.info (dad.info) provides practical information and emotional support specifically '
+            'for fathers, including resources on mental health, relationships, and hands-on fatherhood. '
+            'Care for the Family runs "The Dad Cave" podcast for dads.',
+        category: KnowledgeCategory.dadSpecific,
+        tags: ['dad', 'DaddiLife', 'activities', 'sleep training', 'fatherhood', 'dad.info'],
+        source: 'daddilife',
+        sourceUrl: 'https://www.daddilife.com/',
+        ageStages: ['all', 'dad'],
+        relevanceWeight: 0.84,
+        lastUpdated: now,
+      ),
+
+      // ─── EDUCATION & SCHOOL (Parentkind, BBC Bitesize) ─────────────────
+      KnowledgeArticle(
+        id: 'edu_001',
+        title: 'Supporting your child\'s education \u2014 the parent\'s role',
+        summary:
+            'The National Parent Survey (5,866 parents, 134,000+ insights) reveals what UK '
+            'parents think about schools. Parentkind supports PTAs across the country.',
+        body:
+            'Parentkind (parentkind.org.uk) is the UK\'s leading PTA membership body: '
+            '1) National Parent Survey 2025 \u2014 surveyed 5,866 parents across England, Scotland, '
+            'Wales, and Northern Ireland. Over 134,000 insights on school satisfaction, funding, '
+            'and parent involvement. '
+            '2) "Be School Ready" guide for parents of reception-age children. '
+            '3) Parent training and webinars on supporting children\'s learning at home. '
+            '4) PTA resources for fundraising, community events, and school engagement. '
+            'BBC Bitesize Parents provides: tips to support your child\'s education at every stage, '
+            'phonics and reading resources, maths help, and homework support. '
+            'Today\'s Parent highlights: executive function is the brain\'s "air traffic controller" '
+            '\u2014 help develop it through board games, cooking together, and free play. '
+            'Berkshire Mummies demonstrates the hyperlocal model: detailed school holiday '
+            'What\'s On guides for every borough, complete with reviews and family-friendly venues.',
+        category: KnowledgeCategory.education,
+        tags: ['education', 'school', 'PTA', 'homework', 'reading', 'parentkind'],
+        source: 'parentkind',
+        sourceUrl: 'https://www.parentkind.org.uk/',
+        ageStages: ['preschool', 'schoolAge', 'teens'],
+        relevanceWeight: 0.84,
+        lastUpdated: now,
+      ),
+
+      // ─── PREGNANCY ENRICHMENT (MummyPages, Mamas & Papas) ─────────────
+      KnowledgeArticle(
+        id: 'preg_005',
+        title: 'First trimester survival guide \u2014 10 things that help',
+        summary:
+            'MummyPages shares 10 things that make life easier in the first trimester, '
+            'plus calming techniques for birth anxiety.',
+        body:
+            'MummyPages (mummypages.co.uk) provides practical early pregnancy support: '
+            '1) "10 things that will make your life SO much easier in the first trimester" '
+            '\u2014 ginger biscuits, rest when you can, tell your workplace early if needed. '
+            '2) "Anxious about giving birth? Try these calming techniques and tips" '
+            '\u2014 breathing exercises, hypnobirthing taster sessions, birth plan discussions. '
+            '3) "5 questions you need to discuss with your spouse before baby arrives" '
+            '\u2014 division of responsibilities, finances, childcare, parenting values. '
+            '4) "What dads can do to take an active role in labour" '
+            '\u2014 addressing dads feeling "helpless, anxious & uncertain". '
+            'Mamas & Papas (mamasandpapas.com) offers free "Buying for Baby" appointments '
+            'with up to 40% savings, plus car seat appointments and step-by-step new parent support. '
+            'Their app is available on iOS and Android for product guidance.',
+        category: KnowledgeCategory.pregnancy,
+        tags: ['first trimester', 'birth anxiety', 'baby essentials', 'pregnancy tips'],
+        source: 'mummypages',
+        sourceUrl: 'https://www.mummypages.co.uk/',
+        ageStages: ['pregnancy'],
+        relevanceWeight: 0.83,
+        lastUpdated: now,
+      ),
+
+      // ─── ACTIVITIES ENRICHMENT (Berkshire Mummies, Netmums) ────────────
+      KnowledgeArticle(
+        id: 'act_002',
+        title: 'Hyperlocal family activities \u2014 the borough guide model',
+        summary:
+            'Berkshire Mummies demonstrates the hyperlocal approach with detailed What\'s On '
+            'guides for school holidays, seasonal events, walks, and soft play centres.',
+        body:
+            'Berkshire Mummies (berkshiremummies.co.uk) is the model for hyperlocal parenting content. '
+            'Run by Shona, a stay-at-home mum, it covers Bracknell, Windsor, Maidenhead, Wokingham, '
+            'Ascot, Reading, Thatcham, and Newbury. Content includes: '
+            '1) Detailed "What\'s On" guides for every school holiday with dates and venues. '
+            '2) Soft play centre directory with reviews and pushchair-friendliness ratings. '
+            '3) "Walks with Parks" \u2014 family-friendly walking routes with playground maps. '
+            '4) Summer camp listings, festival guides, and free activity roundups. '
+            '5) Small business directory supporting local enterprises. '
+            'Slummy Single Mummy adds "The Ultimate Guide to Rainy Day Activities" and '
+            '"Low-Effort Garden Wins for Busy Parents" for time-poor families. '
+            'MummyPages covers "Spring Outdoor Play: Getting Kids Moving After School" '
+            'and Easter crafts. This is exactly what Huddl aims to do at scale \u2014 '
+            'every borough gets its own living guide, powered by local parents sharing their finds.',
+        category: KnowledgeCategory.activities,
+        tags: ['hyperlocal', 'activities', 'what\'s on', 'soft play', 'family days out'],
+        source: 'berkshiremummies',
+        sourceUrl: 'https://berkshiremummies.co.uk/',
+        ageStages: ['all'],
+        relevanceWeight: 0.80,
+        lastUpdated: now,
+      ),
+
+      // ─── FOOD & NUTRITION UPDATE (Today's Parent) ──────────────────────
+      KnowledgeArticle(
+        id: 'feed_003',
+        title: 'Ultra-processed baby food \u2014 what parents need to know',
+        summary:
+            'Today\'s Parent reports 71% of baby foods are ultra-processed and high in sugar. '
+            'Home-made purees and whole foods are healthier alternatives.',
+        body:
+            'A concerning statistic from Today\'s Parent: 71% of commercially available '
+            'baby foods are ultra-processed and high in sugar. What this means: '
+            '1) Read labels carefully \u2014 watch for added sugars, maltodextrin, and fruit juice concentrate. '
+            '2) Home-made purees using fresh vegetables are easy and much healthier. '
+            '3) Baby-led weaning with soft finger foods avoids processed pouches entirely. '
+            '4) NCT Baby Cafe groups can provide feeding support and recipe sharing. '
+            '5) MummyPages recipe: "Crispy, salty & sweet honey-thyme fried halloumi" as '
+            'a weekend family staple. '
+            'Key principle: start with vegetables before fruits to develop savoury taste preferences. '
+            'NHS recommends avoiding added salt and sugar for babies under 12 months. '
+            'On Huddl, join your borough\'s Weaning Warriors group for local recipe ideas.',
+        category: KnowledgeCategory.feeding,
+        tags: ['ultra-processed', 'baby food', 'weaning', 'nutrition', 'homemade'],
+        source: 'todaysparent',
+        sourceUrl: 'https://www.todaysparent.com/',
+        ageStages: ['baby', 'toddler'],
+        relevanceWeight: 0.84,
+        lastUpdated: now,
+      ),
+
+      // ─── HOME EDUCATION (DaddiLife) ────────────────────────────────────
+      KnowledgeArticle(
+        id: 'edu_002',
+        title: 'Home education \u2014 resources and considerations',
+        summary:
+            'DaddiLife explores why families choose home education and the best resources '
+            'available for homeschooling in the UK.',
+        body:
+            'DaddiLife covers home education from the parent\'s perspective: '
+            '1) "Why we home educate our children" \u2014 personal accounts of the decision. '
+            '2) "Help with homeschooling: the best resources available now" \u2014 curated list '
+            'of UK educational platforms, workbooks, and online courses. '
+            'BBC Bitesize Parents provides structured learning support aligned with the '
+            'national curriculum for all ages. '
+            'Key considerations: Home education is legal in the UK. You do not need permission '
+            'from the local authority. However, you take full responsibility for ensuring your '
+            'child receives a suitable education. Contact your local authority for guidance. '
+            'Many home-educating families form local co-ops for socialisation and shared teaching. '
+            'On Huddl, find other home-educating parents in your borough through groups and meetups.',
+        category: KnowledgeCategory.education,
+        tags: ['homeschool', 'home education', 'learning resources', 'curriculum'],
+        source: 'daddilife',
+        sourceUrl: 'https://www.daddilife.com/',
+        ageStages: ['preschool', 'schoolAge', 'teens'],
+        relevanceWeight: 0.72,
+        lastUpdated: now,
+      ),
     ]);
   }
 
@@ -2265,6 +2805,164 @@ class AiKnowledgeBaseService {
         source: 'netmums',
         scope: ContentScope.ukWide,
       ),
+
+      // ═══════════════════════════════════════════════════════════════════════
+      // ENRICHED V3: New community templates from 37 additional sources
+      // ═══════════════════════════════════════════════════════════════════════
+
+      // ── SINGLE PARENT groups (Gingerbread) ──
+      CommunityTemplate(
+        name: 'Single Parents Connect',
+        description:
+            'A welcoming space for single parents in {borough}. Share tips on financial planning, '
+            'co-parenting, and building confidence. Inspired by Gingerbread\'s 800K-strong community.',
+        category: 'single_parent',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'weekly',
+        source: 'gingerbread',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── DIGITAL SAFETY group (Parent Zone) ──
+      CommunityTemplate(
+        name: 'Digital Families Circle',
+        description:
+            'Navigating screen time, online safety, and digital resilience for families in {borough}. '
+            'Share tips on parental controls, age-appropriate apps, and digital agreements.',
+        category: 'digital_safety',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'monthly',
+        source: 'parentzone',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── SEN / ADDITIONAL NEEDS groups (Contact, Sibs) ──
+      CommunityTemplate(
+        name: 'SEN Siblings Support',
+        description:
+            'For brothers and sisters of children with disabilities or additional needs in {borough}. '
+            'A safe space inspired by Sibs \u2014 because siblings need support too.',
+        category: 'sen_support',
+        audience: 'all',
+        format: 'in_person',
+        suggestedFrequency: 'fortnightly',
+        source: 'sibs',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── ADOPTION & FOSTERING group (Adoption UK) ──
+      CommunityTemplate(
+        name: 'Adoptive & Foster Families',
+        description:
+            'A supportive group for adoptive and foster families in {borough}. Share experiences, '
+            'celebrate milestones, and find understanding. Inspired by Adoption UK\'s community.',
+        category: 'adoption_fostering',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'monthly',
+        source: 'adoptionuk',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── STEPFAMILY group (HappySteps) ──
+      CommunityTemplate(
+        name: 'Blended Families Hub',
+        description:
+            'For stepparents and blended families in {borough}. Navigate the joys and challenges '
+            'of stepparenting together. Inspired by Dr Lisa Doodson\'s HappySteps approach.',
+        category: 'stepfamily',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'monthly',
+        source: 'happysteps',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── SEPARATION SUPPORT group (OnlyMums & Dads) ──
+      CommunityTemplate(
+        name: 'Co-Parenting Support',
+        description:
+            'For separated parents in {borough} navigating co-parenting. Practical tips, '
+            'emotional support, and shared experiences. Inspired by OnlyMums & Dads.',
+        category: 'separation_support',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'fortnightly',
+        source: 'onlymumsanddads',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── ECO-PARENTING group (Green Parent) ──
+      CommunityTemplate(
+        name: 'Green Parents Circle',
+        description:
+            'Eco-conscious families in {borough} sharing sustainable tips: cloth nappies, '
+            'preloved shopping, nature walks, and growing veg with kids. Inspired by The Green Parent.',
+        category: 'eco_parenting',
+        audience: 'all',
+        format: 'in_person',
+        suggestedFrequency: 'fortnightly',
+        source: 'greenparent',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── SCHOOL PTA group (Parentkind) ──
+      CommunityTemplate(
+        name: 'School Parents Network',
+        description:
+            'For school parents in {borough} to share PTA ideas, fundraising tips, '
+            'homework support strategies, and school readiness advice. Inspired by Parentkind.',
+        category: 'school_network',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'fortnightly',
+        source: 'parentkind',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── TEEN PARENTS group (HuffPost, BBC Bitesize) ──
+      CommunityTemplate(
+        name: 'Raising Teens Together',
+        description:
+            'For parents of teenagers in {borough}. Navigate school, social media, independence, '
+            'and emotional wellbeing. No topic is off-limits.',
+        category: 'teen_parents',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'fortnightly',
+        source: 'huffpost',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── EMOTIONAL INTELLIGENCE group (Parent Talk Podcast) ──
+      CommunityTemplate(
+        name: 'Emotions & Resilience Workshop',
+        description:
+            'For {borough} parents interested in building emotional intelligence in their children. '
+            'Discuss emotion regulation, resilience, and positive discipline. Inspired by Parent Talk Podcast.',
+        category: 'emotional_intelligence',
+        audience: 'all',
+        format: 'hybrid',
+        suggestedFrequency: 'monthly',
+        source: 'parenttalk',
+        scope: ContentScope.boroughOnly,
+      ),
+
+      // ── UK-WIDE: Charity events and workshops ──
+      CommunityTemplate(
+        name: 'UK Charity Family Events',
+        description:
+            'Browse UK-wide charity events: NCT Nearly New Sales, Barnardo\'s workshops, '
+            'Adoption UK family walks, CoramBAAF conferences, and Family Fund face-to-face support.',
+        category: 'events',
+        audience: 'all',
+        format: 'in_person',
+        suggestedFrequency: 'weekly',
+        source: 'nct',
+        scope: ContentScope.ukWide,
+      ),
     ]);
   }
 
@@ -2336,6 +3034,56 @@ class AiKnowledgeBaseService {
         return 'Netmums';
       case 'dadsnet':
         return 'Dadsnet';
+      case 'daddilife':
+        return 'DaddiLife';
+      case 'dadinfo':
+        return 'Dad.info';
+      case 'parenttalk':
+        return 'Parent Talk Podcast';
+      case 'bbcbitesize':
+        return 'BBC Bitesize Parents';
+      case 'parentkind':
+        return 'Parentkind';
+      case 'greenparent':
+        return 'The Green Parent';
+      case 'huffpost':
+        return 'HuffPost Parents';
+      case 'slummysinglemummy':
+        return 'Slummy Single Mummy';
+      case 'mummypages':
+        return 'MummyPages';
+      case 'berkshiremummies':
+        return 'Berkshire Mummies';
+      case 'coramfamilylives':
+        return 'Coram Family Lives';
+      case 'parentzone':
+        return 'Parent Zone';
+      case 'careforthefamily':
+        return 'Care for the Family';
+      case 'barnardos':
+        return 'Barnardo\'s';
+      case 'gingerbread':
+        return 'Gingerbread';
+      case 'onlymumsanddads':
+        return 'OnlyMums & Dads';
+      case 'contact':
+        return 'Contact (Disabled Children)';
+      case 'familyfund':
+        return 'Family Fund';
+      case 'sibs':
+        return 'Sibs';
+      case 'homeforgood':
+        return 'Home for Good';
+      case 'adoptionuk':
+        return 'Adoption UK';
+      case 'corambaaf':
+        return 'CoramBAAF';
+      case 'happysteps':
+        return 'HappySteps';
+      case 'mamasandpapas':
+        return 'Mamas & Papas';
+      case 'todaysparent':
+        return 'Today\'s Parent';
       default:
         return source;
     }
