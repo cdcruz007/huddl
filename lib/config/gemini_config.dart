@@ -10,10 +10,8 @@ class GeminiConfig {
   GeminiConfig._();
 
   // ── API credentials ────────────────────────────────────────────────────
-  // TODO: Replace with a valid Gemini API key from
-  //       https://aistudio.google.com/app/apikey
   static const String apiKey =
-      'AIzaSyAB4VM98Ryk76OEFVUixydGziexWteKnWo';
+      'AIzaSyAbqDOrDBgR4o-HyCITHUSndq0TrxXJr5Y';
 
   static const String model = 'gemini-2.0-flash';
   static const String baseUrl =
