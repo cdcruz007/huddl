@@ -91,10 +91,12 @@ class _ForwardSheet extends StatefulWidget {
   State<_ForwardSheet> createState() => _ForwardSheetState();
 }
 
-class _ForwardSheetState extends State<_ForwardSheet> {
+class _ForwardSheetState extends State<_ForwardSheet>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchCtrl = TextEditingController();
   final DMService _dmService = DMService();
   final OnboardingDataService _onboarding = OnboardingDataService();
+  late final TabController _tabCtrl;
 
   String _query = '';
   bool _loading = true;
@@ -106,11 +108,19 @@ class _ForwardSheetState extends State<_ForwardSheet> {
   @override
   void initState() {
     super.initState();
+    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl.addListener(() {
+      // Re-apply filter when tab changes so search is scoped
+      if (!_tabCtrl.indexIsChanging) {
+        _applyFilter(_query);
+      }
+    });
     _load();
   }
 
   @override
   void dispose() {
+    _tabCtrl.dispose();
     _searchCtrl.dispose();
     for (final t in _undoTimers.values) {
       t?.cancel();
@@ -467,100 +477,137 @@ class _ForwardSheetState extends State<_ForwardSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
 
-          // ── Sectioned contact/group list ─────────────
+          // ── Members / Groups tab bar ────────────────
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: context.hc.scaffold,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(3),
+            child: TabBar(
+              controller: _tabCtrl,
+              indicator: BoxDecoration(
+                color: HuddlColors.primary,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              indicatorSize: TabBarIndicatorSize.tab,
+              dividerColor: Colors.transparent,
+              labelColor: Colors.white,
+              unselectedLabelColor: context.hc.textSecondary,
+              labelStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+              tabs: [
+                Tab(
+                  height: 36,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.person_outline, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Members (${_memberTargets.length})'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  height: 36,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.people_outline, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Groups (${_groupTargets.length})'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ── Tab content ─────────────────────────────
           Expanded(
             child: _loading
                 ? const Center(
                     child:
                         CircularProgressIndicator(color: HuddlColors.primary))
-                : (_filteredMembers.isEmpty && _filteredGroupsList.isEmpty)
-                    ? Center(
-                        child: Text(
-                          'No contacts or groups found',
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: context.hc.textTertiary),
-                        ),
-                      )
-                    : ListView(
-                        padding: EdgeInsets.only(bottom: bottomPad + 20),
-                        children: [
-                          // ── MEMBERS section ──────────────────
-                          if (_filteredMembers.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
-                              child: Text(
-                                'MEMBERS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textTertiary,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ),
-                            ..._filteredMembers.map((target) {
-                              final state =
-                                  _sendStates[target.id] ?? _SendState.idle;
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _ForwardContactTile(
-                                    target: target,
-                                    sendState: state,
-                                    onSend: () => _onSend(target),
-                                    onUndo: () => _onUndo(target),
-                                  ),
-                                  Divider(
-                                    height: 1,
-                                    indent: 72,
-                                    color: context.hc.divider,
-                                  ),
-                                ],
-                              );
-                            }),
-                          ],
-                          // ── GROUPS section ──────────────────
-                          if (_filteredGroupsList.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
-                              child: Text(
-                                'GROUPS',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textTertiary,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                            ),
-                            ..._filteredGroupsList.map((target) {
-                              final state =
-                                  _sendStates[target.id] ?? _SendState.idle;
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _ForwardContactTile(
-                                    target: target,
-                                    sendState: state,
-                                    onSend: () => _onSend(target),
-                                    onUndo: () => _onUndo(target),
-                                  ),
-                                  Divider(
-                                    height: 1,
-                                    indent: 72,
-                                    color: context.hc.divider,
-                                  ),
-                                ],
-                              );
-                            }),
-                          ],
-                        ],
+                : TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      // ── Members tab ──────────────────
+                      _buildTargetList(
+                        targets: _filteredMembers,
+                        emptyLabel: 'No members found',
+                        bottomPad: bottomPad,
                       ),
+                      // ── Groups tab ───────────────────
+                      _buildTargetList(
+                        targets: _filteredGroupsList,
+                        emptyLabel: 'No groups found',
+                        bottomPad: bottomPad,
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Builds one tab's target list (Members or Groups).
+  Widget _buildTargetList({
+    required List<_ForwardTarget> targets,
+    required String emptyLabel,
+    required double bottomPad,
+  }) {
+    if (targets.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off_rounded,
+                  size: 40, color: context.hc.textTertiary),
+              const SizedBox(height: 12),
+              Text(
+                emptyLabel,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: context.hc.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: EdgeInsets.only(top: 4, bottom: bottomPad + 20),
+      itemCount: targets.length,
+      separatorBuilder: (_, __) => Divider(
+        height: 1,
+        indent: 72,
+        color: context.hc.divider,
+      ),
+      itemBuilder: (_, i) {
+        final target = targets[i];
+        final state = _sendStates[target.id] ?? _SendState.idle;
+        return _ForwardContactTile(
+          target: target,
+          sendState: state,
+          onSend: () => _onSend(target),
+          onUndo: () => _onUndo(target),
+        );
+      },
     );
   }
 
