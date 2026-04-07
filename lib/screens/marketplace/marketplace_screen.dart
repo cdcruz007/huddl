@@ -3829,8 +3829,10 @@ class _SmartOfferTile extends StatelessWidget {
                       onTap: onDecline,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+                        height: 38,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        constraints: const BoxConstraints(minWidth: 48),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: hc.divider),
@@ -3838,7 +3840,7 @@ class _SmartOfferTile extends StatelessWidget {
                         child: Text(
                           'Decline',
                           style: _adaptiveText(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w500,
                             color: hc.textSecondary,
                           ),
@@ -3855,8 +3857,10 @@ class _SmartOfferTile extends StatelessWidget {
                       onTap: onAccept,
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+                        height: 38,
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        constraints: const BoxConstraints(minWidth: 48),
                         decoration: BoxDecoration(
                           color: HuddlColors.success.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
@@ -3864,7 +3868,7 @@ class _SmartOfferTile extends StatelessWidget {
                         child: Text(
                           'Accept',
                           style: _adaptiveText(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: HuddlColors.success,
                           ),
