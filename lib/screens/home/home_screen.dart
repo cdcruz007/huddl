@@ -3630,7 +3630,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
               decoration: InputDecoration(
-                hintText: 'Search groups or people...',
+                hintText: 'Search groups or members...',
                 hintStyle: GoogleFonts.poppins(
                     fontSize: 14, color: context.hc.textTertiary),
                 prefixIcon: Icon(Icons.search,
@@ -3660,7 +3660,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                 fontSize: 14, fontWeight: FontWeight.w600),
             unselectedLabelStyle: GoogleFonts.poppins(
                 fontSize: 14, fontWeight: FontWeight.w400),
-            tabs: const [Tab(text: 'My Groups'), Tab(text: 'People')],
+            tabs: const [Tab(text: 'Groups'), Tab(text: 'Members')],
           ),
           Divider(height: 1, color: context.hc.divider),
           Flexible(
@@ -3672,7 +3672,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                         child: Padding(
                           padding: const EdgeInsets.all(32),
                           child: Text(
-                            'No groups to share with',
+                            'No groups to share with yet',
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: context.hc.textTertiary),
@@ -3753,7 +3753,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
                         child: Padding(
                           padding: const EdgeInsets.all(32),
                           child: Text(
-                            'No people in ${widget.borough} to share with',
+                            'No members in ${widget.borough} to share with',
                             style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: context.hc.textTertiary),

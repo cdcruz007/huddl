@@ -172,8 +172,8 @@ class HuddlColors {
   static const Color inputBorder = Color(0xFFDDDDDD);
   static const Color inputBorderLight = Color(0xFFE0E0E0);
 
-  // Onboarding
-  static const Color onboardingOrange = Color(0xFFFCA878);
+  // Onboarding — unified with primary brand orange for consistency
+  static const Color onboardingOrange = primary; // was Color(0xFFFCA878)
   static const Color avatarBg = Color(0xFFFFF9D6);
   static const Color avatarIcon = Color(0xFFE8A87C);
 
