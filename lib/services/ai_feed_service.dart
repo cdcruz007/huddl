@@ -11,11 +11,20 @@ import 'meetup_service.dart';
 import 'default_group_service.dart';
 import 'community_feed_service.dart';
 import 'borough_ai_context.dart';
+import 'ai_knowledge_base_service.dart';
+import 'ai_learning_engine_service.dart';
 
 // =============================================================================
-// AI SMART FEED CURATION & NUDGE ENGINE  — HYPERLOCAL EDITION
-// Uses Gemini AI to generate personalised, context-aware nudge cards
-// and intelligently rank community feed items
+// AI SMART FEED CURATION & NUDGE ENGINE  — PARENT CONCIERGE EDITION (Step 7)
+//
+// UPGRADES from hyperlocal base:
+//   1. Learning engine drives nudge selection (not just static rules)
+//   2. Knowledge base injects timely content: NHS vaccination reminders,
+//      Bounty milestone tips, Netmums seasonal activity ideas
+//   3. Nudge copy is hyper-personalised with child name + exact age
+//   4. Trending topics from Netmums as content nudges
+//   5. Dad-specific nudges for fathers (Dadsnet content)
+//   6. Feed ranking uses learning engine topic affinities
 // =============================================================================
 
 enum NudgeType {
@@ -27,6 +36,10 @@ enum NudgeType {
   communityWelcome,
   trendingItem,
   weeklyDigest,
+  vaccinationReminder,  // Step 7: NHS vaccination reminders
+  seasonalActivity,     // Step 7: Netmums seasonal activity ideas
+  knowledgeNudge,       // Step 7: KB article recommendation
+  dadSpecific,          // Step 7: Dadsnet-sourced content for fathers
 }
 
 class NudgeCard {
@@ -79,8 +92,8 @@ class AiFeedService with BoroughAiContext {
   final MeetupService _meetupService = MeetupService();
   final DefaultGroupService _groupService = DefaultGroupService();
   final CommunityFeedService _feedService = CommunityFeedService();
-
-  // Gemini API configuration (centralised in GeminiConfig)
+  final AiKnowledgeBaseService _knowledgeBase = AiKnowledgeBaseService();
+  final AiLearningEngineService _learningEngine = AiLearningEngineService();
 
   final List<NudgeCard> _nudges = [];
   bool _isInitialized = false;
@@ -94,6 +107,8 @@ class AiFeedService with BoroughAiContext {
     await _onboarding.initialize();
     await _groupService.initialize();
     await _feedService.initialize();
+    await _knowledgeBase.initialize();
+    await _learningEngine.initialize();
     await _generateNudges();
     _isInitialized = true;
   }
@@ -108,80 +123,104 @@ class AiFeedService with BoroughAiContext {
     if (idx >= 0) _nudges[idx].isDismissed = true;
   }
 
-  /// Re-rank feed items based on user profile relevance
+  /// Re-rank feed items based on learning engine + user profile relevance.
+  /// Step 7: Learning engine topic affinities now influence ranking.
   List<RankedFeedItem> rankFeedItems(List<FeedItem> items) {
     final userBorough = _getUserBorough();
     final userGroups =
         _groupService.getAllDefaultGroups().map((g) => g.id).toSet();
+    final topTopics = _learningEngine.profile.topTopics(10)
+        .map((t) => t.topic.toLowerCase())
+        .toSet();
+    final isDad = _onboarding.parentType == 'dad';
 
     return items.map((item) {
       double score = 0.0;
       String reason = '';
 
-      // Recency boost (40%)
+      // Recency boost (35%)
       final ageHours = DateTime.now().difference(item.createdAt).inHours;
       if (ageHours < 1) {
-        score += 0.40;
+        score += 0.35;
         reason = 'Just posted';
       } else if (ageHours < 6) {
-        score += 0.35;
+        score += 0.30;
         reason = 'Recent';
       } else if (ageHours < 24) {
-        score += 0.25;
+        score += 0.22;
         reason = 'Today';
       } else if (ageHours < 72) {
-        score += 0.15;
+        score += 0.12;
         reason = 'This week';
       } else {
         score += 0.05;
       }
 
-      // Type relevance (30%)
+      // Type relevance (25%)
       switch (item.type) {
         case FeedItemType.newEvent:
-          score += 0.30;
+          score += 0.25;
           reason = reason.isEmpty
               ? 'Meetup near you'
               : '$reason \u00B7 Meetup';
           break;
         case FeedItemType.newGroup:
           if (userGroups.length < 5) {
-            score += 0.28;
+            score += 0.23;
             reason = reason.isEmpty
                 ? 'New group'
                 : '$reason \u00B7 New group';
           } else {
-            score += 0.15;
+            score += 0.12;
           }
           break;
         case FeedItemType.newMarketplaceItem:
-          score += 0.22;
+          score += 0.18;
           reason = reason.isEmpty
               ? 'Market item'
               : '$reason \u00B7 Market';
           break;
         case FeedItemType.newParent:
-          score += 0.20;
+          score += 0.16;
           reason = reason.isEmpty
               ? 'New neighbour'
               : '$reason \u00B7 New parent';
           break;
         case FeedItemType.milestone:
-          score += 0.25;
+          score += 0.22;
           reason = reason.isEmpty
               ? 'Milestone'
               : '$reason \u00B7 Milestone';
           break;
       }
 
-      // Social proximity boost (30%)
+      // Social proximity boost (20%)
       if (item.meta.containsKey('groupId') &&
           userGroups.contains(item.meta['groupId'])) {
-        score += 0.20;
+        score += 0.15;
         reason += ' \u00B7 Your group';
       }
       if (item.subtitle.contains(userBorough)) {
-        score += 0.10;
+        score += 0.05;
+      }
+
+      // Step 7: Learning engine affinity boost (20%)
+      // Boost items that match the user's learned topic interests
+      final itemText =
+          '${item.title} ${item.subtitle}'.toLowerCase();
+      int topicMatches = 0;
+      for (final topic in topTopics) {
+        if (itemText.contains(topic)) topicMatches++;
+      }
+      if (topicMatches > 0) {
+        score += (0.20 * (topicMatches / topTopics.length).clamp(0.0, 1.0));
+        reason += ' \u00B7 Matches your interests';
+      }
+
+      // Step 7: Dad-specific boost for fathers
+      if (isDad && itemText.contains('dad')) {
+        score += 0.08;
+        reason += ' \u00B7 For dads';
       }
 
       return RankedFeedItem(
@@ -371,6 +410,261 @@ class AiFeedService with BoroughAiContext {
       actionRoute: '/marketplace',
       relevanceScore: 0.60,
     ));
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // STEP 7: KNOWLEDGE BASE + LEARNING ENGINE NUDGES
+    // ═══════════════════════════════════════════════════════════════════════
+
+    // 9. NHS Vaccination reminder nudge
+    _generateVaccinationNudges();
+
+    // 10. Bounty/NHS milestone tip nudge (knowledge-base-powered)
+    _generateKnowledgeMilestoneNudges();
+
+    // 11. Netmums seasonal activity nudge
+    _generateSeasonalNudges();
+
+    // 12. Knowledge article recommendation based on learning engine
+    _generateKnowledgeArticleNudge();
+
+    // 13. Dad-specific nudge for fathers (Dadsnet content)
+    _generateDadNudge();
+
+    // 14. Learning-engine-driven personalised nudge
+    _generateLearningDrivenNudge();
+  }
+
+  // ── Step 7: Knowledge Base Nudge Generators ────────────────────────────
+
+  /// NHS vaccination reminders based on child age.
+  void _generateVaccinationNudges() {
+    for (final child in _onboarding.children) {
+      final birthday = child['birthday'];
+      final name = child['name'] ?? 'Your little one';
+      if (birthday == null) continue;
+
+      final ageWeeks = _parseAgeWeeks(birthday);
+      if (ageWeeks == null) continue;
+
+      final due = _knowledgeBase.getVaccinationsDue(ageWeeks);
+      if (due.isNotEmpty) {
+        final vacc = due.first;
+        _nudges.add(NudgeCard(
+          id: 'nudge_vacc_${vacc.name}_$name',
+          type: NudgeType.vaccinationReminder,
+          title: '$name may be due for vaccination',
+          subtitle: '${vacc.name} \u2014 '
+              'According to NHS guidelines, this is typically given at ${vacc.ageWeeks} weeks. '
+              'Check with your GP.',
+          emoji: '\u{1F489}',
+          actionLabel: 'NHS Info',
+          relevanceScore: 0.92,
+          meta: {'source': 'NHS', 'childName': name},
+        ));
+      }
+    }
+  }
+
+  /// Bounty/NHS milestone tips powered by knowledge base.
+  void _generateKnowledgeMilestoneNudges() {
+    for (final child in _onboarding.children) {
+      final birthday = child['birthday'];
+      final name = child['name'] ?? 'Your little one';
+      if (birthday == null) continue;
+
+      final ageMonths = _parseAgeMonthsFromBirthday(birthday);
+      if (ageMonths == null) continue;
+
+      final nextMilestone = _knowledgeBase.getNextMilestone(ageMonths);
+      if (nextMilestone != null) {
+        _nudges.add(NudgeCard(
+          id: 'nudge_kb_milestone_${nextMilestone.ageMonths}_$name',
+          type: NudgeType.knowledgeNudge,
+          title: '$name \u2014 ${nextMilestone.label}',
+          subtitle: '${nextMilestone.description} '
+              '(Source: Bounty & NHS)',
+          emoji: '\u{1F31F}',
+          actionLabel: 'Learn More',
+          relevanceScore: 0.85,
+          meta: {'source': 'Bounty/NHS', 'childName': name},
+        ));
+      }
+    }
+  }
+
+  /// Netmums seasonal activity ideas from knowledge base.
+  void _generateSeasonalNudges() {
+    final seasonalTips = _knowledgeBase.getCurrentSeasonalTips();
+    if (seasonalTips.isEmpty) return;
+
+    final tip = seasonalTips.first;
+    final activities = tip.suggestedActivities.take(2).join(' or ');
+    final season = _seasonName(tip.month);
+
+    _nudges.add(NudgeCard(
+      id: 'nudge_seasonal_${tip.month}',
+      type: NudgeType.seasonalActivity,
+      title: tip.title,
+      subtitle: 'Try $activities this $season! '
+          '(Inspired by Netmums)',
+      emoji: tip.month >= 11 || tip.month <= 2
+          ? '\u2744\uFE0F'
+          : tip.month >= 6 && tip.month <= 8
+              ? '\u2600\uFE0F'
+              : tip.month >= 9 && tip.month <= 10
+                  ? '\u{1F342}'
+                  : '\u{1F338}',
+      actionLabel: 'See Ideas',
+      actionRoute: '/events',
+      relevanceScore: 0.62,
+      meta: {'source': 'Netmums', 'season': season},
+    ));
+  }
+
+  /// Knowledge article recommendation based on learning engine interests.
+  void _generateKnowledgeArticleNudge() {
+    final articles = _knowledgeBase.getArticlesForUser();
+    if (articles.isEmpty) return;
+
+    // Pick article matching user's top topic affinity
+    final topTopics = _learningEngine.profile.topTopics(5);
+    KnowledgeArticle? bestArticle;
+
+    for (final topic in topTopics) {
+      bestArticle = articles.cast<KnowledgeArticle?>().firstWhere(
+            (a) => a!.tags.any(
+                (t) => t.toLowerCase().contains(topic.topic.toLowerCase())),
+            orElse: () => null,
+          );
+      if (bestArticle != null) break;
+    }
+
+    bestArticle ??= articles.first;
+
+    _nudges.add(NudgeCard(
+      id: 'nudge_article_${bestArticle.id}',
+      type: NudgeType.knowledgeNudge,
+      title: bestArticle.title,
+      subtitle: '${bestArticle.summary} '
+          '(Source: ${bestArticle.source})',
+      emoji: '\u{1F4D6}',
+      actionLabel: 'Read',
+      relevanceScore: 0.58,
+      meta: {'articleId': bestArticle.id, 'source': bestArticle.source},
+    ));
+  }
+
+  /// Dad-specific nudge for fathers using Dadsnet content.
+  void _generateDadNudge() {
+    if (_onboarding.parentType != 'dad') return;
+
+    final dadArticles =
+        _knowledgeBase.getArticlesByCategory(KnowledgeCategory.dadSpecific);
+    if (dadArticles.isEmpty) return;
+
+    final article = dadArticles[Random().nextInt(dadArticles.length)];
+    _nudges.add(NudgeCard(
+      id: 'nudge_dad_${article.id}',
+      type: NudgeType.dadSpecific,
+      title: article.title,
+      subtitle: '${article.summary} (From Dadsnet)',
+      emoji: '\u{1F468}\u200D\u{1F467}',
+      actionLabel: 'Read',
+      relevanceScore: 0.74,
+      meta: {'articleId': article.id, 'source': 'Dadsnet'},
+    ));
+  }
+
+  /// Learning-engine-driven personalised nudge.
+  /// Uses maturity level and engagement patterns for targeted suggestion.
+  void _generateLearningDrivenNudge() {
+    final maturity = _learningEngine.maturity;
+    final borough = _getUserBorough();
+
+    switch (maturity) {
+      case LearningMaturity.coldStart:
+        _nudges.add(NudgeCard(
+          id: 'nudge_learning_cold',
+          type: NudgeType.communityWelcome,
+          title: 'Welcome to Huddl!',
+          subtitle: 'The more you use Huddl, the smarter your experience gets. '
+              'Start by joining a group in $borough!',
+          emoji: '\u{1F680}',
+          actionLabel: 'Get Started',
+          actionRoute: '/groups',
+          relevanceScore: 0.82,
+        ));
+        break;
+      case LearningMaturity.warming:
+        _nudges.add(NudgeCard(
+          id: 'nudge_learning_warming',
+          type: NudgeType.communityWelcome,
+          title: 'Your Huddl AI is learning!',
+          subtitle: 'We are getting to know your preferences. '
+              'Keep chatting, joining meetups, and exploring \u2014 '
+              'your feed will get even more personalised.',
+          emoji: '\u{1F9E0}',
+          relevanceScore: 0.45,
+        ));
+        break;
+      case LearningMaturity.personalised:
+      case LearningMaturity.mature:
+        // For mature users, suggest based on their top unengaged topic
+        final topTopics = _learningEngine.profile.topTopics(3);
+        if (topTopics.isNotEmpty) {
+          final topic = topTopics.first;
+          _nudges.add(NudgeCard(
+            id: 'nudge_learning_topic_${topic.topic}',
+            type: NudgeType.knowledgeNudge,
+            title: 'You seem interested in ${topic.topic}',
+            subtitle: 'We found new content about ${topic.topic} '
+                'that other $borough parents are loving.',
+            emoji: '\u{2728}',
+            actionLabel: 'Explore',
+            relevanceScore: 0.64,
+          ));
+        }
+        break;
+    }
+  }
+
+  // ── Season helper ──────────────────────────────────────────────────────
+
+  String _seasonName(int month) {
+    if (month >= 3 && month <= 5) return 'Spring';
+    if (month >= 6 && month <= 8) return 'Summer';
+    if (month >= 9 && month <= 11) return 'Autumn';
+    return 'Winter';
+  }
+
+  // ── Age parsing helpers ─────────────────────────────────────────────────
+
+  int? _parseAgeWeeks(String birthday) {
+    try {
+      final parts = birthday.split('/');
+      if (parts.length < 2) return null;
+      final month = int.parse(parts[0]);
+      final year = int.parse(parts.last);
+      final day = parts.length > 2 ? int.parse(parts[1]) : 1;
+      final birthDate = DateTime(year, month, day);
+      return DateTime.now().difference(birthDate).inDays ~/ 7;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int? _parseAgeMonthsFromBirthday(String birthday) {
+    try {
+      final parts = birthday.split('/');
+      if (parts.length < 2) return null;
+      final month = int.parse(parts[0]);
+      final year = int.parse(parts.last);
+      final birthDate = DateTime(year, month, 1);
+      final now = DateTime.now();
+      return (now.year - birthDate.year) * 12 + (now.month - birthDate.month);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Call Gemini to generate personalised nudge copy
