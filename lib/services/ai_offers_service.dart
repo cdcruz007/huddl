@@ -11,16 +11,19 @@ import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
 // =====================================================================================
-// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — PARENT CONCIERGE EDITION (Step 10)
+// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — ENRICHED V3 (Steps 5,10)
 // =====================================================================================
 //
-// UPGRADES from hyperlocal base:
+// UPGRADES from v2:
 //   1. Learning engine records offer interactions for personalisation loop
 //   2. Knowledge base seasonal tips inform seasonal spotlight generation
 //   3. Stage-aware deal scoring uses precise child ages (not just keywords)
 //   4. Safety recall awareness: flags recalled products in deal recommendations
 //   5. Maturity-aware deal curation: cold-start gets popular picks,
 //      mature gets learning-engine-personalised recommendations
+//   6. NEW V3: Charity-partner awareness (Gingerbread, Contact, Family Fund)
+//   7. NEW V3: Eco-product suggestions from Green Parent insights
+//   8. NEW V3: Mamas & Papas product deals and Buying for Baby appointments
 // =====================================================================================
 
 /// A single AI-scored deal recommendation

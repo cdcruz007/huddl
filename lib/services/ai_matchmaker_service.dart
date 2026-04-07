@@ -14,18 +14,21 @@ import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
 // =============================================================================
-// AI MEETUP MATCHMAKER SERVICE  — PARENT CONCIERGE EDITION (Step 9)
+// AI MEETUP MATCHMAKER SERVICE  — ENRICHED V3 (Steps 5,9)
 //
-// UPGRADES from hyperlocal base:
+// UPGRADES from v2:
 //   1. Learning engine topic affinities boost compatibility scoring
 //   2. Knowledge base community templates inform meetup suggestions
 //   3. Match interactions recorded to learning engine for feedback loop
 //   4. Borough directory venues used for realistic location suggestions
 //   5. Maturity-aware matching: cold-start users get broader matches
+//   6. NEW V3: Family structure matching (single+single, blended+blended, etc.)
+//   7. NEW V3: Support need matching (SEN parents connect, adoption families)
+//   8. NEW V3: Richer parent profiles with interests from 25+ sources
 //
 // HYPERLOCAL RULE: Borough-only.
-// • Matches ONLY parents within the same borough
-// • Suggested meetup locations are from borough directory
+// \u2022 Matches ONLY parents within the same borough
+// \u2022 Suggested meetup locations are from borough directory
 // =============================================================================
 
 /// A parent profile used for matching
@@ -214,6 +217,39 @@ class AiMatchmakerService with BoroughAiContext {
         groupIds: ['disc_new_parents', 'disc_school_ready'],
         interests: ['After-school activities', 'Parks', 'Baking'],
       ),
+      // V3: Enriched diversity from new sources
+      MatchableParent(
+        id: 'match_9', name: 'Priya Sharma',
+        avatarUrl: 'https://i.pravatar.cc/150?img=26',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['3 years', '7 years'],
+        groupIds: ['disc_single_parents', 'disc_school_ready'],
+        interests: ['Single parent tips', 'Financial planning', 'Nature walks'],
+      ),
+      MatchableParent(
+        id: 'match_10', name: 'Tom & Lisa Harris',
+        avatarUrl: 'https://i.pravatar.cc/150?img=30',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['5 years', '9 years'],
+        groupIds: ['disc_blended_families', 'disc_teen_parents'],
+        interests: ['Blended family life', 'Football', 'Digital safety'],
+      ),
+      MatchableParent(
+        id: 'match_11', name: 'Rachel Green',
+        avatarUrl: 'https://i.pravatar.cc/150?img=29',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['4 years'],
+        groupIds: ['disc_sen_support', 'disc_nature_walks'],
+        interests: ['SEN support', 'Autism resources', 'Sensory play'],
+      ),
+      MatchableParent(
+        id: 'match_12', name: 'David & Marie Chen',
+        avatarUrl: 'https://i.pravatar.cc/150?img=14',
+        borough: borough, stagesOfLife: ['parent'],
+        childAges: ['2 years'],
+        groupIds: ['disc_adoptive_foster', 'disc_toddler_group'],
+        interests: ['Adoption support', 'Attachment parenting', 'Story time'],
+      ),
     ];
 
     _nearbyParents = parentProfiles.map((parent) {
@@ -306,6 +342,25 @@ class AiMatchmakerService with BoroughAiContext {
       if (interestMatches > 0) {
         score += 0.15 * (interestMatches / parent.interests.length).clamp(0.0, 1.0);
       }
+    }
+
+    // V3: Family structure affinity boost (10%)
+    // Single parents match better with other single parents, etc.
+    if (_onboarding.isSingleParent &&
+        parent.groupIds.any((g) => g.contains('single'))) {
+      score += 0.10;
+    }
+    if (_onboarding.hasSENChild &&
+        parent.groupIds.any((g) => g.contains('sen'))) {
+      score += 0.10;
+    }
+    if (_onboarding.isBlendedFamily &&
+        parent.groupIds.any((g) => g.contains('blended'))) {
+      score += 0.10;
+    }
+    if (_onboarding.isAdoptiveFoster &&
+        parent.groupIds.any((g) => g.contains('adoptive') || g.contains('foster'))) {
+      score += 0.10;
     }
 
     return score.clamp(0.0, 1.0);

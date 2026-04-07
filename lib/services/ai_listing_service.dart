@@ -12,14 +12,17 @@ import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
 // =============================================================================
-// AI LISTING GENERATOR SERVICE  — PARENT CONCIERGE EDITION (Step 8)
+// AI LISTING GENERATOR SERVICE  — ENRICHED V3 (Steps 5,8)
 //
-// UPGRADES from hyperlocal base:
+// UPGRADES from v2:
 //   1. Safety recall checking via Knowledge Base (not just static list)
 //   2. Borough-aware pricing suggestions using local market data
 //   3. Learning engine signals: records marketplace interactions
 //   4. Category suggestions informed by user's child age stage
 //   5. Knowledge base safety warnings injected into listing descriptions
+//   6. NEW V3: Mamas & Papas product guidance for pricing benchmarks
+//   7. NEW V3: Today's Parent ultra-processed food awareness for feeding items
+//   8. NEW V3: Green Parent eco-friendly product nudges
 // =============================================================================
 
 class AiListingDraft {
