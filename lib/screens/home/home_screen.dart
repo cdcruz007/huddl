@@ -2833,7 +2833,16 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                         label: 'Reply to comment',
                                         button: true,
                                         child: GestureDetector(
-                                          onTap: () {},
+                                          onTap: () {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: const Text('Reply feature coming soon'),
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                duration: const Duration(seconds: 2),
+                                              ),
+                                            );
+                                          },
                                           child: SizedBox(
                                             height: 48,
                                             child: Center(
