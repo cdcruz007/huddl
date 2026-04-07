@@ -859,19 +859,7 @@ class _HomeScreenState extends State<HomeScreen>
                     children: [
                       Semantics(
                         label: 'Huddl home logo',
-                        child: Image.asset(
-                          'assets/images/logo_huddl.png',
-                          height: 26,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => Text(
-                            'huddl',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: HuddlColors.primary,
-                            ),
-                          ),
-                        ),
+                        child: _buildAdaptiveLogo(isDark),
                       ),
                       const Spacer(),
 
@@ -1044,6 +1032,40 @@ class _HomeScreenState extends State<HomeScreen>
   // ═══════════════════════════════════════════════════════════════════════════
   // UI BUILDERS
   // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Adaptive logo — in dark mode the dark-grey wordmark is tinted white for
+  /// proper contrast against the dark surface.
+  Widget _buildAdaptiveLogo(bool isDark) {
+    final logo = Image.asset(
+      'assets/images/logo_huddl.png',
+      height: 26,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => Text(
+        'huddl',
+        style: GoogleFonts.poppins(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: HuddlColors.primary,
+        ),
+      ),
+    );
+
+    if (!isDark) return logo;
+
+    // In dark mode, apply a colour filter that brightens the dark-grey wordmark
+    // while keeping the orange H icon vibrant.  BlendMode.srcATop tints only
+    // the opaque pixels; we use a very light grey so the orange still reads.
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(<double>[
+        // R  G  B  A  offset
+        2.0, 0, 0, 0, 60,   // boost red channel
+        0, 2.0, 0, 0, 60,   // boost green channel
+        0, 0, 2.0, 0, 60,   // boost blue channel
+        0, 0, 0, 1.0, 0,    // keep alpha
+      ]),
+      child: logo,
+    );
+  }
 
   /// Compact greeting that merges greeting text + top AI insight into one card
   Widget _buildContextualGreeting(dynamic hc, bool isDark) {
@@ -1346,9 +1368,25 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
-  /// Inline AI nudge — compact, not a carousel
+  /// Inline AI nudge — compact, not a carousel.
+  /// Uses dark-mode-aware colours so the card remains readable regardless of
+  /// the system brightness.
   Widget _buildInlineNudge(_SmartFeedItem item, dynamic hc) {
     final nudge = item.nudge!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Card colours — light gradient in light mode, dark elevated surface in dark mode
+    final gradientColors = isDark
+        ? [HuddlColors.darkSurfaceVariant, HuddlColors.darkSurface]
+        : [HuddlColors.blueBackground, HuddlColors.white];
+    final borderColor = isDark
+        ? HuddlColors.darkDivider
+        : HuddlColors.blue.withValues(alpha: 0.15);
+
+    // Text colours — always contrast against their card background
+    final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
+    final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
+
     return GestureDetector(
       onTap: () => _handleNudgeTap(nudge),
       child: Container(
@@ -1356,16 +1394,12 @@ class _HomeScreenState extends State<HomeScreen>
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              HuddlColors.blueBackground,
-              HuddlColors.white,
-            ],
+            colors: gradientColors,
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: HuddlColors.blue.withValues(alpha: 0.15)),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           children: [
@@ -1380,7 +1414,7 @@ class _HomeScreenState extends State<HomeScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
+                      color: titleColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1389,7 +1423,7 @@ class _HomeScreenState extends State<HomeScreen>
                     nudge.subtitle,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: context.hc.textSecondary,
+                      color: subtitleColor,
                       height: 1.3,
                     ),
                     maxLines: 1,
