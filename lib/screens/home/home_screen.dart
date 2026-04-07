@@ -78,6 +78,15 @@ class _HomeScreenState extends State<HomeScreen>
   // ── Unified smart-feed items ──────────────────────────────────────────────
   List<_SmartFeedItem> _smartFeed = [];
 
+  // ── Feed preference toggles (persisted via BrowserStorage) ────────────────
+  Map<String, bool> _feedPrefs = {
+    'meetups': true,
+    'events': true,
+    'announcements': true,
+    'suggestions': true,
+    'tips': true,
+  };
+
   // ── Notification state ───────────────────────────────────────────────────
   bool _notificationsRead = false;
 
@@ -133,6 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
       parent: _greetingAnimCtrl,
       curve: Curves.easeOutCubic,
     ));
+    _loadFeedPrefs();
     _loadData();
   }
 
@@ -203,6 +213,24 @@ class _HomeScreenState extends State<HomeScreen>
     } catch (e) {
       setState(() => _isLoading = false);
     }
+  }
+
+  // ── Feed preferences persistence ────────────────────────────────────────
+  Future<void> _loadFeedPrefs() async {
+    try {
+      final raw = await BrowserStorage.getString('feed_preferences_v1');
+      if (raw != null) {
+        final Map<String, dynamic> decoded = json.decode(raw);
+        setState(() {
+          _feedPrefs = decoded.map((k, v) => MapEntry(k, v as bool));
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveFeedPrefs() async {
+    await BrowserStorage.setString(
+        'feed_preferences_v1', json.encode(_feedPrefs));
   }
 
   Future<List<Group>> _loadNewPublicGroups(String borough) async {
@@ -315,9 +343,15 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // 5. New groups (max 2, adaptive)
-    if (_newPublicGroups.isNotEmpty) {
-      for (var i = 0; i < _newPublicGroups.length && i < (_groupTaps > 2 ? 3 : 2); i++) {
-        final g = _newPublicGroups[i];
+    // FILTER: exclude default onboarding groups (isImageLocked) — these are
+    // auto-created during the onboarding journey and can't be joined by
+    // members who don't share the same onboarding path.
+    final userCreatedGroups = _newPublicGroups
+        .where((g) => !g.isImageLocked)
+        .toList();
+    if (userCreatedGroups.isNotEmpty) {
+      for (var i = 0; i < userCreatedGroups.length && i < (_groupTaps > 2 ? 3 : 2); i++) {
+        final g = userCreatedGroups[i];
         items.add(_SmartFeedItem(
           type: _SmartFeedType.group,
           score: 0.55 + (_groupTaps > 2 ? 0.1 : 0.0),
@@ -337,6 +371,24 @@ class _HomeScreenState extends State<HomeScreen>
         feedItem: ranked[i].item,
       ));
     }
+
+    // ── Apply feed preference filters ─────────────────────────────────────
+    items.removeWhere((item) {
+      switch (item.type) {
+        case _SmartFeedType.meetup:
+          return !_feedPrefs['meetups']!;
+        case _SmartFeedType.goingEvent:
+          return !_feedPrefs['events']!;
+        case _SmartFeedType.announcement:
+          return !_feedPrefs['announcements']!;
+        case _SmartFeedType.suggestedMeetup:
+        case _SmartFeedType.group:
+          return !_feedPrefs['suggestions']!;
+        case _SmartFeedType.aiNudge:
+        case _SmartFeedType.communityActivity:
+          return !_feedPrefs['tips']!;
+      }
+    });
 
     // Sort by score descending
     items.sort((a, b) => b.score.compareTo(a.score));
@@ -1190,12 +1242,13 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   border: InputBorder.none,
                   isDense: true,
-                  contentPadding: EdgeInsets.zero,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   color: hc.textPrimary,
                 ),
+                textAlignVertical: TextAlignVertical.center,
                 maxLines: 2,
                 minLines: 1,
                 textInputAction: TextInputAction.send,
@@ -1245,104 +1298,29 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Feed preferences sheet ──────────────────────────────────────────────
+  // ── Feed preferences sheet (interactive + persisted) ─────────────────────
   void _showFeedPreferences() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const HuddlBottomSheetHandle(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  const Icon(Icons.tune, color: HuddlColors.primary, size: 20),
-                  const SizedBox(width: 8),
-                  Text('Feed Preferences',
-                      style: GoogleFonts.poppins(
-                          fontSize: 17, fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary)),
-                ],
-              ),
+      builder: (_) => _FeedPreferencesSheet(
+        initialPrefs: Map<String, bool>.from(_feedPrefs),
+        onSaved: (updatedPrefs) {
+          setState(() => _feedPrefs = updatedPrefs);
+          _saveFeedPrefs();
+          _buildSmartFeed();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Preferences saved',
+                  style: GoogleFonts.poppins(fontSize: 13)),
+              backgroundColor: HuddlColors.primary,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 2),
             ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'Your feed is personalised based on your interests, activity, and local community.',
-                style: GoogleFonts.poppins(
-                    fontSize: 12, color: context.hc.textSecondary),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            _feedPrefTile(Icons.groups, 'Meetups I\'m going to',
-                'High priority — shown at the top', true),
-            _feedPrefTile(Icons.event, 'Events I\'m attending',
-                'Reminders as the date approaches', true),
-            _feedPrefTile(Icons.campaign_outlined, 'Community announcements',
-                'Pinned posts and popular activity', true),
-            _feedPrefTile(Icons.group_add, 'Suggested meetups & groups',
-                'New meetups and groups near you', true),
-            _feedPrefTile(Icons.lightbulb_outline, 'Tips & suggestions',
-                'Personalised suggestions based on your activity', true),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Preferences saved',
-                            style: GoogleFonts.poppins(fontSize: 13)),
-                        backgroundColor: HuddlColors.primary,
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  child: Text('Done',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary)),
-                ),
-              ),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _feedPrefTile(
-      IconData icon, String title, String subtitle, bool enabled) {
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 20, color: HuddlColors.primary),
-      title: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 13, fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary)),
-      subtitle: Text(subtitle,
-          style: GoogleFonts.poppins(
-              fontSize: 11, color: context.hc.textTertiary)),
-      trailing: Icon(
-        enabled ? Icons.check_circle : Icons.circle_outlined,
-        size: 20,
-        color: enabled ? HuddlColors.primary : context.hc.textTertiary,
+          );
+        },
       ),
     );
   }
@@ -2638,6 +2616,132 @@ class _SmartFeedItem {
 // BOTTOM SHEETS & FULL-SCREEN PAGES
 // (Retained from previous implementation — comments, notifications, share, etc.)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Feed Preferences Sheet (interactive toggles) ───────────────────────────
+class _FeedPreferencesSheet extends StatefulWidget {
+  final Map<String, bool> initialPrefs;
+  final ValueChanged<Map<String, bool>> onSaved;
+
+  const _FeedPreferencesSheet({
+    required this.initialPrefs,
+    required this.onSaved,
+  });
+
+  @override
+  State<_FeedPreferencesSheet> createState() => _FeedPreferencesSheetState();
+}
+
+class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
+  late Map<String, bool> _prefs;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefs = Map<String, bool>.from(widget.initialPrefs);
+  }
+
+  void _toggle(String key) {
+    HapticFeedback.selectionClick();
+    setState(() => _prefs[key] = !_prefs[key]!);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Container(
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const HuddlBottomSheetHandle(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.tune, color: HuddlColors.primary, size: 20),
+                const SizedBox(width: 8),
+                Text('Feed Preferences',
+                    style: GoogleFonts.poppins(
+                        fontSize: 17, fontWeight: FontWeight.w600,
+                        color: hc.textPrimary)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Choose which content appears in your feed.',
+              style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          _tile('meetups', Icons.groups, 'Meetups I\'m going to',
+              'High priority \u2014 shown at the top'),
+          _tile('events', Icons.event, 'Events I\'m attending',
+              'Reminders as the date approaches'),
+          _tile('announcements', Icons.campaign_outlined,
+              'Community announcements', 'Pinned posts and popular activity'),
+          _tile('suggestions', Icons.group_add,
+              'Suggested meetups & groups', 'New meetups and groups near you'),
+          _tile('tips', Icons.lightbulb_outline, 'Tips & suggestions',
+              'Personalised suggestions based on your activity'),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  widget.onSaved(_prefs);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: HuddlColors.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                child: Text('Save Preferences',
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, fontWeight: FontWeight.w600,
+                        color: Colors.white)),
+              ),
+            ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(String key, IconData icon, String title, String subtitle) {
+    final enabled = _prefs[key] ?? true;
+    final hc = context.hc;
+    return ListTile(
+      dense: true,
+      leading: Icon(icon, size: 20,
+          color: enabled ? HuddlColors.primary : hc.textTertiary),
+      title: Text(title,
+          style: GoogleFonts.poppins(
+              fontSize: 13, fontWeight: FontWeight.w500,
+              color: enabled ? hc.textPrimary : hc.textTertiary)),
+      subtitle: Text(subtitle,
+          style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+      trailing: Icon(
+        enabled ? Icons.check_circle : Icons.circle_outlined,
+        size: 22,
+        color: enabled ? HuddlColors.primary : hc.textTertiary,
+      ),
+      onTap: () => _toggle(key),
+    );
+  }
+}
 
 // ── Comments Sheet ──────────────────────────────────────────────────────────
 class _CommentsSheet extends StatefulWidget {
