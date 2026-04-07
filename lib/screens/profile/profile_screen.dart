@@ -24,6 +24,7 @@ import '../../services/feedback_service.dart';
 import '../../services/subscription_service.dart';
 import '../../models/subscription.dart';
 import '../../utils/borough_migration_service.dart';
+import '../debug/borough_debug_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -3579,6 +3580,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pop(c);
             _showAboutSheet();
           }),
+          if (kDebugMode)
+            _helpTile(Icons.bug_report_outlined, 'Borough Debug',
+                'Borough scoping & analytics', () {
+              Navigator.pop(c);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const BoroughDebugScreen()),
+              );
+            }),
           const SizedBox(height: 16),
         ],
       ),
