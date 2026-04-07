@@ -25,6 +25,8 @@ import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
+import '../../widgets/learning_maturity_indicator.dart';
+import '../../services/daily_ai_refresh_service.dart';
 
 
 // =============================================================================
@@ -156,6 +158,11 @@ class _HomeScreenState extends State<HomeScreen>
       await _invitationService.initialize();
       await _dmService.initialize();
       await _aiFeedService.initialize();
+
+      // Step 14: Trigger daily AI refresh cycle if due
+      DailyAiRefreshService().initialize().then((_) {
+        DailyAiRefreshService().runRefreshCycle();
+      });
 
       String borough = '';
       final pc = _onboarding.postcode;
@@ -933,6 +940,14 @@ class _HomeScreenState extends State<HomeScreen>
                         context, '/subscription_plans'),
                   ),
                 ),
+
+              // ── Step 14: Learning Maturity Indicator ─────────────────
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: LearningMaturityIndicator(compact: false),
+                ),
+              ),
 
               // ── Smart Post Composer (AI pre-fill) ──────────────────
               SliverToBoxAdapter(
