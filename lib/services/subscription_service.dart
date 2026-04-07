@@ -51,6 +51,15 @@ class SubscriptionService extends ChangeNotifier {
   bool get isPlus => _subscription.isVillage;
   bool get isPro => _subscription.isInnerCircle;
 
+  // ---- Scheduled change / cancellation getters ----
+  bool get hasScheduledChange => _subscription.hasScheduledChange;
+  bool get isPendingCancellation => _subscription.isPendingCancellation;
+  SubscriptionTier? get scheduledTier => _subscription.scheduledTier;
+  BillingPeriod? get scheduledPeriod => _subscription.scheduledPeriod;
+  String? get scheduledChangeSummary => _subscription.scheduledChangeSummary;
+  int get daysUntilRenewal => _subscription.daysUntilRenewal;
+  DateTime? get renewalDate => _subscription.renewalDate;
+
   // Founding member info
   int get foundingMembersClaimed => _foundingMembersClaimed;
   int get foundingSpotsRemaining => foundingMemberCap - _foundingMembersClaimed;
@@ -295,6 +304,15 @@ class SubscriptionService extends ChangeNotifier {
 
   // ===========================================================================
   // SUBSCRIPTION PURCHASE / UPGRADE / DOWNGRADE
+  //
+  // BILLING-CYCLE POLICY:
+  //   • Purchasing from Explorer (free) activates immediately.
+  //   • Switching between paid tiers (upgrade or downgrade) is *scheduled*
+  //     — the new tier/period take effect on the next renewalDate.
+  //   • Cancelling sets cancelledAtPeriodEnd = true; the user keeps full
+  //     access at the current tier until renewalDate, after which the sub
+  //     reverts to Explorer.
+  //   • A scheduled change can be *revoked* (revert to current plan).
   // ===========================================================================
 
   /// Simulate purchasing a subscription (in production, this goes through
@@ -316,6 +334,10 @@ class SubscriptionService extends ChangeNotifier {
       isActive: true,
       isTrial: false,
       isFoundingMember: isFoundingMember,
+      // Clear any previously-scheduled change
+      scheduledTier: null,
+      scheduledPeriod: null,
+      cancelledAtPeriodEnd: false,
     );
 
     // Track founding member claim
@@ -333,6 +355,97 @@ class SubscriptionService extends ChangeNotifier {
           'SubscriptionService: Upgraded to ${newTier.name} (${period.name})');
     }
     return true;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Schedule a tier / period change that takes effect at next billing cycle.
+  // ---------------------------------------------------------------------------
+
+  /// Schedule a plan change (upgrade or downgrade) that activates at the
+  /// start of the next billing period.
+  ///
+  /// During the interim the user keeps full access to the *current* tier.
+  Future<bool> schedulePlanChange(
+    SubscriptionTier newTier,
+    BillingPeriod newPeriod, {
+    bool isFoundingMember = false,
+  }) async {
+    if (!_initialized) await initialize();
+
+    // If the user is on Explorer (free) there is nothing to "schedule" —
+    // an immediate purchase is appropriate.
+    if (_subscription.isFree) {
+      return purchase(newTier, newPeriod,
+          isFoundingMember: isFoundingMember);
+    }
+
+    // If they chose the same tier+period they're already on, no-op.
+    if (newTier == _subscription.tier &&
+        newPeriod == _subscription.billingPeriod) {
+      return false;
+    }
+
+    _subscription = UserSubscription(
+      tier: _subscription.tier,
+      billingPeriod: _subscription.billingPeriod,
+      startDate: _subscription.startDate,
+      renewalDate: _subscription.renewalDate,
+      isActive: _subscription.isActive,
+      isTrial: _subscription.isTrial,
+      trialDaysRemaining: _subscription.trialDaysRemaining,
+      isFoundingMember: _subscription.isFoundingMember,
+      scheduledTier: newTier,
+      scheduledPeriod: newPeriod,
+      cancelledAtPeriodEnd: false, // un-cancel if they pick a new plan
+    );
+
+    // Track founding member claim
+    if (isFoundingMember && foundingMemberAvailable) {
+      _foundingMembersClaimed++;
+      await BrowserStorage.setString(
+          _foundingKey, _foundingMembersClaimed.toString());
+    }
+
+    await _persist();
+    notifyListeners();
+
+    if (kDebugMode) {
+      debugPrint(
+          'SubscriptionService: Scheduled change to ${newTier.name} '
+          '(${newPeriod.name}) at next billing cycle');
+    }
+    return true;
+  }
+
+  /// Revoke a previously-scheduled tier change so that the current plan
+  /// continues to renew normally.
+  Future<void> revokeScheduledChange() async {
+    if (!_initialized) await initialize();
+    if (!_subscription.hasScheduledChange &&
+        !_subscription.cancelledAtPeriodEnd) {
+      return;
+    }
+
+    _subscription = UserSubscription(
+      tier: _subscription.tier,
+      billingPeriod: _subscription.billingPeriod,
+      startDate: _subscription.startDate,
+      renewalDate: _subscription.renewalDate,
+      isActive: _subscription.isActive,
+      isTrial: _subscription.isTrial,
+      trialDaysRemaining: _subscription.trialDaysRemaining,
+      isFoundingMember: _subscription.isFoundingMember,
+      scheduledTier: null,
+      scheduledPeriod: null,
+      cancelledAtPeriodEnd: false,
+    );
+
+    await _persist();
+    notifyListeners();
+
+    if (kDebugMode) {
+      debugPrint('SubscriptionService: Revoked scheduled change / cancellation');
+    }
   }
 
   /// Start a 7-day free trial of Neighbourhood
@@ -369,12 +482,70 @@ class SubscriptionService extends ChangeNotifier {
     return trialUsed == 'true';
   }
 
-  /// Cancel subscription -- reverts to Explorer at end of billing period
+  /// Cancel subscription -- sets cancelledAtPeriodEnd so the user retains
+  /// access at the current tier until the end of the billing period.
+  ///
+  /// After [renewalDate] the subscription will revert to Explorer.
   Future<void> cancelSubscription() async {
     if (!_initialized) await initialize();
-    _subscription = UserSubscription.explorer();
+
+    // If the user is already free, just reset.
+    if (_subscription.isFree) {
+      _subscription = UserSubscription.explorer();
+      await _persist();
+      notifyListeners();
+      return;
+    }
+
+    _subscription = UserSubscription(
+      tier: _subscription.tier,
+      billingPeriod: _subscription.billingPeriod,
+      startDate: _subscription.startDate,
+      renewalDate: _subscription.renewalDate,
+      isActive: true, // still active until renewalDate
+      isTrial: _subscription.isTrial,
+      trialDaysRemaining: _subscription.trialDaysRemaining,
+      isFoundingMember: _subscription.isFoundingMember,
+      scheduledTier: null, // clear any scheduled change
+      scheduledPeriod: null,
+      cancelledAtPeriodEnd: true,
+    );
+
     await _persist();
     notifyListeners();
+
+    if (kDebugMode) {
+      debugPrint(
+          'SubscriptionService: Cancelled — access until '
+          '${_subscription.renewalDate}');
+    }
+  }
+
+  /// Reactivate a cancelled subscription (undo cancellation).
+  Future<void> reactivateSubscription() async {
+    if (!_initialized) await initialize();
+    if (!_subscription.cancelledAtPeriodEnd) return;
+
+    _subscription = UserSubscription(
+      tier: _subscription.tier,
+      billingPeriod: _subscription.billingPeriod,
+      startDate: _subscription.startDate,
+      renewalDate: _subscription.renewalDate,
+      isActive: true,
+      isTrial: _subscription.isTrial,
+      trialDaysRemaining: _subscription.trialDaysRemaining,
+      isFoundingMember: _subscription.isFoundingMember,
+      scheduledTier: null,
+      scheduledPeriod: null,
+      cancelledAtPeriodEnd: false,
+    );
+
+    await _persist();
+    notifyListeners();
+
+    if (kDebugMode) {
+      debugPrint('SubscriptionService: Reactivated subscription');
+    }
   }
 
   /// Restore a previous purchase (e.g., app reinstall)

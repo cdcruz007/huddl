@@ -401,6 +401,14 @@ class SubscriptionPlan {
 }
 
 /// Active subscription state
+///
+/// BILLING-CYCLE MODEL:
+///   - Upgrades / downgrades between tiers are *scheduled* and take effect
+///     at the start of the next billing cycle (renewalDate).
+///   - Cancellations stop auto-renewal; the user retains access at the
+///     current tier until the end of the paid period.
+///   - A "scheduled change" is recorded via [scheduledTier] / [scheduledPeriod].
+///   - A "pending cancellation" is recorded via [cancelledAtPeriodEnd].
 class UserSubscription {
   final SubscriptionTier tier;
   final BillingPeriod billingPeriod;
@@ -411,6 +419,19 @@ class UserSubscription {
   final int trialDaysRemaining;
   final bool isFoundingMember;
 
+  // ── Scheduled plan change (upgrade / downgrade) ─────────────────────
+  /// If non-null, the user has requested to switch to this tier at the
+  /// next billing cycle.
+  final SubscriptionTier? scheduledTier;
+
+  /// If non-null, the billing period that will apply after the switch.
+  final BillingPeriod? scheduledPeriod;
+
+  // ── Pending cancellation ────────────────────────────────────────────
+  /// When true the subscription will NOT renew, but the user keeps full
+  /// access to [tier] until [renewalDate].
+  final bool cancelledAtPeriodEnd;
+
   const UserSubscription({
     required this.tier,
     required this.billingPeriod,
@@ -420,6 +441,9 @@ class UserSubscription {
     this.isTrial = false,
     this.trialDaysRemaining = 0,
     this.isFoundingMember = false,
+    this.scheduledTier,
+    this.scheduledPeriod,
+    this.cancelledAtPeriodEnd = false,
   });
 
   TierLimits get limits => TierLimits.forTier(tier);
@@ -431,6 +455,57 @@ class UserSubscription {
   bool get isInnerCircle => tier == SubscriptionTier.innerCircle;
   bool get isFree => tier == SubscriptionTier.explorer;
   bool get isPaid => !isFree;
+
+  /// Whether a tier change is queued for the next billing cycle.
+  bool get hasScheduledChange => scheduledTier != null;
+
+  /// Whether the user has cancelled but still has access until period end.
+  bool get isPendingCancellation => cancelledAtPeriodEnd && isActive;
+
+  /// Number of days remaining in the current billing period.
+  int get daysUntilRenewal {
+    if (renewalDate == null) return 0;
+    final diff = renewalDate!.difference(DateTime.now()).inDays;
+    return diff.clamp(0, 365);
+  }
+
+  /// Human-readable summary of the scheduled change.
+  String? get scheduledChangeSummary {
+    if (cancelledAtPeriodEnd) {
+      return 'Cancels on ${_formatDate(renewalDate)}';
+    }
+    if (scheduledTier != null) {
+      final name = _tierDisplayName(scheduledTier!);
+      final periodLabel = scheduledPeriod == BillingPeriod.annual
+          ? 'annual'
+          : 'monthly';
+      return 'Changing to $name ($periodLabel) on ${_formatDate(renewalDate)}';
+    }
+    return null;
+  }
+
+  // ignore: library_private_types_in_public_api
+  static String formatDate(DateTime? d) => _formatDate(d);
+
+  static String _tierDisplayName(SubscriptionTier t) {
+    switch (t) {
+      case SubscriptionTier.explorer:
+        return 'Explorer';
+      case SubscriptionTier.neighbourhood:
+        return 'Neighbourhood';
+      case SubscriptionTier.innerCircle:
+        return 'Inner Circle';
+    }
+  }
+
+  static String _formatDate(DateTime? d) {
+    if (d == null) return 'end of period';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${d.day} ${months[d.month - 1]} ${d.year}';
+  }
 
   String get tierDisplayName {
     switch (tier) {
@@ -463,6 +538,9 @@ class UserSubscription {
         'isTrial': isTrial,
         'trialDaysRemaining': trialDaysRemaining,
         'isFoundingMember': isFoundingMember,
+        'scheduledTier': scheduledTier?.name,
+        'scheduledPeriod': scheduledPeriod?.name,
+        'cancelledAtPeriodEnd': cancelledAtPeriodEnd,
       };
 
   factory UserSubscription.fromJson(Map<String, dynamic> json) {
@@ -472,6 +550,26 @@ class UserSubscription {
     if (tierName == 'plus') tierName = 'neighbourhood';
     if (tierName == 'village') tierName = 'neighbourhood';
     if (tierName == 'pro') tierName = 'innerCircle';
+
+    // Parse scheduled tier (if any)
+    SubscriptionTier? schedTier;
+    final schedTierName = json['scheduledTier'] as String?;
+    if (schedTierName != null) {
+      schedTier = SubscriptionTier.values.firstWhere(
+        (t) => t.name == schedTierName,
+        orElse: () => SubscriptionTier.explorer,
+      );
+    }
+
+    // Parse scheduled period (if any)
+    BillingPeriod? schedPeriod;
+    final schedPeriodName = json['scheduledPeriod'] as String?;
+    if (schedPeriodName != null) {
+      schedPeriod = BillingPeriod.values.firstWhere(
+        (b) => b.name == schedPeriodName,
+        orElse: () => BillingPeriod.monthly,
+      );
+    }
 
     return UserSubscription(
       tier: SubscriptionTier.values.firstWhere(
@@ -490,6 +588,9 @@ class UserSubscription {
       isTrial: json['isTrial'] as bool? ?? false,
       trialDaysRemaining: json['trialDaysRemaining'] as int? ?? 0,
       isFoundingMember: json['isFoundingMember'] as bool? ?? false,
+      scheduledTier: schedTier,
+      scheduledPeriod: schedPeriod,
+      cancelledAtPeriodEnd: json['cancelledAtPeriodEnd'] as bool? ?? false,
     );
   }
 

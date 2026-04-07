@@ -26,11 +26,15 @@ import '../../services/payment_service.dart';
 class SubscriptionCheckoutScreen extends StatefulWidget {
   final SubscriptionTier tier;
   final BillingPeriod period;
+  /// When true, the purchase is *scheduled* for the next billing cycle
+  /// rather than taking effect immediately.
+  final bool isScheduled;
 
   const SubscriptionCheckoutScreen({
     super.key,
     required this.tier,
     required this.period,
+    this.isScheduled = false,
   });
 
   @override
@@ -46,6 +50,7 @@ class _SubscriptionCheckoutScreenState
   bool _isProcessing = false;
   bool _agreedToTerms = false;
   bool _useFoundingRate = false;
+  late bool _isScheduled;
 
   late SubscriptionPlan _plan;
 
@@ -53,6 +58,7 @@ class _SubscriptionCheckoutScreenState
   void initState() {
     super.initState();
     _period = widget.period;
+    _isScheduled = widget.isScheduled;
     _plan = SubscriptionPlan.allPlans.firstWhere(
       (p) => p.tier == widget.tier,
     );
@@ -179,6 +185,42 @@ class _SubscriptionCheckoutScreenState
 
     setState(() => _isProcessing = true);
 
+    if (_isScheduled) {
+      // ── Scheduled change (upgrade/downgrade from a paid tier) ────────
+      final ok = await _subService.schedulePlanChange(
+        _plan.tier,
+        _period,
+        isFoundingMember: _useFoundingRate,
+      );
+
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        if (ok) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (ctx) => _ScheduledSuccessDialog(
+              plan: _plan,
+              renewalDate: _subService.renewalDate,
+              isFoundingMember: _useFoundingRate,
+            ),
+          ).then((_) {
+            if (mounted) Navigator.pop(context, true);
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not schedule plan change. Please try again.',
+                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+              backgroundColor: HuddlColors.error,
+            ),
+          );
+        }
+      }
+      return;
+    }
+
+    // ── Immediate purchase (from Explorer / new subscriber) ────────────
     final success = await _payService.purchaseSubscription(
       tier: _plan.tier,
       period: _period,
@@ -233,6 +275,62 @@ class _SubscriptionCheckoutScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Scheduled change info banner
+                    if (_isScheduled) ...[
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3580F0).withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: const Color(0xFF3580F0).withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.schedule,
+                                    color: Color(0xFF3580F0), size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Scheduled Plan Change',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF3580F0)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'This change will take effect at the start of '
+                              'your next billing cycle. You\'ll keep full access '
+                              'to your current plan until then.',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: context.hc.textSecondary),
+                            ),
+                            if (_subService.daysUntilRenewal > 0) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_subService.daysUntilRenewal} days remaining '
+                                'in your current billing period.',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF3580F0)),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
                     // Plan summary card
                     _OrderSummaryCard(plan: _plan, period: _period),
                     const SizedBox(height: 20),
@@ -564,17 +662,21 @@ class _SubscriptionCheckoutScreenState
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    _payService.isWeb
-                                        ? Icons.lock_outline
-                                        : Icons.payment,
+                                    _isScheduled
+                                        ? Icons.schedule
+                                        : (_payService.isWeb
+                                            ? Icons.lock_outline
+                                            : Icons.payment),
                                     size: 18,
                                     color: context.hc.surface,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    _useFoundingRate
-                                        ? 'Lock Founding Rate'
-                                        : 'Subscribe to ${_plan.name}',
+                                    _isScheduled
+                                        ? 'Schedule ${_plan.name}'
+                                        : (_useFoundingRate
+                                            ? 'Lock Founding Rate'
+                                            : 'Subscribe to ${_plan.name}'),
                                     style: GoogleFonts.poppins(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600),
@@ -1044,6 +1146,117 @@ class _SuccessDialog extends StatelessWidget {
                       borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text('Start Exploring',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog shown after a *scheduled* plan change is confirmed.
+class _ScheduledSuccessDialog extends StatelessWidget {
+  final SubscriptionPlan plan;
+  final DateTime? renewalDate;
+  final bool isFoundingMember;
+
+  const _ScheduledSuccessDialog({
+    required this.plan,
+    this.renewalDate,
+    this.isFoundingMember = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
+    final color = isFoundingMember
+        ? const Color(0xFF3580F0)
+        : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
+
+    String dateStr = 'your next billing cycle';
+    if (renewalDate != null) {
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ];
+      dateStr =
+          '${renewalDate!.day} ${months[renewalDate!.month - 1]} ${renewalDate!.year}';
+    }
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.schedule, color: color, size: 40),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Plan Change Scheduled!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: context.hc.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'You\'ll switch to ${plan.name} on $dateStr. '
+              'Until then, you keep full access to your current plan.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                  fontSize: 14, color: context.hc.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.info_outline, color: color, size: 16),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      'You can change or cancel this anytime before $dateStr.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: color),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: color,
+                  foregroundColor: HuddlColors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text('Got It',
                     style: GoogleFonts.poppins(
                         fontSize: 15, fontWeight: FontWeight.w600)),
               ),

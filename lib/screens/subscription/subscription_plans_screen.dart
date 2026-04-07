@@ -37,57 +37,166 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
   // ── Purchase flow ────────────────────────────────────────────────────
   Future<void> _onSelectPlan(SubscriptionPlan plan) async {
-    if (plan.tier == _service.tier) return; // Already on this plan
+    if (plan.tier == _service.tier && !_service.hasScheduledChange && !_service.isPendingCancellation) return;
 
-    if (plan.tier == SubscriptionTier.explorer) {
-      // Downgrade confirmation
-      final confirmed = await _showDowngradeDialog();
+    // ── Reactivate if currently pending cancellation and user taps current plan
+    if (plan.tier == _service.tier && _service.isPendingCancellation) {
+      final confirmed = await _showReactivateDialog();
       if (!confirmed) return;
-      await _service.cancelSubscription();
+      await _service.reactivateSubscription();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Reverted to Explorer plan',
+            content: Text('Subscription reactivated! Your plan will continue to renew.',
                 style: GoogleFonts.poppins(color: HuddlColors.white)),
             backgroundColor: HuddlColors.teal,
           ),
         );
-        Navigator.pop(context, true);
+        setState(() {});
       }
       return;
     }
 
-    // Navigate to checkout
-    if (mounted) {
-      final result = await Navigator.pushNamed(
-        context,
-        '/subscription_checkout',
-        arguments: {
-          'tier': plan.tier.name,
-          'period': _period.name,
-        },
-      );
-      if (result == true && mounted) {
-        Navigator.pop(context, true);
+    // ── Revert scheduled change if user re-selects their current plan
+    if (plan.tier == _service.tier && _service.hasScheduledChange) {
+      final confirmed = await _showRevokeScheduledDialog();
+      if (!confirmed) return;
+      await _service.revokeScheduledChange();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Scheduled change revoked. Your current plan continues.',
+                style: GoogleFonts.poppins(color: HuddlColors.white)),
+            backgroundColor: HuddlColors.teal,
+          ),
+        );
+        setState(() {});
+      }
+      return;
+    }
+
+    // ── Downgrade to Explorer (cancel)
+    if (plan.tier == SubscriptionTier.explorer) {
+      if (_service.isPaid) {
+        // Paid user cancelling — keep access until end of period
+        final confirmed = await _showDowngradeDialog();
+        if (!confirmed) return;
+        await _service.cancelSubscription();
+        if (mounted) {
+          final summary = _service.scheduledChangeSummary ?? 'end of billing period';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Subscription cancelled. You keep full access until $summary.',
+                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+              backgroundColor: HuddlColors.primary,
+            ),
+          );
+          setState(() {});
+        }
+      } else {
+        // Already free
+        await _service.cancelSubscription();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Reverted to Explorer plan',
+                  style: GoogleFonts.poppins(color: HuddlColors.white)),
+              backgroundColor: HuddlColors.teal,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      }
+      return;
+    }
+
+    // ── New purchase from Explorer (immediate) or tier change (scheduled)
+    if (_service.isFree) {
+      // Immediate purchase from free tier
+      if (mounted) {
+        final result = await Navigator.pushNamed(
+          context,
+          '/subscription_checkout',
+          arguments: {
+            'tier': plan.tier.name,
+            'period': _period.name,
+            'isScheduled': false,
+          },
+        );
+        if (result == true && mounted) {
+          Navigator.pop(context, true);
+        }
+      }
+    } else {
+      // Paid user switching tier — schedule for next billing cycle
+      if (mounted) {
+        final result = await Navigator.pushNamed(
+          context,
+          '/subscription_checkout',
+          arguments: {
+            'tier': plan.tier.name,
+            'period': _period.name,
+            'isScheduled': true,
+          },
+        );
+        if (result == true && mounted) {
+          setState(() {}); // Refresh plan cards
+        }
       }
     }
   }
 
   Future<bool> _showDowngradeDialog() async {
+    final renewalInfo = _service.renewalDate != null
+        ? 'You\'ll keep full access to your current plan until '
+          '${UserSubscription.formatDate(_service.renewalDate)}. '
+          'After that, you\'ll be on the Explorer (free) tier.'
+        : 'You\'ll lose access to premium features at the end of your billing period. '
+          'Your groups, conversations, and data will be preserved, but you\'ll '
+          'be limited to Explorer tier features.';
+
     return await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Downgrade to Explorer?',
+            title: Text('Cancel Subscription?',
                 style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
-            content: Text(
-              'You\'ll lose access to premium features at the end of your billing period. '
-              'Your groups, conversations, and data will be preserved, but you\'ll '
-              'be limited to Explorer tier features.',
-              style: GoogleFonts.poppins(
-                  fontSize: 14, color: context.hc.textSecondary),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  renewalInfo,
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, color: context.hc.textSecondary),
+                ),
+                if (_service.daysUntilRenewal > 0) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.blueBackground,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline,
+                            color: HuddlColors.blue, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${_service.daysUntilRenewal} days remaining in your current period.',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: HuddlColors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
             actions: [
               TextButton(
@@ -99,8 +208,76 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text('Downgrade',
+                child: Text('Cancel Subscription',
                     style: GoogleFonts.poppins(color: HuddlColors.error)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<bool> _showReactivateDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Reactivate Subscription?',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+            content: Text(
+              'Your cancellation will be reversed and your plan will '
+              'continue to auto-renew at the end of the current billing period.',
+              style: GoogleFonts.poppins(
+                  fontSize: 14, color: context.hc.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('Keep Cancelled',
+                    style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('Reactivate',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.teal)),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<bool> _showRevokeScheduledDialog() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Keep Current Plan?',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+            content: Text(
+              'This will cancel the scheduled plan change. '
+              'Your current plan will continue to renew normally.',
+              style: GoogleFonts.poppins(
+                  fontSize: 14, color: context.hc.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text('Keep Scheduled Change',
+                    style: GoogleFonts.poppins(color: context.hc.textTertiary)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text('Keep Current Plan',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary)),
               ),
             ],
           ),
@@ -137,6 +314,24 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               if (widget.gateMessage != null) _GateBanner(widget.gateMessage!),
               if (widget.gateMessage != null) const SizedBox(height: 16),
 
+              // ── Pending cancellation / scheduled change banner ─────────
+              if (_service.isPendingCancellation || _service.hasScheduledChange)
+                _ScheduledChangeBanner(
+                  summary: _service.scheduledChangeSummary ?? '',
+                  isCancellation: _service.isPendingCancellation,
+                  daysRemaining: _service.daysUntilRenewal,
+                  onRevert: () async {
+                    if (_service.isPendingCancellation) {
+                      await _service.reactivateSubscription();
+                    } else {
+                      await _service.revokeScheduledChange();
+                    }
+                    if (mounted) setState(() {});
+                  },
+                ),
+              if (_service.isPendingCancellation || _service.hasScheduledChange)
+                const SizedBox(height: 16),
+
               // 7-day Neighbourhood trial CTA
               if (_service.isFree) ...[
                 _TrialBanner(onTap: _startTrial),
@@ -171,6 +366,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                           (widget.highlightTier == null &&
                               plan.tier == SubscriptionTier.neighbourhood),
                       isFoundingAvailable: _service.foundingMemberAvailable,
+                      isScheduledTarget: plan.tier == _service.scheduledTier,
+                      isPendingCancel: _service.isPendingCancellation &&
+                          plan.tier == _service.tier,
+                      scheduledSummary: _service.scheduledChangeSummary,
+                      daysUntilRenewal: _service.daysUntilRenewal,
                       onSelect: () => _onSelectPlan(plan),
                     ),
                   )),
@@ -313,6 +513,102 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBWIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/// Banner displayed when there is a pending plan change or cancellation
+class _ScheduledChangeBanner extends StatelessWidget {
+  final String summary;
+  final bool isCancellation;
+  final int daysRemaining;
+  final VoidCallback onRevert;
+
+  const _ScheduledChangeBanner({
+    required this.summary,
+    required this.isCancellation,
+    required this.daysRemaining,
+    required this.onRevert,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color =
+        isCancellation ? HuddlColors.error : const Color(0xFF3580F0);
+    final bgColor = isCancellation
+        ? HuddlColors.error.withValues(alpha: 0.06)
+        : const Color(0xFF3580F0).withValues(alpha: 0.06);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isCancellation ? Icons.cancel_outlined : Icons.schedule,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isCancellation
+                      ? 'Subscription cancels at end of period'
+                      : 'Plan change scheduled',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            summary,
+            style: GoogleFonts.poppins(
+                fontSize: 12, color: context.hc.textSecondary),
+          ),
+          if (daysRemaining > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              '$daysRemaining days remaining in current period',
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textTertiary),
+            ),
+          ],
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onRevert,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                isCancellation
+                    ? 'Undo Cancellation'
+                    : 'Revert to Current Plan',
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 /// Banner shown when a gated feature redirects the user here
 class _GateBanner extends StatelessWidget {
@@ -574,6 +870,10 @@ class _PlanCard extends StatelessWidget {
   final bool isCurrentPlan;
   final bool isHighlighted;
   final bool isFoundingAvailable;
+  final bool isScheduledTarget;
+  final bool isPendingCancel;
+  final String? scheduledSummary;
+  final int daysUntilRenewal;
   final VoidCallback onSelect;
 
   const _PlanCard({
@@ -582,6 +882,10 @@ class _PlanCard extends StatelessWidget {
     required this.isCurrentPlan,
     required this.isHighlighted,
     required this.isFoundingAvailable,
+    this.isScheduledTarget = false,
+    this.isPendingCancel = false,
+    this.scheduledSummary,
+    this.daysUntilRenewal = 0,
     required this.onSelect,
   });
 
@@ -592,20 +896,25 @@ class _PlanCard extends StatelessWidget {
     final isNeighbourhood = plan.tier == SubscriptionTier.neighbourhood;
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
-    if (isHighlighted && !isCurrentPlan) {
+    if (isScheduledTarget) {
+      borderColor = const Color(0xFF3580F0);
+      bgColor = const Color(0xFFF5F0FF);
+    } else if (isHighlighted && !isCurrentPlan) {
       borderColor = HuddlColors.primary;
       bgColor = HuddlColors.peachVeryLight;
     }
     if (isCurrentPlan) {
-      borderColor = HuddlColors.teal;
-      bgColor = HuddlColors.successBg;
+      borderColor = isPendingCancel ? HuddlColors.error : HuddlColors.teal;
+      bgColor = isPendingCancel
+          ? HuddlColors.error.withValues(alpha: 0.05)
+          : HuddlColors.successBg;
     }
 
     return Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor, width: isHighlighted || isCurrentPlan ? 2 : 1),
+        border: Border.all(color: borderColor, width: isHighlighted || isCurrentPlan || isScheduledTarget ? 2 : 1),
         boxShadow: isHighlighted
             ? [
                 BoxShadow(
@@ -652,10 +961,29 @@ class _PlanCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal,
+                                color: isPendingCancel
+                                    ? HuddlColors.error
+                                    : HuddlColors.teal,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text('Current',
+                              child: Text(
+                                isPendingCancel ? 'Cancelling' : 'Current',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.white)),
+                            ),
+                          ],
+                          if (isScheduledTarget) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF3580F0),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text('Scheduled',
                                   style: GoogleFonts.poppins(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -812,13 +1140,74 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
 
+          // Pending cancellation notice on card
+          if (isPendingCancel && daysUntilRenewal > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule,
+                        color: HuddlColors.error, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Access until end of period ($daysUntilRenewal days)',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: HuddlColors.error),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Scheduled target notice on card
+          if (isScheduledTarget)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3580F0).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.schedule,
+                        color: Color(0xFF3580F0), size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        scheduledSummary ?? 'Scheduled for next billing cycle',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: const Color(0xFF3580F0)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // CTA button
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: isCurrentPlan ? null : onSelect,
+                onPressed: isCurrentPlan
+                    ? (isPendingCancel || isScheduledTarget
+                        ? onSelect
+                        : null)
+                    : (isScheduledTarget ? null : onSelect),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: isCurrentPlan
                       ? HuddlColors.gray200
@@ -835,8 +1224,14 @@ class _PlanCard extends StatelessWidget {
                 ),
                 child: Text(
                   isCurrentPlan
-                      ? 'Current Plan'
-                      : (isFree ? 'Downgrade' : 'Choose ${plan.name}'),
+                      ? (isPendingCancel
+                          ? 'Reactivate'
+                          : (isScheduledTarget
+                              ? 'Keep Current Plan'
+                              : 'Current Plan'))
+                      : (isScheduledTarget
+                          ? 'Scheduled'
+                          : (isFree ? 'Cancel Subscription' : 'Choose ${plan.name}')),
                   style: GoogleFonts.poppins(
                       fontSize: 15, fontWeight: FontWeight.w600),
                 ),

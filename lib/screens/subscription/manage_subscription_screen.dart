@@ -320,6 +320,22 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             children: [
               // Current plan card
               _CurrentPlanCard(subscription: sub),
+
+              // Pending cancellation / scheduled change banner
+              if (sub.isPendingCancellation || sub.hasScheduledChange) ...[
+                const SizedBox(height: 12),
+                _ManageScheduledBanner(
+                  subscription: sub,
+                  onRevert: () async {
+                    if (sub.isPendingCancellation) {
+                      await _service.reactivateSubscription();
+                    } else {
+                      await _service.revokeScheduledChange();
+                    }
+                    if (mounted) setState(() {});
+                  },
+                ),
+              ],
               const SizedBox(height: 16),
 
               // Payment info card (for paid users)
@@ -904,11 +920,16 @@ class _CurrentPlanCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     if (!isFree && subscription.renewalDate != null)
                       Text(
-                        subscription.isTrial
-                            ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
-                            : 'Auto-renews ${_formatDate(subscription.renewalDate!)}',
+                        subscription.cancelledAtPeriodEnd
+                            ? 'Cancels ${_formatDate(subscription.renewalDate!)}'
+                            : (subscription.isTrial
+                                ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
+                                : 'Auto-renews ${_formatDate(subscription.renewalDate!)}'),
                         style: GoogleFonts.poppins(
-                            fontSize: 12, color: context.hc.textSecondary),
+                            fontSize: 12,
+                            color: subscription.cancelledAtPeriodEnd
+                                ? HuddlColors.error
+                                : context.hc.textSecondary),
                       )
                     else
                       Text('Free plan \u2014 upgrade anytime',
@@ -1036,6 +1057,94 @@ class _UsageCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ManageScheduledBanner extends StatelessWidget {
+  final UserSubscription subscription;
+  final VoidCallback onRevert;
+
+  const _ManageScheduledBanner({
+    required this.subscription,
+    required this.onRevert,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isCancellation = subscription.isPendingCancellation;
+    final color =
+        isCancellation ? HuddlColors.error : const Color(0xFF3580F0);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isCancellation ? Icons.cancel_outlined : Icons.schedule,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isCancellation
+                      ? 'Subscription cancelling'
+                      : 'Plan change scheduled',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color),
+                ),
+              ),
+            ],
+          ),
+          if (subscription.scheduledChangeSummary != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              subscription.scheduledChangeSummary!,
+              style: GoogleFonts.poppins(
+                  fontSize: 12, color: context.hc.textSecondary),
+            ),
+          ],
+          if (subscription.daysUntilRenewal > 0) ...[
+            const SizedBox(height: 2),
+            Text(
+              '${subscription.daysUntilRenewal} days remaining in current period',
+              style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textTertiary),
+            ),
+          ],
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: onRevert,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                isCancellation ? 'Undo Cancellation' : 'Revert to Current Plan',
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color),
+              ),
             ),
           ),
         ],

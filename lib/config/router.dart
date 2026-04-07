@@ -235,6 +235,7 @@ class AppRouter {
               (b) => b.name == (args['period'] as String? ?? 'annual'),
               orElse: () => BillingPeriod.annual,
             ),
+            isScheduled: args['isScheduled'] as bool? ?? false,
           ),
         );
 
