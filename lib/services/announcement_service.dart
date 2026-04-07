@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
+import 'borough_scope_guard.dart';
 
 /// A comment on an announcement.
 class AnnouncementComment {
@@ -135,6 +136,10 @@ class Announcement {
 
 /// Singleton that manages borough-scoped announcements persisted via
 /// BrowserStorage.  Only announcements in the current user's borough are shown.
+///
+/// HYPERLOCAL RULE: Announcements are borough-only.
+/// Parents can only see and post announcements within their home borough.
+/// Uses BoroughScopeGuard for consistent borough resolution.
 class AnnouncementService {
   static final AnnouncementService _instance = AnnouncementService._internal();
   factory AnnouncementService() => _instance;
@@ -144,28 +149,34 @@ class AnnouncementService {
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcode = PostcodeService();
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   List<Announcement> _announcements = [];
   bool _isInitialized = false;
   String? _userBorough;
 
-  String? get userBorough => _userBorough;
+  /// Current user's borough, resolved via BoroughScopeGuard (single source of truth).
+  String? get userBorough => _guard.currentBorough ?? _userBorough;
   String get currentUserName => _onboarding.name ?? 'You';
   String? get currentUserPhoto => _onboarding.profilePhotoObjectUrl;
   List<Announcement> get announcements => List.unmodifiable(_announcements);
 
   /// Returns only announcements in the current user's borough, newest first.
   /// If no borough is resolved, returns all announcements (so posts still appear).
+  ///
+  /// HYPERLOCAL: Uses BoroughScopeGuard.filterByUserBorough for consistent
+  /// borough matching across all services.
   List<Announcement> get boroughAnnouncements {
+    final borough = _guard.currentBorough ?? _userBorough;
     List<Announcement> list;
-    if (_userBorough == null || _userBorough!.isEmpty) {
+    if (borough == null || borough.isEmpty) {
       // No borough resolved — show all announcements so user posts are visible
       list = List<Announcement>.from(_announcements);
     } else {
-      list = _announcements
-          .where(
-              (a) => a.borough.toLowerCase() == _userBorough!.toLowerCase())
-          .toList();
+      list = _guard.filterByUserBorough<Announcement>(
+        _announcements,
+        (a) => a.borough,
+      );
     }
     list.sort((a, b) {
       // Pinned first, then newest
@@ -188,20 +199,29 @@ class AnnouncementService {
   }
 
   void _resolveBorough() {
-    final pc = _onboarding.postcode;
-    if (pc != null) {
-      _userBorough = _postcode.getBoroughFromPostcode(pc);
+    // Primary: use BoroughScopeGuard (single source of truth)
+    _userBorough = _guard.currentBorough;
+    // Fallback: resolve from postcode directly
+    if (_userBorough == null || _userBorough!.isEmpty) {
+      final pc = _onboarding.postcode;
+      if (pc != null) {
+        _userBorough = _postcode.getBoroughFromPostcode(pc);
+      }
     }
   }
 
   /// Post a new announcement from the current user.
+  ///
+  /// HYPERLOCAL: The announcement is automatically tagged with the user's
+  /// current borough. Parents can only post to their own borough.
   Future<Announcement> post(String content) async {
     await initialize();
+    final borough = _guard.currentBorough ?? _userBorough ?? 'Unknown';
     final a = Announcement(
       id: 'ann_${DateTime.now().millisecondsSinceEpoch}',
       authorName: _onboarding.name ?? 'You',
       authorPhotoUrl: _onboarding.profilePhotoObjectUrl,
-      borough: _userBorough ?? 'Unknown',
+      borough: borough,
       content: content,
       createdAt: DateTime.now(),
     );

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/group.dart';
+import 'borough_scope_guard.dart';
 
 /// Represents a group invitation sent to a user
 class GroupInvitation {
@@ -136,6 +137,11 @@ class GroupSystemMessage {
 
 /// Manages group invitations, joined groups, and system messages.
 ///
+/// HYPERLOCAL RULE: Groups are borough-only.
+/// Invitations can only be sent to members in the same borough.
+/// Users can only join public groups that belong to their home borough.
+/// BoroughScopeGuard enforces the gate at data layer.
+///
 /// In a real app these would be in Firestore / a backend.
 /// Here we simulate with local storage so the demo flows end-to-end.
 class InvitationService extends ChangeNotifier {
@@ -147,6 +153,7 @@ class InvitationService extends ChangeNotifier {
   static const String _joinedGroupsKey = 'joined_groups_v2';
   static const String _systemMessagesKey = 'group_system_messages_v1';
   bool _isInitialized = false;
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   /// All invitations for the current user (demo: single-user device)
   List<GroupInvitation> _invitations = [];
@@ -291,11 +298,25 @@ class InvitationService extends ChangeNotifier {
     _log('Declined invitation: $invitationId');
   }
 
-  /// Join a public group from Discover — persists to Messages tab
+  /// Join a public group from Discover — persists to Messages tab.
+  ///
+  /// HYPERLOCAL GATE: The user can only join groups whose
+  /// creatorBorough matches their home borough. Cross-borough joins are
+  /// silently blocked and logged.
   Future<void> joinPublicGroup(Group group, String userName) async {
     await initialize();
     // Avoid duplicates
     if (_joinedGroups.any((g) => g.id == group.id)) return;
+
+    // Borough gate — block cross-borough group joins
+    if (!_guard.canInteract(
+      feature: HuddlFeature.groups,
+      targetBorough: group.creatorBorough,
+      targetName: group.name,
+    )) {
+      _log('BLOCKED: Cross-borough join attempt for "${group.name}"');
+      return;
+    }
 
     final joinedGroup = group.copyWith(
       isJoined: true,
@@ -409,7 +430,12 @@ class InvitationService extends ChangeNotifier {
   }
 
   /// Generate a list of simulated borough members for the member picker.
-  /// In production this would come from a Firestore query filtered by postcode.
+  ///
+  /// HYPERLOCAL: In production this would query Firestore filtered by
+  /// the user's borough. Only members in the same borough are shown.
+  /// The [borough] parameter is provided for labelling — the member set
+  /// is the same demo data regardless (since all demo users are in the
+  /// same borough).
   static List<BoroughMember> getBoroughMembers(String? borough) {
     return [
       BoroughMember(

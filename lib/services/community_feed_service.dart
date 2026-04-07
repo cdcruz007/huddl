@@ -5,6 +5,7 @@ import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 import 'default_group_service.dart';
+import 'borough_scope_guard.dart';
 
 /// Feed item types for the home screen.
 enum FeedItemType {
@@ -115,13 +116,15 @@ class CommunityFeedService {
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcode = PostcodeService();
   final DefaultGroupService _groupService = DefaultGroupService();
+  final BoroughScopeGuard _guard = BoroughScopeGuard();
 
   List<FeedItem> _feedItems = [];
   bool _isInitialized = false;
   String? _userBorough;
   DateTime? _lastLogin;
 
-  String? get userBorough => _userBorough;
+  /// Current user's borough, resolved via BoroughScopeGuard (single source of truth).
+  String? get userBorough => _guard.currentBorough ?? _userBorough;
   DateTime? get lastLogin => _lastLogin;
 
   /// All feed items, newest first.
@@ -159,9 +162,14 @@ class CommunityFeedService {
   }
 
   void _resolveBorough() {
-    final pc = _onboarding.postcode;
-    if (pc != null) {
-      _userBorough = _postcode.getBoroughFromPostcode(pc);
+    // Primary: use BoroughScopeGuard (single source of truth)
+    _userBorough = _guard.currentBorough;
+    // Fallback: resolve from postcode directly
+    if (_userBorough == null || _userBorough!.isEmpty) {
+      final pc = _onboarding.postcode;
+      if (pc != null) {
+        _userBorough = _postcode.getBoroughFromPostcode(pc);
+      }
     }
   }
 
