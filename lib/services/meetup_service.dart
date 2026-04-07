@@ -146,6 +146,8 @@ class Meetup {
   }
 
   /// Returns a Pexels URL that matches the meetup category.
+  /// Public so the create screen and detail screen can access it.
+  static String categoryFallbackUrl(String category) => _categoryFallbackUrl(category);
   static String _categoryFallbackUrl(String category) {
     switch (category.toLowerCase()) {
       case 'coffee':
@@ -188,7 +190,7 @@ class Meetup {
     'maxAttendees': maxAttendees,
     'isGoing': isGoing,
     'attendeeNames': attendeeNames,
-    'imageUrl': imageUrl.startsWith('data:') ? _categoryFallbackUrl(category) : imageUrl, // Replace base64 with category image
+    'imageUrl': imageUrl, // Preserve original (base64 stored separately if needed)
     'isFree': isFree,
     'price': price,
     'privacy': privacy.index,
@@ -257,6 +259,10 @@ class MeetupService extends ChangeNotifier {
     _meetups.insert(0, meetup);
     notifyListeners();
     _persistUserMeetups();
+    // Store base64 image separately (too large for main JSON list)
+    if (meetup.imageUrl.startsWith('data:')) {
+      _persistMeetupImage(meetup.id, meetup.imageUrl);
+    }
   }
 
   /// Toggle "going" status for a meetup.
@@ -276,12 +282,22 @@ class MeetupService extends ChangeNotifier {
     _persistUserMeetups();
   }
 
-  /// Delete a meetup (organiser only).
-  void deleteMeetup(String meetupId) {
-    _meetups.removeWhere((m) => m.id == meetupId);
+  /// Delete / cancel a meetup (organiser only).
+  /// Returns the meetup data before deletion (for cancellation messages).
+  Meetup? cancelMeetup(String meetupId) {
+    final index = _meetups.indexWhere((m) => m.id == meetupId);
+    if (index < 0) return null;
+    final cancelled = _meetups[index];
+    _meetups.removeAt(index);
     notifyListeners();
     _persistUserMeetups();
+    // Clean up stored image
+    BrowserStorage.remove('meetup_image_$meetupId');
+    return cancelled;
   }
+
+  /// Legacy alias — kept for backward compatibility.
+  void deleteMeetup(String meetupId) => cancelMeetup(meetupId);
 
   /// Update RSVP for an invitee
   void updateInviteeStatus(String meetupId, String inviteeId, String status) {
@@ -312,13 +328,78 @@ class MeetupService extends ChangeNotifier {
 
   // ── Persistence ──────────────────────────────────────────────────────
 
+  /// Store a base64 image separately (keyed by meetup ID).
+  Future<void> _persistMeetupImage(String meetupId, String dataUrl) async {
+    try {
+      await BrowserStorage.setString('meetup_image_$meetupId', dataUrl);
+    } catch (_) {}
+  }
+
+  /// Load a stored base64 image for a meetup.
+  Future<String?> getMeetupImage(String meetupId) async {
+    return BrowserStorage.getString('meetup_image_$meetupId');
+  }
+
+  /// Synchronously check the in-memory cache for a stored image URL.
+  /// Falls back to the meetup's own imageUrl if no override is cached.
+  String resolvedImageUrl(Meetup meetup) {
+    // If the meetup already holds a data: URI in memory, use it.
+    if (meetup.imageUrl.startsWith('data:')) return meetup.imageUrl;
+    // Otherwise use whatever URL is on the object (may be category fallback).
+    return meetup.imageUrl;
+  }
+
+  /// Pre-load stored base64 images into the in-memory meetup list.
+  /// Call once after app start so that card views have the data-URI available.
+  Future<void> restoreCustomImages() async {
+    bool changed = false;
+    for (int i = 0; i < _meetups.length; i++) {
+      final m = _meetups[i];
+      // Only restore if the current URL is NOT a data: URI (i.e. was swapped)
+      if (!m.imageUrl.startsWith('data:') && m.organiserId == 'current_user') {
+        final stored = await BrowserStorage.getString('meetup_image_${m.id}');
+        if (stored != null && stored.startsWith('data:')) {
+          _meetups[i] = Meetup(
+            id: m.id, title: m.title, description: m.description,
+            category: m.category, dateDisplay: m.dateDisplay,
+            timeDisplay: m.timeDisplay, dateTime: m.dateTime,
+            location: m.location, organiserName: m.organiserName,
+            organiserId: m.organiserId, attendeeCount: m.attendeeCount,
+            maxAttendees: m.maxAttendees, isGoing: m.isGoing,
+            isFree: m.isFree, price: m.price,
+            attendeeNames: m.attendeeNames, imageUrl: stored,
+            privacy: m.privacy, repeat: m.repeat,
+            repeatDisplay: m.repeatDisplay, repeatDays: m.repeatDays,
+            repeatEndDate: m.repeatEndDate, groupId: m.groupId,
+            groupName: m.groupName, invitees: m.invitees,
+            invitedMemberIds: m.invitedMemberIds, borough: m.borough,
+            createdAt: m.createdAt,
+          );
+          changed = true;
+        }
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
   Future<void> _persistUserMeetups() async {
     try {
       final userMeetups = _meetups.where((m) => m.organiserId == 'current_user').toList();
-      final encoded = json.encode(userMeetups.map((m) => m.toJson()).toList());
+      // When serializing, swap out base64 for category fallback to keep JSON small
+      final jsonList = userMeetups.map((m) {
+        final j = m.toJson();
+        if ((j['imageUrl'] as String).startsWith('data:')) {
+          j['imageUrl'] = _categoryFallbackUrl(m.category);
+          j['hasCustomImage'] = true; // Flag to reload from separate storage
+        }
+        return j;
+      }).toList();
+      final encoded = json.encode(jsonList);
       await BrowserStorage.setString(_storageKey, encoded);
     } catch (_) {}
   }
+
+  static String _categoryFallbackUrl(String category) => Meetup._categoryFallbackUrl(category);
 
   Future<void> _loadPersistedMeetups() async {
     try {
@@ -326,7 +407,30 @@ class MeetupService extends ChangeNotifier {
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
         for (final j in decoded) {
-          final meetup = Meetup.fromJson(j as Map<String, dynamic>);
+          final map = j as Map<String, dynamic>;
+          var meetup = Meetup.fromJson(map);
+          // Restore base64 image from separate storage if flagged
+          if (map['hasCustomImage'] == true) {
+            final storedImage = await BrowserStorage.getString('meetup_image_${meetup.id}');
+            if (storedImage != null && storedImage.startsWith('data:')) {
+              meetup = Meetup(
+                id: meetup.id, title: meetup.title, description: meetup.description,
+                category: meetup.category, dateDisplay: meetup.dateDisplay,
+                timeDisplay: meetup.timeDisplay, dateTime: meetup.dateTime,
+                location: meetup.location, organiserName: meetup.organiserName,
+                organiserId: meetup.organiserId, attendeeCount: meetup.attendeeCount,
+                maxAttendees: meetup.maxAttendees, isGoing: meetup.isGoing,
+                isFree: meetup.isFree, price: meetup.price,
+                attendeeNames: meetup.attendeeNames, imageUrl: storedImage,
+                privacy: meetup.privacy, repeat: meetup.repeat,
+                repeatDisplay: meetup.repeatDisplay, repeatDays: meetup.repeatDays,
+                repeatEndDate: meetup.repeatEndDate, groupId: meetup.groupId,
+                groupName: meetup.groupName, invitees: meetup.invitees,
+                invitedMemberIds: meetup.invitedMemberIds, borough: meetup.borough,
+                createdAt: meetup.createdAt,
+              );
+            }
+          }
           if (!_meetups.any((m) => m.id == meetup.id)) {
             _meetups.insert(0, meetup);
           }

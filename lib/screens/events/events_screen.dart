@@ -48,6 +48,8 @@ class _EventsScreenState extends State<EventsScreen>
     });
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
+    // Restore user-uploaded base64 images into in-memory meetup list
+    _meetupService.restoreCustomImages();
   }
 
   @override
@@ -849,7 +851,7 @@ class _GoingItem {
         timeDisplay: m.timeDisplay,
         dateTime: m.dateTime,
         location: m.location,
-        imageUrl: m.imageUrl.isNotEmpty && !m.imageUrl.startsWith('data:')
+        imageUrl: m.imageUrl.isNotEmpty
             ? m.imageUrl
             : _meetupCategoryImage(m.category),
         isMeetup: true,
@@ -2123,7 +2125,7 @@ class _MeetupCard extends StatelessWidget {
                 child: Hero(
                   tag: 'meetup_cover_${meetup.id}',
                   child: _buildCoverImage(
-                    imageUrl: meetup.imageUrl.isNotEmpty && !meetup.imageUrl.startsWith('data:')
+                    imageUrl: meetup.imageUrl.isNotEmpty
                         ? meetup.imageUrl
                         : _GoingItem._meetupCategoryImage(meetup.category),
                     fallbackIcon: catStyle.icon,

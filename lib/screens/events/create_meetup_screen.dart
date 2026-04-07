@@ -536,6 +536,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     // Send messages for group or private meetups
     await _sendMeetupNotifications(meetup, organiserName);
 
+    // Auto-create a meetup group chat under Messages for the creator
+    await _createMeetupGroupChat(meetup);
+
     setState(() => _isCreating = false);
 
     if (!mounted) return;
@@ -544,7 +547,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         const Icon(Icons.check_circle, color: Colors.white, size: 18),
         const SizedBox(width: 8),
         Expanded(
-            child: Text('"${meetup.title}" created successfully!')),
+            child: Text('"${meetup.title}" created — group chat added to Messages')),
       ]),
       backgroundColor: HuddlColors.teal,
       behavior: SnackBarBehavior.floating,
@@ -555,6 +558,52 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     // Record usage for subscription tracking
     subService.recordMeetupCreate();
     Navigator.pop(context, meetup);
+  }
+
+  /// Auto-create a group chat under Messages tab so the creator (and future
+  /// attendees) have a place to discuss the meetup.
+  Future<void> _createMeetupGroupChat(Meetup meetup) async {
+    final groupKey = 'user_created_groups_v1';
+    final meetupGroupId = 'meetup_group_${meetup.id}';
+
+    // Check if group already exists
+    final existing = await BrowserStorage.getString(groupKey);
+    List<dynamic> groups = [];
+    if (existing != null) {
+      groups = json.decode(existing) as List<dynamic>;
+      final alreadyExists =
+          groups.any((g) => (g as Map<String, dynamic>)['id'] == meetupGroupId);
+      if (alreadyExists) return;
+    }
+
+    // Use category fallback image for group chat (base64 too large)
+    String chatImage = meetup.imageUrl;
+    if (chatImage.startsWith('data:')) {
+      chatImage = Meetup.categoryFallbackUrl(meetup.category);
+    }
+
+    final newGroup = Group(
+      id: meetupGroupId,
+      name: meetup.title,
+      description:
+          'Group chat for "${meetup.title}" on ${meetup.dateDisplay} at ${meetup.location}',
+      imageUrl: chatImage,
+      memberCount: meetup.attendeeCount,
+      category: 'MEETUP',
+      isJoined: true,
+      isImageLocked: false,
+      targetAudience: const [],
+      privacy: GroupPrivacy.private_,
+      creatorId: meetup.organiserId,
+      creatorName: meetup.organiserName,
+      creatorBorough: _userBorough,
+      lastMessage: '${meetup.organiserName} created this meetup chat',
+      lastSenderName: 'System',
+      lastMessageTime: DateTime.now(),
+    );
+
+    groups.add(newGroup.toJson());
+    await BrowserStorage.setString(groupKey, json.encode(groups));
   }
 
   /// Sends group chat meetup card or DM meetup cards when a group/private meetup is created.

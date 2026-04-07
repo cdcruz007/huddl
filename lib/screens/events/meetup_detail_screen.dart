@@ -7,6 +7,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/meetup_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/browser_storage.dart';
+import '../../services/dm_service.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import '../groups/dm_chat_screen.dart';
@@ -30,6 +31,8 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     super.initState();
     _meetup = widget.meetup;
     _meetupService.addListener(_refresh);
+    // Ensure user-uploaded base64 images are restored into memory
+    _meetupService.restoreCustomImages();
   }
 
   @override
@@ -82,7 +85,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       imageUrl: _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
           ? _meetup.imageUrl
           : _categoryFallbackImage(_meetup.category),
-      memberCount: _meetup.attendeeCount + 1,
+      memberCount: _meetup.attendeeCount,
       category: 'MEETUP',
       isJoined: true,
       isImageLocked: false,
@@ -387,18 +390,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textTertiary)),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              _meetupService.deleteMeetup(_meetup.id);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Meet-up cancelled'),
-                  backgroundColor: HuddlColors.error,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              );
+              await _cancelMeetupAndNotify();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: HuddlColors.error, elevation: 0,
@@ -408,6 +402,72 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.white)),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Cancel the meetup, send cancellation messages to all confirmed attendees,
+  /// and update the meetup group chat with a cancellation notice.
+  Future<void> _cancelMeetupAndNotify() async {
+    final cancelled = _meetupService.cancelMeetup(_meetup.id);
+    if (cancelled == null) return;
+
+    // Send cancellation message to the meetup group chat
+    final meetupGroupId = 'meetup_group_${cancelled.id}';
+    final cancellationMsg =
+        'The creator of the meetup group has unfortunately cancelled this meetup. '
+        'Please feel free to set one up as a replacement if you would still '
+        'be keen to arrange a similar meetup.';
+
+    // Store cancellation notice in the group chat
+    await BrowserStorage.setString(
+      'meetup_cancelled_$meetupGroupId',
+      json.encode({
+        'type': 'cancellation',
+        'meetupId': cancelled.id,
+        'meetupTitle': cancelled.title,
+        'message': cancellationMsg,
+        'timestamp': DateTime.now().toIso8601String(),
+      }),
+    );
+
+    // Also send a DM to each attendee (except the organiser)
+    final dmService = DMService();
+    await dmService.initialize();
+    for (final name in cancelled.attendeeNames) {
+      if (name == cancelled.organiserName) continue; // Skip self
+      final recipientId = 'mem_${name.toLowerCase().replaceAll(' ', '_')}';
+      final conv = await dmService.getOrCreateConversation(
+        recipientId: recipientId,
+        recipientName: name,
+      );
+      await dmService.sendMessage(
+        conversationId: conv.id,
+        message: cancellationMsg,
+        senderName: cancelled.organiserName,
+      );
+    }
+
+    // Remove the meetup group chat from Messages
+    try {
+      final groupKey = 'user_created_groups_v1';
+      final existing = await BrowserStorage.getString(groupKey);
+      if (existing != null) {
+        final groups = (json.decode(existing) as List<dynamic>)
+            .where((g) => (g as Map<String, dynamic>)['id'] != meetupGroupId)
+            .toList();
+        await BrowserStorage.setString(groupKey, json.encode(groups));
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Meet-up cancelled — attendees have been notified'),
+        backgroundColor: HuddlColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -470,7 +530,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   Hero(
                     tag: 'meetup_cover_${_meetup.id}',
                     child: _buildDetailCoverImage(
-                      imageUrl: _meetup.imageUrl.isNotEmpty && !_meetup.imageUrl.startsWith('data:')
+                      imageUrl: _meetup.imageUrl.isNotEmpty
                           ? _meetup.imageUrl
                           : _categoryFallbackImage(_meetup.category),
                       fallbackIcon: catStyle.icon,
