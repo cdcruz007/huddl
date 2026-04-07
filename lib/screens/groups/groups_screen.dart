@@ -3800,147 +3800,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 ),
               ),
 
-            // ── CTA Card ─────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Semantics(
-                label: 'Create a new group',
-                button: true,
-                child: GestureDetector(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final result = await Navigator.pushNamed(context, '/create_group');
-                    if (result != null) {
-                      widget.groupsChangedNotifier.value++;
-                    }
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: context.hc.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 64,
-                          height: 64,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              Container(
-                                width: 56, height: 56,
-                                decoration: const BoxDecoration(
-                                  color: HuddlColors.peachLight,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              Positioned(
-                                left: 0, top: 4,
-                                child: Container(
-                                  width: 10, height: 10,
-                                  decoration: const BoxDecoration(
-                                    color: HuddlColors.accentAmber,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                right: 0, bottom: 6,
-                                child: Container(
-                                  width: 8, height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: HuddlColors.paleBlue,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ),
-                              const Icon(Icons.diversity_3,
-                                  size: 30, color: HuddlColors.primary),
-                              Positioned(
-                                right: 4, top: 4,
-                                child: Container(
-                                  width: 20, height: 20,
-                                  decoration: BoxDecoration(
-                                    color: HuddlColors.blue,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: context.hc.surface, width: 2),
-                                  ),
-                                  child: const Icon(Icons.add,
-                                      size: 11, color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Haven\'t found the perfect group?',
-                                style: _adaptiveText(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textPrimary,
-                                  height: 1.3,
-                                ),
-                              ),
-                              const SizedBox(height: 3),
-                              Text(
-                                'Don\'t worry, add your own!',
-                                style: _adaptiveText(
-                                  fontSize: 12,
-                                  color: context.hc.textTertiary,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 44,
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    HapticFeedback.lightImpact();
-                                    final result = await Navigator.pushNamed(context, '/create_group');
-                                    if (result != null) {
-                                      widget.groupsChangedNotifier.value++;
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: HuddlColors.primary,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Create New Group',
-                                    style: _adaptiveText(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hc.surface,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            // CTA Card removed — circular FAB below is the sole "Create group" action
 
             // ── AI-powered "Suggested for you" header ────────────────
             SliverToBoxAdapter(
@@ -4180,7 +4040,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           ],
         ),
 
-        // ── FAB (Create group — bottom-right) ──────────────────────
+        // ── FAB (Create group — bottom-right, circle) ─────────────
         Positioned(
           bottom: 24,
           right: 16,
@@ -4190,7 +4050,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             child: Material(
               elevation: 6,
               shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: const CircleBorder(),
               color: HuddlColors.primary,
               child: InkWell(
                 onTap: () async {
@@ -4200,7 +4060,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                     widget.groupsChangedNotifier.value++;
                   }
                 },
-                borderRadius: BorderRadius.circular(16),
+                customBorder: const CircleBorder(),
                 child: const SizedBox(
                   width: 56,
                   height: 56,
