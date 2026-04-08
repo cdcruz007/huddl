@@ -698,29 +698,26 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     final uri = Uri.parse(url);
     
     try {
-      if (await canLaunchUrl(uri)) {
-        // For web: open in new tab using webOnlyWindowName
-        // For mobile: use externalApplication to open in default browser
-        if (kIsWeb) {
-          await launchUrl(
-            uri,
-            webOnlyWindowName: '_blank', // Opens in new tab, not in-app webview
-          );
-        } else {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      // For web: open in new tab
+      if (kIsWeb) {
+        final launched = await launchUrl(
+          uri,
+          webOnlyWindowName: '_blank',
+        );
+        if (!launched && kDebugMode) {
+          debugPrint('Failed to launch URL on web: $url');
         }
       } else {
-        if (kDebugMode) {
-          debugPrint('Cannot launch URL: $url');
-        }
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Unable to open offer link'),
-              backgroundColor: HuddlColors.error,
-              duration: const Duration(seconds: 2),
-            ),
+        // For mobile: Try to open in external browser
+        // First check if we can launch it
+        if (await canLaunchUrl(uri)) {
+          // Use platformDefault mode which should open in external browser on mobile
+          await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
           );
+        } else {
+          throw Exception('Cannot launch URL: $url');
         }
       }
     } catch (e) {
@@ -730,9 +727,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Error opening offer. Please try again.'),
+            content: Text('Unable to open offer: ${e.toString().contains('Cannot launch') ? 'Link not supported' : 'Please try again'}'),
             backgroundColor: HuddlColors.error,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
           ),
         );
       }
@@ -2460,19 +2462,29 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               ),
                             ),
                           ),
-                          // Text
-                          Positioned(
-                            left: 14,
-                            right: 14,
-                            top: 0,
-                            bottom: 0,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                banner.title,
-                                style: _adaptiveText(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
+                          // Text - heavily constrained to prevent any wrapping issues
+                          Positioned.fill(
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 212, // 240 - 28 (padding)
+                                    maxHeight: 72,  // 100 - 28 (padding)
+                                  ),
+                                  child: Text(
+                                    banner.title,
+                                    style: _adaptiveText(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    softWrap: true,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
