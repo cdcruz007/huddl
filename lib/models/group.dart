@@ -193,6 +193,8 @@ class ChatMessage {
   final String? replyToSender;
   final bool isMeetupCard; // meetup invite card message
   final Map<String, dynamic>? meetupData; // full meetup data for card rendering
+  final bool isGroupCard; // group invite card message
+  final Map<String, dynamic>? groupData; // full group data for card rendering
 
   ChatMessage({
     required this.id,
@@ -207,5 +209,7 @@ class ChatMessage {
     this.replyToSender,
     this.isMeetupCard = false,
     this.meetupData,
+    this.isGroupCard = false,
+    this.groupData,
   });
 }

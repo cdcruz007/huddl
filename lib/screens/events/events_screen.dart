@@ -19,6 +19,7 @@ import '../../services/invisible_ai_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
+import '../groups/forward_message_sheet.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISCOVER SCREEN — main entry with 3 tabs: Meetups · Events · Groups
@@ -2421,6 +2422,26 @@ class _MeetupCard extends StatelessWidget {
 
   static void _shareMeetup(BuildContext context, Meetup meetup) {
     HapticFeedback.mediumImpact();
+    
+    // Convert meetup to map for forwarding
+    final meetupData = {
+      'id': meetup.id,
+      'title': meetup.title,
+      'category': meetup.category,
+      'dateDisplay': meetup.dateDisplay,
+      'timeDisplay': meetup.timeDisplay,
+      'location': meetup.location,
+      'imageUrl': meetup.imageUrl,
+      'organiserName': meetup.organiserName,
+      'attendeeCount': meetup.attendeeCount,
+      'maxAttendees': meetup.maxAttendees,
+      'isFree': meetup.isFree,
+      'price': meetup.price,
+      'description': meetup.description,
+      'privacy': meetup.privacy.toString(),
+      'groupName': meetup.groupName,
+    };
+
     final priceText = meetup.isFree
         ? 'Free'
         : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
@@ -2443,24 +2464,12 @@ ${meetup.description.isNotEmpty ? meetup.description : ''}
 Shared from Huddl Connect
 '''.trim();
 
-    Clipboard.setData(ClipboardData(text: shareText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text('Meetup card copied to clipboard!',
-                  style: GoogleFonts.poppins(fontSize: 13)),
-            ),
-          ],
-        ),
-        backgroundColor: HuddlColors.teal,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    // Show forward sheet to send as meetup card
+    showForwardSheet(
+      context: context,
+      messageText: shareText,
+      meetupData: meetupData,
+      isMeetupCard: true,
     );
   }
 }

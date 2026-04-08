@@ -28,6 +28,7 @@ import '../events/events_screen.dart' show ImGoingTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
+import 'forward_message_sheet.dart';
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
@@ -4519,6 +4520,20 @@ class _DiscoverGroupCard extends StatelessWidget {
   }
 
   static void _shareGroup(BuildContext context, _GroupItem group) {
+    // Convert group to map for forwarding
+    final groupData = {
+      'id': group.id,
+      'name': group.name,
+      'description': group.description,
+      'imageUrl': group.imageUrl,
+      'memberCount': group.memberCount,
+      'privacy': group.privacy.toString(),
+      'creatorName': group.creatorName,
+      'creatorBorough': group.creatorBorough,
+      'targetAudience': group.targetAudience,
+      'parentGroupName': group.parentGroupName,
+    };
+
     final privacyText = group.privacy == GroupPrivacy.public
         ? 'Public'
         : group.privacy == GroupPrivacy.group
@@ -4557,43 +4572,12 @@ ${group.creatorName != null && group.creatorName!.isNotEmpty ? '║ ✨ Created 
 Shared from Huddl Connect 🚀
 '''.trim();
 
-    Clipboard.setData(ClipboardData(text: shareText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.content_copy, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Group card copied!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Paste in any chat to share',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: HuddlColors.teal,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 3),
-      ),
+    // Show forward sheet to send as group card
+    showForwardSheet(
+      context: context,
+      messageText: shareText,
+      groupData: groupData,
+      isGroupCard: true,
     );
   }
 
