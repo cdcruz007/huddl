@@ -1313,7 +1313,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // COMPONENT WIDGETS
   // ══════════════════════════════════════════════════════════════════════
 
-  /// Blue photo upload banner matching screenshot design
+  /// Photo upload banner — brand orange to match Create Group screen
   Widget _buildPhotoUpload() {
     if (_pickedImageUrl != null) {
       return GestureDetector(
@@ -1361,7 +1361,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         height: 240,
         margin: EdgeInsets.zero,
         decoration: const BoxDecoration(
-          color: HuddlColors.blue,
+          color: HuddlColors.peachLight,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1371,7 +1371,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               height: 52,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: HuddlColors.primary.withValues(alpha: 0.6),
                     width: 2),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1380,7 +1380,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 children: [
                   Icon(Icons.image_outlined,
                       size: 28,
-                      color: Colors.white.withValues(alpha: 0.8)),
+                      color: HuddlColors.primary.withValues(alpha: 0.8)),
                   Positioned(
                     bottom: 4,
                     right: 4,
@@ -1388,11 +1388,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: HuddlColors.primary.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.add,
-                          size: 12, color: HuddlColors.blue),
+                      child: const Icon(Icons.add,
+                          size: 12, color: Colors.white),
                     ),
                   ),
                 ],
@@ -1403,7 +1403,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white)),
+                    color: HuddlColors.primary)),
           ],
         ),
       ),
@@ -1412,10 +1412,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.blue,
+      color: HuddlColors.peachLight,
       child: const Center(
         child:
-            Icon(Icons.image_outlined, size: 48, color: Colors.white),
+            Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
       ),
     );
   }
