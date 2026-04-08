@@ -249,17 +249,16 @@ class _EventsScreenState extends State<EventsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.hc.scaffold,
-      // No floatingActionButton here — FAB is rendered manually in the Stack
-      // below so we have absolute control over visibility per tab.
       body: SafeArea(
         child: Stack(
           children: [
+            // ── Main content column ────────────────────────────────
             Column(
-          children: [
-            // ── Header ─────────────────────────────────────────────
-            Container(
-              color: context.hc.surface,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              children: [
+                // ── Header ─────────────────────────────────────────
+                Container(
+                  color: context.hc.surface,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -407,6 +406,67 @@ class _EventsScreenState extends State<EventsScreen>
                 ],
               ),
             ),
+          ],
+        ),
+        // ── Circular + FAB ────────────────────────────────────
+        // Rendered as a Positioned inside the Stack so we have
+        // absolute control: Groups → create group, Meetups →
+        // create meetup, Events → hidden entirely.
+        if (_selectedTab == 0)
+          Positioned(
+            bottom: 24,
+            right: 16,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.pushNamed(context, '/create_group');
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: HuddlColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              ),
+            ),
+          ),
+        if (_selectedTab == 1)
+          Positioned(
+            bottom: 24,
+            right: 16,
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _navigateToCreateMeetup();
+              },
+              child: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: HuddlColors.primary.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
+              ),
+            ),
+          ),
+        // _selectedTab == 2 (Events) → no FAB rendered at all
           ],
         ),
       ),
