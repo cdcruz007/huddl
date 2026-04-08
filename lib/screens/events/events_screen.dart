@@ -34,6 +34,7 @@ class EventsScreen extends StatefulWidget {
 class _EventsScreenState extends State<EventsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
   bool _isSearching = false;
@@ -46,9 +47,13 @@ class _EventsScreenState extends State<EventsScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      // Rebuild on every index change (both tap and swipe) so the FAB
-      // visibility and action always reflect the active tab.
-      setState(() {});
+      // Only update the selected tab when the animation has settled,
+      // so the FAB never shows/hides based on a mid-swipe index.
+      if (!_tabController.indexIsChanging) {
+        if (_selectedTab != _tabController.index) {
+          setState(() { _selectedTab = _tabController.index; });
+        }
+      }
     });
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
@@ -242,33 +247,37 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // FAB logic per tab:
+    // FAB logic per tab (uses _selectedTab – only updates when settled):
     //   0 (Groups)  → circular + → create group
     //   1 (Meetups)  → circular + → create meetup
     //   2 (Events)  → no FAB
-    final tabIndex = _tabController.index;
+    Widget? fab;
+    if (_selectedTab == 0) {
+      fab = FloatingActionButton(
+        key: const ValueKey('fab-groups'),
+        onPressed: () => Navigator.pushNamed(context, '/create_group'),
+        backgroundColor: HuddlColors.primary,
+        foregroundColor: HuddlColors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 28),
+      );
+    } else if (_selectedTab == 1) {
+      fab = FloatingActionButton(
+        key: const ValueKey('fab-meetups'),
+        onPressed: _navigateToCreateMeetup,
+        backgroundColor: HuddlColors.primary,
+        foregroundColor: HuddlColors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 28),
+      );
+    }
+    // _selectedTab == 2 (Events) → fab remains null → no FAB
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
-      floatingActionButton: tabIndex == 2
-          ? null // No FAB on Events tab
-          : FloatingActionButton(
-              onPressed: () {
-                // Read index at tap-time (not build-time) so swipe
-                // transitions always route to the correct action.
-                final currentTab = _tabController.index;
-                if (currentTab == 0) {
-                  Navigator.pushNamed(context, '/create_group');
-                } else if (currentTab == 1) {
-                  _navigateToCreateMeetup();
-                }
-              },
-              backgroundColor: HuddlColors.primary,
-              foregroundColor: HuddlColors.white,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, size: 28),
-            ),
+      floatingActionButton: fab,
       body: SafeArea(
         child: Column(
           children: [
@@ -360,6 +369,10 @@ class _EventsScreenState extends State<EventsScreen>
                   // ── Tabs: Groups | Meetups | Events ──────────────
                   TabBar(
                     controller: _tabController,
+                    onTap: (index) {
+                      // Immediately update FAB when user taps a tab
+                      setState(() { _selectedTab = index; });
+                    },
                     tabs: const [
                       Tab(text: 'Groups'),
                       Tab(text: 'Meetups'),
@@ -386,12 +399,12 @@ class _EventsScreenState extends State<EventsScreen>
             // ── Borough scope context bar ───────────────────────
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              child: _tabController.index == 2
+              child: _selectedTab == 2
                   ? const BoroughHeader(
                       key: ValueKey('uk-wide'),
                       feature: HuddlFeature.events,
                     )
-                  : _tabController.index == 1
+                  : _selectedTab == 1
                       ? const BoroughHeader(
                           key: ValueKey('meetups-borough'),
                           feature: HuddlFeature.meetups,
