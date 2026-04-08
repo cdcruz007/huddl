@@ -377,6 +377,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
         senderName: userName,
         type: MessageType.image,
         imageUrl: widget.imageUrl,
+        meetupData: widget.meetupData,
+        groupData: widget.groupData,
+        itemData: widget.itemData,
       );
     } else if (widget.documentName != null) {
       await _dmService.sendMessage(
@@ -385,6 +388,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
         senderName: userName,
         type: MessageType.document,
         documentName: widget.documentName,
+        meetupData: widget.meetupData,
+        groupData: widget.groupData,
+        itemData: widget.itemData,
       );
     } else if (widget.latitude != null) {
       await _dmService.sendMessage(
@@ -395,6 +401,9 @@ class _ForwardSheetState extends State<_ForwardSheet>
         latitude: widget.latitude,
         longitude: widget.longitude,
         locationLabel: widget.locationLabel,
+        meetupData: widget.meetupData,
+        groupData: widget.groupData,
+        itemData: widget.itemData,
       );
     } else if (widget.contactName != null) {
       await _dmService.sendMessage(
@@ -404,12 +413,18 @@ class _ForwardSheetState extends State<_ForwardSheet>
         type: MessageType.contact,
         contactName: widget.contactName,
         contactPhone: widget.contactPhone,
+        meetupData: widget.meetupData,
+        groupData: widget.groupData,
+        itemData: widget.itemData,
       );
     } else {
       await _dmService.sendMessage(
         conversationId: conv.id,
         message: widget.messageText,
         senderName: userName,
+        meetupData: widget.meetupData,
+        groupData: widget.groupData,
+        itemData: widget.itemData,
       );
     }
   }

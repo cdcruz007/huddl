@@ -190,6 +190,9 @@ class DMService {
     String? locationLabel,
     String? contactName,
     String? contactPhone,
+    Map<String, dynamic>? meetupData,
+    Map<String, dynamic>? groupData,
+    Map<String, dynamic>? itemData,
   }) async {
     await initialize();
 
@@ -213,6 +216,9 @@ class DMService {
       locationLabel: locationLabel,
       contactName: contactName,
       contactPhone: contactPhone,
+      meetupData: meetupData,
+      groupData: groupData,
+      itemData: itemData,
     );
 
     // Save message

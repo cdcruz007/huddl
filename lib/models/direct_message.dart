@@ -50,6 +50,8 @@ class DirectMessage {
   final String? contactPhone;
   final Map<String, int> reactions; // emoji → count
   final Map<String, dynamic>? meetupData; // for meetup invite cards
+  final Map<String, dynamic>? groupData;  // for group invite cards
+  final Map<String, dynamic>? itemData;   // for item invite cards
 
   DirectMessage({
     required this.id,
@@ -72,6 +74,8 @@ class DirectMessage {
     this.contactPhone,
     this.reactions = const {},
     this.meetupData,
+    this.groupData,
+    this.itemData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -95,6 +99,8 @@ class DirectMessage {
         'contactPhone': contactPhone,
         'reactions': reactions,
         'meetupData': meetupData,
+        'groupData': groupData,
+        'itemData': itemData,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -132,6 +138,12 @@ class DirectMessage {
       reactions: rxn,
       meetupData: json['meetupData'] != null
           ? Map<String, dynamic>.from(json['meetupData'] as Map)
+          : null,
+      groupData: json['groupData'] != null
+          ? Map<String, dynamic>.from(json['groupData'] as Map)
+          : null,
+      itemData: json['itemData'] != null
+          ? Map<String, dynamic>.from(json['itemData'] as Map)
           : null,
     );
   }
