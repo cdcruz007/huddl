@@ -2427,32 +2427,56 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     },
                     child: Container(
                       width: 240,
+                      height: 100,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        image: DecorationImage(
-                          image: NetworkImage(banner.src),
-                          fit: BoxFit.cover,
-                          onError: (_, __) {},
-                        ),
+                        color: hc.surfaceAlt, // Fallback background color
                         boxShadow: [
                           BoxShadow(color: hc.shadow, blurRadius: 8, offset: const Offset(0, 3)),
                         ],
                       ),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(14),
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [Colors.black.withValues(alpha: 0.5), Colors.transparent],
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Background image
+                          if (banner.src.isNotEmpty)
+                            Image.network(
+                              banner.src,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: hc.surfaceAlt,
+                                child: Icon(Icons.image_not_supported, color: hc.textTertiary, size: 32),
+                              ),
+                            ),
+                          // Gradient overlay
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(14),
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
+                              ),
+                            ),
                           ),
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          banner.title,
-                          style: _adaptiveText(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
-                        ),
+                          // Text
+                          Positioned(
+                            left: 14,
+                            right: 14,
+                            top: 0,
+                            bottom: 0,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                banner.title,
+                                style: _adaptiveText(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
