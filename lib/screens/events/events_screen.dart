@@ -247,39 +247,14 @@ class _EventsScreenState extends State<EventsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // FAB logic per tab (uses _selectedTab – only updates when settled):
-    //   0 (Groups)  → circular + → create group
-    //   1 (Meetups)  → circular + → create meetup
-    //   2 (Events)  → no FAB
-    Widget? fab;
-    if (_selectedTab == 0) {
-      fab = FloatingActionButton(
-        key: const ValueKey('fab-groups'),
-        onPressed: () => Navigator.pushNamed(context, '/create_group'),
-        backgroundColor: HuddlColors.primary,
-        foregroundColor: HuddlColors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 28),
-      );
-    } else if (_selectedTab == 1) {
-      fab = FloatingActionButton(
-        key: const ValueKey('fab-meetups'),
-        onPressed: _navigateToCreateMeetup,
-        backgroundColor: HuddlColors.primary,
-        foregroundColor: HuddlColors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, size: 28),
-      );
-    }
-    // _selectedTab == 2 (Events) → fab remains null → no FAB
-
     return Scaffold(
       backgroundColor: context.hc.scaffold,
-      floatingActionButton: fab,
+      // No floatingActionButton here — FAB is rendered manually in the Stack
+      // below so we have absolute control over visibility per tab.
       body: SafeArea(
-        child: Column(
+        child: Stack(
+          children: [
+            Column(
           children: [
             // ── Header ─────────────────────────────────────────────
             Container(

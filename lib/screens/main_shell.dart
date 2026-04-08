@@ -5,7 +5,6 @@ import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
 import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
-import 'events/create_meetup_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
@@ -82,24 +81,8 @@ class MainShellState extends State<MainShell> {
         index: _currentIndex,
         children: _screens,
       ),
-      floatingActionButton: _currentIndex == 2
-          ? FloatingActionButton(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CreateMeetupScreen(),
-                  ),
-                );
-              },
-              tooltip: 'Create a meetup',
-              backgroundColor: HuddlColors.primary,
-              shape: const CircleBorder(),
-              elevation: 4,
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      // FAB is managed per-tab inside EventsScreen (Groups→create group,
+      // Meetups→create meetup, Events→none). No shell-level FAB needed.
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
