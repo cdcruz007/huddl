@@ -3350,6 +3350,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 message: m['message'] as String? ?? '',
                 timestamp: DateTime.parse(m['timestamp'] as String),
                 isMe: true,
+                isMeetupCard: m['isMeetupCard'] as bool? ?? false,
+                meetupData: m['meetupData'] as Map<String, dynamic>?,
+                isGroupCard: m['isGroupCard'] as bool? ?? false,
+                groupData: m['groupData'] as Map<String, dynamic>?,
+                isItemCard: m['isItemCard'] as bool? ?? false,
+                itemData: m['itemData'] as Map<String, dynamic>?,
               ));
             }
           }

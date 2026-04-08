@@ -325,7 +325,8 @@ class _ForwardSheetState extends State<_ForwardSheet>
           fwdText = '\u{1F464} Contact: ${widget.contactName} - ${widget.contactPhone ?? ''}';
           msgType = 'contact';
         }
-        msgs.add({
+        
+        final msgData = {
           'id': 'gm_fwd_${DateTime.now().millisecondsSinceEpoch}',
           'senderId': 'current_user',
           'senderName': userName,
@@ -340,7 +341,23 @@ class _ForwardSheetState extends State<_ForwardSheet>
           'locationLabel': widget.locationLabel,
           'contactName': widget.contactName,
           'contactPhone': widget.contactPhone,
-        });
+        };
+        
+        // Add card data if present
+        if (widget.isMeetupCard && widget.meetupData != null) {
+          msgData['isMeetupCard'] = true;
+          msgData['meetupData'] = widget.meetupData;
+        }
+        if (widget.isGroupCard && widget.groupData != null) {
+          msgData['isGroupCard'] = true;
+          msgData['groupData'] = widget.groupData;
+        }
+        if (widget.isItemCard && widget.itemData != null) {
+          msgData['isItemCard'] = true;
+          msgData['itemData'] = widget.itemData;
+        }
+        
+        msgs.add(msgData);
         await BrowserStorage.setString(key, json.encode(msgs));
       } catch (_) {}
       return;
