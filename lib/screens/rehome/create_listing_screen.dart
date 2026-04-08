@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/rehome_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -36,7 +36,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
-  final _picker = ImagePicker();
+  // ImagePicker no longer needed - using ImageEditorWidget instead
+  // final _picker = ImagePicker();
 
   AgeStage? _selectedAge;
   ItemCategory? _selectedCategory;
@@ -159,15 +160,13 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Future<void> _pickMultipleFromGallery() async {
     try {
-      final files = await _picker.pickMultiImage(
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 80,
-      );
-      for (final file in files) {
+      // Pick and crop images one at a time for better control
+      // User can call this multiple times to add more images
+      final file = await ImageEditorWidget.pickMarketplaceImage(context);
+      if (file != null && mounted) {
         final bytes = await file.readAsBytes();
         final b64 = base64Encode(bytes);
-        final mimeType = file.name.toLowerCase().endsWith('.png')
+        final mimeType = file.path.toLowerCase().endsWith('.png')
             ? 'image/png'
             : 'image/jpeg';
         setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
@@ -176,7 +175,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not access photos: $e'),
+            content: Text('Could not update photo: $e'),
             backgroundColor: HuddlColors.error,
           ),
         );
@@ -186,16 +185,12 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Future<void> _pickFromCamera() async {
     try {
-      final file = await _picker.pickImage(
-        source: ImageSource.camera,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 80,
-      );
+      // Use image editor which includes source selection
+      final file = await ImageEditorWidget.pickMarketplaceImage(context);
       if (file == null) return;
       final bytes = await file.readAsBytes();
       final b64 = base64Encode(bytes);
-      final mimeType = file.name.toLowerCase().endsWith('.png')
+      final mimeType = file.path.toLowerCase().endsWith('.png')
           ? 'image/png'
           : 'image/jpeg';
       setState(() => _pickedImages.add('data:$mimeType;base64,$b64'));
@@ -203,7 +198,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Could not access camera: $e'),
+            content: Text('Could not update photo: $e'),
             backgroundColor: HuddlColors.error,
           ),
         );

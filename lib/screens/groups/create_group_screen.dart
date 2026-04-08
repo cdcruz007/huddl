@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
@@ -34,7 +35,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _memberSearchController = TextEditingController();
-  final _picker = ImagePicker();
+  // ImagePicker no longer needed - using ImageEditorWidget instead
+  // final _picker = ImagePicker();
   bool _isCreating = false;
   String? _pickedImageUrl;
   bool _showImageError = false;
@@ -183,13 +185,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Future<void> _pickFrom(ImageSource source) async {
     try {
-      final file = await _picker.pickImage(
-        source: source, maxWidth: 1200, maxHeight: 800, imageQuality: 85,
-      );
+      // Use new image editor with crop functionality (16:9 for group images)
+      final file = await ImageEditorWidget.pickGroupImage(context);
+      
       if (file != null && mounted) {
         final bytes = await file.readAsBytes();
         final base64Str = base64Encode(bytes);
-        final mimeType = file.name.toLowerCase().endsWith('.png')
+        final mimeType = file.path.toLowerCase().endsWith('.png')
             ? 'image/png'
             : 'image/jpeg';
         setState(() {
@@ -201,7 +203,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Could not access photos: $e'),
+              content: Text('Could not update image: $e'),
               backgroundColor: HuddlColors.error),
         );
       }

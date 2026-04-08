@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../widgets/image_editor_widget.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../services/onboarding_data_service.dart';
@@ -66,7 +67,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Event> _userEvents = [];
   List<Meetup> _userMeetups = [];
 
-  final ImagePicker _picker = ImagePicker();
+  // ImagePicker no longer needed - using ImageEditorWidget instead
+  // final ImagePicker _picker = ImagePicker();
 
   // Notification settings (persisted)
   bool _pushEnabled = true;
@@ -3747,18 +3749,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickProfilePhoto(ImageSource source) async {
     try {
-      final file = await _picker.pickImage(
-          source: source,
-          maxWidth: 800,
-          maxHeight: 800,
-          imageQuality: 85,
-          preferredCameraDevice: CameraDevice.front);
+      // Use new image editor with crop functionality
+      final file = await ImageEditorWidget.pickProfilePicture(context);
+      
       if (file != null && mounted) {
-        _onboarding.setProfilePhotoPath(kIsWeb ? file.name : file.path);
+        _onboarding.setProfilePhotoPath(file.path);
         final bytes = await file.readAsBytes();
         final base64Str = base64Encode(bytes);
-        final mimeType =
-            file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+        final mimeType = file.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
         final dataUrl = 'data:$mimeType;base64,$base64Str';
         _onboarding.setProfilePhotoObjectUrl(dataUrl);
         setState(() => _photoUrl = dataUrl);
@@ -3767,7 +3765,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Could not access photos: $e'),
+            content: Text('Could not update photo: $e'),
             backgroundColor: HuddlColors.error));
       }
     }

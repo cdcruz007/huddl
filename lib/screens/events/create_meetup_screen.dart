@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -38,7 +37,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   final _locationCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _scrollController = ScrollController();
-  final _picker = ImagePicker();
+  // ImagePicker no longer needed - using ImageEditorWidget instead
+  // final _picker = ImagePicker();
 
   // ── Form state ──
   final Set<String> _selectedCategories = {};
@@ -299,85 +299,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ── Image picker ──────────────────────────────────────────────────
   Future<void> _pickImage() async {
-    if (kIsWeb) {
-      await _pickFrom(ImageSource.gallery);
-      return;
-    }
-    if (!mounted) return;
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: context.hc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: context.hc.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Text('Add cover photo',
-                style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight,
-                    shape: BoxShape.circle),
-                child: const Icon(Icons.photo_library_outlined,
-                    color: HuddlColors.primary),
-              ),
-              title: const Text('Choose from gallery',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickFrom(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight,
-                    shape: BoxShape.circle),
-                child: const Icon(Icons.camera_alt_outlined,
-                    color: HuddlColors.primary),
-              ),
-              title: const Text('Take a photo',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickFrom(ImageSource.camera);
-              },
-            ),
-            const SizedBox(height: 8),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _pickFrom(ImageSource source) async {
+    // Use new image editor with crop functionality
     try {
-      final file = await _picker.pickImage(
-          source: source, maxWidth: 1200, maxHeight: 800, imageQuality: 85);
+      final file = await ImageEditorWidget.pickMeetupImage(context);
       if (file != null && mounted) {
         final bytes = await file.readAsBytes();
         final base64Str = base64Encode(bytes);
-        final mimeType = file.name.toLowerCase().endsWith('.png')
+        final mimeType = file.path.toLowerCase().endsWith('.png')
             ? 'image/png'
             : 'image/jpeg';
         setState(
@@ -386,12 +314,17 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Could not access photos: $e'),
+          content: Text('Could not update image: $e'),
           backgroundColor: HuddlColors.error,
         ));
       }
     }
+    // Old bottom sheet code removed - now using ImageEditorWidget
   }
+
+  // Old bottom sheet implementation removed - replaced with ImageEditorWidget
+
+  // Old _pickFrom method removed - replaced with ImageEditorWidget
 
   Widget _buildPickedImage() {
     if (_pickedImageUrl != null && _pickedImageUrl!.startsWith('data:')) {
