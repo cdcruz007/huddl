@@ -142,8 +142,7 @@ class _HomeScreenState extends State<HomeScreen>
       parent: _greetingAnimCtrl,
       curve: Curves.easeOutCubic,
     ));
-    _loadFeedPrefs();
-    _loadData();
+    _initHome();
   }
 
   @override
@@ -157,6 +156,12 @@ class _HomeScreenState extends State<HomeScreen>
   // ═══════════════════════════════════════════════════════════════════════════
   // DATA LOADING
   // ═══════════════════════════════════════════════════════════════════════════
+
+  /// Load feed preferences FIRST, then data, so _buildSmartFeed sees prefs.
+  Future<void> _initHome() async {
+    await _loadFeedPrefs();
+    await _loadData();
+  }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);

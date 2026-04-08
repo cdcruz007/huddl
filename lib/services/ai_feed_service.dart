@@ -408,16 +408,16 @@ class AiFeedService with BoroughAiContext {
       ));
     }
 
-    // 7b. NCT First 1,000 Days nudge for expecting/newborn parents
+    // 7b. NCT early development nudge for expecting/newborn parents
     if (stages.contains('expecting') || stages.contains('new_parent')) {
       _nudges.add(NudgeCard(
         id: 'nudge_first_1000_days',
         type: NudgeType.knowledgeNudge,
-        title: 'The First 1,000 Days',
-        subtitle: '80% of brain development happens before age 2. '
-            'Discover what matters most right now \u2014 from NCT\u2019s research.',
+        title: 'Your Baby\u2019s Amazing Brain',
+        subtitle: '80% of brain development happens in the early years. '
+            'Tap to discover simple everyday activities that make a big difference \u2014 backed by NCT research.',
         emoji: '\u{1F9E0}',
-        actionLabel: 'Learn More',
+        actionLabel: 'Explore Tips',
         actionRoute: '/copilot',
         relevanceScore: 0.92,
         meta: {'source': 'NCT', 'url': 'https://www.nct.org.uk/first-1000-days'},

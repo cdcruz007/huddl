@@ -766,7 +766,10 @@ class UserLearningProfile {
   /// Maturity progress (0.0 - 1.0) within current borough
   double get maturityProgress {
     final total = currentBoroughStats.totalBoroughSignals;
-    if (total < 10) return total / 10.0;
+    // Onboarding data (name, stage, postcode, due date, etc.) gives a
+    // meaningful baseline — never show 0%.  Minimum 15% so the user
+    // sees the AI is already active from day one.
+    if (total < 10) return 0.15 + (total / 10.0) * 0.85;
     if (total < 50) return (total - 10) / 40.0;
     if (total < 200) return (total - 50) / 150.0;
     return 1.0;

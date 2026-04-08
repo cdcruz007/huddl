@@ -18,6 +18,7 @@ import '../screens/onboarding/provider/provider_onboarding_screen.dart';
 import '../screens/onboarding/provider/provider_complete_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/login_otp_screen.dart';
+import '../screens/ai/ai_copilot_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/groups/group_chat_screen.dart';
 import '../screens/groups/group_details_screen.dart';
@@ -160,6 +161,12 @@ class AppRouter {
       case '/create_group':
         return SlidePageRoute(
           page: const CreateGroupScreen(),
+          direction: SlideDirection.up,
+        );
+
+      case '/copilot':
+        return SlidePageRoute(
+          page: const AiCopilotScreen(),
           direction: SlideDirection.up,
         );
 

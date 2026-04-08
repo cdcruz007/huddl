@@ -190,9 +190,9 @@ class LearningMaturityIndicator extends StatelessWidget {
   String _maturityTitle(LearningMaturity maturity) {
     switch (maturity) {
       case LearningMaturity.coldStart:
-        return 'AI Getting Started';
+        return 'AI Active';
       case LearningMaturity.warming:
-        return 'AI Learning';
+        return 'AI Adapting';
       case LearningMaturity.personalised:
         return 'AI Personalised';
       case LearningMaturity.mature:
@@ -203,9 +203,9 @@ class LearningMaturityIndicator extends StatelessWidget {
   String _maturityHint(LearningMaturity maturity) {
     switch (maturity) {
       case LearningMaturity.coldStart:
-        return 'Chat, join groups, and browse to help your AI learn your preferences';
+        return 'Already personalising based on your profile \u2014 the more you use Huddl, the smarter it gets';
       case LearningMaturity.warming:
-        return 'Your AI is getting smarter. Keep exploring for even better suggestions';
+        return 'Getting better every day \u2014 your suggestions are already tailored to you';
       case LearningMaturity.personalised:
         return 'Your feed and recommendations are now personalised to you';
       case LearningMaturity.mature:
@@ -216,7 +216,7 @@ class LearningMaturityIndicator extends StatelessWidget {
   Color _maturityColor(LearningMaturity maturity) {
     switch (maturity) {
       case LearningMaturity.coldStart:
-        return Colors.blue;
+        return Colors.teal;
       case LearningMaturity.warming:
         return Colors.amber.shade700;
       case LearningMaturity.personalised:
