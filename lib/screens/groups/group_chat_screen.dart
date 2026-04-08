@@ -22,6 +22,8 @@ import '../../widgets/document_bubble.dart';
 import '../../widgets/emoji_reaction_picker.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../widgets/meetup_invite_card.dart';
+import '../../widgets/group_invite_card.dart';
+import '../../widgets/item_invite_card.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -2208,6 +2210,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           }
 
                           // Meetup invite card messages
+                          // Render meetup card
                           if (msg.isMeetupCard && msg.meetupData != null) {
                             final showTimestampCard = msgIdx == 0 ||
                                 msg.timestamp
@@ -2220,6 +2223,44 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   _TimestampDivider(timestamp: msg.timestamp),
                                 MeetupInviteCard(
                                   meetupData: msg.meetupData!,
+                                  isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Render group card
+                          if (msg.isGroupCard && msg.groupData != null) {
+                            final showTimestampCard = msgIdx == 0 ||
+                                msg.timestamp
+                                        .difference(_messages[msgIdx - 1].timestamp)
+                                        .inMinutes >
+                                    5;
+                            return Column(
+                              children: [
+                                if (showTimestampCard)
+                                  _TimestampDivider(timestamp: msg.timestamp),
+                                GroupInviteCard(
+                                  groupData: msg.groupData!,
+                                  isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Render item card
+                          if (msg.isItemCard && msg.itemData != null) {
+                            final showTimestampCard = msgIdx == 0 ||
+                                msg.timestamp
+                                        .difference(_messages[msgIdx - 1].timestamp)
+                                        .inMinutes >
+                                    5;
+                            return Column(
+                              children: [
+                                if (showTimestampCard)
+                                  _TimestampDivider(timestamp: msg.timestamp),
+                                ItemInviteCard(
+                                  itemData: msg.itemData!,
                                   isMe: msg.isMe,
                                 ),
                               ],
