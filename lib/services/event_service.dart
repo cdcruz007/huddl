@@ -147,6 +147,10 @@ class EventService extends ChangeNotifier {
     _loadSampleEvents();
   }
 
+  /// Global notifier that fires whenever an event group chat is created.
+  /// The Messages tab listens to this so it can refresh immediately.
+  static final ValueNotifier<int> groupChatCreated = ValueNotifier<int>(0);
+
   final List<Event> _events = [];
   final Set<String> _goingEventIds = {};
   final Set<String> _bookmarkedEventIds = {};
@@ -224,6 +228,9 @@ class EventService extends ChangeNotifier {
 
     groups.add(newGroup.toJson());
     await BrowserStorage.setString(groupKey, json.encode(groups));
+
+    // Signal the Messages tab to refresh immediately.
+    groupChatCreated.value++;
   }
 
   /// Whether the user has bookmarked this event.

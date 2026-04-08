@@ -14,6 +14,7 @@ import '../../services/browser_storage.dart';
 import '../../services/invitation_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/dm_service.dart';
+import '../../services/event_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/message_search_service.dart';
 import '../../models/saved_message.dart';
@@ -236,11 +237,14 @@ class _MessagesTabState extends State<_MessagesTab> {
     _dmService.addListener(_onDMUpdate);
     _invitationService.addListener(_onGroupsChanged);
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
+    // Listen for event "Count Me In" group chat creation
+    EventService.groupChatCreated.addListener(_onGroupsChanged);
   }
 
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    EventService.groupChatCreated.removeListener(_onGroupsChanged);
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _invitationService.removeListener(_onGroupsChanged);
     _searchController.dispose();
