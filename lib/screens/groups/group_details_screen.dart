@@ -8,6 +8,7 @@ import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/dm_service.dart';
+import 'group_polls_screen.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 
@@ -816,14 +817,16 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                 ),
                 trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
                 onTap: () {
-                  // Navigate to group chat which contains the polls
-                  Navigator.pushNamed(context, '/group_chat', arguments: {
-                    'groupId': widget.groupId,
-                    'groupName': _editableName,
-                    'groupImageUrl': widget.groupImageUrl,
-                    'isPrivate': widget.isPrivate,
-                    'creatorId': widget.creatorId,
-                  });
+                  // Navigate to dedicated polls screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => GroupPollsScreen(
+                        groupId: widget.groupId,
+                        groupName: _editableName,
+                      ),
+                    ),
+                  );
                 },
               ),
             ),
