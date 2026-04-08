@@ -8,6 +8,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
 import '../rehome/create_listing_screen.dart';
+import '../groups/forward_message_sheet.dart';
 
 // =============================================================================
 // PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
@@ -117,25 +118,37 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   void _shareItem() {
     HapticFeedback.mediumImpact();
+    
+    // Convert item to map for forwarding
+    final itemData = {
+      'id': item.id,
+      'title': item.title,
+      'description': item.description,
+      'price': item.price,
+      'priceDisplay': item.priceDisplay,
+      'condition': item.condition.label,
+      'ageStage': item.ageStage.label,
+      'category': item.category.label,
+      'imageUrls': item.imageUrls,
+      'sellerName': item.sellerName,
+      'sellerId': item.sellerId,
+      'sellerLocation': item.sellerLocation,
+      'listedAt': item.listedAt.toIso8601String(),
+      'isFree': item.isFree,
+      'borough': item.borough,
+    };
+    
     final shareText =
         '${item.title}\n${item.priceDisplay} \u00B7 ${item.condition.label}'
         '\n\uD83D\uDCCD ${item.sellerLocation}'
         '\n\nCheck it out on Huddl Connect Market!';
-    Clipboard.setData(ClipboardData(text: shareText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Text('Link copied to clipboard'),
-          ],
-        ),
-        backgroundColor: HuddlColors.teal,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    
+    // Show forward sheet to send as item card
+    showForwardSheet(
+      context: context,
+      messageText: shareText,
+      itemData: itemData,
+      isItemCard: true,
     );
   }
 

@@ -52,6 +52,8 @@ Future<void> showForwardSheet({
   bool isMeetupCard = false,
   Map<String, dynamic>? groupData,
   bool isGroupCard = false,
+  Map<String, dynamic>? itemData,
+  bool isItemCard = false,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -70,6 +72,8 @@ Future<void> showForwardSheet({
       isMeetupCard: isMeetupCard,
       groupData: groupData,
       isGroupCard: isGroupCard,
+      itemData: itemData,
+      isItemCard: isItemCard,
     ),
   );
 }
@@ -87,6 +91,8 @@ class _ForwardSheet extends StatefulWidget {
   final bool isMeetupCard;
   final Map<String, dynamic>? groupData;
   final bool isGroupCard;
+  final Map<String, dynamic>? itemData;
+  final bool isItemCard;
 
   const _ForwardSheet({
     required this.messageText,
@@ -101,6 +107,8 @@ class _ForwardSheet extends StatefulWidget {
     this.isMeetupCard = false,
     this.groupData,
     this.isGroupCard = false,
+    this.itemData,
+    this.isItemCard = false,
   });
 
   @override
