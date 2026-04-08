@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -486,8 +487,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Meetup invite card message
-                          if (msg.type == MessageType.meetupInvite && msg.meetupData != null) {
+                          // Meetup invite card message - check type OR data presence
+                          if ((msg.type == MessageType.meetupInvite || msg.meetupData != null) && msg.meetupData != null) {
+                            if (kDebugMode) {
+                              debugPrint('✅ DM: Rendering meetup card for msg ${msg.id}');
+                            }
                             return Column(
                               children: [
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
@@ -499,8 +503,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Group invite card message
+                          // Group invite card message - prioritize if groupData exists
                           if (msg.groupData != null) {
+                            if (kDebugMode) {
+                              debugPrint('✅ DM: Rendering group card for msg ${msg.id}');
+                            }
                             return Column(
                               children: [
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
@@ -512,8 +519,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Item invite card message
+                          // Item invite card message - prioritize if itemData exists
                           if (msg.itemData != null) {
+                            if (kDebugMode) {
+                              debugPrint('✅ DM: Rendering item card for msg ${msg.id}');
+                            }
                             return Column(
                               children: [
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),

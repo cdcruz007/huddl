@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -347,14 +348,23 @@ class _ForwardSheetState extends State<_ForwardSheet>
         if (widget.isMeetupCard && widget.meetupData != null) {
           msgData['isMeetupCard'] = true;
           msgData['meetupData'] = widget.meetupData;
+          if (kDebugMode) {
+            debugPrint('✅ Saving meetup card to group ${target.id}');
+          }
         }
         if (widget.isGroupCard && widget.groupData != null) {
           msgData['isGroupCard'] = true;
           msgData['groupData'] = widget.groupData;
+          if (kDebugMode) {
+            debugPrint('✅ Saving group card to group ${target.id}');
+          }
         }
         if (widget.isItemCard && widget.itemData != null) {
           msgData['isItemCard'] = true;
           msgData['itemData'] = widget.itemData;
+          if (kDebugMode) {
+            debugPrint('✅ Saving item card to group ${target.id}');
+          }
         }
         
         msgs.add(msgData);
