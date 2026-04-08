@@ -1614,8 +1614,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showPhoneSheet() {
-    final phoneCtrl = TextEditingController(
-        text: _onboarding.phoneNumber ?? '');
+    // Remove country code if it's already in the phone number
+    String phoneOnly = _onboarding.phoneNumber ?? '';
+    if (phoneOnly.startsWith('+44')) {
+      phoneOnly = phoneOnly.substring(3);
+    } else if (phoneOnly.startsWith('44')) {
+      phoneOnly = phoneOnly.substring(2);
+    }
+    final phoneCtrl = TextEditingController(text: phoneOnly);
 
     _showSheet(
       title: 'Phone Number',
@@ -1698,8 +1704,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: _sheetButton('Update Phone', () async {
-              final newPhone = phoneCtrl.text.trim();
+              String newPhone = phoneCtrl.text.trim();
               if (newPhone.isNotEmpty) {
+                // Remove country code if user accidentally included it
+                if (newPhone.startsWith('+44')) {
+                  newPhone = newPhone.substring(3);
+                } else if (newPhone.startsWith('44')) {
+                  newPhone = newPhone.substring(2);
+                }
+                
                 // OTP verification for phone change
                 Navigator.pop(c);
                 final verified = await _verifyWithOtp('change your phone number');
@@ -3322,16 +3335,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pop(c);
             _showFAQScreen();
           }),
-          _helpTile(Icons.email_outlined, 'Contact us',
-              'Email us at support@huddl.app', () {
-            Navigator.pop(c);
-            _snack('Contact: support@huddl.app');
-          }),
-          _helpTile(Icons.feedback_outlined, 'Send feedback',
-              'Help us improve Huddl', () {
-            Navigator.pop(c);
-            _showFeedbackSheet();
-          }),
           _helpTile(Icons.description_outlined, 'Terms of Service',
               'Read our terms', () {
             Navigator.pop(c);
@@ -3424,40 +3427,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showFeedbackSheet() {
-    final ctrl = TextEditingController();
-    _showSheet(
-      title: 'Send Feedback',
-      builder: (c) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text(
-                'We\u2019d love to hear from you! Tell us how we can improve Huddl.',
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textSecondary, height: 1.4)),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _sheetField(ctrl, 'Your feedback', Icons.feedback_outlined,
-                maxLines: 5),
-          ),
-          const SizedBox(height: 24),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _sheetButton('Submit', () {
-              Navigator.pop(c);
-              _snack('Thank you for your feedback!');
-            }),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
+
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ABOUT HUDDL

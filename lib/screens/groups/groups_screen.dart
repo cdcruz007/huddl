@@ -3207,15 +3207,30 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     // Record usage for subscription tracking
     subService.recordGroupJoin();
 
+    // CRITICAL FIX: Force UI refresh by updating state AND notifying listeners
     if (mounted) {
       setState(() {});
+      // Trigger Messages tab refresh to show newly joined group
+      widget.groupsChangedNotifier.value++;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Joined ${group.name}! Check your Messages tab.'),
-          backgroundColor: HuddlColors.primary,
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Joined ${group.name}! Go to Messages tab to start chatting.',
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.teal,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 3),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -4511,23 +4526,35 @@ class _DiscoverGroupCard extends StatelessWidget {
             : 'Private';
 
     final audienceText = group.targetAudience.isNotEmpty
-        ? '\n\u{1F3AF} For: ${group.targetAudience.join(', ')}'
+        ? '\n👥 For: ${group.targetAudience.join(', ')}'
         : '';
 
     final boroughText = group.creatorBorough != null &&
             group.creatorBorough!.isNotEmpty &&
             group.creatorBorough != 'Unknown Borough'
-        ? '\n\u{1F4CD} ${group.creatorBorough}'
+        ? '\n📍 ${group.creatorBorough}'
         : '';
 
+    // ENHANCED SHARE FORMAT: Rich formatted card with visual structure
     final shareText = '''
-\u{1F46B} ${group.name}
-\u{1F512} $privacyText  |  \u{1F465} ${group.memberCount} members$audienceText$boroughText
-${group.creatorName != null ? '\u{1F464} Created by ${group.creatorName}' : ''}
+╔═══════════════════════════════
+║ 🔵 HUDDL GROUP
+╠═══════════════════════════════
+║
+║ 👥 ${group.name}
+║
+║ 🔒 $privacyText  •  ${group.memberCount} members$audienceText$boroughText
+${group.creatorName != null && group.creatorName!.isNotEmpty ? '║ ✨ Created by ${group.creatorName}' : ''}
+║
+║ 📝 ${group.description}
+║
+╚═══════════════════════════════
 
-${group.description}
+💬 Join this group on Huddl Connect!
+🔗 Tap "Join" to become a member
+
 ---
-Shared from Huddl Connect
+Shared from Huddl Connect 🚀
 '''.trim();
 
     Clipboard.setData(ClipboardData(text: shareText));
@@ -4535,18 +4562,37 @@ Shared from Huddl Connect
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
+            const Icon(Icons.content_copy, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text('Group card copied to clipboard!',
-                  style: GoogleFonts.poppins(fontSize: 13)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Group card copied!',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Paste in any chat to share',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
         backgroundColor: HuddlColors.teal,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 3),
       ),
     );
   }

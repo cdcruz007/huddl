@@ -2741,7 +2741,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                   decoration: BoxDecoration(
                     color: context.hc.scaffold,
                     borderRadius: BorderRadius.circular(24),
@@ -2756,7 +2756,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       hintStyle:
                           GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      errorBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
                     ),
                     onSubmitted: (_) => _sendMessage(),
                     onTap: () {

@@ -1,5 +1,5 @@
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -657,11 +657,40 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   Future<void> _openOfferStore(RevGlueStore store) async {
     if (!_canViewMoreOffers) { _showUpgradeDialog(); return; }
-    setState(() { _selectedStore = store; _loadingCoupons = true; _couponInsightsMap = {}; _offersViewedToday++; });
-    final coupons = await _offersService.getStoreVouchers(store.id);
-    if (!mounted) return;
-    setState(() { _storeCoupons = coupons; _loadingCoupons = false; });
-    if (coupons.isNotEmpty) { _loadCouponInsights(store.id, coupons); }
+    
+    // Set selected store and show loading state
+    if (mounted) {
+      setState(() {
+        _selectedStore = store;
+        _loadingCoupons = true;
+        _couponInsightsMap = {};
+        _offersViewedToday++;
+      });
+    }
+    
+    try {
+      final coupons = await _offersService.getStoreVouchers(store.id);
+      if (!mounted) return;
+      
+      setState(() {
+        _storeCoupons = coupons;
+        _loadingCoupons = false;
+      });
+      
+      if (coupons.isNotEmpty) {
+        _loadCouponInsights(store.id, coupons);
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error loading store coupons: $e');
+      }
+      if (mounted) {
+        setState(() {
+          _loadingCoupons = false;
+          _storeCoupons = [];
+        });
+      }
+    }
   }
 
   Future<void> _openDealLink(String storeId) async {
@@ -976,7 +1005,11 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 children: [
                   _buildBuyTab(hc),
                   _buildSellTab(hc),
-                  _selectedStore != null ? _buildStoreDetail(hc) : _buildOffersTab(hc),
+                  // Force rebuild of offers tab when store selection changes
+                  KeyedSubtree(
+                    key: ValueKey('offers_${_selectedStore?.id ?? 'list'}'),
+                    child: _selectedStore != null ? _buildStoreDetail(hc) : _buildOffersTab(hc),
+                  ),
                   _buildSavedTab(hc),
                 ],
               ),
@@ -999,54 +1032,21 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    'Market',
-                    style: _adaptiveText(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
-                  ),
-                ),
+          Semantics(
+            header: true,
+            child: Text(
+              'Market',
+              style: _adaptiveText(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: hc.textPrimary,
               ),
-              // Subtle sparkle — progressive disclosure entry point
-              // Minimal, no gradient, no AI branding. Just a quiet affordance.
-              Semantics(
-                label: 'Search',
-                button: true,
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    // Focus the search bar on the current tab
-                  },
-                  customBorder: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: Center(
-                      child: Icon(
-                        Icons.search,
-                        color: hc.textTertiary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: 8),
-          // Borough scope context for marketplace (Buy/Sell = borough-only, Offers = borough-aware)
-          BoroughHeader(
-            feature: _tabController.index == 2
-                ? HuddlFeature.communityFeed // Offers = borough-aware
-                : HuddlFeature.marketplace,  // Buy/Sell = borough-only
+          // Borough scope context for marketplace (Buy/Sell and Offers = borough-only)
+          const BoroughHeader(
+            feature: HuddlFeature.marketplace,  // Buy/Sell/Offers all borough-only
           ),
           TabBar(
             controller: _tabController,
@@ -2239,7 +2239,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // ── Store Detail View (inline, replaces Offers content) ──
   Widget _buildStoreDetail(HuddlContextColors hc) {
-    final store = _selectedStore!;
+    final store = _selectedStore;
+    if (store == null) {
+      // Fallback safety - shouldn't happen but prevents crashes
+      return _buildOffersTab(hc);
+    }
+    
     return Column(
       children: [
         // Back bar
@@ -2480,7 +2485,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           else
             ..._aiPicks.asMap().entries.map((entry) {
               final pick = entry.value;
-              final matchingStore = _offersStores.where((s) => s.id == pick.storeId).toList();
+              // Apply search filter to AI picks stores
+              final filteredStores = _filteredOffersStores;
+              final matchingStore = filteredStores.where((s) => s.id == pick.storeId).toList();
               final store = matchingStore.isNotEmpty ? matchingStore.first : null;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -2641,7 +2648,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // ── Offers Family Picks Sub-Tab ──
   Widget _buildOffersFamilyPicks(HuddlContextColors hc) {
     const familyKeywords = ['baby', 'child', 'kids', 'toys', 'family', 'school', 'my 1st', 'vertbaudet', 'scholastic', 'hamleys', 'baker ross', 'start rite', 'picniq', 'mountain warehouse'];
-    final familyStores = _offersStores.where((s) {
+    // Apply search filter to family stores
+    final filteredStores = _filteredOffersStores;
+    final familyStores = filteredStores.where((s) {
       final t = s.title.toLowerCase();
       return familyKeywords.any((kw) => t.contains(kw));
     }).toList();
@@ -4180,16 +4189,21 @@ class _OffersStoreCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 3),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: HuddlColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                store.offerCouponStr,
-                style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.success),
-                maxLines: 1, overflow: TextOverflow.ellipsis,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: HuddlColors.success.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  store.offerCouponStr,
+                  style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.success),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
             const SizedBox(height: 5),

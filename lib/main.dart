@@ -84,12 +84,12 @@ class HuddlApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // P3: Material You dynamic colour integration
+    // NOTE: Dark mode removed - app always uses light theme for better illustration/logo visibility
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         // If the device provides a dynamic colour palette, use it for the
         // primary seed but keep the brand identity (HuddlColors.primary).
         ThemeData lightTheme = HuddlTheme.lightTheme;
-        ThemeData darkTheme = HuddlTheme.darkTheme;
 
         if (lightDynamic != null) {
           lightTheme = lightTheme.copyWith(
@@ -100,22 +100,13 @@ class HuddlApp extends StatelessWidget {
             ),
           );
         }
-        if (darkDynamic != null) {
-          darkTheme = darkTheme.copyWith(
-            colorScheme: darkTheme.colorScheme.copyWith(
-              primaryContainer: darkDynamic.primaryContainer,
-              secondaryContainer: darkDynamic.secondaryContainer,
-              tertiaryContainer: darkDynamic.tertiaryContainer,
-            ),
-          );
-        }
 
         return MaterialApp(
           title: 'Huddl',
           debugShowCheckedModeBanner: false,
           theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: ThemeMode.system,
+          // Dark theme removed - always use light mode
+          themeMode: ThemeMode.light,
           initialRoute: '/splash',
           onGenerateRoute: AppRouter.generateRoute,
         );
