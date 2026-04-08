@@ -15,6 +15,7 @@ import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import '../../widgets/borough_badge.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -944,6 +945,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ─────────── BOROUGH SCOPE NOTE ───────────
+            const BoroughGateMessage(
+              featureLabel: 'Groups',
+            ),
             // ─────────── PHOTO UPLOAD (full-width banner) ───────────
             _buildPhotoUpload(),
             const SizedBox(height: 16),
