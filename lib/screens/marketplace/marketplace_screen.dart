@@ -696,7 +696,47 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Future<void> _openDealLink(String storeId) async {
     final url = RevGlueService.couponExitUrl(storeId);
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) { await launchUrl(uri, mode: LaunchMode.externalApplication); }
+    
+    try {
+      if (await canLaunchUrl(uri)) {
+        // For web: open in new tab using webOnlyWindowName
+        // For mobile: use externalApplication to open in default browser
+        if (kIsWeb) {
+          await launchUrl(
+            uri,
+            webOnlyWindowName: '_blank', // Opens in new tab, not in-app webview
+          );
+        } else {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } else {
+        if (kDebugMode) {
+          debugPrint('Cannot launch URL: $url');
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Unable to open offer link'),
+              backgroundColor: HuddlColors.error,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error launching URL: $e');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Error opening offer. Please try again.'),
+            backgroundColor: HuddlColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _showUpgradeDialog() {
