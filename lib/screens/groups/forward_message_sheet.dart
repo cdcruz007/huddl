@@ -428,6 +428,13 @@ class _ForwardSheetState extends State<_ForwardSheet>
         itemData: widget.itemData,
       );
     } else {
+      // Send regular message with card data if present
+      if (kDebugMode) {
+        debugPrint('📤 Forwarding to DM: ${target.name}');
+        debugPrint('   meetupData: ${widget.meetupData != null ? 'YES' : 'NO'}');
+        debugPrint('   groupData: ${widget.groupData != null ? 'YES' : 'NO'}');
+        debugPrint('   itemData: ${widget.itemData != null ? 'YES' : 'NO'}');
+      }
       await _dmService.sendMessage(
         conversationId: conv.id,
         message: widget.messageText,

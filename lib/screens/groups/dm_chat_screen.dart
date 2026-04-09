@@ -142,6 +142,16 @@ class _DMChatScreenState extends State<DMChatScreen> {
       await _dmService.markConversationRead(existing.id);
       // Load all messages (text, image, doc, location, contact — all persisted)
       _messages = await _dmService.getMessages(existing.id);
+      
+      if (kDebugMode) {
+        debugPrint('📨 Loaded ${_messages.length} messages from DM conversation');
+        for (final msg in _messages) {
+          debugPrint('   msg ${msg.id}:');
+          debugPrint('     groupData: ${msg.groupData != null ? 'YES (${msg.groupData!.keys.length} keys)' : 'NO'}');
+          debugPrint('     itemData: ${msg.itemData != null ? 'YES (${msg.itemData!.keys.length} keys)' : 'NO'}');
+          debugPrint('     meetupData: ${msg.meetupData != null ? 'YES (${msg.meetupData!.keys.length} keys)' : 'NO'}');
+        }
+      }
     }
     // If no existing conversation, _conversationId stays null.
     // It will be created on the first sent message.

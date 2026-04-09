@@ -196,6 +196,15 @@ class DMService {
   }) async {
     await initialize();
 
+    if (kDebugMode) {
+      debugPrint('💾 DMService.sendMessage called:');
+      debugPrint('   convId: $conversationId');
+      debugPrint('   type: ${type.name}');
+      debugPrint('   meetupData: ${meetupData != null ? 'YES (${meetupData.keys.length} keys)' : 'NO'}');
+      debugPrint('   groupData: ${groupData != null ? 'YES (${groupData.keys.length} keys)' : 'NO'}');
+      debugPrint('   itemData: ${itemData != null ? 'YES (${itemData.keys.length} keys)' : 'NO'}');
+    }
+
     // 1. Create the message with 'sending' status
     final msg = DirectMessage(
       id: 'dm_msg_${DateTime.now().millisecondsSinceEpoch}',
@@ -225,6 +234,14 @@ class DMService {
     final messages = await getMessages(conversationId);
     messages.add(msg);
     await _saveMessages(conversationId, messages);
+    
+    if (kDebugMode) {
+      debugPrint('💾 Message saved to storage:');
+      final json = msg.toJson();
+      debugPrint('   groupData in JSON: ${json['groupData'] != null ? 'YES' : 'NO'}');
+      debugPrint('   itemData in JSON: ${json['itemData'] != null ? 'YES' : 'NO'}');
+      debugPrint('   meetupData in JSON: ${json['meetupData'] != null ? 'YES' : 'NO'}');
+    }
 
     // Determine display text for conversation list
     String displayText = message;
