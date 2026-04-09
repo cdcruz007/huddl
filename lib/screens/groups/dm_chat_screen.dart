@@ -405,6 +405,22 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
             ),
 
+          // ── TEMP DEBUG BANNER ─────────────────────────────────────
+          FutureBuilder<String>(
+            future: _dumpStorage(),
+            builder: (ctx, snap) => GestureDetector(
+              onTap: () => setState(() {}), // tap to refresh
+              child: Container(
+                color: Colors.amber.shade100,
+                padding: const EdgeInsets.all(6),
+                child: Text(
+                  snap.data ?? 'Loading storage...',
+                  style: const TextStyle(fontSize: 9, color: Colors.black87, fontFamily: 'monospace'),
+                ),
+              ),
+            ),
+          ),
+
           // ── Messages list ─────────────────────────────────────────
           Expanded(
             child: _isLoading
@@ -1305,6 +1321,24 @@ class _DMChatScreenState extends State<DMChatScreen> {
         ],
       ),
     );
+  }
+
+  /// Dump raw storage for this conversation — debug only
+  Future<String> _dumpStorage() async {
+    try {
+      final convId = _conversationId ?? 'dm_${widget.recipientId}';
+      final msgs = await _dmService.getMessages(convId);
+      if (msgs.isEmpty) return 'convId=$convId\nNO MSGS LOADED (${msgs.length})';
+      final snap = msgs.map((m) =>
+        'id=${m.id.substring(m.id.length > 10 ? m.id.length - 6 : 0)} '
+        'grp=${m.groupData != null ? 'YES(${m.groupData!.keys.length}k)' : 'NO'} '
+        'meet=${m.meetupData != null ? 'YES' : 'NO'} '
+        'item=${m.itemData != null ? 'YES' : 'NO'}'
+      ).join('\n');
+      return 'convId=$convId  msgs=${msgs.length}\n$snap';
+    } catch (e) {
+      return 'ERROR: $e';
+    }
   }
 
   void _confirmDeleteConversation() {
