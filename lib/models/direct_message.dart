@@ -26,6 +26,14 @@ enum MessageType {
   meetupInvite,
 }
 
+/// Safe cast helper - converts any Map type to Map<String, dynamic>
+Map<String, dynamic>? _safeMap(dynamic raw) {
+  if (raw == null) return null;
+  if (raw is Map<String, dynamic>) return raw;
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+  return null;
+}
+
 /// A single direct message between two users.
 class DirectMessage {
   final String id;
@@ -136,15 +144,9 @@ class DirectMessage {
       contactName: json['contactName'] as String?,
       contactPhone: json['contactPhone'] as String?,
       reactions: rxn,
-      meetupData: json['meetupData'] != null
-          ? Map<String, dynamic>.from(json['meetupData'] as Map)
-          : null,
-      groupData: json['groupData'] != null
-          ? Map<String, dynamic>.from(json['groupData'] as Map)
-          : null,
-      itemData: json['itemData'] != null
-          ? Map<String, dynamic>.from(json['itemData'] as Map)
-          : null,
+      meetupData: _safeMap(json['meetupData']),
+      groupData:  _safeMap(json['groupData']),
+      itemData:   _safeMap(json['itemData']),
     );
   }
 

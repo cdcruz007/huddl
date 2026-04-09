@@ -497,8 +497,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Meetup invite card message - check type OR data presence
-                          if ((msg.type == MessageType.meetupInvite || msg.meetupData != null) && msg.meetupData != null) {
+                          // Card checks MUST come before contact/text to ensure cards render
+                          // Meetup invite card
+                          if (msg.meetupData != null) {
                             if (kDebugMode) {
                               debugPrint('✅ DM: Rendering meetup card for msg ${msg.id}');
                             }
@@ -513,7 +514,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Group invite card message - MUST render if groupData exists
+                          // Group invite card
                           if (msg.groupData != null) {
                             return Column(
                               children: [
@@ -526,7 +527,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Item invite card message - MUST render if itemData exists
+                          // Item invite card
                           if (msg.itemData != null) {
                             return Column(
                               children: [

@@ -3342,6 +3342,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 isLocationPin: true,
               ));
             } else {
+              // Safe cast helper to prevent type mismatch crashes
+              Map<String, dynamic>? safeMap(dynamic raw) {
+                if (raw == null) return null;
+                if (raw is Map<String, dynamic>) return raw;
+                if (raw is Map) return Map<String, dynamic>.from(raw);
+                return null;
+              }
+              final rawMeetupData = safeMap(m['meetupData']);
+              final rawGroupData  = safeMap(m['groupData']);
+              final rawItemData   = safeMap(m['itemData']);
               _messages.add(ChatMessage(
                 id: id,
                 senderId: m['senderId'] as String? ?? 'current_user',
@@ -3350,12 +3360,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 message: m['message'] as String? ?? '',
                 timestamp: DateTime.parse(m['timestamp'] as String),
                 isMe: true,
-                isMeetupCard: m['isMeetupCard'] as bool? ?? false,
-                meetupData: m['meetupData'] as Map<String, dynamic>?,
-                isGroupCard: m['isGroupCard'] as bool? ?? false,
-                groupData: m['groupData'] as Map<String, dynamic>?,
-                isItemCard: m['isItemCard'] as bool? ?? false,
-                itemData: m['itemData'] as Map<String, dynamic>?,
+                isMeetupCard: (m['isMeetupCard'] as bool? ?? false) || rawMeetupData != null,
+                meetupData: rawMeetupData,
+                isGroupCard: (m['isGroupCard'] as bool? ?? false) || rawGroupData != null,
+                groupData: rawGroupData,
+                isItemCard: (m['isItemCard'] as bool? ?? false) || rawItemData != null,
+                itemData: rawItemData,
               ));
             }
           }
