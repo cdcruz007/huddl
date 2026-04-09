@@ -134,60 +134,73 @@ class _DMChatScreenState extends State<DMChatScreen> {
     await _dmService.initialize();
     _userName = _onboardingService.name ?? 'You';
 
-    // Check if conversation already exists (don't create one yet)
+    // Derive the expected conversation ID from the recipientId directly.
+    // This matches the ID format used by getOrCreateConversation:
+    // id: 'dm_$recipientId' — so we can look up storage directly.
+    final expectedConvId = 'dm_${widget.recipientId}';
+
+    // Also try findConversation in case the ID format is different
     final existing = await _dmService.findConversation(widget.recipientId);
+    
+    // Use the found conversation's ID, or fall back to widget.conversationId,
+    // or derive it from recipientId.
+    final resolvedId = existing?.id ?? widget.conversationId ?? expectedConvId;
+    _conversationId = resolvedId;
+
+    // Mark as read if conversation exists
     if (existing != null) {
-      _conversationId = existing.id;
-      // Mark as read
       await _dmService.markConversationRead(existing.id);
-      // Load all messages (text, image, doc, location, contact — all persisted)
-      _messages = await _dmService.getMessages(existing.id);
-      
-      if (kDebugMode) {
-        debugPrint('📨 Loaded ${_messages.length} messages from DM conversation');
-        for (final msg in _messages) {
-          debugPrint('   msg ${msg.id}:');
-          debugPrint('     groupData: ${msg.groupData != null ? 'YES (${msg.groupData!.keys.length} keys)' : 'NO'}');
-          debugPrint('     itemData: ${msg.itemData != null ? 'YES (${msg.itemData!.keys.length} keys)' : 'NO'}');
-          debugPrint('     meetupData: ${msg.meetupData != null ? 'YES (${msg.meetupData!.keys.length} keys)' : 'NO'}');
-        }
+    }
+
+    // Load messages from storage using the resolved ID
+    _messages = await _dmService.getMessages(resolvedId);
+    
+    // If no messages found with resolved ID, also try the expected ID as fallback
+    if (_messages.isEmpty && resolvedId != expectedConvId) {
+      final fallbackMsgs = await _dmService.getMessages(expectedConvId);
+      if (fallbackMsgs.isNotEmpty) {
+        _messages = fallbackMsgs;
+        _conversationId = expectedConvId;
       }
     }
-    // If no existing conversation, _conversationId stays null.
-    // It will be created on the first sent message.
 
     setState(() => _isLoading = false);
     _scrollToBottom();
   }
 
   Future<void> _refreshMessages() async {
-    // If no conversation yet, check if one was created externally (e.g. via forward sheet)
+    // Use the direct expected conversation ID based on recipientId
+    final expectedConvId = 'dm_${widget.recipientId}';
+    
+    // If no conversation ID set, try to find or derive it
     if (_conversationId == null) {
       final conv = await _dmService.findConversation(widget.recipientId);
-      if (conv != null) {
-        _conversationId = conv.id;
-        final msgs = await _dmService.getMessages(conv.id);
-        if (mounted && msgs.isNotEmpty) {
-          setState(() => _messages = msgs);
-          _scrollToBottom(animate: true);
-        }
-      }
-      return;
+      _conversationId = conv?.id ?? expectedConvId;
     }
+
+    // Always check the expected storage key (most reliable)
     final msgs = await _dmService.getMessages(_conversationId!);
-    if (mounted && msgs.length != _messages.length) {
-      setState(() => _messages = msgs);
+    
+    // Also try the expected key if different
+    List<DirectMessage> allMsgs = msgs;
+    if (msgs.isEmpty && _conversationId != expectedConvId) {
+      allMsgs = await _dmService.getMessages(expectedConvId);
+      if (allMsgs.isNotEmpty) _conversationId = expectedConvId;
+    }
+    
+    if (mounted && allMsgs.length != _messages.length) {
+      setState(() => _messages = allMsgs);
       _scrollToBottom(animate: true);
     } else if (mounted) {
       // Check status changes
       bool changed = false;
-      for (int i = 0; i < msgs.length && i < _messages.length; i++) {
-        if (msgs[i].status != _messages[i].status) {
+      for (int i = 0; i < allMsgs.length && i < _messages.length; i++) {
+        if (allMsgs[i].status != _messages[i].status) {
           changed = true;
           break;
         }
       }
-      if (changed) setState(() => _messages = msgs);
+      if (changed) setState(() => _messages = allMsgs);
     }
   }
 
@@ -391,6 +404,33 @@ class _DMChatScreenState extends State<DMChatScreen> {
                 ],
               ),
             ),
+
+          // ── Debug overlay ─────────────────────────────────────────
+          // Shows conv ID and msg count to diagnose empty DM issue
+          Container(
+            color: Colors.orange.withValues(alpha: 0.15),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Conv: ${_conversationId ?? "null"} | Msgs: ${_messages.length} | Recipient: ${widget.recipientId}',
+                    style: const TextStyle(fontSize: 10, color: Colors.deepOrange),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    // Force reload from storage
+                    final id = _conversationId ?? 'dm_${widget.recipientId}';
+                    final msgs = await _dmService.getMessages(id);
+                    if (mounted) setState(() { _conversationId = id; _messages = msgs; });
+                  },
+                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2)),
+                  child: const Text('RELOAD', style: TextStyle(fontSize: 10)),
+                ),
+              ],
+            ),
+          ),
 
           // ── Messages list ─────────────────────────────────────────
           Expanded(
