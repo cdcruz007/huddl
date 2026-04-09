@@ -714,8 +714,188 @@ class _ForwardSheetState extends State<_ForwardSheet>
     );
   }
 
+  Widget _meetupPlaceholder() => Container(
+        color: HuddlColors.primary.withValues(alpha: 0.12),
+        child: const Center(child: Icon(Icons.event, size: 24, color: HuddlColors.primary)),
+      );
+
+  Widget _groupPlaceholder() => Container(
+        color: HuddlColors.primary.withValues(alpha: 0.12),
+        child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.primary)),
+      );
+
   /// Builds the preview section — image thumbnail + caption, or text preview.
   Widget _buildPreview() {
+    // ── Meetup card preview ───────────────────────────────────────────────
+    if (widget.isMeetupCard && widget.meetupData != null) {
+      final data = widget.meetupData!;
+      final title = data['title'] as String? ?? 'Meetup';
+      final dateDisplay = data['dateDisplay'] as String? ?? '';
+      final timeDisplay = data['timeDisplay'] as String? ?? '';
+      final location = data['location'] as String? ?? '';
+      final imageUrl = data['imageUrl'] as String? ?? '';
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: context.hc.scaffold,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Meetup thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: imageUrl.startsWith('http')
+                    ? Image.network(imageUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _meetupPlaceholder())
+                    : imageUrl.startsWith('assets/')
+                        ? Image.asset(imageUrl, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _meetupPlaceholder())
+                        : _meetupPlaceholder(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (dateDisplay.isNotEmpty || timeDisplay.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '$dateDisplay${timeDisplay.isNotEmpty ? '  ⏰ $timeDisplay' : ''}',
+                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (location.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.primary),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              location,
+                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Group card preview ────────────────────────────────────────────────
+    if (widget.isGroupCard && widget.groupData != null) {
+      final data = widget.groupData!;
+      final name = data['name'] as String? ?? 'Group';
+      final memberCount = (data['memberCount'] as num?)?.toInt() ?? 0;
+      final description = data['description'] as String? ?? '';
+      final imageUrl = data['imageUrl'] as String? ?? '';
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: context.hc.scaffold,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Group thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: imageUrl.startsWith('http')
+                    ? Image.network(imageUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _groupPlaceholder())
+                    : imageUrl.startsWith('assets/')
+                        ? Image.asset(imageUrl, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _groupPlaceholder())
+                        : _groupPlaceholder(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.people_outline, size: 11, color: HuddlColors.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$memberCount members',
+                          style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (description.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        description,
+                        style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // If forwarding an image, show the image thumbnail (matching the design)
     if (widget.imageUrl != null) {
       return Container(
@@ -995,6 +1175,17 @@ class _ForwardContactTile extends StatelessWidget {
     const size = 44.0;
 
     if (target.isGroup) {
+      final gUrl = target.groupImageUrl ?? '';
+      Widget groupImage;
+      if (gUrl.startsWith('http')) {
+        groupImage = Image.network(gUrl, fit: BoxFit.cover, width: size, height: size,
+            errorBuilder: (_, __, ___) => const Icon(Icons.people, size: 22, color: HuddlColors.primary));
+      } else if (gUrl.startsWith('assets/')) {
+        groupImage = Image.asset(gUrl, fit: BoxFit.cover, width: size, height: size,
+            errorBuilder: (_, __, ___) => const Icon(Icons.people, size: 22, color: HuddlColors.primary));
+      } else {
+        groupImage = const Icon(Icons.people, size: 22, color: HuddlColors.primary);
+      }
       return Container(
         width: size,
         height: size,
@@ -1003,15 +1194,7 @@ class _ForwardContactTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         clipBehavior: Clip.antiAlias,
-        child: target.groupImageUrl != null &&
-                target.groupImageUrl!.startsWith('http')
-            ? Image.network(
-                target.groupImageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Icon(Icons.people,
-                    size: 22, color: HuddlColors.primary),
-              )
-            : const Icon(Icons.people, size: 22, color: HuddlColors.primary),
+        child: groupImage,
       );
     }
 
