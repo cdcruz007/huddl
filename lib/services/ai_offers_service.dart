@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../config/gemini_config.dart';
+import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
@@ -410,30 +409,17 @@ class AiOffersService with BoroughAiContext {
       ],
     };
 
-    final url = Uri.parse(
-        GeminiConfig.generateContentUrl);
-
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestBody),
-        )
-        .timeout(const Duration(seconds: 20));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final candidates = data['candidates'] as List?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List?;
-        if (parts != null && parts.isNotEmpty) {
-          return parts[0]['text'] as String? ?? '';
-        }
+    final data = await AiApiHelper.generateContent(
+        requestBody, timeout: const Duration(seconds: 20));
+    final candidates = data['candidates'] as List?;
+    if (candidates != null && candidates.isNotEmpty) {
+      final content = candidates[0]['content'];
+      final parts = content['parts'] as List?;
+      if (parts != null && parts.isNotEmpty) {
+        return parts[0]['text'] as String? ?? '';
       }
     }
-    throw Exception(
-        'Gemini API error: ${response.statusCode} ${response.body}');
+    throw Exception('No content in AI response');
   }
 
   // ===========================================================================

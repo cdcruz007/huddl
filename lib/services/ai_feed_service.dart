@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../config/gemini_config.dart';
+import 'ai_api_helper.dart';
 
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
@@ -969,31 +968,19 @@ class AiFeedService with BoroughAiContext {
       },
     };
 
-    final url = Uri.parse(
-        GeminiConfig.generateContentUrl);
-
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestBody),
-        )
-        .timeout(const Duration(seconds: 12));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final candidates = data['candidates'] as List?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List?;
-        if (parts != null && parts.isNotEmpty) {
-          var text = (parts[0]['text'] as String? ?? '').trim();
-          text = text.replaceAll(RegExp(r'^```json\s*'), '');
-          text = text.replaceAll(RegExp(r'\s*```$'), '');
-          text = text.trim();
-          final json = jsonDecode(text) as Map<String, dynamic>;
-          return json.map((k, v) => MapEntry(k, v.toString()));
-        }
+    final data = await AiApiHelper.generateContent(
+        requestBody, timeout: const Duration(seconds: 12));
+    final candidates = data['candidates'] as List?;
+    if (candidates != null && candidates.isNotEmpty) {
+      final content = candidates[0]['content'];
+      final parts = content['parts'] as List?;
+      if (parts != null && parts.isNotEmpty) {
+        var text = (parts[0]['text'] as String? ?? '').trim();
+        text = text.replaceAll(RegExp(r'^```json\s*'), '');
+        text = text.replaceAll(RegExp(r'\s*```$'), '');
+        text = text.trim();
+        final json = jsonDecode(text) as Map<String, dynamic>;
+        return json.map((k, v) => MapEntry(k, v.toString()));
       }
     }
 

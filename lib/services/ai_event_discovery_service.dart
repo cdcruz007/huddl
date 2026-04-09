@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../config/gemini_config.dart';
+import 'ai_api_helper.dart';
 import '../theme/huddl_colors.dart';
 import 'event_service.dart';
 import 'gemini_system_prompt_builder.dart';
@@ -217,34 +216,23 @@ class AiEventDiscoveryService {
         },
       };
 
-      final url = Uri.parse(GeminiConfig.generateContentUrl);
+      final data = await AiApiHelper.generateContent(
+          requestBody, timeout: const Duration(seconds: 25));
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final content = candidates[0]['content'];
+        final parts = content['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          var text = (parts[0]['text'] as String? ?? '').trim();
+          text = text.replaceAll(RegExp(r'^```json\s*'), '');
+          text = text.replaceAll(RegExp(r'\s*```$'), '');
+          text = text.trim();
 
-      final response = await http
-          .post(
-            url,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode(requestBody),
-          )
-          .timeout(const Duration(seconds: 25));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final candidates = data['candidates'] as List?;
-        if (candidates != null && candidates.isNotEmpty) {
-          final content = candidates[0]['content'];
-          final parts = content['parts'] as List?;
-          if (parts != null && parts.isNotEmpty) {
-            var text = (parts[0]['text'] as String? ?? '').trim();
-            text = text.replaceAll(RegExp(r'^```json\s*'), '');
-            text = text.replaceAll(RegExp(r'\s*```$'), '');
-            text = text.trim();
-
-            final json = jsonDecode(text) as Map<String, dynamic>;
-            final descriptions = json['descriptions'] as List<dynamic>? ?? [];
-            for (var i = 0; i < min(templates.length, descriptions.length); i++) {
-              results[templates[i].titleTemplate] =
-                  descriptions[i].toString();
-            }
+          final json = jsonDecode(text) as Map<String, dynamic>;
+          final descriptions = json['descriptions'] as List<dynamic>? ?? [];
+          for (var i = 0; i < min(templates.length, descriptions.length); i++) {
+            results[templates[i].titleTemplate] =
+                descriptions[i].toString();
           }
         }
       }

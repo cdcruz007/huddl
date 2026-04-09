@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import '../config/gemini_config.dart';
+import 'ai_api_helper.dart';
 import '../models/group.dart';
 import 'ai_knowledge_base_service.dart';
 import 'onboarding_data_service.dart';
@@ -242,18 +241,9 @@ class GroupPrepopulationService {
       },
     };
 
-    final url = Uri.parse(GeminiConfig.generateContentUrl);
-
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestBody),
-        )
-        .timeout(const Duration(seconds: 15));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+    try {
+      final data = await AiApiHelper.generateContent(
+          requestBody, timeout: const Duration(seconds: 15));
       final candidates = data['candidates'] as List?;
       if (candidates != null && candidates.isNotEmpty) {
         final content = candidates[0]['content'];
@@ -267,7 +257,7 @@ class GroupPrepopulationService {
           return parsed.map((d) => d.toString()).toList();
         }
       }
-    }
+    } catch (_) {}
 
     return [];
   }
