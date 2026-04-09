@@ -181,6 +181,8 @@ class DirectMessage {
       contactPhone: contactPhone,
       reactions: reactions ?? this.reactions,
       meetupData: meetupData,
+      groupData: groupData,   // ← was missing — caused groupData loss on status update
+      itemData: itemData,     // ← was missing — caused itemData loss on status update
     );
   }
 }
