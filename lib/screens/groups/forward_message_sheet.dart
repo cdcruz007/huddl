@@ -443,6 +443,17 @@ class _ForwardSheetState extends State<_ForwardSheet>
         groupData: widget.groupData,
         itemData: widget.itemData,
       );
+      
+      // DIAGNOSTIC: Verify message was saved to DM
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ DM sent to ${target.name}\nConv ID: ${conv.id}\nCard data: ${widget.groupData != null ? 'GROUP' : widget.itemData != null ? 'ITEM' : widget.meetupData != null ? 'MEETUP' : 'NONE'}'),
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
