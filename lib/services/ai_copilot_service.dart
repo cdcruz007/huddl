@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
+import '../config/vertex_ai_config.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
@@ -90,8 +91,9 @@ class AiCopilotService with BoroughAiContext {
   bool _isInitialized = false;
   bool _isApiOnline = false;
 
-  // Gemini API configuration (centralised in GeminiConfig)
-  /// Whether the Gemini API responded successfully at least once.
+  // AI configuration — fine-tuned model via Vertex AI (primary),
+  // Gemini AI Studio (fallback if Vertex AI credentials fail).
+  /// Whether the AI API responded successfully at least once.
   bool get isOnline => _isApiOnline;
 
   // Conversation history for multi-turn chat
@@ -195,8 +197,12 @@ class AiCopilotService with BoroughAiContext {
     if (_isInitialized) return;
     await _onboarding.initialize();
     await _promptBuilder.initialize();
-    // Validate the Gemini key in the background so the UI can reflect status
-    _isApiOnline = await GeminiConfig.validateKey();
+    // Try Vertex AI fine-tuned model first, fall back to Gemini AI Studio
+    _isApiOnline = await VertexAiConfig.validateCredentials();
+    if (!_isApiOnline) {
+      if (kDebugMode) debugPrint('AiCopilot: Vertex AI unavailable, falling back to Gemini');
+      _isApiOnline = await GeminiConfig.validateKey();
+    }
     _isInitialized = true;
   }
 
@@ -223,7 +229,18 @@ class AiCopilotService with BoroughAiContext {
     });
 
     try {
-      final response = await _callGeminiApi(userText);
+      // ── Primary: Vertex AI fine-tuned model ──────────────────────────
+      CopilotMessage response;
+      try {
+        response = await _callVertexAiApi(userText);
+        if (kDebugMode) debugPrint('AiCopilot: responded via Vertex AI fine-tuned model ✅');
+      } catch (vertexErr) {
+        if (kDebugMode) debugPrint('AiCopilot: Vertex AI failed ($vertexErr), trying Gemini fallback');
+        // ── Fallback: Gemini AI Studio ────────────────────────────────
+        response = await _callGeminiApi(userText);
+        if (kDebugMode) debugPrint('AiCopilot: responded via Gemini fallback ✅');
+      }
+
       _messages.add(response);
       _isApiOnline = true;
 
@@ -239,7 +256,7 @@ class AiCopilotService with BoroughAiContext {
     } catch (e) {
       _isApiOnline = false;
       if (kDebugMode) {
-        debugPrint('Gemini API error: $e');
+        debugPrint('AiCopilot: all AI APIs failed: $e');
       }
       // Fall back to smart local response
       final fallback = _generateLocalResponse(userText);
@@ -254,7 +271,75 @@ class AiCopilotService with BoroughAiContext {
     }
   }
 
-  /// Call Gemini API with full conversation context
+  /// Call the Vertex AI fine-tuned model (huddl-uk-parenting-assistant)
+  /// Uses OAuth 2.0 Bearer token auth — same request shape as Gemini API.
+  Future<CopilotMessage> _callVertexAiApi(String query) async {
+    final systemPrompt = _promptBuilder.buildCopilotPrompt();
+    final contents = <Map<String, dynamic>>[...  _conversationHistory];
+
+    final requestBody = {
+      'system_instruction': {
+        'parts': [{'text': systemPrompt}]
+      },
+      'contents': contents,
+      'generationConfig': {
+        'temperature': 0.75,
+        'topP': 0.95,
+        'topK': 40,
+        'maxOutputTokens': 1024,
+      },
+      'safetySettings': [
+        {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',  'threshold': 'BLOCK_ONLY_HIGH'},
+        {'category': 'HARM_CATEGORY_HARASSMENT',         'threshold': 'BLOCK_ONLY_HIGH'},
+        {'category': 'HARM_CATEGORY_HATE_SPEECH',        'threshold': 'BLOCK_ONLY_HIGH'},
+        {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  'threshold': 'BLOCK_ONLY_HIGH'},
+      ],
+    };
+
+    final token = await VertexAiConfig.getBearerToken();
+    final url   = Uri.parse(VertexAiConfig.generateContentUrl);
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(requestBody),
+    ).timeout(const Duration(seconds: 25));
+
+    if (response.statusCode == 401) {
+      // Token may have expired mid-session — invalidate and let caller retry
+      VertexAiConfig.invalidateToken();
+      throw Exception('Vertex AI: 401 Unauthorized — token refreshed, retry');
+    }
+
+    if (response.statusCode == 200) {
+      final data       = jsonDecode(response.body);
+      final candidates = data['candidates'] as List?;
+      if (candidates != null && candidates.isNotEmpty) {
+        final parts = candidates[0]['content']?['parts'] as List?;
+        if (parts != null && parts.isNotEmpty) {
+          final text     = parts[0]['text'] as String? ?? '';
+          final category = _detectCategory(query);
+          final actions  = _suggestActions(query, category);
+          return CopilotMessage(
+            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+            text: text.trim(),
+            isUser: false,
+            category: category,
+            actions: actions,
+            sourceNote: 'Powered by huddl AI',
+          );
+        }
+      }
+      throw Exception('Vertex AI: no content in response');
+    } else {
+      throw Exception('Vertex AI error: ${response.statusCode} - ${response.body}');
+    }
+  }
+
+  /// Call Gemini AI Studio API (fallback when Vertex AI is unavailable)
   Future<CopilotMessage> _callGeminiApi(String query) async {
     // ── System prompt from centralised builder (hyperlocal-aware) ─────
     final systemPrompt = _promptBuilder.buildCopilotPrompt();
