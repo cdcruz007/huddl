@@ -427,33 +427,52 @@ class _ForwardSheetState extends State<_ForwardSheet>
         groupData: widget.groupData,
         itemData: widget.itemData,
       );
-    } else {
-      // Send regular message with card data if present
-      if (kDebugMode) {
-        debugPrint('📤 Forwarding to DM: ${target.name}');
-        debugPrint('   meetupData: ${widget.meetupData != null ? 'YES' : 'NO'}');
-        debugPrint('   groupData: ${widget.groupData != null ? 'YES' : 'NO'}');
-        debugPrint('   itemData: ${widget.itemData != null ? 'YES' : 'NO'}');
-      }
+    } else if (widget.isMeetupCard && widget.meetupData != null) {
+      // Meetup card message
       await _dmService.sendMessage(
         conversationId: conv.id,
         message: widget.messageText,
         senderName: userName,
+        type: MessageType.meetupInvite,
         meetupData: widget.meetupData,
+      );
+    } else if (widget.isGroupCard && widget.groupData != null) {
+      // Group card message  
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: 'Shared a group',
+        senderName: userName,
         groupData: widget.groupData,
+      );
+    } else if (widget.isItemCard && widget.itemData != null) {
+      // Item card message
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: 'Shared an item for sale',
+        senderName: userName,
         itemData: widget.itemData,
       );
+    } else {
+      // Regular text message
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: widget.messageText,
+        senderName: userName,
+      );
+    }
       
-      // DIAGNOSTIC: Verify message was saved to DM
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('✅ DM sent to ${target.name}\nConv ID: ${conv.id}\nCard data: ${widget.groupData != null ? 'GROUP' : widget.itemData != null ? 'ITEM' : widget.meetupData != null ? 'MEETUP' : 'NONE'}'),
-            duration: const Duration(seconds: 4),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+    // Show confirmation toast for DM sends
+    if (!target.isGroup && context.mounted) {
+      final cardType = widget.isGroupCard && widget.groupData != null ? 'GROUP CARD' :
+                      widget.isItemCard && widget.itemData != null ? 'ITEM CARD' :
+                      widget.isMeetupCard && widget.meetupData != null ? 'MEETUP CARD' : 'TEXT';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✅ Sent $cardType to ${target.name}'),
+          duration: const Duration(seconds: 3),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 
