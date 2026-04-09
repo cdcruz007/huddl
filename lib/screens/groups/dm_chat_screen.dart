@@ -161,7 +161,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   Future<void> _refreshMessages() async {
-    if (_conversationId == null) return;
+    // If no conversation yet, check if one was created externally (e.g. via forward sheet)
+    if (_conversationId == null) {
+      final conv = await _dmService.findConversation(widget.recipientId);
+      if (conv != null) {
+        _conversationId = conv.id;
+        final msgs = await _dmService.getMessages(conv.id);
+        if (mounted && msgs.isNotEmpty) {
+          setState(() => _messages = msgs);
+          _scrollToBottom(animate: true);
+        }
+      }
+      return;
+    }
     final msgs = await _dmService.getMessages(_conversationId!);
     if (mounted && msgs.length != _messages.length) {
       setState(() => _messages = msgs);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -90,6 +91,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
+  Timer? _forwardedMsgTimer;
   bool _isSearching = false;
   String _searchQuery = '';
   List<int> _searchMatches = [];
@@ -139,6 +141,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _loadMessages();
     _blockService.initialize();
     _checkLeaveGroupEligibility();
+    // Periodically reload forwarded messages so cards appear without manual refresh
+    _forwardedMsgTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) _reloadForwardedMessages();
+    });
   }
 
   /// Determine whether the 'Leave group' option should be shown.
@@ -159,6 +165,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   @override
   void dispose() {
+    _forwardedMsgTimer?.cancel();
     _messageController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -218,6 +225,61 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       // Auto-open thread panel if navigated from Saved tab with a thread target
       _autoOpenThreadIfNeeded();
     });
+  }
+
+  /// Reload only forwarded messages and meetup notifications, then merge new ones in.
+  /// Called by the periodic timer to pick up cards forwarded while the chat is open.
+  Future<void> _reloadForwardedMessages() async {
+    try {
+      final key = 'group_messages_${widget.groupId}';
+      final raw = await BrowserStorage.getString(key);
+      if (raw == null) return;
+      final List<dynamic> all = json.decode(raw);
+      bool added = false;
+      for (final m in all) {
+        final id = m['id'] as String? ?? '';
+        if (id.isEmpty || _messages.any((msg) => msg.id == id)) continue;
+        // New forwarded message – add it
+        Map<String, dynamic>? safeMap(dynamic raw) {
+          if (raw == null) return null;
+          if (raw is Map<String, dynamic>) return raw;
+          if (raw is Map) return Map<String, dynamic>.from(raw);
+          return null;
+        }
+        final rawMeetupData = safeMap(m['meetupData']);
+        final rawGroupData  = safeMap(m['groupData']);
+        final rawItemData   = safeMap(m['itemData']);
+        _messages.add(ChatMessage(
+          id: id,
+          senderId: m['senderId'] as String? ?? 'current_user',
+          senderName: m['senderName'] as String? ?? 'You',
+          senderAvatar: '#FF975C',
+          message: m['message'] as String? ?? '',
+          timestamp: DateTime.parse(m['timestamp'] as String),
+          isMe: true,
+          isMeetupCard: (m['isMeetupCard'] as bool? ?? false) || rawMeetupData != null,
+          meetupData: rawMeetupData,
+          isGroupCard: (m['isGroupCard'] as bool? ?? false) || rawGroupData != null,
+          groupData: rawGroupData,
+          isItemCard: (m['isItemCard'] as bool? ?? false) || rawItemData != null,
+          itemData: rawItemData,
+        ));
+        added = true;
+      }
+      if (added && mounted) {
+        _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        setState(() {});
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   /// If the screen was opened with [openThreadForMessageId], find that message
