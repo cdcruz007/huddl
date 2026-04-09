@@ -513,11 +513,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Group invite card message - prioritize if groupData exists
+                          // Group invite card message - MUST render if groupData exists
                           if (msg.groupData != null) {
-                            if (kDebugMode) {
-                              debugPrint('✅ DM: Rendering group card for msg ${msg.id}');
-                            }
                             return Column(
                               children: [
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
@@ -529,11 +526,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                             );
                           }
 
-                          // Item invite card message - prioritize if itemData exists
+                          // Item invite card message - MUST render if itemData exists
                           if (msg.itemData != null) {
-                            if (kDebugMode) {
-                              debugPrint('✅ DM: Rendering item card for msg ${msg.id}');
-                            }
                             return Column(
                               children: [
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
@@ -574,8 +568,29 @@ class _DMChatScreenState extends State<DMChatScreen> {
                               _currentMatchIndex < _searchMatches.length &&
                               _searchMatches[_currentMatchIndex] == index;
 
+                          // DIAGNOSTIC: Show card data status visually
+                          final hasGroupData = msg.groupData != null;
+                          final hasItemData = msg.itemData != null;
+                          final hasMeetupData = msg.meetupData != null;
+                          
                           return Column(
                             children: [
+                              // Visual indicator for card data (temporary for debugging)
+                              if (hasGroupData || hasItemData || hasMeetupData)
+                                Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: hasGroupData ? Colors.blue.withValues(alpha: 0.2) :
+                                           hasItemData ? Colors.green.withValues(alpha: 0.2) :
+                                           Colors.orange.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    '🔍 DEBUG: ${hasGroupData ? 'GROUP CARD DATA EXISTS' : hasItemData ? 'ITEM CARD DATA EXISTS' : 'MEETUP CARD DATA EXISTS'}',
+                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               if (showTimestamp)
                                 _TimestampDivider(timestamp: msg.timestamp),
                               if (isDeletedForEveryone)

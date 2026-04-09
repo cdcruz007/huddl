@@ -245,24 +245,35 @@ class DMService {
 
     // Determine display text for conversation list
     String displayText = message;
-    switch (type) {
-      case MessageType.image:
-        displayText = '\u{1F4F7} Photo';
-        break;
-      case MessageType.document:
-        displayText = '\u{1F4C4} ${documentName ?? 'Document'}';
-        break;
-      case MessageType.location:
-        displayText = '\u{1F4CD} Location';
-        break;
-      case MessageType.contact:
-        displayText = '\u{1F464} ${contactName ?? 'Contact'}';
-        break;
-      case MessageType.meetupInvite:
-        displayText = '\u{1F4C5} Meetup invite';
-        break;
-      case MessageType.text:
-        break;
+    
+    // Check for card data first (takes priority)
+    if (groupData != null) {
+      displayText = '\u{1F465} Group: ${groupData['name'] ?? 'Group'}';
+    } else if (itemData != null) {
+      displayText = '\u{1F4E6} Item: ${itemData['title'] ?? 'Item'}';
+    } else if (meetupData != null) {
+      displayText = '\u{1F4C5} Meetup: ${meetupData['title'] ?? 'Meetup'}';
+    } else {
+      // Fallback to message type
+      switch (type) {
+        case MessageType.image:
+          displayText = '\u{1F4F7} Photo';
+          break;
+        case MessageType.document:
+          displayText = '\u{1F4C4} ${documentName ?? 'Document'}';
+          break;
+        case MessageType.location:
+          displayText = '\u{1F4CD} Location';
+          break;
+        case MessageType.contact:
+          displayText = '\u{1F464} ${contactName ?? 'Contact'}';
+          break;
+        case MessageType.meetupInvite:
+          displayText = '\u{1F4C5} Meetup invite';
+          break;
+        case MessageType.text:
+          break;
+      }
     }
 
     // Update conversation
