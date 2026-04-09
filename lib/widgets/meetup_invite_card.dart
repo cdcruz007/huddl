@@ -48,11 +48,21 @@ class MeetupInviteCard extends StatelessWidget {
     final location = meetupData['location'] as String? ?? '';
     final organiser = meetupData['organiserName'] as String? ?? '';
     final category = meetupData['category'] as String? ?? 'Other';
-    final isFree = meetupData['isFree'] as bool? ?? true;
+    // Safe num→bool/int casts: JSON decode on the web can return num/double
+    // for fields that were stored as Dart int, causing 'as int?' to throw.
+    final isFree = (meetupData['isFree'] as bool?) ?? true;
     final price = meetupData['price'];
-    final attendeeCount = meetupData['attendeeCount'] as int? ?? 1;
-    final maxAttendees = meetupData['maxAttendees'] as int?;
-    final privacyIdx = meetupData['privacy'] as int? ?? 0;
+    final attendeeCount = (meetupData['attendeeCount'] as num?)?.toInt() ?? 1;
+    final maxAttendees = (meetupData['maxAttendees'] as num?)?.toInt();
+    // privacy can be stored as int (index) OR as String (e.g. 'MeetupPrivacy.public')
+    final privacyRaw = meetupData['privacy'];
+    final privacyIdx = (privacyRaw is num)
+        ? privacyRaw.toInt()
+        : (privacyRaw is String && privacyRaw.contains('group'))
+            ? 1
+            : (privacyRaw is String && privacyRaw.contains('private'))
+                ? 2
+                : 0;
     final privacy = MeetupPrivacy.values[privacyIdx.clamp(0, MeetupPrivacy.values.length - 1)];
 
     final imageUrl = _resolveImageUrl();

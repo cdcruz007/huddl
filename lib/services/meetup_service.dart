@@ -218,15 +218,24 @@ class Meetup {
     location: j['location'] ?? '',
     organiserName: j['organiserName'] ?? '',
     organiserId: j['organiserId'] ?? 'current_user',
-    attendeeCount: j['attendeeCount'] ?? 1,
-    maxAttendees: j['maxAttendees'],
+    attendeeCount: (j['attendeeCount'] as num?)?.toInt() ?? 1,
+    maxAttendees: (j['maxAttendees'] as num?)?.toInt(),
     isGoing: j['isGoing'] ?? false,
     attendeeNames: List<String>.from(j['attendeeNames'] ?? []),
     imageUrl: j['imageUrl'] ?? '',
     isFree: j['isFree'] ?? true,
     price: j['price'] != null ? (j['price'] as num).toDouble() : null,
-    privacy: MeetupPrivacy.values[j['privacy'] ?? 0],
-    repeat: MeetupRepeat.values[j['repeat'] ?? 0],
+    privacy: () {
+      final raw = j['privacy'];
+      if (raw is int) return MeetupPrivacy.values[raw.clamp(0, MeetupPrivacy.values.length - 1)];
+      if (raw is num) return MeetupPrivacy.values[raw.toInt().clamp(0, MeetupPrivacy.values.length - 1)];
+      if (raw is String) {
+        if (raw.contains('group')) return MeetupPrivacy.group;
+        if (raw.contains('private')) return MeetupPrivacy.private_;
+      }
+      return MeetupPrivacy.public;
+    }(),
+    repeat: MeetupRepeat.values[((j['repeat'] as num?)?.toInt() ?? 0).clamp(0, MeetupRepeat.values.length - 1)],
     repeatDisplay: j['repeatDisplay'],
     repeatDays: j['repeatDays'] != null ? List<int>.from(j['repeatDays']) : null,
     repeatEndDate: j['repeatEndDate'] != null ? DateTime.tryParse(j['repeatEndDate']) : null,

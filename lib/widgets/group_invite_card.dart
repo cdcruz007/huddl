@@ -22,7 +22,7 @@ class GroupInviteCard extends StatelessWidget {
     final name = groupData['name'] as String? ?? 'Group';
     final description = groupData['description'] as String? ?? '';
     final imageUrl = groupData['imageUrl'] as String? ?? '';
-    final memberCount = groupData['memberCount'] as int? ?? 0;
+    final memberCount = (groupData['memberCount'] as num?)?.toInt() ?? 0;
     final creatorName = groupData['creatorName'] as String? ?? '';
     final borough = groupData['creatorBorough'] as String? ?? '';
 
