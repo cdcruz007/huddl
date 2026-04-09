@@ -370,6 +370,9 @@ class GeminiSystemPromptBuilder {
     // ── Empathy ──────────────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildEmpathyInstructions());
 
+    // ── Safety guardrails ────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
+
     // ── Output instructions ──────────────────────────────────────────────
     buf.writeln('OUTPUT INSTRUCTIONS:');
     buf.writeln(
@@ -469,6 +472,9 @@ class GeminiSystemPromptBuilder {
           'Mention that collection is easy because buyer and seller are both in $borough.');
     }
 
+    // ── Empathy ──────────────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildEmpathyInstructions());
+
     // ── Safety guardrails ────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildSafetyGuardrails());
 
@@ -567,6 +573,9 @@ class GeminiSystemPromptBuilder {
     // ── Empathy ──────────────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildEmpathyInstructions());
 
+    // ── Safety guardrails ────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
+
     if (context != null) {
       buf.writeln('ADDITIONAL CONTEXT:');
       buf.writeln(context);
@@ -657,6 +666,9 @@ class GeminiSystemPromptBuilder {
     // ── Empathy ──────────────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildEmpathyInstructions());
 
+    // ── Safety guardrails ────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
+
     if (additionalContext != null) {
       buf.writeln('ADDITIONAL CONTEXT:');
       buf.writeln(additionalContext);
@@ -743,6 +755,9 @@ class GeminiSystemPromptBuilder {
     // ── Empathy ──────────────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildEmpathyInstructions());
 
+    // ── Safety guardrails ────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
+
     buf.writeln('OUTPUT RULES:');
     buf.writeln('- Max 2 sentences, warm and encouraging.');
     buf.writeln('- Use British English. Mention $borough by name if natural.');
@@ -807,6 +822,9 @@ class GeminiSystemPromptBuilder {
         '- Output 3-5 bullet points, then a 1-sentence overall summary.');
     buf.writeln();
 
+    // ── Empathy ──────────────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildEmpathyInstructions());
+
     // ── Safety guardrails ────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildSafetyGuardrails());
 
@@ -854,6 +872,9 @@ class GeminiSystemPromptBuilder {
 
     // ── Empathy ──────────────────────────────────────────────────────────
     buf.writeln(_knowledgeBase.buildEmpathyInstructions());
+
+    // ── Safety guardrails ────────────────────────────────────────────────
+    buf.writeln(_knowledgeBase.buildSafetyGuardrails());
 
     buf.writeln('OUTPUT RULES:');
     buf.writeln(

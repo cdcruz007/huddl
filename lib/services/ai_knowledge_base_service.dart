@@ -837,6 +837,37 @@ class AiKnowledgeBaseService {
         '- Use British English (nappy, pushchair, nursery, dummy, cot, mum/dad).');
     buffer.writeln();
 
+    // ── Quality guidelines ─────────────────────────────────────────────────
+    buffer.writeln('CONTENT QUALITY STANDARDS:');
+    buffer.writeln(
+        '- NEUTRAL ON PARENTING APPROACHES: Do NOT advocate for or against specific '
+        'parenting philosophies (attachment parenting, free-range, strict routines, '
+        'gentle parenting, cry-it-out, etc.). Present balanced perspectives and '
+        'acknowledge that different approaches suit different families.');
+    buffer.writeln(
+        '- NO CONFLICTING ADVICE: When medical or developmental guidance exists from '
+        'NHS, NICE, or WHO, follow it. Do not present contradictory advice from '
+        'multiple sources as equally valid on medical matters.');
+    buffer.writeln(
+        '- CITE CREDIBLE SOURCES: Ground advice in recognised UK authorities: '
+        'NHS (nhs.uk), NCT, NICE guidelines, Anna Freud Centre, NSPCC, '
+        'Lullaby Trust, Start4Life. Avoid referencing unverified blogs or '
+        'commercially-driven parenting brands as primary sources.');
+    buffer.writeln(
+        '- CURRENCY OF INFORMATION: Prioritise current NHS/NICE guidelines. '
+        'If a topic has evolving guidance (e.g. weaning age, safe sleep), '
+        'state the current NHS position explicitly. Do not repeat outdated '
+        'recommendations (e.g. do not suggest putting babies to sleep on their front).');
+    buffer.writeln(
+        '- NOT OVERLY PROMOTIONAL: Do not recommend specific commercial products, '
+        'brands, or services by name unless they are established UK services '
+        '(e.g. NHS 111, NCT, PANDAS). For huddl features, mention them naturally '
+        'only when genuinely helpful — do not push them in every response.');
+    buffer.writeln(
+        '- ACTIONABLE ADVICE: Responses should be practical and specific. '
+        'Avoid generic platitudes. Give parents concrete next steps they can take today.');
+    buffer.writeln();
+
     return buffer.toString();
   }
 
@@ -876,6 +907,28 @@ class AiKnowledgeBaseService {
         '- For adoption/fostering queries: suggest Adoption UK, CoramBAAF, or Home for Good.');
     buffer.writeln(
         '- For bereavement: suggest Care for the Family bereavement support.');
+
+    // ── Content integrity guardrails ───────────────────────────────────────
+    buffer.writeln(
+        '- NO MEDICAL DIAGNOSES EVER: Always say "this could be worth checking '
+        'with your GP" or "NHS 111 can advise". Never say "your child has [condition]".');
+    buffer.writeln(
+        '- FOLLOW CURRENT NHS/NICE GUIDANCE ONLY: For vaccination schedules, '
+        'safe sleep, weaning, formula preparation, and car seat safety, always '
+        'state the current NHS position. Do not deviate from it.');
+    buffer.writeln(
+        '- NO OUTDATED INFORMATION: Never repeat guidance NHS or NICE has superseded. '
+        'Examples of outdated advice to NEVER give: placing babies on their front '
+        'to sleep; starting solids before 4 months; using cot bumpers; diluting '
+        'formula; giving water to babies under 6 months (except in heat on advice).');
+    buffer.writeln(
+        '- NOT PROMOTIONAL: Do not use marketing-style language for huddl or any '
+        'commercial product. Responses must feel genuinely helpful, not sales-driven.');
+    buffer.writeln(
+        '- BALANCED ON CONTROVERSIAL TOPICS: For areas where parenting communities '
+        'disagree (screen time, co-sleeping, dummies, controlled crying), state the '
+        'NHS/NICE position clearly, then acknowledge families make different choices, '
+        'without endorsing any single approach as superior.');
     buffer.writeln();
 
     return buffer.toString();
