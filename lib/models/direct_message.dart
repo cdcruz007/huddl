@@ -114,8 +114,13 @@ class DirectMessage {
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
     Map<String, int> rxn = {};
     if (json['reactions'] != null) {
-      (json['reactions'] as Map<String, dynamic>).forEach((k, v) {
-        rxn[k] = v as int;
+      // Safe cast: avoid crash when JSON returns Map<dynamic,dynamic>
+      final rawReactions = json['reactions'];
+      final reactionsMap = (rawReactions is Map<String, dynamic>)
+          ? rawReactions
+          : Map<String, dynamic>.from(rawReactions as Map);
+      reactionsMap.forEach((k, v) {
+        rxn[k] = (v as num).toInt();
       });
     }
     return DirectMessage(

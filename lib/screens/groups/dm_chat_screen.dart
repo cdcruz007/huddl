@@ -405,33 +405,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
             ),
 
-          // ── Debug overlay ─────────────────────────────────────────
-          // Shows conv ID and msg count to diagnose empty DM issue
-          Container(
-            color: Colors.orange.withValues(alpha: 0.15),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Conv: ${_conversationId ?? "null"} | Msgs: ${_messages.length} | Recipient: ${widget.recipientId}',
-                    style: const TextStyle(fontSize: 10, color: Colors.deepOrange),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    // Force reload from storage
-                    final id = _conversationId ?? 'dm_${widget.recipientId}';
-                    final msgs = await _dmService.getMessages(id);
-                    if (mounted) setState(() { _conversationId = id; _messages = msgs; });
-                  },
-                  style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2)),
-                  child: const Text('RELOAD', style: TextStyle(fontSize: 10)),
-                ),
-              ],
-            ),
-          ),
-
           // ── Messages list ─────────────────────────────────────────
           Expanded(
             child: _isLoading
@@ -621,29 +594,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                               _currentMatchIndex < _searchMatches.length &&
                               _searchMatches[_currentMatchIndex] == index;
 
-                          // DIAGNOSTIC: Show card data status visually
-                          final hasGroupData = msg.groupData != null;
-                          final hasItemData = msg.itemData != null;
-                          final hasMeetupData = msg.meetupData != null;
-                          
                           return Column(
                             children: [
-                              // Visual indicator for card data (temporary for debugging)
-                              if (hasGroupData || hasItemData || hasMeetupData)
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: hasGroupData ? Colors.blue.withValues(alpha: 0.2) :
-                                           hasItemData ? Colors.green.withValues(alpha: 0.2) :
-                                           Colors.orange.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    '🔍 DEBUG: ${hasGroupData ? 'GROUP CARD DATA EXISTS' : hasItemData ? 'ITEM CARD DATA EXISTS' : 'MEETUP CARD DATA EXISTS'}',
-                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
                               if (showTimestamp)
                                 _TimestampDivider(timestamp: msg.timestamp),
                               if (isDeletedForEveryone)

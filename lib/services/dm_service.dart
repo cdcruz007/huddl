@@ -100,10 +100,20 @@ class DMService {
           '$_messagesKeyPrefix$conversationId');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        return decoded
-            .map((j) => DirectMessage.fromJson(j as Map<String, dynamic>))
-            .toList()
-          ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        final messages = <DirectMessage>[];
+        for (final j in decoded) {
+          try {
+            // Safe cast: json.decode may return Map<dynamic,dynamic>
+            final Map<String, dynamic> map = (j is Map<String, dynamic>)
+                ? j
+                : Map<String, dynamic>.from(j as Map);
+            messages.add(DirectMessage.fromJson(map));
+          } catch (parseErr) {
+            _log('Skipping malformed message: $parseErr');
+          }
+        }
+        messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        return messages;
       }
     } catch (e) {
       _log('Error loading messages for $conversationId: $e');
