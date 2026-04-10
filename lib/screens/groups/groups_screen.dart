@@ -4684,12 +4684,30 @@ class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
 class _SavedItem {
   final SavedMessage? message;
   final SavedThread? thread;
-  _SavedItem.fromMessage(this.message) : thread = null;
-  _SavedItem.fromThread(this.thread) : message = null;
+  final SavedEvent? event;
+
+  _SavedItem.fromMessage(this.message)
+      : thread = null,
+        event = null;
+  _SavedItem.fromThread(this.thread)
+      : message = null,
+        event = null;
+  _SavedItem.fromEvent(this.event)
+      : message = null,
+        thread = null;
 
   bool get isThread => thread != null;
-  String get id => isThread ? thread!.id : message!.id;
-  DateTime get savedAt => isThread ? thread!.savedAt : message!.savedAt;
+  bool get isEvent => event != null;
+  String get id => isThread
+      ? thread!.id
+      : isEvent
+          ? event!.id
+          : message!.id;
+  DateTime get savedAt => isThread
+      ? thread!.savedAt
+      : isEvent
+          ? event!.savedAt
+          : message!.savedAt;
 }
 
 class _SavedTab extends StatefulWidget {
@@ -4726,10 +4744,23 @@ class _SavedTabState extends State<_SavedTab> {
     if (mounted) setState(() => _isLoading = false);
   }
 
-  /// Build a unified list of saved messages + saved threads, sorted newest first.
+  /// Build a unified list of saved messages + saved threads + saved events,
+  /// sorted newest first.
   List<_SavedItem> _filteredSaved() {
     final q = _searchQuery.toLowerCase();
     final items = <_SavedItem>[];
+
+    // Add saved events (bookmarks) — shown first by default as they tend
+    // to be time-sensitive
+    for (final ev in _savedMessageService.savedEvents) {
+      if (q.isEmpty ||
+          ev.title.toLowerCase().contains(q) ||
+          ev.location.toLowerCase().contains(q) ||
+          ev.organiser.toLowerCase().contains(q) ||
+          ev.date.toLowerCase().contains(q)) {
+        items.add(_SavedItem.fromEvent(ev));
+      }
+    }
 
     // Add saved messages
     for (final m in _savedMessageService.savedMessages) {
@@ -4849,9 +4880,12 @@ class _SavedTabState extends State<_SavedTab> {
 
     final allMessages = _savedMessageService.savedMessages;
     final allThreads = _savedMessageService.savedThreads;
+    // allEvents used below in empty-state check
+
+    final allEvents = _savedMessageService.savedEvents;
 
     // No saved items at all — show empty state (no search bar needed)
-    if (allMessages.isEmpty && allThreads.isEmpty) {
+    if (allMessages.isEmpty && allThreads.isEmpty && allEvents.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -4880,7 +4914,7 @@ class _SavedTabState extends State<_SavedTab> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Long-press a message to save it, or save\nan entire reply thread from a group.',
+              'Bookmark events to save them here,\nor long-press a message to save it.',
               style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
               textAlign: TextAlign.center,
             ),
@@ -4977,6 +5011,12 @@ class _SavedTabState extends State<_SavedTab> {
                         onTap: () => _navigateToThread(item.thread!),
                       );
                       onDelete = () => _confirmDeleteSavedThread(item.thread!);
+                    } else if (item.isEvent) {
+                      card = _SavedEventCard(
+                        savedEvent: item.event!,
+                        onTap: () => _navigateToEvent(item.event!),
+                      );
+                      onDelete = () => _removeSavedEvent(item.event!);
                     } else {
                       card = _SavedMessageCard(
                         savedMessage: item.message!,
@@ -5007,6 +5047,45 @@ class _SavedTabState extends State<_SavedTab> {
         ),
       ],
     );
+  }
+
+  /// Navigate to the event detail screen for a saved event.
+  void _navigateToEvent(SavedEvent ev) {
+    Navigator.pushNamed(context, '/event_detail', arguments: {
+      'id': ev.eventId,
+      'title': ev.title,
+      'date': ev.date,
+      'time': ev.time,
+      'location': ev.location,
+      'organiser': ev.organiser,
+      'imageUrl': ev.imageUrl,
+      'isFree': ev.isFree,
+      'price': ev.price,
+      'category': ev.category,
+      'isOnline': ev.isOnline,
+      'description': '',
+      'attendees': 0,
+      'isUserCreated': false,
+    });
+  }
+
+  /// Remove a bookmarked event without a confirmation dialog
+  /// (mirrors the swipe-to-delete UX used for saved messages).
+  Future<void> _removeSavedEvent(SavedEvent ev) async {
+    await _savedMessageService.unsaveEvent(ev.eventId);
+    // Also remove from EventService in-memory cache so the bookmark icon updates
+    final eventService = EventService();
+    eventService.clearBookmarkCache(ev.eventId);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Event bookmark removed'),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   void _navigateToSource(SavedMessage msg) {
@@ -5483,6 +5562,196 @@ class _SavedThreadCard extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SAVED EVENT CARD — shown in Saved tab for bookmarked events
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _SavedEventCard extends StatelessWidget {
+  final SavedEvent savedEvent;
+  final VoidCallback onTap;
+
+  const _SavedEventCard({
+    required this.savedEvent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasImage = savedEvent.imageUrl.isNotEmpty;
+
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        color: context.hc.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail / fallback icon
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 62,
+                height: 62,
+                child: hasImage
+                    ? Image.network(
+                        savedEvent.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _fallbackIcon(context),
+                      )
+                    : _fallbackIcon(context),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Event details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // "Saved event" label
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.bookmark,
+                                size: 11, color: HuddlColors.accentAmber),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Saved Event',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.accentAmber,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      // Free / price badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: savedEvent.isFree
+                              ? HuddlColors.teal.withValues(alpha: 0.12)
+                              : HuddlColors.primary.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          savedEvent.isFree
+                              ? 'Free'
+                              : (savedEvent.price.isNotEmpty ? savedEvent.price : 'Paid'),
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: savedEvent.isFree ? HuddlColors.teal : HuddlColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Title
+                  Text(
+                    savedEvent.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Date & time
+                  if (savedEvent.date.isNotEmpty)
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 12, color: context.hc.textTertiary),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            savedEvent.time.isNotEmpty
+                                ? '${savedEvent.date} · ${savedEvent.time}'
+                                : savedEvent.date,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: context.hc.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  const SizedBox(height: 2),
+                  // Location / online
+                  Row(
+                    children: [
+                      Icon(
+                        savedEvent.isOnline
+                            ? Icons.videocam_outlined
+                            : Icons.location_on_outlined,
+                        size: 12,
+                        color: context.hc.textTertiary,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          savedEvent.isOnline ? 'Online event' : savedEvent.location,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: context.hc.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  // Tap hint
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Icon(Icons.open_in_new, size: 11, color: context.hc.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        'Tap to view event',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: context.hc.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _fallbackIcon(BuildContext context) {
+    return Container(
+      color: HuddlColors.peachLight,
+      child: const Center(
+        child: Icon(Icons.event, size: 28, color: HuddlColors.primary),
+      ),
+    );
   }
 }
 

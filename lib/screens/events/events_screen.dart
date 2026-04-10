@@ -2654,20 +2654,22 @@ class _EventListCardState extends State<_EventListCard> {
                     label: isBookmarked ? 'Remove bookmark' : 'Bookmark event',
                     button: true,
                     child: GestureDetector(
-                      onTap: () {
+                      onTap: () async {
                         if (eventId.isNotEmpty) {
                           HapticFeedback.lightImpact();
-                          _eventService.toggleBookmark(eventId);
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(isBookmarked ? 'Bookmark removed' : 'Event bookmarked!'),
-                              backgroundColor: isBookmarked ? HuddlColors.textSecondary : HuddlColors.teal,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
+                          await _eventService.toggleBookmark(eventId);
+                          if (context.mounted) {
+                            setState(() {});
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isBookmarked ? 'Bookmark removed' : 'Event bookmarked! Find it in the Saved tab.'),
+                                backgroundColor: isBookmarked ? HuddlColors.textSecondary : HuddlColors.teal,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
                         }
                       },
                       child: Icon(

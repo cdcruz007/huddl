@@ -5,6 +5,7 @@ import '../models/group.dart';
 import 'ai_event_discovery_service.dart';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
+import 'saved_message_service.dart';
 
 /// Represents a third-party or user-created event (may be free or paid).
 /// Age range suitability for an event.
@@ -153,7 +154,11 @@ class EventService extends ChangeNotifier {
 
   final List<Event> _events = [];
   final Set<String> _goingEventIds = {};
+  // Bookmarks are now persisted via SavedMessageService — this set is kept
+  // as a fast in-memory cache that mirrors the persisted state.
   final Set<String> _bookmarkedEventIds = {};
+
+  final SavedMessageService _savedSvc = SavedMessageService();
 
   List<Event> get events => List.unmodifiable(_events);
 
@@ -234,16 +239,51 @@ class EventService extends ChangeNotifier {
   }
 
   /// Whether the user has bookmarked this event.
-  bool isBookmarked(String eventId) => _bookmarkedEventIds.contains(eventId);
+  /// Checks both the in-memory cache and the persisted SavedMessageService.
+  bool isBookmarked(String eventId) =>
+      _bookmarkedEventIds.contains(eventId) ||
+      _savedSvc.isEventSaved(eventId);
 
   /// Toggle bookmark status for an event.
-  void toggleBookmark(String eventId) {
-    if (_bookmarkedEventIds.contains(eventId)) {
+  /// Persists to SavedMessageService so the event appears in the Saved tab.
+  Future<void> toggleBookmark(String eventId) async {
+    // Ensure SavedMessageService is initialised before any read/write
+    await _savedSvc.initialize();
+
+    final alreadySaved = isBookmarked(eventId);
+    if (alreadySaved) {
       _bookmarkedEventIds.remove(eventId);
+      await _savedSvc.unsaveEvent(eventId);
     } else {
       _bookmarkedEventIds.add(eventId);
+      // Find the event to snapshot its display data
+      final ev = getEventById(eventId);
+      if (ev != null) {
+        await _savedSvc.saveEvent(
+          eventId: eventId,
+          title: ev.title,
+          date: ev.dateDisplay,
+          time: ev.timeDisplay,
+          location: ev.location,
+          organiser: ev.organiser,
+          imageUrl: ev.imageUrl,
+          isFree: ev.isFree,
+          price: ev.price,
+          category: ev.category,
+          isOnline: ev.isOnline,
+        );
+      }
     }
     notifyListeners();
+  }
+
+  /// Remove an event from the in-memory bookmark cache (called when the user
+  /// removes a bookmark from the Saved tab, which already updated
+  /// SavedMessageService).
+  void clearBookmarkCache(String eventId) {
+    if (_bookmarkedEventIds.remove(eventId)) {
+      notifyListeners();
+    }
   }
 
   /// All events as Maps (for compatibility with existing _EventListCard).

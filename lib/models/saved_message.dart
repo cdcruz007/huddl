@@ -141,6 +141,75 @@ class SavedThread {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Saved / bookmarked event
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Represents an event that the user bookmarked from the Events screen.
+class SavedEvent {
+  final String id;        // unique saved-record id
+  final String eventId;   // original Event.id
+  final String title;
+  final String date;
+  final String time;
+  final String location;
+  final String organiser;
+  final String imageUrl;
+  final bool isFree;
+  final String price;
+  final String category;
+  final bool isOnline;
+  final DateTime savedAt;
+
+  SavedEvent({
+    required this.id,
+    required this.eventId,
+    required this.title,
+    required this.date,
+    required this.time,
+    required this.location,
+    required this.organiser,
+    required this.imageUrl,
+    required this.isFree,
+    required this.price,
+    required this.category,
+    required this.isOnline,
+    required this.savedAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'eventId': eventId,
+        'title': title,
+        'date': date,
+        'time': time,
+        'location': location,
+        'organiser': organiser,
+        'imageUrl': imageUrl,
+        'isFree': isFree,
+        'price': price,
+        'category': category,
+        'isOnline': isOnline,
+        'savedAt': savedAt.toIso8601String(),
+      };
+
+  factory SavedEvent.fromJson(Map<String, dynamic> json) => SavedEvent(
+        id: json['id'] as String,
+        eventId: json['eventId'] as String? ?? '',
+        title: json['title'] as String? ?? 'Event',
+        date: json['date'] as String? ?? '',
+        time: json['time'] as String? ?? '',
+        location: json['location'] as String? ?? '',
+        organiser: json['organiser'] as String? ?? '',
+        imageUrl: json['imageUrl'] as String? ?? '',
+        isFree: json['isFree'] as bool? ?? true,
+        price: json['price'] as String? ?? '',
+        category: json['category'] as String? ?? 'community',
+        isOnline: json['isOnline'] as bool? ?? false,
+        savedAt: DateTime.parse(json['savedAt'] as String),
+      );
+}
+
 /// A single message within a saved thread.
 class SavedThreadMessage {
   final String messageId;

@@ -167,11 +167,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                     color: context.hc.surface, size: 20,
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final id = widget.event['id'] as String? ?? '';
                     if (id.isNotEmpty) {
-                      _eventService.toggleBookmark(id);
-                      setState(() {});
+                      await _eventService.toggleBookmark(id);
+                      if (mounted) setState(() {});
                     }
                   },
                 ),

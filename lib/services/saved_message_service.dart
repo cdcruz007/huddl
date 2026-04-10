@@ -5,6 +5,7 @@ import 'browser_storage.dart';
 
 const String _savedMessagesKey = 'saved_messages_v1';
 const String _savedThreadsKey = 'saved_threads_v1';
+const String _savedEventsKey = 'saved_events_v1';
 
 /// Service to manage saved/bookmarked messages from groups and DMs.
 class SavedMessageService extends ChangeNotifier {
@@ -15,10 +16,12 @@ class SavedMessageService extends ChangeNotifier {
 
   List<SavedMessage> _savedMessages = [];
   List<SavedThread> _savedThreads = [];
+  List<SavedEvent> _savedEvents = [];
   bool _initialized = false;
 
   List<SavedMessage> get savedMessages => List.unmodifiable(_savedMessages);
   List<SavedThread> get savedThreads => List.unmodifiable(_savedThreads);
+  List<SavedEvent> get savedEvents => List.unmodifiable(_savedEvents);
 
   /// All saved messages (messages + threads combined count).
   /// Used by GDPR data compilation.
@@ -28,8 +31,10 @@ class SavedMessageService extends ChangeNotifier {
   Future<void> clearAll() async {
     _savedMessages.clear();
     _savedThreads.clear();
+    _savedEvents.clear();
     await _save();
     await _saveThreads();
+    await _saveEvents();
     notifyListeners();
   }
 
@@ -66,6 +71,19 @@ class SavedMessageService extends ChangeNotifier {
     } catch (_) {
       _savedThreads = [];
     }
+    // Load saved events
+    try {
+      final raw = await BrowserStorage.getString(_savedEventsKey);
+      if (raw != null) {
+        final List<dynamic> decoded = json.decode(raw);
+        _savedEvents = decoded
+            .map((j) => SavedEvent.fromJson(j as Map<String, dynamic>))
+            .toList();
+        _savedEvents.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+      }
+    } catch (_) {
+      _savedEvents = [];
+    }
   }
 
   Future<void> _save() async {
@@ -81,6 +99,15 @@ class SavedMessageService extends ChangeNotifier {
     try {
       final encoded = json.encode(_savedThreads.map((t) => t.toJson()).toList());
       await BrowserStorage.setString(_savedThreadsKey, encoded);
+    } catch (_) {
+      // silently fail
+    }
+  }
+
+  Future<void> _saveEvents() async {
+    try {
+      final encoded = json.encode(_savedEvents.map((e) => e.toJson()).toList());
+      await BrowserStorage.setString(_savedEventsKey, encoded);
     } catch (_) {
       // silently fail
     }
@@ -219,5 +246,57 @@ class SavedMessageService extends ChangeNotifier {
   /// Get all saved threads for a specific group.
   List<SavedThread> getSavedThreadsForGroup(String groupId) {
     return _savedThreads.where((t) => t.groupId == groupId).toList();
+  }
+
+  // ── Event Bookmarking ────────────────────────────────────────────────────
+
+  /// Whether the user has bookmarked a given event.
+  bool isEventSaved(String eventId) =>
+      _savedEvents.any((e) => e.eventId == eventId);
+
+  /// Bookmark an event — saves all display data so it can be rendered
+  /// in the Saved tab without needing the full event list.
+  Future<void> saveEvent({
+    required String eventId,
+    required String title,
+    required String date,
+    required String time,
+    required String location,
+    required String organiser,
+    required String imageUrl,
+    required bool isFree,
+    required String price,
+    required String category,
+    required bool isOnline,
+  }) async {
+    // Don't save duplicates
+    if (isEventSaved(eventId)) return;
+
+    final saved = SavedEvent(
+      id: 'event_${DateTime.now().millisecondsSinceEpoch}',
+      eventId: eventId,
+      title: title,
+      date: date,
+      time: time,
+      location: location,
+      organiser: organiser,
+      imageUrl: imageUrl,
+      isFree: isFree,
+      price: price,
+      category: category,
+      isOnline: isOnline,
+      savedAt: DateTime.now(),
+    );
+
+    _savedEvents.insert(0, saved);
+    await _saveEvents();
+    notifyListeners();
+  }
+
+  /// Remove a bookmarked event by its original event id.
+  Future<void> unsaveEvent(String eventId) async {
+    _savedEvents.removeWhere((e) => e.eventId == eventId);
+    await _saveEvents();
+    notifyListeners();
   }
 }
