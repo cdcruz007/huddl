@@ -17,7 +17,8 @@ class PollVote {
   });
 }
 
-/// Runtime model for an active poll in a group chat
+/// Runtime model for an active poll in a group chat.
+/// Supports multi-user scenarios where each user has their own vote state.
 class ActivePoll {
   final String id;
   final PollData data;
@@ -26,7 +27,7 @@ class ActivePoll {
   final DateTime createdAt;
   final List<PollVote> votes;
   final Set<int> myVotes; // option indices the current user voted for
-  bool isPinned; // whether this poll is pinned at the top (creator-controlled)
+  bool isPinned; // creator can pin to keep visible in chat flow after voting
   bool isDeleted; // soft-deleted by creator
 
   ActivePoll({
@@ -56,9 +57,17 @@ class ActivePoll {
   bool get hasVoted => myVotes.isNotEmpty;
 
   /// Whether this poll should be visible in the main chat flow.
-  /// A poll is dismissed (hidden from flow) when the user has voted AND
-  /// it is not pinned by the creator.
-  bool get visibleInFlow => !hasVoted || isPinned;
+  ///
+  /// Rules:
+  /// - Creator: always visible (so they can access results + pin)
+  /// - Non-creator, not voted yet: visible (needs to vote)
+  /// - Non-creator, voted, NOT pinned: HIDDEN (auto-dismissed after voting)
+  /// - Non-creator, voted, pinned by creator: VISIBLE (creator chose to keep it)
+  bool get visibleInFlow {
+    if (isCreatedByMe) return true; // creator always sees their own polls
+    if (!hasVoted) return true; // unvoted — needs to be shown
+    return isPinned; // voted + pinned → keep visible; voted + not pinned → hide
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -88,7 +97,6 @@ class PollCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final expired = poll.isExpired;
-    // Non-creators who have voted only see their selection, not the vote counts
     final isCreator = poll.isCreatedByMe;
     final hasVoted = poll.hasVoted;
 
@@ -121,7 +129,7 @@ class PollCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row — poll icon + creator + pin + 3-dot menu
+            // ── Header row — poll icon + creator + pin badge + 3-dot menu ──
             Row(
               children: [
                 Container(
@@ -145,10 +153,10 @@ class PollCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Pin indicator — only creator can toggle
-                if (poll.isPinned && !expired && isCreator)
+                // Pinned badge — creator can tap to unpin; non-creator sees read-only
+                if (poll.isPinned && !expired)
                   GestureDetector(
-                    onTap: onTogglePin,
+                    onTap: isCreator ? onTogglePin : null,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -171,39 +179,15 @@ class PollCard extends StatelessWidget {
                               color: HuddlColors.primary,
                             ),
                           ),
-                          const SizedBox(width: 3),
-                          Icon(Icons.close,
-                              size: 11,
-                              color: HuddlColors.primary.withValues(alpha: 0.6)),
+                          if (isCreator) ...[
+                            const SizedBox(width: 3),
+                            Icon(Icons.close,
+                                size: 11,
+                                color:
+                                    HuddlColors.primary.withValues(alpha: 0.6)),
+                          ],
                         ],
                       ),
-                    ),
-                  ),
-                // Non-creator pinned indicator (read-only)
-                if (poll.isPinned && !expired && !isCreator)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    margin: const EdgeInsets.only(right: 6),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.push_pin,
-                            size: 12, color: HuddlColors.primary),
-                        const SizedBox(width: 3),
-                        Text(
-                          'Pinned',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 if (expired)
@@ -223,13 +207,13 @@ class PollCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                // 3-dot menu
+                // 3-dot context menu
                 _buildPollMenu(context),
               ],
             ),
             const SizedBox(height: 12),
 
-            // Question
+            // ── Question ─────────────────────────────────────────────────
             Text(
               poll.data.question,
               style: GoogleFonts.poppins(
@@ -259,33 +243,39 @@ class PollCard extends StatelessWidget {
               ),
             const SizedBox(height: 12),
 
-            // Options
+            // ── Options ───────────────────────────────────────────────────
             ...List.generate(poll.data.options.length, (i) {
               final selected = poll.myVotes.contains(i);
               final count = poll.votesFor(i);
               final total = poll.totalVotes;
               final pct = total > 0 ? (count / total * 100).round() : 0;
-              // Only creator or expired polls show vote counts to everyone
-              final showResults = isCreator && (hasVoted || expired);
-              // Non-creators never see results in the card
-              final showCounts = showResults;
+
+              // Only the creator sees vote counts / percentages inline.
+              // Non-creators NEVER see results — privacy by design.
+              final showCounts = isCreator;
+
+              // A non-creator can tap to vote if:
+              //   • poll not expired
+              //   • hasn't voted yet (single-choice), OR poll allows multiple
+              final canVote = !expired &&
+                  (!hasVoted || poll.data.allowMultiple) &&
+                  !isCreator;
 
               return GestureDetector(
-                onTap: (expired || (hasVoted && !poll.data.allowMultiple))
-                    ? null
-                    : () => onSelectOption?.call(i),
+                onTap: canVote ? () => onSelectOption?.call(i) : null,
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: selected
                         ? HuddlColors.primary.withValues(alpha: 0.1)
                         : context.hc.scaffold,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color:
-                          selected ? HuddlColors.primary : HuddlColors.divider,
+                      color: selected
+                          ? HuddlColors.primary
+                          : HuddlColors.divider,
                       width: selected ? 1.5 : 1.0,
                     ),
                   ),
@@ -342,7 +332,7 @@ class PollCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Only creator sees counts inline
+                      // Creator sees vote counts; non-creators do not
                       if (showCounts) ...[
                         Text(
                           '$count',
@@ -371,20 +361,21 @@ class PollCard extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Footer — total votes (creator only) + expiry
+            // ── Footer ────────────────────────────────────────────────────
             Row(
               children: [
                 Icon(Icons.how_to_vote_outlined,
                     size: 14, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
-                // Non-creators only see vote count if creator or expired
-                if (isCreator || expired)
+                // Creator always sees total vote count
+                if (isCreator)
                   Text(
                     '${poll.totalVotes} vote${poll.totalVotes != 1 ? 's' : ''}',
                     style: GoogleFonts.poppins(
                         fontSize: 11, color: context.hc.textTertiary),
                   )
                 else
+                  // Non-creator: just acknowledge their status
                   Text(
                     hasVoted ? 'Vote recorded' : 'Tap to vote',
                     style: GoogleFonts.poppins(
@@ -404,14 +395,15 @@ class PollCard extends StatelessWidget {
                         : 'Closes ${_relativeTime(poll.data.expiresAt!)}',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color:
-                          expired ? HuddlColors.error : context.hc.textTertiary,
+                      color: expired
+                          ? HuddlColors.error
+                          : context.hc.textTertiary,
                     ),
                   ),
                 ],
                 const Spacer(),
-                // Creator sees "View details" link; others see "Change vote" if voted
-                if (isCreator && (hasVoted || expired))
+                // Creator always sees "View results"
+                if (isCreator)
                   GestureDetector(
                     onTap: onViewDetails,
                     child: Text(
@@ -423,6 +415,7 @@ class PollCard extends StatelessWidget {
                       ),
                     ),
                   )
+                // Non-creator who has voted can change vote (until expiry)
                 else if (!isCreator && hasVoted && !expired)
                   GestureDetector(
                     onTap: onChangeVote,
@@ -476,30 +469,32 @@ class PollCard extends StatelessWidget {
         final items = <PopupMenuEntry<String>>[];
 
         if (isCreator) {
-          // ── Creator menu ──────────────────────────────────────────
-          // Pin / Unpin
-          items.add(PopupMenuItem<String>(
-            value: 'pin',
-            child: Row(
-              children: [
-                Icon(
-                  poll.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
-                  size: 20,
-                  color: context.hc.textPrimary,
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  poll.isPinned ? 'Unpin poll' : 'Pin poll',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+          // ── Creator menu ──────────────────────────────────────────────
+          // Pin / Unpin (only for active polls)
+          if (!poll.isExpired) {
+            items.add(PopupMenuItem<String>(
+              value: 'pin',
+              child: Row(
+                children: [
+                  Icon(
+                    poll.isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                    size: 20,
                     color: context.hc.textPrimary,
                   ),
-                ),
-              ],
-            ),
-          ));
-          // See Results (always available to creator)
+                  const SizedBox(width: 12),
+                  Text(
+                    poll.isPinned ? 'Unpin poll' : 'Pin poll',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: context.hc.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ));
+          }
+          // See Results — always available to creator
           items.add(PopupMenuItem<String>(
             value: 'results',
             child: Row(
@@ -538,7 +533,7 @@ class PollCard extends StatelessWidget {
             ),
           ));
         } else {
-          // ── Non-creator menu ──────────────────────────────────────
+          // ── Non-creator menu ──────────────────────────────────────────
           // Change vote (only if already voted and poll still active)
           if (poll.hasVoted && !poll.isExpired) {
             items.add(PopupMenuItem<String>(
@@ -560,7 +555,7 @@ class PollCard extends StatelessWidget {
               ),
             ));
           }
-          // No results option for non-creators — they cannot see results
+          // Non-creators NEVER get a "See Results" option
         }
 
         return items;
@@ -578,8 +573,10 @@ class PollCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ACTIVE POLLS BOTTOM SHEET — lists all live polls; accessible from 3-dot menu
-// Only creator can see results; others can vote / change vote
+// ACTIVE POLLS BOTTOM SHEET
+// Accessible via the top-right ⋮ menu. Lists ALL live polls from ALL users.
+// - Creators: see results, pin/unpin, delete
+// - Non-creators: vote, change vote (until expiry), no results visible
 // ═══════════════════════════════════════════════════════════════════════════
 
 class ActivePollsSheet extends StatefulWidget {
@@ -605,7 +602,7 @@ class ActivePollsSheet extends StatefulWidget {
 class _ActivePollsSheetState extends State<ActivePollsSheet> {
   @override
   Widget build(BuildContext context) {
-    // Show all non-deleted polls (active + expired)
+    // All non-deleted polls sorted: active first, then expired
     final activePolls =
         widget.polls.where((p) => !p.isDeleted && !p.isExpired).toList();
     final expiredPolls =
@@ -625,7 +622,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
           ),
           child: Column(
             children: [
-              // Handle
+              // ── Handle ────────────────────────────────────────────────
               Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 8),
                 width: 40,
@@ -635,10 +632,10 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Title
+              // ── Title ─────────────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
                   children: [
                     Container(
@@ -653,13 +650,26 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        'Active Polls',
-                        style: GoogleFonts.poppins(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Active Polls',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.textPrimary,
+                            ),
+                          ),
+                          if (activePolls.isNotEmpty)
+                            Text(
+                              'All polls from this group',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: context.hc.textTertiary,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                     if (activePolls.isNotEmpty)
@@ -691,7 +701,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                 ),
               ),
               Divider(height: 1, color: context.hc.divider),
-              // Content
+              // ── Poll list ─────────────────────────────────────────────
               Expanded(
                 child: (activePolls.isEmpty && expiredPolls.isEmpty)
                     ? _buildEmptyState(context)
@@ -708,8 +718,7 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                                   poll: poll,
                                   onVote: (i) {
                                     widget.onVote(poll.id, i);
-                                    // Rebuild sheet with latest state
-                                    setState(() {});
+                                    setState(() {}); // refresh sheet state
                                   },
                                   onViewDetails: poll.isCreatedByMe
                                       ? () {
@@ -739,14 +748,14 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
                             const SizedBox(height: 8),
                             ...expiredPolls.map((poll) => _PollSheetItem(
                                   poll: poll,
-                                  onVote: null,
+                                  onVote: null, // expired — no voting
                                   onViewDetails: poll.isCreatedByMe
                                       ? () {
                                           Navigator.pop(context);
                                           widget.onViewDetails(poll);
                                         }
                                       : null,
-                                  onTogglePin: null,
+                                  onTogglePin: null, // can't pin expired
                                   onDeletePoll: poll.isCreatedByMe
                                       ? () {
                                           Navigator.pop(context);
@@ -820,6 +829,13 @@ class _ActivePollsSheetState extends State<ActivePollsSheet> {
 }
 
 // ─── Individual poll item inside the Active Polls sheet ───────────────────
+//
+// BEHAVIOUR:
+// • Creator:      sees vote counts, percentages, can pin/delete/view results
+// • Non-creator:  sees only their own selection highlighted; no counts shown
+//                 can vote if not yet voted; can CHANGE their vote (tapping a
+//                 different option) at any time until expiry
+// ─────────────────────────────────────────────────────────────────────────
 
 class _PollSheetItem extends StatelessWidget {
   final ActivePoll poll;
@@ -846,9 +862,7 @@ class _PollSheetItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: expired
-            ? context.hc.scaffold
-            : context.hc.surface,
+        color: expired ? context.hc.scaffold : context.hc.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: expired
@@ -864,7 +878,7 @@ class _PollSheetItem extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // ── Header ─────────────────────────────────────────────────
             Row(
               children: [
                 Expanded(
@@ -904,7 +918,7 @@ class _PollSheetItem extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Creator actions
+                // Creator context menu
                 if (isCreator)
                   PopupMenuButton<String>(
                     icon: Icon(Icons.more_vert,
@@ -957,8 +971,7 @@ class _PollSheetItem extends StatelessWidget {
                                 color: context.hc.textPrimary,
                               ),
                               const SizedBox(width: 10),
-                              Text(
-                                  poll.isPinned ? 'Unpin' : 'Pin poll',
+                              Text(poll.isPinned ? 'Unpin' : 'Pin poll',
                                   style:
                                       GoogleFonts.poppins(fontSize: 13)),
                             ],
@@ -983,7 +996,8 @@ class _PollSheetItem extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            // Question
+
+            // ── Question ───────────────────────────────────────────────
             Text(
               poll.data.question,
               style: GoogleFonts.poppins(
@@ -993,18 +1007,21 @@ class _PollSheetItem extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            // Options
+
+            // ── Options ────────────────────────────────────────────────
             ...List.generate(poll.data.options.length, (i) {
               final selected = poll.myVotes.contains(i);
               final count = poll.votesFor(i);
               final total = poll.totalVotes;
               final pct = total > 0 ? (count / total * 100).round() : 0;
-              final canVote = !expired &&
-                  (!hasVoted || poll.data.allowMultiple) &&
-                  onVote != null;
+
+              // Non-creators can vote/change vote on any option until expiry.
+              // Single-choice: tapping a different option changes the vote.
+              // Multi-choice: tapping toggles each option.
+              final canTap = !expired && !isCreator && onVote != null;
 
               return GestureDetector(
-                onTap: canVote ? () => onVote?.call(i) : null,
+                onTap: canTap ? () => onVote?.call(i) : null,
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 6),
                   padding: const EdgeInsets.symmetric(
@@ -1023,6 +1040,7 @@ class _PollSheetItem extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
+                      // Selection indicator
                       Container(
                         width: 18,
                         height: 18,
@@ -1056,7 +1074,7 @@ class _PollSheetItem extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Creator sees counts; non-creators do not
+                      // ONLY creator sees vote counts / percentages
                       if (isCreator && total > 0) ...[
                         Text(
                           '$pct%',
@@ -1077,13 +1095,24 @@ class _PollSheetItem extends StatelessWidget {
                           ),
                         ),
                       ],
+                      // Non-creator who has voted: show "change" hint on unselected
+                      if (!isCreator && hasVoted && !selected && !expired)
+                        Text(
+                          'Change',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color:
+                                HuddlColors.primary.withValues(alpha: 0.6),
+                          ),
+                        ),
                     ],
                   ),
                 ),
               );
             }),
             const SizedBox(height: 6),
-            // Footer
+
+            // ── Footer ─────────────────────────────────────────────────
             Row(
               children: [
                 if (isCreator)
@@ -1094,9 +1123,16 @@ class _PollSheetItem extends StatelessWidget {
                   )
                 else
                   Text(
-                    hasVoted ? 'Vote recorded' : 'Tap an option to vote',
+                    expired
+                        ? (hasVoted ? 'Your vote was recorded' : 'No vote cast')
+                        : (hasVoted
+                            ? 'Tap another option to change vote'
+                            : 'Tap an option to vote'),
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: context.hc.textTertiary),
+                        fontSize: 11,
+                        color: hasVoted && !expired
+                            ? HuddlColors.primary.withValues(alpha: 0.8)
+                            : context.hc.textTertiary),
                   ),
                 if (poll.data.expiresAt != null) ...[
                   const SizedBox(width: 10),
@@ -1192,7 +1228,7 @@ class PollDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Question header
+          // ── Question header ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -1264,13 +1300,15 @@ class PollDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.calendar_today_outlined,
                             size: 13,
-                            color: HuddlColors.primary.withValues(alpha: 0.7)),
+                            color:
+                                HuddlColors.primary.withValues(alpha: 0.7)),
                         const SizedBox(width: 4),
                         Text(
                           'Calendar poll',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: HuddlColors.primary.withValues(alpha: 0.7),
+                            color:
+                                HuddlColors.primary.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -1281,7 +1319,7 @@ class PollDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Options with voters (full detail — creator only)
+          // ── Options with full vote breakdown (creator only) ───────────
           ...List.generate(poll.data.options.length, (i) {
             final count = poll.votesFor(i);
             final pct = total > 0 ? (count / total * 100).round() : 0;
@@ -1381,7 +1419,7 @@ class PollDetailScreen extends StatelessWidget {
             );
           }),
 
-          // Delete button for creator (always shown in results screen)
+          // ── Delete button for creator ─────────────────────────────────
           if (poll.isCreatedByMe && onDeletePoll != null) ...[
             const SizedBox(height: 20),
             SizedBox(

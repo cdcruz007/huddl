@@ -107,16 +107,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   List<ActivePoll> get _pinnedPolls =>
       _polls.where((p) => p.isPinned && !p.isDeleted).toList();
 
-  /// Active polls that are visible in the message flow:
+  /// Active polls that are visible in the message flow (not pinned section):
   /// - Not deleted
-  /// - Not pinned (pinned ones go to the top section)
-  /// - Either the user hasn't voted yet, OR it's expired (expired polls
-  ///   remain visible so the creator can access them)
+  /// - Not pinned (pinned ones go to the top pinned section)
+  /// - visibleInFlow is true (creator always; non-creator: only before voting
+  ///   or if expired so creator can still access their poll)
   List<ActivePoll> get _flowPolls => _polls
       .where((p) =>
           !p.isDeleted &&
           !p.isPinned &&
-          (p.visibleInFlow || p.isExpired))
+          (p.visibleInFlow || (p.isExpired && p.isCreatedByMe)))
       .toList();
 
   /// Count of all non-deleted, non-expired polls (for badge)
