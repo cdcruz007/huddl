@@ -103,13 +103,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   // ── Poll state ──────────────────────────────────────────────────────
   final List<ActivePoll> _polls = [];
 
-  /// Returns only non-deleted pinned polls (shown at top of chat)
+  /// Polls pinned by their creator — always shown at the top of chat
   List<ActivePoll> get _pinnedPolls =>
       _polls.where((p) => p.isPinned && !p.isDeleted).toList();
 
-  /// Returns only non-deleted unpinned polls (shown in message flow)
-  List<ActivePoll> get _unpinnedPolls =>
-      _polls.where((p) => !p.isPinned && !p.isDeleted).toList();
+  /// Active polls that are visible in the message flow:
+  /// - Not deleted
+  /// - Not pinned (pinned ones go to the top section)
+  /// - Either the user hasn't voted yet, OR it's expired (expired polls
+  ///   remain visible so the creator can access them)
+  List<ActivePoll> get _flowPolls => _polls
+      .where((p) =>
+          !p.isDeleted &&
+          !p.isPinned &&
+          (p.visibleInFlow || p.isExpired))
+      .toList();
+
+  /// Count of all non-deleted, non-expired polls (for badge)
+  int get _activePollCount =>
+      _polls.where((p) => !p.isDeleted && !p.isExpired).length;
   final MediaAttachService _mediaService = MediaAttachService();
 
   /// Locally added image messages
@@ -2446,36 +2458,60 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       ),
           ),
 
-          // ── Pinned poll cards (always visible at top) ──────────────
+          // ── Pinned poll cards (always visible at top of chat) ──────
           if (_pinnedPolls.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: _pinnedPolls.map((poll) => PollCard(
                   poll: poll,
-                  onSelectOption: (i) => _votePoll(poll.id, i),
-                  onViewDetails: () => _viewPollDetails(poll),
-                  onTogglePin: () => _togglePollPin(poll.id),
-                  onDeletePoll: () => _deletePoll(poll.id),
-                  onSeeResults: () => _viewPollDetails(poll),
-                  onChangeVote: () => _scrollToPoll(poll),
+                  onSelectOption: poll.isExpired
+                      ? null
+                      : (i) => _votePoll(poll.id, i),
+                  onViewDetails: poll.isCreatedByMe
+                      ? () => _viewPollDetails(poll)
+                      : null,
+                  onTogglePin: poll.isCreatedByMe
+                      ? () => _togglePollPin(poll.id)
+                      : null,
+                  onDeletePoll: poll.isCreatedByMe
+                      ? () => _deletePoll(poll.id)
+                      : null,
+                  onSeeResults: poll.isCreatedByMe
+                      ? () => _viewPollDetails(poll)
+                      : null,
+                  onChangeVote: !poll.isCreatedByMe && poll.hasVoted
+                      ? () => _showActivePollsSheet()
+                      : null,
                 )).toList(),
               ),
             ),
 
-          // ── Unpinned poll cards (flow with messages) ────────────
-          if (_unpinnedPolls.isNotEmpty)
+          // ── Flow poll cards (unvoted or expired, not pinned) ─────
+          if (_flowPolls.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
-                children: _unpinnedPolls.map((poll) => PollCard(
+                children: _flowPolls.map((poll) => PollCard(
                   poll: poll,
-                  onSelectOption: (i) => _votePoll(poll.id, i),
-                  onViewDetails: () => _viewPollDetails(poll),
-                  onTogglePin: () => _togglePollPin(poll.id),
-                  onDeletePoll: () => _deletePoll(poll.id),
-                  onSeeResults: () => _viewPollDetails(poll),
-                  onChangeVote: () => _scrollToPoll(poll),
+                  onSelectOption: poll.isExpired
+                      ? null
+                      : (i) => _votePoll(poll.id, i),
+                  onViewDetails: poll.isCreatedByMe
+                      ? () => _viewPollDetails(poll)
+                      : null,
+                  onTogglePin: poll.isCreatedByMe
+                      ? () => _togglePollPin(poll.id)
+                      : null,
+                  onDeletePoll: poll.isCreatedByMe
+                      ? () => _deletePoll(poll.id)
+                      : null,
+                  onSeeResults: poll.isCreatedByMe
+                      ? () => _viewPollDetails(poll)
+                      : null,
+                  onChangeVote: !poll.isCreatedByMe && poll.hasVoted
+                      ? () => _showActivePollsSheet()
+                      : null,
                 )).toList(),
               ),
             ),
@@ -2588,6 +2624,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           elevation: 8,
           onSelected: (value) {
             switch (value) {
+              case 'active_polls':
+                _showActivePollsSheet();
+                break;
               case 'share':
                 _handleShareGroup();
                 break;
@@ -2622,6 +2661,74 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             }
           },
           itemBuilder: (context) => [
+            // Active Polls (always visible — badge shows count)
+            PopupMenuItem<String>(
+              value: 'active_polls',
+              child: Row(
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(Icons.poll_outlined,
+                          size: 20, color: HuddlColors.primary),
+                      if (_activePollCount > 0)
+                        Positioned(
+                          top: -5,
+                          right: -6,
+                          child: Container(
+                            width: 14,
+                            height: 14,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '$_activePollCount',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w700,
+                                  color: HuddlColors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Active Polls',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  if (_activePollCount > 0) ...[
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: HuddlColors.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$_activePollCount active',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Divider before other items
+            const PopupMenuDivider(),
             // Share group
             PopupMenuItem<String>(
               value: 'share',
@@ -2918,7 +3025,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         creatorName: userName,
         creatorId: 'current_user',
         createdAt: DateTime.now(),
-        isPinned: true, // pinned by default
+        isPinned: false, // not pinned by default; creator opts in via ⋮ menu
       ));
       // Add a system message about the poll
       _messages.add(ChatMessage(
@@ -2955,7 +3062,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final userName = _onboardingService.name ?? 'You';
 
       if (poll.data.allowMultiple) {
-        // Toggle vote
+        // Toggle vote for multi-choice polls
         if (poll.myVotes.contains(optionIndex)) {
           poll.myVotes.remove(optionIndex);
           poll.votes.removeWhere(
@@ -2970,7 +3077,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           ));
         }
       } else {
-        // Single vote — remove any previous
+        // Single-choice: swap selection (allow change of vote)
         poll.votes.removeWhere((v) => v.memberId == 'current_user');
         poll.myVotes.clear();
         poll.myVotes.add(optionIndex);
@@ -2981,11 +3088,43 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ));
       }
 
-      // Auto-unpin after voting
-      if (poll.myVotes.isNotEmpty) {
-        poll.isPinned = false;
-      }
+      // After recording a vote, if the user is NOT the creator and the poll
+      // is NOT pinned by the creator, auto-dismiss from the chat flow.
+      // The poll remains accessible via the Active Polls sheet.
+      // Creator-pinned polls stay visible even after voting.
     });
+
+    // If non-creator just voted and poll is not pinned → show a brief hint
+    final poll = _polls.firstWhere((p) => p.id == pollId);
+    if (!poll.isCreatedByMe && !poll.isPinned && poll.hasVoted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_outline,
+                  color: HuddlColors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Vote recorded. Access via ⋮ → Active Polls to change.',
+                  style: GoogleFonts.poppins(fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+          action: SnackBarAction(
+            label: 'View',
+            textColor: HuddlColors.white,
+            onPressed: _showActivePollsSheet,
+          ),
+        ),
+      );
+    }
   }
 
   void _togglePollPin(String pollId) {
@@ -3034,28 +3173,37 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  void _scrollToPoll(ActivePoll poll) {
-    // For "See Active Poll" — re-pin the poll so user can see and change vote
-    setState(() {
-      poll.isPinned = true;
-    });
-    // Scroll to top
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
+  /// Opens the Active Polls sheet — the hub for all polls in this group.
+  /// Non-creators can change their vote here; creators can see results.
+  void _showActivePollsSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ActivePollsSheet(
+        polls: _polls,
+        onVote: (pollId, optionIndex) {
+          _votePoll(pollId, optionIndex);
+        },
+        onViewDetails: (poll) => _viewPollDetails(poll),
+        onTogglePin: (pollId) {
+          setState(() => _togglePollPin(pollId));
+        },
+        onDeletePoll: (pollId) => _deletePoll(pollId),
+      ),
+    );
   }
 
   void _viewPollDetails(ActivePoll poll) {
+    // Only the creator can view full results
+    if (!poll.isCreatedByMe) return;
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => PollDetailScreen(
           poll: poll,
-          onDeletePoll: poll.isCreatedByMe ? () => _deletePoll(poll.id) : null,
+          onDeletePoll: () => _deletePoll(poll.id),
         ),
       ),
     );
