@@ -56,6 +56,8 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.postcode),
       body: SafeArea(
         child: Column(
           children: [
@@ -117,8 +119,6 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.postcode),
           ],
         ),
       ),

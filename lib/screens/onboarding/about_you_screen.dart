@@ -77,6 +77,8 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.aboutYou),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,8 +222,6 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.aboutYou),
           ],
         ),
       ),

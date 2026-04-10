@@ -124,6 +124,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.password),
       body: SafeArea(
         child: Column(
           children: [
@@ -290,8 +292,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.password),
           ],
         ),
       ),

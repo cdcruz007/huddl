@@ -278,6 +278,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.verification),
       body: SafeArea(
         child: Column(
           children: [
@@ -446,8 +448,6 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.verification),
           ],
         ),
       ),

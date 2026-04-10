@@ -171,6 +171,8 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.addPhoto),
       body: SafeArea(
         child: Column(
           children: [
@@ -341,8 +343,6 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                 ],
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.addPhoto),
           ],
         ),
       ),

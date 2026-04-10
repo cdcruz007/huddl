@@ -147,6 +147,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.phoneNumber),
       body: SafeArea(
         child: Column(
           children: [
@@ -323,8 +325,6 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.phoneNumber),
           ],
         ),
       ),

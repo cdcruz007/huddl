@@ -33,6 +33,8 @@ class _NameInputScreenState extends State<NameInputScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.name),
       body: SafeArea(
         child: Column(
           children: [
@@ -87,8 +89,6 @@ class _NameInputScreenState extends State<NameInputScreen> {
                 ),
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.name),
           ],
         ),
       ),

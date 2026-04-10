@@ -55,6 +55,8 @@ class _DueDateScreenState extends State<DueDateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.dueDate),
       body: SafeArea(
         child: Column(
           children: [
@@ -145,8 +147,6 @@ class _DueDateScreenState extends State<DueDateScreen> {
                 onTap: _continue,
               ),
             ),
-          
-            OnboardingProgressBar(step: OnboardingStep.dueDate),
           ],
         ),
       ),

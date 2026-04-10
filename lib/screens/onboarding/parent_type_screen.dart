@@ -34,6 +34,8 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: false,
+      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.parentType),
       body: SafeArea(
         child: Column(
           children: [
@@ -141,7 +143,6 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
               ),
             ),
           
-            OnboardingProgressBar(step: OnboardingStep.parentType),
           ],
         ),
       ),
