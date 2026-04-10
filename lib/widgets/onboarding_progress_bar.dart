@@ -4,38 +4,21 @@ import '../theme/huddl_colors.dart';
 // =============================================================================
 // ONBOARDING PROGRESS BAR
 //
-// Displays a slim animated progress bar at the bottom of every onboarding
-// screen so users can see exactly how far through the sign-up flow they are.
+// Placed in Scaffold.bottomNavigationBar on every onboarding screen so it is
+// always visible — keyboard-open or not.  Screens must also set:
 //
-// Usage — add to the *bottom* of any onboarding Scaffold body:
+//   resizeToAvoidBottomInset: false
 //
-//   Scaffold(
-//     body: SafeArea(
-//       child: Column(
-//         children: [
-//           ...
-//           const OnboardingProgressBar(step: OnboardingStep.name),
-//         ],
-//       ),
-//     ),
-//   )
-//
-// The SafeArea wrapping the Column means the bar sits just above the system
-// navigation strip.  It is intentionally placed inside SafeArea so that it
-// is always visible (not hidden behind gesture bars).
+// so the keyboard cannot compress the Scaffold body and hide the bar.
 // =============================================================================
 
 // ── Step definitions ──────────────────────────────────────────────────────────
 //
-// The flow has two branching sub-paths (due_date / child_info) that both
-// converge at postcode, so we normalise them to the same step index.
-//
-// Total visible steps: 11 (excluding the carousel / splash)
-//
+// Total visible steps: 11
 // 1  name_input
 // 2  parent_type
 // 3  stage_of_life
-// 4  due_date  |  child_info   (same position in the bar — branch A or B)
+// 4  due_date | child_info  (same visual slot — branch A or B)
 // 5  postcode
 // 6  phone_number
 // 7  password
@@ -45,24 +28,24 @@ import '../theme/huddl_colors.dart';
 // 11 about_you
 
 enum OnboardingStep {
-  name,          // step  1 / 11
-  parentType,    // step  2 / 11
-  stageOfLife,   // step  3 / 11
-  dueDate,       // step  4 / 11
-  childInfo,     // step  4 / 11  (same visual position as dueDate)
-  postcode,      // step  5 / 11
-  phoneNumber,   // step  6 / 11
-  password,      // step  7 / 11
-  verification,  // step  8 / 11
-  welcomeComplete, // step 9 / 11
-  addPhoto,      // step 10 / 11
-  aboutYou,      // step 11 / 11
+  name,            // step  1 / 11
+  parentType,      // step  2 / 11
+  stageOfLife,     // step  3 / 11
+  dueDate,         // step  4 / 11
+  childInfo,       // step  4 / 11  (same visual position as dueDate)
+  postcode,        // step  5 / 11
+  phoneNumber,     // step  6 / 11
+  password,        // step  7 / 11
+  verification,    // step  8 / 11
+  welcomeComplete, // step  9 / 11
+  addPhoto,        // step 10 / 11
+  aboutYou,        // step 11 / 11
 }
 
 extension OnboardingStepInfo on OnboardingStep {
   static const int _totalSteps = 11;
 
-  /// 1-based step number used for progress calculation.
+  /// 1-based step number.
   int get stepNumber {
     switch (this) {
       case OnboardingStep.name:             return 1;
@@ -83,7 +66,7 @@ extension OnboardingStepInfo on OnboardingStep {
   /// Progress fraction in [0.0, 1.0].
   double get progress => stepNumber / _totalSteps;
 
-  /// Human-readable label shown below the bar (e.g. "Step 3 of 11").
+  /// Label shown beside the bar.
   String get label => 'Step $stepNumber of $_totalSteps';
 }
 
@@ -92,7 +75,7 @@ extension OnboardingStepInfo on OnboardingStep {
 class OnboardingProgressBar extends StatelessWidget {
   final OnboardingStep step;
 
-  /// If false, the step counter text is hidden (bar only).
+  /// When false the "Step X of Y" text is hidden.
   final bool showLabel;
 
   const OnboardingProgressBar({
@@ -103,62 +86,92 @@ class OnboardingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = step.progress;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final trackColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
-        : HuddlColors.onboardingOrange.withValues(alpha: 0.15);
-    final fillColor = HuddlColors.onboardingOrange;
-    final labelColor = isDark
-        ? Colors.white.withValues(alpha: 0.55)
-        : HuddlColors.textSecondary;
 
-    return Padding(
-      // Horizontal breathing room; 4 px bottom gap so the bar isn't flush
-      // against the system navigation bar.
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Segmented dot row ────────────────────────────────────────
-          _SegmentedBar(
-            progress: progress,
-            totalSteps: OnboardingStepInfo._totalSteps,
-            completedSteps: step.stepNumber,
-            trackColor: trackColor,
-            fillColor: fillColor,
-          ),
-          if (showLabel) ...[
-            const SizedBox(height: 6),
-            Text(
-              step.label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: labelColor,
-                letterSpacing: 0.2,
+    // Colours — deliberately high-contrast so the bar is impossible to miss
+    final bg         = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final trackColor = isDark
+        ? Colors.white.withValues(alpha: 0.18)
+        : const Color(0xFFE8E8E8); // solid light grey — clearly visible
+    const fillColor  = HuddlColors.onboardingOrange;
+    final labelColor = isDark
+        ? Colors.white.withValues(alpha: 0.6)
+        : const Color(0xFF8E8E93);
+    final dividerColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : const Color(0xFFEEEEEE);
+
+    return Material(
+      color: bg,
+      elevation: 0,
+      child: SafeArea(
+        top: false, // only apply bottom safe-area inset
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Top divider ──────────────────────────────────────────
+            Container(height: 1, color: dividerColor),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 14),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ── Step label row ───────────────────────────────────
+                  if (showLabel)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        children: [
+                          Text(
+                            step.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: fillColor,
+                              letterSpacing: 0.1,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Percentage text
+                          Text(
+                            '${(step.progress * 100).round()}%',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: labelColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // ── Segmented pill bar ───────────────────────────────
+                  _SegmentedBar(
+                    totalSteps: OnboardingStepInfo._totalSteps,
+                    completedSteps: step.stepNumber,
+                    trackColor: trackColor,
+                    fillColor: fillColor,
+                  ),
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
 // ── Segmented bar ─────────────────────────────────────────────────────────────
-// Renders one pill per step. Completed steps fill with brand orange;
-// the current step is partially filled; future steps are the ghost track.
 
 class _SegmentedBar extends StatelessWidget {
-  final double progress;
   final int totalSteps;
   final int completedSteps; // 1-based current step
   final Color trackColor;
   final Color fillColor;
 
   const _SegmentedBar({
-    required this.progress,
     required this.totalSteps,
     required this.completedSteps,
     required this.trackColor,
@@ -168,7 +181,7 @@ class _SegmentedBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
-      const gap = 4.0;
+      const gap = 5.0;
       final segW = (constraints.maxWidth - gap * (totalSteps - 1)) / totalSteps;
 
       return Row(
@@ -193,6 +206,8 @@ class _SegmentedBar extends StatelessWidget {
   }
 }
 
+// ── Single segment ────────────────────────────────────────────────────────────
+
 class _Segment extends StatelessWidget {
   final double width;
   final bool isCompleted;
@@ -213,40 +228,33 @@ class _Segment extends StatelessWidget {
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(
         begin: 0,
-        end: isCompleted ? 1.0 : (isCurrent ? 0.55 : 0.0),
+        end: isCompleted ? 1.0 : (isCurrent ? 1.0 : 0.0),
       ),
-      duration: const Duration(milliseconds: 420),
+      duration: const Duration(milliseconds: 380),
       curve: Curves.easeOutCubic,
       builder: (_, value, __) {
         return SizedBox(
           width: width,
-          height: 5,
+          height: 8, // taller — clearly visible
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                // Track
+                // Track (empty segment)
                 Container(color: trackColor),
-                // Fill
-                FractionallySizedBox(
-                  widthFactor: value,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: fillColor,
-                      borderRadius: BorderRadius.circular(3),
-                      // Subtle glow on current segment
-                      boxShadow: isCurrent
-                          ? [
-                              BoxShadow(
-                                color: fillColor.withValues(alpha: 0.45),
-                                blurRadius: 4,
-                                offset: const Offset(0, 1),
-                              )
-                            ]
-                          : null,
+                // Fill (completed / current)
+                if (value > 0)
+                  FractionallySizedBox(
+                    widthFactor: value,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? fillColor
+                            : fillColor.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
