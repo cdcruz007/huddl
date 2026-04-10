@@ -721,10 +721,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       itemCount: 8,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
-                        final names = [
-                          'Emma', 'Sophie', 'Kate', 'Lucy',
-                          'James', 'Anna', 'Mia', 'You'
-                        ];
+                        // Only show 'You' in the member list if the user has joined
+                        final names = _isJoined
+                            ? ['Emma', 'Sophie', 'Kate', 'Lucy', 'James', 'Anna', 'Mia', 'You']
+                            : ['Emma', 'Sophie', 'Kate', 'Lucy', 'James', 'Anna', 'Mia', 'Beth'];
                         final colors = [
                           HuddlColors.primary,
                           HuddlColors.blue,
@@ -799,48 +799,50 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           if (_isJoined && savedCount > 0)
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // ── Polls section ───────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Container(
-              color: context.hc.surface,
-              child: ListTile(
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.poll_outlined,
-                      color: HuddlColors.primary, size: 22),
-                ),
-                title: Text(
-                  'Polls',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
-                ),
-                subtitle: Text(
-                  '2 active polls',
-                  style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
-                ),
-                trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
-                onTap: () {
-                  // Navigate to dedicated polls screen
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => GroupPollsScreen(
-                        groupId: widget.groupId,
-                        groupName: _editableName,
-                      ),
+          // ── Polls section — only visible to members ──────────────
+          if (_isJoined)
+            SliverToBoxAdapter(
+              child: Container(
+                color: context.hc.surface,
+                child: ListTile(
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                  );
-                },
+                    child: const Icon(Icons.poll_outlined,
+                        color: HuddlColors.primary, size: 22),
+                  ),
+                  title: Text(
+                    'Polls',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
+                  ),
+                  subtitle: Text(
+                    'View group polls',
+                    style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                  ),
+                  trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+                  onTap: () {
+                    // Navigate to dedicated polls screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => GroupPollsScreen(
+                          groupId: widget.groupId,
+                          groupName: _editableName,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
-          ),
 
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          if (_isJoined)
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // ── Action buttons ──────────────────────────────────────────
           SliverToBoxAdapter(
@@ -1031,22 +1033,24 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
             ),
             const SizedBox(height: 16),
-            // Info notice for public groups or non-admin private group members
-            if (_isPublicGroup)
+
+            // ── NON-MEMBER: only show Share + Join ───────────────────────
+            if (!_isJoined) ...[
+              // Info banner for non-members
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: context.hc.textTertiary.withValues(alpha: 0.08),
+                  color: HuddlColors.primary.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.lock_outline, size: 18, color: context.hc.textSecondary),
+                    Icon(Icons.info_outline, size: 18, color: HuddlColors.primary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'This is a public group. Group details cannot be changed by any member.',
+                        'Join this group to access member features.',
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: context.hc.textSecondary,
@@ -1057,77 +1061,131 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   ],
                 ),
               ),
-            if (!_isPublicGroup && !_isAdmin)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: context.hc.textTertiary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 18, color: context.hc.textSecondary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Only the group creator or admins can edit group details.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textSecondary,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            // Edit option -- private-group admin/creator only
-            if (_canEdit && _isJoined)
+              const SizedBox(height: 4),
               ListTile(
-                leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
-                title: Text('Edit group details',
+                leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
+                title: Text('Share group',
                     style: GoogleFonts.poppins(
                         fontSize: 15, fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(c);
-                  _toggleEditing();
+                  _shareGroup();
                 },
               ),
-            ListTile(
-              leading:
-                  Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
-              title: Text('Mute notifications',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(c);
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Notifications muted')),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
-              title: Text('Saved messages',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(c);
-                // Navigate to saved tab
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
-              title: Text('Share group',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15, fontWeight: FontWeight.w500)),
-              onTap: () {
-                Navigator.pop(c);
-                _shareGroup();
-              },
-            ),
-            if (_isJoined)
+              ListTile(
+                leading: Icon(Icons.group_add_outlined, color: HuddlColors.primary),
+                title: Text('Join group',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _joinGroup();
+                },
+              ),
+            ],
+
+            // ── MEMBER: show full member options ─────────────────────────
+            if (_isJoined) ...[
+              // Info notices for public / non-admin private group members
+              if (_isPublicGroup)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: context.hc.textTertiary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_outline, size: 18, color: context.hc.textSecondary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'This is a public group. Group details cannot be changed by any member.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: context.hc.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (!_isPublicGroup && !_isAdmin)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: context.hc.textTertiary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, size: 18, color: context.hc.textSecondary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Only the group creator or admins can edit group details.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: context.hc.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // Edit option — private-group admin/creator only
+              if (_canEdit)
+                ListTile(
+                  leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
+                  title: Text('Edit group details',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    _toggleEditing();
+                  },
+                ),
+              ListTile(
+                leading: Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
+                title: Text('Mute notifications',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Notifications muted')),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
+                title: Text('Saved messages',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  Navigator.pushNamed(ctx, '/saved_messages_for_group', arguments: {
+                    'groupId': widget.groupId,
+                    'groupName': _editableName,
+                  });
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
+                title: Text('Share group',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(c);
+                  _shareGroup();
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
                 title: Text('Leave group',
@@ -1140,20 +1198,22 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   _showLeaveGroupDialog();
                 },
               ),
-            // Delete group — only for private group admins/creator
-            if (widget.isPrivate && _isAdmin)
-              ListTile(
-                leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
-                title: Text('Delete group',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.error)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _confirmDeleteGroup(ctx);
-                },
-              ),
+              // Delete group — only for private group admins/creator
+              if (widget.isPrivate && _isAdmin)
+                ListTile(
+                  leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
+                  title: Text('Delete group',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.error)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    _confirmDeleteGroup(ctx);
+                  },
+                ),
+            ],
+
             const SizedBox(height: 8),
           ],
         ),
