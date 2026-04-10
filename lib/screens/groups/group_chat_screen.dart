@@ -36,6 +36,7 @@ class GroupChatScreen extends StatefulWidget {
   final bool isDefaultGroup;
   final bool isPrivate;
   final String? creatorId;
+  final String? creatorBorough;
   final List<String> targetAudience;
   final String groupCategory;
   /// When non-null, the chat screen will auto-open the thread panel for this
@@ -50,6 +51,7 @@ class GroupChatScreen extends StatefulWidget {
     this.isDefaultGroup = false,
     this.isPrivate = false,
     this.creatorId,
+    this.creatorBorough,
     this.targetAudience = const [],
     this.groupCategory = '',
     this.openThreadForMessageId,
@@ -2537,6 +2539,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             'groupName': widget.groupName,
             'groupImageUrl': widget.groupImageUrl,
             'isPrivate': widget.isPrivate,
+            'creatorId': widget.creatorId,
+            'creatorBorough': widget.creatorBorough,
           });
         },
         child: Row(
@@ -2594,6 +2598,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   'groupImageUrl': widget.groupImageUrl,
                   'isPrivate': widget.isPrivate,
                   'creatorId': widget.creatorId,
+                  'creatorBorough': widget.creatorBorough,
                 });
                 break;
               case 'saved':

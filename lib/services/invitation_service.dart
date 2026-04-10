@@ -308,13 +308,22 @@ class InvitationService extends ChangeNotifier {
     // Avoid duplicates
     if (_joinedGroups.any((g) => g.id == group.id)) return;
 
-    // Borough gate — block cross-borough group joins
-    if (!_guard.canInteract(
-      feature: HuddlFeature.groups,
-      targetBorough: group.creatorBorough,
-      targetName: group.name,
-    )) {
-      _log('BLOCKED: Cross-borough join attempt for "${group.name}"');
+    // Borough gate — block confirmed cross-borough group joins.
+    // IMPORTANT: If creatorBorough is null/empty (pre-borough data or groups
+    // opened via GroupDetailsScreen without the borough being passed through),
+    // we allow the join rather than silently blocking it. The guard's
+    // isSameBorough() already returns false for null, which would wrongly block
+    // valid same-borough joins when the field is simply missing.
+    if (group.creatorBorough != null &&
+        group.creatorBorough!.isNotEmpty &&
+        !_guard.canInteract(
+          feature: HuddlFeature.groups,
+          targetBorough: group.creatorBorough,
+          targetName: group.name,
+        )) {
+      _log('BLOCKED: Cross-borough join attempt for "${group.name}" '
+          '(group borough: ${group.creatorBorough}, '
+          'user borough: ${_guard.currentBorough})');
       return;
     }
 

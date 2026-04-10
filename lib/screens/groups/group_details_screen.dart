@@ -21,6 +21,9 @@ class GroupDetailsScreen extends StatefulWidget {
   final bool isPrivate;
   final String? creatorId;
   final bool isJoined;
+  // Borough of the group creator — required so the borough guard in
+  // joinPublicGroup() doesn't silently block the join when creatorBorough is null.
+  final String? creatorBorough;
 
   const GroupDetailsScreen({
     super.key,
@@ -32,6 +35,7 @@ class GroupDetailsScreen extends StatefulWidget {
     this.isPrivate = false,
     this.creatorId,
     this.isJoined = true,
+    this.creatorBorough,
   });
 
   @override
@@ -106,6 +110,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       category: '',
       isJoined: true,
       privacy: widget.isPrivate ? GroupPrivacy.private_ : GroupPrivacy.public,
+      // Pass creatorBorough so the borough guard in joinPublicGroup() doesn't
+      // silently block the join when targetBorough is null/empty.
+      creatorBorough: widget.creatorBorough,
+      creatorId: widget.creatorId,
     );
     await _invitationService.joinPublicGroup(group, userName);
 

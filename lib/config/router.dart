@@ -125,6 +125,7 @@ class AppRouter {
             isDefaultGroup: args['isDefaultGroup'] as bool? ?? false,
             isPrivate: args['isPrivate'] as bool? ?? false,
             creatorId: args['creatorId'] as String?,
+            creatorBorough: args['creatorBorough'] as String?,
             targetAudience: (args['targetAudience'] as List<dynamic>?)
                     ?.map((e) => e as String)
                     .toList() ??
@@ -146,6 +147,7 @@ class AppRouter {
             isPrivate: args['isPrivate'] as bool? ?? false,
             creatorId: args['creatorId'] as String?,
             isJoined: args['isJoined'] as bool? ?? true,
+            creatorBorough: args['creatorBorough'] as String?,
           ),
         );
 

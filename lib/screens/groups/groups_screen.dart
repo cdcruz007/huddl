@@ -849,6 +849,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         'isDefaultGroup': group.isDefault,
         'isPrivate': group.isPrivate,
         'creatorId': group.creatorId,
+        'creatorBorough': group.creatorBorough,
         'targetAudience': group.targetAudience,
         'groupCategory': group.category,
         'searchQuery': _searchQuery, // pass query so chat can highlight
@@ -1295,6 +1296,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'isDefaultGroup': item.groupItem!.isDefault,
                     'isPrivate': item.groupItem!.isPrivate,
                     'creatorId': item.groupItem!.creatorId,
+                    'creatorBorough': item.groupItem!.creatorBorough,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });
@@ -1487,6 +1489,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                     'isDefaultGroup': item.groupItem!.isDefault,
                     'isPrivate': item.groupItem!.isPrivate,
                     'creatorId': item.groupItem!.creatorId,
+                    'creatorBorough': item.groupItem!.creatorBorough,
                     'targetAudience': item.groupItem!.targetAudience,
                     'groupCategory': item.groupItem!.category,
                   });
@@ -3977,6 +3980,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               'memberCount': group.memberCount,
                               'isPrivate': group.isPrivate,
                               'creatorId': group.creatorId,
+                              'creatorBorough': group.creatorBorough,
                               'isJoined': isJoined,
                             });
                       },
