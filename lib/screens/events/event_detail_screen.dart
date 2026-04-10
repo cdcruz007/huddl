@@ -197,7 +197,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     tag: 'event_cover_${widget.event['id'] ?? ''}',
                     child: _buildEventDetailCover(
                       imageUrl: e['imageUrl'] as String? ?? '',
-                      fallbackIcon: e['icon'] as IconData,
+                      fallbackIcon: (e['icon'] is IconData ? e['icon'] as IconData : null) ?? Icons.event_outlined,
                       fallbackColor: color,
                     ),
                   ),
@@ -226,7 +226,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            isFree ? 'Free' : e['price'] as String,
+                            isFree ? 'Free' : (e['price'] as String? ?? ''),
                             style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -307,7 +307,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        e['title'] as String,
+                        e['title'] as String? ?? 'Event',
                         style: GoogleFonts.poppins(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -371,8 +371,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       _DetailRow(
                         icon: Icons.calendar_today_outlined,
                         iconColor: color,
-                        title: e['date'] as String,
-                        subtitle: e['time'] as String,
+                        title: e['date'] as String? ?? '',
+                        subtitle: e['time'] as String? ?? '',
                       ),
                       const Divider(height: 24),
                       _DetailRow(
@@ -380,7 +380,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             ? Icons.videocam_outlined
                             : Icons.location_on_outlined,
                         iconColor: color,
-                        title: e['location'] as String,
+                        title: e['location'] as String? ?? '',
                         subtitle: isOnline
                             ? 'Online event — link shared on registration'
                             : 'Tap for directions',
@@ -396,7 +396,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       _DetailRow(
                         icon: Icons.attach_money,
                         iconColor: isFree ? HuddlColors.blue : color,
-                        title: isFree ? 'Free' : e['price'] as String,
+                        title: isFree ? 'Free' : (e['price'] as String? ?? ''),
                         subtitle: isFree
                             ? 'No cost to attend'
                             : 'Per person — paid on registration',
@@ -406,7 +406,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         _DetailRow(
                           icon: Icons.map_outlined,
                           iconColor: HuddlColors.blue,
-                          title: e['borough'] as String,
+                          title: e['borough'] as String? ?? '',
                           subtitle: 'Borough',
                         ),
                       ],
