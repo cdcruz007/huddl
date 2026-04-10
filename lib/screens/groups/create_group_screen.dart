@@ -185,8 +185,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Future<void> _pickFrom(ImageSource source) async {
     try {
-      // Use new image editor with crop functionality (16:9 for group images)
-      final file = await ImageEditorWidget.pickGroupImage(context);
+      // Pass the already-chosen source so ImageEditorWidget skips its own
+      // "Select Image Source" sheet and avoids a double-prompt.
+      final file = await ImageEditorWidget.pickGroupImageWithSource(context, source);
       
       if (file != null && mounted) {
         final bytes = await file.readAsBytes();

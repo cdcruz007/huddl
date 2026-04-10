@@ -185,10 +185,46 @@ class ImageEditorWidget {
     return [_getAndroidAspectRatio(ratio)];
   }
 
+  /// Pick and crop with a *pre-selected* [source], skipping the internal
+  /// "Select Image Source" bottom sheet.  Use this when the caller has already
+  /// shown its own source-selection sheet so the user is not prompted twice.
+  static Future<File?> pickAndCropImageWithSource({
+    required BuildContext context,
+    required ImageSource source,
+    ImageAspectRatio aspectRatio = ImageAspectRatio.square,
+    String title = 'Edit Image',
+  }) async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      imageQuality: 90,
+    );
+    if (pickedFile == null) return null;
+
+    return _cropImage(
+      context: context,
+      imagePath: pickedFile.path,
+      aspectRatio: aspectRatio,
+      title: title,
+    );
+  }
+
   /// Quick helper for profile pictures (always square)
   static Future<File?> pickProfilePicture(BuildContext context) {
     return pickAndCropImage(
       context: context,
+      aspectRatio: ImageAspectRatio.square,
+      title: 'Edit Profile Picture',
+    );
+  }
+
+  /// Quick helper for profile pictures with a *pre-selected* source (no double prompt).
+  static Future<File?> pickProfilePictureWithSource(
+      BuildContext context, ImageSource source) {
+    return pickAndCropImageWithSource(
+      context: context,
+      source: source,
       aspectRatio: ImageAspectRatio.square,
       title: 'Edit Profile Picture',
     );
@@ -203,6 +239,17 @@ class ImageEditorWidget {
     );
   }
 
+  /// Quick helper for group images with a *pre-selected* source (no double prompt).
+  static Future<File?> pickGroupImageWithSource(
+      BuildContext context, ImageSource source) {
+    return pickAndCropImageWithSource(
+      context: context,
+      source: source,
+      aspectRatio: ImageAspectRatio.wide,
+      title: 'Edit Group Image',
+    );
+  }
+
   /// Quick helper for meetup images (16:9 recommended)
   static Future<File?> pickMeetupImage(BuildContext context) {
     return pickAndCropImage(
@@ -212,10 +259,32 @@ class ImageEditorWidget {
     );
   }
 
+  /// Quick helper for meetup images with a *pre-selected* source (no double prompt).
+  static Future<File?> pickMeetupImageWithSource(
+      BuildContext context, ImageSource source) {
+    return pickAndCropImageWithSource(
+      context: context,
+      source: source,
+      aspectRatio: ImageAspectRatio.wide,
+      title: 'Edit Meetup Image',
+    );
+  }
+
   /// Quick helper for marketplace item images (free aspect ratio for flexibility)
   static Future<File?> pickMarketplaceImage(BuildContext context) {
     return pickAndCropImage(
       context: context,
+      aspectRatio: ImageAspectRatio.free,
+      title: 'Edit Item Photo',
+    );
+  }
+
+  /// Quick helper for marketplace images with a *pre-selected* source (no double prompt).
+  static Future<File?> pickMarketplaceImageWithSource(
+      BuildContext context, ImageSource source) {
+    return pickAndCropImageWithSource(
+      context: context,
+      source: source,
       aspectRatio: ImageAspectRatio.free,
       title: 'Edit Item Photo',
     );

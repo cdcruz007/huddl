@@ -1,10 +1,9 @@
 
-import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import '../config/gemini_config.dart';
 import '../config/vertex_ai_config.dart';
+import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
@@ -229,17 +228,38 @@ class AiCopilotService with BoroughAiContext {
     });
 
     try {
-      // ── Primary: Vertex AI fine-tuned model ──────────────────────────
-      CopilotMessage response;
-      try {
-        response = await _callVertexAiApi(userText);
-        if (kDebugMode) debugPrint('AiCopilot: responded via Vertex AI fine-tuned model ✅');
-      } catch (vertexErr) {
-        if (kDebugMode) debugPrint('AiCopilot: Vertex AI failed ($vertexErr), trying Gemini fallback');
-        // ── Fallback: Gemini AI Studio ────────────────────────────────
-        response = await _callGeminiApi(userText);
-        if (kDebugMode) debugPrint('AiCopilot: responded via Gemini fallback ✅');
-      }
+      // ── Route through shared AiApiHelper (Vertex AI → Gemini fallback) ──
+      final systemPrompt = _promptBuilder.buildCopilotPrompt();
+      final requestBody = {
+        'system_instruction': {
+          'parts': [{'text': systemPrompt}]
+        },
+        'contents': <Map<String, dynamic>>[..._conversationHistory],
+        'generationConfig': {
+          'temperature': 0.75,
+          'topP': 0.95,
+          'topK': 40,
+          'maxOutputTokens': 1024,
+        },
+        'safetySettings': [
+          {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',  'threshold': 'BLOCK_ONLY_HIGH'},
+          {'category': 'HARM_CATEGORY_HARASSMENT',         'threshold': 'BLOCK_ONLY_HIGH'},
+          {'category': 'HARM_CATEGORY_HATE_SPEECH',        'threshold': 'BLOCK_ONLY_HIGH'},
+          {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  'threshold': 'BLOCK_ONLY_HIGH'},
+        ],
+      };
+
+      final text = await AiApiHelper.generateText(requestBody) ?? '';
+      final category = _detectCategory(userText);
+      final actions  = _suggestActions(userText, category);
+      final response = CopilotMessage(
+        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+        text: text.trim(),
+        isUser: false,
+        category: category,
+        actions: actions,
+        sourceNote: 'Powered by huddl AI',
+      );
 
       _messages.add(response);
       _isApiOnline = true;
@@ -247,9 +267,7 @@ class AiCopilotService with BoroughAiContext {
       // Add AI response to conversation history
       _conversationHistory.add({
         'role': 'model',
-        'parts': [
-          {'text': response.text}
-        ],
+        'parts': [{'text': response.text}],
       });
 
       return response;
@@ -268,184 +286,6 @@ class AiCopilotService with BoroughAiContext {
         ],
       });
       return fallback;
-    }
-  }
-
-  /// Call the Vertex AI fine-tuned model (huddl-uk-parenting-assistant)
-  /// Uses OAuth 2.0 Bearer token auth — same request shape as Gemini API.
-  Future<CopilotMessage> _callVertexAiApi(String query) async {
-    final systemPrompt = _promptBuilder.buildCopilotPrompt();
-    final contents = <Map<String, dynamic>>[...  _conversationHistory];
-
-    final requestBody = {
-      'system_instruction': {
-        'parts': [{'text': systemPrompt}]
-      },
-      'contents': contents,
-      'generationConfig': {
-        'temperature': 0.75,
-        'topP': 0.95,
-        'topK': 40,
-        'maxOutputTokens': 1024,
-      },
-      'safetySettings': [
-        {'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',  'threshold': 'BLOCK_ONLY_HIGH'},
-        {'category': 'HARM_CATEGORY_HARASSMENT',         'threshold': 'BLOCK_ONLY_HIGH'},
-        {'category': 'HARM_CATEGORY_HATE_SPEECH',        'threshold': 'BLOCK_ONLY_HIGH'},
-        {'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',  'threshold': 'BLOCK_ONLY_HIGH'},
-      ],
-    };
-
-    final token = await VertexAiConfig.getBearerToken();
-    final url   = Uri.parse(VertexAiConfig.generateContentUrl);
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode(requestBody),
-    ).timeout(const Duration(seconds: 25));
-
-    if (response.statusCode == 401) {
-      // Token may have expired mid-session — invalidate and let caller retry
-      VertexAiConfig.invalidateToken();
-      throw Exception('Vertex AI: 401 Unauthorized — token refreshed, retry');
-    }
-
-    if (response.statusCode == 200) {
-      final data       = jsonDecode(response.body);
-      final candidates = data['candidates'] as List?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final parts = candidates[0]['content']?['parts'] as List?;
-        if (parts != null && parts.isNotEmpty) {
-          final text     = parts[0]['text'] as String? ?? '';
-          final category = _detectCategory(query);
-          final actions  = _suggestActions(query, category);
-          return CopilotMessage(
-            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-            text: text.trim(),
-            isUser: false,
-            category: category,
-            actions: actions,
-            sourceNote: 'Powered by huddl AI',
-          );
-        }
-      }
-      throw Exception('Vertex AI: no content in response');
-    } else {
-      throw Exception('Vertex AI error: ${response.statusCode} - ${response.body}');
-    }
-  }
-
-  /// Call Gemini AI Studio API (fallback when Vertex AI is unavailable)
-  Future<CopilotMessage> _callGeminiApi(String query) async {
-    // ── System prompt from centralised builder (hyperlocal-aware) ─────
-    final systemPrompt = _promptBuilder.buildCopilotPrompt();
-
-    // Build contents with system instruction + conversation history
-    final contents = <Map<String, dynamic>>[];
-
-    // Add conversation history (Gemini uses alternating user/model roles)
-    for (final msg in _conversationHistory) {
-      contents.add(msg);
-    }
-
-    final requestBody = {
-      'system_instruction': {
-        'parts': [
-          {'text': systemPrompt}
-        ]
-      },
-      'contents': contents,
-      'generationConfig': {
-        'temperature': 0.8,
-        'topP': 0.95,
-        'topK': 40,
-        'maxOutputTokens': 1024,
-      },
-      'safetySettings': [
-        {
-          'category': 'HARM_CATEGORY_DANGEROUS_CONTENT',
-          'threshold': 'BLOCK_ONLY_HIGH'
-        },
-        {
-          'category': 'HARM_CATEGORY_HARASSMENT',
-          'threshold': 'BLOCK_ONLY_HIGH'
-        },
-        {
-          'category': 'HARM_CATEGORY_HATE_SPEECH',
-          'threshold': 'BLOCK_ONLY_HIGH'
-        },
-        {
-          'category': 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-          'threshold': 'BLOCK_ONLY_HIGH'
-        },
-      ],
-    };
-
-    final url = Uri.parse(GeminiConfig.generateContentUrl);
-
-    final response = await http
-        .post(
-          url,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(requestBody),
-        )
-        .timeout(const Duration(seconds: 20));
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final candidates = data['candidates'] as List?;
-      if (candidates != null && candidates.isNotEmpty) {
-        final content = candidates[0]['content'];
-        final parts = content['parts'] as List?;
-        if (parts != null && parts.isNotEmpty) {
-          final text = parts[0]['text'] as String? ?? '';
-          final category = _detectCategory(query);
-          final actions = _suggestActions(query, category);
-
-          return CopilotMessage(
-            id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-            text: text.trim(),
-            isUser: false,
-            category: category,
-            actions: actions,
-            sourceNote: 'Powered by huddl AI',
-          );
-        }
-      }
-      // If no valid content, throw to trigger fallback
-      throw Exception('No content in Gemini response');
-    } else if (response.statusCode == 429) {
-      // Quota exceeded — key is valid but rate-limited
-      _isApiOnline = false;
-      final userName = _onboarding.name ?? 'there';
-      return CopilotMessage(
-        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-        text:
-            'I\'m taking a short breather, $userName! Our AI quota has been '
-            'reached for the moment.\n\n'
-            'This usually resets within **a few minutes**. In the meantime '
-            'I can still help with the topics below, or try again shortly!',
-        isUser: false,
-        category: CopilotCategory.general,
-        actions: const [
-          CopilotAction(
-              label: 'Browse Meetups',
-              route: '/meetups',
-              icon: 'groups'),
-          CopilotAction(
-              label: 'Market',
-              route: '/marketplace',
-              icon: 'storefront'),
-        ],
-        sourceNote: 'Quota limit reached \u00B7 Resets shortly',
-      );
-    } else {
-      throw Exception(
-          'Gemini API error: ${response.statusCode} - ${response.body}');
     }
   }
 

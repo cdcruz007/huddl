@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/rehome_service.dart';
@@ -160,9 +161,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Future<void> _pickMultipleFromGallery() async {
     try {
-      // Pick and crop images one at a time for better control
-      // User can call this multiple times to add more images
-      final file = await ImageEditorWidget.pickMarketplaceImage(context);
+      // Pass ImageSource.gallery directly — the caller already showed the
+      // source-selection sheet, so we skip ImageEditorWidget's own sheet.
+      final file = await ImageEditorWidget.pickMarketplaceImageWithSource(
+          context, ImageSource.gallery);
       if (file != null && mounted) {
         final bytes = await file.readAsBytes();
         final b64 = base64Encode(bytes);
@@ -185,8 +187,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Future<void> _pickFromCamera() async {
     try {
-      // Use image editor which includes source selection
-      final file = await ImageEditorWidget.pickMarketplaceImage(context);
+      // Pass ImageSource.camera directly — skips ImageEditorWidget's own sheet.
+      final file = await ImageEditorWidget.pickMarketplaceImageWithSource(
+          context, ImageSource.camera);
       if (file == null) return;
       final bytes = await file.readAsBytes();
       final b64 = base64Encode(bytes);

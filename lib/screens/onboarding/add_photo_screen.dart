@@ -28,10 +28,25 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
   // ── Photo picker ─────────────────────────────────────────────────────────
 
-  /// Shows bottom sheet with "Choose from photos" / "Take a photo" options.
-  /// On web, camera is not available so only the photo library option is shown.
+  /// Entry point when user taps the avatar circle or "Add photo" button.
+  ///
+  /// • Web: goes straight to the gallery picker — no intermediate sheet needed
+  ///   because (a) camera is unavailable on web and (b) showing a sheet with
+  ///   only one option then triggering the browser's own file chooser creates
+  ///   a confusing double-prompt for the user.
+  ///
+  /// • Mobile: shows a bottom sheet offering both Gallery and Camera options,
+  ///   then calls _pickFrom() with the chosen source.
   Future<void> _showPickerOptions() async {
     if (!mounted) return;
+
+    // ── Web: skip the sheet, open the file picker directly ──────────────────
+    if (kIsWeb) {
+      await _pickFrom(ImageSource.gallery);
+      return;
+    }
+
+    // ── Mobile: show gallery / camera choice sheet ───────────────────────────
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -80,25 +95,23 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                   _pickFrom(ImageSource.gallery);
                 },
               ),
-              // Camera option — only available on mobile devices
-              if (!kIsWeb)
-                ListTile(
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
+              ListTile(
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-                  title: const Text('Take a photo',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
-                  onTap: () {
-                    Navigator.pop(ctx);
-                    _pickFrom(ImageSource.camera);
-                  },
+                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.onboardingOrange),
                 ),
+                title: const Text('Take a photo',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickFrom(ImageSource.camera);
+                },
+              ),
               const SizedBox(height: 8),
             ],
           ),

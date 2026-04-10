@@ -3749,8 +3749,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickProfilePhoto(ImageSource source) async {
     try {
-      // Use new image editor with crop functionality
-      final file = await ImageEditorWidget.pickProfilePicture(context);
+      // Use new image editor with crop functionality.
+      // Pass the *already-chosen* source so the ImageEditorWidget does NOT show
+      // its own "Select Image Source" sheet — preventing a double-prompt.
+      final file = await ImageEditorWidget.pickProfilePictureWithSource(context, source);
       
       if (file != null && mounted) {
         _onboarding.setProfilePhotoPath(file.path);
