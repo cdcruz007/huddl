@@ -11,21 +11,29 @@ import 'package:http/http.dart' as http;
 /// build time via --dart-define. For local development, pass:
 ///   flutter run --dart-define=GEMINI_API_KEY=your_key_here
 /// For CI/CD, set the env var in your build pipeline.
+///
+/// SETUP REQUIRED: The Generative Language API must be enabled in the
+/// huddl-connect Google Cloud project for the embedded key to work:
+///   https://console.developers.google.com/apis/api/generativelanguage.googleapis.com/overview?project=879152141283
 class GeminiConfig {
   GeminiConfig._();
 
   // ── API credentials ────────────────────────────────────────────────────
   // Key is embedded directly so the Gemini fallback always works without
   // requiring --dart-define=GEMINI_API_KEY at build time.
-  // The key is for the huddl-connect Google Cloud project (same project as
-  // the Vertex AI fine-tuned model) and is restricted to the Generative
-  // Language API only.
-  static const String _embeddedKey = 'AIzaSyBPWoXNhqNY-HZLG8cBmE8voZ75TRKBTOw';
+  //
+  // This is the huddl-connect Firebase web API key (project 879152141283).
+  // For this to work, the Generative Language API must be enabled at:
+  //   https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect
+  //
+  // Alternatively, create a dedicated Gemini AI Studio key at:
+  //   https://aistudio.google.com/app/apikey
+  // and pass it via --dart-define=GEMINI_API_KEY=AIza... at build time.
+  static const String _embeddedKey = 'AIzaSyBk2hsDAYRFj1eLM8XZD5aQndLJBiXTZp4';
 
   static const String apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    // Fall back to embedded key so the app works out-of-the-box without
-    // needing a build-time --dart-define.
+    // Fall back to embedded key so the app works out-of-the-box.
     defaultValue: _embeddedKey,
   );
 
@@ -96,6 +104,12 @@ class GeminiConfig {
         debugPrint(
             'GeminiConfig: API key validation failed (${response.statusCode}): '
             '${response.body}');
+        if (response.statusCode == 403) {
+          debugPrint(
+              'GeminiConfig: 403 usually means the Generative Language API '
+              'is not enabled for this project. Enable it at: '
+              'https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com?project=huddl-connect');
+        }
       }
     } catch (e) {
       _validated = true;

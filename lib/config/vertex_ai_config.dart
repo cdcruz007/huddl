@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 // =============================================================================
 // VERTEX AI CONFIG — huddl-uk-parenting-assistant (Gemini 2.5 fine-tuned)
 //
-// Project:   huddl-connect  (334510232366)
+// Project:   huddl-connect  (879152141283)
 // Region:    europe-west4 (Netherlands)
 // Model ID:  627673804901974016  (version @1)
 // Auth:      Service account OAuth 2.0  (huddl-vertex-ai@huddl-connect.iam.gserviceaccount.com)
@@ -20,7 +20,7 @@ class VertexAiConfig {
 
   // ── Project & model identifiers ───────────────────────────────────────
   static const String projectId     = 'huddl-connect';
-  static const String projectNumber = '334510232366';
+  static const String projectNumber = '879152141283';
   static const String location      = 'europe-west4';
   static const String modelId       = '627673804901974016';
   static const String modelVersion  = '1';
