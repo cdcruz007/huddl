@@ -7,6 +7,7 @@ import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
+import '../../services/invitation_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import 'create_meetup_screen.dart';
@@ -1356,24 +1357,57 @@ class ImGoingTab extends StatefulWidget {
 class _ImGoingTabWrapperState extends State<ImGoingTab> {
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
+  final InvitationService _invitationService = InvitationService();
+  final DefaultGroupService _defaultGroupService = DefaultGroupService();
   // Rebuild key — incremented on every cancel to force list rebuild
   int _rebuildKey = 0;
+  List<Group> _myGroups = [];
 
   @override
   void initState() {
     super.initState();
     _meetupService.addListener(_refresh);
     _eventService.addListener(_refresh);
+    _invitationService.addListener(_refresh);
+    _loadMyGroups();
   }
 
   @override
   void dispose() {
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
+    _invitationService.removeListener(_refresh);
     super.dispose();
   }
 
+  Future<void> _loadMyGroups() async {
+    await _invitationService.initialize();
+    await _defaultGroupService.initialize();
+    _rebuildGroupList();
+  }
+
+  void _rebuildGroupList() {
+    // Collect all groups the user is a member of:
+    // 1. Default borough groups auto-joined at onboarding (isJoined == true)
+    final defaultJoined = _defaultGroupService.getAllDefaultGroups()
+        .where((g) => g.isJoined)
+        .toList();
+    // 2. Groups explicitly joined from Discover or via invitation accept
+    final explicitJoined = _invitationService.joinedGroups;
+    // Merge, de-duplicate by id
+    final seen = <String>{};
+    final merged = <Group>[];
+    for (final g in [...explicitJoined, ...defaultJoined]) {
+      if (seen.add(g.id)) merged.add(g);
+    }
+    merged.sort((a, b) => a.name.compareTo(b.name));
+    if (mounted) {
+      setState(() => _myGroups = merged);
+    }
+  }
+
   void _refresh() {
+    _rebuildGroupList();
     if (mounted) setState(() => _rebuildKey++);
   }
 
@@ -1405,19 +1439,19 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
 
     final upcoming = allGoing.where((i) => i.dateTime.isAfter(now)).toList();
     final past = allGoing.where((i) => !i.dateTime.isAfter(now)).toList();
+    final hasGroups = _myGroups.isNotEmpty;
 
-    if (allGoing.isEmpty) {
+    if (allGoing.isEmpty && !hasGroups) {
       return _EmptyState(
         icon: Icons.event_available_outlined,
         title: "You're not going to anything yet",
-        subtitle:
-            "Tap 'Count Me In' on a meetup or event to add it here!",
+        subtitle: "Join a group or tap 'Count Me In' on a meetup or event!",
       );
     }
 
     return RefreshIndicator(
       onRefresh: () async {
-        await Future.delayed(const Duration(milliseconds: 500));
+        await _loadMyGroups();
         if (mounted) setState(() => _rebuildKey++);
       },
       color: HuddlColors.primary,
@@ -1425,6 +1459,20 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
         key: ValueKey('im_going_list_$_rebuildKey'),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         children: [
+          // ── My Groups section ──────────────────────────────────────
+          if (hasGroups) ...[
+            _SectionLabel(
+              icon: Icons.group_outlined,
+              label: 'My Groups',
+              color: HuddlColors.primary,
+            ),
+            const SizedBox(height: 8),
+            ..._myGroups.map((group) => _GroupGoingCard(
+                  key: ValueKey('group_card_${group.id}_$_rebuildKey'),
+                  group: group,
+                )),
+            const SizedBox(height: 16),
+          ],
           if (upcoming.isNotEmpty) ...[
             _SectionLabel(
               icon: Icons.upcoming_outlined,
@@ -1454,6 +1502,162 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
                 )),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GROUP CARD for "I'm Going" tab — tapping navigates to the group chat
+// ═══════════════════════════════════════════════════════════════════════════════
+class _GroupGoingCard extends StatelessWidget {
+  final Group group;
+  const _GroupGoingCard({super.key, required this.group});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: Material(
+        color: HuddlColors.white,
+        borderRadius: BorderRadius.circular(16),
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.pushNamed(context, '/group_chat', arguments: {
+              'groupId': group.id,
+              'groupName': group.name,
+              'groupImageUrl': group.imageUrl,
+              'isDefaultGroup': false,
+              'isPrivate': group.isPrivate,
+              'creatorId': group.creatorId,
+              'creatorBorough': group.creatorBorough,
+              'targetAudience': group.targetAudience,
+              'groupCategory': group.category,
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                // ── Group avatar ─────────────────────────────────────
+                Container(
+                  width: 54,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: HuddlColors.peachLight,
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: _buildGroupImage(),
+                ),
+                const SizedBox(width: 12),
+                // ── Name + meta ──────────────────────────────────────
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              group.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: context.hc.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Joined',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          Icon(
+                            group.isPrivate
+                                ? Icons.lock_outline
+                                : Icons.public,
+                            size: 12,
+                            color: context.hc.textTertiary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              '${group.memberCount} members  \u00b7  ${group.category}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: context.hc.textTertiary,
+                                fontWeight: FontWeight.w400,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_right, color: context.hc.textTertiary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGroupImage() {
+    final url = group.imageUrl;
+    if (url.startsWith('data:')) {
+      try {
+        final bytes = Uri.parse(url).data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(bytes, fit: BoxFit.cover, width: 54, height: 54,
+              errorBuilder: (_, __, ___) => _fallbackIcon());
+        }
+      } catch (_) {}
+      return _fallbackIcon();
+    }
+    if (url.startsWith('http')) {
+      return Image.network(url, fit: BoxFit.cover, width: 54, height: 54,
+          errorBuilder: (_, __, ___) => _fallbackIcon());
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(url, fit: BoxFit.cover, width: 54, height: 54,
+          errorBuilder: (_, __, ___) => _fallbackIcon());
+    }
+    return _fallbackIcon();
+  }
+
+  Widget _fallbackIcon() {
+    return Container(
+      color: HuddlColors.peachLight,
+      child: Center(
+        child: Icon(Icons.group, size: 54 * 0.45, color: HuddlColors.primary),
       ),
     );
   }
