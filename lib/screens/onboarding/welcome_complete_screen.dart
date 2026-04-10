@@ -15,8 +15,6 @@ class WelcomeCompleteScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: HuddlColors.white,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: const OnboardingProgressBar(step: OnboardingStep.welcomeComplete),
       body: SafeArea(
         child: Column(
           children: [
@@ -26,6 +24,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
               child: _HuddlLogo(),
             ),
 
+            OnboardingProgressBar(step: OnboardingStep.welcomeComplete),
             const SizedBox(height: 24),
 
             // -- Title --

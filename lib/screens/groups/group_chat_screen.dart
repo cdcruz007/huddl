@@ -25,6 +25,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../widgets/meetup_invite_card.dart';
 import '../../widgets/group_invite_card.dart';
 import '../../widgets/item_invite_card.dart';
+import '../../widgets/event_invite_card.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -263,6 +264,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         final rawMeetupData = safeMap(m['meetupData']);
         final rawGroupData  = safeMap(m['groupData']);
         final rawItemData   = safeMap(m['itemData']);
+        final rawEventData  = safeMap(m['eventData']);
         _messages.add(ChatMessage(
           id: id,
           senderId: m['senderId'] as String? ?? 'current_user',
@@ -277,6 +279,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           groupData: rawGroupData,
           isItemCard: (m['isItemCard'] as bool? ?? false) || rawItemData != null,
           itemData: rawItemData,
+          isEventCard: (m['isEventCard'] as bool? ?? false) || rawEventData != null,
+          eventData: rawEventData,
         ));
         added = true;
       }
@@ -2346,6 +2350,25 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             );
                           }
 
+                          // Render event card
+                          if (msg.isEventCard && msg.eventData != null) {
+                            final showTimestampCard = msgIdx == 0 ||
+                                msg.timestamp
+                                        .difference(_messages[msgIdx - 1].timestamp)
+                                        .inMinutes >
+                                    5;
+                            return Column(
+                              children: [
+                                if (showTimestampCard)
+                                  _TimestampDivider(timestamp: msg.timestamp),
+                                EventInviteCard(
+                                  eventData: msg.eventData!,
+                                  isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
                           final showAvatar = msgIdx == 0 ||
                               _messages[msgIdx - 1].senderId != msg.senderId ||
                               _messages[msgIdx - 1].isSystem;
@@ -3572,6 +3595,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               final rawMeetupData = safeMap(m['meetupData']);
               final rawGroupData  = safeMap(m['groupData']);
               final rawItemData   = safeMap(m['itemData']);
+              final rawEventData  = safeMap(m['eventData']);
               _messages.add(ChatMessage(
                 id: id,
                 senderId: m['senderId'] as String? ?? 'current_user',
@@ -3586,6 +3610,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 groupData: rawGroupData,
                 isItemCard: (m['isItemCard'] as bool? ?? false) || rawItemData != null,
                 itemData: rawItemData,
+                isEventCard: (m['isEventCard'] as bool? ?? false) || rawEventData != null,
+                eventData: rawEventData,
               ));
             }
           }

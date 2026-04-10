@@ -34,12 +34,11 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.parentType),
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+            OnboardingProgressBar(step: OnboardingStep.parentType),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

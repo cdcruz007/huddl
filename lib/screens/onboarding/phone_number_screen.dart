@@ -147,12 +147,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.phoneNumber),
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+            OnboardingProgressBar(step: OnboardingStep.phoneNumber),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -18,6 +18,7 @@ import '../../widgets/emoji_reaction_picker.dart';
 import '../../widgets/meetup_invite_card.dart';
 import '../../widgets/group_invite_card.dart';
 import '../../widgets/item_invite_card.dart';
+import '../../widgets/event_invite_card.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -575,6 +576,19 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                 if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
                                 ItemInviteCard(
                                   itemData: msg.itemData!,
+                                  isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Event invite card
+                          if (msg.eventData != null) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                EventInviteCard(
+                                  eventData: msg.eventData!,
                                   isMe: msg.isMe,
                                 ),
                               ],

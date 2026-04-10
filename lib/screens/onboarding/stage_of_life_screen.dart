@@ -68,12 +68,11 @@ class _StageOfLifeScreenState extends State<StageOfLifeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.stageOfLife),
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+            OnboardingProgressBar(step: OnboardingStep.stageOfLife),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

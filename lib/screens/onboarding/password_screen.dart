@@ -124,12 +124,11 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.password),
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+            OnboardingProgressBar(step: OnboardingStep.password),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

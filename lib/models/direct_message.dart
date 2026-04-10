@@ -60,6 +60,7 @@ class DirectMessage {
   final Map<String, dynamic>? meetupData; // for meetup invite cards
   final Map<String, dynamic>? groupData;  // for group invite cards
   final Map<String, dynamic>? itemData;   // for item invite cards
+  final Map<String, dynamic>? eventData;  // for event invite cards
 
   DirectMessage({
     required this.id,
@@ -84,6 +85,7 @@ class DirectMessage {
     this.meetupData,
     this.groupData,
     this.itemData,
+    this.eventData,
   });
 
   Map<String, dynamic> toJson() => {
@@ -109,6 +111,7 @@ class DirectMessage {
         'meetupData': meetupData,
         'groupData': groupData,
         'itemData': itemData,
+        'eventData': eventData,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -152,6 +155,7 @@ class DirectMessage {
       meetupData: _safeMap(json['meetupData']),
       groupData:  _safeMap(json['groupData']),
       itemData:   _safeMap(json['itemData']),
+      eventData:  _safeMap(json['eventData']),
     );
   }
 
@@ -181,8 +185,9 @@ class DirectMessage {
       contactPhone: contactPhone,
       reactions: reactions ?? this.reactions,
       meetupData: meetupData,
-      groupData: groupData,   // ← was missing — caused groupData loss on status update
-      itemData: itemData,     // ← was missing — caused itemData loss on status update
+      groupData: groupData,
+      itemData: itemData,
+      eventData: eventData,
     );
   }
 }

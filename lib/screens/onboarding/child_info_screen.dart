@@ -47,12 +47,11 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.childInfo),
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
+            OnboardingProgressBar(step: OnboardingStep.childInfo),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),

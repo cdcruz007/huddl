@@ -7,6 +7,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/invisible_ai_service.dart';
+import '../groups/forward_message_sheet.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -90,24 +91,38 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final e = widget.event;
     final title = e['title'] as String? ?? 'Event';
     final date = e['date'] as String? ?? '';
+    final time = e['time'] as String? ?? '';
     final location = e['location'] as String? ?? '';
     final organiser = e['organiser'] as String? ?? '';
-    final shareText = '$title\n📅 $date\n📍 $location\nOrganised by $organiser\n\nShared via Huddl Connect';
-    Clipboard.setData(ClipboardData(text: shareText));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 18),
-            SizedBox(width: 8),
-            Text('Event link copied to clipboard'),
-          ],
-        ),
-        backgroundColor: HuddlColors.teal,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
+    final shareText = title.isNotEmpty
+        ? '$title\n📅 $date${time.isNotEmpty ? ' · $time' : ''}\n📍 $location${organiser.isNotEmpty ? '\nBy $organiser' : ''}'
+        : 'Check out this event on Huddl Connect!';
+
+    // Build a serialisable eventData map for the rich card
+    // Note: Color and IconData cannot be serialised, so we use
+    // the category string to reconstruct styling in EventInviteCard.
+    final eventData = <String, dynamic>{
+      'id': e['id'] ?? '',
+      'title': title,
+      'date': date,
+      'time': time,
+      'location': location,
+      'organiser': organiser,
+      'category': e['category'] ?? 'community',
+      'isFree': e['isFree'] ?? true,
+      'price': e['price'] ?? '',
+      'attendees': e['attendees'] ?? 0,
+      'imageUrl': e['imageUrl'] ?? '',
+      'isOnline': e['isOnline'] ?? false,
+      'description': e['description'] ?? '',
+      'borough': e['borough'] ?? '',
+    };
+
+    showForwardSheet(
+      context: context,
+      messageText: shareText,
+      eventData: eventData,
+      isEventCard: true,
     );
   }
 

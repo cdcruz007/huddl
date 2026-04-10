@@ -203,6 +203,7 @@ class DMService {
     Map<String, dynamic>? meetupData,
     Map<String, dynamic>? groupData,
     Map<String, dynamic>? itemData,
+    Map<String, dynamic>? eventData,
   }) async {
     await initialize();
 
@@ -238,6 +239,7 @@ class DMService {
       meetupData: meetupData,
       groupData: groupData,
       itemData: itemData,
+      eventData: eventData,
     );
 
     // Save message
@@ -263,6 +265,8 @@ class DMService {
       displayText = '\u{1F4E6} Item: ${itemData['title'] ?? 'Item'}';
     } else if (meetupData != null) {
       displayText = '\u{1F4C5} Meetup: ${meetupData['title'] ?? 'Meetup'}';
+    } else if (eventData != null) {
+      displayText = '\u{1F4C5} Event: ${eventData['title'] ?? 'Event'}';
     } else {
       // Fallback to message type
       switch (type) {

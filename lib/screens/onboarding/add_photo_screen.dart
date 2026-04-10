@@ -171,11 +171,10 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.addPhoto),
       body: SafeArea(
         child: Column(
           children: [
+            OnboardingProgressBar(step: OnboardingStep.addPhoto),
             // ── App bar row ──────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),

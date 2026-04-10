@@ -197,6 +197,8 @@ class ChatMessage {
   final Map<String, dynamic>? groupData; // full group data for card rendering
   final bool isItemCard; // item for sale card message
   final Map<String, dynamic>? itemData; // full item data for card rendering
+  final bool isEventCard; // event invite card message
+  final Map<String, dynamic>? eventData; // full event data for card rendering
 
   ChatMessage({
     required this.id,
@@ -215,5 +217,7 @@ class ChatMessage {
     this.groupData,
     this.isItemCard = false,
     this.itemData,
+    this.isEventCard = false,
+    this.eventData,
   });
 }

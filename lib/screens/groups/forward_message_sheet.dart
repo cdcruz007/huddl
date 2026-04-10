@@ -55,6 +55,8 @@ Future<void> showForwardSheet({
   bool isGroupCard = false,
   Map<String, dynamic>? itemData,
   bool isItemCard = false,
+  Map<String, dynamic>? eventData,
+  bool isEventCard = false,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -75,6 +77,8 @@ Future<void> showForwardSheet({
       isGroupCard: isGroupCard,
       itemData: itemData,
       isItemCard: isItemCard,
+      eventData: eventData,
+      isEventCard: isEventCard,
     ),
   );
 }
@@ -94,6 +98,8 @@ class _ForwardSheet extends StatefulWidget {
   final bool isGroupCard;
   final Map<String, dynamic>? itemData;
   final bool isItemCard;
+  final Map<String, dynamic>? eventData;
+  final bool isEventCard;
 
   const _ForwardSheet({
     required this.messageText,
@@ -110,6 +116,8 @@ class _ForwardSheet extends StatefulWidget {
     this.isGroupCard = false,
     this.itemData,
     this.isItemCard = false,
+    this.eventData,
+    this.isEventCard = false,
   });
 
   @override
@@ -366,6 +374,13 @@ class _ForwardSheetState extends State<_ForwardSheet>
             debugPrint('✅ Saving item card to group ${target.id}');
           }
         }
+        if (widget.isEventCard && widget.eventData != null) {
+          msgData['isEventCard'] = true;
+          msgData['eventData'] = widget.eventData;
+          if (kDebugMode) {
+            debugPrint('✅ Saving event card to group ${target.id}');
+          }
+        }
         
         msgs.add(msgData);
         await BrowserStorage.setString(key, json.encode(msgs));
@@ -452,6 +467,14 @@ class _ForwardSheetState extends State<_ForwardSheet>
         senderName: userName,
         itemData: widget.itemData,
       );
+    } else if (widget.isEventCard && widget.eventData != null) {
+      // Event card message
+      await _dmService.sendMessage(
+        conversationId: conv.id,
+        message: 'Shared an event',
+        senderName: userName,
+        eventData: widget.eventData,
+      );
     } else {
       // Regular text message
       await _dmService.sendMessage(
@@ -465,6 +488,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
     if (!target.isGroup && context.mounted) {
       final cardType = widget.isGroupCard && widget.groupData != null ? 'GROUP CARD' :
                       widget.isItemCard && widget.itemData != null ? 'ITEM CARD' :
+                      widget.isEventCard && widget.eventData != null ? 'EVENT CARD' :
                       widget.isMeetupCard && widget.meetupData != null ? 'MEETUP CARD' : 'TEXT';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -724,6 +748,11 @@ class _ForwardSheetState extends State<_ForwardSheet>
         child: const Center(child: Icon(Icons.people, size: 24, color: HuddlColors.primary)),
       );
 
+  Widget _eventPlaceholder() => Container(
+        color: HuddlColors.blue.withValues(alpha: 0.12),
+        child: const Center(child: Icon(Icons.event_outlined, size: 24, color: HuddlColors.blue)),
+      );
+
   /// Builds the preview section — image thumbnail + caption, or text preview.
   Widget _buildPreview() {
     // ── Meetup card preview ───────────────────────────────────────────────
@@ -886,6 +915,113 @@ class _ForwardSheetState extends State<_ForwardSheet>
                         style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Event card preview ────────────────────────────────────────────────
+    if (widget.isEventCard && widget.eventData != null) {
+      final data = widget.eventData!;
+      final title = data['title'] as String? ?? 'Event';
+      final date = data['date'] as String? ?? '';
+      final time = data['time'] as String? ?? '';
+      final location = data['location'] as String? ?? '';
+      final imageUrl = data['imageUrl'] as String? ?? '';
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: context.hc.scaffold,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Event thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                width: 56,
+                height: 56,
+                child: imageUrl.startsWith('http')
+                    ? Image.network(imageUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _eventPlaceholder())
+                    : imageUrl.startsWith('assets/')
+                        ? Image.asset(imageUrl, fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => _eventPlaceholder())
+                        : _eventPlaceholder(),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.event_outlined, size: 11, color: HuddlColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Event',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (date.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              '$date${time.isNotEmpty ? '  \u23f0 $time' : ''}',
+                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (location.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 11, color: HuddlColors.primary),
+                          const SizedBox(width: 4),
+                          Flexible(
+                            child: Text(
+                              location,
+                              style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                 ],

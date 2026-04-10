@@ -77,12 +77,11 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      resizeToAvoidBottomInset: false,
-      bottomNavigationBar: OnboardingProgressBar(step: OnboardingStep.aboutYou),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            OnboardingProgressBar(step: OnboardingStep.aboutYou),
             // ── Back arrow only (no logo on this screen per design) ────
             Padding(
               padding: const EdgeInsets.fromLTRB(4, 8, 8, 0),
