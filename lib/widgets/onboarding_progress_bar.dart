@@ -4,36 +4,32 @@ import '../theme/huddl_colors.dart';
 // =============================================================================
 // ONBOARDING PROGRESS BAR
 //
-// Rendered inline — placed directly in the Column, right below the app bar.
-// No Material/SafeArea wrappers so it always renders at its natural height.
+// Rendered inline — placed in the Column right below the app bar.
+// Uses a peach-tinted background so it is always visible against
+// the white scaffold background.
 //
 // Steps:
-//  1  name_input
-//  2  parent_type
-//  3  stage_of_life
-//  4  due_date | child_info  (same visual slot)
-//  5  postcode
-//  6  phone_number
-//  7  password
-//  8  verification
-//  9  welcome_complete
-// 10  add_photo
-// 11  about_you
+//  1  name_input        6  phone_number
+//  2  parent_type       7  password
+//  3  stage_of_life     8  verification
+//  4  due_date |        9  welcome_complete
+//     child_info       10  add_photo
+//  5  postcode         11  about_you
 // =============================================================================
 
 enum OnboardingStep {
-  name,            // step  1 / 11
-  parentType,      // step  2 / 11
-  stageOfLife,     // step  3 / 11
-  dueDate,         // step  4 / 11
-  childInfo,       // step  4 / 11  (same visual position as dueDate)
-  postcode,        // step  5 / 11
-  phoneNumber,     // step  6 / 11
-  password,        // step  7 / 11
-  verification,    // step  8 / 11
-  welcomeComplete, // step  9 / 11
-  addPhoto,        // step 10 / 11
-  aboutYou,        // step 11 / 11
+  name,
+  parentType,
+  stageOfLife,
+  dueDate,
+  childInfo,
+  postcode,
+  phoneNumber,
+  password,
+  verification,
+  welcomeComplete,
+  addPhoto,
+  aboutYou,
 }
 
 extension OnboardingStepInfo on OnboardingStep {
@@ -60,7 +56,7 @@ extension OnboardingStepInfo on OnboardingStep {
   String get label    => 'Step $stepNumber of $_totalSteps';
 }
 
-// ── Widget ────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class OnboardingProgressBar extends StatelessWidget {
   final OnboardingStep step;
@@ -74,18 +70,22 @@ class OnboardingProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark      = Theme.of(context).brightness == Brightness.dark;
-    final bg          = isDark ? const Color(0xFF1C1C1E) : Colors.white;
-    final trackColor  = isDark
-        ? Colors.white.withValues(alpha: 0.15)
-        : const Color(0xFFE0E0E0);
-    const fillColor   = HuddlColors.onboardingOrange;
-    final labelColor  = isDark
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // ── Colours ───────────────────────────────────────────────────────
+    // Light mode: peach background so the bar stands out against the
+    // white scaffold; dark mode: dark card surface.
+    final bg         = isDark ? const Color(0xFF2C2C2E) : HuddlColors.peachLight;
+    final trackColor = isDark
+        ? Colors.white.withValues(alpha: 0.12)
+        : HuddlColors.onboardingOrange.withValues(alpha: 0.18);
+    const fillColor  = HuddlColors.onboardingOrange;
+    final labelColor = isDark
         ? Colors.white.withValues(alpha: 0.55)
-        : const Color(0xFF8E8E93);
-    final divider     = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : const Color(0xFFEEEEEE);
+        : HuddlColors.onboardingOrange.withValues(alpha: 0.7);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : HuddlColors.onboardingOrange.withValues(alpha: 0.15);
 
     return Container(
       width: double.infinity,
@@ -94,43 +94,43 @@ class OnboardingProgressBar extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── thin top divider ──────────────────────────────────────────
-          Container(height: 1, color: divider),
+          // top border line
+          Container(height: 1, color: borderColor),
 
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 12),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── label row ────────────────────────────────────────────
+                // ── label row ─────────────────────────────────────────
                 if (showLabel) ...[
                   Row(
                     children: [
                       Text(
                         step.label,
-                        style: const TextStyle(
-                          fontSize: 12,
+                        style: TextStyle(
+                          fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: fillColor,
-                          letterSpacing: 0.1,
+                          letterSpacing: 0.2,
                         ),
                       ),
                       const Spacer(),
                       Text(
                         '${(step.progress * 100).round()}%',
                         style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                           color: labelColor,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 7),
                 ],
 
-                // ── segmented pill bar ────────────────────────────────────
+                // ── pill segments ──────────────────────────────────────
                 _SegmentedBar(
                   totalSteps:     OnboardingStepInfo._totalSteps,
                   completedSteps: step.stepNumber,
@@ -141,15 +141,15 @@ class OnboardingProgressBar extends StatelessWidget {
             ),
           ),
 
-          // ── thin bottom divider ───────────────────────────────────────
-          Container(height: 1, color: divider),
+          // bottom border line
+          Container(height: 1, color: borderColor),
         ],
       ),
     );
   }
 }
 
-// ── Segmented bar ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _SegmentedBar extends StatelessWidget {
   final int   totalSteps;
@@ -192,7 +192,7 @@ class _SegmentedBar extends StatelessWidget {
   }
 }
 
-// ── Single segment ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _Segment extends StatelessWidget {
   final double width;
@@ -213,26 +213,16 @@ class _Segment extends StatelessWidget {
   Widget build(BuildContext context) {
     final filled = isCompleted || isCurrent;
 
-    return SizedBox(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
       width:  width,
-      height: 8,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Stack(
-          children: [
-            // ── empty track ──────────────────────────────────────────────
-            Container(color: trackColor),
-            // ── filled portion ───────────────────────────────────────────
-            if (filled)
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeOutCubic,
-                color: isCompleted
-                    ? fillColor.withValues(alpha: 0.8)
-                    : fillColor,
-              ),
-          ],
-        ),
+      height: 9,
+      decoration: BoxDecoration(
+        color: filled
+            ? (isCurrent ? fillColor : fillColor.withValues(alpha: 0.75))
+            : trackColor,
+        borderRadius: BorderRadius.circular(5),
       ),
     );
   }
