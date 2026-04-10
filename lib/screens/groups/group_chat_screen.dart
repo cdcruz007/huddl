@@ -2548,6 +2548,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           hintText: 'Search messages...',
           hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
         onChanged: _performGroupSearch,
       ),

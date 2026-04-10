@@ -855,6 +855,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
           hintStyle:
               GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
         onChanged: _performSearch,
       ),
@@ -1128,6 +1130,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       hintStyle: GoogleFonts.poppins(
                           fontSize: 14, color: context.hc.textTertiary),
                       border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                     ),
                     onSubmitted: (_) => _sendMessage(),
