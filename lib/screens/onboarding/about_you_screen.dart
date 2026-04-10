@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 // large textarea filling most of screen, orange "Continue" button at bottom.
 
@@ -219,6 +220,8 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.aboutYou),
           ],
         ),
       ),

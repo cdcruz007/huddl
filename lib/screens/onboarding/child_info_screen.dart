@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class ChildInfoScreen extends StatefulWidget {
@@ -153,6 +154,8 @@ class _ChildInfoScreenState extends State<ChildInfoScreen> {
                   enabled: _canContinue,
                   onTap: _continue),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.childInfo),
           ],
         ),
       ),

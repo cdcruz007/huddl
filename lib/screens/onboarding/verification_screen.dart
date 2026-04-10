@@ -7,6 +7,7 @@ import '../../widgets/common/huddl_header_logo.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class VerificationScreen extends StatefulWidget {
@@ -445,6 +446,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.verification),
           ],
         ),
       ),

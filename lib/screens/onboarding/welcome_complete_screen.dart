@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -276,6 +277,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const OnboardingProgressBar(step: OnboardingStep.welcomeComplete),
           ],
         ),
       ),

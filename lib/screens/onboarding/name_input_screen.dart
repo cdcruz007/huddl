@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class NameInputScreen extends StatefulWidget {
@@ -86,6 +87,8 @@ class _NameInputScreenState extends State<NameInputScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.name),
           ],
         ),
       ),

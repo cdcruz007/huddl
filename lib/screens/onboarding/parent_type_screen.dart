@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class ParentTypeScreen extends StatefulWidget {
@@ -139,6 +140,8 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                 color: _selected == 'provider' ? HuddlColors.lightBlue : HuddlColors.onboardingOrange,
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.parentType),
           ],
         ),
       ),

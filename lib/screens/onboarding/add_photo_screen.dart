@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────────
 
@@ -340,6 +341,8 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
                 ],
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.addPhoto),
           ],
         ),
       ),

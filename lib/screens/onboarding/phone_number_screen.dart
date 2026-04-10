@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class PhoneNumberScreen extends StatefulWidget {
@@ -322,6 +323,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.phoneNumber),
           ],
         ),
       ),

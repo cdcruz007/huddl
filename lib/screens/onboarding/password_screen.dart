@@ -5,6 +5,7 @@ import '../../services/onboarding_data_service.dart';
 import '../legal/terms_of_service_screen.dart';
 import '../legal/privacy_policy_detail_screen.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 // ── Password strength helpers ─────────────────────────────────────────────────
@@ -289,6 +290,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.password),
           ],
         ),
       ),

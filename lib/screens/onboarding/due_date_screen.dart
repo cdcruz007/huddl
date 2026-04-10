@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class DueDateScreen extends StatefulWidget {
@@ -144,6 +145,8 @@ class _DueDateScreenState extends State<DueDateScreen> {
                 onTap: _continue,
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.dueDate),
           ],
         ),
       ),

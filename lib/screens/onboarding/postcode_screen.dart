@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/onboarding_progress_bar.dart';
 
 
 class PostcodeScreen extends StatefulWidget {
@@ -116,6 +117,8 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                 ),
               ),
             ),
+          
+            OnboardingProgressBar(step: OnboardingStep.postcode),
           ],
         ),
       ),
