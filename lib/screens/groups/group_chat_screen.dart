@@ -557,7 +557,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Saved threads for this group ───────────────────────────────────
   void _showSavedThreadsForGroup() {
-    final threads = _savedMessageService.getSavedThreadsForGroup(widget.groupId);
     showModalBottomSheet(
       context: context,
       backgroundColor: context.hc.surface,
@@ -565,7 +564,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (c) => SafeArea(
+      builder: (c) {
+        // Read threads inside builder so the list is always current
+        final threads = _savedMessageService.getSavedThreadsForGroup(widget.groupId);
+        return SafeArea(
         child: Container(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.75,
@@ -715,9 +717,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             // Delete
                             IconButton(
                               icon: Icon(Icons.delete_outline, size: 18, color: context.hc.textTertiary),
-                              onPressed: () {
-                                _savedMessageService.unsaveThread(thread.id);
-                                Navigator.pop(c);
+                              onPressed: () async {
+                                await _savedMessageService.unsaveThread(thread.id);
+                                if (c.mounted) Navigator.pop(c);
                                 _showSavedThreadsForGroup();
                               },
                             ),
@@ -735,7 +737,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ],
           ),
         ),
-      ),
+        );
+      },
     );
   }
 
@@ -913,7 +916,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   // ── Save message ──────────────────────────────────────────────────────
-  void _saveMessage(ChatMessage msg) {
+  Future<void> _saveMessage(ChatMessage msg) async {
     if (_savedMessageService.isMessageSaved(msg.id)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -927,7 +930,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       return;
     }
 
-    _savedMessageService.saveGroupMessage(
+    await _savedMessageService.saveGroupMessage(
       messageId: msg.id,
       message: msg.message,
       senderName: msg.senderName,
@@ -1226,7 +1229,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         final topic = topicController.text.trim();
                         if (topic.isEmpty) return;
                         Navigator.pop(c);
-                        _saveThread(rootMsg, threadReplies, topic);
+                        unawaited(_saveThread(rootMsg, threadReplies, topic));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HuddlColors.blue,
@@ -1248,8 +1251,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  void _saveThread(ChatMessage rootMsg, List<ThreadReply> replies, String topicName) {
-    _savedMessageService.saveThread(
+  Future<void> _saveThread(ChatMessage rootMsg, List<ThreadReply> replies, String topicName) async {
+    await _savedMessageService.saveThread(
       topicName: topicName,
       rootMessageId: rootMsg.id,
       rootMessageText: rootMsg.message,
