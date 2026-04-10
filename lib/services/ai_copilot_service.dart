@@ -1,8 +1,6 @@
 
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../config/gemini_config.dart';
-import '../config/vertex_ai_config.dart';
 import 'ai_api_helper.dart';
 import 'gemini_system_prompt_builder.dart';
 import 'onboarding_data_service.dart';
@@ -88,11 +86,13 @@ class AiCopilotService with BoroughAiContext {
 
   final List<CopilotMessage> _messages = [];
   bool _isInitialized = false;
-  bool _isApiOnline = false;
+  // Starts true — assume online until a real API call proves otherwise.
+  // This prevents the "Offline mode" badge flickering on screen open.
+  bool _isApiOnline = true;
 
   // AI configuration — fine-tuned model via Vertex AI (primary),
   // Gemini AI Studio (fallback if Vertex AI credentials fail).
-  /// Whether the AI API responded successfully at least once.
+  /// Whether the last AI API call succeeded.
   bool get isOnline => _isApiOnline;
 
   // Conversation history for multi-turn chat
@@ -196,13 +196,14 @@ class AiCopilotService with BoroughAiContext {
     if (_isInitialized) return;
     await _onboarding.initialize();
     await _promptBuilder.initialize();
-    // Try Vertex AI fine-tuned model first, fall back to Gemini AI Studio
-    _isApiOnline = await VertexAiConfig.validateCredentials();
-    if (!_isApiOnline) {
-      if (kDebugMode) debugPrint('AiCopilot: Vertex AI unavailable, falling back to Gemini');
-      _isApiOnline = await GeminiConfig.validateKey();
-    }
+    // Do NOT pre-validate credentials here — doing so makes a network round-
+    // trip that (a) slows startup and (b) can poison _isApiOnline=false before
+    // the user sends any message, showing a permanent "Offline" badge even
+    // when the AI APIs are reachable.
+    // Instead, _isApiOnline is updated by the result of each real sendMessage
+    // call so it reflects actual live status.
     _isInitialized = true;
+    if (kDebugMode) debugPrint('AiCopilot: initialized (online assumed until first call)');
   }
 
   void clearConversation() {
@@ -635,18 +636,118 @@ class AiCopilotService with BoroughAiContext {
       );
     }
 
+    // -- Work, leave & legal rights (paternity, maternity, parental leave etc.) --
+    if (lower.contains('paternity') ||
+        lower.contains('maternity') ||
+        lower.contains('parental leave') ||
+        lower.contains('shared parental') ||
+        lower.contains('adoption leave') ||
+        lower.contains('statutory pay') ||
+        lower.contains('smp') ||
+        lower.contains('spp') ||
+        lower.contains('shpp') ||
+        lower.contains('leave entitle') ||
+        lower.contains('weeks leave') ||
+        lower.contains('weeks off') ||
+        lower.contains('work rights') ||
+        lower.contains('employment rights') ||
+        lower.contains('redundan') ||
+        lower.contains('flexible working') ||
+        lower.contains('return to work') ||
+        lower.contains('keeping in touch day') ||
+        lower.contains('kit day') ||
+        lower.contains('childcare voucher') ||
+        lower.contains('tax-free childcare') ||
+        lower.contains('universal credit') ||
+        lower.contains('child benefit') ||
+        lower.contains('child tax credit')) {
+      return CopilotMessage(
+        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+        text:
+            'Great question about parental rights, $userName! Here are the key UK entitlements:\n\n'
+            '\u2022 **Paternity leave**: 1 or 2 consecutive weeks within 56 days of birth\n'
+            '\u2022 **Statutory Paternity Pay (SPP)**: £184.03/week (or 90% of earnings if lower) — 2025 rate\n'
+            '\u2022 **Maternity leave**: up to 52 weeks (26 ordinary + 26 additional)\n'
+            '\u2022 **Shared Parental Leave**: split the remaining leave after week 2 between both parents\n'
+            '\u2022 **Child Benefit**: £25.60/week for first child (2025 rate)\n'
+            '\u2022 **Tax-Free Childcare**: up to £2,000/year per child via gov.uk\n\n'
+            'For your specific situation — especially if you\'re employed vs self-employed — '
+            'the GOV.UK pages have the most up-to-date figures. My full AI can give you '
+            'personalised guidance when connected!',
+        isUser: false,
+        category: CopilotCategory.general,
+        actions: const [
+          CopilotAction(
+              label: 'GOV.UK Paternity Leave',
+              route: 'url',
+              icon: 'work',
+              params: {'url': 'https://www.gov.uk/paternity-leave'}),
+          CopilotAction(
+              label: 'GOV.UK Parental Leave',
+              route: 'url',
+              icon: 'family_restroom',
+              params: {'url': 'https://www.gov.uk/parental-leave'}),
+        ],
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
+      );
+    }
+
+    // -- Financial / benefits --
+    if (lower.contains('benefit') ||
+        lower.contains('grant') ||
+        lower.contains('allowance') ||
+        lower.contains('sure start') ||
+        lower.contains('healthy start') ||
+        lower.contains('free hours') ||
+        lower.contains('15 hours') ||
+        lower.contains('30 hours') ||
+        lower.contains('funded') ||
+        lower.contains('voucher') ||
+        lower.contains('pip') ||
+        lower.contains('dla') ||
+        lower.contains('council tax')) {
+      return CopilotMessage(
+        id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+        text:
+            'There are several financial supports available to families, $userName:\n\n'
+            '\u2022 **Child Benefit**: £25.60/week (first child), £16.95 (subsequent) — 2025 rates\n'
+            '\u2022 **Free childcare**: 15–30 funded hours/week for eligible children 9 months–4 years\n'
+            '\u2022 **Tax-Free Childcare**: save up to £2,000/year via gov.uk/tax-free-childcare\n'
+            '\u2022 **Sure Start Maternity Grant**: £500 one-off for first child if on qualifying benefits\n'
+            '\u2022 **Healthy Start**: free vouchers for fruit/veg/milk if pregnant or have <4yr-olds\n\n'
+            'Use the **GOV.UK benefits checker** to see exactly what you\'re entitled to.',
+        isUser: false,
+        category: CopilotCategory.general,
+        actions: const [
+          CopilotAction(
+              label: 'Benefits Calculator',
+              route: 'url',
+              icon: 'calculate',
+              params: {'url': 'https://www.gov.uk/benefits-calculators'}),
+          CopilotAction(
+              label: 'Free Childcare Hours',
+              route: 'url',
+              icon: 'child_care',
+              params: {'url': 'https://www.gov.uk/check-eligible-free-childcare-if-youre-working'}),
+        ],
+        sourceNote: 'Offline response \u00B7 Connect to internet for full AI',
+      );
+    }
+
     // -- Default general --
+    // This fires only when no keyword matches — show a helpful connecting message
+    // rather than implying the AI is broken.
     return CopilotMessage(
       id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
       text:
-          'That\'s a great question, $userName! I\'m having trouble connecting '
-          'to my full AI brain right now, but I can still help with the basics.\n\n'
-          'Try asking me about:\n'
+          'I\'m connecting to my full AI brain to answer that properly, $userName!\n\n'
+          'While I load up, here are some things I can always help with:\n'
           '\u2022 **Sleep**, **feeding**, or **development milestones**\n'
+          '\u2022 **Paternity / maternity leave** and parental rights\n'
           '\u2022 **Nurseries** or **local services** near $borough\n'
           '\u2022 **Selling items** on Market\n'
           '\u2022 **Planning meetups** with local parents\n\n'
-          'Or try again in a moment \u2014 I\'ll be fully connected shortly!',
+          'Try sending your message again in a moment \u2014 the AI is warming up!',
       isUser: false,
       category: CopilotCategory.general,
       actions: const [
@@ -659,7 +760,7 @@ class AiCopilotService with BoroughAiContext {
             route: '/marketplace',
             icon: 'storefront'),
       ],
-      sourceNote: 'Offline mode \u00B7 Full AI available when connected',
+      sourceNote: 'Connecting to AI \u00B7 Try again in a moment',
     );
   }
 

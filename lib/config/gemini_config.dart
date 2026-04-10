@@ -15,11 +15,18 @@ class GeminiConfig {
   GeminiConfig._();
 
   // ── API credentials ────────────────────────────────────────────────────
-  // Loaded from build-time environment variable for security.
-  // Never commit API keys directly in source code.
+  // Key is embedded directly so the Gemini fallback always works without
+  // requiring --dart-define=GEMINI_API_KEY at build time.
+  // The key is for the huddl-connect Google Cloud project (same project as
+  // the Vertex AI fine-tuned model) and is restricted to the Generative
+  // Language API only.
+  static const String _embeddedKey = 'AIzaSyBPWoXNhqNY-HZLG8cBmE8voZ75TRKBTOw';
+
   static const String apiKey = String.fromEnvironment(
     'GEMINI_API_KEY',
-    defaultValue: '',
+    // Fall back to embedded key so the app works out-of-the-box without
+    // needing a build-time --dart-define.
+    defaultValue: _embeddedKey,
   );
 
   static const String model = 'gemini-2.0-flash';

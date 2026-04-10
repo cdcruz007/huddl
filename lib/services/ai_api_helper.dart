@@ -63,10 +63,14 @@ class AiApiHelper {
     }
 
     // ── Fallback: Gemini AI Studio ────────────────────────────────────────
-    final url = Uri.parse(GeminiConfig.generateContentUrl);
+    if (!GeminiConfig.hasKey) {
+      throw Exception('AiApiHelper: Gemini API key is empty — add GEMINI_API_KEY via --dart-define');
+    }
+
+    final geminiUrl = Uri.parse(GeminiConfig.generateContentUrl);
 
     final response = await http.post(
-      url,
+      geminiUrl,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(requestBody),
     ).timeout(timeout);
@@ -75,6 +79,11 @@ class AiApiHelper {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       if (kDebugMode) debugPrint('AiApiHelper: responded via Gemini fallback ✅');
       return data;
+    }
+
+    if (kDebugMode) {
+      debugPrint('AiApiHelper: Gemini fallback failed (${response.statusCode}): '
+          '${response.body.substring(0, response.body.length.clamp(0, 300))}');
     }
 
     throw Exception(
