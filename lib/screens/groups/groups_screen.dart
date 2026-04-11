@@ -3008,7 +3008,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   String _searchQuery = '';
   String _selectedSort = 'Recommended';
   final TextEditingController _searchController = TextEditingController();
-  bool _showSearchField = false;
+
 
   // ── Filter states ─────────────────────────────────────────────────
   Set<String> _selectedAudiences = {};
@@ -3783,215 +3783,165 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 ),
               ),
 
-            // ── Search bar / Filter-sort bar ─────────────────────────
+            // ── Unified search + filter bar ───────────────────────────
             SliverToBoxAdapter(
               child: Container(
                 color: context.hc.surface,
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
-                child: _showSearchField
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: context.hc.inputBg,
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                  child: TextField(
-                                    controller: _searchController,
-                                    autofocus: true,
-                                    style: _adaptiveText(
-                                        fontSize: 14,
-                                        color: context.hc.textPrimary),
-                                    decoration: InputDecoration(
-                                      hintText: 'Search groups...',
-                                      hintStyle: _adaptiveText(
-                                          fontSize: 14,
-                                          color: context.hc.textTertiary),
-                                      prefixIcon: Icon(Icons.search,
-                                          size: 20, color: context.hc.textTertiary),
-                                      suffixIcon: _searchQuery.isNotEmpty
-                                          ? Semantics(
-                                              label: 'Clear search',
-                                              button: true,
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  HapticFeedback.lightImpact();
-                                                  setState(() {
-                                                    _searchController.clear();
-                                                    _searchQuery = '';
-                                                  });
-                                                },
-                                                child: SizedBox(
-                                                  width: 44, height: 44,
-                                                  child: Icon(Icons.close,
-                                                      size: 18,
-                                                      color: context.hc.textTertiary),
-                                                ),
-                                              ),
-                                            )
-                                          : null,
-                                      border: InputBorder.none,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              horizontal: 16, vertical: 13),
-                                    ),
-                                    onChanged: (val) {
-                                      _discoverAi.recordSearch(val);
-                                      setState(() {
-                                        _searchQuery = val;
-                                        if (val.isNotEmpty) {
-                                          _aiSuggestions = _discoverAi.getPredictiveSuggestions(
-                                            partialQuery: val,
-                                            userBorough: _userBorough,
-                                            stagesOfLife: _userStagesOfLife,
-                                            parentType: _userParentType,
-                                          );
-                                        }
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Semantics(
-                                label: 'Cancel search',
-                                button: true,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    setState(() {
-                                      _showSearchField = false;
-                                      _searchQuery = '';
-                                      _searchController.clear();
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                                    child: Text('Cancel',
-                                        style: _adaptiveText(
-                                            fontSize: 14,
-                                            color: HuddlColors.primary,
-                                            fontWeight: FontWeight.w500)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          // ── Predictive AI suggestions (below search bar) ──
-                          if (_searchQuery.isNotEmpty && _aiSuggestions.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Wrap(
-                                spacing: 6,
-                                runSpacing: 4,
-                                children: _aiSuggestions.take(3).map((s) {
-                                  return Semantics(
-                                    label: 'AI suggestion: ${s.query}',
-                                    button: true,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        HapticFeedback.selectionClick();
-                                        setState(() {
-                                          _searchQuery = s.query;
-                                          _searchController.text = s.query;
-                                        });
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                        decoration: BoxDecoration(
-                                          color: HuddlColors.teal.withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(14),
-                                          border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.search, size: 11, color: HuddlColors.teal),
-                                            const SizedBox(width: 4),
-                                            Text(s.query, style: _adaptiveText(
-                                              fontSize: 11, fontWeight: FontWeight.w500,
-                                              color: HuddlColors.teal,
-                                            )),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                        ],
-                      )
-                    : Semantics(
-                        label: hasActiveFilters ? 'Active filters applied. Tap to change.' : 'Filter and sort groups',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _showFilterSortSheet();
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Row(
+                  children: [
+                    // Search pill
+                    Expanded(
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: context.hc.inputBg,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (val) {
+                            _discoverAi.recordSearch(val);
+                            setState(() {
+                              _searchQuery = val;
+                              if (val.isNotEmpty) {
+                                _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+                                  partialQuery: val,
+                                  userBorough: _userBorough,
+                                  stagesOfLife: _userStagesOfLife,
+                                  parentType: _userParentType,
+                                );
+                              }
+                            });
                           },
-                          child: Container(
-                            height: 48,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: context.hc.inputBg,
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.tune,
-                                    size: 18,
-                                    color: hasActiveFilters
-                                        ? HuddlColors.primary
-                                        : HuddlColors.textHint),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    hasActiveFilters
-                                        ? 'Filtered${_selectedAudiences.isNotEmpty ? ' \u00B7 ${_selectedAudiences.length} audience${_selectedAudiences.length > 1 ? 's' : ''}' : ''}${_selectedSort != 'Recommended' ? ' \u00B7 $_selectedSort' : ''}'
-                                        : 'Filter and sort',
-                                    style: _adaptiveText(
-                                      fontSize: 14,
-                                      color: hasActiveFilters
-                                          ? context.hc.textPrimary
-                                          : HuddlColors.textHint,
-                                      fontWeight: hasActiveFilters
-                                          ? FontWeight.w500
-                                          : FontWeight.w400,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Semantics(
-                                  label: 'Search groups',
-                                  button: true,
-                                  child: GestureDetector(
+                          style: _adaptiveText(fontSize: 13, color: context.hc.textPrimary),
+                          decoration: InputDecoration(
+                            hintText: 'Search groups...',
+                            hintStyle: _adaptiveText(fontSize: 13, color: context.hc.textTertiary),
+                            prefixIcon: Icon(Icons.search, size: 18,
+                                color: context.hc.textTertiary.withValues(alpha: 0.7)),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? GestureDetector(
                                     onTap: () {
                                       HapticFeedback.lightImpact();
-                                      setState(() => _showSearchField = true);
+                                      _searchController.clear();
+                                      setState(() => _searchQuery = '');
                                     },
-                                    child: SizedBox(
-                                      width: 48, height: 48,
-                                      child: Icon(Icons.search,
-                                          size: 22,
-                                          color: context.hc.textPrimary),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                                    child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            isDense: true,
                           ),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Filter pill button
+                    Semantics(
+                      label: hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter groups',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          _showFilterSortSheet();
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: hasActiveFilters
+                                ? HuddlColors.primary.withValues(alpha: 0.12)
+                                : context.hc.inputBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: hasActiveFilters
+                                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                                  : Colors.transparent,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                size: 16,
+                                color: hasActiveFilters
+                                    ? HuddlColors.primary
+                                    : context.hc.textTertiary,
+                              ),
+                              if (hasActiveFilters) ...[
+                                const SizedBox(width: 4),
+                                Text(
+                                  _selectedAudiences.isNotEmpty
+                                      ? '${_selectedAudiences.length}'
+                                      : _selectedSort,
+                                  style: _adaptiveText(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+
+            // ── AI predictive suggestions (shown while typing) ────────
+            if (_searchQuery.isNotEmpty && _aiSuggestions.isNotEmpty)
+              SliverToBoxAdapter(
+                child: Container(
+                  color: context.hc.surface,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: _aiSuggestions.take(3).map((s) {
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _searchQuery = s.query;
+                            _searchController.text = s.query;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.teal.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.search, size: 11, color: HuddlColors.teal),
+                              const SizedBox(width: 4),
+                              Text(s.query, style: _adaptiveText(
+                                fontSize: 11, fontWeight: FontWeight.w500,
+                                color: HuddlColors.teal,
+                              )),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+
+
 
             // ── AI Context Banner (transparency) ─────────────────────
             if (_aiRecommendationsEnabled && _showAiContextBanner)
@@ -4257,7 +4207,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 _selectedSort = 'Recommended';
                                 _searchQuery = '';
                                 _searchController.clear();
-                                _showSearchField = false;
                               });
                             },
                             child: Container(

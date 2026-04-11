@@ -38,10 +38,7 @@ class _EventsScreenState extends State<EventsScreen>
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
-  bool _isSearching = false;
-  String _searchQuery = '';
-  final TextEditingController _searchController = TextEditingController();
-  final FocusNode _searchFocusNode = FocusNode();
+  // Search is now handled per-tab (each tab has its own search bar)
 
   @override
   void initState() {
@@ -65,8 +62,6 @@ class _EventsScreenState extends State<EventsScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _searchController.dispose();
-    _searchFocusNode.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     super.dispose();
@@ -277,24 +272,6 @@ class _EventsScreenState extends State<EventsScreen>
                       Row(
                         children: [
                           IconButton(
-                            icon: Icon(
-                              _isSearching ? Icons.close : Icons.search,
-                              color: context.hc.textPrimary,
-                            ),
-                            tooltip: _isSearching ? 'Close search' : 'Search',
-                            onPressed: () {
-                              setState(() {
-                                _isSearching = !_isSearching;
-                                if (!_isSearching) {
-                                  _searchQuery = '';
-                                  _searchController.clear();
-                                } else {
-                                  _searchFocusNode.requestFocus();
-                                }
-                              });
-                            },
-                          ),
-                          IconButton(
                             icon: Icon(Icons.notifications_outlined,
                                 color: context.hc.textPrimary),
                             tooltip: 'Notifications',
@@ -306,40 +283,6 @@ class _EventsScreenState extends State<EventsScreen>
                       ),
                     ],
                   ),
-                  // ── Search bar (collapsible) ──────────────────────
-                  if (_isSearching) ...[
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: (v) => setState(() => _searchQuery = v),
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Search meetups & events...',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
-                        prefixIcon: Icon(Icons.search,
-                            color: context.hc.textTertiary, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: context.hc.inputBg,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 4),
                   // ── Tabs: Groups | Meetups | Events ──────────────
                   TabBar(
@@ -398,11 +341,9 @@ class _EventsScreenState extends State<EventsScreen>
                   _MeetupsTab(
                     meetupService: _meetupService,
                     onCreateMeetup: _navigateToCreateMeetup,
-                    searchQuery: _searchQuery,
                   ),
                   _EventsTab(
                     eventService: _eventService,
-                    searchQuery: _searchQuery,
                   ),
                 ],
               ),
@@ -484,9 +425,8 @@ class _EventsScreenState extends State<EventsScreen>
 class _MeetupsTab extends StatefulWidget {
   final MeetupService meetupService;
   final VoidCallback onCreateMeetup;
-  final String searchQuery;
 
-  const _MeetupsTab({required this.meetupService, required this.onCreateMeetup, this.searchQuery = ''});
+  const _MeetupsTab({required this.meetupService, required this.onCreateMeetup});
 
   @override
   State<_MeetupsTab> createState() => _MeetupsTabState();
@@ -497,18 +437,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
   bool _aiReady = false;
-  bool _filtersExpanded = false; // progressive disclosure
+  bool _filtersExpanded = false;
   SmartNudge? _activeNudge;
 
-  // Compact default filters — only the most common categories
-  static const _defaultFilters = [
-    {'label': 'All', 'codes': null},
-    {'label': 'Playdate', 'codes': ['Playdate']},
-    {'label': 'Coffee', 'codes': ['Coffee']},
-    {'label': 'Walk', 'codes': ['Walk']},
-  ];
+  // ── Local search ──────────────────────────────────────────────
+  String _localSearchQuery = '';
+  final TextEditingController _localSearchController = TextEditingController();
 
-  // Full filter set (progressive disclosure — revealed on tap)
+  // Full filter set — all shown in scrollable chip row
   static const _allFilters = [
     {'label': 'All', 'codes': null},
     {'label': 'Playdate', 'codes': ['Playdate']},
@@ -519,9 +455,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     {'label': 'Food', 'codes': ['Food']},
     {'label': 'Other', 'codes': ['Other']},
   ];
-
-  List<Map<String, dynamic>> get _activeFilters =>
-      _filtersExpanded ? _allFilters : _defaultFilters;
 
   List<String>? get _activeFilterCodes {
     if (_filter == 'All') return null;
@@ -537,6 +470,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     super.initState();
     _loadUserContext();
     _initAi();
+  }
+
+  @override
+  void dispose() {
+    _localSearchController.dispose();
+    super.dispose();
   }
 
   Future<void> _initAi() async {
@@ -573,7 +512,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   /// Access control enforced at tap-time.
   List<Meetup> get _visibleMeetups {
     final now = DateTime.now();
-    final query = widget.searchQuery.toLowerCase();
+    final query = _localSearchQuery.toLowerCase();
     return widget.meetupService.meetups.where((m) {
       if (m.dateTime.isBefore(now)) return false;
       if (query.isNotEmpty) {
@@ -677,71 +616,121 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
     return Column(
       children: [
-        // ── Slim filter row with progressive disclosure ──────────
+        // ── Unified search + filter bar ──────────────────────────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: SizedBox(
-            height: 40,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                ..._activeFilters.map((cat) {
-                  final label = cat['label'] as String;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: _FilterChip(
-                      label: label,
-                      isSelected: _filter == label,
-                      onTap: () {
-                        _aiService.trackCategoryTap(label);
-                        setState(() => _filter = label);
-                      },
-                    ),
-                  );
-                }),
-                // More/Less toggle chip
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _filtersExpanded = !_filtersExpanded);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      height: 36,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: context.hc.surfaceAlt,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: context.hc.divider, width: 0.5),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _filtersExpanded ? Icons.keyboard_arrow_left : Icons.tune,
-                            size: 16,
-                            color: context.hc.textTertiary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _filtersExpanded ? 'Less' : 'More',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: context.hc.textTertiary,
-                            ),
-                          ),
-                        ],
-                      ),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+          child: Row(
+            children: [
+              // Search pill
+              Expanded(
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TextField(
+                    controller: _localSearchController,
+                    onChanged: (v) => setState(() => _localSearchQuery = v),
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search meetups...',
+                      hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+                      prefixIcon: Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.7)),
+                      suffixIcon: _localSearchQuery.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                _localSearchController.clear();
+                                setState(() => _localSearchQuery = '');
+                              },
+                              child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
                     ),
                   ),
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              // Filter pill button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _filtersExpanded = !_filtersExpanded);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: (_filter != 'All' || _filtersExpanded)
+                        ? HuddlColors.primary.withValues(alpha: 0.12)
+                        : context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: (_filter != 'All')
+                          ? HuddlColors.primary.withValues(alpha: 0.4)
+                          : Colors.transparent,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.tune_rounded,
+                        size: 16,
+                        color: (_filter != 'All')
+                            ? HuddlColors.primary
+                            : context.hc.textTertiary,
+                      ),
+                      if (_filter != 'All') ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          _filter,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // ── Filter chips row (always visible) ────────────────────
+        Container(
+          color: context.hc.surface,
+          padding: const EdgeInsets.only(bottom: 8),
+          child: SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: _allFilters.map((cat) {
+                final label = cat['label'] as String;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: _FilterChip(
+                    label: label,
+                    isSelected: _filter == label,
+                    onTap: () {
+                      _aiService.trackCategoryTap(label);
+                      setState(() => _filter = label);
+                    },
+                  ),
+                );
+              }).toList(),
             ),
           ),
         ),
@@ -1461,9 +1450,8 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
 
 class _EventsTab extends StatefulWidget {
   final EventService eventService;
-  final String searchQuery;
 
-  const _EventsTab({required this.eventService, this.searchQuery = ''});
+  const _EventsTab({required this.eventService});
 
   @override
   State<_EventsTab> createState() => _EventsTabState();
@@ -1583,7 +1571,7 @@ class _EventsTabState extends State<_EventsTab> {
     var allEvents = widget.eventService.eventMaps;
 
     // Apply parent-level search
-    final parentQuery = widget.searchQuery.toLowerCase();
+    final parentQuery = ''; // search now handled by in-tab search bar
     if (parentQuery.isNotEmpty) {
       allEvents = allEvents.where((e) {
         final title = (e['title'] as String? ?? '').toLowerCase();
@@ -1604,7 +1592,7 @@ class _EventsTabState extends State<_EventsTab> {
     }
 
     // Apply manual filters if expanded
-    if (_filtersExpanded && _activeManualFilter != 'All') {
+    if (_activeManualFilter != 'All') {
       events = events.where((e) {
         if (_activeManualFilter == 'Free') return e['isFree'] == true;
         if (_activeManualFilter == 'Paid') return e['isFree'] != true;
@@ -1619,70 +1607,103 @@ class _EventsTabState extends State<_EventsTab> {
       events = _invisibleAi.intelligentSort(events, _scoredEventMap);
     }
 
-    // Show carousel only when clean state
+    // Show carousel only when clean state (no active search/filter)
     final showCarousel = _recommenderReady &&
         _recommended.isNotEmpty &&
         parentQuery.isEmpty &&
         _nlpQuery.isEmpty &&
-        !_filtersExpanded;
+        _activeManualFilter == 'All';
 
     // Active filter chips for NLP
     final activeNlpChips = _buildActiveNlpChips();
 
     return Column(
       children: [
-        // ── Predictive NLP Search Bar ─────────────────────────
+        // ── Unified search + filter bar ───────────────────────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 10, 8, 4),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Row(
             children: [
+              // Search pill
               Expanded(
                 child: Container(
+                  height: 40,
                   decoration: BoxDecoration(
-                    color: context.hc.scaffold,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _nlpFocusNode.hasFocus
-                          ? HuddlColors.blue.withValues(alpha: 0.4)
-                          : HuddlColors.divider,
-                    ),
+                    color: context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: TextField(
                     controller: _nlpController,
                     focusNode: _nlpFocusNode,
                     onChanged: _onNlpQueryChanged,
-                    style: GoogleFonts.poppins(fontSize: 14),
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Try "free baby classes this weekend"',
-                      hintStyle: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textTertiary,
-                      ),
-                      prefixIcon: Icon(Icons.search,
-                                size: 18, color: context.hc.textTertiary),
+                      hintText: 'Search events...',
+                      hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+                      prefixIcon: Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.7)),
                       suffixIcon: _nlpQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close, size: 18),
-                              onPressed: _clearSearch,
+                          ? GestureDetector(
+                              onTap: _clearSearch,
+                              child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
                             )
                           : null,
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
                     ),
                   ),
                 ),
               ),
-
-              // ── Toggle manual filters ──
-              IconButton(
-                icon: Icon(
-                  _filtersExpanded ? Icons.tune : Icons.tune_outlined,
-                  size: 20,
-                  color: _filtersExpanded ? HuddlColors.blue : HuddlColors.textHint,
+              const SizedBox(width: 8),
+              // Filter pill button
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _filtersExpanded = !_filtersExpanded);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: (_activeManualFilter != 'All' || _filtersExpanded)
+                        ? HuddlColors.primary.withValues(alpha: 0.12)
+                        : context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: _activeManualFilter != 'All'
+                          ? HuddlColors.primary.withValues(alpha: 0.4)
+                          : Colors.transparent,
+                      width: 1.2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.tune_rounded,
+                        size: 16,
+                        color: (_activeManualFilter != 'All')
+                            ? HuddlColors.primary
+                            : context.hc.textTertiary,
+                      ),
+                      if (_activeManualFilter != 'All') ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          _activeManualFilter,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
-                tooltip: 'Filters',
-                onPressed: () => setState(() => _filtersExpanded = !_filtersExpanded),
               ),
             ],
           ),
@@ -1711,30 +1732,29 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
 
-        // ── Manual filter chips (progressive disclosure, hidden by default) ──
-        if (_filtersExpanded)
-          Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                children: _invisibleAi.adaptiveFilterOrder.map((f) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _FilterChip(
-                    label: f,
-                    isSelected: _activeManualFilter == f,
-                    onTap: () {
-                      _invisibleAi.trackFilterClick(f);
-                      setState(() => _activeManualFilter = f);
-                    },
-                  ),
-                )).toList(),
-              ),
+        // ── Filter chips row (always visible) ────────────────────
+        Container(
+          color: context.hc.surface,
+          padding: const EdgeInsets.only(bottom: 8),
+          child: SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: _invisibleAi.adaptiveFilterOrder.map((f) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _FilterChip(
+                  label: f,
+                  isSelected: _activeManualFilter == f,
+                  onTap: () {
+                    _invisibleAi.trackFilterClick(f);
+                    setState(() => _activeManualFilter = f);
+                  },
+                ),
+              )).toList(),
             ),
           ),
+        ),
 
 
 
