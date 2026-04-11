@@ -124,27 +124,38 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     }
   }
 
-  /// Open a DM with the organiser
-  void _chatWithOrganiser() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => DMChatScreen(
-          recipientId: _meetup.organiserId,
-          recipientName: _meetup.organiserName,
-          recipientAvatarColor: '#FF975C',
-        ),
-      ),
-    );
+  /// Build the meetup data map used for rich card sharing.
+  Map<String, dynamic> get _meetupShareData {
+    final data = _meetup.toJson();
+    // Strip large base64 images — card widget fetches them from MeetupService
+    if ((data['imageUrl'] as String? ?? '').startsWith('data:')) {
+      data['imageUrl'] = '';
+    }
+    return data;
   }
 
-  /// Share meetup via forward sheet
+  /// Share meetup via forward sheet — opens the "Send to" sheet with
+  /// Members and Groups tabs so the user picks recipients. A rich
+  /// meetup card is sent (not plain text).
   void _shareMeetup() {
     HapticFeedback.mediumImpact();
     showForwardSheet(
       context: context,
-      messageText:
-          'Check out this meetup: "${_meetup.title}" on ${_meetup.dateDisplay} ${_meetup.timeDisplay} at ${_meetup.location}',
+      messageText: 'Check out this meetup: "${_meetup.title}"',
+      isMeetupCard: true,
+      meetupData: _meetupShareData,
+    );
+  }
+
+  /// Opens the forward sheet to send the meetup card to a DM or group.
+  /// Used by the chat (bubble) button — sends a card, NOT plain text.
+  void _shareToChat() {
+    HapticFeedback.mediumImpact();
+    showForwardSheet(
+      context: context,
+      messageText: 'Check out this meetup: "${_meetup.title}"',
+      isMeetupCard: true,
+      meetupData: _meetupShareData,
     );
   }
 
@@ -498,6 +509,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ),
             ),
             actions: [
+              // Share button — always visible
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
@@ -510,18 +522,20 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   onPressed: _shareMeetup,
                 ),
               ),
-              Container(
-                margin: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-                decoration: BoxDecoration(
-                  color: HuddlColors.gray900.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
+              // 3-dot overflow — organiser only (manage attendees + cancel)
+              if (_isOrganiser)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.gray900.withValues(alpha: 0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.more_vert,
+                        color: context.hc.surface, size: 20),
+                    onPressed: _showMoreOptions,
+                  ),
                 ),
-                child: IconButton(
-                  icon: Icon(Icons.more_vert,
-                      color: context.hc.surface, size: 20),
-                  onPressed: _showMoreOptions,
-                ),
-              ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
@@ -945,11 +959,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         ),
         child: Row(
           children: [
-            // Message organiser button — opens DM
+            // Share / send meetup card button
             Expanded(
               flex: 1,
               child: OutlinedButton(
-                onPressed: _chatWithOrganiser,
+                onPressed: _shareToChat,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: HuddlColors.primary),
                   shape: RoundedRectangleBorder(
@@ -957,7 +971,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Icon(Icons.chat_bubble_outline,
+                child: const Icon(Icons.send_outlined,
                     color: HuddlColors.primary, size: 20),
               ),
             ),
