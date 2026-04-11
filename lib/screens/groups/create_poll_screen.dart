@@ -19,6 +19,27 @@ class PollData {
     this.allowMultiple = false,
     this.isCalendarMode = false,
   });
+
+  Map<String, dynamic> toJson() => {
+        'question': question,
+        'options': options,
+        'expiresAt': expiresAt?.toIso8601String(),
+        'allowMultiple': allowMultiple,
+        'isCalendarMode': isCalendarMode,
+      };
+
+  factory PollData.fromJson(Map<String, dynamic> j) => PollData(
+        question: j['question'] as String? ?? '',
+        options: (j['options'] as List<dynamic>?)
+                ?.map((e) => e as String)
+                .toList() ??
+            [],
+        expiresAt: j['expiresAt'] != null
+            ? DateTime.tryParse(j['expiresAt'] as String)
+            : null,
+        allowMultiple: j['allowMultiple'] as bool? ?? false,
+        isCalendarMode: j['isCalendarMode'] as bool? ?? false,
+      );
 }
 
 /// Screen for creating a poll in a group chat.

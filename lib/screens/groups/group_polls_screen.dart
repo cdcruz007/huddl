@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
+import '../../services/poll_service.dart';
 import 'poll_detail_screen.dart';
-import 'create_poll_screen.dart';
 
 // ignore: unused_import
 import '../../widgets/huddl_widgets.dart';
@@ -25,51 +25,10 @@ class GroupPollsScreen extends StatefulWidget {
 class _GroupPollsScreenState extends State<GroupPollsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final PollService _pollService = PollService();
+  bool _isLoading = true;
 
-  // Mock data - in real app this would come from Firebase/backend
-  final List<ActivePoll> _allPolls = [
-    ActivePoll(
-      id: 'poll_1',
-      data: PollData(
-        question: 'What time works best for the next meetup?',
-        options: ['Saturday 2pm', 'Saturday 5pm', 'Sunday 11am', 'Sunday 3pm'],
-        allowMultiple: false,
-        expiresAt: DateTime.now().add(const Duration(days: 3)),
-      ),
-      creatorName: 'Sarah Johnson',
-      creatorId: 'user_1',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      votes: [
-        const PollVote(memberId: 'user_2', memberName: 'John Doe', optionIndex: 0),
-        const PollVote(memberId: 'user_3', memberName: 'Jane Smith', optionIndex: 1),
-        const PollVote(memberId: 'user_4', memberName: 'Mike Brown', optionIndex: 0),
-        const PollVote(memberId: 'user_5', memberName: 'Emily Davis', optionIndex: 2),
-      ],
-      myVotes: {0},
-      isPinned: true,
-    ),
-    ActivePoll(
-      id: 'poll_2',
-      data: PollData(
-        question: 'Which activity should we do this month?',
-        options: ['Bowling', 'Mini Golf', 'Movie Night', 'Picnic'],
-        allowMultiple: true,
-        expiresAt: DateTime.now().add(const Duration(days: 7)),
-      ),
-      creatorName: 'Tom Wilson',
-      creatorId: 'user_6',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      votes: [
-        const PollVote(memberId: 'user_1', memberName: 'Sarah Johnson', optionIndex: 0),
-        const PollVote(memberId: 'user_1', memberName: 'Sarah Johnson', optionIndex: 2),
-        const PollVote(memberId: 'user_2', memberName: 'John Doe', optionIndex: 1),
-        const PollVote(memberId: 'user_3', memberName: 'Jane Smith', optionIndex: 3),
-        const PollVote(memberId: 'user_4', memberName: 'Mike Brown', optionIndex: 0),
-      ],
-      myVotes: {0, 2},
-      isPinned: false,
-    ),
-  ];
+  List<ActivePoll> get _allPolls => _pollService.getPolls(widget.groupId);
 
   List<ActivePoll> get _activePolls =>
       _allPolls.where((p) => !p.isExpired && !p.isDeleted).toList();
@@ -81,17 +40,31 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _pollService.addListener(_onPollsChanged);
+    _loadPolls();
   }
 
   @override
   void dispose() {
+    _pollService.removeListener(_onPollsChanged);
     _tabController.dispose();
     super.dispose();
   }
 
+  void _onPollsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadPolls() async {
+    await _pollService.loadPolls(widget.groupId);
+    if (mounted) setState(() => _isLoading = false);
+  }
+
   void _votePoll(String pollId, int optionIndex) {
     setState(() {
-      final poll = _allPolls.firstWhere((p) => p.id == pollId);
+      final idx = _allPolls.indexWhere((p) => p.id == pollId);
+      if (idx == -1) return;
+      final poll = _allPolls[idx];
       if (poll.isExpired) return;
 
       if (poll.data.allowMultiple) {
@@ -118,6 +91,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
         ));
       }
     });
+    _pollService.savePolls(widget.groupId, List.from(_allPolls));
   }
 
   void _viewPollDetails(ActivePoll poll) {
@@ -131,16 +105,20 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
 
   void _togglePollPin(String pollId) {
     setState(() {
-      final poll = _allPolls.firstWhere((p) => p.id == pollId);
-      poll.isPinned = !poll.isPinned;
+      final idx = _allPolls.indexWhere((p) => p.id == pollId);
+      if (idx == -1) return;
+      _allPolls[idx].isPinned = !_allPolls[idx].isPinned;
     });
+    _pollService.savePolls(widget.groupId, List.from(_allPolls));
   }
 
   void _deletePoll(String pollId) {
     setState(() {
-      final poll = _allPolls.firstWhere((p) => p.id == pollId);
-      poll.isDeleted = true;
+      final idx = _allPolls.indexWhere((p) => p.id == pollId);
+      if (idx == -1) return;
+      _allPolls[idx].isDeleted = true;
     });
+    _pollService.savePolls(widget.groupId, List.from(_allPolls));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Poll deleted'),
@@ -152,6 +130,27 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
+
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: hc.surfaceAlt,
+        appBar: AppBar(
+          backgroundColor: hc.surface,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: hc.textPrimary),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text('Polls',
+              style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: hc.textPrimary)),
+        ),
+        body: const Center(
+            child: CircularProgressIndicator(color: HuddlColors.primary)),
+      );
+    }
 
     return Scaffold(
       backgroundColor: hc.surfaceAlt,
@@ -227,7 +226,7 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              isActive ? 'No active polls' : 'No closed polls',
+              isActive ? 'No polls yet' : 'No closed polls',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -237,8 +236,8 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
             const SizedBox(height: 8),
             Text(
               isActive
-                  ? 'Create a poll in the group chat'
-                  : 'Expired polls will appear here',
+                  ? 'Polls created in this group will\nappear here for everyone to vote on.'
+                  : 'Expired or deleted polls will appear here',
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 color: hc.textTertiary,

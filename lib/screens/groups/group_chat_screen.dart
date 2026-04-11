@@ -13,6 +13,7 @@ import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
 import '../../services/browser_storage.dart';
+import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
@@ -102,7 +103,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   // Simulated message status progression for user messages
   final Map<String, MessageStatus> _messageStatuses = {};
   // ── Poll state ──────────────────────────────────────────────────────
-  final List<ActivePoll> _polls = [];
+  final PollService _pollService = PollService();
+  List<ActivePoll> get _polls => _pollService.getPolls(widget.groupId);
 
   /// Polls pinned by their creator — always shown at the top of chat
   List<ActivePoll> get _pinnedPolls =>
@@ -228,6 +230,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     // Load meetup notification for this group (if any)
     await _loadMeetupNotification();
+
+    // Load persisted polls for this group
+    await _pollService.loadPolls(widget.groupId);
 
     // Re-sort everything
     _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -3046,15 +3051,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (result == null || !mounted) return;
 
     final userName = _onboardingService.name ?? 'You';
+    final newPoll = ActivePoll(
+      id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
+      data: result,
+      creatorName: userName,
+      creatorId: 'current_user',
+      createdAt: DateTime.now(),
+      isPinned: false,
+    );
+
+    // Persist to PollService FIRST so the list is ready before setState
+    await _pollService.addPoll(widget.groupId, newPoll);
+
+    if (!mounted) return;
     setState(() {
-      _polls.add(ActivePoll(
-        id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
-        data: result,
-        creatorName: userName,
-        creatorId: 'current_user',
-        createdAt: DateTime.now(),
-        isPinned: false, // not pinned by default; creator opts in via ⋮ menu
-      ));
       // Add a system message about the poll
       _messages.add(ChatMessage(
         id: 'sys_poll_${DateTime.now().millisecondsSinceEpoch}',
@@ -3115,12 +3125,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           optionIndex: optionIndex,
         ));
       }
-
-      // After recording a vote, if the user is NOT the creator and the poll
-      // is NOT pinned by the creator, auto-dismiss from the chat flow.
-      // The poll remains accessible via the Active Polls sheet.
-      // Creator-pinned polls stay visible even after voting.
     });
+
+    // Persist vote changes
+    _pollService.savePolls(widget.groupId, List.from(_polls));
 
     // If non-creator just voted and poll is not pinned → show a brief hint
     final poll = _polls.firstWhere((p) => p.id == pollId);
@@ -3161,6 +3169,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       if (idx == -1) return;
       _polls[idx].isPinned = !_polls[idx].isPinned;
     });
+    // Persist pin change
+    _pollService.savePolls(widget.groupId, List.from(_polls));
   }
 
   void _deletePoll(String pollId) {
@@ -3191,6 +3201,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   _polls[idx].isDeleted = true;
                 }
               });
+              // Persist deletion
+              _pollService.savePolls(widget.groupId, List.from(_polls));
             },
             child: Text('Delete',
                 style: GoogleFonts.poppins(

@@ -15,6 +15,18 @@ class PollVote {
     required this.memberName,
     required this.optionIndex,
   });
+
+  Map<String, dynamic> toJson() => {
+        'memberId': memberId,
+        'memberName': memberName,
+        'optionIndex': optionIndex,
+      };
+
+  factory PollVote.fromJson(Map<String, dynamic> j) => PollVote(
+        memberId: j['memberId'] as String? ?? '',
+        memberName: j['memberName'] as String? ?? 'Unknown',
+        optionIndex: j['optionIndex'] as int? ?? 0,
+      );
 }
 
 /// Runtime model for an active poll in a group chat.
@@ -55,6 +67,35 @@ class ActivePoll {
 
   /// Whether the current user has already voted on this poll
   bool get hasVoted => myVotes.isNotEmpty;
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'data': data.toJson(),
+        'creatorName': creatorName,
+        'creatorId': creatorId,
+        'createdAt': createdAt.toIso8601String(),
+        'votes': votes.map((v) => v.toJson()).toList(),
+        'myVotes': myVotes.toList(),
+        'isPinned': isPinned,
+        'isDeleted': isDeleted,
+      };
+
+  factory ActivePoll.fromJson(Map<String, dynamic> j) => ActivePoll(
+        id: j['id'] as String,
+        data: PollData.fromJson(j['data'] as Map<String, dynamic>),
+        creatorName: j['creatorName'] as String? ?? 'Unknown',
+        creatorId: j['creatorId'] as String? ?? 'current_user',
+        createdAt: DateTime.parse(j['createdAt'] as String),
+        votes: (j['votes'] as List<dynamic>?)
+                ?.map((v) => PollVote.fromJson(v as Map<String, dynamic>))
+                .toList() ??
+            [],
+        myVotes: ((j['myVotes'] as List<dynamic>?) ?? [])
+            .map((e) => e as int)
+            .toSet(),
+        isPinned: j['isPinned'] as bool? ?? false,
+        isDeleted: j['isDeleted'] as bool? ?? false,
+      );
 
   /// Whether this poll should be visible in the main chat flow.
   ///
