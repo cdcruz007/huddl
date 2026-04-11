@@ -35,6 +35,14 @@ import '../../widgets/event_invite_card.dart';
 const Color _kMyBubble = HuddlColors.peachLight;
 
 class GroupChatScreen extends StatefulWidget {
+  /// Fires the groupId string whenever the current user sends any message
+  /// (text, media, forwarded card, etc.).  The Messages tab subscribes to
+  /// this so it can re-sort the list without a full reload round-trip.
+  /// Uses a map-entry {id, counter} so repeated messages in the same group
+  /// always trigger the listener even when the groupId hasn't changed.
+  static final ValueNotifier<Map<String, dynamic>> messageSent =
+      ValueNotifier<Map<String, dynamic>>({'groupId': null, 'seq': 0});
+
   final String groupId;
   final String groupName;
   final String groupImageUrl;
@@ -385,7 +393,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
@@ -405,7 +413,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     });
 
     _messageController.clear();
-    _persistUserTextMessages();
+    // Await persist so storage is written before the Messages tab reads it.
+    await _persistUserTextMessages();
+    // Notify Messages tab to re-sort the conversation list.
+    _fireMessageSentNotifier();
 
     // Simulate status progression: sending -> sent -> delivered -> read
     Future.delayed(const Duration(milliseconds: 500), () {
@@ -3316,18 +3327,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _handleCameraCapture() async {
     final attachment = await _mediaService.takePhoto();
     if (attachment == null || !mounted) return;
-    _addImageMessage(attachment);
+    await _addImageMessage(attachment);
   }
 
   Future<void> _handleGalleryPick() async {
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
     for (final att in attachments) {
-      _addImageMessage(att);
+      await _addImageMessage(att);
     }
   }
 
-  void _addImageMessage(MediaAttachment att) {
+  Future<void> _addImageMessage(MediaAttachment att) async {
     final userName = _onboardingService.name ?? 'You';
     final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
     setState(() {
@@ -3341,7 +3352,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         bytes: att.bytes,
       ));
     });
-    _persistUserMediaMessages();
+    await _persistUserMediaMessages();
+    _fireMessageSentNotifier();
     _scrollToEnd();
   }
 
@@ -3360,7 +3372,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         senderId: 'current_user',
       ));
     });
-    _persistUserMediaMessages();
+    await _persistUserMediaMessages();
+    _fireMessageSentNotifier();
     _scrollToEnd();
   }
 
@@ -3451,7 +3464,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     setState(() {
       _imageMessages.add(msg);
     });
-    _persistUserMediaMessages();
+    await _persistUserMediaMessages();
+    _fireMessageSentNotifier();
     _scrollToEnd();
   }
 
@@ -3513,7 +3527,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           isMe: true,
         ));
       });
-      _persistUserTextMessages();
+      await _persistUserTextMessages();
+      _fireMessageSentNotifier();
       _scrollToEnd();
     }
   }
@@ -3522,6 +3537,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   String get _userTextMsgKey => 'gc_user_texts_${widget.groupId}';
   String get _userMediaMsgKey => 'gc_user_media_${widget.groupId}';
   String get _userReactionsKey => 'gc_reactions_${widget.groupId}';
+
+  /// Fires the messageSent notifier, always incrementing seq so the
+  /// Messages-tab listener triggers even for back-to-back sends.
+  void _fireMessageSentNotifier() {
+    GroupChatScreen.messageSent.value = {
+      'groupId': widget.groupId,
+      'seq': (GroupChatScreen.messageSent.value['seq'] as int) + 1,
+    };
+  }
 
   Future<void> _persistUserTextMessages() async {
     try {

@@ -29,6 +29,7 @@ import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
 import 'forward_message_sheet.dart';
+import 'group_chat_screen.dart' show GroupChatScreen;
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
@@ -240,6 +241,8 @@ class _MessagesTabState extends State<_MessagesTab> {
     widget.groupsChangedNotifier.addListener(_onGroupsChanged);
     // Listen for event "Count Me In" group chat creation
     EventService.groupChatCreated.addListener(_onGroupsChanged);
+    // Re-sort list whenever the user sends a message in any group chat
+    GroupChatScreen.messageSent.addListener(_onMessageSentFromChat);
   }
 
   @override
@@ -248,6 +251,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     EventService.groupChatCreated.removeListener(_onGroupsChanged);
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _invitationService.removeListener(_onGroupsChanged);
+    GroupChatScreen.messageSent.removeListener(_onMessageSentFromChat);
     _searchController.dispose();
     _dmService.removeListener(_onDMUpdate);
     super.dispose();
@@ -255,6 +259,116 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   void _onGroupsChanged() {
     _loadGroups();
+  }
+
+  /// Called whenever the user sends a message in any GroupChatScreen.
+  /// Refreshes last-message data so the list re-sorts immediately.
+  void _onMessageSentFromChat() {
+    final payload = GroupChatScreen.messageSent.value;
+    final sentGroupId = payload['groupId'] as String?;
+    if (sentGroupId == null) return;
+    _refreshLastMessageForGroup(sentGroupId);
+  }
+
+  /// Reads the latest message from storage for [groupId] and updates
+  /// the corresponding [_GroupItem] so the list re-sorts correctly.
+  Future<void> _refreshLastMessageForGroup(String groupId) async {
+    try {
+      DateTime? latestTime;
+      String? latestText;
+      String? latestSender;
+
+      // ── 1. User-typed text messages ───────────────────────────────
+      final textKey = 'gc_user_texts_$groupId';
+      final textRaw = await BrowserStorage.getString(textKey);
+      if (textRaw != null) {
+        final msgs = (json.decode(textRaw) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        for (final m in msgs) {
+          final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+          if (ts != null && (latestTime == null || ts.isAfter(latestTime))) {
+            latestTime = ts;
+            latestText = m['message'] as String?;
+            latestSender = 'You';
+          }
+        }
+      }
+
+      // ── 2. Forwarded / card messages ─────────────────────────────
+      final fwdKey = 'group_messages_$groupId';
+      final fwdRaw = await BrowserStorage.getString(fwdKey);
+      if (fwdRaw != null) {
+        final msgs = (json.decode(fwdRaw) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        for (final m in msgs) {
+          final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+          if (ts != null && (latestTime == null || ts.isAfter(latestTime))) {
+            latestTime = ts;
+            final isMe = (m['senderId'] as String? ?? '') == 'current_user';
+            latestSender = isMe ? 'You' : (m['senderName'] as String? ?? '');
+            // Show a friendly label for card types
+            if (m['isMeetupCard'] == true) {
+              latestText = '📅 Shared a meetup';
+            } else if (m['isGroupCard'] == true) {
+              latestText = '👥 Shared a group';
+            } else if (m['isEventCard'] == true) {
+              latestText = '📌 Shared an event';
+            } else if (m['isItemCard'] == true) {
+              latestText = '🛍 Shared a listing';
+            } else {
+              latestText = m['message'] as String?;
+            }
+          }
+        }
+      }
+
+      // ── 3. Media messages (images, documents, location pins) ──────
+      final mediaRaw =
+          await BrowserStorage.getString('gc_user_media_$groupId');
+      if (mediaRaw != null) {
+        final decoded = json.decode(mediaRaw) as Map<String, dynamic>;
+        final imgs = (decoded['images'] as List<dynamic>? ?? [])
+            .cast<Map<String, dynamic>>();
+        final docs = (decoded['documents'] as List<dynamic>? ?? [])
+            .cast<Map<String, dynamic>>();
+        for (final m in [...imgs, ...docs]) {
+          final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+          if (ts != null && (latestTime == null || ts.isAfter(latestTime))) {
+            latestTime = ts;
+            latestSender = 'You';
+            if (m['isLocationPin'] == true) {
+              latestText = '📍 Shared a location';
+            } else if (m.containsKey('fileName')) {
+              latestText = '📄 ${m['fileName']}';
+            } else {
+              latestText = '📷 Photo';
+            }
+          }
+        }
+      }
+
+      if (latestTime == null || !mounted) return;
+
+      final finalText = latestText;
+      final finalSender = latestSender;
+      final finalTime = latestTime;
+
+      setState(() {
+        final idx = _allGroups.indexWhere((g) => g.id == groupId);
+        if (idx >= 0 &&
+            (finalTime.isAfter(
+                _allGroups[idx].lastMessageTime ?? DateTime(2000)))) {
+          _allGroups[idx] = _allGroups[idx].copyWith(
+            lastMessage: finalSender != null && finalText != null
+                ? '$finalSender: $finalText'
+                : finalText,
+            lastSenderName: finalSender,
+            lastMessageTime: finalTime,
+          );
+          _applyFilter(); // re-sort
+        }
+      });
+    } catch (_) {}
   }
 
   Future<void> _loadDemoSummaries() async {
@@ -388,6 +502,11 @@ class _MessagesTabState extends State<_MessagesTab> {
         items.addAll(_demoCommunityGroups());
       }
 
+      // ── Enrich last-message info from local storage ───────────────
+      // Read the actual most-recent message for each group so the list
+      // sorts correctly even on first load after the user has chatted.
+      await _enrichLastMessages(items);
+
       setState(() {
         _allGroups = items;
         _pendingInvitations = _invitationService.pendingInvitations;
@@ -405,6 +524,106 @@ class _MessagesTabState extends State<_MessagesTab> {
         _applyFilter();
         _isLoading = false;
       });
+    }
+  }
+
+  /// For each group in [items], read its local message storage and update
+  /// [lastMessage] / [lastMessageTime] if a newer message exists there.
+  /// This makes the list sort correctly immediately after `_loadGroups`.
+  Future<void> _enrichLastMessages(List<_GroupItem> items) async {
+    for (int i = 0; i < items.length; i++) {
+      final group = items[i];
+      DateTime? latestTime = group.lastMessageTime;
+      String? latestText = group.lastMessage;
+      String? latestSender = group.lastSenderName;
+
+      try {
+        // User-typed text messages
+        final textRaw =
+            await BrowserStorage.getString('gc_user_texts_${group.id}');
+        if (textRaw != null) {
+          final msgs = (json.decode(textRaw) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+          for (final m in msgs) {
+            final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+            if (ts != null &&
+                (latestTime == null || ts.isAfter(latestTime))) {
+              latestTime = ts;
+              latestText = m['message'] as String?;
+              latestSender = 'You';
+            }
+          }
+        }
+
+        // Forwarded / card messages
+        final fwdRaw =
+            await BrowserStorage.getString('group_messages_${group.id}');
+        if (fwdRaw != null) {
+          final msgs = (json.decode(fwdRaw) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+          for (final m in msgs) {
+            final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+            if (ts != null &&
+                (latestTime == null || ts.isAfter(latestTime))) {
+              latestTime = ts;
+              final isMe =
+                  (m['senderId'] as String? ?? '') == 'current_user';
+              latestSender =
+                  isMe ? 'You' : (m['senderName'] as String? ?? '');
+              if (m['isMeetupCard'] == true) {
+                latestText = '📅 Shared a meetup';
+              } else if (m['isGroupCard'] == true) {
+                latestText = '👥 Shared a group';
+              } else if (m['isEventCard'] == true) {
+                latestText = '📌 Shared an event';
+              } else if (m['isItemCard'] == true) {
+                latestText = '🛍 Shared a listing';
+              } else {
+                latestText = m['message'] as String?;
+              }
+            }
+          }
+        }
+
+        // Media messages (images, documents, location pins)
+        final mediaRaw =
+            await BrowserStorage.getString('gc_user_media_${group.id}');
+        if (mediaRaw != null) {
+          final decoded = json.decode(mediaRaw) as Map<String, dynamic>;
+          final imgs = (decoded['images'] as List<dynamic>? ?? [])
+              .cast<Map<String, dynamic>>();
+          final docs = (decoded['documents'] as List<dynamic>? ?? [])
+              .cast<Map<String, dynamic>>();
+          for (final m in [...imgs, ...docs]) {
+            final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+            if (ts != null &&
+                (latestTime == null || ts.isAfter(latestTime))) {
+              latestTime = ts;
+              latestSender = 'You';
+              if (m['isLocationPin'] == true) {
+                latestText = '📍 Shared a location';
+              } else if (m.containsKey('fileName')) {
+                latestText = '📄 ${m['fileName']}';
+              } else {
+                latestText = '📷 Photo';
+              }
+            }
+          }
+        }
+      } catch (_) {}
+
+      if (latestTime != null &&
+          (group.lastMessageTime == null ||
+              latestTime.isAfter(group.lastMessageTime!))) {
+        final preview = latestSender != null && latestText != null
+            ? '$latestSender: $latestText'
+            : latestText;
+        items[i] = group.copyWith(
+          lastMessage: preview,
+          lastSenderName: latestSender,
+          lastMessageTime: latestTime,
+        );
+      }
     }
   }
 
