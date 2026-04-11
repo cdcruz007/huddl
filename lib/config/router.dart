@@ -37,6 +37,7 @@ import '../screens/subscription/manage_subscription_screen.dart';
 import '../services/rehome_service.dart';
 import '../models/subscription.dart';
 import '../screens/home/journey_map_screen.dart';
+import '../screens/profile/backup_restore_screen.dart';
 import '../utils/page_transitions.dart';
 
 class AppRouter {
@@ -267,6 +268,9 @@ class AppRouter {
 
       case '/journey_maps':
         return SlidePageRoute(page: const JourneyMapScreen());
+
+      case '/backup_restore':
+        return SlidePageRoute(page: const BackupRestoreScreen());
 
       default:
         return MaterialPageRoute(

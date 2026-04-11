@@ -3550,6 +3550,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pop(c);
             _showPrivacySheet();
           }),
+          _helpTile(Icons.backup_outlined, 'Backup & Restore',
+              'Export or restore your app data', () {
+            Navigator.pop(c);
+            Navigator.pushNamed(context, '/backup_restore');
+          }),
           _helpTile(Icons.person_outline, 'Edit profile',
               'Change name, bio, and photo', () {
             Navigator.pop(c);

@@ -45,5 +45,17 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- ── iCloud Key-Value Backup ─────────────────────────────────────────
+	     Enables NSUbiquitousKeyValueStore so that SharedPreferences data is
+	     mirrored to iCloud and automatically restored when the user reinstalls
+	     the app or switches to a new iPhone.
+	     The container identifier must match the one in your Apple Developer
+	     account under Identifiers → App ID → iCloud.
+	     Use your actual team-prefixed bundle ID, e.g.:
+	         iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
+	──────────────────────────────────────────────────────────────────────── -->
+	<key>NSUbiquitousKeyValueStoreIdentifier</key>
+	<string>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 </dict>
 </plist>

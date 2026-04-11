@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    HUDDL CONNECT — ANDROID AUTO BACKUP RULES
+    ==========================================
+    Controls what gets backed up to Google Drive via Android Auto Backup
+    (Android 6.0+ / API 23+). Restored automatically when user reinstalls
+    the app or migrates to a new Android device.
+
+    SharedPreferences keys are stored under the 'flutter.' prefix by BrowserStorage.
+    All keys below INCLUDE that prefix when the OS reads them from the
+    shared_prefs/<package>.xml file.
+
+    Excluded: passwords (never stored), temporary caches, device-specific
+    tokens, and large binary blobs (meetup images handled by manual backup).
+-->
+<full-backup-content>
+
+    <!-- ── USER PROFILE & ONBOARDING ──────────────────────────────────── -->
+    <include domain="sharedpref" path="onboarding_data_v1" />
+
+    <!-- ── GROUP MESSAGES & STATE ─────────────────────────────────────── -->
+    <!-- User-typed messages and media references per group (gc_user_texts_* / gc_user_media_*) -->
+    <include domain="sharedpref" path="." />
+
+    <!-- ── EXCLUDE sensitive / transient keys ─────────────────────────── -->
+    <!-- Never back up device-specific tokens or large base64 images -->
+    <exclude domain="sharedpref" path="ai_discovery_last_run" />
+    <exclude domain="sharedpref" path="last_login_timestamp" />
+    <exclude domain="sharedpref" path="data_reset_v2" />
+    <!-- Exclude any Flutter internal prefs -->
+    <exclude domain="sharedpref" path="FlutterSharedPreferences" />
+
+</full-backup-content>
