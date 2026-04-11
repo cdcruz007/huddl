@@ -2212,9 +2212,42 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                        itemCount: _groupSortedItems.length,
+                        // +1 extra slot at the end for flow poll cards
+                        itemCount: _groupSortedItems.length +
+                            (_flowPolls.isNotEmpty ? 1 : 0),
                         itemBuilder: (context, index) {
                           final items = _groupSortedItems;
+                          // Last slot: render flow poll cards inside the
+                          // scroll list so they scroll with messages and
+                          // don't create a sticky block above the input bar.
+                          if (index == items.length && _flowPolls.isNotEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8, bottom: 8),
+                              child: Column(
+                                children: _flowPolls.map((poll) => PollCard(
+                                  poll: poll,
+                                  onSelectOption: poll.isExpired
+                                      ? null
+                                      : (i) => _votePoll(poll.id, i),
+                                  onViewDetails: poll.isCreatedByMe
+                                      ? () => _viewPollDetails(poll)
+                                      : null,
+                                  onTogglePin: poll.isCreatedByMe
+                                      ? () => _togglePollPin(poll.id)
+                                      : null,
+                                  onDeletePoll: poll.isCreatedByMe
+                                      ? () => _deletePoll(poll.id)
+                                      : null,
+                                  onSeeResults: poll.isCreatedByMe
+                                      ? () => _viewPollDetails(poll)
+                                      : null,
+                                  onChangeVote: !poll.isCreatedByMe && poll.hasVoted
+                                      ? () => _showActivePollsSheet()
+                                      : null,
+                                )).toList(),
+                              ),
+                            );
+                          }
                           if (index >= items.length) return const SizedBox.shrink();
                           final item = items[index];
 
@@ -2518,36 +2551,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
             ),
 
-          // ── Flow poll cards (unvoted or expired, not pinned) ─────
-          if (_flowPolls.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: _flowPolls.map((poll) => PollCard(
-                  poll: poll,
-                  onSelectOption: poll.isExpired
-                      ? null
-                      : (i) => _votePoll(poll.id, i),
-                  onViewDetails: poll.isCreatedByMe
-                      ? () => _viewPollDetails(poll)
-                      : null,
-                  onTogglePin: poll.isCreatedByMe
-                      ? () => _togglePollPin(poll.id)
-                      : null,
-                  onDeletePoll: poll.isCreatedByMe
-                      ? () => _deletePoll(poll.id)
-                      : null,
-                  onSeeResults: poll.isCreatedByMe
-                      ? () => _viewPollDetails(poll)
-                      : null,
-                  onChangeVote: !poll.isCreatedByMe && poll.hasVoted
-                      ? () => _showActivePollsSheet()
-                      : null,
-                )).toList(),
-              ),
-            ),
-
           // ── Input bar ─────────────────────────────────────────────
+          // Note: flow poll cards are now rendered inside the ListView
+          // (as the last item) so they scroll with messages and the
+          // input bar always sits at the very bottom.
           _buildInputBar(),
         ],
       ),
@@ -3130,9 +3137,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // Persist vote changes
     _pollService.savePolls(widget.groupId, List.from(_polls));
 
-    // If non-creator just voted and poll is not pinned → show a brief hint
+    // If anyone (creator or member) just voted on an unpinned poll → show hint
     final poll = _polls.firstWhere((p) => p.id == pollId);
-    if (!poll.isCreatedByMe && !poll.isPinned && poll.hasVoted) {
+    if (!poll.isPinned && poll.hasVoted) {
+      final msg = poll.isCreatedByMe
+          ? 'Vote recorded. View results via ⋮ → Active Polls.'
+          : 'Vote recorded. Access via ⋮ → Active Polls to change.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -3142,7 +3152,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Vote recorded. Access via ⋮ → Active Polls to change.',
+                  msg,
                   style: GoogleFonts.poppins(fontSize: 13),
                 ),
               ),

@@ -100,14 +100,15 @@ class ActivePoll {
   /// Whether this poll should be visible in the main chat flow.
   ///
   /// Rules:
-  /// - Creator: always visible (so they can access results + pin)
+  /// - Creator, not voted yet: visible (so they can vote and access results)
+  /// - Creator, voted, NOT pinned: HIDDEN (dismissed after voting, access via Active Polls)
+  /// - Creator, voted, pinned: VISIBLE (creator explicitly pinned it)
   /// - Non-creator, not voted yet: visible (needs to vote)
   /// - Non-creator, voted, NOT pinned: HIDDEN (auto-dismissed after voting)
   /// - Non-creator, voted, pinned by creator: VISIBLE (creator chose to keep it)
   bool get visibleInFlow {
-    if (isCreatedByMe) return true; // creator always sees their own polls
-    if (!hasVoted) return true; // unvoted — needs to be shown
-    return isPinned; // voted + pinned → keep visible; voted + not pinned → hide
+    if (!hasVoted) return true; // everyone sees unvoted polls
+    return isPinned; // voted → only stay visible if pinned
   }
 }
 
@@ -295,12 +296,11 @@ class PollCard extends StatelessWidget {
               // Non-creators NEVER see results — privacy by design.
               final showCounts = isCreator;
 
-              // A non-creator can tap to vote if:
+              // Anyone (including the creator) can vote if:
               //   • poll not expired
               //   • hasn't voted yet (single-choice), OR poll allows multiple
               final canVote = !expired &&
-                  (!hasVoted || poll.data.allowMultiple) &&
-                  !isCreator;
+                  (!hasVoted || poll.data.allowMultiple);
 
               return GestureDetector(
                 onTap: canVote ? () => onSelectOption?.call(i) : null,
@@ -1056,10 +1056,12 @@ class _PollSheetItem extends StatelessWidget {
               final total = poll.totalVotes;
               final pct = total > 0 ? (count / total * 100).round() : 0;
 
-              // Non-creators can vote/change vote on any option until expiry.
+              // Anyone (creator or member) can vote/change vote until expiry.
               // Single-choice: tapping a different option changes the vote.
               // Multi-choice: tapping toggles each option.
-              final canTap = !expired && !isCreator && onVote != null;
+              final canTap = !expired &&
+                  (!hasVoted || poll.data.allowMultiple) &&
+                  onVote != null;
 
               return GestureDetector(
                 onTap: canTap ? () => onVote?.call(i) : null,
