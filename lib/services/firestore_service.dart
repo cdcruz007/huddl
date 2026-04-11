@@ -1,11 +1,38 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — FIRESTORE SERVICE
+// HUDDL CONNECT — FIRESTORE SERVICE  (FUTURE / NOT ACTIVE)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
-// Single-source gateway for all Firestore reads and writes.
-// Replaces mock BrowserStorage services with live Cloud Firestore data.
+// ⚠️  STORAGE ARCHITECTURE — READ BEFORE USING ⚠️
 //
-// Collections:
+// CURRENT DESIGN: All user-generated content is stored exclusively on the
+// USER'S OWN DEVICE using BrowserStorage (SharedPreferences). Nothing is
+// sent to or read from a remote server unless explicitly required.
+//
+// DATA STORED ON-DEVICE (SharedPreferences):
+//   • Group & DM messages (text, media refs, reactions, thread replies)
+//   • Polls (per group)
+//   • Meetups (user-created)
+//   • Events (bookmarks, drafts)
+//   • Profile / onboarding data (name, postcode, children, bio, preferences)
+//   • Saved messages & bookmarks
+//   • Group memberships, pins, mutes
+//   • Blocked users list
+//   • Notification preferences
+//   • Subscription state
+//   • AI behaviour settings
+//
+// DATA THAT MANDATORILY REQUIRES BACKEND (minimum set):
+//   • Authentication tokens only (Firebase Auth — login/logout/OTP)
+//   • Subscription purchase receipts (Stripe/Apple/Google — payment verification)
+//   • GDPR deletion requests (must be server-side confirmed)
+//
+// THIS FILE: Implements the complete Firestore gateway for when/if the app
+// is extended to a multi-device/server-backed architecture. It is NOT
+// currently imported or instantiated by any screen or service.
+// DO NOT import this file into screens unless intentionally migrating a
+// specific feature to cloud storage.
+//
+// Collections (when active):
 //   users, groups, group_messages, conversations, direct_messages,
 //   meetups, marketplace, subscriptions, notifications
 //

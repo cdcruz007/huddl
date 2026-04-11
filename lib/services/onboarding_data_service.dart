@@ -139,9 +139,12 @@ class OnboardingDataService {
   }
 
   void setPassword(String password) {
+    // Store password in memory ONLY during the onboarding session.
+    // It is NEVER written to persistent storage — passwords must only be
+    // sent directly to Firebase Auth and then discarded.
     _password = password;
-    _log('Password set (length: ${password.length})');
-    _saveToStorage();
+    _log('Password held in memory (length: ${password.length}) — NOT persisted');
+    // Note: intentionally do NOT call _saveToStorage() here.
   }
 
   void setPhoneVerified(bool verified) {
@@ -328,7 +331,9 @@ class OnboardingDataService {
         );
         _phoneNumber = data['phone_number'] as String?;
         _countryCode = data['country_code'] as String?;
-        _password = data['password'] as String?;
+        // 'password' is never loaded from storage (it was never saved there).
+        // If a legacy entry exists it is silently ignored.
+        _password = null;
         _isPhoneVerified = data['is_phone_verified'] as bool? ?? false;
         _profilePhotoPath = data['profile_photo_path'] as String?;
         _bio = data['bio'] as String?;
@@ -374,7 +379,7 @@ class OnboardingDataService {
         'children': _children,
         'phone_number': _phoneNumber,
         'country_code': _countryCode,
-        'password': _password,
+        // 'password' is intentionally EXCLUDED — never persist passwords to device storage.
         'is_phone_verified': _isPhoneVerified,
         'profile_photo_path': _profilePhotoPath,
         'bio': _bio,
