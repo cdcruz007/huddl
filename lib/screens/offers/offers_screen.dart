@@ -450,40 +450,48 @@ class _OffersScreenState extends State<OffersScreen> with SingleTickerProviderSt
   }
 
   Widget _buildSearchBar() {
+    final hc = context.hc;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
-      child: Container(
-        height: 46,
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: HuddlColors.gray900.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Semantics(
+        label: 'Search stores and brands',
+        textField: true,
+        child: Container(
+          height: 40,
+          decoration: BoxDecoration(
+            color: hc.inputBg,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (v) => setState(() => _searchQuery = v),
+            style: GoogleFonts.poppins(fontSize: 13, color: hc.textPrimary),
+            decoration: InputDecoration(
+              hintText: 'Search stores, brands...',
+              hintStyle: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary),
+              prefixIcon: Icon(Icons.search, color: hc.textTertiary.withValues(alpha: 0.7), size: 18),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? Semantics(
+                      label: 'Clear search',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                        child: Icon(Icons.close, color: hc.textTertiary, size: 16),
+                      ),
+                    )
+                  : null,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              isDense: true,
             ),
-          ],
-        ),
-        child: TextField(
-          controller: _searchController,
-          onChanged: (v) => setState(() => _searchQuery = v),
-          style: GoogleFonts.poppins(fontSize: 14),
-          decoration: InputDecoration(
-            hintText: 'Search stores, brands...',
-            hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-            prefixIcon: Icon(Icons.search, color: context.hc.textTertiary, size: 20),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? GestureDetector(
-                    onTap: () => setState(() {
-                      _searchController.clear();
-                      _searchQuery = '';
-                    }),
-                    child: Icon(Icons.close, color: context.hc.textTertiary, size: 18),
-                  )
-                : null,
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),
       ),

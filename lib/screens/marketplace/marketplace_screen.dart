@@ -1322,7 +1322,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildFilterBar(HuddlContextColors hc) {
     return Container(
       color: hc.surface,
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
       child: SizedBox(
         height: 36,
         child: ListView(
