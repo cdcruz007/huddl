@@ -870,6 +870,206 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     });
   }
 
+  int get _activeFilterCount {
+    int n = 0;
+    if (_selectedAge != null) n++;
+    if (_selectedCategory != null) n++;
+    if (_selectedPriceType != null) n++;
+    if (_selectedCondition != null) n++;
+    return n;
+  }
+
+  /// Short label shown inside the filter pill when exactly one filter is active.
+  String get _activeFilterLabel {
+    if (_selectedAge != null) return _selectedAge!.shortLabel;
+    if (_selectedCategory != null) return _selectedCategory!.label;
+    if (_selectedPriceType == PriceType.free) return 'Free';
+    if (_selectedPriceType == PriceType.paid) return 'Paid';
+    if (_selectedCondition != null) return _selectedCondition!.label;
+    return 'Filter';
+  }
+
+  /// Opens a combined filter bottom-sheet that consolidates all four filters.
+  void _showAllFiltersSheet(HuddlContextColors hc) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: hc.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const HuddlBottomSheetHandle(),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text('Filters', style: _adaptiveText(
+                      fontSize: 18, fontWeight: FontWeight.w700, color: hc.textPrimary)),
+                  const Spacer(),
+                  if (_hasActiveFilters)
+                    GestureDetector(
+                      onTap: () {
+                        _clearAllFilters();
+                        Navigator.pop(context);
+                      },
+                      child: Text('Clear all', style: _adaptiveText(
+                          fontSize: 13, color: HuddlColors.primary,
+                          fontWeight: FontWeight.w500)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Age
+              Text('Age group', style: _adaptiveText(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () { Navigator.pop(context); _showAgeSheet(hc); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedAge != null
+                        ? HuddlColors.primary.withValues(alpha: 0.08)
+                        : hc.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _selectedAge != null
+                          ? HuddlColors.primary.withValues(alpha: 0.3)
+                          : hc.divider,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.child_care, size: 16,
+                          color: _selectedAge != null ? HuddlColors.primary : hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Text(_selectedAge?.shortLabel ?? 'Any age',
+                          style: _adaptiveText(fontSize: 14,
+                              color: _selectedAge != null ? HuddlColors.primary : hc.textSecondary)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Category
+              Text('Category', style: _adaptiveText(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () { Navigator.pop(context); _showCategorySheet(hc); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedCategory != null
+                        ? HuddlColors.primary.withValues(alpha: 0.08)
+                        : hc.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _selectedCategory != null
+                          ? HuddlColors.primary.withValues(alpha: 0.3)
+                          : hc.divider,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.category_outlined, size: 16,
+                          color: _selectedCategory != null ? HuddlColors.primary : hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Text(_selectedCategory?.label ?? 'All categories',
+                          style: _adaptiveText(fontSize: 14,
+                              color: _selectedCategory != null ? HuddlColors.primary : hc.textSecondary)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Price
+              Text('Price', style: _adaptiveText(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () { Navigator.pop(context); _showPriceSheet(hc); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedPriceType != null
+                        ? HuddlColors.primary.withValues(alpha: 0.08)
+                        : hc.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _selectedPriceType != null
+                          ? HuddlColors.primary.withValues(alpha: 0.3)
+                          : hc.divider,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.sell_outlined, size: 16,
+                          color: _selectedPriceType != null ? HuddlColors.primary : hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Text(_selectedPriceType == PriceType.free ? 'Free only'
+                          : _selectedPriceType == PriceType.paid ? 'Paid only'
+                          : 'All prices',
+                          style: _adaptiveText(fontSize: 14,
+                              color: _selectedPriceType != null ? HuddlColors.primary : hc.textSecondary)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Condition
+              Text('Condition', style: _adaptiveText(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
+              const SizedBox(height: 8),
+              GestureDetector(
+                onTap: () { Navigator.pop(context); _showConditionSheet(hc); },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _selectedCondition != null
+                        ? HuddlColors.primary.withValues(alpha: 0.08)
+                        : hc.inputBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _selectedCondition != null
+                          ? HuddlColors.primary.withValues(alpha: 0.3)
+                          : hc.divider,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.star_outline, size: 16,
+                          color: _selectedCondition != null ? HuddlColors.primary : hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Text(_selectedCondition?.label ?? 'Any condition',
+                          style: _adaptiveText(fontSize: 14,
+                              color: _selectedCondition != null ? HuddlColors.primary : hc.textSecondary)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _openCreateListing() async {
     HapticFeedback.mediumImpact();
     final result = await Navigator.push<RehomeItem>(
@@ -1040,7 +1240,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         child: Column(
           children: [
             _buildHeader(hc),
-            if (_tabController.index == 0) _buildFilterBar(hc),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -1123,12 +1322,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildFilterBar(HuddlContextColors hc) {
     return Container(
       color: hc.surface,
-      padding: const EdgeInsets.only(top: 4, bottom: 10),
+      padding: const EdgeInsets.only(bottom: 8),
       child: SizedBox(
-        height: 44,
+        height: 36,
         child: ListView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
             _FilterChip(
               label: _selectedAge?.shortLabel ?? 'For age',
@@ -1136,14 +1335,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               isActive: _selectedAge != null,
               onTap: () => _showAgeSheet(hc),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             _FilterChip(
               label: _selectedCategory?.label ?? 'Category',
               icon: Icons.category_outlined,
               isActive: _selectedCategory != null,
               onTap: () => _showCategorySheet(hc),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             _FilterChip(
               label: _selectedPriceType == PriceType.free
                   ? 'Free'
@@ -1154,23 +1353,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               isActive: _selectedPriceType != null,
               onTap: () => _showPriceSheet(hc),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             _FilterChip(
               label: _selectedCondition?.label ?? 'Condition',
               icon: Icons.star_outline,
               isActive: _selectedCondition != null,
               onTap: () => _showConditionSheet(hc),
             ),
-            if (_hasActiveFilters) ...[
-              const SizedBox(width: 6),
-              _FilterChip(
-                label: 'Clear all',
-                icon: Icons.clear_all,
-                isActive: false,
-                isDestructive: true,
-                onTap: _clearAllFilters,
-              ),
-            ],
           ],
         ),
       ),
@@ -1349,27 +1538,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     return Column(
       children: [
-        // Search bar — uses AI-adapted placeholder
+        // ── Unified search + filter bar ───────────────────────────
         Container(
           color: hc.surface,
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
           child: Column(
             children: [
-              Semantics(
-                label: 'Search market items',
-                textField: true,
-                child: Container(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: hc.surfaceAlt,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const SizedBox(width: 12),
-                      Icon(Icons.search, size: 20, color: hc.textTertiary),
-                      const SizedBox(width: 8),
-                      Expanded(
+              Row(
+                children: [
+                  // Search pill
+                  Expanded(
+                    child: Semantics(
+                      label: 'Search market items',
+                      textField: true,
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: hc.inputBg,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: TextField(
                           controller: _searchController,
                           focusNode: _searchFocus,
@@ -1383,52 +1570,94 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             _ai.recordSearch(val);
                             _searchFocus.unfocus();
                           },
-                          style: _adaptiveText(
-                            fontSize: 14,
-                            color: hc.textPrimary,
-                          ),
+                          style: _adaptiveText(fontSize: 13, color: hc.textPrimary),
                           decoration: InputDecoration(
-                            // AI adapts placeholder based on browsing
                             hintText: _ai.smartPlaceholder(),
+                            hintStyle: _adaptiveText(fontSize: 13, color: hc.textTertiary),
+                            prefixIcon: Icon(Icons.search, size: 18,
+                                color: hc.textTertiary.withValues(alpha: 0.7)),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? Semantics(
+                                    label: 'Clear search',
+                                    button: true,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        _searchController.clear();
+                                        setState(() {
+                                          _searchQuery = '';
+                                          _showSuggestions = false;
+                                        });
+                                      },
+                                      child: Icon(Icons.close, size: 16,
+                                          color: hc.textTertiary),
+                                    ),
+                                  )
+                                : null,
                             border: InputBorder.none,
                             enabledBorder: InputBorder.none,
                             focusedBorder: InputBorder.none,
-                            contentPadding: EdgeInsets.zero,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
                             isDense: true,
-                            hintStyle: _adaptiveText(
-                              fontSize: 14,
-                              color: hc.textTertiary,
-                            ),
                           ),
                         ),
                       ),
-                      if (_searchQuery.isNotEmpty)
-                        Semantics(
-                          label: 'Clear search',
-                          button: true,
-                          child: InkWell(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() {
-                                _searchController.clear();
-                                _searchQuery = '';
-                                _showSuggestions = false;
-                              });
-                            },
-                            borderRadius: BorderRadius.circular(24),
-                            child: SizedBox(
-                              width: 48,
-                              height: 48,
-                              child: Icon(Icons.close,
-                                  size: 18, color: context.hc.textTertiary),
-                            ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Filter pill button
+                  Semantics(
+                    label: _hasActiveFilters ? 'Filters active. Tap to change.' : 'Filter items',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => _showAllFiltersSheet(hc),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: _hasActiveFilters
+                              ? HuddlColors.primary.withValues(alpha: 0.12)
+                              : hc.inputBg,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: _hasActiveFilters
+                                ? HuddlColors.primary.withValues(alpha: 0.4)
+                                : Colors.transparent,
+                            width: 1.2,
                           ),
                         ),
-                    ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 16,
+                              color: _hasActiveFilters
+                                  ? HuddlColors.primary
+                                  : hc.textTertiary,
+                            ),
+                            if (_hasActiveFilters) ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                _activeFilterCount > 1
+                                    ? '$_activeFilterCount'
+                                    : _activeFilterLabel,
+                                style: _adaptiveText(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              // Search suggestions — no sparkle icons, just clean text
+              // Search suggestions
               if (_showSuggestions && suggestions.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 SizedBox(
@@ -1458,7 +1687,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: hc.surfaceAlt,
+                              color: hc.inputBg,
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: hc.divider),
                             ),
@@ -1489,30 +1718,31 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
         ),
-        // Item count — minimal, no AI toggle
-        // liveRegion: screen readers announce count changes when filters update
+        // ── Filter chips row (always visible) ────────────────────
+        _buildFilterBar(hc),
+        // Item count
         Semantics(
           liveRegion: true,
           child: Container(
             color: hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
             child: Row(
               children: [
                 Text(
                   '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' (filtered)' : ''}',
-                  style: _adaptiveText(
-                    fontSize: 11,
-                    color: hc.textTertiary,
-                  ),
+                  style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
                 ),
                 const Spacer(),
                 if (_hasActiveFilters)
-                  Text(
-                    'Filtered',
-                    style: _adaptiveText(
-                      fontSize: 11,
-                      color: HuddlColors.primary,
-                      fontWeight: FontWeight.w500,
+                  GestureDetector(
+                    onTap: _clearAllFilters,
+                    child: Text(
+                      'Clear all',
+                      style: _adaptiveText(
+                        fontSize: 11,
+                        color: HuddlColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
               ],
@@ -2245,32 +2475,35 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
           const SizedBox(height: 8),
-          // Search bar
+          // ── Unified search pill ───────────────────────────────
           Container(
-            height: 42,
+            height: 40,
             decoration: BoxDecoration(
-              color: hc.surfaceAlt,
-              borderRadius: BorderRadius.circular(12),
+              color: hc.inputBg,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: TextField(
               controller: _offersSearchController,
               onChanged: (v) => setState(() => _offersSearchQuery = v),
-              style: _adaptiveText(fontSize: 14, color: hc.textPrimary),
+              style: _adaptiveText(fontSize: 13, color: hc.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Search stores, brands...',
-                hintStyle: _adaptiveText(fontSize: 14, color: hc.textTertiary),
-                prefixIcon: Icon(Icons.search, color: hc.textTertiary, size: 20),
+                hintStyle: _adaptiveText(fontSize: 13, color: hc.textTertiary),
+                prefixIcon: Icon(Icons.search, color: hc.textTertiary.withValues(alpha: 0.7), size: 18),
                 suffixIcon: _offersSearchQuery.isNotEmpty
                     ? GestureDetector(
                         onTap: () => setState(() {
                           _offersSearchController.clear();
                           _offersSearchQuery = '';
                         }),
-                        child: Icon(Icons.close, color: hc.textTertiary, size: 18),
+                        child: Icon(Icons.close, color: hc.textTertiary, size: 16),
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                isDense: true,
               ),
             ),
           ),
@@ -2980,47 +3213,41 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isActive;
-  final bool isDestructive;
   final VoidCallback onTap;
 
   const _FilterChip({
     required this.label,
     required this.icon,
     required this.isActive,
-    this.isDestructive = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    final Color bgColor = isDestructive
-        ? HuddlColors.error.withValues(alpha: 0.08)
-        : isActive
+    final Color bgColor = isActive
             ? HuddlColors.primary.withValues(alpha: 0.1)
-            : hc.surfaceAlt;
-    final Color fgColor = isDestructive
-        ? HuddlColors.error
-        : isActive
+            : hc.inputBg;
+    final Color fgColor = isActive
             ? HuddlColors.primary
             : hc.textSecondary;
 
     return Semantics(
-      label: '$label filter${isActive ? ", active" : ""}${isDestructive ? ", clear all filters" : ""}',
+      label: '$label filter${isActive ? ", active" : ""}',
       button: true,
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          height: 40,
+          height: 36,
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: isActive
                   ? HuddlColors.primary.withValues(alpha: 0.3)
@@ -3041,7 +3268,7 @@ class _FilterChip extends StatelessWidget {
                   color: fgColor,
                 ),
               ),
-              if (isActive && !isDestructive) ...[
+              if (isActive) ...[
                 const SizedBox(width: 3),
                 Icon(Icons.keyboard_arrow_down, size: 16, color: fgColor),
               ],
