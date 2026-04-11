@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:js' as js;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -2261,7 +2264,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 senderName: imgMsg.senderName,
                                 senderAvatar: imgMsg.senderAvatar,
                                 senderId: imgMsg.senderId,
-                                locationName: 'Cambridge, UK',
+                                locationName: imgMsg.locationLabel,
+                                latitude: imgMsg.latitude,
+                                longitude: imgMsg.longitude,
                               );
                             }
                             return _GroupImageBubble(
@@ -3359,9 +3364,78 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _scrollToEnd();
   }
 
-  void _handleLocationShare() {
+  Future<void> _handleLocationShare() async {
     if (!mounted) return;
     final userName = _onboardingService.name ?? 'You';
+
+    // Show a "getting location…" snackbar while we wait
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const SizedBox(
+              width: 16, height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Text('Getting your location…', style: GoogleFonts.poppins(fontSize: 13)),
+          ],
+        ),
+        backgroundColor: HuddlColors.primary,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+
+    double lat = 52.2053; // Cambridge fallback
+    double lng = 0.1218;
+    String label = 'My location';
+
+    // Use browser Geolocation API via dart:js
+    if (kIsWeb) {
+      try {
+        final completer = Completer<Map<String, double>?>();
+        js.context.callMethod('eval', ['''
+          navigator.geolocation.getCurrentPosition(
+            function(pos) {
+              window._huddlGeoResult = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            },
+            function(err) {
+              window._huddlGeoResult = null;
+            },
+            { timeout: 6000, maximumAge: 60000, enableHighAccuracy: true }
+          );
+        ''']);
+        // Poll for result (up to 7 seconds)
+        for (int i = 0; i < 35; i++) {
+          await Future.delayed(const Duration(milliseconds: 200));
+          final result = js.context['_huddlGeoResult'];
+          if (result != null) {
+            final jsLat = result['lat'];
+            final jsLng = result['lng'];
+            if (jsLat != null && jsLng != null) {
+              lat = (jsLat as num).toDouble();
+              lng = (jsLng as num).toDouble();
+              label = '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+            }
+            // Clean up
+            js.context['_huddlGeoResult'] = null;
+            completer.complete({'lat': lat, 'lng': lng});
+            break;
+          }
+          if (result == null && i == 34) {
+            completer.complete(null);
+          }
+        }
+      } catch (_) {
+        // Permission denied or not available – keep Cambridge fallback
+      }
+    }
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
     final msg = _GroupImageMessage(
       imageUrl: 'location_pin',
       isMe: true,
@@ -3370,6 +3444,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       senderAvatar: '#FF975C',
       senderId: 'current_user',
       isLocationPin: true,
+      latitude: lat,
+      longitude: lng,
+      locationLabel: label,
     );
     setState(() {
       _imageMessages.add(msg);
@@ -4474,6 +4551,9 @@ class _GroupImageMessage {
   final String senderId;
   final Uint8List? bytes;
   final bool isLocationPin;
+  final double? latitude;
+  final double? longitude;
+  final String? locationLabel;
 
   const _GroupImageMessage({
     required this.imageUrl,
@@ -4484,6 +4564,9 @@ class _GroupImageMessage {
     required this.senderId,
     this.bytes,
     this.isLocationPin = false,
+    this.latitude,
+    this.longitude,
+    this.locationLabel,
   });
 }
 
@@ -4698,6 +4781,8 @@ class _GroupLocationBubble extends StatelessWidget {
   final String senderAvatar;
   final String? senderId;
   final String? locationName;
+  final double? latitude;
+  final double? longitude;
 
   const _GroupLocationBubble({
     required this.isMe,
@@ -4706,24 +4791,23 @@ class _GroupLocationBubble extends StatelessWidget {
     required this.senderAvatar,
     this.senderId,
     this.locationName,
+    this.latitude,
+    this.longitude,
   });
 
   Future<void> _openInMaps(BuildContext context) async {
-    // Use coordinates directly for reliable map opening (Cambridge UK defaults)
-    const lat = 52.2053;
-    const lng = 0.1218;
-    final label = locationName ?? 'Cambridge, UK';
+    final lat = latitude ?? 52.2053;
+    final lng = longitude ?? 0.1218;
+    final label = locationName ?? 'My Location';
     final googleUrl = Uri.parse(
         'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
     try {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } catch (_) {
-      // Fallback: try geo: URI
       final geoUrl = Uri.parse('geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})');
       try {
         await launchUrl(geoUrl);
       } catch (_) {
-        // Last resort: open in browser tab
         try {
           await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
         } catch (_) {
@@ -4740,6 +4824,15 @@ class _GroupLocationBubble extends StatelessWidget {
         }
       }
     }
+  }
+
+  /// Builds a Google Maps Static API thumbnail URL (no API key needed for basic tiles)
+  String _mapThumbnailUrl() {
+    final lat = latitude ?? 52.2053;
+    final lng = longitude ?? 0.1218;
+    // Use OpenStreetMap static tile via staticmap.openstreetmap.de (free, no key)
+    return 'https://staticmap.openstreetmap.de/staticmap.php'
+        '?center=$lat,$lng&zoom=15&size=300x120&markers=$lat,$lng,red-pushpin';
   }
 
   @override
@@ -4797,28 +4890,47 @@ class _GroupLocationBubble extends StatelessWidget {
                     child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.blueBackground,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        ),
+                      // ── Real map thumbnail ──────────────────────────────
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                         child: Stack(
-                          alignment: Alignment.center,
                           children: [
-                            Opacity(
-                              opacity: 0.15,
-                              child: Column(
-                                children: List.generate(6, (_) => Expanded(
-                                  child: Container(
-                                    decoration: const BoxDecoration(
-                                      border: Border(bottom: BorderSide(color: HuddlColors.gray400, width: 0.5)),
+                            Image.network(
+                              _mapThumbnailUrl(),
+                              height: 130,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              loadingBuilder: (ctx, child, progress) {
+                                if (progress == null) return child;
+                                return Container(
+                                  height: 130,
+                                  color: const Color(0xFFE8F4EA),
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: HuddlColors.primary,
                                     ),
                                   ),
-                                )),
+                                );
+                              },
+                              errorBuilder: (_, __, ___) => Container(
+                                height: 130,
+                                color: const Color(0xFFE8F4EA),
+                                child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primary),
                               ),
                             ),
-                            const Icon(Icons.location_on, size: 40, color: HuddlColors.error),
+                            // Red pin overlay centred on the map
+                            Positioned.fill(
+                              child: Align(
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  Icons.location_on,
+                                  size: 36,
+                                  color: HuddlColors.error,
+                                  shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -4830,7 +4942,7 @@ class _GroupLocationBubble extends StatelessWidget {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                'Shared location',
+                                locationName ?? 'My location',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -4853,7 +4965,7 @@ class _GroupLocationBubble extends StatelessWidget {
                             Icon(Icons.open_in_new, size: 13, color: HuddlColors.primary),
                             const SizedBox(width: 4),
                             Text(
-                              'Open in Maps',
+                              'Open in Google Maps',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
