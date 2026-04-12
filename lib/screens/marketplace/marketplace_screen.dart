@@ -2344,62 +2344,321 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             offer: offer,
             aiSummary: _ai.offerSummary(offer, item),
             sentiment: _ai.offerSentiment(offer, item),
-            onAccept: () {
-              HapticFeedback.mediumImpact();
-              _ai.recordOfferAccept();
-              _service.acceptOffer(offer.id);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(Icons.handshake, color: Colors.white, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text('Accepted ${offer.buyerName}\'s offer')),
-                      ],
-                    ),
-                    backgroundColor: HuddlColors.success,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    action: SnackBarAction(
-                      label: 'Undo',
-                      textColor: Colors.white,
-                      onPressed: () {
-                        _service.declineOffer(offer.id);
-                      },
-                    ),
-                  ),
-                );
-              }
-            },
-            onDecline: () {
-              HapticFeedback.lightImpact();
-              _ai.recordOfferDecline();
-              _service.declineOffer(offer.id);
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Declined ${offer.buyerName}\'s offer'),
-                    backgroundColor: hc.textSecondary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    action: SnackBarAction(
-                      label: 'Undo',
-                      textColor: Colors.white,
-                      onPressed: () {
-                        // Undo: re-set to pending (human-in-the-loop)
-                        offer.status = 'pending';
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                );
-              }
-            },
+            onAccept: () => _showOfferResponseSheet(offer, hc, isAccept: true),
+            onDecline: () => _showOfferResponseSheet(offer, hc, isAccept: false),
           );
         }),
       ],
     );
+  }
+
+  // ── Offer response sheet: accept or decline with optional message ─────────
+  void _showOfferResponseSheet(
+    RehomeOffer offer,
+    HuddlContextColors hc, {
+    required bool isAccept,
+  }) {
+    HapticFeedback.mediumImpact();
+    final msgController = TextEditingController();
+    final focusNode = FocusNode();
+
+    final accentColor = isAccept ? HuddlColors.success : HuddlColors.error;
+    final actionLabel = isAccept ? 'Accept offer' : 'Decline offer';
+    final icon = isAccept ? Icons.handshake_outlined : Icons.close_outlined;
+
+    // Suggested quick replies differ by action
+    final quickReplies = isAccept
+        ? [
+            'Looking forward to it! I\'ll arrange collection soon.',
+            'Great, please get in touch to arrange pick-up.',
+            'Accepted! Let me know when you\'re free to collect.',
+          ]
+        : [
+            'Sorry, I\'ve decided to keep this item for now.',
+            'I\'ve had a higher offer — thanks for your interest.',
+            'Sorry, I\'m no longer selling this item.',
+          ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final shc = ctx.hc;
+          return Padding(
+            // Shift up when keyboard appears
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle
+                    const HuddlBottomSheetHandle(),
+                    const SizedBox(height: 10),
+
+                    // ── Header ───────────────────────────────────────────
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: accentColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, size: 18, color: accentColor),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAccept ? 'Accept offer' : 'Decline offer',
+                                style: _adaptiveText(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: shc.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                '${offer.buyerName} · ${offer.amountDisplay} for ${offer.itemTitle}',
+                                style: _adaptiveText(
+                                  fontSize: 12,
+                                  color: shc.textTertiary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ── Optional message ─────────────────────────────────
+                    Text(
+                      'Send a message (optional)',
+                      style: _adaptiveText(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: shc.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: shc.inputBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: shc.divider),
+                      ),
+                      child: TextField(
+                        controller: msgController,
+                        focusNode: focusNode,
+                        maxLines: 3,
+                        minLines: 2,
+                        maxLength: 200,
+                        style: _adaptiveText(fontSize: 14, color: shc.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: isAccept
+                              ? 'e.g. "Great! Please get in touch to arrange pick-up."'
+                              : 'e.g. "Sorry, I\'ve had another offer."',
+                          hintStyle: _adaptiveText(
+                              fontSize: 13, color: shc.textTertiary),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.all(14),
+                          counterStyle: _adaptiveText(
+                              fontSize: 11, color: shc.textTertiary),
+                        ),
+                        onChanged: (_) => setSheetState(() {}),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── Quick-reply suggestions ──────────────────────────
+                    Text(
+                      'Quick replies',
+                      style: _adaptiveText(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: shc.textTertiary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ...quickReplies.map((reply) => GestureDetector(
+                          onTap: () {
+                            HapticFeedback.selectionClick();
+                            msgController.text = reply;
+                            msgController.selection = TextSelection.fromPosition(
+                              TextPosition(offset: reply.length),
+                            );
+                            setSheetState(() {});
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: msgController.text == reply
+                                  ? accentColor.withValues(alpha: 0.08)
+                                  : shc.inputBg,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: msgController.text == reply
+                                    ? accentColor.withValues(alpha: 0.3)
+                                    : shc.divider,
+                              ),
+                            ),
+                            child: Text(
+                              reply,
+                              style: _adaptiveText(
+                                fontSize: 13,
+                                color: msgController.text == reply
+                                    ? accentColor
+                                    : shc.textSecondary,
+                              ),
+                            ),
+                          ),
+                        )),
+                    const SizedBox(height: 20),
+
+                    // ── Action buttons ───────────────────────────────────
+                    Row(
+                      children: [
+                        // Cancel
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: shc.divider),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: _adaptiveText(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: shc.textSecondary,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Confirm action
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final msg = msgController.text.trim().isEmpty
+                                  ? null
+                                  : msgController.text.trim();
+                              Navigator.pop(ctx);
+
+                              if (isAccept) {
+                                _ai.recordOfferAccept();
+                                _service.acceptOffer(offer.id, message: msg);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(Icons.handshake,
+                                            color: Colors.white, size: 18),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Accepted ${offer.buyerName}\'s offer'
+                                            '${msg != null ? ' · Message sent' : ''}',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    backgroundColor: HuddlColors.success,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    action: SnackBarAction(
+                                      label: 'Undo',
+                                      textColor: Colors.white,
+                                      onPressed: () =>
+                                          _service.restoreOfferToPending(
+                                              offer.id),
+                                    ),
+                                  ));
+                                }
+                              } else {
+                                _ai.recordOfferDecline();
+                                _service.declineOffer(offer.id, message: msg);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                      'Declined ${offer.buyerName}\'s offer'
+                                      '${msg != null ? ' · Message sent' : ''}',
+                                    ),
+                                    backgroundColor: hc.textSecondary,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
+                                    action: SnackBarAction(
+                                      label: 'Undo',
+                                      textColor: Colors.white,
+                                      onPressed: () =>
+                                          _service.restoreOfferToPending(
+                                              offer.id),
+                                    ),
+                                  ));
+                                }
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accentColor,
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 14),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: Text(
+                              actionLabel,
+                              style: _adaptiveText(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    ).whenComplete(() {
+      msgController.dispose();
+      focusNode.dispose();
+    });
   }
 
   // ── Progressive Disclosure: Listing actions via bottom sheet ──
@@ -4230,8 +4489,8 @@ class _SmartOfferTile extends StatelessWidget {
       },
       child: Semantics(
         label: '${offer.buyerName} offered ${offer.amountDisplay} for ${offer.itemTitle}. $aiSummary. '
-            'Swipe right to accept, swipe left to decline.',
-        hint: 'Accept or decline this offer',
+            'Tap Accept or Decline, or swipe right to accept, left to decline.',
+        hint: 'Opens response sheet to accept or decline with an optional message',
         child: Container(
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),

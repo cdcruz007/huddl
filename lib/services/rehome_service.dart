@@ -316,6 +316,7 @@ class RehomeOffer {
   final double amount;
   final DateTime createdAt;
   String status; // 'pending', 'accepted', 'declined'
+  String? responseMessage; // optional message sent back to buyer
 
   RehomeOffer({
     required this.id,
@@ -326,6 +327,7 @@ class RehomeOffer {
     required this.amount,
     required this.createdAt,
     this.status = 'pending',
+    this.responseMessage,
   });
 
   String get amountDisplay =>
@@ -490,18 +492,34 @@ class RehomeService extends ChangeNotifier {
     notifyListeners();
   }
 
-  void acceptOffer(String offerId) {
+  void acceptOffer(String offerId, {String? message}) {
     final idx = _offers.indexWhere((o) => o.id == offerId);
     if (idx >= 0) {
       _offers[idx].status = 'accepted';
+      if (message != null && message.trim().isNotEmpty) {
+        _offers[idx].responseMessage = message.trim();
+      }
       notifyListeners();
     }
   }
 
-  void declineOffer(String offerId) {
+  void declineOffer(String offerId, {String? message}) {
     final idx = _offers.indexWhere((o) => o.id == offerId);
     if (idx >= 0) {
       _offers[idx].status = 'declined';
+      if (message != null && message.trim().isNotEmpty) {
+        _offers[idx].responseMessage = message.trim();
+      }
+      notifyListeners();
+    }
+  }
+
+  /// Restore a previously responded-to offer back to pending (undo support).
+  void restoreOfferToPending(String offerId) {
+    final idx = _offers.indexWhere((o) => o.id == offerId);
+    if (idx >= 0) {
+      _offers[idx].status = 'pending';
+      _offers[idx].responseMessage = null;
       notifyListeners();
     }
   }
