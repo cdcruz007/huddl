@@ -1128,153 +1128,296 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
 
     final topicController = TextEditingController();
+    // Existing topic names for suggestions / duplicate detection
+    final existingTopics = _savedMessageService.savedTopicNames;
 
     showDialog(
       context: context,
-      builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.blue),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                'Save reply thread',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${threadReplies.length + 1} messages in this thread',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: context.hc.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Thread preview
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border(
-                    left: BorderSide(color: HuddlColors.primary, width: 3),
-                  ),
-                ),
+      builder: (c) => StatefulBuilder(
+        builder: (c, setDialogState) {
+          // Live duplicate check as user types
+          final typed = topicController.text.trim().toLowerCase();
+          final isExisting = typed.isNotEmpty &&
+              existingTopics
+                  .any((t) => t.trim().toLowerCase() == typed);
+
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Icon
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.blue.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.blue),
+                    ),
+                    const SizedBox(height: 18),
                     Text(
-                      rootMsg.senderName,
+                      'Save reply thread',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: context.hc.textPrimary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${threadReplies.length + 1} messages in this thread',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: context.hc.textSecondary,
                       ),
                     ),
-                    Text(
-                      rootMsg.message,
-                      style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '+ ${threadReplies.length} ${threadReplies.length == 1 ? 'reply' : 'replies'}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.blue,
+                    const SizedBox(height: 16),
+                    // Thread preview
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: context.hc.scaffold,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border(
+                          left: BorderSide(color: HuddlColors.primary, width: 3),
+                        ),
                       ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            rootMsg.senderName,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                          Text(
+                            rootMsg.message,
+                            style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '+ ${threadReplies.length} ${threadReplies.length == 1 ? 'reply' : 'replies'}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: HuddlColors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Existing topic chips (tap to reuse) ──────────────
+                    if (existingTopics.isNotEmpty) ...[
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Add to existing topic',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: context.hc.textSecondary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 36,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: existingTopics.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 6),
+                          itemBuilder: (_, i) {
+                            final name = existingTopics[i];
+                            final selected =
+                                topicController.text.trim().toLowerCase() ==
+                                    name.trim().toLowerCase();
+                            return GestureDetector(
+                              onTap: () {
+                                topicController.text = name;
+                                topicController.selection = TextSelection.collapsed(
+                                    offset: name.length);
+                                setDialogState(() {});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: selected
+                                      ? HuddlColors.blue
+                                      : HuddlColors.blue.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: selected
+                                        ? HuddlColors.blue
+                                        : HuddlColors.blue.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  name,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: selected
+                                        ? HuddlColors.white
+                                        : HuddlColors.blue,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // ── Topic name text field ───────────────────────────
+                    TextField(
+                      controller: topicController,
+                      autofocus: existingTopics.isEmpty,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: InputDecoration(
+                        labelText: 'Topic name',
+                        labelStyle: GoogleFonts.poppins(
+                            fontSize: 14, color: context.hc.textTertiary),
+                        hintText: existingTopics.isEmpty
+                            ? 'e.g. Thursday cafe meetup'
+                            : 'New topic or pick one above',
+                        hintStyle: GoogleFonts.poppins(
+                            fontSize: 14, color: context.hc.textTertiary),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: context.hc.divider),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: isExisting ? HuddlColors.blue : HuddlColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        // Suffix clear button
+                        suffixIcon: topicController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () {
+                                  topicController.clear();
+                                  setDialogState(() {});
+                                },
+                              )
+                            : null,
+                      ),
+                    ),
+
+                    // ── Merge notice ─────────────────────────────────────
+                    if (isExisting) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.blue.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: HuddlColors.blue.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.merge_type_rounded,
+                                size: 16, color: HuddlColors.blue),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'This thread will be added to the existing "${topicController.text.trim()}" topic',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: HuddlColors.blue),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(c),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: HuddlColors.primary),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: Text('Cancel',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.primary)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final topic = topicController.text.trim();
+                              if (topic.isEmpty) return;
+                              Navigator.pop(c);
+                              unawaited(_saveThread(rootMsg, threadReplies, topic));
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: HuddlColors.blue,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              isExisting ? 'Add to topic' : 'Save thread',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // Topic name input
-              TextField(
-                controller: topicController,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Topic name',
-                  labelStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-                  hintText: 'e.g. Thursday cafe meetup',
-                  hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: context.hc.divider),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: HuddlColors.primary, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(c),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: Text('Cancel',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        final topic = topicController.text.trim();
-                        if (topic.isEmpty) return;
-                        Navigator.pop(c);
-                        unawaited(_saveThread(rootMsg, threadReplies, topic));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.blue,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
-                      ),
-                      child: Text('Save thread',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.white)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Future<void> _saveThread(ChatMessage rootMsg, List<ThreadReply> replies, String topicName) async {
+    // Determine whether this is a merge before saving (for snackbar label)
+    final existingTopics = _savedMessageService.savedTopicNames;
+    final isMerge = existingTopics
+        .any((t) => t.trim().toLowerCase() == topicName.trim().toLowerCase());
+
     await _savedMessageService.saveThread(
       topicName: topicName,
       rootMessageId: rootMsg.id,
@@ -1299,9 +1442,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.topic, color: Colors.white, size: 18),
+            Icon(isMerge ? Icons.merge_type_rounded : Icons.topic,
+                color: Colors.white, size: 18),
             const SizedBox(width: 8),
-            Expanded(child: Text('Thread saved as "$topicName"')),
+            Expanded(
+              child: Text(
+                isMerge
+                    ? 'Thread added to "$topicName"'
+                    : 'Thread saved as "$topicName"',
+              ),
+            ),
           ],
         ),
         backgroundColor: HuddlColors.teal,

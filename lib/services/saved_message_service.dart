@@ -206,6 +206,11 @@ class SavedMessageService extends ChangeNotifier {
   // ── Thread Saving ──────────────────────────────────────────────────────
 
   /// Save an entire reply thread under a topic name.
+  ///
+  /// **Merge behaviour**: if a thread with the same [topicName] already exists
+  /// (case-insensitive match), the new root message + replies are appended to
+  /// that existing thread instead of creating a duplicate entry.  The merged
+  /// thread is moved to the top of the list and [savedAt] is updated.
   Future<void> saveThread({
     required String topicName,
     required String rootMessageId,
@@ -217,24 +222,66 @@ class SavedMessageService extends ChangeNotifier {
     required String groupName,
     required String groupImageUrl,
   }) async {
-    final thread = SavedThread(
-      id: 'thread_${DateTime.now().millisecondsSinceEpoch}',
-      topicName: topicName,
-      savedAt: DateTime.now(),
-      rootMessageId: rootMessageId,
-      rootMessageText: rootMessageText,
-      rootSenderName: rootSenderName,
-      rootTimestamp: rootTimestamp,
-      replies: replies,
-      groupId: groupId,
-      groupName: groupName,
-      groupImageUrl: groupImageUrl,
+    final normName = topicName.trim().toLowerCase();
+
+    // ── Check for an existing thread with the same topic name ──────────────
+    final existingIdx = _savedThreads.indexWhere(
+      (t) => t.topicName.trim().toLowerCase() == normName,
     );
 
-    _savedThreads.insert(0, thread);
+    if (existingIdx >= 0) {
+      // Merge: build the new "root" message as the first SavedThreadMessage of
+      // this batch, append all replies after it, then combine with existing.
+      final newBatch = <SavedThreadMessage>[
+        SavedThreadMessage(
+          messageId: rootMessageId,
+          message: rootMessageText,
+          senderName: rootSenderName,
+          timestamp: rootTimestamp,
+          isMe: false, // root author; caller can override if needed
+        ),
+        ...replies,
+      ];
+
+      // Deduplicate by messageId so repeated saves of the same message don't
+      // add it twice.
+      final existingThread = _savedThreads[existingIdx];
+      final existingIds =
+          {existingThread.rootMessageId, ...existingThread.replies.map((r) => r.messageId)};
+      final dedupedBatch =
+          newBatch.where((m) => !existingIds.contains(m.messageId)).toList();
+
+      final mergedReplies = [...existingThread.replies, ...dedupedBatch];
+      final updated = existingThread.copyWithReplies(mergedReplies);
+
+      // Remove old entry and re-insert at top so it surfaces first.
+      _savedThreads.removeAt(existingIdx);
+      _savedThreads.insert(0, updated);
+    } else {
+      // Brand-new topic — create a fresh entry.
+      final thread = SavedThread(
+        id: 'thread_${DateTime.now().millisecondsSinceEpoch}',
+        topicName: topicName.trim(),
+        savedAt: DateTime.now(),
+        rootMessageId: rootMessageId,
+        rootMessageText: rootMessageText,
+        rootSenderName: rootSenderName,
+        rootTimestamp: rootTimestamp,
+        replies: replies,
+        groupId: groupId,
+        groupName: groupName,
+        groupImageUrl: groupImageUrl,
+      );
+      _savedThreads.insert(0, thread);
+    }
+
     await _saveThreads();
     notifyListeners();
   }
+
+  /// All unique topic names across all saved threads (for autocomplete).
+  List<String> get savedTopicNames =>
+      _savedThreads.map((t) => t.topicName).toSet().toList()..sort();
 
   /// Remove a saved thread.
   Future<void> unsaveThread(String threadId) async {

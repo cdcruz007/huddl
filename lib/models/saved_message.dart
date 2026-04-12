@@ -106,6 +106,24 @@ class SavedThread {
 
   int get totalMessages => 1 + replies.length;
 
+  /// Return a copy with [replies] and [savedAt] updated (used when merging
+  /// a new message into an existing topic so the thread grows in-place).
+  SavedThread copyWithReplies(List<SavedThreadMessage> newReplies) {
+    return SavedThread(
+      id: id,
+      topicName: topicName,
+      savedAt: DateTime.now(), // bump so it surfaces at top of list
+      rootMessageId: rootMessageId,
+      rootMessageText: rootMessageText,
+      rootSenderName: rootSenderName,
+      rootTimestamp: rootTimestamp,
+      replies: newReplies,
+      groupId: groupId,
+      groupName: groupName,
+      groupImageUrl: groupImageUrl,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'topicName': topicName,
