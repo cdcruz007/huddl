@@ -561,6 +561,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   final _offersSearchController = TextEditingController();
   String _offersSearchQuery = '';
   late TabController _offersTabController;
+  // Offers tab filters
+  String _offersDealTypeFilter = 'All';   // All | With Code | % Off
+  String? _offersCategoryFilter;           // null = All, else category title
   int _offersViewedToday = 0;
   static const int _freeViewLimit = 10;
 
@@ -815,9 +818,42 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   List<RevGlueStore> get _filteredOffersStores {
-    if (_offersSearchQuery.isEmpty) return _offersStores;
-    final q = _offersSearchQuery.toLowerCase();
-    return _offersStores.where((s) => s.title.toLowerCase().contains(q)).toList();
+    var stores = List<RevGlueStore>.from(_offersStores);
+
+    // Search filter
+    if (_offersSearchQuery.isNotEmpty) {
+      final q = _offersSearchQuery.toLowerCase();
+      stores = stores.where((s) => s.title.toLowerCase().contains(q)).toList();
+    }
+
+    // Deal type filter — derived from offerCouponStr content
+    if (_offersDealTypeFilter == 'With Code') {
+      stores = stores.where((s) {
+        final str = s.offerCouponStr.toLowerCase();
+        return str.contains('code') || str.contains('voucher');
+      }).toList();
+    } else if (_offersDealTypeFilter == '% Off') {
+      stores = stores.where((s) {
+        final str = s.offerCouponStr.toLowerCase();
+        return str.contains('%') || str.contains('off') || str.contains('sale');
+      }).toList();
+    }
+
+    return stores;
+  }
+
+  bool get _hasOffersFilters =>
+      _offersDealTypeFilter != 'All' || _offersCategoryFilter != null;
+
+  int get _offersActiveFilterCount =>
+      (_offersDealTypeFilter != 'All' ? 1 : 0) +
+      (_offersCategoryFilter != null ? 1 : 0);
+
+  void _clearOffersFilters() {
+    setState(() {
+      _offersDealTypeFilter = 'All';
+      _offersCategoryFilter = null;
+    });
   }
 
   List<RevGlueCategory> get _familyCategories {
@@ -2907,39 +2943,363 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
           const SizedBox(height: 8),
-          // ── Unified search pill ───────────────────────────────
-          Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: hc.inputBg,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: TextField(
-              controller: _offersSearchController,
-              onChanged: (v) => setState(() => _offersSearchQuery = v),
-              style: _adaptiveText(fontSize: 13, color: hc.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Search stores, brands...',
-                hintStyle: _adaptiveText(fontSize: 13, color: hc.textTertiary),
-                prefixIcon: Icon(Icons.search, color: hc.textTertiary.withValues(alpha: 0.7), size: 18),
-                suffixIcon: _offersSearchQuery.isNotEmpty
-                    ? GestureDetector(
-                        onTap: () => setState(() {
-                          _offersSearchController.clear();
-                          _offersSearchQuery = '';
-                        }),
-                        child: Icon(Icons.close, color: hc.textTertiary, size: 16),
-                      )
-                    : null,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                isDense: true,
+          // ── Search + Filter row ───────────────────────────────
+          Row(
+            children: [
+              // Search pill
+              Expanded(
+                child: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TextField(
+                    controller: _offersSearchController,
+                    onChanged: (v) => setState(() => _offersSearchQuery = v),
+                    style: _adaptiveText(fontSize: 13, color: hc.textPrimary),
+                    decoration: InputDecoration(
+                      hintText: 'Search stores, brands...',
+                      hintStyle: _adaptiveText(fontSize: 13, color: hc.textTertiary),
+                      prefixIcon: Icon(Icons.search, color: hc.textTertiary.withValues(alpha: 0.7), size: 18),
+                      suffixIcon: _offersSearchQuery.isNotEmpty
+                          ? GestureDetector(
+                              onTap: () => setState(() {
+                                _offersSearchController.clear();
+                                _offersSearchQuery = '';
+                              }),
+                              child: Icon(Icons.close, color: hc.textTertiary, size: 16),
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Filter pill button
+              Semantics(
+                label: _hasOffersFilters
+                    ? 'Filters active ($_offersActiveFilterCount). Tap to change.'
+                    : 'Filter offers',
+                button: true,
+                child: GestureDetector(
+                  onTap: () => _showOffersFilterSheet(hc),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: _hasOffersFilters
+                          ? HuddlColors.primary.withValues(alpha: 0.12)
+                          : hc.inputBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _hasOffersFilters
+                            ? HuddlColors.primary.withValues(alpha: 0.4)
+                            : Colors.transparent,
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 16,
+                          color: _hasOffersFilters
+                              ? HuddlColors.primary
+                              : hc.textTertiary,
+                        ),
+                        if (_hasOffersFilters) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '$_offersActiveFilterCount',
+                              style: _adaptiveText(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Active filter chips row (shown below search when filters are on)
+          if (_hasOffersFilters) ...[
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  if (_offersDealTypeFilter != 'All')
+                    _OffersActiveFilterChip(
+                      label: _offersDealTypeFilter,
+                      onClear: () => setState(() => _offersDealTypeFilter = 'All'),
+                      hc: hc,
+                    ),
+                  if (_offersCategoryFilter != null)
+                    _OffersActiveFilterChip(
+                      label: _offersCategoryFilter!,
+                      onClear: () => setState(() => _offersCategoryFilter = null),
+                      hc: hc,
+                    ),
+                  if (_hasOffersFilters)
+                    GestureDetector(
+                      onTap: _clearOffersFilters,
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        child: Text(
+                          'Clear all',
+                          style: _adaptiveText(
+                            fontSize: 12,
+                            color: HuddlColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-          ),
+          ],
         ],
+      ),
+    );
+  }
+
+  void _showOffersFilterSheet(HuddlContextColors hc) {
+    HapticFeedback.selectionClick();
+    String sheetDealType = _offersDealTypeFilter;
+    String? sheetCategory = _offersCategoryFilter;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final shc = ctx.hc;
+          final hasAny = sheetDealType != 'All' || sheetCategory != null;
+
+          Widget optionChip(String label, bool isSelected, VoidCallback onTap, {Color? color}) {
+            final c = color ?? HuddlColors.primary;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected ? c.withValues(alpha: 0.12) : shc.inputBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? c.withValues(alpha: 0.45) : shc.divider,
+                    width: 1.2,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: _adaptiveText(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? c : shc.textSecondary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.75,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            builder: (_, scrollController) => SafeArea(
+              child: Column(
+                children: [
+                  // Fixed header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const HuddlBottomSheetHandle(),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Filter Offers',
+                              style: _adaptiveText(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: shc.textPrimary,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (hasAny)
+                              TextButton(
+                                onPressed: () {
+                                  setSheetState(() {
+                                    sheetDealType = 'All';
+                                    sheetCategory = null;
+                                  });
+                                  setState(() {
+                                    _offersDealTypeFilter = 'All';
+                                    _offersCategoryFilter = null;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: Text(
+                                  'Clear all',
+                                  style: _adaptiveText(
+                                    fontSize: 13,
+                                    color: HuddlColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                      ],
+                    ),
+                  ),
+                  // Scrollable content
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                      children: [
+                        // ── Deal type ──────────────────────────────────
+                        Text(
+                          'Deal type',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: ['All', 'With Code', '% Off'].map((label) {
+                            return optionChip(
+                              label,
+                              sheetDealType == label,
+                              () {
+                                final next = sheetDealType == label ? 'All' : label;
+                                setSheetState(() => sheetDealType = next);
+                                setState(() => _offersDealTypeFilter = next);
+                              },
+                              color: label == 'With Code'
+                                  ? HuddlColors.blue
+                                  : label == '% Off'
+                                      ? HuddlColors.actionGreen
+                                      : HuddlColors.primary,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ── Category ────────────────────────────────────
+                        Text(
+                          'Category',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            optionChip(
+                              'All categories',
+                              sheetCategory == null,
+                              () {
+                                setSheetState(() => sheetCategory = null);
+                                setState(() => _offersCategoryFilter = null);
+                              },
+                            ),
+                            ..._familyCategories.take(12).map((cat) {
+                              return optionChip(
+                                cat.title,
+                                sheetCategory == cat.title,
+                                () {
+                                  final next = sheetCategory == cat.title ? null : cat.title;
+                                  setSheetState(() => sheetCategory = next);
+                                  setState(() => _offersCategoryFilter = next);
+                                },
+                              );
+                            }),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+                  // Fixed apply button
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Show offers',
+                          style: _adaptiveText(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -4885,6 +5245,59 @@ class _CategoryFilterSheet extends StatelessWidget {
 
 // =============================================================================
 // OFFERS SUB-WIDGETS — embedded under Market tab
+// =============================================================================
+// OFFERS ACTIVE FILTER CHIP — dismissible chip shown below search bar
+// =============================================================================
+
+class _OffersActiveFilterChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onClear;
+  final HuddlContextColors hc;
+
+  const _OffersActiveFilterChip({
+    required this.label,
+    required this.onClear,
+    required this.hc,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 6),
+      padding: const EdgeInsets.fromLTRB(10, 5, 6, 5),
+      decoration: BoxDecoration(
+        color: HuddlColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: _adaptiveText(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.primary,
+            ),
+          ),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onClear();
+            },
+            child: Icon(Icons.close_rounded, size: 14, color: HuddlColors.primary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // =============================================================================
 
 class _OffersStoreCard extends StatelessWidget {
