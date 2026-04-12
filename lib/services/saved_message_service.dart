@@ -63,10 +63,18 @@ class SavedMessageService extends ChangeNotifier {
       final raw = await BrowserStorage.getString(_savedThreadsKey);
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        _savedThreads = decoded
+        final loaded = decoded
             .map((j) => SavedThread.fromJson(j as Map<String, dynamic>))
             .toList();
+        // ── Consolidate duplicates that were stored before the merge fix ──
+        // Group by normalised topic name, then merge all entries under each name
+        // into one thread (oldest root + combined replies, deduped by messageId).
+        _savedThreads = _consolidateThreads(loaded);
         _savedThreads.sort((a, b) => b.savedAt.compareTo(a.savedAt));
+        // If we collapsed any duplicates, immediately persist the cleaner list.
+        if (_savedThreads.length < loaded.length) {
+          await _saveThreads();
+        }
       }
     } catch (_) {
       _savedThreads = [];
@@ -84,6 +92,57 @@ class SavedMessageService extends ChangeNotifier {
     } catch (_) {
       _savedEvents = [];
     }
+  }
+
+  /// Consolidate a raw list of [SavedThread]s so that every unique topic name
+  /// (case-insensitive) is represented by exactly ONE thread.  All messages from
+  /// duplicate entries are merged into the earliest entry's replies list and
+  /// deduped by messageId.  This migration runs once on load and permanently
+  /// fixes data stored before the merge-on-save logic was introduced.
+  List<SavedThread> _consolidateThreads(List<SavedThread> raw) {
+    // Keep insertion order: process oldest-first so the root stays the first
+    // message of each topic.
+    final chronological = List<SavedThread>.from(raw)
+      ..sort((a, b) => a.savedAt.compareTo(b.savedAt));
+
+    // Map from normalised topic name → merged thread.
+    final Map<String, SavedThread> byTopic = {};
+
+    for (final thread in chronological) {
+      final key = thread.topicName.trim().toLowerCase();
+      if (!byTopic.containsKey(key)) {
+        // First time we see this topic — use it as the canonical base.
+        byTopic[key] = thread;
+      } else {
+        // Merge: append the incoming thread's root + replies to the existing
+        // thread, skipping any messageIds already present.
+        final existing = byTopic[key]!;
+        final seenIds = <String>{
+          existing.rootMessageId,
+          ...existing.replies.map((r) => r.messageId),
+        };
+
+        // Treat the incoming root as the first message of the new batch.
+        final incomingBatch = <SavedThreadMessage>[
+          SavedThreadMessage(
+            messageId: thread.rootMessageId,
+            message: thread.rootMessageText,
+            senderName: thread.rootSenderName,
+            timestamp: thread.rootTimestamp,
+          ),
+          ...thread.replies,
+        ];
+
+        final newReplies = <SavedThreadMessage>[
+          ...existing.replies,
+          ...incomingBatch.where((m) => !seenIds.contains(m.messageId)),
+        ];
+
+        byTopic[key] = existing.copyWithReplies(newReplies);
+      }
+    }
+
+    return byTopic.values.toList();
   }
 
   Future<void> _save() async {
