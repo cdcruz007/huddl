@@ -2766,8 +2766,12 @@ class _CommentsSheet extends StatefulWidget {
 
 class _CommentsSheetState extends State<_CommentsSheet> {
   final TextEditingController _ctrl = TextEditingController();
+  final FocusNode _focusNode = FocusNode();
   bool _sending = false;
   late List<AnnouncementComment> _comments;
+
+  /// When non-null the input bar is in "reply" mode for this author name.
+  String? _replyingTo;
 
   @override
   void initState() {
@@ -2778,18 +2782,57 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   @override
   void dispose() {
     _ctrl.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Begin replying to [authorName]: pre-fills @mention and focuses input.
+  void _startReply(String authorName) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _replyingTo = authorName;
+      _ctrl.text = '@$authorName ';
+      _ctrl.selection =
+          TextSelection.collapsed(offset: _ctrl.text.length);
+    });
+    _focusNode.requestFocus();
+  }
+
+  void _cancelReply() {
+    setState(() {
+      _replyingTo = null;
+      _ctrl.clear();
+    });
+    _focusNode.unfocus();
   }
 
   Future<void> _send() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
     setState(() => _sending = true);
-    final comment =
-        await widget.service.addComment(widget.announcement.id, text);
+
+    final AnnouncementComment result;
+    if (_replyingTo != null) {
+      // Strip the leading @mention from the persisted content
+      // so we don't double-render it (the UI already shows the @mention pill).
+      final strippedText =
+          text.startsWith('@$_replyingTo ') && text.length > '@$_replyingTo '.length
+              ? text.substring('@$_replyingTo '.length).trim()
+              : text;
+      result = await widget.service.addReply(
+        announcementId: widget.announcement.id,
+        replyToName: _replyingTo!,
+        content: strippedText,
+      );
+    } else {
+      result = await widget.service
+          .addComment(widget.announcement.id, text);
+    }
+
     _ctrl.clear();
     setState(() {
-      _comments.add(comment);
+      _comments.add(result);
+      _replyingTo = null;
       _sending = false;
     });
     widget.onUpdate();
@@ -2797,14 +2840,15 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final hc = context.hc;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
       decoration: BoxDecoration(
-        color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        color: hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Padding(
         padding: EdgeInsets.only(bottom: bottomInset),
@@ -2821,7 +2865,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
+                      color: hc.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -2829,14 +2873,15 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                     '(${_comments.length})',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: context.hc.textTertiary,
+                      color: hc.textTertiary,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            Divider(height: 1, color: context.hc.divider),
+            Divider(height: 1, color: hc.divider),
+            // ── Comment list ────────────────────────────────────────────────
             Flexible(
               child: _comments.isEmpty
                   ? Center(
@@ -2847,23 +2892,18 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           children: [
                             Icon(Icons.chat_bubble_outline,
                                 size: 40,
-                                color: context.hc.textTertiary
-                                    .withValues(alpha: 0.5)),
+                                color: hc.textTertiary.withValues(alpha: 0.5)),
                             const SizedBox(height: 12),
                             Text(
                               'No comments yet',
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: context.hc.textTertiary,
-                              ),
+                                  fontSize: 14, color: hc.textTertiary),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Be the first to comment!',
                               style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: HuddlColors.textLight,
-                              ),
+                                  fontSize: 12, color: HuddlColors.textLight),
                             ),
                           ],
                         ),
@@ -2877,144 +2917,200 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           const SizedBox(height: 16),
                       itemBuilder: (_, index) {
                         final c = _comments[index];
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            MemberAvatar(
-                              name: c.authorName,
-                              imageUrl: c.authorPhotoUrl,
-                              size: 36,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        c.authorName,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.hc.textPrimary,
+                        final isReply = c.replyToName != null;
+                        return Padding(
+                          // Indent replies slightly
+                          padding: EdgeInsets.only(left: isReply ? 20.0 : 0.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Vertical reply line for threaded feel
+                              if (isReply) ...[
+                                Container(
+                                  width: 2,
+                                  height: 36,
+                                  margin: const EdgeInsets.only(right: 8, top: 4),
+                                  decoration: BoxDecoration(
+                                    color: HuddlColors.primary.withValues(alpha: 0.25),
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
+                                ),
+                              ],
+                              MemberAvatar(
+                                name: c.authorName,
+                                imageUrl: c.authorPhotoUrl,
+                                size: isReply ? 28 : 36,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          c.authorName,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: isReply ? 12 : 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: hc.textPrimary,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        c.timeAgo,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11,
-                                          color: context.hc.textTertiary,
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          c.timeAgo,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: hc.textTertiary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // @mention chip for replies
+                                    if (isReply) ...[
+                                      const SizedBox(height: 2),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: HuddlColors.primary
+                                              .withValues(alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          '@${c.replyToName}',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: HuddlColors.primary,
+                                          ),
                                         ),
                                       ),
                                     ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    c.content,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: context.hc.textPrimary,
-                                      height: 1.4,
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      c.content,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: isReply ? 12 : 13,
+                                        color: hc.textPrimary,
+                                        height: 1.4,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      Semantics(
-                                        label: c.isLiked
-                                            ? 'Unlike comment'
-                                            : 'Like comment',
-                                        button: true,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            HapticFeedback.lightImpact();
-                                            setState(() {
-                                              c.isLiked = !c.isLiked;
-                                              c.likes +=
-                                                  c.isLiked ? 1 : -1;
-                                            });
-                                          },
-                                          child: SizedBox(
-                                            height: 48,
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  c.isLiked
-                                                      ? Icons.favorite
-                                                      : Icons
-                                                          .favorite_border,
-                                                  size: 14,
-                                                  color: c.isLiked
-                                                      ? HuddlColors
-                                                          .primary
-                                                      : HuddlColors
-                                                          .textHint,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Text(
-                                                  '${c.likes}',
-                                                  style:
-                                                      GoogleFonts.poppins(
-                                                    fontSize: 11,
+                                    const SizedBox(height: 6),
+                                    // Like + Reply row
+                                    Row(
+                                      children: [
+                                        // Like
+                                        Semantics(
+                                          label: c.isLiked
+                                              ? 'Unlike comment'
+                                              : 'Like comment',
+                                          button: true,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              HapticFeedback.lightImpact();
+                                              setState(() {
+                                                c.isLiked = !c.isLiked;
+                                                c.likes +=
+                                                    c.isLiked ? 1 : -1;
+                                              });
+                                            },
+                                            child: SizedBox(
+                                              height: 40,
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    c.isLiked
+                                                        ? Icons.favorite
+                                                        : Icons.favorite_border,
+                                                    size: 14,
                                                     color: c.isLiked
-                                                        ? HuddlColors
-                                                            .primary
-                                                        : HuddlColors
-                                                            .textHint,
+                                                        ? HuddlColors.primary
+                                                        : HuddlColors.textHint,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${c.likes}',
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 11,
+                                                      color: c.isLiked
+                                                          ? HuddlColors.primary
+                                                          : HuddlColors.textHint,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        // Reply — now fully wired
+                                        Semantics(
+                                          label: 'Reply to ${c.authorName}',
+                                          button: true,
+                                          child: GestureDetector(
+                                            onTap: () =>
+                                                _startReply(c.authorName),
+                                            child: SizedBox(
+                                              height: 40,
+                                              child: Center(
+                                                child: Text(
+                                                  'Reply',
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: _replyingTo ==
+                                                            c.authorName
+                                                        ? HuddlColors.primary
+                                                        : HuddlColors.textHint,
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Semantics(
-                                        label: 'Reply to comment',
-                                        button: true,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: const Text('Reply feature coming soon'),
-                                                behavior: SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                duration: const Duration(seconds: 2),
-                                              ),
-                                            );
-                                          },
-                                          child: SizedBox(
-                                            height: 48,
-                                            child: Center(
-                                              child: Text(
-                                                'Reply',
-                                                style:
-                                                    GoogleFonts.poppins(
-                                                  fontSize: 11,
-                                                  fontWeight:
-                                                      FontWeight.w500,
-                                                  color:
-                                                      HuddlColors.textHint,
-                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     ),
             ),
-            Divider(height: 1, color: context.hc.divider),
+            // ── "Replying to @name" banner ──────────────────────────────────
+            if (_replyingTo != null)
+              Container(
+                color: HuddlColors.primary.withValues(alpha: 0.06),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.reply_rounded,
+                        size: 14, color: HuddlColors.primary),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Replying to @$_replyingTo',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: HuddlColors.primary,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _cancelReply,
+                      child: Icon(Icons.close_rounded,
+                          size: 16, color: HuddlColors.primary),
+                    ),
+                  ],
+                ),
+              ),
+            Divider(height: 1, color: hc.divider),
+            // ── Input bar ───────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: Row(
@@ -3022,31 +3118,35 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                   Expanded(
                     child: TextField(
                       controller: _ctrl,
+                      focusNode: _focusNode,
                       decoration: InputDecoration(
-                        hintText: 'Write a comment...',
+                        hintText: _replyingTo != null
+                            ? 'Reply to @$_replyingTo…'
+                            : 'Write a comment…',
                         hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
+                            fontSize: 14, color: hc.textTertiary),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(
-                              color: context.hc.divider),
+                          borderSide: BorderSide(color: hc.divider),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide(
-                              color: context.hc.divider),
+                          borderSide: BorderSide(color: hc.divider),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(24),
-                          borderSide: const BorderSide(
-                              color: HuddlColors.primary),
+                          borderSide: BorderSide(
+                            color: _replyingTo != null
+                                ? HuddlColors.primary
+                                : HuddlColors.primary,
+                          ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
                         isDense: true,
                       ),
                       style: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textPrimary),
+                          fontSize: 14, color: hc.textPrimary),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
                     ),

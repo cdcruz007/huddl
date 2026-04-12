@@ -14,6 +14,8 @@ class AnnouncementComment {
   final DateTime createdAt;
   int likes;
   bool isLiked;
+  /// When non-null this comment is a reply; value is the author being replied to.
+  final String? replyToName;
 
   AnnouncementComment({
     required this.id,
@@ -23,6 +25,7 @@ class AnnouncementComment {
     required this.createdAt,
     this.likes = 0,
     this.isLiked = false,
+    this.replyToName,
   });
 
   Map<String, dynamic> toJson() => {
@@ -33,6 +36,7 @@ class AnnouncementComment {
         'createdAt': createdAt.toIso8601String(),
         'likes': likes,
         'isLiked': isLiked,
+        if (replyToName != null) 'replyToName': replyToName,
       };
 
   factory AnnouncementComment.fromJson(Map<String, dynamic> j) =>
@@ -44,6 +48,7 @@ class AnnouncementComment {
         createdAt: DateTime.parse(j['createdAt'] as String),
         likes: j['likes'] as int? ?? 0,
         isLiked: j['isLiked'] as bool? ?? false,
+        replyToName: j['replyToName'] as String?,
       );
 
   String get timeAgo {
@@ -264,6 +269,30 @@ class AnnouncementService {
     _announcements[idx].comments = _announcements[idx].commentsList.length;
     await _save();
     return comment;
+  }
+
+  /// Add a reply to a specific comment on an announcement.
+  /// The reply appears in the flat comment list immediately after [replyToName]'s
+  /// comment, tagged with [replyToName] so the UI can render the @mention.
+  Future<AnnouncementComment> addReply({
+    required String announcementId,
+    required String replyToName,
+    required String content,
+  }) async {
+    final idx = _announcements.indexWhere((a) => a.id == announcementId);
+    if (idx == -1) throw Exception('Announcement not found');
+    final reply = AnnouncementComment(
+      id: 'rpl_${DateTime.now().millisecondsSinceEpoch}',
+      authorName: _onboarding.name ?? 'You',
+      authorPhotoUrl: _onboarding.profilePhotoObjectUrl,
+      content: content,
+      createdAt: DateTime.now(),
+      replyToName: replyToName,
+    );
+    _announcements[idx].commentsList.add(reply);
+    _announcements[idx].comments = _announcements[idx].commentsList.length;
+    await _save();
+    return reply;
   }
 
   /// Increment share count.

@@ -7,6 +7,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
+import '../../services/onboarding_data_service.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
@@ -227,6 +228,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           ? suggestedPrice.toStringAsFixed(0)
           : '',
     );
+
+    // ── note controller ──────────────────────────────────────────────────────
+    final noteController = TextEditingController();
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -236,131 +241,225 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       ),
       builder: (ctx) {
         final sheetHc = ctx.hc;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-              20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const HuddlBottomSheetHandle(),
-              const SizedBox(height: 8),
-              Text(
-                'Make an offer',
-                style: _adaptiveText(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: sheetHc.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'for ${item.title}',
-                style: _adaptiveText(
-                  fontSize: 14,
-                  color: sheetHc.textTertiary,
-                ),
-              ),
-              if (!item.isFree) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Listed at ${item.priceDisplay}',
-                  style: _adaptiveText(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: HuddlColors.primary,
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            bool sending = false;
+
+            void submitOffer() {
+              if (sending) return;
+              HapticFeedback.mediumImpact();
+
+              final raw = controller.text.trim();
+              // For free items allow £0, otherwise require a positive value
+              final amount = double.tryParse(raw) ?? 0.0;
+              if (!item.isFree && amount <= 0) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(
+                    content: const Text('Please enter a valid offer amount.'),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
+                );
+                return;
+              }
+
+              setSheetState(() => sending = true);
+
+              // Resolve buyer name from onboarding data
+              final onboarding = OnboardingDataService();
+              final buyerName =
+                  onboarding.name?.isNotEmpty == true ? onboarding.name! : 'You';
+
+              final offer = RehomeOffer(
+                id: 'off_${DateTime.now().millisecondsSinceEpoch}',
+                itemId: item.id,
+                itemTitle: item.title,
+                buyerName: buyerName,
+                buyerId: 'current_user',
+                amount: item.isFree ? 0.0 : amount,
+                createdAt: DateTime.now(),
+                responseMessage:
+                    noteController.text.trim().isEmpty ? null : noteController.text.trim(),
+              );
+
+              // Persist to service so the seller sees it in the Sell tab
+              _service.addOffer(offer);
+
+              Navigator.pop(ctx);
+
+              final amountStr = item.isFree ? 'Free' : '£${amount.toStringAsFixed(0)}';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Row(
+                    children: [
+                      const Icon(Icons.check_circle,
+                          color: Colors.white, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Text(
+                              '$amountStr offer sent for "${item.title}"! The seller will review it.')),
+                    ],
+                  ),
+                  backgroundColor: HuddlColors.teal,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  duration: const Duration(seconds: 3),
                 ),
-              ],
-              const SizedBox(height: 20),
-              Semantics(
-                label: 'Enter your offer amount in pounds',
-                textField: true,
-                child: TextField(
-                  controller: controller,
-                  keyboardType: TextInputType.number,
-                  autofocus: true,
-                  style: _adaptiveText(
-                      fontSize: 24, fontWeight: FontWeight.w600,
-                      color: sheetHc.textPrimary),
-                  decoration: InputDecoration(
-                    prefixText: '\u00A3 ',
-                    prefixStyle: _adaptiveText(
-                        fontSize: 24, fontWeight: FontWeight.w600,
-                        color: sheetHc.textPrimary),
-                    hintText: '0',
-                    hintStyle: _adaptiveText(
-                        fontSize: 24, color: sheetHc.textTertiary),
-                    filled: true,
-                    fillColor: sheetHc.surfaceAlt,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
+              );
+            }
+
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                  20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const HuddlBottomSheetHandle(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Make an offer',
+                    style: _adaptiveText(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: sheetHc.textPrimary,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
                   ),
-                ),
-              ),
-              // Subtle hint about suggested price — transparency, not branding
-              if (suggestedPrice != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Suggested based on item condition',
-                  style: _adaptiveText(
-                    fontSize: 11,
-                    color: sheetHc.textTertiary,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: Semantics(
-                  label: 'Send offer to seller',
-                  button: true,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Row(
-                            children: [
-                              Icon(Icons.check_circle,
-                                  color: Colors.white, size: 18),
-                              SizedBox(width: 8),
-                              Text('Offer sent! The seller will be notified.'),
-                            ],
-                          ),
-                          backgroundColor: HuddlColors.teal,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(26)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      elevation: 0,
-                      minimumSize: const Size(0, 48),
+                  const SizedBox(height: 4),
+                  Text(
+                    'for ${item.title}',
+                    style: _adaptiveText(
+                      fontSize: 14,
+                      color: sheetHc.textTertiary,
                     ),
-                    child: Text(
-                      'Send offer',
+                  ),
+                  if (!item.isFree) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Listed at ${item.priceDisplay}',
                       style: _adaptiveText(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  if (!item.isFree) ...[
+                    Semantics(
+                      label: 'Enter your offer amount in pounds',
+                      textField: true,
+                      child: TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.number,
+                        autofocus: true,
+                        style: _adaptiveText(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: sheetHc.textPrimary),
+                        decoration: InputDecoration(
+                          prefixText: '\u00A3 ',
+                          prefixStyle: _adaptiveText(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: sheetHc.textPrimary),
+                          hintText: '0',
+                          hintStyle: _adaptiveText(
+                              fontSize: 24, color: sheetHc.textTertiary),
+                          filled: true,
+                          fillColor: sheetHc.surfaceAlt,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 16),
+                        ),
+                      ),
+                    ),
+                    // Subtle hint about suggested price
+                    if (suggestedPrice != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Suggested based on item condition',
+                        style: _adaptiveText(
+                          fontSize: 11,
+                          color: sheetHc.textTertiary,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                  ],
+                  // Optional note to seller
+                  Semantics(
+                    label: 'Add a note to the seller (optional)',
+                    textField: true,
+                    child: TextField(
+                      controller: noteController,
+                      maxLines: 2,
+                      maxLength: 160,
+                      style: _adaptiveText(
+                          fontSize: 14, color: sheetHc.textPrimary),
+                      decoration: InputDecoration(
+                        hintText:
+                            item.isFree ? 'Add a message for the seller…' : 'Add a note (optional)…',
+                        hintStyle: _adaptiveText(
+                            fontSize: 14, color: sheetHc.textTertiary),
+                        filled: true,
+                        fillColor: sheetHc.surfaceAlt,
+                        counterStyle: _adaptiveText(
+                            fontSize: 11, color: sheetHc.textTertiary),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Semantics(
+                      label: 'Send offer to seller',
+                      button: true,
+                      child: ElevatedButton(
+                        onPressed: sending ? null : submitOffer,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary,
+                          disabledBackgroundColor:
+                              HuddlColors.primary.withValues(alpha: 0.5),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          minimumSize: const Size(0, 48),
+                        ),
+                        child: sending
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : Text(
+                                item.isFree ? 'Request item' : 'Send offer',
+                                style: _adaptiveText(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

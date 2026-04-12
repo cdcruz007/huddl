@@ -492,6 +492,19 @@ class RehomeService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Called when a buyer submits an offer from the Item Detail screen.
+  /// Inserts the offer at the top of [_offers] and increments the item's
+  /// [offerCount] so the seller sees the new offer in their Sell tab.
+  void addOffer(RehomeOffer offer) {
+    _offers.insert(0, offer);
+    // Bump offerCount on the matching item
+    final idx = _items.indexWhere((i) => i.id == offer.itemId);
+    if (idx >= 0) _items[idx].offerCount++;
+    final myIdx = _myListings.indexWhere((i) => i.id == offer.itemId);
+    if (myIdx >= 0) _myListings[myIdx].offerCount++;
+    notifyListeners();
+  }
+
   void acceptOffer(String offerId, {String? message}) {
     final idx = _offers.indexWhere((o) => o.id == offerId);
     if (idx >= 0) {
