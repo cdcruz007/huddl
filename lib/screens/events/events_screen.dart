@@ -1740,7 +1740,10 @@ class _EventsTabState extends State<_EventsTab> {
   final FocusNode _nlpFocusNode = FocusNode();
   bool _showSuggestions = false;
   Map<String, dynamic> _activeParsedFilters = {};
-  bool _filtersExpanded = false; // progressive disclosure: filters hidden by default
+
+  // ── Manual filter state (set via bottom sheet) ─────────────
+  String _priceFilter = 'All';   // All | Free | Paid
+  String _formatFilter = 'All';  // All | Online | In-Person
 
   @override
   void initState() {
@@ -1856,13 +1859,29 @@ class _EventsTabState extends State<_EventsTab> {
       events = allEvents;
     }
 
-    // Apply manual filters if expanded
+    // Apply manual filters (set via chip row or bottom-sheet)
     if (_activeManualFilter != 'All') {
       events = events.where((e) {
         if (_activeManualFilter == 'Free') return e['isFree'] == true;
         if (_activeManualFilter == 'Paid') return e['isFree'] != true;
         if (_activeManualFilter == 'Online') return e['isOnline'] == true;
         if (_activeManualFilter == 'In-Person') return e['isOnline'] != true;
+        return true;
+      }).toList();
+    }
+    // Apply bottom-sheet price filter
+    if (_priceFilter != 'All') {
+      events = events.where((e) {
+        if (_priceFilter == 'Free') return e['isFree'] == true;
+        if (_priceFilter == 'Paid') return e['isFree'] != true;
+        return true;
+      }).toList();
+    }
+    // Apply bottom-sheet format filter
+    if (_formatFilter != 'All') {
+      events = events.where((e) {
+        if (_formatFilter == 'Online') return e['isOnline'] == true;
+        if (_formatFilter == 'In-Person') return e['isOnline'] != true;
         return true;
       }).toList();
     }
@@ -1877,7 +1896,13 @@ class _EventsTabState extends State<_EventsTab> {
         _recommended.isNotEmpty &&
         parentQuery.isEmpty &&
         _nlpQuery.isEmpty &&
-        _activeManualFilter == 'All';
+        _activeManualFilter == 'All' &&
+        _priceFilter == 'All' &&
+        _formatFilter == 'All';
+
+    // Whether bottom-sheet filters are active
+    final bool hasSheetFilters = _priceFilter != 'All' || _formatFilter != 'All';
+    final int sheetFilterCount = (_priceFilter != 'All' ? 1 : 0) + (_formatFilter != 'All' ? 1 : 0);
 
     // Active filter chips for NLP
     final activeNlpChips = _buildActiveNlpChips();
@@ -1923,50 +1948,62 @@ class _EventsTabState extends State<_EventsTab> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Filter pill button
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _filtersExpanded = !_filtersExpanded);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: (_activeManualFilter != 'All' || _filtersExpanded)
-                        ? HuddlColors.primary.withValues(alpha: 0.12)
-                        : context.hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _activeManualFilter != 'All'
-                          ? HuddlColors.primary.withValues(alpha: 0.4)
-                          : Colors.transparent,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 16,
-                        color: (_activeManualFilter != 'All')
-                            ? HuddlColors.primary
-                            : context.hc.textTertiary,
+              // Filter pill button — opens bottom sheet
+              Semantics(
+                label: hasSheetFilters
+                    ? 'Filters active ($sheetFilterCount). Tap to change.'
+                    : 'Filter events',
+                button: true,
+                child: GestureDetector(
+                  onTap: () => _showEventsFilterSheet(context),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: hasSheetFilters
+                          ? HuddlColors.primary.withValues(alpha: 0.12)
+                          : context.hc.inputBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: hasSheetFilters
+                            ? HuddlColors.primary.withValues(alpha: 0.4)
+                            : Colors.transparent,
+                        width: 1.2,
                       ),
-                      if (_activeManualFilter != 'All') ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          _activeManualFilter,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 16,
+                          color: hasSheetFilters
+                              ? HuddlColors.primary
+                              : context.hc.textTertiary,
                         ),
+                        if (hasSheetFilters) ...[
+                          const SizedBox(width: 4),
+                          Container(
+                            width: 16,
+                            height: 16,
+                            decoration: const BoxDecoration(
+                              color: HuddlColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '$sheetFilterCount',
+                              style: GoogleFonts.poppins(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -2010,10 +2047,22 @@ class _EventsTabState extends State<_EventsTab> {
                 padding: const EdgeInsets.only(right: 8),
                 child: _FilterChip(
                   label: f,
-                  isSelected: _activeManualFilter == f,
+                  // Chip is highlighted when it matches the chip-level filter
+                  // OR when the sheet filter matches it
+                  isSelected: _activeManualFilter == f ||
+                      (f == 'Free' && _priceFilter == 'Free') ||
+                      (f == 'Paid' && _priceFilter == 'Paid') ||
+                      (f == 'Online' && _formatFilter == 'Online') ||
+                      (f == 'In-Person' && _formatFilter == 'In-Person'),
                   onTap: () {
                     _invisibleAi.trackFilterClick(f);
-                    setState(() => _activeManualFilter = f);
+                    setState(() {
+                      // Selecting a chip clears the sheet filters to avoid conflict
+                      _priceFilter = 'All';
+                      _formatFilter = 'All';
+                      // Toggle: tapping the active chip deselects it
+                      _activeManualFilter = (_activeManualFilter == f) ? 'All' : f;
+                    });
                   },
                 ),
               )).toList(),
@@ -2049,13 +2098,33 @@ class _EventsTabState extends State<_EventsTab> {
         Expanded(
           child: events.isEmpty && !showCarousel
               ? _EmptyState(
-                  icon: Icons.event_outlined,
-                  title: _nlpQuery.isNotEmpty ? 'No matches' : 'No events found',
+                  icon: hasSheetFilters || _activeManualFilter != 'All'
+                      ? Icons.filter_list_off
+                      : Icons.event_outlined,
+                  title: _nlpQuery.isNotEmpty
+                      ? 'No matches'
+                      : (hasSheetFilters || _activeManualFilter != 'All')
+                          ? 'No events match your filters'
+                          : 'No events found',
                   subtitle: _nlpQuery.isNotEmpty
                       ? 'Try a different search like\n"free baby classes near me"'
-                      : 'Pull down to refresh or try searching.',
-                  actionLabel: _nlpQuery.isNotEmpty ? 'Clear search' : null,
-                  onAction: _nlpQuery.isNotEmpty ? _clearSearch : null,
+                      : (hasSheetFilters || _activeManualFilter != 'All')
+                          ? 'Try adjusting or clearing your filters.'
+                          : 'Pull down to refresh or try searching.',
+                  actionLabel: _nlpQuery.isNotEmpty
+                      ? 'Clear search'
+                      : (hasSheetFilters || _activeManualFilter != 'All')
+                          ? 'Clear filters'
+                          : null,
+                  onAction: _nlpQuery.isNotEmpty
+                      ? _clearSearch
+                      : (hasSheetFilters || _activeManualFilter != 'All')
+                          ? () => setState(() {
+                                _priceFilter = 'All';
+                                _formatFilter = 'All';
+                                _activeManualFilter = 'All';
+                              })
+                          : null,
                 )
               : RefreshIndicator(
                   onRefresh: _forceRefreshDiscovery,
@@ -2089,6 +2158,194 @@ class _EventsTabState extends State<_EventsTab> {
   }
 
   String _activeManualFilter = 'All';
+
+  // ── Events filter bottom sheet ────────────────────────────────
+  void _showEventsFilterSheet(BuildContext context) {
+    HapticFeedback.selectionClick();
+    // Snapshot current values so the sheet can restore on cancel
+    String sheetPrice = _priceFilter;
+    String sheetFormat = _formatFilter;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final hc = ctx.hc;
+          final hasAny = sheetPrice != 'All' || sheetFormat != 'All';
+
+          Widget optionChip(String label, String current, void Function(String) onSelect) {
+            final isSelected = current == label;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelect(label);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? HuddlColors.primary.withValues(alpha: 0.12)
+                      : hc.inputBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? HuddlColors.primary.withValues(alpha: 0.45)
+                        : hc.divider,
+                    width: 1.2,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? HuddlColors.primary : hc.textSecondary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle
+                  const HuddlBottomSheetHandle(),
+                  const SizedBox(height: 8),
+                  // Header row
+                  Row(
+                    children: [
+                      Text(
+                        'Filter Events',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (hasAny)
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              sheetPrice = 'All';
+                              sheetFormat = 'All';
+                            });
+                            setState(() {
+                              _priceFilter = 'All';
+                              _formatFilter = 'All';
+                            });
+                          },
+                          child: Text(
+                            'Clear all',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: HuddlColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // ── Price section ────────────────────────────
+                  Text(
+                    'Price',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ['All', 'Free', 'Paid'].map((label) {
+                      return optionChip(label, sheetPrice, (v) {
+                        setSheetState(() => sheetPrice = v);
+                        setState(() {
+                          _priceFilter = v;
+                          // Clear chip-level filter if it overlaps price
+                          if (v != 'All' && (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid')) {
+                            _activeManualFilter = 'All';
+                          }
+                        });
+                      });
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ── Format section ───────────────────────────
+                  Text(
+                    'Format',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ['All', 'Online', 'In-Person'].map((label) {
+                      return optionChip(label, sheetFormat, (v) {
+                        setSheetState(() => sheetFormat = v);
+                        setState(() {
+                          _formatFilter = v;
+                          // Clear chip-level filter if it overlaps format
+                          if (v != 'All' && (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person')) {
+                            _activeManualFilter = 'All';
+                          }
+                        });
+                      });
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ── Apply button ─────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'Show events',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   Widget _buildSuggestionsPanel() {
     final suggestions = _invisibleAi.getSearchSuggestions();
