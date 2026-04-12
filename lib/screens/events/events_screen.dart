@@ -18,6 +18,7 @@ import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import '../../widgets/borough_badge.dart';
+import '../../widgets/huddl_widgets.dart' show HuddlBottomSheetHandle;
 import '../../services/borough_scope_guard.dart';
 import '../groups/forward_message_sheet.dart';
 
@@ -433,36 +434,61 @@ class _MeetupsTab extends StatefulWidget {
 }
 
 class _MeetupsTabState extends State<_MeetupsTab> {
-  String _filter = 'All';
+  // ── Category filter (chip row) ────────────────────────────────
+  // These labels exactly match the create-meetup category names.
+  // Each maps to the short code(s) stored in Meetup.category.
+  static const _categoryChips = [
+    {'label': 'All',                  'codes': <String>[]},
+    {'label': 'Hanging out',          'codes': ['Social']},
+    {'label': 'Pregnancy',            'codes': ['Social']},
+    {'label': 'Playdate',             'codes': ['Playdate']},
+    {'label': 'Sports & exercise',    'codes': ['Sport']},
+    {'label': 'Coffee & tea',         'codes': ['Coffee']},
+    {'label': 'Parks & Walks',        'codes': ['Walk']},
+    {'label': 'Food & nutrition',     'codes': ['Food']},
+    {'label': 'Performance & shows',  'codes': ['Social']},
+    {'label': 'Other',                'codes': ['Other']},
+  ];
+
+  // ── Participant filter options (matches create-meetup form) ───
+  static const _participantOptions = [
+    'Mums', 'Dads', 'Aspiring parents', 'Expecting parents', 'Kids',
+  ];
+
+  String _selectedCategory = 'All'; // chip row selection
+  String _selectedParticipant = 'All'; // participant filter from bottom sheet
+
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
   bool _aiReady = false;
-  bool _filtersExpanded = false;
   SmartNudge? _activeNudge;
 
   // ── Local search ──────────────────────────────────────────────
   String _localSearchQuery = '';
   final TextEditingController _localSearchController = TextEditingController();
 
-  // Full filter set — all shown in scrollable chip row
-  static const _allFilters = [
-    {'label': 'All', 'codes': null},
-    {'label': 'Playdate', 'codes': ['Playdate']},
-    {'label': 'Coffee', 'codes': ['Coffee']},
-    {'label': 'Walk', 'codes': ['Walk']},
-    {'label': 'Sport', 'codes': ['Sport']},
-    {'label': 'Social', 'codes': ['Social']},
-    {'label': 'Food', 'codes': ['Food']},
-    {'label': 'Other', 'codes': ['Other']},
-  ];
+  /// True when any filter beyond 'All' is active.
+  bool get _hasActiveFilter =>
+      _selectedCategory != 'All' || _selectedParticipant != 'All';
 
-  List<String>? get _activeFilterCodes {
-    if (_filter == 'All') return null;
-    final cat = _allFilters.firstWhere(
-      (c) => c['label'] == _filter,
-      orElse: () => {'label': 'All', 'codes': null},
+  /// The category codes to match (empty = show all).
+  List<String> get _activeCategoryCodes {
+    if (_selectedCategory == 'All') return [];
+    final chip = _categoryChips.firstWhere(
+      (c) => c['label'] == _selectedCategory,
+      orElse: () => {'label': 'All', 'codes': <String>[]},
     );
-    return (cat['codes'] as List<String>?);
+    return (chip['codes'] as List<String>? ?? []);
+  }
+
+  /// Short label for the filter pill.
+  String get _filterPillLabel {
+    if (_selectedCategory != 'All' && _selectedParticipant != 'All') {
+      return '2 filters';
+    }
+    if (_selectedCategory != 'All') return _selectedCategory;
+    if (_selectedParticipant != 'All') return _selectedParticipant;
+    return '';
   }
 
   @override
@@ -523,6 +549,25 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       }
       return true;
     }).toList();
+  }
+
+  /// Apply both category and participant filters.
+  List<Meetup> _applyFilters(List<Meetup> meetups) {
+    var result = meetups;
+    // Category filter
+    final codes = _activeCategoryCodes;
+    if (codes.isNotEmpty) {
+      result = result.where((m) => codes.contains(m.category)).toList();
+    }
+    // Participant filter
+    if (_selectedParticipant != 'All') {
+      result = result.where((m) {
+        // If targetAudience is empty it means open to everyone — include it.
+        if (m.targetAudience.isEmpty) return true;
+        return m.targetAudience.contains(_selectedParticipant);
+      }).toList();
+    }
+    return result;
   }
 
   bool _canAccessMeetup(Meetup m) {
@@ -591,13 +636,185 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     );
   }
 
+  // ── Filter bottom sheet ───────────────────────────────────────
+  void _showFilterSheet(BuildContext context) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final hc = ctx.hc;
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle + header
+                  const HuddlBottomSheetHandle(),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text('Filter Meetups',
+                          style: GoogleFonts.poppins(
+                              fontSize: 18, fontWeight: FontWeight.w700,
+                              color: hc.textPrimary)),
+                      const Spacer(),
+                      if (_hasActiveFilter)
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {
+                              _selectedCategory = 'All';
+                              _selectedParticipant = 'All';
+                            });
+                            setState(() {
+                              _selectedCategory = 'All';
+                              _selectedParticipant = 'All';
+                            });
+                          },
+                          child: Text('Clear all',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, color: HuddlColors.primary,
+                                  fontWeight: FontWeight.w500)),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // ── Category section ──────────────────────────
+                  Text('Category',
+                      style: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w600,
+                          color: hc.textSecondary)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _categoryChips.map((chip) {
+                      final label = chip['label'] as String;
+                      final isSelected = _selectedCategory == label;
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setSheetState(() => _selectedCategory = label);
+                          setState(() {
+                            _selectedCategory = label;
+                            _aiService.trackCategoryTap(label);
+                          });
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? HuddlColors.primary.withValues(alpha: 0.12)
+                                : hc.inputBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                                  : hc.divider,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Text(label,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? HuddlColors.primary
+                                      : hc.textSecondary)),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  // ── Participants section ───────────────────────
+                  Text('Participants',
+                      style: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w600,
+                          color: hc.textSecondary)),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: ['All', ..._participantOptions].map((p) {
+                      final isSelected = _selectedParticipant == p;
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          setSheetState(() => _selectedParticipant = p);
+                          setState(() => _selectedParticipant = p);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? HuddlColors.primary.withValues(alpha: 0.12)
+                                : hc.inputBg,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: isSelected
+                                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                                  : hc.divider,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: Text(p,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color: isSelected
+                                      ? HuddlColors.primary
+                                      : hc.textSecondary)),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  // ── Apply button ──────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                        elevation: 0,
+                      ),
+                      child: Text('Show meetups',
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final visible = _visibleMeetups;
-    final codes = _activeFilterCodes;
-    var filtered = codes == null
-        ? visible
-        : visible.where((m) => codes.contains(m.category)).toList();
+    var filtered = _applyFilters(visible);
 
     // ── B) Smart Sort: AI silently reorders meetups ──────────────
     List<ScoredMeetup> scored = [];
@@ -658,75 +875,77 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 ),
               ),
               const SizedBox(width: 8),
-              // Filter pill button
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _filtersExpanded = !_filtersExpanded);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: (_filter != 'All' || _filtersExpanded)
-                        ? HuddlColors.primary.withValues(alpha: 0.12)
-                        : context.hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: (_filter != 'All')
-                          ? HuddlColors.primary.withValues(alpha: 0.4)
-                          : Colors.transparent,
-                      width: 1.2,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        size: 16,
-                        color: (_filter != 'All')
-                            ? HuddlColors.primary
-                            : context.hc.textTertiary,
+              // Filter pill button — opens full filter bottom sheet
+              Semantics(
+                label: _hasActiveFilter ? 'Filters active. Tap to change.' : 'Filter meetups',
+                button: true,
+                child: GestureDetector(
+                  onTap: () => _showFilterSheet(context),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: _hasActiveFilter
+                          ? HuddlColors.primary.withValues(alpha: 0.12)
+                          : context.hc.inputBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: _hasActiveFilter
+                            ? HuddlColors.primary.withValues(alpha: 0.4)
+                            : Colors.transparent,
+                        width: 1.2,
                       ),
-                      if (_filter != 'All') ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          _filter,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
-                          ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 16,
+                          color: _hasActiveFilter
+                              ? HuddlColors.primary
+                              : context.hc.textTertiary,
                         ),
+                        if (_filterPillLabel.isNotEmpty) ...[
+                          const SizedBox(width: 4),
+                          Text(
+                            _filterPillLabel,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ],
           ),
         ),
-        // ── Filter chips row (always visible) ────────────────────
+        // ── Category chips row — full 9 categories from create form ──
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.fromLTRB(0, 2, 0, 8),
           child: SizedBox(
             height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _allFilters.map((cat) {
-                final label = cat['label'] as String;
+              children: _categoryChips.map((chip) {
+                final label = chip['label'] as String;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: _FilterChip(
                     label: label,
-                    isSelected: _filter == label,
+                    isSelected: _selectedCategory == label,
                     onTap: () {
+                      HapticFeedback.selectionClick();
                       _aiService.trackCategoryTap(label);
-                      setState(() => _filter = label);
+                      setState(() => _selectedCategory = label);
                     },
                   ),
                 );
@@ -734,6 +953,46 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             ),
           ),
         ),
+        // Active participant filter badge (shown when participant is filtered)
+        if (_selectedParticipant != 'All')
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: HuddlColors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.people_outline, size: 14,
+                          color: HuddlColors.primary),
+                      const SizedBox(width: 5),
+                      Text(_selectedParticipant,
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary)),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _selectedParticipant = 'All');
+                        },
+                        child: Icon(Icons.close, size: 14,
+                            color: HuddlColors.primary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
 
         // ── E) Smart Nudge — contextual one-liner (dismissible) ──
         if (_activeNudge != null)
@@ -750,12 +1009,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         Expanded(
           child: filtered.isEmpty
               ? _EmptyState(
-                  icon: Icons.groups_outlined,
-                  title: 'No meet-ups yet',
-                  subtitle:
-                      'Organise a casual get-together with\nother parents in your area.',
-                  actionLabel: 'Create Meet-up',
-                  onAction: widget.onCreateMeetup,
+                  icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
+                  title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
+                  subtitle: _hasActiveFilter
+                      ? 'Try adjusting your filters to see more meetups.'
+                      : 'Organise a casual get-together with\nother parents in your area.',
+                  actionLabel: _hasActiveFilter ? 'Clear filters' : 'Create Meet-up',
+                  onAction: _hasActiveFilter
+                      ? () => setState(() {
+                            _selectedCategory = 'All';
+                            _selectedParticipant = 'All';
+                          })
+                      : widget.onCreateMeetup,
                 )
               : RefreshIndicator(
                   onRefresh: () async {

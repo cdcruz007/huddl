@@ -461,6 +461,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       groupName: _selectedGroupName,
       invitedMemberIds: _privacy == 'private' ? _selectedMemberIds.toList() : [],
       borough: _userBorough,
+      targetAudience: _participants.entries
+          .where((e) => e.value)
+          .map((e) => e.key)
+          .toList(),
     );
 
     _meetupService.createMeetup(meetup);

@@ -72,6 +72,7 @@ class Meetup {
   final List<MeetupAttendee> invitees;
   final List<String> invitedMemberIds; // For private meetups: IDs of invited members
   final String? borough; // Borough this meetup belongs to for visibility
+  final List<String> targetAudience; // Participant types: Mums, Dads, Aspiring parents, Expecting parents, Kids
   final DateTime createdAt;
 
   Meetup({
@@ -102,6 +103,7 @@ class Meetup {
     this.invitees = const [],
     this.invitedMemberIds = const [],
     this.borough,
+    this.targetAudience = const [],
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -113,6 +115,7 @@ class Meetup {
     List<String>? attendeeNames,
     List<MeetupAttendee>? invitees,
     List<String>? invitedMemberIds,
+    List<String>? targetAudience,
   }) {
     return Meetup(
       id: id,
@@ -142,6 +145,7 @@ class Meetup {
       invitees: invitees ?? this.invitees,
       invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
       borough: borough,
+      targetAudience: targetAudience ?? this.targetAudience,
       createdAt: createdAt,
     );
   }
@@ -204,6 +208,7 @@ class Meetup {
     'invitees': invitees.map((i) => i.toJson()).toList(),
     'invitedMemberIds': invitedMemberIds,
     'borough': borough,
+    'targetAudience': targetAudience,
     'createdAt': createdAt.toIso8601String(),
   };
 
@@ -246,6 +251,7 @@ class Meetup {
         .toList() ?? [],
     invitedMemberIds: List<String>.from(j['invitedMemberIds'] ?? []),
     borough: j['borough'],
+    targetAudience: List<String>.from(j['targetAudience'] ?? []),
     createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
   );
 }
@@ -439,6 +445,7 @@ class MeetupService extends ChangeNotifier {
             repeatEndDate: m.repeatEndDate, groupId: m.groupId,
             groupName: m.groupName, invitees: m.invitees,
             invitedMemberIds: m.invitedMemberIds, borough: m.borough,
+            targetAudience: m.targetAudience,
             createdAt: m.createdAt,
           );
           changed = true;
@@ -493,6 +500,7 @@ class MeetupService extends ChangeNotifier {
                 repeatEndDate: meetup.repeatEndDate, groupId: meetup.groupId,
                 groupName: meetup.groupName, invitees: meetup.invitees,
                 invitedMemberIds: meetup.invitedMemberIds, borough: meetup.borough,
+                targetAudience: meetup.targetAudience,
                 createdAt: meetup.createdAt,
               );
             }
@@ -533,6 +541,7 @@ class MeetupService extends ChangeNotifier {
         repeatDisplay: 'Every Monday',
         isFree: true,
         borough: 'Cambridge',
+        targetAudience: ['Mums', 'Dads'],
       ),
       Meetup(
         id: 'mu_2',
@@ -557,6 +566,7 @@ class MeetupService extends ChangeNotifier {
         isFree: false,
         price: 15.0,
         borough: 'Cambridge',
+        targetAudience: ['Dads', 'Kids'],
       ),
       Meetup(
         id: 'mu_3',
@@ -577,6 +587,7 @@ class MeetupService extends ChangeNotifier {
         privacy: MeetupPrivacy.public,
         isFree: true,
         borough: 'Cambridge',
+        targetAudience: ['Mums', 'Kids'],
       ),
       Meetup(
         id: 'mu_4',
@@ -597,6 +608,7 @@ class MeetupService extends ChangeNotifier {
         privacy: MeetupPrivacy.public,
         isFree: true,
         borough: 'Cambridge',
+        targetAudience: ['Mums', 'Dads', 'Kids'],
       ),
       Meetup(
         id: 'mu_5',
@@ -620,6 +632,7 @@ class MeetupService extends ChangeNotifier {
         isFree: false,
         price: 35.0,
         borough: 'Cambridge',
+        targetAudience: ['Mums', 'Dads'],
       ),
     ]);
   }
