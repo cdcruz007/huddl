@@ -892,6 +892,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   /// Opens a combined filter bottom-sheet that consolidates all four filters.
   void _showAllFiltersSheet(HuddlContextColors hc) {
     HapticFeedback.selectionClick();
+
+    // Snapshot current values so the sheet StatefulBuilder can mutate locally
+    // while also pushing changes back to the parent via setState immediately
+    // (live filtering as the user taps — no "Apply" delay).
+    AgeStage? sheetAge = _selectedAge;
+    ItemCategory? sheetCat = _selectedCategory;
+    PriceType? sheetPrice = _selectedPriceType;
+    ItemCondition? sheetCond = _selectedCondition;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: hc.surface,
@@ -899,173 +908,337 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const HuddlBottomSheetHandle(),
-              const SizedBox(height: 8),
-              Row(
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final shc = ctx.hc;
+          final hasAny = sheetAge != null ||
+              sheetCat != null ||
+              sheetPrice != null ||
+              sheetCond != null;
+
+          // ── Helper: inline chip that selects/deselects on tap ──────────
+          Widget chip<T>({
+            required String label,
+            required bool isSelected,
+            required VoidCallback onTap,
+            Color? activeColor,
+          }) {
+            final color = activeColor ?? HuddlColors.primary;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? color.withValues(alpha: 0.12)
+                      : shc.inputBg,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? color.withValues(alpha: 0.45)
+                        : shc.divider,
+                    width: 1.2,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: _adaptiveText(
+                    fontSize: 13,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? color : shc.textSecondary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.82,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (_, scrollController) => SafeArea(
+              child: Column(
                 children: [
-                  Text('Filters', style: _adaptiveText(
-                      fontSize: 18, fontWeight: FontWeight.w700, color: hc.textPrimary)),
-                  const Spacer(),
-                  if (_hasActiveFilters)
-                    GestureDetector(
-                      onTap: () {
-                        _clearAllFilters();
-                        Navigator.pop(context);
-                      },
-                      child: Text('Clear all', style: _adaptiveText(
-                          fontSize: 13, color: HuddlColors.primary,
-                          fontWeight: FontWeight.w500)),
+                  // ── Fixed header ───────────────────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const HuddlBottomSheetHandle(),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              'Filters',
+                              style: _adaptiveText(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: shc.textPrimary,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (hasAny)
+                              TextButton(
+                                onPressed: () {
+                                  setSheetState(() {
+                                    sheetAge = null;
+                                    sheetCat = null;
+                                    sheetPrice = null;
+                                    sheetCond = null;
+                                  });
+                                  setState(() {
+                                    _selectedAge = null;
+                                    _selectedCategory = null;
+                                    _selectedPriceType = null;
+                                    _selectedCondition = null;
+                                  });
+                                },
+                                style: TextButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap),
+                                child: Text(
+                                  'Clear all',
+                                  style: _adaptiveText(
+                                    fontSize: 13,
+                                    color: HuddlColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                      ],
                     ),
+                  ),
+
+                  // ── Scrollable filter sections ─────────────────────────
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                      children: [
+                        // ── AGE GROUP ──────────────────────────────────
+                        Text(
+                          'Age group',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            // "Any age" clears the age selection
+                            chip<void>(
+                              label: 'Any age',
+                              isSelected: sheetAge == null,
+                              onTap: () {
+                                setSheetState(() => sheetAge = null);
+                                setState(() => _selectedAge = null);
+                              },
+                            ),
+                            ...AgeStage.values.map((age) => chip<AgeStage>(
+                                  label: age.shortLabel,
+                                  isSelected: sheetAge == age,
+                                  onTap: () {
+                                    // Tap again to deselect
+                                    final next =
+                                        sheetAge == age ? null : age;
+                                    setSheetState(() => sheetAge = next);
+                                    setState(
+                                        () => _selectedAge = next);
+                                  },
+                                )),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ── CATEGORY ───────────────────────────────────
+                        Text(
+                          'Category',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            chip<void>(
+                              label: 'All',
+                              isSelected: sheetCat == null,
+                              onTap: () {
+                                setSheetState(() => sheetCat = null);
+                                setState(
+                                    () => _selectedCategory = null);
+                              },
+                            ),
+                            ...ItemCategory.values
+                                .map((cat) => chip<ItemCategory>(
+                                      label: cat.label,
+                                      isSelected: sheetCat == cat,
+                                      activeColor: cat.color,
+                                      onTap: () {
+                                        final next = sheetCat == cat
+                                            ? null
+                                            : cat;
+                                        setSheetState(
+                                            () => sheetCat = next);
+                                        setState(() =>
+                                            _selectedCategory = next);
+                                      },
+                                    )),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ── PRICE ──────────────────────────────────────
+                        Text(
+                          'Price',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            chip<void>(
+                              label: 'All prices',
+                              isSelected: sheetPrice == null,
+                              onTap: () {
+                                setSheetState(() => sheetPrice = null);
+                                setState(
+                                    () => _selectedPriceType = null);
+                              },
+                            ),
+                            chip<PriceType>(
+                              label: 'Free',
+                              isSelected: sheetPrice == PriceType.free,
+                              activeColor: HuddlColors.actionGreen,
+                              onTap: () {
+                                final next = sheetPrice == PriceType.free
+                                    ? null
+                                    : PriceType.free;
+                                setSheetState(() => sheetPrice = next);
+                                setState(
+                                    () => _selectedPriceType = next);
+                              },
+                            ),
+                            chip<PriceType>(
+                              label: 'Paid',
+                              isSelected: sheetPrice == PriceType.paid,
+                              activeColor: HuddlColors.amberWarm,
+                              onTap: () {
+                                final next = sheetPrice == PriceType.paid
+                                    ? null
+                                    : PriceType.paid;
+                                setSheetState(() => sheetPrice = next);
+                                setState(
+                                    () => _selectedPriceType = next);
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ── CONDITION ──────────────────────────────────
+                        Text(
+                          'Condition',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: shc.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            chip<void>(
+                              label: 'Any condition',
+                              isSelected: sheetCond == null,
+                              onTap: () {
+                                setSheetState(() => sheetCond = null);
+                                setState(
+                                    () => _selectedCondition = null);
+                              },
+                            ),
+                            ...ItemCondition.values
+                                .map((cond) => chip<ItemCondition>(
+                                      label: cond.label,
+                                      isSelected: sheetCond == cond,
+                                      activeColor: cond.color,
+                                      onTap: () {
+                                        final next = sheetCond == cond
+                                            ? null
+                                            : cond;
+                                        setSheetState(
+                                            () => sheetCond = next);
+                                        setState(() =>
+                                            _selectedCondition = next);
+                                      },
+                                    )),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
+
+                  // ── Fixed "Show items" button ──────────────────────────
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary,
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Show items',
+                          style: _adaptiveText(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
-              // Age
-              Text('Age group', style: _adaptiveText(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () { Navigator.pop(context); _showAgeSheet(hc); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedAge != null
-                        ? HuddlColors.primary.withValues(alpha: 0.08)
-                        : hc.inputBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedAge != null
-                          ? HuddlColors.primary.withValues(alpha: 0.3)
-                          : hc.divider,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.child_care, size: 16,
-                          color: _selectedAge != null ? HuddlColors.primary : hc.textTertiary),
-                      const SizedBox(width: 8),
-                      Text(_selectedAge?.shortLabel ?? 'Any age',
-                          style: _adaptiveText(fontSize: 14,
-                              color: _selectedAge != null ? HuddlColors.primary : hc.textSecondary)),
-                      const Spacer(),
-                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Category
-              Text('Category', style: _adaptiveText(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () { Navigator.pop(context); _showCategorySheet(hc); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedCategory != null
-                        ? HuddlColors.primary.withValues(alpha: 0.08)
-                        : hc.inputBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedCategory != null
-                          ? HuddlColors.primary.withValues(alpha: 0.3)
-                          : hc.divider,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.category_outlined, size: 16,
-                          color: _selectedCategory != null ? HuddlColors.primary : hc.textTertiary),
-                      const SizedBox(width: 8),
-                      Text(_selectedCategory?.label ?? 'All categories',
-                          style: _adaptiveText(fontSize: 14,
-                              color: _selectedCategory != null ? HuddlColors.primary : hc.textSecondary)),
-                      const Spacer(),
-                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Price
-              Text('Price', style: _adaptiveText(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () { Navigator.pop(context); _showPriceSheet(hc); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedPriceType != null
-                        ? HuddlColors.primary.withValues(alpha: 0.08)
-                        : hc.inputBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedPriceType != null
-                          ? HuddlColors.primary.withValues(alpha: 0.3)
-                          : hc.divider,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.sell_outlined, size: 16,
-                          color: _selectedPriceType != null ? HuddlColors.primary : hc.textTertiary),
-                      const SizedBox(width: 8),
-                      Text(_selectedPriceType == PriceType.free ? 'Free only'
-                          : _selectedPriceType == PriceType.paid ? 'Paid only'
-                          : 'All prices',
-                          style: _adaptiveText(fontSize: 14,
-                              color: _selectedPriceType != null ? HuddlColors.primary : hc.textSecondary)),
-                      const Spacer(),
-                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              // Condition
-              Text('Condition', style: _adaptiveText(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: hc.textSecondary)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () { Navigator.pop(context); _showConditionSheet(hc); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _selectedCondition != null
-                        ? HuddlColors.primary.withValues(alpha: 0.08)
-                        : hc.inputBg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _selectedCondition != null
-                          ? HuddlColors.primary.withValues(alpha: 0.3)
-                          : hc.divider,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.star_outline, size: 16,
-                          color: _selectedCondition != null ? HuddlColors.primary : hc.textTertiary),
-                      const SizedBox(width: 8),
-                      Text(_selectedCondition?.label ?? 'Any condition',
-                          style: _adaptiveText(fontSize: 14,
-                              color: _selectedCondition != null ? HuddlColors.primary : hc.textSecondary)),
-                      const Spacer(),
-                      Icon(Icons.chevron_right, size: 18, color: hc.textTertiary),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
