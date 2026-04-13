@@ -1,4 +1,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ── Permissions ────────────────────────────────────────────────────────
+         INTERNET        : Required for Firebase, backend API calls, and Stripe.
+         BILLING         : Required by Google Play Billing / in_app_purchase.
+                           Without this the purchase sheet will not open and
+                           InAppPurchase.instance.isAvailable() returns false.
+    ──────────────────────────────────────────────────────────────────────── -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
     <application
         android:label="Huddl Connect"
         android:name="${applicationName}"
@@ -54,6 +64,12 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- ── Google Play Billing visibility (Android 11+) ──────────────────
+             Allows in_app_purchase to detect and communicate with the Play
+             Store billing service. Required on API 30+ due to package
+             visibility restrictions (PMS queries).
+        ──────────────────────────────────────────────────────────────────── -->
+        <package android:name="com.android.vending"/>
     </queries>
 </manifest>
 

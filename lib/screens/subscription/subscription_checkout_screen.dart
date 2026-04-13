@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
@@ -50,6 +51,8 @@ class _SubscriptionCheckoutScreenState
   bool _isProcessing = false;
   bool _agreedToTerms = false;
   late bool _isScheduled;
+  // Web-only: true while we're waiting for the Stripe webhook to confirm payment
+  bool _awaitingStripeWebhook = false;
 
   late SubscriptionPlan _plan;
 
@@ -87,8 +90,16 @@ class _SubscriptionCheckoutScreenState
   void _onPaymentStatusChanged() {
     if (!mounted) return;
     setState(() {
-      _isProcessing = _payService.status == PaymentStatus.purchasing ||
-          _payService.status == PaymentStatus.verifying;
+      _isProcessing = _payService.status == PaymentStatus.purchasing;
+      // On web, verifying means the user is on the Stripe page (not a spinner)
+      if (kIsWeb && _payService.status == PaymentStatus.verifying) {
+        _awaitingStripeWebhook = true;
+        _isProcessing = false;
+      }
+      // If status flips to success via notifyStripeSuccess, hide waiting state
+      if (_payService.status == PaymentStatus.success) {
+        _awaitingStripeWebhook = false;
+      }
     });
   }
 
@@ -203,24 +214,24 @@ class _SubscriptionCheckoutScreenState
       return;
     }
 
-    // ── Immediate purchase (from Explorer / new subscriber) ────────────
+    // ── Immediate purchase (from Welcome / new subscriber) ────────────
     final success = await _payService.purchaseSubscription(
       tier: _plan.tier,
       period: _period,
     );
 
-    // On mobile, the result comes via the purchaseStream callback.
-    // On web (Stripe), success is returned directly.
-    if (success && kIsWeb) {
-      // Web: Stripe flow completed synchronously in our dev stub
-      _onPurchaseSuccess(
-        HuddlProductIds.productIdFor(_plan.tier, _period),
-        null,
-      );
-    } else if (!success) {
-      setState(() => _isProcessing = false);
+    // On mobile: result comes via purchaseStream callback (_onPurchaseSuccess).
+    // On web:    the user has been redirected to Stripe Checkout in the browser.
+    //            Payment is NOT confirmed here — we wait for the Stripe webhook
+    //            to update Firestore, or the user returns via successUrl and
+    //            the router calls PaymentService().notifyStripeSuccess().
+    //            _onPaymentStatusChanged() updates _awaitingStripeWebhook so
+    //            the UI shows the "waiting for payment" banner.
+    if (!success) {
+      if (mounted) setState(() => _isProcessing = false);
     }
-    // On mobile, we wait for the purchaseStream callback
+    // On mobile success=true means the native sheet was shown; wait for stream.
+    // On web success=true means browser was opened; wait for webhook / return.
   }
 
   // ── Build ──────────────────────────────────────────────────────────────
@@ -458,6 +469,70 @@ class _SubscriptionCheckoutScreenState
                 ),
               ),
             ),
+
+            // ── Web: Stripe payment pending banner ───────────────────────
+            if (_awaitingStripeWebhook) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                color: HuddlColors.blue.withValues(alpha: 0.07),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: HuddlColors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Waiting for payment confirmation…',
+                            style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Complete your payment in the browser tab that just opened. '
+                      'This screen will update automatically once your payment is confirmed.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: context.hc.textSecondary),
+                    ),
+                    if (_payService.lastCheckoutUrl != null) ...[
+                      const SizedBox(height: 8),
+                      TextButton.icon(
+                        onPressed: () async {
+                          final url = _payService.lastCheckoutUrl!;
+                          await launchUrl(Uri.parse(url),
+                              mode: LaunchMode.externalApplication);
+                        },
+                        icon: const Icon(Icons.open_in_browser,
+                            size: 16, color: HuddlColors.blue),
+                        label: Text('Re-open payment page',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.blue)),
+                        style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
 
             // ── Purchase button bar ──────────────────────────────────────
             Container(

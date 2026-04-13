@@ -42,6 +42,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/subscription.dart';
 import 'backend_api_service.dart';
 
@@ -104,6 +105,37 @@ class HuddlProductIds {
 }
 
 // ── Stripe configuration (web only) ─────────────────────────────────────────
+//
+// ╔══════════════════════════════════════════════════════════════════════════╗
+// ║  STRIPE SETUP CHECKLIST — complete before going live                    ║
+// ╠══════════════════════════════════════════════════════════════════════════╣
+// ║  1. PUBLISHABLE KEY                                                      ║
+// ║     Build with:  flutter build web --dart-define=STRIPE_PK=pk_live_xxx  ║
+// ║     Test builds: flutter build web --dart-define=STRIPE_PK=pk_test_xxx  ║
+// ║     Obtain from: https://dashboard.stripe.com/apikeys                   ║
+// ║                                                                          ║
+// ║  2. PRICE IDs  (replace placeholders in priceIds map below)             ║
+// ║     Create products at: https://dashboard.stripe.com/products           ║
+// ║     Then copy the Price ID (starts with price_) for each plan/period.   ║
+// ║                                                                          ║
+// ║  3. WEBHOOK                                                              ║
+// ║     Endpoint: POST https://api.huddlconnect.com/api/stripe/webhook      ║
+// ║     Events:   customer.subscription.created                             ║
+// ║               customer.subscription.updated                             ║
+// ║               invoice.paid                                              ║
+// ║               invoice.payment_failed                                    ║
+// ║               customer.subscription.deleted                             ║
+// ║     Secret:   Set STRIPE_WEBHOOK_SECRET env var on the backend server.  ║
+// ║     Obtain:   https://dashboard.stripe.com/webhooks                     ║
+// ║                                                                          ║
+// ║  4. BACKEND ENVIRONMENT VARIABLES (api.huddlconnect.com)                ║
+// ║     STRIPE_SECRET_KEY=sk_live_xxx                                       ║
+// ║     STRIPE_WEBHOOK_SECRET=whsec_xxx                                     ║
+// ║                                                                          ║
+// ║  5. CUSTOMER PORTAL                                                     ║
+// ║     Enable and configure at:                                             ║
+// ║     https://dashboard.stripe.com/settings/billing/portal                ║
+// ╚══════════════════════════════════════════════════════════════════════════╝
 
 class StripeConfig {
   StripeConfig._();
@@ -120,12 +152,26 @@ class StripeConfig {
   static String get customerPortalUrl =>
       '${BackendApiService().baseUrl}/api/stripe/customer-portal';
 
-  // Stripe Price IDs (must match your Stripe Dashboard products)
+  // ── Stripe Price IDs ────────────────────────────────────────────────────
+  // TODO: Replace every placeholder below with the real Price ID from
+  //       https://dashboard.stripe.com/prices
+  //       Format: price_<alphanumeric>   e.g. price_1OXxyzABCDEFGHIJ
+  //
+  //       These placeholders will cause "No such price" errors in production.
+  //       The backend reads productId from the request body and looks up the
+  //       corresponding priceId to pass to stripe.checkout.sessions.create().
+  //
+  //  Product          Period   Placeholder                → Replace with
+  //  ───────────────  ───────  ─────────────────────────   ────────────────
+  //  Neighbour        Monthly  'price_neighbour_monthly'  → 'price_1Abc...'
+  //  Neighbour        Annual   'price_neighbour_annual'   → 'price_2Abc...'
+  //  Circle           Monthly  'price_circle_monthly'     → 'price_3Abc...'
+  //  Circle           Annual   'price_circle_annual'      → 'price_4Abc...'
   static const Map<String, String> priceIds = {
-    HuddlProductIds.neighbourhoodMonthly: 'price_neighbour_monthly',
-    HuddlProductIds.neighbourhoodAnnual: 'price_neighbour_annual',
-    HuddlProductIds.innerCircleMonthly: 'price_circle_monthly',
-    HuddlProductIds.innerCircleAnnual: 'price_circle_annual',
+    HuddlProductIds.neighbourhoodMonthly: 'price_neighbour_monthly', // TODO: replace
+    HuddlProductIds.neighbourhoodAnnual:  'price_neighbour_annual',  // TODO: replace
+    HuddlProductIds.innerCircleMonthly:   'price_circle_monthly',    // TODO: replace
+    HuddlProductIds.innerCircleAnnual:    'price_circle_annual',     // TODO: replace
   };
 }
 
@@ -467,12 +513,61 @@ class PaymentService extends ChangeNotifier {
 
   /// Purchase via Stripe Checkout (web).
   ///
-  /// Calls the Node.js backend to create a Stripe Checkout Session,
-  /// then redirects the user to the Stripe-hosted payment page.
+  /// Calls the Node.js backend to create a Stripe Checkout Session and opens
+  /// the Stripe-hosted payment page in the browser via url_launcher.
+  ///
+  /// ─── HOW THE WEB FLOW WORKS ────────────────────────────────────────────
+  ///  1. We POST to /api/stripe/create-checkout-session with:
+  ///       productId   → tells the backend which Stripe Price to charge
+  ///       successUrl  → Stripe redirects here after payment; include a
+  ///                     ?session_id={CHECKOUT_SESSION_ID} query parameter so
+  ///                     your backend can confirm the session on return.
+  ///       cancelUrl   → Stripe redirects here if the user clicks "Back"
+  ///  2. We receive a Stripe Checkout URL and open it in the browser.
+  ///  3. Status is set to [PaymentStatus.verifying] while the user is on
+  ///     the Stripe page.  We do NOT call onPurchaseSuccess here — payment
+  ///     has not been collected yet.
+  ///  4. After the user pays, Stripe fires a webhook to your backend
+  ///     (invoice.paid / customer.subscription.created).  The backend
+  ///     updates Firestore with the new subscription state.
+  ///  5. On return to the app the SubscriptionService reads Firestore and
+  ///     updates the user's tier.  The checkout screen should listen to
+  ///     Firestore (or poll /api/subscription/{uid}) to detect the change
+  ///     and show the success dialog.
+  ///
+  /// ─── STRIPE DASHBOARD SETUP REQUIRED ──────────────────────────────────
+  ///  • Webhook endpoint:  POST https://api.huddlconnect.com/api/stripe/webhook
+  ///  • Events to listen:  customer.subscription.created
+  ///                        customer.subscription.updated
+  ///                        invoice.paid
+  ///                        invoice.payment_failed
+  ///  • Webhook secret:    Set STRIPE_WEBHOOK_SECRET env var on backend.
+  ///
+  /// ─── PRODUCT / PRICE IDS IN STRIPE DASHBOARD ──────────────────────────
+  /// TODO: Replace the placeholder price IDs in [StripeConfig.priceIds] with
+  ///       your real Stripe Price IDs from https://dashboard.stripe.com/prices
+  ///       Current placeholders (will cause "No such price" errors in prod):
+  ///         'price_neighbour_monthly'  → e.g. 'price_1AbcDEFGhiJK'
+  ///         'price_neighbour_annual'   → e.g. 'price_2AbcDEFGhiJK'
+  ///         'price_circle_monthly'     → e.g. 'price_3AbcDEFGhiJK'
+  ///         'price_circle_annual'      → e.g. 'price_4AbcDEFGhiJK'
   Future<bool> _purchaseViaStripe(String productId) async {
     try {
       final api = BackendApiService();
-      final result = await api.createCheckoutSession(productId: productId);
+
+      // Build return URLs.  On web, window.location.origin is available via
+      // Uri.base.  The backend embeds ?session_id={CHECKOUT_SESSION_ID} in
+      // the successUrl so it can verify the session on return.
+      final origin = kIsWeb ? Uri.base.origin : 'https://app.huddlconnect.com';
+      final successUrl =
+          '$origin/subscription/success?session_id={CHECKOUT_SESSION_ID}';
+      final cancelUrl = '$origin/subscription/cancel';
+
+      final result = await api.createCheckoutSession(
+        productId: productId,
+        successUrl: successUrl,
+        cancelUrl: cancelUrl,
+      );
 
       final checkoutUrl = result['url'] as String?;
       if (checkoutUrl == null || checkoutUrl.isEmpty) {
@@ -481,21 +576,30 @@ class PaymentService extends ChangeNotifier {
       }
 
       if (kDebugMode) {
-        debugPrint('PaymentService: Stripe Checkout URL: $checkoutUrl');
+        debugPrint('PaymentService: Opening Stripe Checkout: $checkoutUrl');
       }
 
-      // On web, redirect to Stripe Checkout.  On mobile this branch is not
-      // reached (handled by _purchaseViaNativeStore), but as a safety net
-      // we use url_launcher.
-      // ignore: uri_does_not_exist
-      // The caller (SubscriptionScreen) will handle the URL launch.
       _lastCheckoutUrl = checkoutUrl;
 
+      // Open the Stripe-hosted payment page in the browser.
+      // On web this navigates the current tab; on mobile it opens a browser.
+      final launched = await launchUrl(
+        Uri.parse(checkoutUrl),
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        _setError(
+            'Could not open payment page. Please try again or copy the link manually.');
+        return false;
+      }
+
+      // Payment is IN PROGRESS — the user is now on the Stripe page.
+      // We set status to verifying and return true to signal the UI to wait.
+      // onPurchaseSuccess must NOT be called here — no money has been
+      // collected yet.  The webhook (→ Firestore → SubscriptionService)
+      // will confirm the payment asynchronously.
       _setStatus(PaymentStatus.verifying);
-      // The webhook will update Firestore; the app listens to Firestore.
-      // Mark as success so the UI can redirect.
-      _setStatus(PaymentStatus.success);
-      onPurchaseSuccess?.call(productId, null);
       return true;
     } on BackendApiException catch (e) {
       _setError(e.message);
@@ -506,7 +610,21 @@ class PaymentService extends ChangeNotifier {
     }
   }
 
-  /// The last Stripe Checkout URL (for web redirect).
+  /// Notify the app that a Stripe payment completed (called from the
+  /// success-return route or after a Firestore subscription-state change
+  /// is detected).
+  ///
+  /// Call this from your router when the user lands on the successUrl path,
+  /// e.g. in your GoRouter / Navigator redirect handler:
+  ///
+  ///   PaymentService().notifyStripeSuccess(productId: resolvedProductId);
+  void notifyStripeSuccess(String productId) {
+    _setStatus(PaymentStatus.success);
+    onPurchaseSuccess?.call(productId, null);
+  }
+
+  /// The last Stripe Checkout URL (exposed so the UI can show a "Open
+  /// payment page" button if the automatic launch failed).
   String? _lastCheckoutUrl;
   String? get lastCheckoutUrl => _lastCheckoutUrl;
 
