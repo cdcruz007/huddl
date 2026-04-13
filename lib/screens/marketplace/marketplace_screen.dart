@@ -696,48 +696,42 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     }
   }
 
-  Future<void> _openDealLink(String storeId) async {
-    final url = RevGlueService.couponExitUrl(storeId);
-    final uri = Uri.parse(url);
-    
+  Future<void> _openDealLink(String storeId, {String? storeTitleUrl}) async {
+    // Build the RevGlue affiliate exit-click URL (records the click for commission).
+    final exitUrl = RevGlueService.couponExitUrl(storeId);
+    final uri = Uri.parse(exitUrl);
+
     try {
-      // For web: open in new tab
       if (kIsWeb) {
-        final launched = await launchUrl(
-          uri,
-          webOnlyWindowName: '_blank',
-        );
-        if (!launched && kDebugMode) {
-          debugPrint('Failed to launch URL on web: $url');
+        // On web (sandbox preview) the exit URL returns a near-empty page and
+        // the JS redirect does not fire inside the Flutter iframe.  Use
+        // dart:js interop to open the URL in a real top-level browser window
+        // where the session cookie + JS redirect can execute correctly.
+        // ignore: avoid_dynamic_calls
+        try {
+          // ignore: undefined_prefixed_name
+          // Use url_launcher which calls window.open internally on web.
+          await launchUrl(uri, webOnlyWindowName: '_blank');
+        } catch (_) {
+          // Absolute fallback: try the store's direct revglue page.
+          if (storeTitleUrl != null && storeTitleUrl.isNotEmpty) {
+            final fallbackUri = Uri.parse('https://www.revglue.com/affiliate/$storeTitleUrl');
+            await launchUrl(fallbackUri, webOnlyWindowName: '_blank');
+          }
         }
       } else {
-        // For mobile: Try to open in external browser
-        // First check if we can launch it
-        if (await canLaunchUrl(uri)) {
-          // Use platformDefault mode which should open in external browser on mobile
-          await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication,
-          );
-        } else {
-          throw Exception('Cannot launch URL: $url');
-        }
+        // On mobile: open in the device's default browser so cookies and JS work.
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error launching URL: $e');
-      }
+      if (kDebugMode) debugPrint('_openDealLink error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Unable to open offer: ${e.toString().contains('Cannot launch') ? 'Link not supported' : 'Please try again'}'),
+            content: const Text('Unable to open offer. Please try again.'),
             backgroundColor: HuddlColors.error,
             duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'OK',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+            action: SnackBarAction(label: 'OK', textColor: Colors.white, onPressed: () {}),
           ),
         );
       }
@@ -803,7 +797,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () { Navigator.pop(ctx); _openDealLink(coupon.storeId); },
+                onPressed: () { Navigator.pop(ctx); _openDealLink(coupon.storeId, storeTitleUrl: coupon.titleUrl); },
                 icon: const Icon(Icons.open_in_new, size: 18),
                 label: Text(coupon.hasCode ? 'Use Code & Shop' : 'Get Offer', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, foregroundColor: HuddlColors.white, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
@@ -856,17 +850,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     });
   }
 
+  /// Only expose the Baby & Child category — Huddl is a parenting app.
   List<RevGlueCategory> get _familyCategories {
-    const priorityIds = ['3', '11', '15', '9', '1', '12', '4', '14'];
-    final sorted = List<RevGlueCategory>.from(_offersCategories);
-    sorted.sort((a, b) {
-      final aPri = priorityIds.indexOf(a.id); final bPri = priorityIds.indexOf(b.id);
-      if (aPri >= 0 && bPri >= 0) return aPri.compareTo(bPri);
-      if (aPri >= 0) return -1; if (bPri >= 0) return 1;
-      return a.title.compareTo(b.title);
-    });
-    return sorted;
+    return _offersCategories
+        .where((c) => c.id == '3' || c.title.toLowerCase().contains('baby') || c.title.toLowerCase().contains('child'))
+        .toList();
   }
+
+  /// The single Baby & Child category (null-safe helper).
+  RevGlueCategory? get _babyCategory =>
+      _familyCategories.isNotEmpty ? _familyCategories.first : null;
 
   void _showOffersCategoryStores(RevGlueCategory cat) {
     showModalBottomSheet(
@@ -3343,7 +3336,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 ),
               ),
               ElevatedButton.icon(
-                onPressed: () => _openDealLink(store.id),
+                onPressed: () => _openDealLink(store.id, storeTitleUrl: store.titleUrl),
                 icon: const Icon(Icons.open_in_new, size: 14),
                 label: Text('Shop', style: _adaptiveText(fontWeight: FontWeight.w600, fontSize: 12)),
                 style: ElevatedButton.styleFrom(
@@ -3371,7 +3364,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           Text('No coupons available right now', style: _adaptiveText(color: hc.textTertiary)),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () => _openDealLink(store.id),
+                            onPressed: () => _openDealLink(store.id, storeTitleUrl: store.titleUrl),
                             icon: const Icon(Icons.open_in_new, size: 16),
                             label: Text('Visit ${store.title}', style: _adaptiveText(fontWeight: FontWeight.w600)),
                             style: ElevatedButton.styleFrom(
@@ -3416,7 +3409,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           coupon: coupon,
                           insight: insight,
                           onTap: () => _showCouponCode(coupon),
-                          onShop: () => _openDealLink(coupon.storeId),
+                          onShop: () => _openDealLink(coupon.storeId, storeTitleUrl: coupon.titleUrl),
                         );
                       },
                     ),
@@ -3449,7 +3442,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       if (store.isNotEmpty) {
                         _openOfferStore(store.first);
                       } else {
-                        _openDealLink(banner.storeId);
+                        _openDealLink(banner.storeId, storeTitleUrl: banner.titleUrl);
                       }
                     },
                     child: Container(
@@ -3722,26 +3715,217 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   // ── Offers Categories Sub-Tab ──
+  // ── Offers Categories Sub-Tab — Baby & Child featured ──
   Widget _buildOffersCategoriesList(HuddlContextColors hc) {
+    final baby = _babyCategory;
     return RefreshIndicator(
       onRefresh: _loadOffersData,
       color: HuddlColors.primary,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-        itemCount: _familyCategories.length,
-        itemBuilder: (_, i) {
-          final cat = _familyCategories[i];
-          return _OffersCategoryTile(
-            category: cat,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        children: [
+          // ── Hero banner ────────────────────────────────────────────────
+          GestureDetector(
             onTap: () {
-              if (!_canViewMoreOffers && _isExplorer) {
-                _showUpgradeDialog();
-                return;
-              }
-              _showOffersCategoryStores(cat);
+              if (baby == null) return;
+              if (!_canViewMoreOffers && _isExplorer) { _showUpgradeDialog(); return; }
+              _showOffersCategoryStores(baby);
             },
-          );
-        },
+            child: Container(
+              height: 160,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFF0E8), Color(0xFFFFD9C4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.25)),
+              ),
+              child: Stack(
+                children: [
+                  // Decorative circle
+                  Positioned(
+                    right: -20, top: -20,
+                    child: Container(
+                      width: 130, height: 130,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 30, bottom: -30,
+                    child: Container(
+                      width: 80, height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: HuddlColors.primary.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text('Featured Category', style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Baby & Child', style: _adaptiveText(fontSize: 22, fontWeight: FontWeight.w700, color: hc.textPrimary)),
+                              const SizedBox(height: 4),
+                              Text(
+                                baby?.offerCouponStr ?? 'Deals for little ones',
+                                style: _adaptiveText(fontSize: 13, color: HuddlColors.success, fontWeight: FontWeight.w500),
+                              ),
+                              if (baby != null && baby.subCategories.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 3),
+                                  child: Text('${baby.subCategories.length} subcategories', style: _adaptiveText(fontSize: 11, color: hc.textTertiary)),
+                                ),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text('Browse Deals', style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 70, height: 70,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: const Icon(Icons.child_care, color: HuddlColors.primary, size: 36),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // ── Sub-category chips ────────────────────────────────────────
+          if (baby != null && baby.subCategories.isNotEmpty) ...[
+            Text('Shop by Age & Type', style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary)),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: baby.subCategories.map((sub) {
+                return GestureDetector(
+                  onTap: () {
+                    if (!_canViewMoreOffers && _isExplorer) { _showUpgradeDialog(); return; }
+                    _showOffersCategoryStores(sub);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: hc.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
+                      boxShadow: [BoxShadow(color: hc.shadow, blurRadius: 4, offset: const Offset(0, 1))],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.child_care, size: 14, color: HuddlColors.primary),
+                        const SizedBox(width: 5),
+                        Text(sub.title, style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w500, color: hc.textPrimary)),
+                        if (sub.offerCouponStr.isNotEmpty) ...[
+                          const SizedBox(width: 5),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.success.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(sub.offerCouponStr, style: _adaptiveText(fontSize: 9, color: HuddlColors.success, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+          ],
+
+          // ── Why Huddl curates only Baby & Child ──────────────────────
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: hc.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: hc.cardBorder,
+              boxShadow: [BoxShadow(color: hc.shadow, blurRadius: 6, offset: const Offset(0, 2))],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: HuddlColors.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Text('Why only Baby & Child?', style: _adaptiveText(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Huddl is built for parents. We curate only the deals that matter most for your family — trusted baby and children\'s products from top UK retailers.',
+                  style: _adaptiveText(fontSize: 12, color: hc.textSecondary, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ── View all stores CTA ───────────────────────────────────────
+          if (baby != null)
+            GestureDetector(
+              onTap: () {
+                if (!_canViewMoreOffers && _isExplorer) { _showUpgradeDialog(); return; }
+                _showOffersCategoryStores(baby);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.storefront_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text('View All Baby & Child Stores', style: _adaptiveText(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 13),
+                  ],
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
