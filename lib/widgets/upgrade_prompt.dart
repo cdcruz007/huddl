@@ -96,14 +96,14 @@ class _UpgradePromptSheet extends StatelessWidget {
               // Quick tier previews
               if (currentTier == SubscriptionTier.explorer) ...[
                 _QuickTierPreview(
-                  name: 'Neighbourhood',
+                  name: 'Neighbour',
                   price: '\u00A35.99/mo',
                   color: HuddlColors.primary,
                   icon: Icons.home_outlined,
                   benefits: const [
                     'Unlimited groups, DMs & meetups',
-                    'Private groups & meetups',
-                    'Ad-free + full AI suite',
+                    'Create private & invite-only groups',
+                    'Full AI suite — Chat Helper, Summaries & more',
                   ],
                   onTap: () {
                     Navigator.pop(context, false);
@@ -118,14 +118,14 @@ class _UpgradePromptSheet extends StatelessWidget {
               ],
 
               _QuickTierPreview(
-                name: 'Inner Circle',
+                name: 'Circle',
                 price: '\u00A311.99/mo',
                 color: HuddlColors.teal,
                 icon: Icons.workspace_premium,
                 benefits: const [
-                  'Everything in Neighbourhood',
-                  'Unlimited AI + Matchmaker',
-                  'Unlimited listings, trips & photos',
+                  'Everything in Neighbour, fully unlimited',
+                  'AI Meetup Matchmaker — smart parent matching',
+                  'Unlimited listings, 50 photos & unlimited bookmarks',
                 ],
                 onTap: () {
                   Navigator.pop(context, false);
@@ -139,7 +139,7 @@ class _UpgradePromptSheet extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // 7-day trial CTA (only if on Explorer and trial not used)
+              // 7-day trial CTA (only if on Welcome and trial not used)
               if (currentTier == SubscriptionTier.explorer) ...[
                 Container(
                   width: double.infinity,
@@ -159,7 +159,7 @@ class _UpgradePromptSheet extends StatelessWidget {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Try Neighbourhood free for 7 days — no card required',
+                          'Try Neighbour free for 7 days — no card required',
                           style: GoogleFonts.poppins(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -295,7 +295,7 @@ class UpgradeBanner extends StatelessWidget {
 
   const UpgradeBanner({
     super.key,
-    this.message = 'Upgrade to Neighbourhood for unlimited access',
+    this.message = 'Upgrade to Neighbour for unlimited access',
     this.onTap,
   });
 

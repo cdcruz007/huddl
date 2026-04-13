@@ -52,21 +52,18 @@ import 'backend_api_service.dart';
 class HuddlProductIds {
   HuddlProductIds._();
 
-  // Neighbourhood tier
-  static const String neighbourhoodMonthly = 'huddl_neighbourhood_monthly';
-  static const String neighbourhoodAnnual = 'huddl_neighbourhood_annual';
-  static const String neighbourhoodFoundingMonthly =
-      'huddl_neighbourhood_founding_monthly';
+  // Neighbour tier
+  static const String neighbourhoodMonthly = 'huddl_neighbour_monthly';
+  static const String neighbourhoodAnnual = 'huddl_neighbour_annual';
 
-  // Inner Circle tier
-  static const String innerCircleMonthly = 'huddl_inner_circle_monthly';
-  static const String innerCircleAnnual = 'huddl_inner_circle_annual';
+  // Circle tier
+  static const String innerCircleMonthly = 'huddl_circle_monthly';
+  static const String innerCircleAnnual = 'huddl_circle_annual';
 
   /// All product IDs we expect to find in the store
   static const Set<String> all = {
     neighbourhoodMonthly,
     neighbourhoodAnnual,
-    neighbourhoodFoundingMonthly,
     innerCircleMonthly,
     innerCircleAnnual,
   };
@@ -75,7 +72,6 @@ class HuddlProductIds {
   static (SubscriptionTier, BillingPeriod) tierForProduct(String id) {
     switch (id) {
       case neighbourhoodMonthly:
-      case neighbourhoodFoundingMonthly:
         return (SubscriptionTier.neighbourhood, BillingPeriod.monthly);
       case neighbourhoodAnnual:
         return (SubscriptionTier.neighbourhood, BillingPeriod.annual);
@@ -91,13 +87,9 @@ class HuddlProductIds {
   /// Get the product ID for a given tier + billing period
   static String productIdFor(
     SubscriptionTier tier,
-    BillingPeriod period, {
-    bool foundingMember = false,
-  }) {
+    BillingPeriod period,
+  ) {
     if (tier == SubscriptionTier.neighbourhood) {
-      if (foundingMember && period == BillingPeriod.monthly) {
-        return neighbourhoodFoundingMonthly;
-      }
       return period == BillingPeriod.monthly
           ? neighbourhoodMonthly
           : neighbourhoodAnnual;
@@ -130,12 +122,10 @@ class StripeConfig {
 
   // Stripe Price IDs (must match your Stripe Dashboard products)
   static const Map<String, String> priceIds = {
-    HuddlProductIds.neighbourhoodMonthly: 'price_neighbourhood_monthly',
-    HuddlProductIds.neighbourhoodAnnual: 'price_neighbourhood_annual',
-    HuddlProductIds.neighbourhoodFoundingMonthly:
-        'price_neighbourhood_founding',
-    HuddlProductIds.innerCircleMonthly: 'price_inner_circle_monthly',
-    HuddlProductIds.innerCircleAnnual: 'price_inner_circle_annual',
+    HuddlProductIds.neighbourhoodMonthly: 'price_neighbour_monthly',
+    HuddlProductIds.neighbourhoodAnnual: 'price_neighbour_annual',
+    HuddlProductIds.innerCircleMonthly: 'price_circle_monthly',
+    HuddlProductIds.innerCircleAnnual: 'price_circle_annual',
   };
 }
 
@@ -411,28 +401,11 @@ class PaymentService extends ChangeNotifier {
         currencyCode: 'GBP',
       );
     }
-
-    // Founding member product
-    if (SubscriptionPlan.allPlans
-        .any((p) => p.tier == SubscriptionTier.neighbourhood)) {
-      final foundingPlan = SubscriptionPlan.allPlans
-          .firstWhere((p) => p.tier == SubscriptionTier.neighbourhood);
-      if (foundingPlan.foundingMonthlyPrice != null) {
-        _products[HuddlProductIds.neighbourhoodFoundingMonthly] =
-            StoreProduct.fromStripe(
-          id: HuddlProductIds.neighbourhoodFoundingMonthly,
-          title: 'Neighbourhood Founding Member',
-          price:
-              '\u00A3${foundingPlan.foundingMonthlyPrice!.toStringAsFixed(2)}/month',
-          currencyCode: 'GBP',
-        );
-      }
-    }
   }
 
   // ── Purchase Flow ──────────────────────────────────────────────────────
 
-  /// Initiate a purchase for the given tier, period, and founding status.
+  /// Initiate a purchase for the given tier and period.
   ///
   /// On mobile: triggers the native store purchase sheet (Apple Pay / GPay /
   /// card selection is handled by the OS — the user sees the standard system
@@ -442,14 +415,12 @@ class PaymentService extends ChangeNotifier {
   Future<bool> purchaseSubscription({
     required SubscriptionTier tier,
     required BillingPeriod period,
-    bool foundingMember = false,
   }) async {
     if (!_initialized) await initialize();
 
     final productId = HuddlProductIds.productIdFor(
       tier,
       period,
-      foundingMember: foundingMember,
     );
 
     _setStatus(PaymentStatus.purchasing);

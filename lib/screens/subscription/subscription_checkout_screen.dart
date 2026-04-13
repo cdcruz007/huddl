@@ -49,7 +49,6 @@ class _SubscriptionCheckoutScreenState
   late BillingPeriod _period;
   bool _isProcessing = false;
   bool _agreedToTerms = false;
-  bool _useFoundingRate = false;
   late bool _isScheduled;
 
   late SubscriptionPlan _plan;
@@ -74,13 +73,6 @@ class _SubscriptionCheckoutScreenState
     _payService.onPurchaseError = _onPurchaseError;
     _payService.onPurchasesRestored = _onPurchasesRestored;
 
-    // Auto-select founding rate if available for Neighbourhood tier
-    if (_plan.tier == SubscriptionTier.neighbourhood &&
-        _plan.foundingMonthlyPrice != null &&
-        _subService.foundingMemberAvailable) {
-      setState(() => _useFoundingRate = true);
-    }
-
     // Listen for PaymentService status changes
     _payService.addListener(_onPaymentStatusChanged);
     if (mounted) setState(() {});
@@ -104,7 +96,7 @@ class _SubscriptionCheckoutScreenState
 
   void _onPurchaseSuccess(String productId, dynamic details) {
     final (tier, period) = HuddlProductIds.tierForProduct(productId);
-    _subService.purchase(tier, period, isFoundingMember: _useFoundingRate);
+    _subService.purchase(tier, period);
 
     if (mounted) {
       showDialog(
@@ -112,7 +104,6 @@ class _SubscriptionCheckoutScreenState
         barrierDismissible: false,
         builder: (ctx) => _SuccessDialog(
           plan: _plan,
-          isFoundingMember: _useFoundingRate,
         ),
       ).then((_) {
         if (mounted) Navigator.pop(context, true);
@@ -148,11 +139,6 @@ class _SubscriptionCheckoutScreenState
   // ── Price calculation ──────────────────────────────────────────────────
 
   double get _displayPrice {
-    if (_useFoundingRate &&
-        _plan.foundingMonthlyPrice != null &&
-        _period == BillingPeriod.monthly) {
-      return _plan.foundingMonthlyPrice!;
-    }
     return _plan.priceFor(_period);
   }
 
@@ -161,7 +147,6 @@ class _SubscriptionCheckoutScreenState
     final productId = HuddlProductIds.productIdFor(
       _plan.tier,
       _period,
-      foundingMember: _useFoundingRate,
     );
     final storePrice = _payService.getPriceForProduct(productId);
     if (storePrice.isNotEmpty) return storePrice;
@@ -190,7 +175,6 @@ class _SubscriptionCheckoutScreenState
       final ok = await _subService.schedulePlanChange(
         _plan.tier,
         _period,
-        isFoundingMember: _useFoundingRate,
       );
 
       if (mounted) {
@@ -202,7 +186,6 @@ class _SubscriptionCheckoutScreenState
             builder: (ctx) => _ScheduledSuccessDialog(
               plan: _plan,
               renewalDate: _subService.renewalDate,
-              isFoundingMember: _useFoundingRate,
             ),
           ).then((_) {
             if (mounted) Navigator.pop(context, true);
@@ -224,7 +207,6 @@ class _SubscriptionCheckoutScreenState
     final success = await _payService.purchaseSubscription(
       tier: _plan.tier,
       period: _period,
-      foundingMember: _useFoundingRate,
     );
 
     // On mobile, the result comes via the purchaseStream callback.
@@ -232,8 +214,7 @@ class _SubscriptionCheckoutScreenState
     if (success && kIsWeb) {
       // Web: Stripe flow completed synchronously in our dev stub
       _onPurchaseSuccess(
-        HuddlProductIds.productIdFor(_plan.tier, _period,
-            foundingMember: _useFoundingRate),
+        HuddlProductIds.productIdFor(_plan.tier, _period),
         null,
       );
     } else if (!success) {
@@ -359,93 +340,8 @@ class _SubscriptionCheckoutScreenState
                       isSelected: _period == BillingPeriod.annual,
                       onTap: () => setState(() {
                         _period = BillingPeriod.annual;
-                        _useFoundingRate = false;
                       }),
                     ),
-
-                    // Founding member option
-                    if (_plan.tier == SubscriptionTier.neighbourhood &&
-                        _plan.foundingMonthlyPrice != null &&
-                        _subService.foundingMemberAvailable &&
-                        _period == BillingPeriod.monthly) ...[
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => setState(
-                            () => _useFoundingRate = !_useFoundingRate),
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: _useFoundingRate
-                                ? HuddlColors.premiumPurpleBg
-                                : HuddlColors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: _useFoundingRate
-                                  ? HuddlColors.blue
-                                  : HuddlColors.gray200,
-                              width: _useFoundingRate ? 2 : 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _useFoundingRate
-                                    ? Icons.check_circle
-                                    : Icons.circle_outlined,
-                                color: _useFoundingRate
-                                    ? HuddlColors.blue
-                                    : HuddlColors.textHint,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text('Founding Member Rate',
-                                            style: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color:
-                                                    HuddlColors.blue)),
-                                        const SizedBox(width: 6),
-                                        const Icon(
-                                            Icons.local_fire_department,
-                                            color: HuddlColors.blue,
-                                            size: 16),
-                                      ],
-                                    ),
-                                    Text(
-                                        '\u00A3${_plan.foundingMonthlyPrice!.toStringAsFixed(2)}/mo \u2014 locked for life',
-                                        style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            color:
-                                                HuddlColors.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.blue
-                                      .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                    'Save \u00A3${(_plan.monthlyPrice - _plan.foundingMonthlyPrice!).toStringAsFixed(2)}/mo',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.blue)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
 
                     const SizedBox(height: 24),
 
@@ -588,29 +484,12 @@ class _SubscriptionCheckoutScreenState
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: context.hc.textPrimary)),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            if (_useFoundingRate &&
-                                _plan.foundingMonthlyPrice != null) ...[
-                              Text(
-                                '\u00A3${_plan.monthlyPrice.toStringAsFixed(2)}/month',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    color: context.hc.textTertiary,
-                                    decoration: TextDecoration.lineThrough),
-                              ),
-                            ],
-                            Text(
-                              _displayPriceString,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: _useFoundingRate
-                                      ? HuddlColors.blue
-                                      : HuddlColors.textDark),
-                            ),
-                          ],
+                        Text(
+                          _displayPriceString,
+                          style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.textDark),
                         ),
                       ],
                     ),
@@ -620,9 +499,7 @@ class _SubscriptionCheckoutScreenState
                       child: ElevatedButton(
                         onPressed: _isProcessing ? null : _completePurchase,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _useFoundingRate
-                              ? HuddlColors.blue
-                              : color,
+                          backgroundColor: color,
                           foregroundColor: HuddlColors.white,
                           disabledBackgroundColor:
                               color.withValues(alpha: 0.5),
@@ -674,9 +551,7 @@ class _SubscriptionCheckoutScreenState
                                   Text(
                                     _isScheduled
                                         ? 'Schedule ${_plan.name}'
-                                        : (_useFoundingRate
-                                            ? 'Lock Founding Rate'
-                                            : 'Subscribe to ${_plan.name}'),
+                                        : 'Subscribe to ${_plan.name}',
                                     style: GoogleFonts.poppins(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600),
@@ -1063,15 +938,12 @@ class _BillingOptionTile extends StatelessWidget {
 
 class _SuccessDialog extends StatelessWidget {
   final SubscriptionPlan plan;
-  final bool isFoundingMember;
-  const _SuccessDialog({required this.plan, this.isFoundingMember = false});
+  const _SuccessDialog({required this.plan});
 
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isFoundingMember
-        ? HuddlColors.blue
-        : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
+    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -1090,9 +962,7 @@ class _SuccessDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              isFoundingMember
-                  ? 'Welcome, Founding Member!'
-                  : 'Welcome to ${plan.name}!',
+              'Welcome to ${plan.name}!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                   fontSize: 22,
@@ -1101,37 +971,12 @@ class _SuccessDialog extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              isFoundingMember
-                  ? 'Your \u00A33.99/mo rate is locked for life. Thank you for being an early supporter!'
-                  : 'Your subscription is now active. Enjoy all your new features!',
+              'Your subscription is now active. Enjoy all your new features!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                   fontSize: 14, color: context.hc.textSecondary),
             ),
-            if (isFoundingMember) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.verified,
-                        color: HuddlColors.blue, size: 16),
-                    const SizedBox(width: 6),
-                    Text('Founding Member Badge Unlocked',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.blue)),
-                  ],
-                ),
-              ),
-            ],
+
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -1161,20 +1006,15 @@ class _SuccessDialog extends StatelessWidget {
 class _ScheduledSuccessDialog extends StatelessWidget {
   final SubscriptionPlan plan;
   final DateTime? renewalDate;
-  final bool isFoundingMember;
-
   const _ScheduledSuccessDialog({
     required this.plan,
     this.renewalDate,
-    this.isFoundingMember = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final isInnerCircle = plan.tier == SubscriptionTier.innerCircle;
-    final color = isFoundingMember
-        ? HuddlColors.blue
-        : (isInnerCircle ? HuddlColors.teal : HuddlColors.primary);
+    final color = isInnerCircle ? HuddlColors.teal : HuddlColors.primary;
 
     String dateStr = 'your next billing cycle';
     if (renewalDate != null) {

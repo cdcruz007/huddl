@@ -226,13 +226,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     Color accentColor = HuddlColors.textHint;
     IconData icon = Icons.explore_outlined;
-    String planLabel = 'Explorer';
+    String planLabel = 'Welcome';
     String subtitle = 'Upgrade for unlimited access';
 
     if (isNeighbourhood) {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
-      planLabel = 'Huddl Neighbourhood';
+      planLabel = 'Neighbour';
       subtitle = sub.isTrial
           ? 'Trial \u2022 ${sub.trialDaysRemaining} days left'
           : sub.billingPeriod == BillingPeriod.annual
@@ -241,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } else if (isInnerCircle) {
       accentColor = HuddlColors.teal;
       icon = Icons.workspace_premium;
-      planLabel = 'Inner Circle';
+      planLabel = 'Circle';
       subtitle = sub.billingPeriod == BillingPeriod.annual
           ? '\u00A399.99/year'
           : '\u00A311.99/month';

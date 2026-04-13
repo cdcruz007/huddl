@@ -6,17 +6,10 @@ import 'browser_storage.dart';
 /// Singleton service managing the user's subscription state, feature-gating,
 /// usage tracking, and purchase flow. Persists state via BrowserStorage.
 ///
-/// CONVERSION STRATEGY:
-/// 1. Auto-start 7-day Neighbourhood trial on sign-up (no card required)
-/// 2. Track usage and trigger soft paywalls at value moments
-/// 3. Founding member rate (GBP 3.99/mo) for first 500 users
-/// 4. Day-5 trial reminder, Day-7 conversion prompt
-/// 5. Exit survey + 1-month pause on cancellation
-///
-/// AI FEATURE GATING STRATEGY:
-/// - Explorer gets a taster of AI (3 copilot chats/day, basic discovery)
-/// - Neighbourhood unlocks full AI suite with generous daily caps
-/// - Inner Circle gets unlimited AI plus exclusive Matchmaker
+/// FEATURE GATING STRATEGY:
+/// - Welcome (free) gets a taster of AI (3 copilot chats/day, basic discovery)
+/// - Neighbour unlocks full AI suite with generous daily caps
+/// - Circle gets unlimited AI plus exclusive Matchmaker
 /// - AI limits reset daily/weekly/monthly depending on the feature
 class SubscriptionService extends ChangeNotifier {
   // ---- Singleton ----
@@ -26,14 +19,11 @@ class SubscriptionService extends ChangeNotifier {
 
   static const String _subKey = 'user_subscription_v2';
   static const String _usageKey = 'subscription_usage_v2';
-  static const String _foundingKey = 'founding_members_claimed';
   static const String _trialUsedKey = 'trial_already_used';
-  static const int foundingMemberCap = 500;
 
   bool _initialized = false;
   late UserSubscription _subscription;
   final Map<String, int> _usageCounts = {};
-  int _foundingMembersClaimed = 423; // Start at realistic number
 
   UserSubscription get subscription => _subscription;
   SubscriptionTier get tier => _subscription.tier;
@@ -59,11 +49,6 @@ class SubscriptionService extends ChangeNotifier {
   String? get scheduledChangeSummary => _subscription.scheduledChangeSummary;
   int get daysUntilRenewal => _subscription.daysUntilRenewal;
   DateTime? get renewalDate => _subscription.renewalDate;
-
-  // Founding member info
-  int get foundingMembersClaimed => _foundingMembersClaimed;
-  int get foundingSpotsRemaining => foundingMemberCap - _foundingMembersClaimed;
-  bool get foundingMemberAvailable => _foundingMembersClaimed < foundingMemberCap;
 
   // ===========================================================================
   // INITIALIZATION
@@ -95,12 +80,6 @@ class SubscriptionService extends ChangeNotifier {
       } catch (_) {
         // ignore
       }
-    }
-
-    // Load founding member count
-    final fmCount = await BrowserStorage.getString(_foundingKey);
-    if (fmCount != null) {
-      _foundingMembersClaimed = int.tryParse(fmCount) ?? 423;
     }
 
     _initialized = true;
@@ -169,9 +148,9 @@ class SubscriptionService extends ChangeNotifier {
   bool get canCreatePrivateGroup => limits.canCreatePrivateGroups;
   bool get canCreateMeetupFeature => limits.canCreateMeetups;
   bool get canCreateEvent => canCreateMeetupFeature; // backward-compat
-  bool get isAdFree => limits.adFree;
+  bool get isAdFree => true; // App has no ads
   bool get hasBadge => limits.customProfileBadge;
-  bool get hasMilestoneTracker => limits.milestoneTracker;
+  bool get hasMilestoneTracker => false; // Feature removed
 
   // ===========================================================================
   // AI FEATURE -- FEATURE GATING
@@ -311,14 +290,13 @@ class SubscriptionService extends ChangeNotifier {
   //     — the new tier/period take effect on the next renewalDate.
   //   • Cancelling sets cancelledAtPeriodEnd = true; the user keeps full
   //     access at the current tier until renewalDate, after which the sub
-  //     reverts to Explorer.
+  //     reverts to Welcome.
   //   • A scheduled change can be *revoked* (revert to current plan).
   // ===========================================================================
 
   /// Simulate purchasing a subscription (in production, this goes through
   /// Apple/Google IAP). Returns true on success.
-  Future<bool> purchase(SubscriptionTier newTier, BillingPeriod period,
-      {bool isFoundingMember = false}) async {
+  Future<bool> purchase(SubscriptionTier newTier, BillingPeriod period) async {
     if (!_initialized) await initialize();
 
     final now = DateTime.now();
@@ -333,19 +311,10 @@ class SubscriptionService extends ChangeNotifier {
       renewalDate: renewal,
       isActive: true,
       isTrial: false,
-      isFoundingMember: isFoundingMember,
-      // Clear any previously-scheduled change
       scheduledTier: null,
       scheduledPeriod: null,
       cancelledAtPeriodEnd: false,
     );
-
-    // Track founding member claim
-    if (isFoundingMember && foundingMemberAvailable) {
-      _foundingMembersClaimed++;
-      await BrowserStorage.setString(
-          _foundingKey, _foundingMembersClaimed.toString());
-    }
 
     await _persist();
     notifyListeners();
@@ -367,16 +336,14 @@ class SubscriptionService extends ChangeNotifier {
   /// During the interim the user keeps full access to the *current* tier.
   Future<bool> schedulePlanChange(
     SubscriptionTier newTier,
-    BillingPeriod newPeriod, {
-    bool isFoundingMember = false,
-  }) async {
+    BillingPeriod newPeriod,
+  ) async {
     if (!_initialized) await initialize();
 
-    // If the user is on Explorer (free) there is nothing to "schedule" —
+    // If the user is on Welcome (free) there is nothing to "schedule" —
     // an immediate purchase is appropriate.
     if (_subscription.isFree) {
-      return purchase(newTier, newPeriod,
-          isFoundingMember: isFoundingMember);
+      return purchase(newTier, newPeriod);
     }
 
     // If they chose the same tier+period they're already on, no-op.
@@ -393,18 +360,10 @@ class SubscriptionService extends ChangeNotifier {
       isActive: _subscription.isActive,
       isTrial: _subscription.isTrial,
       trialDaysRemaining: _subscription.trialDaysRemaining,
-      isFoundingMember: _subscription.isFoundingMember,
       scheduledTier: newTier,
       scheduledPeriod: newPeriod,
-      cancelledAtPeriodEnd: false, // un-cancel if they pick a new plan
+      cancelledAtPeriodEnd: false,
     );
-
-    // Track founding member claim
-    if (isFoundingMember && foundingMemberAvailable) {
-      _foundingMembersClaimed++;
-      await BrowserStorage.setString(
-          _foundingKey, _foundingMembersClaimed.toString());
-    }
 
     await _persist();
     notifyListeners();
@@ -434,7 +393,6 @@ class SubscriptionService extends ChangeNotifier {
       isActive: _subscription.isActive,
       isTrial: _subscription.isTrial,
       trialDaysRemaining: _subscription.trialDaysRemaining,
-      isFoundingMember: _subscription.isFoundingMember,
       scheduledTier: null,
       scheduledPeriod: null,
       cancelledAtPeriodEnd: false,
@@ -448,7 +406,7 @@ class SubscriptionService extends ChangeNotifier {
     }
   }
 
-  /// Start a 7-day free trial of Neighbourhood
+  /// Start a 7-day free trial of Neighbour
   Future<bool> startTrial() async {
     if (!_initialized) await initialize();
 
@@ -505,7 +463,6 @@ class SubscriptionService extends ChangeNotifier {
       isActive: true, // still active until renewalDate
       isTrial: _subscription.isTrial,
       trialDaysRemaining: _subscription.trialDaysRemaining,
-      isFoundingMember: _subscription.isFoundingMember,
       scheduledTier: null, // clear any scheduled change
       scheduledPeriod: null,
       cancelledAtPeriodEnd: true,
@@ -534,7 +491,6 @@ class SubscriptionService extends ChangeNotifier {
       isActive: true,
       isTrial: _subscription.isTrial,
       trialDaysRemaining: _subscription.trialDaysRemaining,
-      isFoundingMember: _subscription.isFoundingMember,
       scheduledTier: null,
       scheduledPeriod: null,
       cancelledAtPeriodEnd: false,
@@ -576,9 +532,7 @@ class SubscriptionService extends ChangeNotifier {
       case 'private_groups':
       case 'meetups':
       case 'events':
-      case 'ad_free':
       case 'profile_badge':
-      case 'milestones':
         return SubscriptionTier.neighbourhood;
 
       // AI -- Neighbourhood
@@ -617,7 +571,7 @@ class SubscriptionService extends ChangeNotifier {
     switch (limitType) {
       // Core social limits
       case 'groups_join':
-        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Neighbourhood for unlimited groups!';
+        return 'You\'ve joined $tierName\'s max of ${limits.maxGroups} groups. Upgrade to Neighbour for unlimited groups!';
       case 'groups_create':
         return 'You\'ve hit the $tierName limit of ${limits.maxGroupsCreated} created groups. Upgrade to create more!';
       case 'meetups':
@@ -627,27 +581,27 @@ class SubscriptionService extends ChangeNotifier {
       case 'listings':
         return 'You\'ve reached the $tierName limit of ${limits.maxMarketplaceListings} listings. Upgrade for more!';
       case 'messages':
-        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Neighbourhood for unlimited messaging!';
+        return 'You\'ve sent ${limits.maxMessagesPerMonth} messages this month. Upgrade to Neighbour for unlimited messaging!';
       case 'private_groups':
-        return 'Private groups are a Neighbourhood feature. Upgrade to create private groups!';
+        return 'Private groups are a Neighbour feature. Upgrade to create private groups!';
       case 'events':
-        return 'Meetup creation is a Neighbourhood feature. Upgrade to create and host meetups!';
+        return 'Meetup creation is a Neighbour feature. Upgrade to create and host meetups!';
 
       // AI limits
       case 'ai_copilot':
-        return 'You\'ve used your ${limits.maxAiCopilotChatsPerDay} AI Copilot chats today. Upgrade to Neighbourhood for 25 chats/day!';
+        return 'You\'ve used your ${limits.maxAiCopilotChatsPerDay} AI Copilot chats today. Upgrade to Neighbour for 25 chats/day!';
       case 'ai_chat_summaries':
         return 'You\'ve used your ${limits.maxAiChatSummariesPerDay} AI chat summary today. Upgrade for up to 10 summaries/day!';
       case 'ai_listing_generator':
-        return 'AI Listing Generator is a Neighbourhood feature. Upgrade to auto-generate listings from photos!';
+        return 'AI Listing Writer is a Neighbour feature. Upgrade to auto-generate listings from photos!';
       case 'ai_matchmaker':
-        return 'AI Meetup Matchmaker is an Inner Circle exclusive. Upgrade to get smart parent-matching!';
+        return 'AI Meetup Matchmaker is a Circle exclusive. Upgrade to get smart parent-matching!';
       case 'ai_event_discovery':
-        return 'You\'ve used your weekly AI event discovery. Upgrade to Neighbourhood for daily discovery!';
+        return 'You\'ve used your weekly AI event discovery. Upgrade to Neighbour for daily discovery!';
       case 'ai_smart_feed':
         return 'You\'ve used your daily smart feed refreshes. Upgrade for unlimited personalisation!';
       case 'community_qa':
-        return 'You\'ve reached your $tierName weekly question limit. Upgrade to Neighbourhood for 15 questions/week!';
+        return 'You\'ve reached your $tierName weekly question limit. Upgrade to Neighbour for 15 questions/week!';
 
       default:
         return 'This feature requires a higher plan. Upgrade to unlock it!';

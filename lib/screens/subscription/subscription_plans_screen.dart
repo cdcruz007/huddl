@@ -99,7 +99,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Reverted to Explorer plan',
+              content: Text('Reverted to Welcome plan',
                   style: GoogleFonts.poppins(color: HuddlColors.white)),
               backgroundColor: HuddlColors.teal,
             ),
@@ -150,10 +150,10 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final renewalInfo = _service.renewalDate != null
         ? 'You\'ll keep full access to your current plan until '
           '${UserSubscription.formatDate(_service.renewalDate)}. '
-          'After that, you\'ll be on the Explorer (free) tier.'
+          'After that, you\'ll be on the Welcome (free) plan.'
         : 'You\'ll lose access to premium features at the end of your billing period. '
           'Your groups, conversations, and data will be preserved, but you\'ll '
-          'be limited to Explorer tier features.';
+          'be limited to the Welcome plan features.';
 
     return await showDialog<bool>(
           context: context,
@@ -332,21 +332,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               if (_service.isPendingCancellation || _service.hasScheduledChange)
                 const SizedBox(height: 16),
 
-              // 7-day Neighbourhood trial CTA
+              // 7-day Neighbour trial CTA
               if (_service.isFree) ...[
                 _TrialBanner(onTap: _startTrial),
                 const SizedBox(height: 12),
               ],
 
-              // Founding member banner
-              if (_service.isFree && _service.foundingMemberAvailable) ...[
-                _FoundingMemberBanner(
-                  claimed: _service.foundingMembersClaimed,
-                  cap: SubscriptionService.foundingMemberCap,
-                ),
-                const SizedBox(height: 20),
-              ] else
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               // Billing toggle
               _BillingToggle(
@@ -365,7 +357,6 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       isHighlighted: plan.tier == widget.highlightTier ||
                           (widget.highlightTier == null &&
                               plan.tier == SubscriptionTier.neighbourhood),
-                      isFoundingAvailable: _service.foundingMemberAvailable,
                       isScheduledTarget: plan.tier == _service.scheduledTier,
                       isPendingCancel: _service.isPendingCancellation &&
                           plan.tier == _service.tier,
@@ -475,7 +466,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     if (ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('7-day Neighbourhood trial activated! Enjoy unlimited access.',
+          content: Text('7-day Neighbour trial activated! Enjoy unlimited access.',
               style: GoogleFonts.poppins(color: HuddlColors.white)),
           backgroundColor: HuddlColors.teal,
         ),
@@ -641,7 +632,7 @@ class _GateBanner extends StatelessWidget {
   }
 }
 
-/// 7-day Neighbourhood trial banner
+/// 7-day Neighbour trial banner
 class _TrialBanner extends StatelessWidget {
   final VoidCallback onTap;
   const _TrialBanner({required this.onTap});
@@ -672,7 +663,7 @@ class _TrialBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Try Neighbourhood free for 7 days',
+                Text('Try Neighbour free for 7 days',
                     style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -700,81 +691,6 @@ class _TrialBanner extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                       color: HuddlColors.white)),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Founding member urgency banner
-class _FoundingMemberBanner extends StatelessWidget {
-  final int claimed;
-  final int cap;
-  const _FoundingMemberBanner({required this.claimed, required this.cap});
-
-  @override
-  Widget build(BuildContext context) {
-    final remaining = cap - claimed;
-    final progress = claimed / cap;
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [HuddlColors.premiumPurpleBg, HuddlColors.premiumPurpleLight],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.local_fire_department,
-                    color: HuddlColors.blue, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Founding Member: \u00A33.99/mo locked for life',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.blue),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: HuddlColors.blue.withValues(alpha: 0.1),
-              color: HuddlColors.blue,
-              minHeight: 6,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('$claimed of $cap claimed',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: context.hc.textSecondary)),
-              Text('Only $remaining spots left!',
-                  style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.blue)),
-            ],
           ),
         ],
       ),
@@ -869,7 +785,6 @@ class _PlanCard extends StatelessWidget {
   final BillingPeriod period;
   final bool isCurrentPlan;
   final bool isHighlighted;
-  final bool isFoundingAvailable;
   final bool isScheduledTarget;
   final bool isPendingCancel;
   final String? scheduledSummary;
@@ -881,7 +796,6 @@ class _PlanCard extends StatelessWidget {
     required this.period,
     required this.isCurrentPlan,
     required this.isHighlighted,
-    required this.isFoundingAvailable,
     this.isScheduledTarget = false,
     this.isPendingCancel = false,
     this.scheduledSummary,
@@ -893,7 +807,6 @@ class _PlanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final price = plan.priceFor(period);
     final isFree = plan.tier == SubscriptionTier.explorer;
-    final isNeighbourhood = plan.tier == SubscriptionTier.neighbourhood;
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isScheduledTarget) {
@@ -1082,33 +995,6 @@ class _PlanCard extends StatelessWidget {
                       color: context.hc.textTertiary)),
             ),
           ),
-
-          // Founding member price callout
-          if (isNeighbourhood && isFoundingAvailable && period == BillingPeriod.monthly) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_fire_department,
-                        color: HuddlColors.blue, size: 14),
-                    const SizedBox(width: 4),
-                    Text('Founding: \u00A33.99/mo locked for life',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.blue)),
-                  ],
-                ),
-              ),
-            ),
-          ],
 
           // Highlights
           Padding(
@@ -1308,21 +1194,21 @@ class _FeatureComparisonTable extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: context.hc.textTertiary))),
                     Expanded(
-                        child: Text('Explorer',
+                        child: Text('Welcome',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: context.hc.textTertiary))),
                     Expanded(
-                        child: Text('N’hood',
+                        child: Text('Neighbour',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 color: HuddlColors.primary))),
                     Expanded(
-                        child: Text('Inner\nCircle',
+                        child: Text('Circle',
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                                 fontSize: 10,
@@ -1342,14 +1228,12 @@ class _FeatureComparisonTable extends StatelessWidget {
               _row('Photo uploads', '3', '15', '50'),
               _rowBool('Private groups', false, true, true),
               _rowBool('Create meetups', false, true, true),
-              _rowBool('Ad-free', false, true, true),
               _rowBool('Profile badge', false, true, true),
-              _rowBool('Milestone tracker', false, true, true),
 
               // ---- AI Features section ----
               _sectionHeader('AI Features'),
               _row('AI Copilot', '3/day', '25/day', '\u221E'),
-              _row('AI Chat Summaries', '1/day', '10/day', '\u221E'),
+              _row('AI Chat Summaries', '\u2014', '10/day', '\u221E'),
               _row('AI Event Discovery', '1/wk', 'Daily', '\u221E'),
               _rowBool('AI Recommendations', true, true, true),
               _rowBool('AI Smart Feed', true, true, true),
@@ -1359,7 +1243,7 @@ class _FeatureComparisonTable extends StatelessWidget {
               // ---- Community Q&A section ----
               _sectionHeader('Community Q&A'),
               _row('Questions/week', '3', '15', '\u221E'),
-              _row('Bookmarks/month', '5', '50', '\u221E'),
+              _row('Bookmarks/month', '10', '50', '\u221E'),
               _rowBool('Community badges', false, true, true),
               _rowBool('AI answer synthesis', false, true, true),
 

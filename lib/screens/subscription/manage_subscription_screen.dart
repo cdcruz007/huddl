@@ -472,14 +472,14 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                       const Icon(Icons.rocket_launch,
                           color: HuddlColors.primary, size: 36),
                       const SizedBox(height: 12),
-                      Text('Unlock Your Full Neighbourhood',
+                      Text('Unlock Your Full Community',
                           style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               color: context.hc.textPrimary)),
                       const SizedBox(height: 6),
                       Text(
-                        'Unlimited groups, DMs, meetups, full AI suite, ad-free & more \u2014 from just \u00A35.99/mo.',
+                        'Unlimited groups, DMs, meetups, and full AI suite \u2014 from just \u00A35.99/mo.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.poppins(
                             fontSize: 13, color: context.hc.textSecondary),
@@ -890,31 +890,7 @@ class _CurrentPlanCard extends StatelessWidget {
                                     color: HuddlColors.yellowDark)),
                           ),
                         ],
-                        if (subscription.isFoundingMember) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.blue
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.local_fire_department,
-                                    color: HuddlColors.blue, size: 10),
-                                const SizedBox(width: 2),
-                                Text('Founding',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.blue)),
-                              ],
-                            ),
-                          ),
-                        ],
+
                       ],
                     ),
                     const SizedBox(height: 2),

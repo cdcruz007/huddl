@@ -235,9 +235,9 @@ This indemnification obligation is unlimited in amount and duration, and survive
             _buildSection(
               '7. Payment Terms and Subscription Management',
               '''a) Subscription Tiers:
-• Explorer Tier (Free): Basic access with limited features
-• Connector Tier (Paid): Enhanced features with usage limits
-• Networker Tier (Paid): Full access to all premium features
+• Welcome Tier (Free): Basic access with limited features
+• Neighbour Tier (Paid): Full community access with AI tools
+• Circle Tier (Paid): Unlimited access with exclusive AI features
 
 Exact pricing, features, and limitations are displayed in-app and may be modified at our discretion.
 
