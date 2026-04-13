@@ -57,5 +57,69 @@
 	──────────────────────────────────────────────────────────────────────── -->
 	<key>NSUbiquitousKeyValueStoreIdentifier</key>
 	<string>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<!-- ── Firebase / Google Sign-In URL scheme ─────────────────────────────
+	     Required for Firebase phone auth reCAPTCHA fallback and Google
+	     Sign-In to redirect back to the app after authentication.
+	     The value must be the REVERSED_CLIENT_ID from your
+	     GoogleService-Info.plist file.
+	     TODO: Replace REPLACE_WITH_REVERSED_CLIENT_ID with the actual
+	           REVERSED_CLIENT_ID value from GoogleService-Info.plist
+	           e.g. com.googleusercontent.apps.879152141283-xxxxxxxxxx
+	────────────────────────────────────────────────────────────────────── -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- TODO: Replace with REVERSED_CLIENT_ID from GoogleService-Info.plist -->
+				<string>REPLACE_WITH_REVERSED_CLIENT_ID</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ── Privacy usage descriptions (required by App Store / TestFlight) ──
+	     Apple rejects any build that uses a permission-requiring API without
+	     a corresponding NSXxxUsageDescription key here. Each string is shown
+	     to the user in the system permission dialog.
+	────────────────────────────────────────────────────────────────────── -->
+
+	<!-- Camera — used by image_picker when taking a profile photo or
+	     posting a photo in a group / marketplace listing -->
+	<key>NSCameraUsageDescription</key>
+	<string>Huddl Connect uses the camera to let you take profile photos and share images in groups and marketplace listings.</string>
+
+	<!-- Photo library read — used by image_picker to select existing photos -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Huddl Connect accesses your photo library so you can choose photos for your profile, groups, and marketplace listings.</string>
+
+	<!-- Photo library write — used by image_picker / image_cropper to save
+	     edited images back to the camera roll -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Huddl Connect may save edited profile or group photos to your photo library.</string>
+
+	<!-- Microphone — required by image_picker when recording video clips -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Huddl Connect requests microphone access to allow video recording when sharing content in groups.</string>
+
+	<!-- Face ID — used by local_auth for biometric login lock -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Huddl Connect uses Face ID to protect your account with biometric login.</string>
+
+	<!-- File access — used by file_picker to attach documents in
+	     marketplace listings or group posts -->
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>Huddl Connect accesses your files to let you attach documents to marketplace listings and group posts.</string>
+
+	<!-- Push Notifications — required for Firebase Cloud Messaging (FCM)
+	     which powers group and DM notifications -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+
 </dict>
 </plist>

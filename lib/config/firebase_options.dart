@@ -48,13 +48,43 @@ class DefaultFirebaseOptions {
     storageBucket: 'huddl-connect.firebasestorage.app',
   );
 
-  // ── iOS (placeholder — register iOS app in Firebase Console when ready) ─
+  // ── iOS ─────────────────────────────────────────────────────────────────
+  //
+  // ╔══════════════════════════════════════════════════════════════════════╗
+  // ║  TODO — REPLACE VALUES BEFORE BUILDING FOR iOS / TESTFLIGHT         ║
+  // ╠══════════════════════════════════════════════════════════════════════╣
+  // ║  After downloading GoogleService-Info.plist from Firebase Console,  ║
+  // ║  copy these values from that file into the fields below:            ║
+  // ║                                                                      ║
+  // ║  Field in firebase_options.dart  ← Key in GoogleService-Info.plist  ║
+  // ║  ─────────────────────────────────────────────────────────────────  ║
+  // ║  apiKey              ← API_KEY                                       ║
+  // ║  appId               ← GOOGLE_APP_ID                                 ║
+  // ║  messagingSenderId   ← GCM_SENDER_ID                                 ║
+  // ║  iosBundleId         ← BUNDLE_ID  (= com.huddlconnect.huddlConnect)  ║
+  // ║  iosClientId         ← CLIENT_ID                                     ║
+  // ║                                                                      ║
+  // ║  projectId and storageBucket are the same as Android — no change.   ║
+  // ║                                                                      ║
+  // ║  HOW TO GET GoogleService-Info.plist:                                ║
+  // ║    1. https://console.firebase.google.com → huddl-connect project   ║
+  // ║    2. ⚙️ Project settings → Your apps → Add app → iOS               ║
+  // ║    3. Bundle ID: com.huddlconnect.huddlConnect                       ║
+  // ║    4. Download GoogleService-Info.plist                              ║
+  // ║    5. Place file at:  ios/Runner/GoogleService-Info.plist            ║
+  // ║    6. Update the values below                                        ║
+  // ╚══════════════════════════════════════════════════════════════════════╝
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBPWoXNhqNY-HZLG8cBmE8voZ75TRKBTOw',
-    appId: '1:879152141283:android:e33a13e587e540519186d6', // Replace with iOS appId
+    // TODO: replace with API_KEY from GoogleService-Info.plist
+    apiKey: 'REPLACE_WITH_IOS_API_KEY',
+    // TODO: replace with GOOGLE_APP_ID from GoogleService-Info.plist
+    // Format: 1:879152141283:ios:xxxxxxxxxxxx
+    appId: 'REPLACE_WITH_IOS_APP_ID',
     messagingSenderId: '879152141283',
     projectId: 'huddl-connect',
     storageBucket: 'huddl-connect.firebasestorage.app',
-    iosBundleId: 'com.huddlconnect.huddlConnect', // Replace with real bundle ID
+    // TODO: replace with CLIENT_ID from GoogleService-Info.plist
+    iosClientId: 'REPLACE_WITH_IOS_CLIENT_ID',
+    iosBundleId: 'com.huddlconnect.huddlConnect',
   );
 }

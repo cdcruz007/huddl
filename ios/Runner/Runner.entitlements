@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+	<!-- ── Push Notifications ──────────────────────────────────────────────
+	     Required for Firebase Cloud Messaging (FCM) to deliver push
+	     notifications to the device. This capability must ALSO be enabled in:
+	       Apple Developer Portal → Certificates, IDs & Profiles →
+	       Identifiers → com.huddlconnect.huddlConnect → Push Notifications ✅
+	     AND in Xcode:
+	       Runner target → Signing & Capabilities → + Capability →
+	       Push Notifications
+	────────────────────────────────────────────────────────────────────── -->
+	<key>aps-environment</key>
+	<string>development</string>
+	<!-- Change to 'production' when submitting to the App Store / TestFlight
+	     production track. For TestFlight internal testing, 'development' is
+	     correct. -->
+
+	<!-- ── iCloud Key-Value Store ──────────────────────────────────────────
+	     Enables NSUbiquitousKeyValueStore for the iCloud KV backup used in
+	     AppDelegate.swift. Must ALSO be enabled in:
+	       Apple Developer Portal → Identifiers →
+	       com.huddlconnect.huddlConnect → iCloud ✅
+	     AND in Xcode:
+	       Runner target → Signing & Capabilities → + Capability → iCloud →
+	       Key-value storage ✅
+	────────────────────────────────────────────────────────────────────── -->
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+
+</dict>
+</plist>
