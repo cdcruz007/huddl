@@ -204,7 +204,6 @@ class FirebaseAuthService {
       'tier': 'explorer',
       'isFoundingMember': false,
       'isPhoneVerified': true,
-      'isProvider': onboarding.isProvider,
       'createdAt': FieldValue.serverTimestamp(),
       'lastActiveAt': FieldValue.serverTimestamp(),
       'assignedGroupCount': 0,
@@ -212,19 +211,6 @@ class FirebaseAuthService {
       'fcmToken': '',
       'notificationsEnabled': true,
     };
-
-    // Provider-specific fields
-    if (onboarding.isProvider) {
-      profile.addAll({
-        'serviceTypes': onboarding.serviceTypes,
-        'businessName': onboarding.businessName ?? '',
-        'qualifications': onboarding.qualifications ?? '',
-        'hasDBS': onboarding.hasDBS,
-        'experience': onboarding.experience ?? '',
-        'hourlyRate': onboarding.hourlyRate ?? '',
-        'serviceAreas': onboarding.serviceAreas,
-      });
-    }
 
     await _db.collection('users').doc(userId).set(profile, SetOptions(merge: true));
 

@@ -14,8 +14,6 @@ import '../screens/onboarding/verification_screen.dart';
 import '../screens/onboarding/welcome_complete_screen.dart';
 import '../screens/onboarding/add_photo_screen.dart';
 import '../screens/onboarding/about_you_screen.dart';
-import '../screens/onboarding/provider/provider_onboarding_screen.dart';
-import '../screens/onboarding/provider/provider_complete_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/login_otp_screen.dart';
 import '../screens/ai/ai_copilot_screen.dart';
@@ -91,12 +89,6 @@ class AppRouter {
 
       case '/about_you':
         return SlidePageRoute(page: const AboutYouScreen());
-
-      case '/provider_onboarding':
-        return SlidePageRoute(page: const ProviderOnboardingScreen());
-
-      case '/provider_complete':
-        return ScalePageRoute(page: const ProviderCompleteScreen());
 
       case '/login':
         return FadePageRoute(page: const LoginScreen());

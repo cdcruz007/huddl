@@ -12,22 +12,13 @@ class ParentTypeScreen extends StatefulWidget {
 }
 
 class _ParentTypeScreenState extends State<ParentTypeScreen> {
-  String? _selected; // 'Mum', 'Dad', or 'provider'
+  String? _selected; // 'Mum' or 'Dad'
 
   void _continue() {
     if (_selected == null) return;
-
     final onboarding = OnboardingDataService();
-
-    if (_selected == 'provider') {
-      // Service provider path — set parent type and go to provider onboarding
-      onboarding.setParentType('provider');
-      Navigator.pushNamed(context, '/provider_onboarding');
-    } else {
-      // Parent path — continue through normal onboarding
-      onboarding.setParentType(_selected!);
-      Navigator.pushNamed(context, '/stage_of_life');
-    }
+    onboarding.setParentType(_selected!);
+    Navigator.pushNamed(context, '/stage_of_life');
   }
 
   @override
@@ -93,26 +84,6 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // ── Provide Local Help — HIDDEN for now (will be used later) ──
-                    // Commented out to avoid dead-code warnings.  Uncomment and
-                    // replace the surrounding comment markers to re-enable.
-                    //
-                    // Row(children: [
-                    //   Expanded(child: Divider(color: HuddlColors.divider, thickness: 1)),
-                    //   Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
-                    //     child: Text('or', style: TextStyle(fontSize: 13, color: HuddlColors.disabledText, fontWeight: FontWeight.w500))),
-                    //   Expanded(child: Divider(color: HuddlColors.divider, thickness: 1)),
-                    // ]),
-                    // const SizedBox(height: 14),
-                    // _ParentTypeCard(
-                    //   label: 'Provide Local Help',
-                    //   subtitle: 'Doula, Nanny, Babysitter, Tutor & more',
-                    //   icon: Icons.handshake_outlined,
-                    //   accentColor: HuddlColors.lightBlue,
-                    //   selected: _selected == 'provider',
-                    //   onTap: () => setState(() => _selected = 'provider'),
-                    // ),
-
                     // Illustration at bottom
                     const SizedBox(height: 12),
                     Center(
@@ -135,10 +106,10 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
               child: _OrangeButton(
-                label: _selected == 'provider' ? 'Set Up My Profile' : 'Continue',
+                label: 'Continue',
                 enabled: _selected != null,
                 onTap: _continue,
-                color: _selected == 'provider' ? HuddlColors.lightBlue : HuddlColors.onboardingOrange,
+                color: HuddlColors.onboardingOrange,
               ),
             ),
           

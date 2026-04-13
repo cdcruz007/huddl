@@ -30,14 +30,6 @@ class OnboardingDataService {
   int _assignedGroupCount = 0; // Number of groups assigned during onboarding
   List<String> _assignedGroupNames = []; // Names of groups assigned during onboarding
 
-  // ── Provider-specific fields ──────────────────────────────────────────────
-  List<String> _serviceTypes = [];      // e.g. ['doula', 'babysitter']
-  String? _businessName;                // Display name for their service
-  String? _qualifications;              // Free-text qualifications
-  bool _hasDBS = false;                 // DBS checked
-  String? _experience;                  // Years / description of experience
-  String? _hourlyRate;                  // e.g. '15-25'
-  List<String> _serviceAreas = [];      // Postcodes they cover
 
   // Getters
   String? get name => _name;
@@ -66,15 +58,6 @@ class OnboardingDataService {
   /// Whether the user has changed their postcode (moved to a different borough)
   bool get hasChangedBorough => _previousBorough != null && _previousBorough!.isNotEmpty;
 
-  // Provider getters
-  List<String> get serviceTypes => _serviceTypes;
-  String? get businessName => _businessName;
-  String? get qualifications => _qualifications;
-  bool get hasDBS => _hasDBS;
-  String? get experience => _experience;
-  String? get hourlyRate => _hourlyRate;
-  List<String> get serviceAreas => _serviceAreas;
-  bool get isProvider => _parentType == 'provider';
 
   // Setters
   void setName(String name) {
@@ -183,48 +166,6 @@ class OnboardingDataService {
     _saveToStorage();
   }
 
-  // ── Provider setters ──────────────────────────────────────────────────────
-  void setServiceTypes(List<String> types) {
-    _serviceTypes = types;
-    _log('Service types set: $types');
-    _saveToStorage();
-  }
-
-  void setBusinessName(String? name) {
-    _businessName = name;
-    _log('Business name set: $name');
-    _saveToStorage();
-  }
-
-  void setQualifications(String? quals) {
-    _qualifications = quals;
-    _log('Qualifications set: ${quals?.length ?? 0} chars');
-    _saveToStorage();
-  }
-
-  void setHasDBS(bool dbs) {
-    _hasDBS = dbs;
-    _log('DBS checked: $dbs');
-    _saveToStorage();
-  }
-
-  void setExperience(String? exp) {
-    _experience = exp;
-    _log('Experience set: $exp');
-    _saveToStorage();
-  }
-
-  void setHourlyRate(String? rate) {
-    _hourlyRate = rate;
-    _log('Hourly rate set: $rate');
-    _saveToStorage();
-  }
-
-  void setServiceAreas(List<String> areas) {
-    _serviceAreas = areas;
-    _log('Service areas set: $areas');
-    _saveToStorage();
-  }
 
   // Check if user data is complete
   bool isComplete() {
@@ -287,13 +228,6 @@ class OnboardingDataService {
     _previousBorough = null;
     _assignedGroupCount = 0;
     _assignedGroupNames = [];
-    _serviceTypes = [];
-    _businessName = null;
-    _qualifications = null;
-    _hasDBS = false;
-    _experience = null;
-    _hourlyRate = null;
-    _serviceAreas = [];
     _log('All onboarding data cleared');
     await BrowserStorage.remove(_storageKey);
   }
@@ -342,13 +276,6 @@ class OnboardingDataService {
         _previousBorough = data['previous_borough'] as String?;
         _assignedGroupCount = data['assigned_group_count'] as int? ?? 0;
         _assignedGroupNames = List<String>.from(data['assigned_group_names'] ?? []);
-        _serviceTypes = List<String>.from(data['service_types'] ?? []);
-        _businessName = data['business_name'] as String?;
-        _qualifications = data['qualifications'] as String?;
-        _hasDBS = data['has_dbs'] as bool? ?? false;
-        _experience = data['experience'] as String?;
-        _hourlyRate = data['hourly_rate'] as String?;
-        _serviceAreas = List<String>.from(data['service_areas'] ?? []);
         
         if (kDebugMode) {
           debugPrint('OnboardingData loaded from storage');
@@ -388,13 +315,6 @@ class OnboardingDataService {
         'previous_borough': _previousBorough,
         'assigned_group_count': _assignedGroupCount,
         'assigned_group_names': _assignedGroupNames,
-        'service_types': _serviceTypes,
-        'business_name': _businessName,
-        'qualifications': _qualifications,
-        'has_dbs': _hasDBS,
-        'experience': _experience,
-        'hourly_rate': _hourlyRate,
-        'service_areas': _serviceAreas,
       };
       
       await BrowserStorage.setString(_storageKey, json.encode(data));

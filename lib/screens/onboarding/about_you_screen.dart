@@ -63,14 +63,8 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
 
     if (!mounted) return;
 
-    // Provider path → show the "You're Live!" success screen
-    if (_onboarding.isProvider) {
-      Navigator.pushNamedAndRemoveUntil(
-          context, '/provider_complete', (route) => false);
-    } else {
-      // Parent path → go straight home
-      Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-    }
+    // Navigate home after completing onboarding
+    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
   }
 
   @override
