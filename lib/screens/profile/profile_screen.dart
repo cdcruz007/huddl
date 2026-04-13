@@ -3509,19 +3509,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pushNamed(context, '/privacy');
             },
           ),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-            leading: const Icon(Icons.map_outlined, size: 20),
-            title: Text('User Journey Maps',
-                style: GoogleFonts.poppins(fontSize: 14)),
-            trailing: Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/journey_maps');
-            },
-          ),
           const SizedBox(height: 16),
-          Text('\u00a9 2025 Huddl. All rights reserved.',
+          Text('\u00a9 2026 Cruzen Ltd. All rights reserved.',
               style: GoogleFonts.poppins(
                   fontSize: 11, color: context.hc.textTertiary)),
           const SizedBox(height: 16),
