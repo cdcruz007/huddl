@@ -49,7 +49,7 @@ class FeedbackService extends ChangeNotifier {
   /// Persists the rating locally and sends the data to the team.
   Future<bool> submitFeedback({
     required String feedbackText,
-    required int starRating,
+    int starRating = 0,
     required String userName,
   }) async {
     // 1) Persist locally

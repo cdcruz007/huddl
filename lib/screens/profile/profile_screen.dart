@@ -690,7 +690,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     _MenuItem(
                       icon: Icons.feedback_outlined,
-                      title: 'Feedback & Rating',
+                      title: 'Feedback',
                       subtitle: 'Tell us what you think',
                       onTap: _openFeedbackScreen,
                     ),
@@ -3337,16 +3337,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pop(c);
             _showFAQScreen();
           }),
-          _helpTile(Icons.description_outlined, 'Terms of Service',
-              'Read our terms', () {
-            Navigator.pop(c);
-            Navigator.pushNamed(context, '/terms');
-          }),
-          _helpTile(Icons.privacy_tip_outlined, 'Privacy Policy',
-              'Read our privacy policy', () {
-            Navigator.pop(c);
-            Navigator.pushNamed(context, '/privacy');
-          }),
           const SizedBox(height: 16),
         ],
       ),
@@ -3486,30 +3476,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          const Divider(indent: 20, endIndent: 20),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-            leading: const Icon(Icons.description_outlined, size: 20),
-            title: Text('Terms of Service',
-                style: GoogleFonts.poppins(fontSize: 14)),
-            trailing: Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/terms');
-            },
-          ),
-          ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-            leading: const Icon(Icons.privacy_tip_outlined, size: 20),
-            title: Text('Privacy Policy',
-                style: GoogleFonts.poppins(fontSize: 14)),
-            trailing: Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/privacy');
-            },
-          ),
-          const SizedBox(height: 16),
           Text('\u00a9 2026 Cruzen Ltd. All rights reserved.',
               style: GoogleFonts.poppins(
                   fontSize: 11, color: context.hc.textTertiary)),
@@ -3844,114 +3810,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // FEEDBACK & RATING
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Prominent feedback card shown in the profile — includes static 4.8 rating
+  /// Feedback card shown in the profile — feedback only, no star rating.
   Widget _buildFeedbackCard() {
     return Container(
       color: context.hc.surface,
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Rating display row
-          Row(
-            children: [
-              // Star cluster
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: HuddlColors.accentAmber.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.star_rounded,
-                    size: 28, color: HuddlColors.accentAmber),
-              ),
-              const SizedBox(width: 12),
-              // Rating text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          '${_feedbackService.displayRating}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '/ 5.0',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textTertiary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 5 star icons showing 4.8
-                        ...List.generate(5, (i) {
-                          if (i < 4) {
-                            return const Icon(Icons.star_rounded,
-                                size: 16, color: HuddlColors.accentAmber);
-                          } else {
-                            return Icon(Icons.star_rounded,
-                                size: 16,
-                                color: HuddlColors.accentAmber
-                                    .withValues(alpha: 0.4));
-                          }
-                        }),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'App Rating',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // Feedback CTA button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _openFeedbackScreen,
-              icon: const Icon(Icons.rate_review_outlined,
-                  size: 20, color: Colors.white),
-              label: Text(
-                'Give Feedback & Rate',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                elevation: 0,
-              ),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _openFeedbackScreen,
+          icon: const Icon(Icons.rate_review_outlined,
+              size: 20, color: Colors.white),
+          label: Text(
+            'Give Feedback',
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
-        ],
+          style: ElevatedButton.styleFrom(
+            backgroundColor: HuddlColors.primary,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24)),
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            elevation: 0,
+          ),
+        ),
       ),
     );
   }
 
-  /// Opens the full Feedback & Rating screen as a large bottom sheet
+  /// Opens the full Feedback screen as a large bottom sheet
   void _openFeedbackScreen() {
-    int selectedRating = 0;
     final feedbackCtrl = TextEditingController();
     bool isSubmitting = false;
     bool isSubmitted = false;
@@ -3979,7 +3870,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: context.hc.divider,
                         borderRadius: BorderRadius.circular(2))),
                 const SizedBox(height: 16),
-                Text('Feedback & Rating',
+                Text('Feedback',
                     style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -3999,80 +3890,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // ── Star Rating Section ──
-                              Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(24),
-                                  decoration: BoxDecoration(
-                                    color: context.hc.scaffold,
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'How would you rate Huddl?',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.hc.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      // Interactive stars
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: List.generate(5, (i) {
-                                          final starIndex = i + 1;
-                                          return GestureDetector(
-                                            onTap: () {
-                                              setLocal(() =>
-                                                  selectedRating = starIndex);
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 6),
-                                              child: AnimatedScale(
-                                                scale:
-                                                    selectedRating >= starIndex
-                                                        ? 1.1
-                                                        : 1.0,
-                                                duration: const Duration(
-                                                    milliseconds: 150),
-                                                child: Icon(
-                                                  selectedRating >= starIndex
-                                                      ? Icons.star_rounded
-                                                      : Icons
-                                                          .star_outline_rounded,
-                                                  size: 44,
-                                                  color: selectedRating >=
-                                                          starIndex
-                                                      ? HuddlColors.accentAmber
-                                                      : HuddlColors.gray300,
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        }),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      if (selectedRating > 0)
-                                        Text(
-                                          _ratingLabel(selectedRating),
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: HuddlColors.accentAmber,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 24),
-
                               // ── Feedback Text Section ──
                               Text(
                                 'Your feedback',
@@ -4098,6 +3915,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 maxLength: 1000,
                                 textCapitalization:
                                     TextCapitalization.sentences,
+                                onChanged: (_) => setLocal(() {}),
                                 style: GoogleFonts.poppins(
                                     fontSize: 14,
                                     color: context.hc.textPrimary),
@@ -4163,37 +3981,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton(
-                                  onPressed: (selectedRating == 0 &&
-                                          feedbackCtrl.text.trim().isEmpty)
+                                  onPressed: feedbackCtrl.text.trim().isEmpty
                                       ? null
                                       : isSubmitting
                                           ? null
                                           : () async {
-                                              if (selectedRating == 0) {
-                                                ScaffoldMessenger.of(context)
-                                                    .showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                        'Please select a star rating',
-                                                        style:
-                                                            GoogleFonts.poppins(
-                                                                fontSize: 13)),
-                                                    backgroundColor:
-                                                        HuddlColors
-                                                            .accentAmber,
-                                                    behavior: SnackBarBehavior
-                                                        .floating,
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10)),
-                                                  ),
-                                                );
-                                                return;
-                                              }
-
                                               setLocal(
                                                   () => isSubmitting = true);
 
@@ -4201,7 +3993,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                   .submitFeedback(
                                                 feedbackText: feedbackCtrl.text
                                                     .trim(),
-                                                starRating: selectedRating,
+                                                starRating: 0,
                                                 userName: _name,
                                               );
 
@@ -4298,7 +4090,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Your feedback and rating have been submitted.\nWe truly value your input — it helps us make\nHuddl better for everyone.',
+            'Your feedback has been submitted.\nWe truly value your input — it helps us make\nHuddl better for everyone.',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: 14,
@@ -4328,23 +4120,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ],
       ),
     );
-  }
-
-  String _ratingLabel(int rating) {
-    switch (rating) {
-      case 1:
-        return 'Poor';
-      case 2:
-        return 'Fair';
-      case 3:
-        return 'Good';
-      case 4:
-        return 'Great';
-      case 5:
-        return 'Excellent!';
-      default:
-        return '';
-    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
