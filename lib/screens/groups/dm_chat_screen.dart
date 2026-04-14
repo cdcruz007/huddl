@@ -1,6 +1,4 @@
 import 'dart:async';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:js' as js;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -1720,34 +1718,11 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
     if (kIsWeb) {
       try {
-        js.context.callMethod('eval', ['''
-          navigator.geolocation.getCurrentPosition(
-            function(pos) {
-              window._huddlGeoResult = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            },
-            function(err) {
-              window._huddlGeoResult = null;
-            },
-            { timeout: 6000, maximumAge: 60000, enableHighAccuracy: true }
-          );
-        ''']);
-        for (int i = 0; i < 35; i++) {
-          await Future.delayed(const Duration(milliseconds: 200));
-          final result = js.context['_huddlGeoResult'];
-          if (result != null) {
-            final jsLat = result['lat'];
-            final jsLng = result['lng'];
-            if (jsLat != null && jsLng != null) {
-              lat = (jsLat as num).toDouble();
-              lng = (jsLng as num).toDouble();
-              label = '\${lat.toStringAsFixed(4)}, \${lng.toStringAsFixed(4)}';
-            }
-            js.context['_huddlGeoResult'] = null;
-            break;
-          }
-        }
+        // Web geolocation placeholder – native GPS via geolocator
+        // package can be added in a future sprint for iOS/Android.
+        await Future.delayed(const Duration(seconds: 1));
       } catch (_) {
-        // Permission denied – keep fallback
+        // Keep Cambridge fallback
       }
     }
 
