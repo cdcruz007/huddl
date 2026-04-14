@@ -18,17 +18,5 @@
 	     production track. For TestFlight internal testing, 'development' is
 	     correct. -->
 
-	<!-- ── iCloud Key-Value Store ──────────────────────────────────────────
-	     Enables NSUbiquitousKeyValueStore for the iCloud KV backup used in
-	     AppDelegate.swift. Must ALSO be enabled in:
-	       Apple Developer Portal → Identifiers →
-	       com.huddlconnect.huddlConnect → iCloud ✅
-	     AND in Xcode:
-	       Runner target → Signing & Capabilities → + Capability → iCloud →
-	       Key-value storage ✅
-	────────────────────────────────────────────────────────────────────── -->
-	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
-	<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
-
 </dict>
 </plist>
