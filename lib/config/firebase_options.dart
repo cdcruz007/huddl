@@ -50,41 +50,19 @@ class DefaultFirebaseOptions {
 
   // ── iOS ─────────────────────────────────────────────────────────────────
   //
-  // ╔══════════════════════════════════════════════════════════════════════╗
-  // ║  TODO — REPLACE VALUES BEFORE BUILDING FOR iOS / TESTFLIGHT         ║
-  // ╠══════════════════════════════════════════════════════════════════════╣
-  // ║  After downloading GoogleService-Info.plist from Firebase Console,  ║
-  // ║  copy these values from that file into the fields below:            ║
-  // ║                                                                      ║
-  // ║  Field in firebase_options.dart  ← Key in GoogleService-Info.plist  ║
-  // ║  ─────────────────────────────────────────────────────────────────  ║
-  // ║  apiKey              ← API_KEY                                       ║
-  // ║  appId               ← GOOGLE_APP_ID                                 ║
-  // ║  messagingSenderId   ← GCM_SENDER_ID                                 ║
-  // ║  iosBundleId         ← BUNDLE_ID  (= com.huddlconnect.huddlConnect)  ║
-  // ║  iosClientId         ← CLIENT_ID                                     ║
-  // ║                                                                      ║
-  // ║  projectId and storageBucket are the same as Android — no change.   ║
-  // ║                                                                      ║
-  // ║  HOW TO GET GoogleService-Info.plist:                                ║
-  // ║    1. https://console.firebase.google.com → huddl-connect project   ║
-  // ║    2. ⚙️ Project settings → Your apps → Add app → iOS               ║
-  // ║    3. Bundle ID: com.huddlconnect.huddlConnect                       ║
-  // ║    4. Download GoogleService-Info.plist                              ║
-  // ║    5. Place file at:  ios/Runner/GoogleService-Info.plist            ║
-  // ║    6. Update the values below                                        ║
-  // ╚══════════════════════════════════════════════════════════════════════╝
+  // Values sourced from GoogleService-Info.plist (ios/Runner/GoogleService-Info.plist)
+  // Project: huddl-connect  |  Bundle ID: com.huddlconnect.huddlConnect
+  //
+  // NOTE: CLIENT_ID / iosClientId is absent from this plist because no
+  // OAuth 2.0 client has been created for this iOS app yet.  If you need
+  // Google Sign-In, go to Firebase Console → Authentication → Sign-in method
+  // → Google → enable it, then re-download the plist to get CLIENT_ID.
   static const FirebaseOptions ios = FirebaseOptions(
-    // TODO: replace with API_KEY from GoogleService-Info.plist
-    apiKey: 'REPLACE_WITH_IOS_API_KEY',
-    // TODO: replace with GOOGLE_APP_ID from GoogleService-Info.plist
-    // Format: 1:879152141283:ios:xxxxxxxxxxxx
-    appId: 'REPLACE_WITH_IOS_APP_ID',
+    apiKey: 'AIzaSyBJfw203W_lXYri_TPA6XL4nrn03D1IfGI',
+    appId: '1:879152141283:ios:bdac2f6012c53a8d9186d6',
     messagingSenderId: '879152141283',
     projectId: 'huddl-connect',
     storageBucket: 'huddl-connect.firebasestorage.app',
-    // TODO: replace with CLIENT_ID from GoogleService-Info.plist
-    iosClientId: 'REPLACE_WITH_IOS_CLIENT_ID',
     iosBundleId: 'com.huddlconnect.huddlConnect',
   );
 }
