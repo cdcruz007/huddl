@@ -98,19 +98,23 @@ import Foundation
               let reasonRaw = userInfo[NSUbiquitousKeyValueStoreChangeReasonKey] as? Int
         else { return }
 
-        let reason = NSUbiquitousKeyValueStore.ChangeReason(rawValue: reasonRaw)
-
-        switch reason {
-        case .serverChange, .initialSyncChange:
+        // Use raw integer values for compatibility across all iOS versions:
+        // NSUbiquitousKeyValueStoreServerChange       = 0
+        // NSUbiquitousKeyValueStoreInitialSyncChange  = 1
+        // NSUbiquitousKeyValueStoreQuotaViolationChange = 2
+        // NSUbiquitousKeyValueStoreAccountChange      = 3
+        switch reasonRaw {
+        case NSUbiquitousKeyValueStoreServerChange,
+             NSUbiquitousKeyValueStoreInitialSyncChange:
             // Another device (or first-sync) updated values — pull them down
             pullICloudKVToLocal()
-        case .accountChange:
+        case NSUbiquitousKeyValueStoreAccountChange:
             // User changed iCloud account — full resync
             syncLocalToICloudKV()
-        case .quotaViolationChange:
+        case NSUbiquitousKeyValueStoreQuotaViolationChange:
             // We exceeded the 1 MB quota — nothing we can do at runtime;
             // manual backup is still available.
-            print("⚠️ HuddlBackup: iCloud KV quota exceeded. Use manual backup.")
+            print("HuddlBackup: iCloud KV quota exceeded. Use manual backup.")
         default:
             break
         }
@@ -150,7 +154,7 @@ import Foundation
         kvStore.synchronize()
 
         if syncedCount > 0 {
-            print("✅ HuddlBackup: Synced \(syncedCount) keys to iCloud KV (\(skippedCount) skipped — too large)")
+            print("HuddlBackup: Synced \(syncedCount) keys to iCloud KV (\(skippedCount) skipped)")
         }
     }
 
@@ -169,7 +173,7 @@ import Foundation
         defaults.synchronize()
 
         if restoredCount > 0 {
-            print("✅ HuddlBackup: Pulled \(restoredCount) keys from iCloud KV to local storage")
+            print("HuddlBackup: Pulled \(restoredCount) keys from iCloud KV to local storage")
         }
     }
 
@@ -184,7 +188,7 @@ import Foundation
         let kvHasData    = !kvStore.dictionaryRepresentation.isEmpty
 
         if !localHasData && kvHasData {
-            print("📲 HuddlBackup: No local data found — restoring from iCloud KV")
+            print("HuddlBackup: No local data found, restoring from iCloud KV")
             pullICloudKVToLocal()
         }
     }
