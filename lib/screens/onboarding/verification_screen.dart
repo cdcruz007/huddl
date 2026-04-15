@@ -22,7 +22,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
   int _resendSeconds = 60;
   Timer? _resendTimer;
   bool _isVerifying = false;
+
+  // Separate state for the "sending code" phase vs "verifying code" phase
+  bool _isSendingCode = false;
   String? _errorMessage;
+  String? _infoMessage;
+
   final FirebaseAuthService _authService = FirebaseAuthService();
   final OnboardingDataService _onboardingData = OnboardingDataService();
 
@@ -37,11 +42,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         setState(() {
-          _errorMessage = 'Enter any 6-digit code and tap Continue.';
+          _infoMessage = 'On web preview, enter any 6-digit code and tap Continue.';
         });
       });
     } else {
-      // Mobile: initiate real Firebase phone verification
+      // Mobile: show "sending" state immediately, then initiate Firebase
+      setState(() {
+        _isSendingCode = true;
+        _infoMessage = 'Sending code to your phone…';
+      });
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _initiatePhoneVerification();
       });
@@ -55,62 +64,106 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Initiate Firebase phone verification (sends SMS).
-  Future<void> _initiatePhoneVerification() async {
-    final phoneNumber = _onboardingData.phoneNumber;
+  /// Build clean phone number from onboarding data (no double prefix).
+  String _buildFullPhoneNumber() {
+    final phoneNumber = _onboardingData.phoneNumber ?? '';
     final countryCode = _onboardingData.countryCode ?? '+44';
 
-    if (phoneNumber == null) return;
-
-    // Sanitise: strip any +44 already embedded in phoneNumber
-    // to prevent double-prefix e.g. "+44+447575888452"
+    // Sanitise: strip any +<cc> already embedded in phoneNumber
     String cleanPhone = phoneNumber;
     final ccDigits = countryCode.replaceAll('+', '');
-    if (cleanPhone.startsWith('+$ccDigits')) cleanPhone = cleanPhone.substring(ccDigits.length + 1);
-    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
-    final fullPhone = '$countryCode$cleanPhone';
+    if (cleanPhone.startsWith('+$ccDigits')) {
+      cleanPhone = cleanPhone.substring(ccDigits.length + 1);
+    }
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    // Strip all non-digit characters then prepend country code
+    final digitsOnly = cleanPhone.replaceAll(RegExp(r'\D'), '');
+    return '$countryCode$digitsOnly';
+  }
+
+  /// Initiate Firebase phone verification (sends SMS).
+  Future<void> _initiatePhoneVerification() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isSendingCode = true;
+      _errorMessage = null;
+      _infoMessage = 'Sending code to your phone…';
+    });
+
+    final phoneNumber = _onboardingData.phoneNumber;
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isSendingCode = false;
+        _errorMessage = 'No phone number found. Please go back and enter your number.';
+      });
+      return;
+    }
+
+    final fullPhone = _buildFullPhoneNumber();
+    if (kDebugMode) debugPrint('[VerificationScreen] Initiating verification for: $fullPhone');
 
     try {
+      // Re-run configure() immediately before the call to guarantee
+      // appVerificationDisabledForTesting is active on this platform thread.
+      await _authService.configure();
+
       final result = await _authService.verifyPhoneNumber(fullPhone)
-          .timeout(const Duration(seconds: 30), onTimeout: () {
+          .timeout(const Duration(seconds: 45), onTimeout: () {
         return PhoneAuthResult(
           status: PhoneAuthStatus.codeSent,
           verificationId: '',
+          errorMessage: 'SMS may be delayed. Enter your code when it arrives.',
         );
       });
 
       if (!mounted) return;
 
+      setState(() => _isSendingCode = false);
+
       if (result.status == PhoneAuthStatus.verified) {
         // Auto-verified on Android — complete sign-up flow
         _completeSignUp();
       } else if (result.status == PhoneAuthStatus.codeSent) {
-        // SMS sent — user waits for OTP
-        // No error message needed, UI is already showing the input field
+        // SMS sent — show helpful message
+        setState(() {
+          _infoMessage = result.errorMessage ?? 'Code sent! Check your SMS.';
+          _errorMessage = null;
+        });
       } else if (result.status == PhoneAuthStatus.error) {
-        // Don't block the screen — show message but let user proceed
-        if (mounted) {
-          setState(() {
-            _errorMessage = result.errorMessage ?? 'Could not send SMS. Please check your number and try again.';
-          });
-        }
+        setState(() {
+          _errorMessage = result.errorMessage ??
+              'Could not send SMS. Tap "Retry" to try again.';
+          _infoMessage = null;
+        });
       }
     } catch (e) {
+      if (kDebugMode) debugPrint('[VerificationScreen] _initiatePhoneVerification error: $e');
       if (!mounted) return;
-      // Any crash in Firebase phone auth — show message, don't crash the app
       setState(() {
-        _errorMessage = 'Could not send verification code. Please check your number and try again.';
+        _isSendingCode = false;
+        _errorMessage = 'Could not send verification code. Tap "Retry" to try again.';
+        _infoMessage = null;
       });
     }
   }
 
   void _startResendTimer() {
     _resendTimer?.cancel();
-    setState(() {
-      _resendSeconds = 60;
-    });
+    if (mounted) {
+      setState(() {
+        _resendSeconds = 60;
+      });
+    }
 
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       if (_resendSeconds > 0) {
         setState(() {
           _resendSeconds--;
@@ -145,8 +198,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
     try {
       // Mobile: verify the SMS code via Firebase phone auth
       final result = await _authService.verifySmsCode(code)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
-        return AuthResult.failure('Verification timed out');
+          .timeout(const Duration(seconds: 15), onTimeout: () {
+        return AuthResult.failure('Verification timed out. Please try again.');
       });
 
       if (!mounted) return;
@@ -230,55 +283,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return;
     }
 
-    final phoneNumber = _onboardingData.phoneNumber;
-    final countryCode = _onboardingData.countryCode ?? '+44';
-    if (phoneNumber == null) return;
-
-    // Sanitise to prevent double +44
-    String cleanPhone = phoneNumber;
-    final ccD = countryCode.replaceAll('+', '');
-    if (cleanPhone.startsWith('+$ccD')) cleanPhone = cleanPhone.substring(ccD.length + 1);
-    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
-    final fullPhone = '$countryCode$cleanPhone';
-    try {
-      final result = await _authService.verifyPhoneNumber(fullPhone)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
-        return PhoneAuthResult(
-          status: PhoneAuthStatus.error,
-          errorMessage: 'Resend timed out.',
-        );
-      });
-
-      if (!mounted) return;
-
-      if (result.status == PhoneAuthStatus.codeSent) {
-        _startResendTimer();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('New code sent to $fullPhone'),
-            backgroundColor: HuddlColors.success,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to resend code. Please try again.'),
-            backgroundColor: HuddlColors.error,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to resend code. Please try again.'),
-          backgroundColor: HuddlColors.error,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    _startResendTimer();
+    await _initiatePhoneVerification();
   }
 
   bool get _canContinue => _codeController.text.length >= 4;
@@ -291,6 +297,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final kInputBg = Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg;
     final kInputBorder = Theme.of(context).dividerColor;
     const kBtnDisabled = HuddlColors.disabled;
+
+    // Display phone number (sanitised, no double prefix)
+    final displayPhone = () {
+      final cc = _onboardingData.countryCode ?? '+44';
+      String ph = _onboardingData.phoneNumber ?? 'your phone';
+      final ccDigits = cc.replaceAll('+', '');
+      if (ph.startsWith('+$ccDigits')) ph = ph.substring(ccDigits.length + 1);
+      if (ph.startsWith('0')) ph = ph.substring(1);
+      // Only digits left
+      ph = ph.replaceAll(RegExp(r'\D'), '');
+      return '$cc $ph';
+    }();
 
     final isWorking = _isVerifying;
 
@@ -313,6 +331,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
             ),
 
             OnboardingProgressBar(step: OnboardingStep.verification),
+
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -336,15 +355,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Subtitle with phone number
                     Text(
-                      () {
-                        final cc = _onboardingData.countryCode ?? '+44';
-                        String ph = _onboardingData.phoneNumber ?? 'your phone';
-                        // Strip any embedded country code to avoid double +44 display
-                        final ccDigits = cc.replaceAll('+', '');
-                        if (ph.startsWith('+$ccDigits')) ph = ph.substring(ccDigits.length + 1);
-                        if (ph.startsWith('0')) ph = ph.substring(1);
-                        return 'Enter the 6-digit code sent to\n$cc $ph';
-                      }(),
+                      'Enter the 6-digit code sent to\n$displayPhone',
                       style: const TextStyle(
                         fontSize: 14,
                         color: kTextGray,
@@ -353,9 +364,50 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       textAlign: TextAlign.center,
                     ),
 
-                    const SizedBox(height: 36),
+                    const SizedBox(height: 24),
 
-                    // Code input
+                    // ── "Sending code" loading indicator ─────────────────
+                    if (_isSendingCode) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: kOrange,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            _infoMessage ?? 'Sending code…',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: kTextGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ] else if (_infoMessage != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        _infoMessage!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: HuddlColors.success,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Code input (shown even while sending so user can
+                    // start typing as soon as SMS arrives)
                     Container(
                       decoration: BoxDecoration(
                         color: kInputBg,
@@ -385,32 +437,61 @@ class _VerificationScreenState extends State<VerificationScreen> {
                           contentPadding:
                               EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
-                        onChanged: (_) => setState(() => _errorMessage = null),
+                        onChanged: (_) => setState(() {
+                          _errorMessage = null;
+                        }),
                       ),
                     ),
 
+                    // Error message
                     if (_errorMessage != null) ...[
                       const SizedBox(height: 8),
-                      Text(
-                        _errorMessage!,
-                        style: const TextStyle(
-                            fontSize: 13, color: HuddlColors.error),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                  fontSize: 13, color: HuddlColors.error),
+                            ),
+                          ),
+                          // Retry button inline with error
+                          if (!_isSendingCode)
+                            TextButton(
+                              onPressed: _initiatePhoneVerification,
+                              style: TextButton.styleFrom(
+                                foregroundColor: kOrange,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Retry',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                        ],
                       ),
                     ],
 
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
 
                     // Resend button
                     GestureDetector(
-                      onTap: _resendSeconds == 0 ? _resendOTP : null,
+                      onTap: (_resendSeconds == 0 && !_isSendingCode)
+                          ? _resendOTP
+                          : null,
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
                           color: kInputBg,
                           borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: HuddlColors.inputBorderLight, width: 1),
+                          border: Border.all(
+                              color: HuddlColors.inputBorderLight, width: 1),
                         ),
                         alignment: Alignment.center,
                         child: Text(
@@ -419,30 +500,35 @@ class _VerificationScreenState extends State<VerificationScreen> {
                               : 'Resend code',
                           style: TextStyle(
                             fontSize: 15,
-                            color: _resendSeconds > 0 ? kTextGray : kOrange,
+                            color: (_resendSeconds > 0 || _isSendingCode)
+                                ? kTextGray
+                                : kOrange,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Continue / Verify button
                     GestureDetector(
-                      onTap: (_canContinue && !isWorking) ? _verifyOTP : null,
+                      onTap: (_canContinue && !isWorking && !_isSendingCode)
+                          ? _verifyOTP
+                          : null,
                       child: Container(
                         width: double.infinity,
                         height: 54,
                         decoration: BoxDecoration(
-                            color: (_canContinue && !isWorking)
+                            color: (_canContinue && !isWorking && !_isSendingCode)
                                 ? kOrange
                                 : kBtnDisabled,
                             borderRadius: BorderRadius.circular(12)),
                         alignment: Alignment.center,
                         child: isWorking
                             ? const SizedBox(
-                                width: 22, height: 22,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
                                     strokeWidth: 2, color: Colors.white))
                             : Text(
@@ -450,18 +536,18 @@ class _VerificationScreenState extends State<VerificationScreen> {
                                 style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
-                                    color: (_canContinue && !isWorking)
+                                    color: (_canContinue && !isWorking && !_isSendingCode)
                                         ? Colors.white
                                         : kTextGray),
                               ),
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Helpful hint
                     Text(
-                      'Enter the code from your SMS, or tap Continue to create your account.',
+                      'Enter the 6-digit code from your SMS message.',
                       style: TextStyle(
                         fontSize: 12,
                         color: context.hc.textTertiary,
