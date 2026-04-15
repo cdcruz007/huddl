@@ -54,87 +54,35 @@ class FirebaseAuthService {
   }
 
   // ── iOS ──────────────────────────────────────────────────────────────────
+  // Uses signInWithPhoneNumber (reCAPTCHA web flow) instead of
+  // verifyPhoneNumber. The verifyPhoneNumber method on iOS calls
+  // Swift's assertionFailure() when APNs isn't ready, causing an
+  // unrecoverable SIGTRAP crash. signInWithPhoneNumber does NOT
+  // have this assertion and works reliably on TestFlight/production.
   Future<PhoneAuthResult> _iosVerify(String phoneNumber) async {
-    final completer = Completer<PhoneAuthResult>();
-
-    final timeoutTimer = Timer(const Duration(seconds: 45), () {
-      if (!completer.isCompleted) {
-        completer.complete(PhoneAuthResult(
-          status: PhoneAuthStatus.error,
-          errorMessage: 'Verification timed out. Please try again.',
-        ));
-      }
-    });
-
-    _log('iOS: calling verifyPhoneNumber');
-
+    _log('iOS: calling signInWithPhoneNumber');
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: const Duration(seconds: 30),
-        forceResendingToken: _resendToken,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          _log('iOS verificationCompleted');
-          try {
-            await _auth.signInWithCredential(credential);
-            if (!completer.isCompleted) {
-              completer
-                  .complete(PhoneAuthResult(status: PhoneAuthStatus.verified));
-            }
-          } catch (e) {
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(
-                status: PhoneAuthStatus.error,
-                errorMessage: 'Auto-verification failed.',
-              ));
-            }
-          }
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _log('iOS verificationFailed: ${e.code}');
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.error,
-              errorMessage: _mapAuthError(e.code),
-            ));
-          }
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          _iosConfirmationResult = null;
-          _log('iOS codeSent');
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.codeSent,
-              verificationId: verificationId,
-            ));
-          }
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.codeSent,
-              verificationId: verificationId,
-            ));
-          }
-        },
+      final confirmationResult =
+          await _auth.signInWithPhoneNumber(phoneNumber);
+      _iosConfirmationResult = confirmationResult;
+      _verificationId = confirmationResult.verificationId;
+      _log('iOS: signInWithPhoneNumber succeeded, codeSent');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.codeSent,
+        verificationId: confirmationResult.verificationId,
       );
-
-      timeoutTimer.cancel();
-      return completer.future;
+    } on FirebaseAuthException catch (e) {
+      _logError(e, StackTrace.current, 'iOS signInWithPhoneNumber FirebaseAuthException: ${e.code}');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: _mapAuthError(e.code),
+      );
     } catch (e, stack) {
-      _logError(e, stack, 'iOS verifyPhoneNumber sync throw');
-      timeoutTimer.cancel();
-      if (!completer.isCompleted) {
-        completer.complete(PhoneAuthResult(
-          status: PhoneAuthStatus.error,
-          errorMessage:
-              'Could not send verification code. Please try again.',
-        ));
-      }
-      return completer.future;
+      _logError(e, stack, 'iOS signInWithPhoneNumber catch');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: 'Could not send verification code. Please try again.',
+      );
     }
   }
 
