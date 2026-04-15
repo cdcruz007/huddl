@@ -62,7 +62,13 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     if (phoneNumber == null) return;
 
-    final fullPhone = '$countryCode$phoneNumber';
+    // Sanitise: strip any +44 already embedded in phoneNumber
+    // to prevent double-prefix e.g. "+44+447575888452"
+    String cleanPhone = phoneNumber;
+    final ccDigits = countryCode.replaceAll('+', '');
+    if (cleanPhone.startsWith('+$ccDigits')) cleanPhone = cleanPhone.substring(ccDigits.length + 1);
+    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+    final fullPhone = '$countryCode$cleanPhone';
 
     try {
       final result = await _authService.verifyPhoneNumber(fullPhone)
@@ -118,6 +124,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
   Future<void> _verifyOTP() async {
     final code = _codeController.text.trim();
     if (code.length < 4) return;
+
+    // Dismiss keyboard before processing
+    FocusScope.of(context).unfocus();
 
     setState(() {
       _isVerifying = true;
@@ -225,7 +234,12 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final countryCode = _onboardingData.countryCode ?? '+44';
     if (phoneNumber == null) return;
 
-    final fullPhone = '$countryCode$phoneNumber';
+    // Sanitise to prevent double +44
+    String cleanPhone = phoneNumber;
+    final ccD = countryCode.replaceAll('+', '');
+    if (cleanPhone.startsWith('+$ccD')) cleanPhone = cleanPhone.substring(ccD.length + 1);
+    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+    final fullPhone = '$countryCode$cleanPhone';
     try {
       final result = await _authService.verifyPhoneNumber(fullPhone)
           .timeout(const Duration(seconds: 10), onTimeout: () {
@@ -322,7 +336,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Subtitle with phone number
                     Text(
-                      'Enter the 6-digit code sent to\n${_onboardingData.countryCode ?? "+44"} ${_onboardingData.phoneNumber ?? "your phone"}',
+                      () {
+                        final cc = _onboardingData.countryCode ?? '+44';
+                        String ph = _onboardingData.phoneNumber ?? 'your phone';
+                        // Strip any embedded country code to avoid double +44 display
+                        final ccDigits = cc.replaceAll('+', '');
+                        if (ph.startsWith('+$ccDigits')) ph = ph.substring(ccDigits.length + 1);
+                        if (ph.startsWith('0')) ph = ph.substring(1);
+                        return 'Enter the 6-digit code sent to\n$cc $ph';
+                      }(),
                       style: const TextStyle(
                         fontSize: 14,
                         color: kTextGray,
