@@ -71,6 +71,19 @@ class FirebaseAuthService {
         }
       });
 
+      // ── CRITICAL iOS FIX ─────────────────────────────────────────────
+      // Firebase's PhoneAuthProvider.verifyPhoneNumber() calls Swift's
+      // assertionFailure() if APNs is not yet registered when the call
+      // is made (common on first launch / TestFlight). This kills the
+      // process before Dart try/catch can intercept it.
+      //
+      // Fix: wait up to 3 seconds for APNs to register, then proceed.
+      // If APNs still isn't ready, Firebase will fall back to reCAPTCHA
+      // silently instead of asserting.
+      if (!kIsWeb) {
+        await Future.delayed(const Duration(milliseconds: 3000));
+      }
+
       try {
         await _auth.verifyPhoneNumber(
           phoneNumber: phoneNumber,
