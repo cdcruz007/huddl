@@ -64,23 +64,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Build clean phone number from onboarding data (no double prefix).
+  /// Build clean E.164 phone number — digits only stored, so just prepend cc.
   String _buildFullPhoneNumber() {
-    final phoneNumber = _onboardingData.phoneNumber ?? '';
-    final countryCode = _onboardingData.countryCode ?? '+44';
+    final digits = _onboardingData.phoneNumber ?? '';
+    final cc = _onboardingData.countryCode ?? '+44';
+    // phoneNumber is already stored as raw digits (e.g. "7575888452")
+    // just prepend the country code.
+    final clean = digits.replaceAll(RegExp(r'\D'), '');
+    return '$cc$clean';
+  }
 
-    // Sanitise: strip any +<cc> already embedded in phoneNumber
-    String cleanPhone = phoneNumber;
-    final ccDigits = countryCode.replaceAll('+', '');
-    if (cleanPhone.startsWith('+$ccDigits')) {
-      cleanPhone = cleanPhone.substring(ccDigits.length + 1);
-    }
-    if (cleanPhone.startsWith('0')) {
-      cleanPhone = cleanPhone.substring(1);
-    }
-    // Strip all non-digit characters then prepend country code
-    final digitsOnly = cleanPhone.replaceAll(RegExp(r'\D'), '');
-    return '$countryCode$digitsOnly';
+  /// Display string shown in the subtitle — e.g. "+44 7575 888452"
+  String _displayPhone() {
+    final digits = _onboardingData.phoneNumber ?? 'your phone';
+    final cc = _onboardingData.countryCode ?? '+44';
+    final clean = digits.replaceAll(RegExp(r'\D'), '');
+    return '$cc $clean';
   }
 
   /// Initiate Firebase phone verification (sends SMS).
@@ -298,17 +297,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
     final kInputBorder = Theme.of(context).dividerColor;
     const kBtnDisabled = HuddlColors.disabled;
 
-    // Display phone number (sanitised, no double prefix)
-    final displayPhone = () {
-      final cc = _onboardingData.countryCode ?? '+44';
-      String ph = _onboardingData.phoneNumber ?? 'your phone';
-      final ccDigits = cc.replaceAll('+', '');
-      if (ph.startsWith('+$ccDigits')) ph = ph.substring(ccDigits.length + 1);
-      if (ph.startsWith('0')) ph = ph.substring(1);
-      // Only digits left
-      ph = ph.replaceAll(RegExp(r'\D'), '');
-      return '$cc $ph';
-    }();
+    final displayPhone = _displayPhone();
 
     final isWorking = _isVerifying;
 
@@ -355,7 +344,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
                     // Subtitle with phone number
                     Text(
-                      'Enter the 6-digit code sent to\n$displayPhone',
+                      'Enter the 6-digit code sent to\n$displayPhone',  // e.g. +44 7575888452
                       style: const TextStyle(
                         fontSize: 14,
                         color: kTextGray,
