@@ -26,6 +26,8 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
+
+    // (FirebaseAuthService.configure is a no-op — settings managed natively)
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }

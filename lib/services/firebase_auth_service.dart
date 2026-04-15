@@ -8,7 +8,6 @@ import 'onboarding_data_service.dart';
 /// Centralised Firebase Authentication service for Huddl Connect.
 ///
 /// Phone-only authentication using Firebase Auth.
-/// Test phone numbers (configured in Firebase Console) bypass real SMS.
 class FirebaseAuthService {
   // ── Singleton ────────────────────────────────────────────────────────────
   static final FirebaseAuthService _instance = FirebaseAuthService._internal();
@@ -21,8 +20,6 @@ class FirebaseAuthService {
   // ── Phone auth state ────────────────────────────────────────────────────
   String? _verificationId;
   int? _resendToken;
-
-  // iOS: ConfirmationResult from signInWithPhoneNumber
   ConfirmationResult? _iosConfirmationResult;
 
   // ── Getters ─────────────────────────────────────────────────────────────
@@ -31,56 +28,21 @@ class FirebaseAuthService {
   String? get uid => _auth.currentUser?.uid;
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // ═════════════════════════════════════════════════════════════════════════
-  // INITIALISATION
-  // ═════════════════════════════════════════════════════════════════════════
-
-  /// Call once after Firebase.initializeApp().
-  /// On iOS, disables APNs/reCAPTCHA verification so Firebase test phone
-  /// numbers work without a real device token.
-  ///
-  /// IMPORTANT: This must complete before any verifyPhoneNumber call.
-  Future<void> configure() async {
-    try {
-      if (!kIsWeb) {
-        // Set on BOTH platforms — on iOS this disables the assertion that
-        // causes the SIGTRAP crash; on Android it allows test numbers.
-        await _auth.setSettings(
-          appVerificationDisabledForTesting: true,
-        );
-        _log('FirebaseAuthService: appVerificationDisabledForTesting=true');
-      }
-    } catch (e) {
-      _log('FirebaseAuthService.configure error: $e');
-    }
-  }
+  // ── No-op configure kept for call-site compatibility ─────────────────────
+  Future<void> configure() async {}
 
   // ═════════════════════════════════════════════════════════════════════════
   // PHONE AUTH
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Send verification code to [phoneNumber].
-  ///
-  /// Strategy:
-  /// - **iOS**: Uses `verifyPhoneNumber` with `appVerificationDisabledForTesting=true`
-  ///   to bypass the native assertion crash. For test numbers this always works.
-  /// - **Android**: `verifyPhoneNumber` with auto-retrieval.
-  /// - **Web**: `signInWithPhoneNumber`.
   Future<PhoneAuthResult> verifyPhoneNumber(String phoneNumber) async {
-    _log('verifyPhoneNumber: platform=${defaultTargetPlatform.name} number=$phoneNumber');
+    _log('verifyPhoneNumber: platform=${defaultTargetPlatform.name}');
 
     try {
-      // ── Web ──────────────────────────────────────────────────────────
-      if (kIsWeb) {
-        return await _webVerify(phoneNumber);
-      }
-
-      // ── iOS ──────────────────────────────────────────────────────────
+      if (kIsWeb) return await _webVerify(phoneNumber);
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         return await _iosVerify(phoneNumber);
       }
-
-      // ── Android ──────────────────────────────────────────────────────
       return await _androidVerify(phoneNumber);
     } catch (e, stack) {
       _logError(e, stack, 'verifyPhoneNumber outer catch');
@@ -91,19 +53,10 @@ class FirebaseAuthService {
     }
   }
 
-  // ── iOS verification ──────────────────────────────────────────────────────
-  //
-  // On iOS with appVerificationDisabledForTesting=true:
-  // - Firebase test numbers: verifyPhoneNumber works without APNs, no reCAPTCHA
-  // - Real numbers: verifyPhoneNumber may still require APNs/reCAPTCHA
-  //
-  // The key change: we now set appVerificationDisabledForTesting=true
-  // SYNCHRONOUSLY in configure() before any auth call, and we ensure
-  // verifyPhoneNumber is called on the main thread via WidgetsBinding.
+  // ── iOS ──────────────────────────────────────────────────────────────────
   Future<PhoneAuthResult> _iosVerify(String phoneNumber) async {
     final completer = Completer<PhoneAuthResult>();
 
-    // Safety timeout
     final timeoutTimer = Timer(const Duration(seconds: 45), () {
       if (!completer.isCompleted) {
         completer.complete(PhoneAuthResult(
@@ -113,23 +66,20 @@ class FirebaseAuthService {
       }
     });
 
-    _log('iOS: calling verifyPhoneNumber (appVerificationDisabledForTesting=true)');
+    _log('iOS: calling verifyPhoneNumber');
 
-    // Ensure we're calling on the platform thread
-    // This is critical — calling from a background isolate causes the crash
     try {
       await _auth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         timeout: const Duration(seconds: 30),
         forceResendingToken: _resendToken,
-
         verificationCompleted: (PhoneAuthCredential credential) async {
           _log('iOS verificationCompleted');
           try {
             await _auth.signInWithCredential(credential);
             if (!completer.isCompleted) {
-              completer.complete(
-                  PhoneAuthResult(status: PhoneAuthStatus.verified));
+              completer
+                  .complete(PhoneAuthResult(status: PhoneAuthStatus.verified));
             }
           } catch (e) {
             if (!completer.isCompleted) {
@@ -140,9 +90,8 @@ class FirebaseAuthService {
             }
           }
         },
-
         verificationFailed: (FirebaseAuthException e) {
-          _log('iOS verificationFailed: ${e.code} – ${e.message}');
+          _log('iOS verificationFailed: ${e.code}');
           if (!completer.isCompleted) {
             completer.complete(PhoneAuthResult(
               status: PhoneAuthStatus.error,
@@ -150,12 +99,11 @@ class FirebaseAuthService {
             ));
           }
         },
-
         codeSent: (String verificationId, int? resendToken) {
           _verificationId = verificationId;
           _resendToken = resendToken;
           _iosConfirmationResult = null;
-          _log('iOS codeSent: verificationId=$verificationId');
+          _log('iOS codeSent');
           if (!completer.isCompleted) {
             completer.complete(PhoneAuthResult(
               status: PhoneAuthStatus.codeSent,
@@ -163,7 +111,6 @@ class FirebaseAuthService {
             ));
           }
         },
-
         codeAutoRetrievalTimeout: (String verificationId) {
           _verificationId = verificationId;
           if (!completer.isCompleted) {
@@ -178,25 +125,20 @@ class FirebaseAuthService {
       timeoutTimer.cancel();
       return completer.future;
     } catch (e, stack) {
-      // verifyPhoneNumber threw synchronously — this is the SIGTRAP path
-      // if appVerificationDisabledForTesting didn't prevent it.
       _logError(e, stack, 'iOS verifyPhoneNumber sync throw');
       timeoutTimer.cancel();
-
       if (!completer.isCompleted) {
-        // Final fallback: return codeSent with empty verificationId
-        // The user can still attempt OTP entry with the test number.
         completer.complete(PhoneAuthResult(
-          status: PhoneAuthStatus.codeSent,
-          verificationId: '',
-          errorMessage: 'SMS may have been delayed. Enter your code when it arrives.',
+          status: PhoneAuthStatus.error,
+          errorMessage:
+              'Could not send verification code. Please try again.',
         ));
       }
       return completer.future;
     }
   }
 
-  // Android verification
+  // ── Android ───────────────────────────────────────────────────────────────
   Future<PhoneAuthResult> _androidVerify(String phoneNumber) async {
     final completer = Completer<PhoneAuthResult>();
 
@@ -218,8 +160,8 @@ class FirebaseAuthService {
           try {
             await _auth.signInWithCredential(credential);
             if (!completer.isCompleted) {
-              completer.complete(
-                  PhoneAuthResult(status: PhoneAuthStatus.verified));
+              completer
+                  .complete(PhoneAuthResult(status: PhoneAuthStatus.verified));
             }
           } catch (e) {
             if (!completer.isCompleted) {
@@ -272,7 +214,7 @@ class FirebaseAuthService {
     }
   }
 
-  // Web verification
+  // ── Web ───────────────────────────────────────────────────────────────────
   Future<PhoneAuthResult> _webVerify(String phoneNumber) async {
     try {
       final result = await _auth.signInWithPhoneNumber(phoneNumber);
@@ -294,15 +236,11 @@ class FirebaseAuthService {
   // VERIFY SMS CODE
   // ═════════════════════════════════════════════════════════════════════════
 
-  /// Confirm the 6-digit code the user typed.
   Future<AuthResult> verifySmsCode(String smsCode,
       {String? verificationId}) async {
-    _log('verifySmsCode: platform=${defaultTargetPlatform.name} '
-        'hasConfirmationResult=${_iosConfirmationResult != null} '
-        'hasVerificationId=${(_verificationId ?? verificationId) != null}');
+    _log('verifySmsCode called');
 
     try {
-      // ── iOS with ConfirmationResult ───────────────────────────────────
       if (!kIsWeb &&
           defaultTargetPlatform == TargetPlatform.iOS &&
           _iosConfirmationResult != null) {
@@ -313,16 +251,14 @@ class FirebaseAuthService {
         return AuthResult.success(userCred.user);
       }
 
-      // ── All other paths: PhoneAuthProvider.credential ─────────────────
       final vId = verificationId ?? _verificationId;
       if (vId == null || vId.isEmpty) {
-        // Empty verificationId means appVerificationDisabledForTesting path
-        // for test phone numbers — Firebase accepts this combination.
-        _log('verifySmsCode: no verificationId, attempting with empty string (test number path)');
+        return AuthResult.failure(
+            'Verification session expired. Please go back and try again.');
       }
 
       final credential = PhoneAuthProvider.credential(
-        verificationId: vId ?? '',
+        verificationId: vId,
         smsCode: smsCode,
       );
       final userCred = await _auth.signInWithCredential(credential);
@@ -340,7 +276,7 @@ class FirebaseAuthService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // SESSION & SIGN OUT
+  // SESSION
   // ═════════════════════════════════════════════════════════════════════════
 
   Future<void> signOut() async {
@@ -363,7 +299,7 @@ class FirebaseAuthService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
-  // FIRESTORE USER PROFILE
+  // USER PROFILE
   // ═════════════════════════════════════════════════════════════════════════
 
   Future<void> _createUserProfile(String userId) async {
@@ -421,7 +357,9 @@ class FirebaseAuthService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    if (kDebugMode) debugPrint('FirebaseAuthService: profile created for $userId');
+    if (kDebugMode) {
+      debugPrint('FirebaseAuthService: profile created for $userId');
+    }
   }
 
   Future<void> updateLastActive() async {
@@ -484,9 +422,15 @@ class FirebaseAuthService {
   }
 
   String _mapRawError(String raw) {
-    if (raw.contains('too-many-requests')) return 'Too many attempts. Please wait.';
-    if (raw.contains('invalid-phone-number')) return 'Invalid phone number format.';
-    if (raw.contains('quota-exceeded')) return 'SMS quota exceeded.';
+    if (raw.contains('too-many-requests')) {
+      return 'Too many attempts. Please wait.';
+    }
+    if (raw.contains('invalid-phone-number')) {
+      return 'Invalid phone number format.';
+    }
+    if (raw.contains('quota-exceeded')) {
+      return 'SMS quota exceeded.';
+    }
     if (raw.contains('network-request-failed')) {
       return 'Network error. Check your connection.';
     }
