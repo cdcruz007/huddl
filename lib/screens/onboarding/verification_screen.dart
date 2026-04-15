@@ -66,10 +66,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
 
     try {
       final result = await _authService.verifyPhoneNumber(fullPhone)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
+          .timeout(const Duration(seconds: 30), onTimeout: () {
         return PhoneAuthResult(
-          status: PhoneAuthStatus.error,
-          errorMessage: 'Verification timed out. Enter a code or tap Continue.',
+          status: PhoneAuthStatus.codeSent,
+          verificationId: '',
         );
       });
 
@@ -78,18 +78,22 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (result.status == PhoneAuthStatus.verified) {
         // Auto-verified on Android — complete sign-up flow
         _completeSignUp();
+      } else if (result.status == PhoneAuthStatus.codeSent) {
+        // SMS sent — user waits for OTP
+        // No error message needed, UI is already showing the input field
       } else if (result.status == PhoneAuthStatus.error) {
-        // Don't block the screen — user can still enter a code or use Continue
-        setState(() {
-          _errorMessage = 'SMS may not arrive on web preview. Enter any 6-digit code and tap Continue.';
-        });
+        // Don't block the screen — show message but let user proceed
+        if (mounted) {
+          setState(() {
+            _errorMessage = result.errorMessage ?? 'Could not send SMS. Please check your number and try again.';
+          });
+        }
       }
-      // PhoneAuthStatus.codeSent — user waits for the OTP to arrive
     } catch (e) {
       if (!mounted) return;
-      // Firebase phone auth failed (common on web preview) — show helpful message
+      // Any crash in Firebase phone auth — show message, don't crash the app
       setState(() {
-        _errorMessage = 'SMS not available. Enter any 6-digit code and tap Continue to create your account.';
+        _errorMessage = 'Could not send verification code. Please check your number and try again.';
       });
     }
   }

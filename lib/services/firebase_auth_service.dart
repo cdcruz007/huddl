@@ -61,54 +61,79 @@ class FirebaseAuthService {
       // ── Mobile platform ──────────────────────────────────────────────
       final completer = Completer<PhoneAuthResult>();
 
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: const Duration(seconds: 60),
-        forceResendingToken: _resendToken,
+      // Guard: complete with error if completer hasn't resolved in 45s
+      Future.delayed(const Duration(seconds: 45), () {
+        if (!completer.isCompleted) {
+          completer.complete(PhoneAuthResult(
+            status: PhoneAuthStatus.error,
+            errorMessage: 'Verification timed out. Please try again.',
+          ));
+        }
+      });
 
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-retrieval (Android only) — sign in directly
-          try {
-            await _auth.signInWithCredential(credential);
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(
-                status: PhoneAuthStatus.verified,
-              ));
+      try {
+        await _auth.verifyPhoneNumber(
+          phoneNumber: phoneNumber,
+          timeout: const Duration(seconds: 30),
+          forceResendingToken: _resendToken,
+
+          verificationCompleted: (PhoneAuthCredential credential) async {
+            // Auto-retrieval (Android only) — sign in directly
+            try {
+              await _auth.signInWithCredential(credential);
+              if (!completer.isCompleted) {
+                completer.complete(PhoneAuthResult(
+                  status: PhoneAuthStatus.verified,
+                ));
+              }
+            } catch (e) {
+              if (!completer.isCompleted) {
+                completer.complete(PhoneAuthResult(
+                  status: PhoneAuthStatus.error,
+                  errorMessage: 'Auto-verification failed: $e',
+                ));
+              }
             }
-          } catch (e) {
+          },
+
+          verificationFailed: (FirebaseAuthException e) {
             if (!completer.isCompleted) {
               completer.complete(PhoneAuthResult(
                 status: PhoneAuthStatus.error,
-                errorMessage: 'Auto-verification failed: $e',
+                errorMessage: _mapAuthError(e.code),
               ));
             }
-          }
-        },
+          },
 
-        verificationFailed: (FirebaseAuthException e) {
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.error,
-              errorMessage: _mapAuthError(e.code),
-            ));
-          }
-        },
+          codeSent: (String verificationId, int? resendToken) {
+            _verificationId = verificationId;
+            _resendToken = resendToken;
+            if (!completer.isCompleted) {
+              completer.complete(PhoneAuthResult(
+                status: PhoneAuthStatus.codeSent,
+                verificationId: verificationId,
+              ));
+            }
+          },
 
-        codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.codeSent,
-              verificationId: verificationId,
-            ));
-          }
-        },
-
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
-      );
+          codeAutoRetrievalTimeout: (String verificationId) {
+            _verificationId = verificationId;
+            if (!completer.isCompleted) {
+              completer.complete(PhoneAuthResult(
+                status: PhoneAuthStatus.codeSent,
+                verificationId: verificationId,
+              ));
+            }
+          },
+        );
+      } catch (e) {
+        if (!completer.isCompleted) {
+          completer.complete(PhoneAuthResult(
+            status: PhoneAuthStatus.error,
+            errorMessage: 'Could not reach Firebase. Check your connection.',
+          ));
+        }
+      }
 
       return completer.future;
     } catch (e) {
