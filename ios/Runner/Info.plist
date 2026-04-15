@@ -46,31 +46,13 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
-	<!-- ── iCloud Key-Value Backup ─────────────────────────────────────────
-	     Enables NSUbiquitousKeyValueStore so that SharedPreferences data is
-	     mirrored to iCloud and automatically restored when the user reinstalls
-	     the app or switches to a new iPhone.
-	     The container identifier must match the one in your Apple Developer
-	     account under Identifiers → App ID → iCloud.
-	     Use your actual team-prefixed bundle ID, e.g.:
-	         iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
-	──────────────────────────────────────────────────────────────────────── -->
-	<key>NSUbiquitousKeyValueStoreIdentifier</key>
-	<string>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-
 	<!-- ── Firebase URL schemes ──────────────────────────────────────────────
 	     Huddl Connect uses Firebase Phone Authentication (SMS OTP) only.
-	     There is NO Google Sign-In, so no REVERSED_CLIENT_ID is required.
-
-	     The two schemes registered below are:
-	     1. The app's bundle ID — required by Firebase phone auth for the
-	        reCAPTCHA web-based fallback flow on iOS.
-	     2. The GOOGLE_APP_ID encoded as a URL scheme — used internally by
-	        the Firebase iOS SDK for app-verification callbacks.
-
-	     If you add Google Sign-In in the future, also add a third scheme
-	     entry with the REVERSED_CLIENT_ID value from GoogleService-Info.plist
-	     (e.g. com.googleusercontent.apps.879152141283-xxxxxxxxxx).
+	     Only the bundle ID scheme is registered — required by Firebase
+	     phone auth for the reCAPTCHA web-based fallback flow on iOS.
+	     NOTE: The GOOGLE_APP_ID scheme (1-879152141283-ios-...) has been
+	     removed because Apple requires URL schemes to begin with a letter.
+	     The Firebase SDK does not require this scheme for phone auth.
 	────────────────────────────────────────────────────────────────────── -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -83,18 +65,6 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.huddlconnect.huddlConnect</string>
-			</array>
-		</dict>
-		<!-- Google App ID scheme — Firebase internal app-verification callback -->
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>google.app.id</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<!-- GOOGLE_APP_ID from GoogleService-Info.plist with colons replaced by dashes -->
-				<string>1-879152141283-ios-bdac2f6012c53a8d9186d6</string>
 			</array>
 		</dict>
 	</array>
