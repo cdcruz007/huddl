@@ -28,6 +28,7 @@ dependencies:
   cloud_firestore: 5.4.3
   firebase_storage: 12.3.2
   firebase_messaging: 15.1.3
+  firebase_crashlytics: 4.1.3
 
   # Payment / In-App Purchases
   in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)

@@ -27,6 +27,12 @@ class FirebaseAuthService {
   String? _verificationId;
   int? _resendToken;
 
+  // ── iOS: ConfirmationResult from signInWithPhoneNumber ───────────────────
+  // On iOS we use signInWithPhoneNumber (same as web API) to avoid the
+  // internal assertionFailure crash that verifyPhoneNumber triggers when
+  // APNs / reCAPTCHA isn't fully initialised.
+  ConfirmationResult? _iosConfirmationResult;
+
   // ── Getters ─────────────────────────────────────────────────────────────
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => _auth.currentUser != null;
@@ -39,29 +45,45 @@ class FirebaseAuthService {
 
   /// Initiate phone number verification — Firebase sends SMS to the number.
   ///
-  /// On **web**: returns immediately with a [ConfirmationResult] via
-  /// `signInWithPhoneNumber`. The caller should prompt for the OTP and
-  /// then call [verifySmsCode].
+  /// ### Platform strategy
+  /// | Platform | Method used | Why |
+  /// |----------|-------------|-----|
+  /// | Web      | `signInWithPhoneNumber` | Only available API on web |
+  /// | iOS      | `signInWithPhoneNumber` | Avoids internal assertionFailure crash in `verifyPhoneNumber` when APNs/reCAPTCHA isn't ready |
+  /// | Android  | `verifyPhoneNumber` | Supports auto-retrieval (SMS listener) |
   ///
-  /// On **Android/iOS**: Firebase may auto-retrieve the code. Callbacks
-  /// handle verification completed / failed / code sent.
+  /// Firebase test phone numbers (e.g. +44 7700 900000 with code 123456)
+  /// work on all platforms without real SMS.
   Future<PhoneAuthResult> verifyPhoneNumber(String phoneNumber) async {
     try {
-      // ── Web platform ─────────────────────────────────────────────────
-      if (kIsWeb) {
-        final confirmationResult =
-            await _auth.signInWithPhoneNumber(phoneNumber);
-        _verificationId = confirmationResult.verificationId;
-        return PhoneAuthResult(
-          status: PhoneAuthStatus.codeSent,
-          verificationId: confirmationResult.verificationId,
-        );
+      // ── Web + iOS: use signInWithPhoneNumber ──────────────────────────
+      // On iOS, verifyPhoneNumber internally calls assertionFailure() if
+      // APNs / reCAPTCHA is not yet initialised. signInWithPhoneNumber
+      // uses the web-style reCAPTCHA flow which is stable on iOS.
+      if (kIsWeb || defaultTargetPlatform == TargetPlatform.iOS) {
+        try {
+          final confirmationResult =
+              await _auth.signInWithPhoneNumber(phoneNumber);
+          _verificationId = confirmationResult.verificationId;
+          _iosConfirmationResult = confirmationResult;
+          return PhoneAuthResult(
+            status: PhoneAuthStatus.codeSent,
+            verificationId: confirmationResult.verificationId,
+          );
+        } catch (e) {
+          final msg = e.toString();
+          if (kDebugMode) debugPrint('FirebaseAuthService iOS/Web error: $e');
+          return PhoneAuthResult(
+            status: PhoneAuthStatus.error,
+            errorMessage: _mapRawError(msg),
+          );
+        }
       }
 
-      // ── Mobile platform ──────────────────────────────────────────────
+      // ── Android: use verifyPhoneNumber (supports auto-retrieval) ──────
       final completer = Completer<PhoneAuthResult>();
 
-      // Guard: complete with error if completer hasn't resolved in 45s
+      // Safety timeout — completes with error if Firebase never responds
       Future.delayed(const Duration(seconds: 45), () {
         if (!completer.isCompleted) {
           completer.complete(PhoneAuthResult(
@@ -71,82 +93,60 @@ class FirebaseAuthService {
         }
       });
 
-      // ── CRITICAL iOS FIX ─────────────────────────────────────────────
-      // Firebase's PhoneAuthProvider.verifyPhoneNumber() calls Swift's
-      // assertionFailure() if APNs is not yet registered when the call
-      // is made (common on first launch / TestFlight). This kills the
-      // process before Dart try/catch can intercept it.
-      //
-      // Fix: wait up to 3 seconds for APNs to register, then proceed.
-      // If APNs still isn't ready, Firebase will fall back to reCAPTCHA
-      // silently instead of asserting.
-      if (!kIsWeb) {
-        await Future.delayed(const Duration(milliseconds: 3000));
-      }
+      await _auth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: const Duration(seconds: 30),
+        forceResendingToken: _resendToken,
 
-      try {
-        await _auth.verifyPhoneNumber(
-          phoneNumber: phoneNumber,
-          timeout: const Duration(seconds: 30),
-          forceResendingToken: _resendToken,
-
-          verificationCompleted: (PhoneAuthCredential credential) async {
-            // Auto-retrieval (Android only) — sign in directly
-            try {
-              await _auth.signInWithCredential(credential);
-              if (!completer.isCompleted) {
-                completer.complete(PhoneAuthResult(
-                  status: PhoneAuthStatus.verified,
-                ));
-              }
-            } catch (e) {
-              if (!completer.isCompleted) {
-                completer.complete(PhoneAuthResult(
-                  status: PhoneAuthStatus.error,
-                  errorMessage: 'Auto-verification failed: $e',
-                ));
-              }
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Auto-retrieval (Android only) — sign in directly
+          try {
+            await _auth.signInWithCredential(credential);
+            if (!completer.isCompleted) {
+              completer.complete(PhoneAuthResult(
+                status: PhoneAuthStatus.verified,
+              ));
             }
-          },
-
-          verificationFailed: (FirebaseAuthException e) {
+          } catch (e) {
             if (!completer.isCompleted) {
               completer.complete(PhoneAuthResult(
                 status: PhoneAuthStatus.error,
-                errorMessage: _mapAuthError(e.code),
+                errorMessage: 'Auto-verification failed: $e',
               ));
             }
-          },
+          }
+        },
 
-          codeSent: (String verificationId, int? resendToken) {
-            _verificationId = verificationId;
-            _resendToken = resendToken;
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(
-                status: PhoneAuthStatus.codeSent,
-                verificationId: verificationId,
-              ));
-            }
-          },
+        verificationFailed: (FirebaseAuthException e) {
+          if (!completer.isCompleted) {
+            completer.complete(PhoneAuthResult(
+              status: PhoneAuthStatus.error,
+              errorMessage: _mapAuthError(e.code),
+            ));
+          }
+        },
 
-          codeAutoRetrievalTimeout: (String verificationId) {
-            _verificationId = verificationId;
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(
-                status: PhoneAuthStatus.codeSent,
-                verificationId: verificationId,
-              ));
-            }
-          },
-        );
-      } catch (e) {
-        if (!completer.isCompleted) {
-          completer.complete(PhoneAuthResult(
-            status: PhoneAuthStatus.error,
-            errorMessage: 'Could not reach Firebase. Check your connection.',
-          ));
-        }
-      }
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          _resendToken = resendToken;
+          if (!completer.isCompleted) {
+            completer.complete(PhoneAuthResult(
+              status: PhoneAuthStatus.codeSent,
+              verificationId: verificationId,
+            ));
+          }
+        },
+
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+          if (!completer.isCompleted) {
+            completer.complete(PhoneAuthResult(
+              status: PhoneAuthStatus.codeSent,
+              verificationId: verificationId,
+            ));
+          }
+        },
+      );
 
       return completer.future;
     } catch (e) {
@@ -158,12 +158,35 @@ class FirebaseAuthService {
   }
 
   /// Verify the 6-digit SMS code entered by the user.
+  ///
+  /// On iOS, uses the [ConfirmationResult] from [signInWithPhoneNumber].
+  /// On Android/Web, uses [PhoneAuthProvider.credential].
   Future<AuthResult> verifySmsCode(String smsCode,
       {String? verificationId}) async {
     try {
+      // ── iOS path: confirm via ConfirmationResult ──────────────────────
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        if (_iosConfirmationResult != null) {
+          try {
+            final userCredential =
+                await _iosConfirmationResult!.confirm(smsCode);
+            if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+              await _createUserProfile(userCredential.user!.uid);
+            }
+            return AuthResult.success(userCredential.user);
+          } on FirebaseAuthException catch (e) {
+            return AuthResult.failure(_mapAuthError(e.code));
+          } catch (e) {
+            return AuthResult.failure('Verification failed: $e');
+          }
+        }
+        // Fallback: use verificationId if ConfirmationResult not available
+      }
+
+      // ── Android / Web / fallback path ─────────────────────────────────
       final vId = verificationId ?? _verificationId;
 
-      if (vId == null) {
+      if (vId == null || vId.isEmpty) {
         return AuthResult.failure(
             'Verification session expired. Please request a new code.');
       }
@@ -172,8 +195,7 @@ class FirebaseAuthService {
         verificationId: vId,
         smsCode: smsCode,
       );
-      final userCredential =
-          await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
 
       // Create profile if first time
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
@@ -197,6 +219,7 @@ class FirebaseAuthService {
     await _auth.signOut();
     _verificationId = null;
     _resendToken = null;
+    _iosConfirmationResult = null;
   }
 
   /// Check if user has a Firestore profile already.
@@ -235,7 +258,7 @@ class FirebaseAuthService {
       'parentType': onboarding.parentType ?? '',
       'stagesOfLife': onboarding.stagesOfLife,
       'postcode': onboarding.postcode ?? '',
-      'borough': '', // Resolved later from postcode
+      'borough': '',
       'children': onboarding.children,
       'bio': onboarding.bio ?? '',
       'photoUrl': '',
@@ -252,13 +275,12 @@ class FirebaseAuthService {
 
     await _db.collection('users').doc(userId).set(profile, SetOptions(merge: true));
 
-    // Also create a default Explorer subscription
     await _db.collection('subscriptions').add({
       'userId': userId,
       'tier': 'explorer',
       'billingPeriod': 'monthly',
       'status': 'active',
-      'platform': kIsWeb ? 'web' : 'android',
+      'platform': kIsWeb ? 'web' : (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android'),
       'startDate': DateTime.now().toIso8601String(),
       'renewalDate': null,
       'isActive': true,
@@ -312,9 +334,32 @@ class FirebaseAuthService {
         return 'Invalid phone number format. Use +44 followed by your number.';
       case 'credential-already-in-use':
         return 'This phone number is already linked to another account.';
+      case 'web-context-cancelled':
+        return 'Verification was cancelled. Please try again.';
+      case 'web-context-already-presented':
+        return 'A verification is already in progress. Please wait.';
       default:
         return 'Authentication error ($code). Please try again.';
     }
+  }
+
+  String _mapRawError(String raw) {
+    if (raw.contains('too-many-requests') || raw.contains('TOO_LONG')) {
+      return 'Too many attempts. Please wait a moment and try again.';
+    }
+    if (raw.contains('invalid-phone-number') || raw.contains('INVALID_PHONE_NUMBER')) {
+      return 'Invalid phone number format. Use +44 followed by your number.';
+    }
+    if (raw.contains('quota-exceeded')) {
+      return 'SMS quota exceeded. Please try again later.';
+    }
+    if (raw.contains('network-request-failed')) {
+      return 'Network error. Please check your connection and try again.';
+    }
+    if (raw.contains('web-context-cancelled')) {
+      return 'Verification was cancelled. Please try again.';
+    }
+    return 'Could not send verification code. Please try again.';
   }
 }
 
