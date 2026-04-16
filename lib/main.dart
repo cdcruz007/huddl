@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
@@ -28,15 +27,12 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // Firebase is now fully initialised — safe to configure FirebaseAuth.
-    // Setting appVerificationDisabledForTesting here (from Dart, after full
-    // init) means Firebase skips the APNs token check for registered test
-    // numbers. For real numbers on real devices this flag has no effect.
-    // This MUST be in Dart after initializeApp — never in AppDelegate where
-    // Auth.auth() crashes because FirebaseApp isn't ready yet.
-    await FirebaseAuth.instance.setSettings(
-      appVerificationDisabledForTesting: true,
-    );
+    // Firebase is fully initialised. No additional Auth settings needed here:
+    // iOS uses signInWithPhoneNumber (reCAPTCHA web-view, no APNs required),
+    // Android uses verifyPhoneNumber (native GMS), Web uses signInWithPhoneNumber.
+    // appVerificationDisabledForTesting is NOT set here — it only applies to
+    // verifyPhoneNumber (which we no longer call on iOS) and caused race
+    // conditions when set asynchronously before the first auth call.
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
