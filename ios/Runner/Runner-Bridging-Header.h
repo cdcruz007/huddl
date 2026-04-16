@@ -1,2 +1,2 @@
 #import "GeneratedPluginRegistrant.h"
-#import <FirebaseAuth/FirebaseAuth.h>
+#import <objc/runtime.h>
