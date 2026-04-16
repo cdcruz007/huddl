@@ -64,36 +64,34 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Build the E.164 phone number to pass to Firebase verifyPhoneNumber.
+  /// Build the phone number string sent to Firebase verifyPhoneNumber.
   ///
-  /// E.164 = country code immediately followed by subscriber digits, no spaces.
-  /// e.g. stored "7575888452" + cc "+44" → "+447575888452"
+  /// Firebase Console always reformats numbers with spaces regardless of how
+  /// they are entered — e.g. typing "+447575888452" is saved as "+44 7575 888452".
+  /// Test number matching is an exact string comparison, so the app must send
+  /// the number in the same spaced format Firebase stores it.
   ///
-  /// verifyPhoneNumber accepts standard E.164. The Firebase Console test number
-  /// must be stored in the same E.164 format: "+447575888452" (no spaces).
+  /// UK (+44) 10-digit numbers are formatted as: +44 XXXX XXXXXX
+  ///   stored "7575888452"  →  "+44 7575 888452"
+  ///   stored "07575888452" →  "+44 7575 888452"  (leading 0 stripped)
   String _buildFullPhoneNumber() {
     final rawDigits = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
     final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return cc;
-    // Strip leading zero (e.g. "07575888452" → "7575888452")
+    // Strip leading zero if present (e.g. "07575888452" → "7575888452")
     final local = digits.startsWith('0') ? digits.substring(1) : digits;
-    return '$cc$local'; // e.g. "+447575888452"
-  }
-
-  /// Human-readable display string for the UI subtitle only.
-  /// e.g. "+44 7575 888452". Never sent to Firebase.
-  String _displayPhone() {
-    final rawDigits = _onboardingData.phoneNumber ?? '';
-    final cc = _onboardingData.countryCode ?? '+44';
-    final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return cc;
-    final local = digits.startsWith('0') ? digits.substring(1) : digits;
+    // UK: format as "+44 XXXX XXXXXX" — exactly how Firebase Console stores it
     if (cc == '+44' && local.length == 10) {
       return '$cc ${local.substring(0, 4)} ${local.substring(4)}';
     }
+    // Other countries: single space between code and number
     return '$cc $local';
   }
+
+  /// Display string for the UI subtitle — same as _buildFullPhoneNumber()
+  /// since both now use the spaced format.
+  String _displayPhone() => _buildFullPhoneNumber();
 
   /// Initiate Firebase phone verification (sends SMS).
   Future<void> _initiatePhoneVerification() async {
