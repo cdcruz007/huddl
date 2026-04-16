@@ -64,43 +64,40 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Build the phone number string to pass to Firebase verifyPhoneNumber.
+  /// Build the E.164 phone number to pass to Firebase signInWithPhoneNumber.
   ///
-  /// Firebase Console stores test numbers exactly as entered, e.g. "+44 7575 888452".
-  /// Firebase Auth matches by string equality, so we must send the number in the
-  /// same format the user would normally type — with a space after the country code
-  /// and the local number grouped naturally.
+  /// E.164 format = country code + subscriber digits, no spaces, no dashes.
+  /// Examples:
+  ///   stored "7575888452" + cc "+44"  →  "+447575888452"
+  ///   stored "07575888452"            →  "+447575888452"  (leading 0 stripped)
   ///
-  /// For UK numbers (11 digits after stripping leading zero):
-  ///   07575888452  →  +44 7575 888452
-  /// For other countries we fall back to: +CC digits
+  /// Firebase phone auth accepts E.164 natively. The Firebase Console test
+  /// number must therefore be stored as "+447575888452" (no spaces).
   String _buildFullPhoneNumber() {
     final rawDigits = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
-    // Strip all non-digit characters from whatever was stored
+    // Strip everything except digits
     final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return '$cc ';
+    if (digits.isEmpty) return cc;
 
-    // For UK (+44): local numbers are 10 digits (after removing leading 0).
-    // Firebase Console formats as "+44 XXXX XXXXXX" (4 + 6 split).
-    if (cc == '+44') {
-      // Remove leading zero if present (e.g. stored as "07575888452")
-      final local = digits.startsWith('0') ? digits.substring(1) : digits;
-      if (local.length == 10) {
-        final part1 = local.substring(0, 4); // e.g. "7575"
-        final part2 = local.substring(4);    // e.g. "888452"
-        return '$cc $part1 $part2';           // "+44 7575 888452"
-      }
-      return '$cc $local';
-    }
-
-    // Default: "+CC digits" with a single space — matches standard E.164 display
-    return '$cc $digits';
+    // Strip leading zero if the user somehow stored "07575888452"
+    final local = digits.startsWith('0') ? digits.substring(1) : digits;
+    // Return pure E.164: "+44" + "7575888452" = "+447575888452"
+    return '$cc$local';
   }
 
-  /// Display string shown in the subtitle — mirrors _buildFullPhoneNumber().
+  /// Human-readable version shown in the UI subtitle (formatted with spaces).
+  /// E.g. "+44 7575 888452". Only used for display — never sent to Firebase.
   String _displayPhone() {
-    return _buildFullPhoneNumber();
+    final rawDigits = _onboardingData.phoneNumber ?? '';
+    final cc = _onboardingData.countryCode ?? '+44';
+    final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return cc;
+    final local = digits.startsWith('0') ? digits.substring(1) : digits;
+    if (cc == '+44' && local.length == 10) {
+      return '$cc ${local.substring(0, 4)} ${local.substring(4)}';
+    }
+    return '$cc $local';
   }
 
   /// Initiate Firebase phone verification (sends SMS).
