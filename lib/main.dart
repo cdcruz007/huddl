@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
@@ -27,6 +28,20 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
+    // Set appVerificationDisabledForTesting immediately after Firebase init,
+    // before any Firebase Auth call is made anywhere in the app.
+    // This makes Firebase skip the APNs token check for registered test
+    // phone numbers (e.g. +447575888452 → code 123456).
+    // For real phone numbers on real devices this flag has no effect.
+    // Must be called here — not in AppDelegate, not inside verifyPhoneNumber —
+    // because it must be set before the first use of FirebaseAuth.
+    try {
+      await FirebaseAuth.instance.setSettings(
+        appVerificationDisabledForTesting: true,
+      );
+    } catch (e) {
+      debugPrint('setSettings error (non-fatal): $e');
+    }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
