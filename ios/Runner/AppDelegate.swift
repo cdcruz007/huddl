@@ -63,10 +63,10 @@ import UserNotifications
         // that occurs in verifyPhoneNumber when APNs token isn't ready.
         // FIRPhoneAuthProvider.provider().verifyPhoneNumber uses reCAPTCHA when
         // called with a UIDelegate, which does NOT require APNs.
-        let authProvider = FIRPhoneAuthProvider.provider()
+        let authProvider = PhoneAuthProvider.provider()
         authProvider.verifyPhoneNumber(
             phoneNumber,
-            uiDelegate: viewController as? FIRAuthUIDelegate
+            uiDelegate: viewController as? AuthUIDelegate
         ) { verificationID, error in
             if let error = error {
                 result(FlutterError(
