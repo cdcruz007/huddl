@@ -59,13 +59,13 @@ import UserNotifications
         _ application: UIApplication,
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
-    ) -> Bool {
+    ) {
         // Let Firebase Auth handle silent push notifications used for phone auth
         if Auth.auth().canHandleNotification(userInfo) {
             completionHandler(.noData)
-            return true
+            return
         }
-        return super.application(application, didReceiveRemoteNotification: userInfo,
-                                  fetchCompletionHandler: completionHandler)
+        super.application(application, didReceiveRemoteNotification: userInfo,
+                          fetchCompletionHandler: completionHandler)
     }
 }
