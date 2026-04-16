@@ -45,14 +45,6 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
-  # ── Pin FirebaseAuth iOS pod to 10.x ─────────────────────────────────────
-  # FirebaseAuth 11.x (used by firebase_auth Flutter package 5.x) introduced
-  # a Swift assertionFailure() in PhoneAuthProvider.verifyPhoneNumber() that
-  # crashes unconditionally on iOS 18 when APNs token is not yet available.
-  # Pinning to 10.29.0 eliminates the crash while keeping all other Firebase
-  # packages at their current versions.
-  pod 'FirebaseAuth', '10.29.0'
-
   target 'RunnerTests' do
     inherit! :search_paths
   end
