@@ -1,9 +1,13 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'onboarding_data_service.dart';
+
+// Method channel to native iOS phone auth (avoids verifyPhoneNumber SIGTRAP)
+const _iosPhoneAuthChannel = MethodChannel('com.huddlconnect/phone_auth');
 
 /// Centralised Firebase Authentication service for Huddl Connect.
 ///
@@ -54,88 +58,55 @@ class FirebaseAuthService {
   }
 
   // ── iOS ──────────────────────────────────────────────────────────────────
-  // Use verifyPhoneNumber on iOS. AppDelegate.swift sets
-  // isAppVerificationDisabledForTesting = true AFTER GeneratedPluginRegistrant
-  // so Firebase skips the APNs assertion for test numbers entirely.
-  // Real numbers still go through the normal APNs/SMS flow.
+  // CRITICAL: verifyPhoneNumber() ALWAYS crashes on iOS 18 / Firebase Auth 5.x
+  // with EXC_BREAKPOINT (SIGTRAP) when APNs token is not ready.
+  // The fix: call native FIRPhoneAuthProvider via a method channel.
+  // The native side uses FIRPhoneAuthProvider.verifyPhoneNumber with a
+  // UIViewController UIDelegate so reCAPTCHA works and APNs is NOT required.
   Future<PhoneAuthResult> _iosVerify(String phoneNumber) async {
-    _log('iOS: calling verifyPhoneNumber (appVerificationDisabledForTesting=true in AppDelegate)');
-    final completer = Completer<PhoneAuthResult>();
-
-    final timeoutTimer = Timer(const Duration(seconds: 45), () {
-      if (!completer.isCompleted) {
-        completer.complete(PhoneAuthResult(
-          status: PhoneAuthStatus.codeSent,
-          verificationId: _verificationId ?? '',
-          errorMessage: 'SMS may be delayed. Enter the code when it arrives.',
-        ));
-      }
-    });
-
+    _log('iOS: calling native sendOtp via method channel (avoids SIGTRAP)');
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: phoneNumber,
-        timeout: const Duration(seconds: 30),
-        forceResendingToken: _resendToken,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-verified (Android instant verification — rare on iOS)
-          try {
-            await _auth.signInWithCredential(credential);
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(status: PhoneAuthStatus.verified));
-            }
-          } catch (e) {
-            if (!completer.isCompleted) {
-              completer.complete(PhoneAuthResult(
-                status: PhoneAuthStatus.error,
-                errorMessage: 'Auto-verification failed. Please enter the code manually.',
-              ));
-            }
-          }
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _logError(e, StackTrace.current, 'iOS verifyPhoneNumber failed: ${e.code}');
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.error,
-              errorMessage: _mapAuthError(e.code),
-            ));
-          }
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          _iosConfirmationResult = null; // using credential path, not confirmation
-          _log('iOS: codeSent, verificationId stored');
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.codeSent,
-              verificationId: verificationId,
-            ));
-          }
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-          if (!completer.isCompleted) {
-            completer.complete(PhoneAuthResult(
-              status: PhoneAuthStatus.codeSent,
-              verificationId: verificationId,
-            ));
-          }
-        },
-      );
-      timeoutTimer.cancel();
-      return completer.future;
-    } catch (e, stack) {
-      timeoutTimer.cancel();
-      _logError(e, stack, 'iOS verifyPhoneNumber outer catch');
-      if (!completer.isCompleted) {
-        completer.complete(PhoneAuthResult(
+      final verificationId = await _iosPhoneAuthChannel.invokeMethod<String>(
+        'sendOtp',
+        {'phoneNumber': phoneNumber},
+      ).timeout(const Duration(seconds: 60), onTimeout: () {
+        throw TimeoutException('OTP request timed out after 60 seconds');
+      });
+
+      if (verificationId == null || verificationId.isEmpty) {
+        return PhoneAuthResult(
           status: PhoneAuthStatus.error,
           errorMessage: 'Could not send verification code. Please try again.',
-        ));
+        );
       }
-      return completer.future;
+
+      _verificationId = verificationId;
+      _iosConfirmationResult = null;
+      _log('iOS: native sendOtp succeeded, verificationId stored');
+
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.codeSent,
+        verificationId: verificationId,
+      );
+    } on PlatformException catch (e) {
+      _logError(e, StackTrace.current, 'iOS sendOtp PlatformException: ${e.code}');
+      final msg = e.message ?? 'Could not send verification code.';
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: _mapRawError(msg),
+      );
+    } on TimeoutException catch (e) {
+      _logError(e, StackTrace.current, 'iOS sendOtp timeout');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: 'Request timed out. Please check your connection and try again.',
+      );
+    } catch (e, stack) {
+      _logError(e, stack, 'iOS sendOtp unexpected error');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: 'Could not send verification code. Please try again.',
+      );
     }
   }
 

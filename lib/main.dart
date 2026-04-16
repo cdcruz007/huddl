@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb, PlatformDispatcher, TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
@@ -28,14 +27,6 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // Set appVerificationDisabledForTesting on iOS so Firebase skips the
-    // APNs silent-push assertion for test phone numbers. This must be set
-    // AFTER Firebase.initializeApp() completes. Safe for production: only
-    // numbers listed in Firebase Console → Authentication → Test numbers
-    // are affected; real numbers still go through normal SMS verification.
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
-    }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
