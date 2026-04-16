@@ -55,7 +55,6 @@ By using this Service, you acknowledge that you have read, understood, and agree
 • Marketplace for buying and selling children's items
 • AI-powered recommendations and matching
 • Subscription management and premium features
-• Third-party offers and deals integration
 • User-generated content sharing (posts, photos, videos)
 • Location-based services and borough filtering
 
@@ -186,9 +185,8 @@ e) MARKETPLACE AND TRANSACTIONS:
 • We do NOT provide buyer or seller protections
 
 f) THIRD-PARTY CONTENT AND SERVICES:
-• We are NOT responsible for third-party offers, deals, stores, or websites
+• We are NOT responsible for third-party websites linked from the app
 • We do NOT endorse or guarantee third-party products or services
-• Third-party content is provided "as is" without verification
 • You access third-party services at your own risk
 
 g) MAXIMUM LIABILITY CAP:
@@ -527,17 +525,10 @@ d) Assumption of Risk:
 The Service may integrate with third-party services including:
 • Stripe (payment processing)
 • Firebase (data hosting and authentication)
-• RevGlue (offers and deals)
 • Google Maps (location services)
 • Other service providers
 
-b) Third-Party Offers and Deals:
-• Third-party stores, offers, coupons, and deals are provided by external companies
-• We do NOT endorse, verify, or guarantee these offers
-• We are NOT LIABLE for third-party products, services, pricing, or availability
-• Third-party offers are subject to their own terms and conditions
-
-c) External Links:
+b) External Links:
 • The Service may contain links to external websites
 • We do NOT control or endorse linked websites
 • We are NOT LIABLE for content, products, or services on external sites

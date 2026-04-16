@@ -1,74 +1,102 @@
 <!DOCTYPE html>
-<html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Huddl Connect — Design Documents</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f6f6f6; color: #262A35; }
-.header { background: linear-gradient(135deg, #FF975C, #FFAD7F); padding: 40px 24px; text-align: center; }
-.header h1 { color: #fff; font-size: 28px; margin-bottom: 8px; }
-.header p { color: rgba(255,255,255,0.9); font-size: 14px; }
-.container { max-width: 700px; margin: -30px auto 40px; padding: 0 16px; }
-.card { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
-.doc-item { display: flex; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; text-decoration: none; color: inherit; transition: background 0.2s; }
-.doc-item:hover { background: #FFF8F0; }
-.doc-item:last-child { border-bottom: none; }
-.doc-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; margin-right: 14px; }
-.doc-info h3 { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-.doc-info p { font-size: 12px; color: #6C6C6C; }
-.badge { display: inline-block; background: #E6F5F3; color: #199A85; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; margin-left: 8px; }
-.badge.new { background: #FFF3ED; color: #FF975C; }
-.dl { margin-left: auto; color: #FF975C; font-size: 22px; flex-shrink: 0; padding-left: 12px; }
-</style>
-</head><body>
-<div class="header">
-<h1>Huddl Connect</h1>
-<p>Design Documents — Version 2.1</p>
-</div>
-<div class="container"><div class="card">
-<a class="doc-item" href="Huddl_Connect_Functional_Design_Document.docx">
-<div class="doc-icon" style="background:#EDF4FF">📋</div>
-<div class="doc-info"><h3>Functional Design Document <span class="badge">Updated</span></h3><p>Features, user personas, subscription model, Deals spec</p></div>
-<div class="dl">⬇</div></a>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Huddl Connect — Documentation Hub</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 900px; margin: 40px auto; padding: 0 24px; color: #212121; background: #fafafa; }
+    h1 { color: #009688; font-size: 2rem; margin-bottom: 4px; }
+    .subtitle { color: #757575; margin-bottom: 32px; }
+    .version { background: #e0f2f1; color: #009688; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; display: inline-block; margin-bottom: 32px; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    th { background: #009688; color: white; padding: 14px 16px; text-align: left; font-weight: 600; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f5f5f5; }
+    a { color: #009688; text-decoration: none; font-weight: 500; }
+    a:hover { text-decoration: underline; }
+    .tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; display: inline-block; margin-left: 6px; }
+    .tag.live { background: #e8f5e9; color: #2e7d32; }
+    .tag.updated { background: #e3f2fd; color: #1565c0; }
+    footer { margin-top: 40px; color: #9e9e9e; font-size: 0.85rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>huddl connect</h1>
+  <p class="subtitle">Documentation Hub — The hyperlocal parenting community app</p>
+  <span class="version">Version 3.0 | June 2026</span>
 
-<a class="doc-item" href="Huddl_Connect_Software_Design_Document.docx">
-<div class="doc-icon" style="background:#F3E8FF">🏗️</div>
-<div class="doc-info"><h3>Software Design Document <span class="badge">Updated</span></h3><p>Architecture, services, RevGlue integration, data models</p></div>
-<div class="dl">⬇</div></a>
+  <table>
+    <thead>
+      <tr>
+        <th>Document</th>
+        <th>Description</th>
+        <th>Last Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><a href="Huddl_Connect_Go_To_Market_Strategy.docx">Go-To-Market Strategy</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>GTM phases, acquisition channels, revenue model, KPIs. AI roadmap in Appendix A.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_Investor_Pitch_Deck.docx">Investor Pitch Deck</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>15-slide investor deck. Built features spotlight. Founders: Conrad & Malgorzata. AI roadmap in Appendix A.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_AI_System_Design_Document.docx">AI System Design Document</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>All 9 live AI features, Borough Context Engine, Gemini integration, usage limits by tier.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_UX_Design_Documentation.docx">UX Design Documentation</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>5-tab navigation, screen inventory, onboarding flow, subscription UX, accessibility.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_Functional_Design_Document.docx">Functional Design Document</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>Complete feature specifications for all 5 tabs, subscription tiers, data architecture.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_Software_Design_Document.docx">Software Design Document</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>Architecture, service layer (54 services), file structure, tech stack.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_Deployment_Guide.docx">Deployment Guide</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>Android, iOS (TestFlight), and Web build instructions. Firebase config. Key dependencies.</td>
+        <td>June 2026</td>
+      </tr>
+      <tr>
+        <td><a href="Huddl_Connect_Store_Publishing_Guide.docx">App Store Publishing Guide</a> <span class="tag updated">Updated v3.0</span></td>
+        <td>Google Play and Apple App Store listing, IAP product IDs, privacy policy requirements, ASO.</td>
+        <td>June 2026</td>
+      </tr>
+    </tbody>
+  </table>
 
-<a class="doc-item" href="Huddl_Connect_UX_Design_Documentation.docx">
-<div class="doc-icon" style="background:#FFF3ED">🎨</div>
-<div class="doc-info"><h3>UX Design Documentation <span class="badge">Updated</span></h3><p>Navigation, screen inventory, Deals tab UX, accessibility</p></div>
-<div class="dl">⬇</div></a>
+  <br>
+  <table>
+    <thead>
+      <tr><th colspan="2">Quick Reference — Current Build</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Navigation</strong></td><td>5 tabs: Home | Connect | Discover | Market | Profile</td></tr>
+      <tr><td><strong>Subscription Tiers</strong></td><td>Welcome (Free) | Neighbour (£5.99/mo) | Circle (£11.99/mo)</td></tr>
+      <tr><td><strong>AI Features (Live)</strong></td><td>AI Chat Helper, Smart Feed, Events Finder, Group Summaries, Listing Writer, Event Recommendations, Meetup Matchmaker, Borough Context, Daily Refresh</td></tr>
+      <tr><td><strong>Removed from App</strong></td><td>Deals/RevGlue tab, Trips tab, Offers functionality</td></tr>
+      <tr><td><strong>Tech Stack</strong></td><td>Flutter 3.35.4 | Firebase | Google Gemini API | Android + iOS + Web</td></tr>
+      <tr><td><strong>Founders</strong></td><td>Conrad (Founder) | Malgorzata (Founder)</td></tr>
+      <tr><td><strong>GitHub</strong></td><td>github.com/cdcruz007/huddl</td></tr>
+    </tbody>
+  </table>
 
-<a class="doc-item" href="Huddl_Connect_AI_System_Design_Document.docx">
-<div class="doc-icon" style="background:#E6F5F3">🤖</div>
-<div class="doc-info"><h3>AI System Design Document <span class="badge">Updated</span></h3><p>AI features, deals curation engine, usage limits</p></div>
-<div class="dl">⬇</div></a>
-
-<a class="doc-item" href="Huddl_Connect_RevGlue_Integration_Guide.docx">
-<div class="doc-icon" style="background:#FFF7C9">💰</div>
-<div class="doc-info"><h3>RevGlue Integration & Monetisation Guide <span class="badge new">NEW</span></h3><p>Business model, API docs, revenue projections, operations</p></div>
-<div class="dl">⬇</div></a>
-
-<a class="doc-item" href="Huddl_Connect_Store_Publishing_Guide.docx">
-<div class="doc-icon" style="background:#FFE9E9">🏪</div>
-<div class="doc-info"><h3>Store Publishing & Monetisation Guide <span class="badge">Updated</span></h3><p>App store setup, IAP config, RevGlue account details</p></div>
-<div class="dl">⬇</div></a>
-
-<a class="doc-item" href="Huddl_Connect_Deployment_Guide.docx">
-<div class="doc-icon" style="background:#E8E8E8">🚀</div>
-<div class="doc-info"><h3>Deployment & Configuration Guide <span class="badge">Updated</span></h3><p>Build commands, dependencies, Firebase & RevGlue config</p></div>
-<div class="dl">⬇</div></a>
-
-<a class="doc-item" href="Huddl_Connect_Investor_Pitch_Deck.docx">
-<div class="doc-icon" style="background:#FFE0CC">🎯</div>
-<div class="doc-info"><h3>Investor Pitch Deck <span class="badge new">NEW</span></h3><p>15-slide deck: Problem, Solution, AI Suite, Trips, Deals/RevGlue, Subscriptions, Revenue, GTM, Roadmap, Team & Ask</p></div>
-<div class="dl">⬇</div></a>
-
-<a class="doc-item" href="Huddl_Trips_AI_Feature_Pitch_Deck_Supplement.docx">
-<div class="doc-icon" style="background:#EDF4FF">✈️</div>
-<div class="doc-info"><h3>Trips AI Pitch Deck Supplement</h3><p>Travel concierge deep-dive, community moat, strategic value</p></div>
-<div class="dl">⬇</div></a>
-</div></div>
-</body></html>
+  <footer>
+    &copy; 2026 Huddl Connect (Cruzen Ltd). All rights reserved. | Confidential
+  </footer>
+</body>
+</html>

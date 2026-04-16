@@ -142,7 +142,7 @@ b) Personalization and Recommendations:
 • Personalized group suggestions based on your parenting stage
 • Customized event recommendations based on location and interests
 • Marketplace item recommendations using AI
-• Tailored offers and deals from third-party partners
+• Tailored local event and meetup recommendations
 • Borough-specific content filtering
 • Customized in-app experiences
 
@@ -273,7 +273,6 @@ We share data with trusted third-party service providers who process data on our
 
 • Stripe: Payment processing, subscription billing, fraud detection
 • Google Firebase / Google Cloud: Data hosting, cloud storage, authentication, push notifications
-• RevGlue: Third-party offers and deals integration
 • Analytics Providers: Usage analytics, performance monitoring, crash reporting
 • Customer Support Tools: Support ticket management
 • Email Service Providers: Transactional and marketing emails
@@ -663,7 +662,7 @@ Transactional Communications (Cannot Opt Out):
 Promotional Communications (Can Opt Out):
 • Marketing emails about new features
 • Newsletters and community highlights
-• Offers, deals, and promotions
+• Local events and meetup recommendations
 • Surveys and feedback requests
 • Event recommendations and invitations
 
