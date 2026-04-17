@@ -94,68 +94,86 @@ post_install do |installer|
     # ── 2. Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ────────────
     #
     # ROOT CAUSE: Xcode 16 clang rejects the MIPS small-data flag '-G' on arm64.
-    # BoringSSL-GRPC stores per-SOURCE-FILE compiler flags in
-    # source_build_phase.files[].settings['COMPILER_FLAGS']. These are separate
-    # from the target-level OTHER_CFLAGS, so overriding OTHER_CFLAGS has NO
-    # effect on them. The sub-targets x_val, x_x509, x_x509a each compile one
-    # ASN.1 source file that carries '-GCC_WARN_INHIBIT_ALL_WARNINGS' (which
-    # clang misparses as '-G CC_WARN_INHIBIT_ALL_WARNINGS' on arm64).
+    # BoringSSL-GRPC embeds '-GCC_WARN_INHIBIT_ALL_WARNINGS' in per-source-file
+    # COMPILER_FLAGS. Xcode 16 tokenises it as '-G' + 'CC_WARN_INHIBIT_ALL_WARNINGS'
+    # and rejects the bare '-G' (MIPS flag, invalid on arm64).
+    # This causes errors on sub-targets x_val, x_x509, x_x509a.
     #
-    # FIX: iterate every file in BoringSSL-GRPC's source build phase and strip
-    # any token that is exactly '-G' or starts with '-G' followed by a
-    # non-dash character.
-    # References: https://stackoverflow.com/questions/78608693
+    # FIX: iterate source_build_phase.files and strip the bad tokens.
+    # Overriding OTHER_CFLAGS has NO effect — per-file flags bypass it.
     if target.name == 'BoringSSL-GRPC'
       target.source_build_phase.files.each do |file|
         next unless file.settings&.key?('COMPILER_FLAGS')
-        original_flags = file.settings['COMPILER_FLAGS']
-        cleaned_flags = original_flags
+        original = file.settings['COMPILER_FLAGS']
+        cleaned = original
           .split
-          .reject { |f| f == '-G' || (f.start_with?('-G') && f[2] != '-') }
+          .reject { |f| f == '-G' || (f.start_with?('-G') && f.length > 2 && f[2] != '-') }
           .join(' ')
-        next if cleaned_flags == original_flags
-        file.settings['COMPILER_FLAGS'] = cleaned_flags
-        puts "  [Podfile] Stripped -G from BoringSSL-GRPC/#{file.file_ref&.path || 'unknown'}"
+        next if cleaned == original
+        file.settings['COMPILER_FLAGS'] = cleaned
+        puts "  [Podfile] BoringSSL-GRPC: stripped -G from #{file.file_ref&.path || 'unknown'}"
       end
     end
   end
 
   # ── 3. Patch gRPC-Core basic_seq.h: fix C++ template syntax for Xcode 16 ──
   #
-  # ROOT CAUSE: Xcode 16's Clang enforces stricter C++17 rules and rejects
-  #   Traits::template CallSeqFactory(f_, *cur_, std::move(arg));
-  # because the dependent-name template call requires an explicit empty
-  # template argument list <> when called with no template arguments.
-  # This causes a "Parse Issue: A template argument list is expected after a
-  # name prefixed by the template keyword" error on basic_seq.h:102.
+  # ROOT CAUSE: Xcode 16 Clang strictly enforces C++17: a dependent-name
+  # template call like  Traits::template CallSeqFactory(...)  must be written
+  # as  Traits::template CallSeqFactory<>(...)  when no template args are
+  # passed. Older Clang accepted both; Xcode 16 rejects the form without <>.
+  # This fires as "A template argument list is expected after a name prefixed
+  # by the template keyword" on basic_seq.h line ~102 (target basic_seq under
+  # gRPC-Core).
   #
-  # FIX: after pod install writes the source file to disk, patch it in-place
-  # by adding <> after CallSeqFactory. This is idempotent — running pod install
-  # again will re-download and re-patch cleanly.
-  #
-  # References:
-  #   https://stackoverflow.com/questions/79551968
-  #   https://medium.com/@abdulsamie488/solving-the-dreaded-xcode-grpc-core-build-error
-  #   https://github.com/firebase/firebase-ios-sdk/issues/14643
-  basic_seq_path = File.join(
-    installer.sandbox.root,
-    'gRPC-Core/src/core/lib/promise/detail/basic_seq.h'
-  )
+  # FIX: locate basic_seq.h anywhere under the Pods sandbox and patch the
+  # line in-place. Uses multiple path strategies so it works regardless of
+  # CocoaPods version, sandbox layout, or whether Pods/ is a symlink.
+  # The gsub is idempotent — CallSeqFactory<>(...) is left unchanged.
 
-  if File.exist?(basic_seq_path)
-    content = File.read(basic_seq_path)
-    # Match the unpatched form (no <> after CallSeqFactory) and add <>
-    patched = content.gsub(
-      'Traits::template CallSeqFactory(f_, *cur_, std::move(arg));',
-      'Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
-    )
-    if patched != content
-      File.write(basic_seq_path, patched)
-      puts '  [Podfile] Patched gRPC-Core basic_seq.h: added <> to CallSeqFactory'
-    else
-      puts '  [Podfile] gRPC-Core basic_seq.h already patched or line not found'
+  bad_line  = 'Traits::template CallSeqFactory(f_, *cur_, std::move(arg));'
+  good_line = 'Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
+
+  # Strategy A: canonical path via installer.sandbox.root (usually ios/Pods)
+  candidate_paths = [
+    File.join(installer.sandbox.root.to_s,
+              'gRPC-Core/src/core/lib/promise/detail/basic_seq.h'),
+  ]
+
+  # Strategy B: relative to the Podfile itself (ios/Pods/...)
+  podfile_dir = File.dirname(File.realpath(__FILE__))
+  candidate_paths << File.join(podfile_dir,
+                               'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h')
+
+  # Strategy C: glob-find under the sandbox root (handles any depth / layout)
+  Dir.glob(File.join(installer.sandbox.root.to_s, '**/basic_seq.h')).each do |p|
+    candidate_paths << p
+  end
+
+  patched_any = false
+  candidate_paths.uniq.each do |path|
+    next unless File.exist?(path)
+    content = File.read(path)
+    next unless content.include?(bad_line)   # already patched or wrong file
+    File.write(path, content.gsub(bad_line, good_line))
+    puts "  [Podfile] Patched basic_seq.h at: #{path}"
+    patched_any = true
+  end
+
+  unless patched_any
+    # Extra fallback: search the entire ios/ tree (slow but guaranteed)
+    Dir.glob(File.join(podfile_dir, '**/basic_seq.h')).each do |path|
+      content = File.read(path)
+      next unless content.include?(bad_line)
+      File.write(path, content.gsub(bad_line, good_line))
+      puts "  [Podfile] Patched basic_seq.h (fallback glob) at: #{path}"
+      patched_any = true
     end
+  end
+
+  if patched_any
+    puts '  [Podfile] gRPC-Core basic_seq.h: CallSeqFactory<> fix applied OK'
   else
-    puts "  [Podfile] WARNING: basic_seq.h not found at #{basic_seq_path}"
+    puts '  [Podfile] gRPC-Core basic_seq.h: already patched or file not found'
   end
 end
