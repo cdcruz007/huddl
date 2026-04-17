@@ -3,28 +3,18 @@
 #
 # Minimum iOS version: 13.0
 #   • Firebase requires iOS 13+
-#   • in_app_purchase (StoreKit) requires iOS 11.4+ (we use 13 to be safe)
-#   • local_auth (Face ID) requires iOS 9+
-#   • Flutter itself requires iOS 12+ from Flutter 3.x
-#
-# DO NOT lower this below 13.0 — Firebase packages will break.
+#   • DO NOT lower below 13.0 — Firebase packages will break.
 #
 # ── Firebase iOS SDK version pin ─────────────────────────────────────────────
-# firebase_auth 5.1.0 + firebase_core 3.1.0 require Firebase iOS SDK 10.27.0.
-# FirebaseAuth 11.x (SDK >=11.0) contains a hard assertionFailure in
-# verifyPhoneNumber that crashes on iOS 18 without an APNs token (SIGTRAP).
+# firebase_auth 5.1.0 + firebase_core 3.1.0 → Firebase iOS SDK 10.27.0
+# FirebaseAuth 11.x crashes on iOS 18 (SIGTRAP/EXC_BREAKPOINT) without APNs.
 # FirebaseAuth 10.x does NOT have this bug.
-#
-# $FirebaseSDKVersion forces ALL FlutterFire pods to use this exact SDK
-# version, overriding whatever the CocoaPods spec repo resolves.
-# DO NOT change this without first verifying the new firebase_auth pub package
-# still targets Firebase iOS SDK 10.x.
+# DO NOT change without verifying new firebase_auth still targets SDK 10.x.
 # ─────────────────────────────────────────────────────────────────────────────
 $FirebaseSDKVersion = '10.27.0'
 
 platform :ios, '13.0'
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -38,7 +28,6 @@ def flutter_root
   unless File.exist?(generated_xcode_build_settings_path)
     raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
   end
-
   File.foreach(generated_xcode_build_settings_path) do |line|
     matches = line.match(/FLUTTER_ROOT\=(.*)/)
     return matches[1].strip if matches
@@ -51,31 +40,20 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 flutter_ios_podfile_setup
 
 target 'Runner' do
+  # ── Framework linkage ────────────────────────────────────────────────────
+  # use_frameworks! is required by FlutterFire (Swift pods need dynamic frameworks).
+  # use_modular_headers! is intentionally OMITTED — it causes:
+  #   "Include of non-modular header inside framework module"
+  # for firebase_messaging, firebase_crashlytics, etc. whose Objective-C headers
+  # do #import <Firebase/Firebase.h> (a non-modular umbrella import).
   use_frameworks!
-  # use_modular_headers! removed — causes "Include of non-modular header inside
-  # framework module" errors with Firebase pods (Crashlytics, Messaging, etc.)
-  # when combined with use_frameworks!. Firebase headers are not modular-safe.
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # ── Hard-pin Firebase iOS SDK to 10.27.0 ─────────────────────────────────
-  # firebase_auth 5.1.0 / firebase_core 3.1.0 target Firebase iOS SDK 10.27.0.
-  # FirebaseAuth 11.x has a hard assertionFailure in verifyPhoneNumber that
-  # crashes on iOS 18 without APNs (EXC_BREAKPOINT / SIGTRAP).
-  #
-  # The explicit pod directive below is the ONLY reliable way to prevent
-  # CocoaPods from resolving a newer version when the Mac pub cache contains
-  # a newer firebase_auth package (e.g. 5.3.1) alongside the locked 5.1.0.
-  # $FirebaseSDKVersion alone is not sufficient — if a newer FlutterFire
-  # podspec slips through via the Mac pub cache, it can override the variable.
-  #
-  # Firebase uses a single versioned umbrella pod. All subspecs share the same
-  # version number, so pinning 'Firebase' to 10.27.0 locks all of them.
-  #
-  # DO NOT change this version without verifying the new firebase_auth
-  # pub package still requires Firebase iOS SDK 10.x.
+  # The explicit pod directive is the ONLY reliable lock — $FirebaseSDKVersion
+  # alone can be overridden by a newer FlutterFire podspec in the Mac pub cache.
   pod 'Firebase', '= 10.27.0'
-  # ─────────────────────────────────────────────────────────────────────────
 
   target 'RunnerTests' do
     inherit! :search_paths
@@ -83,25 +61,19 @@ target 'Runner' do
 end
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Helper: patch basic_seq.h anywhere under a given root directory.
-# Returns true if any file was newly patched.
+# Helper: patch basic_seq.h (gRPC-Core Xcode 16 C++17 fix)
 # ─────────────────────────────────────────────────────────────────────────────
 def patch_basic_seq(root_dir)
   patched_any = false
-  # Search all basic_seq.h files under root_dir
   Dir.glob(File.join(root_dir, '**/basic_seq.h')).each do |path|
     next unless File.exist?(path)
     content = File.read(path)
-    # Replace 'CallSeqFactory(' with 'CallSeqFactory<>(' only where not already patched
     if content.include?('CallSeqFactory(') && !content.include?('CallSeqFactory<>(')
-      patched = content.gsub('CallSeqFactory(', 'CallSeqFactory<>(')
-      File.write(path, patched)
-      puts "  [Podfile] PATCHED basic_seq.h at: #{path}"
+      File.write(path, content.gsub('CallSeqFactory(', 'CallSeqFactory<>('))
+      puts "  [Podfile] PATCHED basic_seq.h: #{path}"
       patched_any = true
     elsif content.include?('CallSeqFactory<>(')
       puts "  [Podfile] basic_seq.h already patched: #{path}"
-    else
-      puts "  [Podfile] basic_seq.h found but no CallSeqFactory — skipping: #{path}"
     end
   end
   patched_any
@@ -111,34 +83,37 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
-    # ── 1. Enforce minimum deployment target + suppress warnings (all pods) ──
     target.build_configurations.each do |config|
+      # ── Minimum deployment target ──────────────────────────────────────────
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
-      # Allow non-modular headers — required because use_modular_headers! was
-      # removed but some pods still emit the include error without this flag.
+
+      # ── Suppress warnings ─────────────────────────────────────────────────
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS']  = 'YES'
+      config.build_settings['SWIFT_SUPPRESS_WARNINGS']        = 'YES'
+
+      # ── Non-modular header fix ────────────────────────────────────────────
+      # FLTFirebaseMessagingPlugin.h (and other Firebase ObjC headers) do:
+      #   #import <Firebase/Firebase.h>
+      # which is a non-modular umbrella import. With use_frameworks! CocoaPods
+      # generates a module map for each pod; Clang then rejects any non-modular
+      # #import inside that module. Setting this key to YES silences the error.
+      # This is the only correct fix when use_frameworks! must be kept for
+      # Swift pods (FlutterFire requires dynamic frameworks).
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
 
-    # ── 2. Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ────────────
-    #
-    # ROOT CAUSE: Xcode 16 clang rejects the MIPS small-data flag '-G' on arm64.
-    # BoringSSL-GRPC embeds '-GCC_WARN_INHIBIT_ALL_WARNINGS' in per-source-file
-    # COMPILER_FLAGS. Xcode 16 tokenises it as '-G' + 'CC_WARN_INHIBIT_ALL_WARNINGS'
-    # and rejects the bare '-G' (MIPS flag, invalid on arm64).
-    # This causes errors on sub-targets x_val, x_x509, x_x509a.
-    #
-    # FIX: iterate source_build_phase.files and strip the bad tokens.
-    # Overriding OTHER_CFLAGS has NO effect — per-file flags bypass it.
+    # ── Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ───────────────
+    # Xcode 16 rejects the MIPS '-G' flag on arm64. BoringSSL-GRPC embeds
+    # '-GCC_WARN_INHIBIT_ALL_WARNINGS' in per-file COMPILER_FLAGS; Clang
+    # tokenises it as '-G' + 'CC_WARN_INHIBIT_ALL_WARNINGS'. Per-file flags
+    # bypass OTHER_CFLAGS, so we must strip them here.
     if target.name == 'BoringSSL-GRPC'
       target.source_build_phase.files.each do |file|
         next unless file.settings&.key?('COMPILER_FLAGS')
         original = file.settings['COMPILER_FLAGS']
-        cleaned = original
-          .split
-          .reject { |f| f == '-G' || (f.start_with?('-G') && f.length > 2 && f[2] != '-') }
-          .join(' ')
+        cleaned  = original.split
+                           .reject { |f| f == '-G' || (f.start_with?('-G') && f.length > 2 && f[2] != '-') }
+                           .join(' ')
         next if cleaned == original
         file.settings['COMPILER_FLAGS'] = cleaned
         puts "  [Podfile] BoringSSL-GRPC: stripped -G from #{file.file_ref&.path || 'unknown'}"
@@ -146,92 +121,68 @@ post_install do |installer|
     end
   end
 
-  # ── 3. Save the project FIRST so xcodeproj changes are written ─────────────
+  # Save xcodeproj after all target mutations
   installer.pods_project.save
 
-  # ── 4. Patch gRPC-Core basic_seq.h: fix C++ template syntax for Xcode 16 ──
-  #
-  # ROOT CAUSE: Xcode 16 Clang strictly enforces C++17: a dependent-name
-  # template call  Traits::template CallSeqFactory(...)  must be written
-  # as  Traits::template CallSeqFactory<>(...)  when no template args are passed.
-  # This fires as a Parse Issue in basic_seq.h on any gRPC-related target.
-  #
-  # STRATEGY: Search ALL basic_seq.h files under:
-  #   A) The CocoaPods sandbox (installer.sandbox.root)  — the installed Pods/
-  #   B) The Podfile directory / Pods/                   — in case of symlinks
-  #   C) The HOME CocoaPods cache (~/.cocoapods/repos/…) — never cached here
-  #   D) The Mac CocoaPods download cache               — pod_cache_root
-  #
-  # We patch A+B (the files Xcode actually compiles).
-  # The gsub is idempotent: CallSeqFactory<>( is left unchanged.
+  # ── Patch xcconfig files on disk ─────────────────────────────────────────
+  # post_install build_settings writes apply to the in-memory xcodeproj, but
+  # CocoaPods also generates .xcconfig files that Xcode reads directly.
+  # We must add CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES there too.
+  puts '  [Podfile] Patching generated xcconfig files...'
+  xcconfig_dir = File.join(installer.sandbox.root.to_s, 'Target Support Files')
+  Dir.glob(File.join(xcconfig_dir, '**/*.xcconfig')).each do |xcconfig_path|
+    content = File.read(xcconfig_path)
+    key = 'CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'
+    unless content.include?(key)
+      File.open(xcconfig_path, 'a') { |f| f.puts "\n#{key} = YES" }
+    end
+  end
+  puts '  [Podfile] xcconfig patch done.'
 
+  # ── Patch gRPC-Core basic_seq.h for Xcode 16 C++17 ───────────────────────
   puts '  [Podfile] === Patching basic_seq.h for Xcode 16 C++17 compatibility ==='
-
-  sandbox_root  = installer.sandbox.root.to_s
-  podfile_dir   = File.dirname(File.realpath(__FILE__))
-
-  search_roots = [sandbox_root, podfile_dir].uniq
-
-  total_patched = false
-  search_roots.each do |root|
-    puts "  [Podfile] Searching: #{root}"
-    result = patch_basic_seq(root)
-    total_patched ||= result
-  end
-
-  # Also try the CocoaPods download cache (pods are extracted here first)
-  cache_root = File.expand_path('~/.cocoapods/repos')
-  if Dir.exist?(cache_root)
-    puts "  [Podfile] Searching CocoaPods cache: #{cache_root}"
-    patch_basic_seq(cache_root)
-  end
-
+  sandbox_root = installer.sandbox.root.to_s
+  podfile_dir  = File.dirname(File.realpath(__FILE__))
+  total_patched = [sandbox_root, podfile_dir].uniq
+                                             .map { |r| patch_basic_seq(r) }
+                                             .any?
   if total_patched
-    puts '  [Podfile] === basic_seq.h patch: APPLIED successfully ==='
+    puts '  [Podfile] === basic_seq.h: PATCHED ==='
   else
-    puts '  [Podfile] === basic_seq.h patch: already patched or not found ==='
-    # List all basic_seq.h found for diagnosis
-    all_found = search_roots.flat_map { |r| Dir.glob(File.join(r, '**/basic_seq.h')) }
+    all_found = Dir.glob(File.join(sandbox_root, '**/basic_seq.h'))
     if all_found.empty?
-      puts '  [Podfile] WARNING: basic_seq.h NOT FOUND anywhere — gRPC-Core may not be installed'
+      puts '  [Podfile] WARNING: basic_seq.h not found — gRPC-Core may not be installed'
     else
       all_found.each do |f|
         line = File.readlines(f).find { |l| l.include?('CallSeqFactory') }
-        puts "  [Podfile] #{f}: #{line&.strip || '(no CallSeqFactory line found)'}"
+        puts "  [Podfile] #{f}: #{line&.strip || '(no CallSeqFactory line)'}"
       end
+      puts '  [Podfile] === basic_seq.h: already patched ==='
     end
   end
 
-  # ── 5. NUCLEAR OPTION: Also patch via a shell script added to gRPC-Core ────
-  #
-  # If the above still fails (e.g. Xcode restores from DerivedData), add a
-  # "Run Script" build phase to gRPC-Core that patches the file at compile time.
-  #
+  # ── Add compile-time Run Script to gRPC-Core (belt-and-suspenders) ────────
+  # Patches basic_seq.h again at Xcode compile time in case DerivedData cached
+  # the old compiled .o. Added only once (idempotent check on phase name).
   installer.pods_project.targets.each do |target|
     next unless target.name == 'gRPC-Core'
-
-    # Only add the script phase once
-    existing = target.shell_script_build_phases.find { |p| p.name == 'Fix basic_seq.h Xcode16' }
-    next if existing
-
+    next if target.shell_script_build_phases.any? { |p| p.name == 'Fix basic_seq.h Xcode16' }
     phase = target.new_shell_script_build_phase('Fix basic_seq.h Xcode16')
     phase.shell_script = <<~'SHELL'
-      # Patch basic_seq.h for Xcode 16 C++17 compatibility
-      # Adds <> to CallSeqFactory so it reads CallSeqFactory<>(...) 
       FILE="${PODS_ROOT}/gRPC-Core/src/core/lib/promise/detail/basic_seq.h"
       if [ -f "$FILE" ]; then
         if grep -q 'CallSeqFactory(' "$FILE" && ! grep -q 'CallSeqFactory<>(' "$FILE"; then
           sed -i '' 's/CallSeqFactory(/CallSeqFactory<>(/g' "$FILE"
           echo "[Fix basic_seq.h] Patched: $FILE"
         else
-          echo "[Fix basic_seq.h] Already patched or no match: $FILE"
+          echo "[Fix basic_seq.h] Already patched: $FILE"
         fi
       else
-        echo "[Fix basic_seq.h] File not found: $FILE"
+        echo "[Fix basic_seq.h] Not found: $FILE"
       fi
     SHELL
     phase.run_only_for_deployment_postprocessing = '0'
-    puts '  [Podfile] Added Run Script phase to gRPC-Core: Fix basic_seq.h Xcode16'
+    puts '  [Podfile] Added Run Script to gRPC-Core: Fix basic_seq.h Xcode16'
   end
 
   installer.pods_project.save
