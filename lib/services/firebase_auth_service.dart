@@ -73,36 +73,39 @@ class FirebaseAuthService {
   // skips the reCAPTCHA web-view and immediately returns a ConfirmationResult;
   // no appVerificationDisabledForTesting flag is required.
   Future<PhoneAuthResult> _signInWithPhoneVerify(String phoneNumber) async {
-    _log('iOS/Web: calling signInWithPhoneNumber');
+    _log('iOS/Web: calling signInWithPhoneNumber for: $phoneNumber');
     try {
       final result = await _auth
           .signInWithPhoneNumber(phoneNumber)
           .timeout(const Duration(seconds: 60));
       _confirmationResult = result;
       _verificationId = result.verificationId;
-      _log('iOS/Web: codeSent, verificationId=${result.verificationId}');
+      _log('iOS/Web: codeSent OK, verificationId=${result.verificationId}');
       return PhoneAuthResult(
         status: PhoneAuthStatus.codeSent,
         verificationId: result.verificationId,
       );
     } on FirebaseAuthException catch (e) {
-      _logError(e, StackTrace.current,
-          'iOS/Web signInWithPhoneNumber FirebaseAuthException: ${e.code} — ${e.message}');
+      // Surface the RAW error code and message directly in the UI so we can
+      // diagnose the exact Firebase rejection reason without another rebuild.
+      final msg = 'Firebase error: [${e.code}] ${e.message ?? "no message"}';
+      _logError(e, StackTrace.current, 'signInWithPhoneNumber failed: $msg');
       return PhoneAuthResult(
         status: PhoneAuthStatus.error,
-        errorMessage: _mapAuthError(e.code),
+        errorMessage: msg,
       );
     } on TimeoutException {
-      _log('iOS/Web signInWithPhoneNumber timed out');
+      _log('iOS/Web signInWithPhoneNumber timed out after 60s');
       return PhoneAuthResult(
         status: PhoneAuthStatus.error,
-        errorMessage: 'Request timed out. Please check your connection and try again.',
+        errorMessage: 'Firebase error: [timeout] Request timed out after 60s.',
       );
     } catch (e, stack) {
-      _logError(e, stack, 'iOS/Web signInWithPhoneNumber unknown error');
+      final msg = 'Firebase error: [unknown] ${e.runtimeType}: $e';
+      _logError(e, stack, 'signInWithPhoneNumber unknown: $msg');
       return PhoneAuthResult(
         status: PhoneAuthStatus.error,
-        errorMessage: 'Could not send verification code. Please try again.',
+        errorMessage: msg,
       );
     }
   }
@@ -216,9 +219,9 @@ class FirebaseAuthService {
       // iOS + Web: confirm via ConfirmationResult from signInWithPhoneNumber
       if (kIsWeb || defaultTargetPlatform == TargetPlatform.iOS) {
         if (_confirmationResult == null) {
-          _log('verifySmsCode: _confirmationResult is null on iOS/Web');
+          _log('verifySmsCode: _confirmationResult is null — send step failed');
           return AuthResult.failure(
-              'Verification session expired. Please go back and request a new code.');
+              'DEBUG: No confirmation result stored. The send-code step failed — check the error shown on the previous screen.');
         }
         _log('verifySmsCode: confirming with ConfirmationResult');
         final userCred = await _confirmationResult!.confirm(smsCode);
