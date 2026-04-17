@@ -22,13 +22,18 @@ dependencies:
   file_picker: ^8.0.0
   url_launcher: ^6.2.5
 
-  # Firebase (LOCKED versions — tested with Flutter 3.35.4)
-  firebase_core: 3.6.0
-  firebase_auth: 5.3.1
-  cloud_firestore: 5.4.3
-  firebase_storage: 12.3.2
-  firebase_messaging: 15.1.3
-  firebase_crashlytics: 4.1.3
+  # Firebase — pinned to iOS SDK 10.27.0 to avoid the iOS 18 SIGTRAP crash.
+  # FirebaseAuth 11.x (firebase_auth >=5.2.0) has a hard assertionFailure in
+  # verifyPhoneNumber on iOS 18 without APNs. FirebaseAuth 10.x does NOT.
+  # firebase_auth 5.1.0 + firebase_core 3.1.0 = Firebase iOS SDK 10.27.0.
+  # All versions below are the exact releases tied to firebase_core 3.1.0.
+  # DO NOT upgrade any of these without verifying the iOS pod version first.
+  firebase_core: 3.1.0
+  firebase_auth: 5.1.0
+  cloud_firestore: 5.0.1
+  firebase_storage: 12.0.1
+  firebase_messaging: 15.0.0
+  firebase_crashlytics: 4.0.1
 
   # Payment / In-App Purchases
   in_app_purchase: 3.2.0           # Apple StoreKit + Google Play Billing (official Flutter plugin)
@@ -38,6 +43,15 @@ dependencies:
 
   # Material You dynamic colour (P3 audit recommendation)
   dynamic_color: ^1.7.0            # Android 12+ dynamic colour extraction
+
+  # dependency_overrides: force web sub-packages to versions that accept
+  # firebase_core 3.1.0. These are the platform-web implementations bundled
+  # inside firebase_auth and firebase_messaging — they are not used on iOS/Android
+  # but the pub resolver still checks their constraints.
+dependency_overrides:
+  firebase_auth_web: 5.12.2
+  firebase_messaging_web: 3.8.9
+  cached_network_image_web: 1.3.0
 
 dev_dependencies:
   flutter_test:

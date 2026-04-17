@@ -28,14 +28,10 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // appVerificationDisabledForTesting is required for BOTH verifyPhoneNumber
-    // AND signInWithPhoneNumber on iOS when using test numbers registered in
-    // the Firebase Console. Without this flag, signInWithPhoneNumber launches
-    // a full reCAPTCHA web-view flow, which cannot complete without a valid
-    // REVERSED_CLIENT_ID URL scheme (only present with Google Sign-In enabled).
-    // With this flag set, Firebase skips the web-view entirely for test numbers
-    // and immediately returns a ConfirmationResult — exactly what we need.
-    // This is safe: the flag has no effect on real phone numbers in production.
+    // Required for Firebase Console test numbers with verifyPhoneNumber on iOS.
+    // With Firebase iOS SDK 10.x (firebase_auth 5.1.0) this flag is safe and
+    // skips the APNs/reCAPTCHA check for registered test numbers only.
+    // Real phone numbers in production are completely unaffected by this flag.
     await FirebaseAuth.instance.setSettings(
       appVerificationDisabledForTesting: true,
     );
