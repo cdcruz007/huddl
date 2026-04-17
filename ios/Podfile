@@ -99,40 +99,63 @@ post_install do |installer|
     # from the target-level OTHER_CFLAGS, so overriding OTHER_CFLAGS has NO
     # effect on them. The sub-targets x_val, x_x509, x_x509a each compile one
     # ASN.1 source file that carries '-GCC_WARN_INHIBIT_ALL_WARNINGS' (which
-    # clang misparses as '-G CC_WARN_INHIBIT_ALL_WARNINGS'… and then hits the
-    # unsupported -G flag error on arm64).
+    # clang misparses as '-G CC_WARN_INHIBIT_ALL_WARNINGS' on arm64).
     #
     # FIX: iterate every file in BoringSSL-GRPC's source build phase and strip
     # any token that is exactly '-G' or starts with '-G' followed by a
-    # non-dash character (i.e. '-GCC_…' style flags that contain -G as prefix).
-    # We keep '-GRPC_…' define macros and '-GCC_WARN…' style defines ONLY when
-    # they are preprocessor defines (they start with -D or are passed via
-    # GCC_PREPROCESSOR_DEFINITIONS). Here we are operating on COMPILER_FLAGS
-    # strings, so we can safely strip any token matching /\A-G[^-]/.
-    #
-    # References:
-    #   https://stackoverflow.com/questions/78608693
-    #   https://github.com/invertase/react-native-firebase/issues/8020
-    next unless target.name == 'BoringSSL-GRPC'
-
-    target.source_build_phase.files.each do |file|
-      next unless file.settings&.key?('COMPILER_FLAGS')
-
-      original_flags = file.settings['COMPILER_FLAGS']
-      # Split on whitespace, reject any token that:
-      #   • is exactly '-G'
-      #   • starts with '-G' followed by a non-dash character
-      #     (catches -GCC_WARN_INHIBIT_ALL_WARNINGS which Xcode 16 splits
-      #      into the unsupported -G argument)
-      cleaned_flags = original_flags
-        .split
-        .reject { |f| f == '-G' || (f.start_with?('-G') && f[2] != '-') }
-        .join(' ')
-
-      next if cleaned_flags == original_flags
-
-      file.settings['COMPILER_FLAGS'] = cleaned_flags
-      puts "  [Podfile] Stripped -G from BoringSSL-GRPC/#{file.file_ref&.path || 'unknown'}"
+    # non-dash character.
+    # References: https://stackoverflow.com/questions/78608693
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        next unless file.settings&.key?('COMPILER_FLAGS')
+        original_flags = file.settings['COMPILER_FLAGS']
+        cleaned_flags = original_flags
+          .split
+          .reject { |f| f == '-G' || (f.start_with?('-G') && f[2] != '-') }
+          .join(' ')
+        next if cleaned_flags == original_flags
+        file.settings['COMPILER_FLAGS'] = cleaned_flags
+        puts "  [Podfile] Stripped -G from BoringSSL-GRPC/#{file.file_ref&.path || 'unknown'}"
+      end
     end
+  end
+
+  # ── 3. Patch gRPC-Core basic_seq.h: fix C++ template syntax for Xcode 16 ──
+  #
+  # ROOT CAUSE: Xcode 16's Clang enforces stricter C++17 rules and rejects
+  #   Traits::template CallSeqFactory(f_, *cur_, std::move(arg));
+  # because the dependent-name template call requires an explicit empty
+  # template argument list <> when called with no template arguments.
+  # This causes a "Parse Issue: A template argument list is expected after a
+  # name prefixed by the template keyword" error on basic_seq.h:102.
+  #
+  # FIX: after pod install writes the source file to disk, patch it in-place
+  # by adding <> after CallSeqFactory. This is idempotent — running pod install
+  # again will re-download and re-patch cleanly.
+  #
+  # References:
+  #   https://stackoverflow.com/questions/79551968
+  #   https://medium.com/@abdulsamie488/solving-the-dreaded-xcode-grpc-core-build-error
+  #   https://github.com/firebase/firebase-ios-sdk/issues/14643
+  basic_seq_path = File.join(
+    installer.sandbox.root,
+    'gRPC-Core/src/core/lib/promise/detail/basic_seq.h'
+  )
+
+  if File.exist?(basic_seq_path)
+    content = File.read(basic_seq_path)
+    # Match the unpatched form (no <> after CallSeqFactory) and add <>
+    patched = content.gsub(
+      'Traits::template CallSeqFactory(f_, *cur_, std::move(arg));',
+      'Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
+    )
+    if patched != content
+      File.write(basic_seq_path, patched)
+      puts '  [Podfile] Patched gRPC-Core basic_seq.h: added <> to CallSeqFactory'
+    else
+      puts '  [Podfile] gRPC-Core basic_seq.h already patched or line not found'
+    end
+  else
+    puts "  [Podfile] WARNING: basic_seq.h not found at #{basic_seq_path}"
   end
 end
