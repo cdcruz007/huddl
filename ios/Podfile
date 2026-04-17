@@ -131,22 +131,26 @@ post_install do |installer|
   # CocoaPods version, sandbox layout, or whether Pods/ is a symlink.
   # The gsub is idempotent — CallSeqFactory<>(...) is left unchanged.
 
-  bad_line  = 'Traits::template CallSeqFactory(f_, *cur_, std::move(arg));'
-  good_line = 'Traits::template CallSeqFactory<>(f_, *cur_, std::move(arg));'
+  # Regex matches ANY whitespace variant of the problematic line and any
+  # argument names — the only invariant is CallSeqFactory without <>.
+  # The negative lookahead (?!<) ensures we skip already-patched lines.
+  bad_pattern = /Traits::template\s+CallSeqFactory\s*(?!<)\(([^)]*)\);/
 
-  # Strategy A: canonical path via installer.sandbox.root (usually ios/Pods)
+  podfile_dir = File.dirname(File.realpath(__FILE__))
+
+  # All candidate paths for basic_seq.h (tried in order, deduped)
   candidate_paths = [
     File.join(installer.sandbox.root.to_s,
               'gRPC-Core/src/core/lib/promise/detail/basic_seq.h'),
+    File.join(podfile_dir,
+              'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h'),
   ]
-
-  # Strategy B: relative to the Podfile itself (ios/Pods/...)
-  podfile_dir = File.dirname(File.realpath(__FILE__))
-  candidate_paths << File.join(podfile_dir,
-                               'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h')
-
-  # Strategy C: glob-find under the sandbox root (handles any depth / layout)
+  # Glob under sandbox root catches any depth / symlink layout
   Dir.glob(File.join(installer.sandbox.root.to_s, '**/basic_seq.h')).each do |p|
+    candidate_paths << p
+  end
+  # Final fallback: entire ios/ tree
+  Dir.glob(File.join(podfile_dir, '**/basic_seq.h')).each do |p|
     candidate_paths << p
   end
 
@@ -154,26 +158,30 @@ post_install do |installer|
   candidate_paths.uniq.each do |path|
     next unless File.exist?(path)
     content = File.read(path)
-    next unless content.include?(bad_line)   # already patched or wrong file
-    File.write(path, content.gsub(bad_line, good_line))
-    puts "  [Podfile] Patched basic_seq.h at: #{path}"
-    patched_any = true
-  end
 
-  unless patched_any
-    # Extra fallback: search the entire ios/ tree (slow but guaranteed)
-    Dir.glob(File.join(podfile_dir, '**/basic_seq.h')).each do |path|
-      content = File.read(path)
-      next unless content.include?(bad_line)
-      File.write(path, content.gsub(bad_line, good_line))
-      puts "  [Podfile] Patched basic_seq.h (fallback glob) at: #{path}"
+    if content.match?(bad_pattern)
+      # Replace: insert <> between CallSeqFactory and (
+      patched = content.gsub(bad_pattern) do |match|
+        match.sub('CallSeqFactory(', 'CallSeqFactory<>(')
+      end
+      File.write(path, patched)
+      puts "  [Podfile] Patched basic_seq.h at: #{path}"
       patched_any = true
+    elsif content.include?('CallSeqFactory<>')
+      puts "  [Podfile] basic_seq.h already patched at: #{path}"
+    else
+      # Print the actual CallSeqFactory line for diagnosis
+      content.each_line do |line|
+        puts "  [Podfile] basic_seq.h line: #{line.rstrip}" if line.include?('CallSeqFactory')
+      end
     end
   end
 
   if patched_any
     puts '  [Podfile] gRPC-Core basic_seq.h: CallSeqFactory<> fix applied OK'
+  elsif candidate_paths.uniq.any? { |p| File.exist?(p) }
+    puts '  [Podfile] gRPC-Core basic_seq.h: already patched — OK'
   else
-    puts '  [Podfile] gRPC-Core basic_seq.h: already patched or file not found'
+    puts '  [Podfile] WARNING: basic_seq.h not found under Pods/'
   end
 end
