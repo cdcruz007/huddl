@@ -56,6 +56,25 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
+  # ── Hard-pin Firebase iOS SDK to 10.27.0 ─────────────────────────────────
+  # firebase_auth 5.1.0 / firebase_core 3.1.0 target Firebase iOS SDK 10.27.0.
+  # FirebaseAuth 11.x has a hard assertionFailure in verifyPhoneNumber that
+  # crashes on iOS 18 without APNs (EXC_BREAKPOINT / SIGTRAP).
+  #
+  # The explicit pod directives below are the ONLY reliable way to prevent
+  # CocoaPods from resolving a newer version when the Mac pub cache contains
+  # a newer firebase_auth package (e.g. 5.3.1) alongside the locked 5.1.0.
+  # $FirebaseSDKVersion alone is not sufficient — if a newer FlutterFire
+  # podspec slips through via the Mac pub cache, it can override the variable.
+  #
+  # Firebase uses a single versioned umbrella pod. All subspecs share the same
+  # version number, so pinning 'Firebase' to 10.27.0 locks all of them.
+  #
+  # DO NOT change this version without verifying the new firebase_auth
+  # pub package still requires Firebase iOS SDK 10.x.
+  pod 'Firebase', '= 10.27.0'
+  # ─────────────────────────────────────────────────────────────────────────
+
   target 'RunnerTests' do
     inherit! :search_paths
   end
