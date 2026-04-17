@@ -80,6 +80,31 @@ target 'Runner' do
   end
 end
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper: patch basic_seq.h anywhere under a given root directory.
+# Returns true if any file was newly patched.
+# ─────────────────────────────────────────────────────────────────────────────
+def patch_basic_seq(root_dir)
+  patched_any = false
+  # Search all basic_seq.h files under root_dir
+  Dir.glob(File.join(root_dir, '**/basic_seq.h')).each do |path|
+    next unless File.exist?(path)
+    content = File.read(path)
+    # Replace 'CallSeqFactory(' with 'CallSeqFactory<>(' only where not already patched
+    if content.include?('CallSeqFactory(') && !content.include?('CallSeqFactory<>(')
+      patched = content.gsub('CallSeqFactory(', 'CallSeqFactory<>(')
+      File.write(path, patched)
+      puts "  [Podfile] PATCHED basic_seq.h at: #{path}"
+      patched_any = true
+    elsif content.include?('CallSeqFactory<>(')
+      puts "  [Podfile] basic_seq.h already patched: #{path}"
+    else
+      puts "  [Podfile] basic_seq.h found but no CallSeqFactory — skipping: #{path}"
+    end
+  end
+  patched_any
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
@@ -116,61 +141,93 @@ post_install do |installer|
     end
   end
 
-  # ── 3. Patch gRPC-Core basic_seq.h: fix C++ template syntax for Xcode 16 ──
+  # ── 3. Save the project FIRST so xcodeproj changes are written ─────────────
+  installer.pods_project.save
+
+  # ── 4. Patch gRPC-Core basic_seq.h: fix C++ template syntax for Xcode 16 ──
   #
   # ROOT CAUSE: Xcode 16 Clang strictly enforces C++17: a dependent-name
-  # template call like  Traits::template CallSeqFactory(...)  must be written
-  # as  Traits::template CallSeqFactory<>(...)  when no template args are
-  # passed. Older Clang accepted both; Xcode 16 rejects the form without <>.
-  # This fires as "A template argument list is expected after a name prefixed
-  # by the template keyword" on basic_seq.h line ~102 (target basic_seq under
-  # gRPC-Core).
+  # template call  Traits::template CallSeqFactory(...)  must be written
+  # as  Traits::template CallSeqFactory<>(...)  when no template args are passed.
+  # This fires as a Parse Issue in basic_seq.h on any gRPC-related target.
   #
-  # FIX: locate basic_seq.h anywhere under the Pods sandbox and patch the
-  # line in-place. Uses multiple path strategies so it works regardless of
-  # CocoaPods version, sandbox layout, or whether Pods/ is a symlink.
-  # The gsub is idempotent — CallSeqFactory<>(...) is left unchanged.
+  # STRATEGY: Search ALL basic_seq.h files under:
+  #   A) The CocoaPods sandbox (installer.sandbox.root)  — the installed Pods/
+  #   B) The Podfile directory / Pods/                   — in case of symlinks
+  #   C) The HOME CocoaPods cache (~/.cocoapods/repos/…) — never cached here
+  #   D) The Mac CocoaPods download cache               — pod_cache_root
+  #
+  # We patch A+B (the files Xcode actually compiles).
+  # The gsub is idempotent: CallSeqFactory<>( is left unchanged.
 
-  # The exact line confirmed from grep output (line 103):
-  #   Traits::template CallSeqFactory(f_, *cur_, std::move(arg)));
-  # Note: std::move(arg) contains a nested ) so [^)]* won't match.
-  # We simply replace 'CallSeqFactory(' -> 'CallSeqFactory<>(' on any
-  # line that contains 'CallSeqFactory(' without a preceding '<>'.
-  # This is the most robust approach — no regex needed.
+  puts '  [Podfile] === Patching basic_seq.h for Xcode 16 C++17 compatibility ==='
 
-  podfile_dir = File.dirname(File.realpath(__FILE__))
+  sandbox_root  = installer.sandbox.root.to_s
+  podfile_dir   = File.dirname(File.realpath(__FILE__))
 
-  # All candidate paths for basic_seq.h (tried in order, deduped)
-  candidate_paths = [
-    File.join(installer.sandbox.root.to_s,
-              'gRPC-Core/src/core/lib/promise/detail/basic_seq.h'),
-    File.join(podfile_dir,
-              'Pods/gRPC-Core/src/core/lib/promise/detail/basic_seq.h'),
-  ]
-  Dir.glob(File.join(installer.sandbox.root.to_s, '**/basic_seq.h')).each { |p| candidate_paths << p }
-  Dir.glob(File.join(podfile_dir, '**/basic_seq.h')).each { |p| candidate_paths << p }
+  search_roots = [sandbox_root, podfile_dir].uniq
 
-  patched_any = false
-  candidate_paths.uniq.each do |path|
-    next unless File.exist?(path)
-    content = File.read(path)
+  total_patched = false
+  search_roots.each do |root|
+    puts "  [Podfile] Searching: #{root}"
+    result = patch_basic_seq(root)
+    total_patched ||= result
+  end
 
-    # Check if unpatched: 'CallSeqFactory(' present but 'CallSeqFactory<>(' absent
-    if content.include?('CallSeqFactory(') && !content.include?('CallSeqFactory<>(')
-      patched = content.gsub('CallSeqFactory(', 'CallSeqFactory<>(')
-      File.write(path, patched)
-      puts "  [Podfile] Patched basic_seq.h at: #{path}"
-      patched_any = true
-    elsif content.include?('CallSeqFactory<>(')
-      puts "  [Podfile] basic_seq.h already patched at: #{path}"
+  # Also try the CocoaPods download cache (pods are extracted here first)
+  cache_root = File.expand_path('~/.cocoapods/repos')
+  if Dir.exist?(cache_root)
+    puts "  [Podfile] Searching CocoaPods cache: #{cache_root}"
+    patch_basic_seq(cache_root)
+  end
+
+  if total_patched
+    puts '  [Podfile] === basic_seq.h patch: APPLIED successfully ==='
+  else
+    puts '  [Podfile] === basic_seq.h patch: already patched or not found ==='
+    # List all basic_seq.h found for diagnosis
+    all_found = search_roots.flat_map { |r| Dir.glob(File.join(r, '**/basic_seq.h')) }
+    if all_found.empty?
+      puts '  [Podfile] WARNING: basic_seq.h NOT FOUND anywhere — gRPC-Core may not be installed'
+    else
+      all_found.each do |f|
+        line = File.readlines(f).find { |l| l.include?('CallSeqFactory') }
+        puts "  [Podfile] #{f}: #{line&.strip || '(no CallSeqFactory line found)'}"
+      end
     end
   end
 
-  if patched_any
-    puts '  [Podfile] gRPC-Core basic_seq.h: CallSeqFactory<> fix applied OK'
-  elsif candidate_paths.uniq.any? { |p| File.exist?(p) }
-    puts '  [Podfile] gRPC-Core basic_seq.h: already patched — OK'
-  else
-    puts '  [Podfile] WARNING: basic_seq.h not found under Pods/'
+  # ── 5. NUCLEAR OPTION: Also patch via a shell script added to gRPC-Core ────
+  #
+  # If the above still fails (e.g. Xcode restores from DerivedData), add a
+  # "Run Script" build phase to gRPC-Core that patches the file at compile time.
+  #
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'gRPC-Core'
+
+    # Only add the script phase once
+    existing = target.shell_script_build_phases.find { |p| p.name == 'Fix basic_seq.h Xcode16' }
+    next if existing
+
+    phase = target.new_shell_script_build_phase('Fix basic_seq.h Xcode16')
+    phase.shell_script = <<~'SHELL'
+      # Patch basic_seq.h for Xcode 16 C++17 compatibility
+      # Adds <> to CallSeqFactory so it reads CallSeqFactory<>(...) 
+      FILE="${PODS_ROOT}/gRPC-Core/src/core/lib/promise/detail/basic_seq.h"
+      if [ -f "$FILE" ]; then
+        if grep -q 'CallSeqFactory(' "$FILE" && ! grep -q 'CallSeqFactory<>(' "$FILE"; then
+          sed -i '' 's/CallSeqFactory(/CallSeqFactory<>(/g' "$FILE"
+          echo "[Fix basic_seq.h] Patched: $FILE"
+        else
+          echo "[Fix basic_seq.h] Already patched or no match: $FILE"
+        fi
+      else
+        echo "[Fix basic_seq.h] File not found: $FILE"
+      fi
+    SHELL
+    phase.run_only_for_deployment_postprocessing = '0'
+    puts '  [Podfile] Added Run Script phase to gRPC-Core: Fix basic_seq.h Xcode16'
   end
+
+  installer.pods_project.save
 end
