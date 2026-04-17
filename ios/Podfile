@@ -61,7 +61,7 @@ target 'Runner' do
   # FirebaseAuth 11.x has a hard assertionFailure in verifyPhoneNumber that
   # crashes on iOS 18 without APNs (EXC_BREAKPOINT / SIGTRAP).
   #
-  # The explicit pod directives below are the ONLY reliable way to prevent
+  # The explicit pod directive below is the ONLY reliable way to prevent
   # CocoaPods from resolving a newer version when the Mac pub cache contains
   # a newer firebase_auth package (e.g. 5.3.1) alongside the locked 5.1.0.
   # $FirebaseSDKVersion alone is not sufficient — if a newer FlutterFire
@@ -81,97 +81,58 @@ target 'Runner' do
 end
 
 post_install do |installer|
-  # ── Targets that inject the unsupported '-G' flag on Xcode 16 / arm64 ────
-  # Xcode 16 clang rejects '-G' (MIPS small-data flag) on arm64 targets.
-  # The flag originates from build settings inherited into the compiler
-  # response files (.resp) for BoringSSL-GRPC, gRPC-C++, gRPC-Core, and
-  # FirebaseFirestoreInternal. We must override OTHER_CFLAGS / OTHER_CPLUSPLUSFLAGS
-  # for ALL of these targets, not just BoringSSL-GRPC.
-  GRPC_TARGETS = %w[
-    BoringSSL-GRPC
-    gRPC-C++
-    gRPC-Core
-    FirebaseFirestoreInternal
-    abseil
-  ].freeze
-
-  # Safe warning-suppression flags that are valid on arm64 (no -G).
-  SAFE_CFLAGS = '$(inherited) -Wno-comma -Wno-unreachable-code -Wno-shorten-64-to-32'.freeze
-
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
+    # ── 1. Enforce minimum deployment target + suppress warnings (all pods) ──
     target.build_configurations.each do |config|
-      # ── Enforce minimum iOS deployment target for all pods ────────────────
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
-
-      # ── Strip -G from every affected gRPC / Firestore target ─────────────
-      # For exact name matches AND prefix matches (e.g. BoringSSL-GRPC_Privacy).
-      is_affected = GRPC_TARGETS.any? { |t| target.name == t || target.name.start_with?(t) }
-      next unless is_affected
-
-      # Override OTHER_CFLAGS and OTHER_CPLUSPLUSFLAGS with safe flags only.
-      config.build_settings['OTHER_CFLAGS'] = SAFE_CFLAGS
-      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = SAFE_CFLAGS
-
-      # Remove any arch-specific overrides that could reintroduce -G.
-      config.build_settings.delete('OTHER_CFLAGS[arch=*]')
-      config.build_settings.delete('OTHER_CPLUSPLUSFLAGS[arch=*]')
-
-      # Strip -G from HEADER_SEARCH_PATHS in case it leaked in there.
-      if config.build_settings['HEADER_SEARCH_PATHS']
-        paths = config.build_settings['HEADER_SEARCH_PATHS']
-        if paths.is_a?(Array)
-          paths = paths.map { |p| p.gsub(/-G\S*/, '').strip }.reject(&:empty?)
-          config.build_settings['HEADER_SEARCH_PATHS'] = paths
-        elsif paths.is_a?(String) && paths.include?('-G')
-          config.build_settings['HEADER_SEARCH_PATHS'] = paths.gsub(/-G\S*/, '').strip
-        end
-      end
-
-      puts "  [Podfile] Stripped -G flags from #{target.name} (#{config.name})"
     end
-  end
 
-  # ── Patch shell script build phases: strip -G injected at build time ─────
-  # Some gRPC-Core script phases write -G flags into generated files at
-  # build time (e.g. prepare_boringssl.sh). Patch the in-memory script so
-  # the written files are clean when Xcode executes them.
-  installer.pods_project.targets.each do |target|
-    target.build_phases.each do |phase|
-      next unless phase.respond_to?(:shell_script)
-      next if phase.shell_script.nil?
-      next unless phase.shell_script.include?('-G ')
-      original = phase.shell_script
-      phase.shell_script = original.gsub(/ -G \$[^\s"']+/, '').gsub(/ -G (?![-\w])/, ' ')
-      puts "  [Podfile] Patched -G from script phase: #{target.name}/#{phase.display_name}"
+    # ── 2. Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ────────────
+    #
+    # ROOT CAUSE: Xcode 16 clang rejects the MIPS small-data flag '-G' on arm64.
+    # BoringSSL-GRPC stores per-SOURCE-FILE compiler flags in
+    # source_build_phase.files[].settings['COMPILER_FLAGS']. These are separate
+    # from the target-level OTHER_CFLAGS, so overriding OTHER_CFLAGS has NO
+    # effect on them. The sub-targets x_val, x_x509, x_x509a each compile one
+    # ASN.1 source file that carries '-GCC_WARN_INHIBIT_ALL_WARNINGS' (which
+    # clang misparses as '-G CC_WARN_INHIBIT_ALL_WARNINGS'… and then hits the
+    # unsupported -G flag error on arm64).
+    #
+    # FIX: iterate every file in BoringSSL-GRPC's source build phase and strip
+    # any token that is exactly '-G' or starts with '-G' followed by a
+    # non-dash character (i.e. '-GCC_…' style flags that contain -G as prefix).
+    # We keep '-GRPC_…' define macros and '-GCC_WARN…' style defines ONLY when
+    # they are preprocessor defines (they start with -D or are passed via
+    # GCC_PREPROCESSOR_DEFINITIONS). Here we are operating on COMPILER_FLAGS
+    # strings, so we can safely strip any token matching /\A-G[^-]/.
+    #
+    # References:
+    #   https://stackoverflow.com/questions/78608693
+    #   https://github.com/invertase/react-native-firebase/issues/8020
+    next unless target.name == 'BoringSSL-GRPC'
+
+    target.source_build_phase.files.each do |file|
+      next unless file.settings&.key?('COMPILER_FLAGS')
+
+      original_flags = file.settings['COMPILER_FLAGS']
+      # Split on whitespace, reject any token that:
+      #   • is exactly '-G'
+      #   • starts with '-G' followed by a non-dash character
+      #     (catches -GCC_WARN_INHIBIT_ALL_WARNINGS which Xcode 16 splits
+      #      into the unsupported -G argument)
+      cleaned_flags = original_flags
+        .split
+        .reject { |f| f == '-G' || (f.start_with?('-G') && f[2] != '-') }
+        .join(' ')
+
+      next if cleaned_flags == original_flags
+
+      file.settings['COMPILER_FLAGS'] = cleaned_flags
+      puts "  [Podfile] Stripped -G from BoringSSL-GRPC/#{file.file_ref&.path || 'unknown'}"
     end
-  end
-
-  # ── Patch generated .xcconfig files on disk ──────────────────────────────
-  # CocoaPods writes xcconfig files before post_install runs; patch them now
-  # so that Xcode reads clean files. This covers any -G that ended up in
-  # OTHER_CFLAGS, OTHER_CPLUSPLUSFLAGS, or HEADER_SEARCH_PATHS on disk.
-  xcconfig_dir = File.join(installer.sandbox.root, 'Target Support Files')
-  Dir.glob(File.join(xcconfig_dir, '**', '*.xcconfig')).each do |path|
-    content = File.read(path)
-    # Only touch files that mention -G followed by a non-flag character
-    next unless content.match?(/ -G[^-\w]| -G$/)
-    patched = content.gsub(/ -G\$[^\s"']+/, '').gsub(/ -G (?![-\w])/, ' ')
-    next if patched == content
-    File.write(path, patched)
-    puts "  [Podfile] Patched -G in xcconfig: #{File.basename(path)}"
-  end
-
-  # ── Patch .sh scripts in the Pods sandbox ────────────────────────────────
-  Dir.glob(File.join(installer.sandbox.root, '**', '*.sh')).each do |sh_path|
-    content = File.read(sh_path)
-    next unless content.include?('-G ')
-    patched = content.gsub(/ -G \$[^\s"']+/, '').gsub(/ -G (?![-\w])/, ' ')
-    next if patched == content
-    File.write(sh_path, patched)
-    puts "  [Podfile] Patched -G in script: #{File.basename(sh_path)}"
   end
 end
