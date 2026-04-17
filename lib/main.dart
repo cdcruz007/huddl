@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'config/firebase_options.dart';
@@ -28,13 +27,9 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // Required for Firebase Console test numbers with verifyPhoneNumber on iOS.
-    // With Firebase iOS SDK 10.x (firebase_auth 5.1.0) this flag is safe and
-    // skips the APNs/reCAPTCHA check for registered test numbers only.
-    // Real phone numbers in production are completely unaffected by this flag.
-    await FirebaseAuth.instance.setSettings(
-      appVerificationDisabledForTesting: true,
-    );
+    // NOTE: appVerificationDisabledForTesting intentionally removed for production.
+    // Test numbers registered in Firebase Console still work via verifyPhoneNumber
+    // when APNs is configured on the device (real device with push notifications).
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
