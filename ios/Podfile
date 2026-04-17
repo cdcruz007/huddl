@@ -101,46 +101,25 @@ post_install do |installer|
   end
 
   # ── Patch gRPC-Core script phases: strip -G flag injected at build time ──
-  # The -G flag is not in xcconfig or build settings — it is injected by a
-  # shell script build phase inside gRPC-Core that preprocesses BoringSSL
-  # source files at compile time. Xcode 16 clang rejects -G on arm64.
-  # This patch finds every shell script build phase in Pods.xcodeproj and
-  # removes any occurrence of '-G ' from the script body.
-  installer.pods_project.build_phases.each do |phase|
-    if phase.respond_to?(:shell_script) && phase.shell_script.include?('-G ')
-      phase.shell_script = phase.shell_script.gsub(/ -G /, ' ')
-      puts "Patched -G from build phase: #{phase.name}"
-    end
-  end
-
+  # The -G flag is injected by gRPC-Core shell script build phases that
+  # preprocess BoringSSL source files. Xcode 16 clang rejects -G on arm64.
+  # Patch the shell_script property of every build phase that contains '-G '.
   installer.pods_project.targets.each do |target|
     target.build_phases.each do |phase|
-      if phase.respond_to?(:shell_script) && phase.shell_script.to_s.include?('-G ')
-        phase.shell_script = phase.shell_script.gsub(/ -G /, ' ')
-        puts "Patched -G from #{target.name} phase: #{phase.name}"
+      next unless phase.respond_to?(:shell_script)
+      next if phase.shell_script.nil?
+      if phase.shell_script.include?('-G ')
+        phase.shell_script = phase.shell_script.gsub(/ -G \S+/, '').gsub(/ -G /, ' ')
+        puts "Patched -G from #{target.name}/#{phase.display_name}"
       end
     end
   end
 
-  installer.pods_project.save
-
-  # ── Also patch the pbxproj directly for any remaining -G occurrences ────
-  pbxproj_path = File.join(installer.sandbox.root, '..', 'Pods', 'Pods.xcodeproj', 'project.pbxproj')
-  if File.exist?(pbxproj_path)
-    content = File.read(pbxproj_path)
-    if content.match?(/ -G [^ "\\]/)
-      patched = content.gsub(/ -G [^ "\\]+/, '')
-      File.write(pbxproj_path, patched)
-      puts "Patched -G flag from Pods.xcodeproj/project.pbxproj"
-    end
-  end
-
-  # ── Patch any generated .sh scripts in the Pods directory ───────────────
+  # ── Patch any .sh scripts written to the Pods directory ─────────────────
   Dir.glob(File.join(installer.sandbox.root, '**', '*.sh')).each do |sh_path|
     content = File.read(sh_path)
-    if content.include?('-G ')
-      File.write(sh_path, content.gsub(/ -G /, ' '))
-      puts "Patched -G from script: #{File.basename(sh_path)}"
-    end
+    next unless content.include?('-G ')
+    File.write(sh_path, content.gsub(/ -G \S+/, '').gsub(/ -G /, ' '))
+    puts "Patched -G from: #{File.basename(sh_path)}"
   end
 end
