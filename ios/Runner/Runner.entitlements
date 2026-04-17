@@ -4,19 +4,25 @@
 <dict>
 
 	<!-- ── Push Notifications ──────────────────────────────────────────────
-	     Required for Firebase Cloud Messaging (FCM) to deliver push
-	     notifications to the device. This capability must ALSO be enabled in:
-	       Apple Developer Portal → Certificates, IDs & Profiles →
+	     Required for Firebase phone auth (silent APNs token) and FCM push.
+	
+	     aps-environment values:
+	       development  → direct device install via Xcode (debug builds)
+	       production   → TestFlight (internal + external) AND App Store
+	
+	     IMPORTANT: TestFlight uses the PRODUCTION APNs gateway — NOT
+	     development. Using 'development' here causes Firebase phone auth
+	     to fail on TestFlight because the APNs token Firebase receives is
+	     for the development gateway, but the provisioning profile used by
+	     TestFlight/App Store Connect expects production tokens.
+	
+	     This must ALSO be enabled in Apple Developer Portal:
 	       Identifiers → com.huddlconnect.huddlConnect → Push Notifications ✅
 	     AND in Xcode:
-	       Runner target → Signing & Capabilities → + Capability →
-	       Push Notifications
+	       Runner target → Signing & Capabilities → Push Notifications
 	────────────────────────────────────────────────────────────────────── -->
 	<key>aps-environment</key>
-	<string>development</string>
-	<!-- Change to 'production' when submitting to the App Store / TestFlight
-	     production track. For TestFlight internal testing, 'development' is
-	     correct. -->
+	<string>production</string>
 
 </dict>
 </plist>
