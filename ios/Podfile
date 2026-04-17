@@ -52,7 +52,9 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
-  use_modular_headers!
+  # use_modular_headers! removed — causes "Include of non-modular header inside
+  # framework module" errors with Firebase pods (Crashlytics, Messaging, etc.)
+  # when combined with use_frameworks!. Firebase headers are not modular-safe.
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
@@ -114,6 +116,9 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       config.build_settings['SWIFT_SUPPRESS_WARNINGS'] = 'YES'
+      # Allow non-modular headers — required because use_modular_headers! was
+      # removed but some pods still emit the include error without this flag.
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
     end
 
     # ── 2. Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ────────────
