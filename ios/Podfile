@@ -8,9 +8,20 @@
 #   • Flutter itself requires iOS 12+ from Flutter 3.x
 #
 # DO NOT lower this below 13.0 — Firebase packages will break.
+#
+# ── Firebase iOS SDK version pin ─────────────────────────────────────────────
+# firebase_auth 5.1.0 + firebase_core 3.1.0 require Firebase iOS SDK 10.27.0.
+# FirebaseAuth 11.x (SDK >=11.0) contains a hard assertionFailure in
+# verifyPhoneNumber that crashes on iOS 18 without an APNs token (SIGTRAP).
+# FirebaseAuth 10.x does NOT have this bug.
+#
+# $FirebaseSDKVersion forces ALL FlutterFire pods to use this exact SDK
+# version, overriding whatever the CocoaPods spec repo resolves.
+# DO NOT change this without first verifying the new firebase_auth pub package
+# still targets Firebase iOS SDK 10.x.
 # ─────────────────────────────────────────────────────────────────────────────
+$FirebaseSDKVersion = '10.27.0'
 
-# Uncomment this line to define a global platform for your project
 platform :ios, '13.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
