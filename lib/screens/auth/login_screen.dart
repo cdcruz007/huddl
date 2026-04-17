@@ -39,6 +39,17 @@ class _LoginScreenState extends State<LoginScreen> {
     return raw;
   }
 
+  /// Builds the full E.164-with-spaces phone number for Firebase.
+  /// Firebase test numbers are stored WITH spaces: "+44 7575 888452".
+  /// The number sent to Firebase MUST match exactly.
+  /// UK (+44) 10-digit local number → "+44 XXXX XXXXXX"
+  String _buildFullPhone(String digits) {
+    if (_countryCode == '+44' && digits.length == 10) {
+      return '$_countryCode ${digits.substring(0, 4)} ${digits.substring(4)}';
+    }
+    return '$_countryCode $digits';
+  }
+
   String? _validatePhone(String raw) {
     final digits = _normalise(raw);
     if (digits.isEmpty) return null;
@@ -99,7 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final digits = _normalise(_phoneController.text);
-    final fullPhone = '$_countryCode$digits';
+    // Format WITH spaces to match Firebase test numbers e.g. "+44 7575 888452"
+    final fullPhone = _buildFullPhone(digits);
 
     try {
       final result = await _authService.verifyPhoneNumber(fullPhone)
@@ -532,7 +544,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       final digits = _normalise(resetPhoneCtrl.text);
                       if (digits.length == 10 && digits.startsWith('7')) {
                         setLocal(() => isSending = true);
-                        final fullPhone = '+44$digits';
+                        // Format WITH spaces to match Firebase test numbers
+                        final fullPhone = _buildFullPhone(digits);
                         try {
                           final result = await _authService.verifyPhoneNumber(fullPhone)
                               .timeout(const Duration(seconds: 10), onTimeout: () {

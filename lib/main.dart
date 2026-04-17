@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
+import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode, PlatformDispatcher;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:dynamic_color/dynamic_color.dart';
@@ -27,9 +28,21 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // NOTE: appVerificationDisabledForTesting intentionally removed for production.
-    // Test numbers registered in Firebase Console still work via verifyPhoneNumber
-    // when APNs is configured on the device (real device with push notifications).
+    // ── Firebase test number bypass (non-release builds only) ───────────────
+    // Firebase Console test phone numbers (e.g. +44 7575 888452 / 123456) ONLY
+    // work when appVerificationDisabledForTesting = true. Without this flag,
+    // Firebase ignores the test number list entirely and attempts a real SMS.
+    //
+    // kReleaseMode = false in both DEBUG (Xcode direct) and PROFILE (TestFlight).
+    // kReleaseMode = true  in App Store production builds only.
+    //
+    // This means TestFlight testers can use +44 7575 888452 / 123456 without
+    // needing a real SMS, while App Store users always go through real APNs+SMS.
+    if (!kReleaseMode) {
+      await FirebaseAuth.instance.setSettings(
+        appVerificationDisabledForTesting: true,
+      );
+    }
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
