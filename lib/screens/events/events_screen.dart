@@ -1622,8 +1622,14 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
   @override
   void initState() {
     super.initState();
-    _meetupService.addListener(_refresh);
-    _eventService.addListener(_refresh);
+    // Defer listener registration to avoid setState-during-build crash.
+    // MeetupService._loadPersistedMeetups() calls notifyListeners() async
+    // from its constructor and may complete during the first build frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _meetupService.addListener(_refresh);
+      _eventService.addListener(_refresh);
+    });
   }
 
   @override

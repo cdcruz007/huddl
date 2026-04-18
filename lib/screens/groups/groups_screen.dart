@@ -4897,8 +4897,12 @@ class _SavedTabState extends State<_SavedTab> {
   @override
   void initState() {
     super.initState();
-    _init();
-    _savedMessageService.addListener(_onUpdate);
+    // Defer listener registration and data load to avoid setState-during-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _savedMessageService.addListener(_onUpdate);
+      _init();
+    });
   }
 
   @override

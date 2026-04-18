@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
 
@@ -509,7 +510,12 @@ class MeetupService extends ChangeNotifier {
             _meetups.insert(0, meetup);
           }
         }
-        notifyListeners();
+        // Guard notifyListeners so it never fires during a build frame.
+        // This method is called from the constructor (_internal), which may
+        // complete while the widget tree is building on first launch.
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
       }
     } catch (_) {}
   }
