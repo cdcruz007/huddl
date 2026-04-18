@@ -59,6 +59,15 @@ void main() async {
   try {
     final crashlytics = FirebaseCrashlytics.instance;
 
+    // CRITICAL: Explicitly enable collection in all build modes.
+    // Without this call, Crashlytics may be disabled in release builds
+    // depending on the platform default — always force it on.
+    await crashlytics.setCrashlyticsCollectionEnabled(true);
+
+    // Log a breadcrumb immediately so we can confirm Crashlytics is live
+    // in Firebase Console → Crashlytics → latest session → Logs tab.
+    await crashlytics.log('App started — Crashlytics active');
+
     // Pass all Flutter framework errors to Crashlytics
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);
