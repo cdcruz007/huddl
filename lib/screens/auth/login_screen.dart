@@ -43,11 +43,21 @@ class _LoginScreenState extends State<LoginScreen> {
   /// MUST match the exact format stored in Firebase Console test phone numbers.
   /// Firebase Console stores: "+44 7575 888452" (with spaces).
   /// UK (+44) 10-digit local number → "+44 XXXX XXXXXX"
+  ///
+  /// [digits] is the normalised local number (e.g. "7575888452") from _normalise().
   String _buildFullPhone(String digits) {
-    if (_countryCode == '+44' && digits.length == 10) {
-      return '$_countryCode ${digits.substring(0, 4)} ${digits.substring(4)}';
+    // Strip any residual non-digit chars, leading zeros, or country code prefix
+    String local = digits.replaceAll(RegExp(r'\D'), '');
+    final ccDigits = _countryCode.replaceAll(RegExp(r'\D'), '');
+    if (local.startsWith(ccDigits) && local.length > ccDigits.length) {
+      local = local.substring(ccDigits.length);
     }
-    return '$_countryCode $digits';
+    if (local.startsWith('0')) local = local.substring(1);
+
+    if (_countryCode == '+44' && local.length == 10) {
+      return '$_countryCode ${local.substring(0, 4)} ${local.substring(4)}';
+    }
+    return '$_countryCode $local';
   }
 
   String? _validatePhone(String raw) {

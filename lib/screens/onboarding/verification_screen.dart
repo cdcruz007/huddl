@@ -69,19 +69,38 @@ class _VerificationScreenState extends State<VerificationScreen> {
   /// The format MUST exactly match what is stored in Firebase Console →
   /// Authentication → Phone → Test phone numbers.
   /// Firebase Console stores: "+44 7575 888452" (with spaces).
-  /// So we must send: "+44 7575 888452" — spaces included.
+  ///
+  /// Handles all storage variants defensively:
+  ///   "7575888452"      → "+44 7575 888452" ✓ (normal: digits only stored)
+  ///   "07575888452"     → "+44 7575 888452" ✓ (leading zero)
+  ///   "+447575888452"   → "+44 7575 888452" ✓ (full E.164 stored)
+  ///   "+44 7575 888452" → "+44 7575 888452" ✓ (already correct)
   String _buildFullPhoneNumber() {
-    final rawDigits = _onboardingData.phoneNumber ?? '';
+    final raw = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
-    final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return cc;
-    // Strip leading zero if present (e.g. "07575888452" → "7575888452")
-    final local = digits.startsWith('0') ? digits.substring(1) : digits;
-    // UK (+44): format as "+44 XXXX XXXXXX" to match Firebase Console exactly
-    if (cc == '+44' && local.length == 10) {
-      return '$cc ${local.substring(0, 4)} ${local.substring(4)}';
+
+    // Strip all non-digit characters to get bare digits
+    String digits = raw.replaceAll(RegExp(r'\D'), '');
+
+    // If digits still contain the country code prefix (e.g. stored as "447575888452")
+    // strip it. Country code "+44" → numeric "44"
+    final ccDigits = cc.replaceAll(RegExp(r'\D'), '');
+    if (digits.startsWith(ccDigits) && digits.length > ccDigits.length) {
+      digits = digits.substring(ccDigits.length);
     }
-    return '$cc $local';
+
+    // Strip leading zero (local format "07575888452" → "7575888452")
+    if (digits.startsWith('0')) digits = digits.substring(1);
+
+    if (digits.isEmpty) return cc;
+
+    // UK (+44): format as "+44 XXXX XXXXXX" — exactly matching Firebase Console
+    if (cc == '+44' && digits.length == 10) {
+      return '$cc ${digits.substring(0, 4)} ${digits.substring(4)}';
+    }
+
+    // Non-UK fallback: single space
+    return '$cc $digits';
   }
 
   /// Display string for UI — same as the number sent to Firebase.
