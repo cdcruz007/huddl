@@ -110,8 +110,12 @@ class FirebaseAuthService {
           _logError(e, StackTrace.current,
               'Native verifyPhoneNumber failed: ${e.code} — ${e.message}');
           if (!completer.isCompleted) {
+            // Pass BOTH the raw code and mapped message so UI can display
+            // the exact Firebase error code for diagnosis
             completer.complete(PhoneAuthResult(
               status: PhoneAuthStatus.error,
+              rawErrorCode: e.code,
+              rawErrorMessage: e.message,
               errorMessage: _mapAuthError(e.code),
             ));
           }
@@ -415,10 +419,15 @@ class PhoneAuthResult {
   final PhoneAuthStatus status;
   final String? verificationId;
   final String? errorMessage;
+  // Raw Firebase error code and message — passed through for on-screen diagnosis
+  final String? rawErrorCode;
+  final String? rawErrorMessage;
 
   PhoneAuthResult({
     required this.status,
     this.verificationId,
     this.errorMessage,
+    this.rawErrorCode,
+    this.rawErrorMessage,
   });
 }

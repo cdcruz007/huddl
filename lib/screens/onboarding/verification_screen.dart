@@ -163,9 +163,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
           _errorMessage = null;
         });
       } else if (result.status == PhoneAuthStatus.error) {
+        // Show the raw Firebase error code on screen so it's visible in
+        // TestFlight without needing Xcode console or Crashlytics
+        final rawDetail = result.rawErrorCode != null
+            ? '\n[FB code: ${result.rawErrorCode}]'
+                '${result.rawErrorMessage != null ? "\n${result.rawErrorMessage}" : ""}'
+            : '';
         setState(() {
-          _errorMessage = result.errorMessage ??
-              'Could not send SMS. Tap "Retry" to try again.';
+          _errorMessage = (result.errorMessage ??
+              'Could not send SMS. Tap "Retry" to try again.') + rawDetail;
           _infoMessage = null;
         });
       }
