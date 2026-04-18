@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
+import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -70,6 +70,9 @@ void main() async {
 
     // Pass all Flutter framework errors to Crashlytics
     FlutterError.onError = (FlutterErrorDetails details) {
+      // Always print to console so we can diagnose crashes in Xcode log
+      debugPrint('🔴 FLUTTER ERROR: ${details.exceptionAsString()}');
+      debugPrint('🔴 STACK: ${details.stack?.toString().split('\n').take(10).join('\n')}');
       FlutterError.presentError(details);
       crashlytics.recordFlutterFatalError(details);
     };
@@ -80,9 +83,12 @@ void main() async {
       return true; // Returning true prevents the default crash
     };
 
-    // Replace the blank error widget with a visible red card for debug builds
+    // Replace the blank error widget with a visible red card — always show
+    // the error text so we can diagnose crashes from Xcode console.
     ErrorWidget.builder = (FlutterErrorDetails details) {
-      // In release we don't show details; Crashlytics already captured it
+      // Always print to debug console regardless of build mode
+      debugPrint('🔴 ErrorWidget triggered: ${details.exceptionAsString()}');
+      debugPrint('🔴 Stack: ${details.stack?.toString().split('\n').take(15).join('\n')}');
       return MaterialApp(
         home: Scaffold(
           backgroundColor: Colors.white,
@@ -100,14 +106,14 @@ void main() async {
                           fontWeight: FontWeight.bold,
                           color: Colors.red)),
                   const SizedBox(height: 12),
-                  if (kDebugMode)
-                    Text(details.exceptionAsString(),
-                        style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                  if (!kDebugMode)
-                    const Text(
-                      'An unexpected error occurred. Please restart the app.\n\nThis crash has been automatically reported to our team.',
-                      style: TextStyle(fontSize: 13, color: Colors.black54),
-                    ),
+                  // Always show error details — needed for diagnosis
+                  Text(details.exceptionAsString(),
+                      style: const TextStyle(fontSize: 13, color: Colors.black87)),
+                  const SizedBox(height: 8),
+                  Text(
+                    details.stack?.toString().split('\n').take(10).join('\n') ?? '',
+                    style: const TextStyle(fontSize: 10, color: Colors.black54),
+                  ),
                 ],
               ),
             ),

@@ -232,9 +232,10 @@ class _HomeScreenState extends State<HomeScreen>
       final raw = await BrowserStorage.getString('feed_preferences_v1');
       if (raw != null) {
         final Map<String, dynamic> decoded = json.decode(raw);
-        setState(() {
-          _feedPrefs = decoded.map((k, v) => MapEntry(k, v as bool));
-        });
+        final loaded = decoded.map((k, v) => MapEntry(k, v as bool));
+        // Merge with defaults so new keys added later are never null
+        final merged = Map<String, bool>.from(_feedPrefs)..addAll(loaded);
+        if (mounted) setState(() => _feedPrefs = merged);
       }
     } catch (_) {}
   }
