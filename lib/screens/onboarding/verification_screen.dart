@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, debugPrint;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'dart:async';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_header_logo.dart';
@@ -46,12 +47,15 @@ class _VerificationScreenState extends State<VerificationScreen> {
         });
       });
     } else {
-      // Mobile: show "sending" state immediately, then initiate Firebase
+      // Mobile: initialise service first (loads stored phone number from storage),
+      // then send the code.
       setState(() {
         _isSendingCode = true;
         _infoMessage = 'Sending code to your phone…';
       });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        // Ensure stored phone number is loaded before we try to read it
+        await _onboardingData.initialize();
         _initiatePhoneVerification();
       });
     }
@@ -127,7 +131,9 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
 
     final fullPhone = _buildFullPhoneNumber();
-    if (kDebugMode) debugPrint('[VerificationScreen] Initiating verification for: $fullPhone');
+    // Log the exact string being sent — visible in Crashlytics and debug console
+    debugPrint('[VerificationScreen] Sending to Firebase: "$fullPhone"');
+    try { FirebaseCrashlytics.instance.log('verifyPhoneNumber sending: $fullPhone'); } catch (_) {}
 
     try {
       // Re-run configure() immediately before the call to guarantee
