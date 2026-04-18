@@ -14,6 +14,8 @@ import '../../services/browser_storage.dart';
 import '../../services/invitation_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/dm_service.dart';
+import '../../services/realtime_dm_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/event_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/message_search_service.dart';
@@ -205,6 +207,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
+  final RealtimeDMService _realtimeDMService = RealtimeDMService();
   final AiChatSummariserService _summariser = AiChatSummariserService();
   final MessagesAiService _aiService = MessagesAiService();
 
@@ -213,6 +216,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   List<GroupInvitation> _pendingInvitations = [];
   List<DMConversation> _dmConversations = [];
   List<DMConversation> _filteredDMs = [];
+  StreamSubscription<List<RealtimeDMConversation>>? _firestoreConvSub;
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
   bool _isLoading = true;
@@ -254,6 +258,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   @override
   void dispose() {
     _searchDebounce?.cancel();
+    _firestoreConvSub?.cancel();
     EventService.groupChatCreated.removeListener(_onGroupsChanged);
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _invitationService.removeListener(_onGroupsChanged);
@@ -415,10 +420,20 @@ class _MessagesTabState extends State<_MessagesTab> {
   void _onDMUpdate() {
     if (mounted) {
       setState(() {
-        _dmConversations = List.from(_dmService.conversations);
+        // Preserve Firestore conversations; only refresh local demo ones
+        final firestoreConvs = _dmConversations.where((c) => c.id.startsWith('conv_')).toList();
+        _dmConversations = List.from(_dmService.conversations)..addAll(firestoreConvs);
         _applyFilter();
       });
     }
+  }
+
+  String _avatarColorForUid(String uid) {
+    const colors = [
+      '#FF975C', '#3580F0', '#199A85', '#A16AE9',
+      '#5B9DFF', '#E8A838', '#FF7575', '#34C759',
+    ];
+    return colors[uid.hashCode.abs() % colors.length];
   }
 
   Future<void> _loadGroups() async {
@@ -430,8 +445,40 @@ class _MessagesTabState extends State<_MessagesTab> {
       await _invitationService.initialize();
       await _dmService.initialize();
 
-      // Load DM conversations
+      // Load DM conversations (local demo + real Firestore)
       _dmConversations = List.from(_dmService.conversations);
+
+      // Subscribe to real Firestore conversations (real user DMs)
+      if (FirebaseAuth.instance.currentUser != null) {
+        _firestoreConvSub?.cancel();
+        _firestoreConvSub = _realtimeDMService.conversationsStream().listen(
+          (firestoreConvs) {
+            if (!mounted) return;
+            // Convert RealtimeDMConversation → DMConversation
+            final converted = firestoreConvs.map((fc) => DMConversation(
+              id: fc.id,
+              recipientId: fc.otherUserId,
+              recipientName: fc.otherUserName,
+              recipientAvatarColor: _avatarColorForUid(fc.otherUserId),
+              lastMessage: fc.lastMessage,
+              lastSenderName: fc.lastSenderName,
+              lastMessageTime: fc.lastMessageAt,
+              unreadCount: fc.unreadCount,
+              isOnline: false,
+            )).toList();
+
+            setState(() {
+              // Remove any existing Firestore-backed convs and replace
+              _dmConversations.removeWhere((c) => c.id.startsWith('conv_'));
+              _dmConversations.addAll(converted);
+              _applyFilter();
+            });
+          },
+          onError: (e) {
+            if (kDebugMode) debugPrint('[groups_screen] Firestore conv stream error: $e');
+          },
+        );
+      }
 
       // ── 1. Try to get previously assigned default groups ──────────
       List<Group> defaultGroups =

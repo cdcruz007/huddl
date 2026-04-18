@@ -6,8 +6,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
+
 import '../../services/dm_service.dart';
+import '../../services/realtime_dm_service.dart';
 import '../../services/onboarding_data_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
@@ -75,6 +78,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
   final DMService _dmService = DMService();
+  final RealtimeDMService _realtimeDMService = RealtimeDMService();
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   final BlockService _blockService = BlockService();
@@ -90,6 +94,15 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Timer? _refreshTimer;
   final MediaAttachService _mediaService = MediaAttachService();
 
+  // Firestore real-time subscription (for real users)
+  StreamSubscription<List<RealtimeDMMessage>>? _firestoreMsgSub;
+
+  /// Returns true if the recipient is a real Firebase user (not a demo member).
+  bool get _isRealUser =>
+      !widget.recipientId.startsWith('mem_') &&
+      widget.recipientId.isNotEmpty &&
+      FirebaseAuth.instance.currentUser != null;
+
   /// IDs of messages unsent "just for me" (hidden locally)
   final Set<String> _hiddenMessageIds = {};
 
@@ -104,13 +117,15 @@ class _DMChatScreenState extends State<DMChatScreen> {
     super.initState();
     _conversationId = widget.conversationId;
     _loadData();
-    _dmService.addListener(_onServiceUpdate);
+    if (!_isRealUser) {
+      // Demo mode: use local DMService with polling
+      _dmService.addListener(_onServiceUpdate);
+      _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) _refreshMessages();
+      });
+    }
     _savedMessageService.initialize();
     _blockService.initialize();
-    // Periodic refresh for status changes
-    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) _refreshMessages();
-    });
   }
 
   @override
@@ -120,6 +135,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _scrollController.dispose();
     _focusNode.dispose();
     _refreshTimer?.cancel();
+    _firestoreMsgSub?.cancel();
     _dmService.removeListener(_onServiceUpdate);
     super.dispose();
   }
@@ -132,41 +148,146 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   Future<void> _loadData() async {
     await _onboardingService.initialize();
-    await _dmService.initialize();
     _userName = _onboardingService.name ?? 'You';
 
-    // Derive the expected conversation ID from the recipientId directly.
-    // This matches the ID format used by getOrCreateConversation:
-    // id: 'dm_$recipientId' — so we can look up storage directly.
-    final expectedConvId = 'dm_${widget.recipientId}';
+    if (_isRealUser) {
+      // ── REAL USER MODE: use Firestore ──────────────────────────────────
+      // Get or create the conversation document in Firestore
+      final convId = await _realtimeDMService.getOrCreateConversation(
+        widget.recipientId,
+      );
 
-    // Also try findConversation in case the ID format is different
-    final existing = await _dmService.findConversation(widget.recipientId);
-    
-    // Use the found conversation's ID, or fall back to widget.conversationId,
-    // or derive it from recipientId.
-    final resolvedId = existing?.id ?? widget.conversationId ?? expectedConvId;
-    _conversationId = resolvedId;
+      if (!mounted) return;
 
-    // Mark as read if conversation exists
-    if (existing != null) {
-      await _dmService.markConversationRead(existing.id);
-    }
-
-    // Load messages from storage using the resolved ID
-    _messages = await _dmService.getMessages(resolvedId);
-    
-    // If no messages found with resolved ID, also try the expected ID as fallback
-    if (_messages.isEmpty && resolvedId != expectedConvId) {
-      final fallbackMsgs = await _dmService.getMessages(expectedConvId);
-      if (fallbackMsgs.isNotEmpty) {
-        _messages = fallbackMsgs;
-        _conversationId = expectedConvId;
+      if (convId == null || convId == 'blocked') {
+        setState(() => _isLoading = false);
+        if (mounted && convId == 'blocked') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You can only message parents in your area.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
       }
+
+      _conversationId = convId;
+      await _realtimeDMService.markConversationRead(convId);
+
+      // Subscribe to real-time message stream
+      _firestoreMsgSub = _realtimeDMService
+          .messagesStream(convId)
+          .listen((firestoreMsgs) {
+        if (!mounted) return;
+        // Convert RealtimeDMMessage → DirectMessage for the existing UI
+        final converted = firestoreMsgs
+            .map((m) => _realtimeToDirectMessage(m))
+            .toList();
+        setState(() => _messages = converted);
+        _scrollToBottom(animate: _messages.isNotEmpty);
+      });
+
+      setState(() => _isLoading = false);
+    } else {
+      // ── DEMO MODE: use local DMService ────────────────────────────────
+      await _dmService.initialize();
+
+      final expectedConvId = 'dm_${widget.recipientId}';
+      final existing = await _dmService.findConversation(widget.recipientId);
+      final resolvedId = existing?.id ?? widget.conversationId ?? expectedConvId;
+      _conversationId = resolvedId;
+
+      if (existing != null) {
+        await _dmService.markConversationRead(existing.id);
+      }
+
+      _messages = await _dmService.getMessages(resolvedId);
+      if (_messages.isEmpty && resolvedId != expectedConvId) {
+        final fallbackMsgs = await _dmService.getMessages(expectedConvId);
+        if (fallbackMsgs.isNotEmpty) {
+          _messages = fallbackMsgs;
+          _conversationId = expectedConvId;
+        }
+      }
+
+      setState(() => _isLoading = false);
+      _scrollToBottom();
+    }
+  }
+
+  /// Convert a Firestore RealtimeDMMessage to the existing DirectMessage model
+  /// so the rich UI (reactions, reply quoting, rich cards) works unchanged.
+  DirectMessage _realtimeToDirectMessage(RealtimeDMMessage m) {
+    MessageType msgType;
+    switch (m.type) {
+      case 'image':
+        msgType = MessageType.image;
+        break;
+      case 'document':
+        msgType = MessageType.document;
+        break;
+      case 'location':
+        msgType = MessageType.location;
+        break;
+      case 'contact':
+        msgType = MessageType.contact;
+        break;
+      case 'meetupInvite':
+        msgType = MessageType.meetupInvite;
+        break;
+      default:
+        msgType = MessageType.text;
     }
 
-    setState(() => _isLoading = false);
-    _scrollToBottom();
+    MessageStatus msgStatus;
+    switch (m.status) {
+      case 'delivered':
+        msgStatus = MessageStatus.delivered;
+        break;
+      case 'read':
+        msgStatus = MessageStatus.read;
+        break;
+      case 'failed':
+      case 'error':
+        msgStatus = MessageStatus.error;
+        break;
+      default:
+        msgStatus = MessageStatus.sent;
+    }
+
+    // Convert Firestore reaction format (emoji:uid keys) to simple emoji counts
+    final Map<String, int> reactionCounts = {};
+    for (final key in m.reactions.keys) {
+      final emoji = key.contains(':') ? key.split(':').first : key;
+      reactionCounts[emoji] = (reactionCounts[emoji] ?? 0) + 1;
+    }
+
+    return DirectMessage(
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      message: m.message,
+      timestamp: m.timestamp,
+      isMe: m.isMe,
+      status: msgStatus,
+      reactions: reactionCounts,
+      replyToText: m.replyToText,
+      replyToSender: m.replyToSender,
+      type: msgType,
+      imageUrl: m.imageUrl,
+      documentName: m.documentName,
+      documentSize: m.documentSize,
+      latitude: m.latitude,
+      longitude: m.longitude,
+      locationLabel: m.locationLabel,
+      contactName: m.contactName,
+      contactPhone: m.contactPhone,
+      meetupData: m.meetupData,
+      groupData: m.groupData,
+      itemData: m.itemData,
+      eventData: m.eventData,
+    );
   }
 
   Future<void> _refreshMessages() async {
@@ -228,27 +349,49 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _messageController.clear();
     HapticFeedback.lightImpact();
 
-    // Create conversation on first message if it doesn't exist yet
-    if (_conversationId == null) {
-      final conv = await _dmService.getOrCreateConversation(
-        recipientId: widget.recipientId,
-        recipientName: widget.recipientName,
-        avatarColor: widget.recipientAvatarColor,
+    if (_isRealUser) {
+      // ── Real user: send via Firestore ──────────────────────────────────
+      if (_conversationId == null) {
+        final convId = await _realtimeDMService.getOrCreateConversation(
+          widget.recipientId,
+        );
+        if (convId == null || convId == 'blocked') return;
+        _conversationId = convId;
+        // Subscribe to messages now that we have an ID
+        _firestoreMsgSub?.cancel();
+        _firestoreMsgSub = _realtimeDMService
+            .messagesStream(_conversationId!)
+            .listen((msgs) {
+          if (!mounted) return;
+          setState(() => _messages = msgs.map(_realtimeToDirectMessage).toList());
+          _scrollToBottom(animate: true);
+        });
+      }
+      await _realtimeDMService.sendMessage(
+        conversationId: _conversationId!,
+        message: text,
       );
-      _conversationId = conv.id;
+      // Message will appear via the stream subscription — no setState needed
+    } else {
+      // ── Demo mode: local DMService ─────────────────────────────────────
+      if (_conversationId == null) {
+        final conv = await _dmService.getOrCreateConversation(
+          recipientId: widget.recipientId,
+          recipientName: widget.recipientName,
+          avatarColor: widget.recipientAvatarColor,
+        );
+        _conversationId = conv.id;
+      }
+      final msg = await _dmService.sendMessage(
+        conversationId: _conversationId!,
+        message: text,
+        senderName: _userName,
+      );
+      setState(() {
+        _messages.add(msg);
+      });
+      _scrollToBottom(animate: true);
     }
-
-    final msg = await _dmService.sendMessage(
-      conversationId: _conversationId!,
-      message: text,
-      senderName: _userName,
-
-    );
-
-    setState(() {
-      _messages.add(msg);
-    });
-    _scrollToBottom(animate: true);
   }
 
   /// Resend a failed message (P1: tap-to-resend on error)
@@ -262,15 +405,23 @@ class _DMChatScreenState extends State<DMChatScreen> {
     });
 
     // Re-send with the same text
-    final msg = await _dmService.sendMessage(
-      conversationId: _conversationId!,
-      message: failedMsg.message,
-      senderName: _userName,
-    );
-
-    setState(() {
-      _messages.add(msg);
-    });
+    if (_isRealUser) {
+      if (_conversationId != null) {
+        await _realtimeDMService.sendMessage(
+          conversationId: _conversationId!,
+          message: failedMsg.message,
+        );
+      }
+    } else {
+      final msg = await _dmService.sendMessage(
+        conversationId: _conversationId!,
+        message: failedMsg.message,
+        senderName: _userName,
+      );
+      setState(() {
+        _messages.add(msg);
+      });
+    }
     _scrollToBottom(animate: true);
 
     if (mounted) {
@@ -1790,7 +1941,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
   }
 
-  /// Helper to send a rich (non-text) message through DMService for persistence
+  /// Helper to send a rich (non-text) message through the appropriate service
   Future<void> _sendRichMessage({
     required MessageType type,
     String? imageUrl,
@@ -1802,14 +1953,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
     String? contactName,
     String? contactPhone,
   }) async {
-    if (_conversationId == null) {
-      final conv = await _dmService.getOrCreateConversation(
-        recipientId: widget.recipientId,
-        recipientName: widget.recipientName,
-        avatarColor: widget.recipientAvatarColor,
-      );
-      _conversationId = conv.id;
-    }
     String displayMsg = '';
     switch (type) {
       case MessageType.image: displayMsg = 'Photo'; break;
@@ -1819,23 +1962,57 @@ class _DMChatScreenState extends State<DMChatScreen> {
       case MessageType.meetupInvite: displayMsg = 'Meetup invite'; break;
       case MessageType.text: break;
     }
-    await _dmService.sendMessage(
-      conversationId: _conversationId!,
-      message: displayMsg,
-      senderName: _userName,
-      type: type,
-      imageUrl: imageUrl,
-      documentName: documentName,
-      documentSize: documentSize,
-      latitude: latitude,
-      longitude: longitude,
-      locationLabel: locationLabel,
-      contactName: contactName,
-      contactPhone: contactPhone,
-    );
-    // Refresh messages
-    _messages = await _dmService.getMessages(_conversationId!);
-    setState(() {});
+
+    final typeStr = type.name; // e.g. 'image', 'document', 'location'
+
+    if (_isRealUser) {
+      if (_conversationId == null) {
+        final convId = await _realtimeDMService.getOrCreateConversation(
+          widget.recipientId,
+        );
+        if (convId == null || convId == 'blocked') return;
+        _conversationId = convId;
+      }
+      await _realtimeDMService.sendMessage(
+        conversationId: _conversationId!,
+        message: displayMsg,
+        type: typeStr,
+        imageUrl: imageUrl,
+        documentName: documentName,
+        documentSize: documentSize,
+        latitude: latitude,
+        longitude: longitude,
+        locationLabel: locationLabel,
+        contactName: contactName,
+        contactPhone: contactPhone,
+      );
+      // Stream subscription will update _messages automatically
+    } else {
+      if (_conversationId == null) {
+        final conv = await _dmService.getOrCreateConversation(
+          recipientId: widget.recipientId,
+          recipientName: widget.recipientName,
+          avatarColor: widget.recipientAvatarColor,
+        );
+        _conversationId = conv.id;
+      }
+      await _dmService.sendMessage(
+        conversationId: _conversationId!,
+        message: displayMsg,
+        senderName: _userName,
+        type: type,
+        imageUrl: imageUrl,
+        documentName: documentName,
+        documentSize: documentSize,
+        latitude: latitude,
+        longitude: longitude,
+        locationLabel: locationLabel,
+        contactName: contactName,
+        contactPhone: contactPhone,
+      );
+      _messages = await _dmService.getMessages(_conversationId!);
+      setState(() {});
+    }
     _scrollToBottom(animate: true);
   }
 
@@ -1849,10 +2026,14 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   void _toggleReaction(String messageId, String emoji) async {
     if (_conversationId == null) return;
-    await _dmService.toggleReaction(_conversationId!, messageId, emoji);
-    // Refresh messages to get updated reactions
-    _messages = await _dmService.getMessages(_conversationId!);
-    if (mounted) setState(() {});
+    if (_isRealUser) {
+      await _realtimeDMService.toggleReaction(_conversationId!, messageId, emoji);
+      // Stream subscription handles UI update
+    } else {
+      await _dmService.toggleReaction(_conversationId!, messageId, emoji);
+      _messages = await _dmService.getMessages(_conversationId!);
+      if (mounted) setState(() {});
+    }
   }
 
   void _saveMessage(DirectMessage msg) {

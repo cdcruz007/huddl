@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'onboarding_data_service.dart';
+import 'huddl_user_service.dart';
+import 'postcode_service.dart';
 
 /// Centralised Firebase Authentication service for Huddl Connect.
 ///
@@ -226,6 +228,9 @@ class FirebaseAuthService {
       final userCred = await _auth.signInWithCredential(credential);
       if (userCred.additionalUserInfo?.isNewUser ?? false) {
         await _createUserProfile(userCred.user!.uid);
+      } else {
+        // Returning user — sync their profile to ensure borough is up-to-date
+        await HuddlUserService().syncCurrentUserProfile();
       }
       _log('verifySmsCode: success, uid=${userCred.user?.uid}');
       return AuthResult.success(userCred.user);
@@ -269,28 +274,37 @@ class FirebaseAuthService {
     final onboarding = OnboardingDataService();
     await onboarding.initialize();
 
+    // Resolve borough from postcode at profile-creation time
+    final postcode = onboarding.postcode ?? '';
+    final borough = PostcodeService().getBoroughFromPostcode(postcode) ?? '';
+
+    final name = onboarding.name ?? '';
+    final parts = name.trim().split(' ');
+    final firstName = parts.isNotEmpty ? parts.first : '';
+    final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+
     final Map<String, dynamic> profile = {
       'uid': userId,
-      'name': onboarding.name ?? '',
-      'firstName': onboarding.name?.split(' ').first ?? '',
-      'lastName': (onboarding.name?.split(' ').length ?? 0) > 1
-          ? onboarding.name!.split(' ').sublist(1).join(' ')
-          : '',
+      'name': name,
+      'firstName': firstName,
+      'lastName': lastName,
       'phone':
           onboarding.fullPhoneNumber ?? _auth.currentUser?.phoneNumber ?? '',
       'countryCode': onboarding.countryCode ?? '+44',
       'parentType': onboarding.parentType ?? '',
       'stagesOfLife': onboarding.stagesOfLife,
-      'postcode': onboarding.postcode ?? '',
-      'borough': '',
+      'postcode': postcode,
+      'borough': borough,
       'children': onboarding.children,
       'bio': onboarding.bio ?? '',
       'photoUrl': '',
       'tier': 'explorer',
       'isFoundingMember': false,
       'isPhoneVerified': true,
+      'isOnline': true,
       'createdAt': FieldValue.serverTimestamp(),
       'lastActiveAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
       'assignedGroupCount': 0,
       'assignedGroupNames': [],
       'fcmToken': '',
@@ -320,8 +334,11 @@ class FirebaseAuthService {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
+    // Trigger a full profile sync so all fields are set correctly
+    await HuddlUserService().syncCurrentUserProfile();
+
     if (kDebugMode) {
-      debugPrint('FirebaseAuthService: profile created for $userId');
+      debugPrint('FirebaseAuthService: profile created for $userId, borough=$borough');
     }
   }
 
