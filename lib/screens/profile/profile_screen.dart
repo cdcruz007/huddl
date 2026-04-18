@@ -89,10 +89,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _blockService.initialize();
     _feedbackService.initialize();
     _subscriptionService.initialize();
-    _subscriptionService.addListener(_onSubChange);
-    // Defer data loading until after first frame to avoid setState-during-build
+    // Defer ALL listener registration and data loading until after first frame.
+    // SubscriptionService.notifyListeners() fires on initialize() completion —
+    // adding the listener before that completes causes setState-during-build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _subscriptionService.addListener(_onSubChange);
         _loadProfileData();
         _loadSettings();
       }
@@ -101,6 +103,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _onSubChange() {
     if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _subscriptionService.removeListener(_onSubChange);
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {

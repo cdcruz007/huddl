@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import '../models/subscription.dart';
 import 'browser_storage.dart';
 
@@ -83,7 +84,11 @@ class SubscriptionService extends ChangeNotifier {
     }
 
     _initialized = true;
-    notifyListeners();
+    // Use addPostFrameCallback so this notifyListeners() never fires
+    // during a widget build phase (which causes setState-during-build crash).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   Future<void> _persist() async {

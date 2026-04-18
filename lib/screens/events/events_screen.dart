@@ -54,10 +54,16 @@ class _EventsScreenState extends State<EventsScreen>
         }
       }
     });
-    _meetupService.addListener(_refresh);
-    _eventService.addListener(_refresh);
-    // Restore user-uploaded base64 images into in-memory meetup list
-    _meetupService.restoreCustomImages();
+    // Defer service listener registration until after first frame.
+    // MeetupService.restoreCustomImages() and EventService can call
+    // notifyListeners() which triggers setState on MainShell during build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _meetupService.addListener(_refresh);
+        _eventService.addListener(_refresh);
+        _meetupService.restoreCustomImages();
+      }
+    });
   }
 
   @override
