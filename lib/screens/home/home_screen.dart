@@ -142,7 +142,13 @@ class _HomeScreenState extends State<HomeScreen>
       parent: _greetingAnimCtrl,
       curve: Curves.easeOutCubic,
     ));
-    _initHome();
+    // Defer _initHome() until after the first frame is fully built.
+    // Calling setState() inside initState() (via _loadFeedPrefs / _loadData)
+    // before the widget tree is drawn triggers:
+    // "setState() or markNeedsBuild() called during build"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _initHome();
+    });
   }
 
   @override

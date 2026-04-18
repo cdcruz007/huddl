@@ -232,9 +232,6 @@ class _MessagesTabState extends State<_MessagesTab> {
   @override
   void initState() {
     super.initState();
-    _loadGroups();
-    _loadMutedAndPinned();
-    _loadDemoSummaries();
     _aiService.initialize();
     _dmService.addListener(_onDMUpdate);
     _invitationService.addListener(_onGroupsChanged);
@@ -243,6 +240,14 @@ class _MessagesTabState extends State<_MessagesTab> {
     EventService.groupChatCreated.addListener(_onGroupsChanged);
     // Re-sort list whenever the user sends a message in any group chat
     GroupChatScreen.messageSent.addListener(_onMessageSentFromChat);
+    // Defer data loading until after first frame to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadGroups();
+        _loadMutedAndPinned();
+        _loadDemoSummaries();
+      }
+    });
   }
 
   @override
@@ -384,14 +389,14 @@ class _MessagesTabState extends State<_MessagesTab> {
     final mutedStored = await BrowserStorage.getString(_mutedKey);
     if (mutedStored != null && mutedStored.isNotEmpty) {
       final List<dynamic> decoded = json.decode(mutedStored);
-      setState(() {
+      if (mounted) setState(() {
         _mutedGroupIds.addAll(decoded.cast<String>());
       });
     }
     final pinnedStored = await BrowserStorage.getString(_pinnedKey);
     if (pinnedStored != null && pinnedStored.isNotEmpty) {
       final List<dynamic> decoded = json.decode(pinnedStored);
-      setState(() {
+      if (mounted) setState(() {
         _pinnedGroupIds.addAll(decoded.cast<String>());
       });
     }

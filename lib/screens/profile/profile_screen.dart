@@ -86,12 +86,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProfileData();
-    _loadSettings();
     _blockService.initialize();
     _feedbackService.initialize();
     _subscriptionService.initialize();
     _subscriptionService.addListener(_onSubChange);
+    // Defer data loading until after first frame to avoid setState-during-build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadProfileData();
+        _loadSettings();
+      }
+    });
   }
 
   void _onSubChange() {
