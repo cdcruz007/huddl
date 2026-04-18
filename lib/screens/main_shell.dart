@@ -24,18 +24,20 @@ class MainShell extends StatefulWidget {
 class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),    // 0 – Home
-    GroupsScreen(),  // 1 – Connect
-    EventsScreen(),  // 2 – Discover
-    MarketplaceScreen(), // 3 – Market (Buy, Sell, Offers, Saved)
-    ProfileScreen(), // 4 – Profile
-  ];
+  // Track which tabs have been activated at least once.
+  // Only activated tabs are built — this prevents ALL screens initialising
+  // simultaneously on first launch, which was causing setState-during-build
+  // because every screen's initState async work raced with the build phase.
+  final Set<int> _activatedTabs = {0}; // Home is always pre-activated
 
   @override
   void initState() {
     super.initState();
-    _checkTutorial();
+    // Defer tutorial check until after the first frame so it never
+    // calls setState while MainShell itself is being built.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _checkTutorial();
+    });
   }
 
   Future<void> _checkTutorial() async {
@@ -55,21 +57,43 @@ class MainShellState extends State<MainShell> {
     TutorialOverlay.show(
       context,
       onTabSwitch: (index) {
-        if (index >= 0 && index < _screens.length) {
-          setState(() => _currentIndex = index);
+        if (index >= 0 && index < 5) {
+          _switchTab(index);
         }
       },
       onComplete: () {
-        setState(() => _currentIndex = 0);
+        _switchTab(0);
       },
     );
   }
 
-  /// Switch to a specific tab by index
+  /// Switch to a specific tab by index.
   /// 0=Home, 1=Connect, 2=Discover, 3=Market, 4=Profile
-  void switchTab(int index) {
-    if (index >= 0 && index < _screens.length) {
-      setState(() => _currentIndex = index);
+  void switchTab(int index) => _switchTab(index);
+
+  void _switchTab(int index) {
+    if (index < 0 || index >= 5) return;
+    if (!mounted) return;
+    setState(() {
+      _activatedTabs.add(index);
+      _currentIndex = index;
+    });
+  }
+
+  Widget _buildScreen(int index) {
+    // Only build a screen once it has been activated.
+    // Before activation, show an empty box — zero build cost,
+    // zero initState work, zero listener registrations.
+    if (!_activatedTabs.contains(index)) {
+      return const SizedBox.shrink();
+    }
+    switch (index) {
+      case 0: return const HomeScreen();
+      case 1: return const GroupsScreen();
+      case 2: return const EventsScreen();
+      case 3: return const MarketplaceScreen();
+      case 4: return const ProfileScreen();
+      default: return const SizedBox.shrink();
     }
   }
 
@@ -77,12 +101,14 @@ class MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: Stack(
+        children: List.generate(5, (index) {
+          return Offstage(
+            offstage: _currentIndex != index,
+            child: _buildScreen(index),
+          );
+        }),
       ),
-      // FAB is managed per-tab inside EventsScreen (Groups→create group,
-      // Meetups→create meetup, Events→none). No shell-level FAB needed.
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -116,35 +142,35 @@ class MainShellState extends State<MainShell> {
                     activeIcon: Icons.home,
                     label: 'Home',
                     isActive: _currentIndex == 0,
-                    onTap: () => setState(() => _currentIndex = 0),
+                    onTap: () => _switchTab(0),
                   ),
                   _NavItem(
                     icon: Icons.people_outline,
                     activeIcon: Icons.people,
                     label: 'Connect',
                     isActive: _currentIndex == 1,
-                    onTap: () => setState(() => _currentIndex = 1),
+                    onTap: () => _switchTab(1),
                   ),
                   _NavItem(
                     icon: Icons.explore_outlined,
                     activeIcon: Icons.explore,
                     label: 'Discover',
                     isActive: _currentIndex == 2,
-                    onTap: () => setState(() => _currentIndex = 2),
+                    onTap: () => _switchTab(2),
                   ),
                   _NavItem(
                     icon: Icons.storefront_outlined,
                     activeIcon: Icons.storefront,
                     label: 'Market',
                     isActive: _currentIndex == 3,
-                    onTap: () => setState(() => _currentIndex = 3),
+                    onTap: () => _switchTab(3),
                   ),
                   _NavItem(
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Profile',
                     isActive: _currentIndex == 4,
-                    onTap: () => setState(() => _currentIndex = 4),
+                    onTap: () => _switchTab(4),
                   ),
                 ],
               ),
