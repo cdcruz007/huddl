@@ -47,16 +47,28 @@
 	<true/>
 
 	<!-- ── Firebase URL schemes ──────────────────────────────────────────────
-	     Huddl Connect uses Firebase Phone Authentication (SMS OTP) only.
-	     Only the bundle ID scheme is registered — required by Firebase
-	     phone auth for the reCAPTCHA web-based fallback flow on iOS.
-	     NOTE: The GOOGLE_APP_ID scheme (1-879152141283-ios-...) has been
-	     removed because Apple requires URL schemes to begin with a letter.
-	     The Firebase SDK does not require this scheme for phone auth.
+	     TWO schemes are required by Firebase phone auth on iOS:
+	     1. GOOGLE_APP_ID scheme: 'app-1-879152141283-ios-bdac2f6012c53a8d9186d6'
+	        Required by Firebase SDK for phone auth reCAPTCHA fallback callback.
+	        Firebase explicitly errors if this is missing:
+	        "Please register custom URL scheme 'app-1-...' in Info.plist"
+	     2. Bundle ID scheme: 'com.huddlconnect.huddlConnect'
+	        Required for Firebase dynamic links and general Firebase callbacks.
 	────────────────────────────────────────────────────────────────────── -->
 	<key>CFBundleURLTypes</key>
 	<array>
-		<!-- Bundle ID scheme — Firebase phone auth reCAPTCHA fallback -->
+		<!-- REQUIRED: GOOGLE_APP_ID scheme for Firebase phone auth reCAPTCHA -->
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google-app-id</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>app-1-879152141283-ios-bdac2f6012c53a8d9186d6</string>
+			</array>
+		</dict>
+		<!-- Bundle ID scheme — Firebase general callbacks -->
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
