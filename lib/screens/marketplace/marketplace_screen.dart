@@ -542,9 +542,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
-    _service.addListener(_onServiceChange);
+    // Defer service listener registration to avoid setState-during-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _service.addListener(_onServiceChange);
+    });
     _searchFocus.addListener(() {
-      setState(() => _showSuggestions = _searchFocus.hasFocus);
+      if (mounted) setState(() => _showSuggestions = _searchFocus.hasFocus);
     });
   }
 

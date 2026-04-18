@@ -233,20 +233,21 @@ class _MessagesTabState extends State<_MessagesTab> {
   void initState() {
     super.initState();
     _aiService.initialize();
-    _dmService.addListener(_onDMUpdate);
-    _invitationService.addListener(_onGroupsChanged);
-    widget.groupsChangedNotifier.addListener(_onGroupsChanged);
-    // Listen for event "Count Me In" group chat creation
-    EventService.groupChatCreated.addListener(_onGroupsChanged);
-    // Re-sort list whenever the user sends a message in any group chat
-    GroupChatScreen.messageSent.addListener(_onMessageSentFromChat);
-    // Defer data loading until after first frame to avoid setState-during-build
+    // Defer ALL listener registration AND data loading to after the first
+    // frame. Any ChangeNotifier that fires notifyListeners() before or during
+    // the first build will otherwise trigger setState-during-build on MainShell.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _loadGroups();
-        _loadMutedAndPinned();
-        _loadDemoSummaries();
-      }
+      if (!mounted) return;
+      _dmService.addListener(_onDMUpdate);
+      _invitationService.addListener(_onGroupsChanged);
+      widget.groupsChangedNotifier.addListener(_onGroupsChanged);
+      // Listen for event "Count Me In" group chat creation
+      EventService.groupChatCreated.addListener(_onGroupsChanged);
+      // Re-sort list whenever the user sends a message in any group chat
+      GroupChatScreen.messageSent.addListener(_onMessageSentFromChat);
+      _loadGroups();
+      _loadMutedAndPinned();
+      _loadDemoSummaries();
     });
   }
 
@@ -3035,19 +3036,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
-    _discoverAi.initialize().then((_) {
-      if (mounted) {
-        setState(() {
-          _aiSuggestions = _discoverAi.getPredictiveSuggestions(
-            userBorough: _userBorough,
-            stagesOfLife: _userStagesOfLife,
-            parentType: _userParentType,
-          );
-        });
-      }
+    // Defer all work and listener registration to after first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.groupsChangedNotifier.addListener(_onGroupsChanged);
+      _loadUserProfile();
+      _discoverAi.initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+              userBorough: _userBorough,
+              stagesOfLife: _userStagesOfLife,
+              parentType: _userParentType,
+            );
+          });
+        }
+      });
     });
-    widget.groupsChangedNotifier.addListener(_onGroupsChanged);
   }
 
   @override

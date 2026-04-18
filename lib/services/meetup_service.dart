@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
 
@@ -511,10 +510,12 @@ class MeetupService extends ChangeNotifier {
           }
         }
         // Guard notifyListeners so it never fires during a build frame.
-        // This method is called from the constructor (_internal), which may
-        // complete while the widget tree is building on first launch.
-        SchedulerBinding.instance.addPostFrameCallback((_) {
-          notifyListeners();
+        // This method is called from the constructor (_internal), which runs
+        // during static singleton initialization. addPostFrameCallback can fire
+        // DURING the first build frame. Future.delayed(Duration.zero) is
+        // safer: it runs on the event queue after the build cycle completes.
+        Future.delayed(Duration.zero, () {
+          if (hasListeners) notifyListeners();
         });
       }
     } catch (_) {}

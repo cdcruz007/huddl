@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import '../models/subscription.dart';
 import 'browser_storage.dart';
 
@@ -84,10 +83,15 @@ class SubscriptionService extends ChangeNotifier {
     }
 
     _initialized = true;
-    // Use addPostFrameCallback so this notifyListeners() never fires
-    // during a widget build phase (which causes setState-during-build crash).
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      notifyListeners();
+    // CRITICAL: Use Future.delayed(Duration.zero) instead of addPostFrameCallback.
+    // When initialize() is called from main() before runApp(), any
+    // addPostFrameCallback registered at that point fires DURING the very first
+    // build frame (because that IS the next frame), causing the same
+    // setState-during-build crash we're trying to avoid.
+    // Future.delayed(Duration.zero) schedules on the microtask/event queue,
+    // guaranteed to run AFTER the current build cycle completes.
+    Future.delayed(Duration.zero, () {
+      if (hasListeners) notifyListeners();
     });
   }
 
