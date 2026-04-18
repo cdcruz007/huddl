@@ -438,76 +438,11 @@ class InvitationService extends ChangeNotifier {
     }
   }
 
-  /// Generate a list of simulated borough members for the member picker.
-  ///
-  /// HYPERLOCAL: In production this would query Firestore filtered by
-  /// the user's borough. Only members in the same borough are shown.
-  /// The [borough] parameter is provided for labelling — the member set
-  /// is the same demo data regardless (since all demo users are in the
-  /// same borough).
+  /// Returns an empty list — all real borough member lookups are now
+  /// performed via HuddlUserService.getBoroughMembers() which queries
+  /// Firestore. This method is kept for API compatibility only.
   static List<BoroughMember> getBoroughMembers(String? borough) {
-    return [
-      BoroughMember(
-        id: 'mem_emma', name: 'Emma Thompson',
-        parentType: 'mum',
-        stagesOfLife: ['expecting'],
-      ),
-      BoroughMember(
-        id: 'mem_sophie', name: 'Sophie Williams',
-        parentType: 'mum',
-        stagesOfLife: ['parent'],
-      ),
-      BoroughMember(
-        id: 'mem_james', name: 'James Carter',
-        parentType: 'dad',
-        stagesOfLife: ['parent'],
-      ),
-      BoroughMember(
-        id: 'mem_olivia', name: 'Olivia Brown',
-        parentType: 'mum',
-        stagesOfLife: ['aspiring'],
-      ),
-      BoroughMember(
-        id: 'mem_luke', name: 'Luke Anderson',
-        parentType: 'dad',
-        stagesOfLife: ['expecting'],
-      ),
-      BoroughMember(
-        id: 'mem_anna', name: 'Anna Mitchell',
-        parentType: 'mum',
-        stagesOfLife: ['parent', 'expecting'],
-      ),
-      BoroughMember(
-        id: 'mem_kate', name: 'Kate Rogers',
-        parentType: 'mum',
-        stagesOfLife: ['parent'],
-      ),
-      BoroughMember(
-        id: 'mem_david', name: 'David Harris',
-        parentType: 'dad',
-        stagesOfLife: ['parent'],
-      ),
-      BoroughMember(
-        id: 'mem_lucy', name: 'Lucy Taylor',
-        parentType: 'mum',
-        stagesOfLife: ['parent'],
-      ),
-      BoroughMember(
-        id: 'mem_mark', name: 'Mark Robinson',
-        parentType: 'dad',
-        stagesOfLife: ['aspiring'],
-      ),
-      BoroughMember(
-        id: 'mem_sarah', name: 'Sarah Clarke',
-        parentType: 'mum',
-        stagesOfLife: ['expecting'],
-      ),
-      BoroughMember(
-        id: 'mem_tom', name: 'Tom Evans',
-        parentType: 'dad',
-        stagesOfLife: ['parent'],
-      ),
-    ];
+    return [];
   }
 
   void _log(String message) {

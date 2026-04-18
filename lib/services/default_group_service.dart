@@ -228,49 +228,19 @@ class DefaultGroupService {
     }
   }
 
-  /// Generate a realistic welcome / seed message for a newly created default group
-  /// so the Messages tab shows engaging content from the moment the user sees it.
+  /// Generate a welcome / seed message for a newly created default group.
+  /// Uses a neutral system message — no fake member names.
   ///
   /// Returns a Map with keys: 'message', 'sender', 'minutesAgo', 'unread'.
   static int _welcomeCounter = 0;
   Map<String, dynamic> _generateWelcomeMessage(
       String category, String borough, String? birthYear) {
-    // Rotate through a pool of realistic community messages
+    // Single neutral system message — real member activity will follow.
     final messages = <Map<String, dynamic>>[
       {
-        'message': 'Emma: Welcome everyone! So excited to connect with local parents here.',
-        'sender': 'Emma',
-        'minutesAgo': 3,
-        'unread': 2,
-      },
-      {
-        'message': 'Sophie: Has anyone tried the new playground near the river?',
-        'sender': 'Sophie',
-        'minutesAgo': 15,
-        'unread': 1,
-      },
-      {
-        'message': 'Lucy: Just joined! Looking forward to meeting other parents nearby.',
-        'sender': 'Lucy',
-        'minutesAgo': 42,
-        'unread': 3,
-      },
-      {
-        'message': 'Kate: We should organise a group meetup this weekend!',
-        'sender': 'Kate',
-        'minutesAgo': 68,
-        'unread': 1,
-      },
-      {
-        'message': 'James: Anyone recommend a good baby-friendly cafe in $borough?',
-        'sender': 'James',
-        'minutesAgo': 120,
-        'unread': 0,
-      },
-      {
-        'message': 'Anna: Great to see so many parents joining from $borough!',
-        'sender': 'Anna',
-        'minutesAgo': 180,
+        'message': 'Welcome to the group! Say hello to connect with other $category in $borough.',
+        'sender': 'Huddl',
+        'minutesAgo': 0,
         'unread': 0,
       },
     ];

@@ -196,17 +196,24 @@ class PostcodeService {
     'WC2N': 'Westminster',
     'WC2R': 'Westminster',
     
-    // Cambridge
+    // Cambridge — all CB postcodes map to "Cambridge" so all local users
+    // share one borough and can see each other in the member picker.
     'CB1': 'Cambridge',
     'CB2': 'Cambridge',
     'CB3': 'Cambridge',
     'CB4': 'Cambridge',
     'CB5': 'Cambridge',
-    'CB21': 'South Cambridgeshire',
-    'CB22': 'South Cambridgeshire',
-    'CB23': 'South Cambridgeshire',
-    'CB24': 'South Cambridgeshire',
-    'CB25': 'East Cambridgeshire',
+    'CB6': 'Cambridge',
+    'CB7': 'Cambridge',
+    'CB8': 'Cambridge',
+    'CB9': 'Cambridge',
+    'CB10': 'Cambridge',
+    'CB11': 'Cambridge',
+    'CB21': 'Cambridge',
+    'CB22': 'Cambridge',
+    'CB23': 'Cambridge',
+    'CB24': 'Cambridge',
+    'CB25': 'Cambridge',
     
     // Manchester
     'M1': 'Manchester',
@@ -359,23 +366,14 @@ class PostcodeService {
   }
 
   /// Returns true if the postcode is in the Cambridge launch area.
-  /// Cambridge postcodes: CB1–CB5 (city), CB21–CB25 (surrounding villages).
-  /// These are the only areas supported at launch.
+  /// All CB postcodes are included so all Cambridgeshire users share
+  /// the same borough ("Cambridge") and can see each other.
   bool isCambridgePostcode(String? postcode) {
     if (postcode == null || postcode.isEmpty) return false;
     final outward = _extractOutwardCode(
         postcode.replaceAll(' ', '').toUpperCase()) ?? '';
-    // CB1-CB5 = Cambridge city; CB21-CB25 = South/East Cambridgeshire villages
-    return outward == 'CB1' ||
-        outward == 'CB2' ||
-        outward == 'CB3' ||
-        outward == 'CB4' ||
-        outward == 'CB5' ||
-        outward == 'CB21' ||
-        outward == 'CB22' ||
-        outward == 'CB23' ||
-        outward == 'CB24' ||
-        outward == 'CB25';
+    // Any CB postcode is accepted for the Cambridge launch area
+    return outward.startsWith('CB');
   }
 
   void _log(String message) {

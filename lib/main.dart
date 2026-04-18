@@ -9,16 +9,19 @@ import 'theme/huddl_theme.dart';
 import 'config/router.dart';
 import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
+import 'services/huddl_user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── One-time data reset ────────────────────────────────────────────────
+  // ── One-time data reset (bump version to purge legacy demo data) ──────────
+  // v3: removes old demo meetups, DM conversations, group memberships and
+  //     marketplace items that were cached from the simulated data era.
   try {
-    final resetDone = await BrowserStorage.getString('data_reset_v2');
+    final resetDone = await BrowserStorage.getString('data_reset_v3');
     if (resetDone == null) {
       await BrowserStorage.clear();
-      await BrowserStorage.setString('data_reset_v2', 'done');
+      await BrowserStorage.setString('data_reset_v3', 'done');
     }
   } catch (_) {}
 
@@ -129,6 +132,17 @@ void main() async {
   try {
     await SubscriptionService().initialize()
         .timeout(const Duration(seconds: 5));
+  } catch (_) {}
+
+  // ── Sync current user's Firestore profile on every cold start ─────────
+  // This ensures the borough field is always up-to-date for the borough
+  // member picker, including users who were already logged in before this
+  // feature was added.
+  try {
+    if (FirebaseAuth.instance.currentUser != null) {
+      await HuddlUserService().syncCurrentUserProfile()
+          .timeout(const Duration(seconds: 5));
+    }
   } catch (_) {}
 
   runApp(const HuddlApp());

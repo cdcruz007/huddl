@@ -395,16 +395,20 @@ class _MessagesTabState extends State<_MessagesTab> {
     final mutedStored = await BrowserStorage.getString(_mutedKey);
     if (mutedStored != null && mutedStored.isNotEmpty) {
       final List<dynamic> decoded = json.decode(mutedStored);
-      if (mounted) setState(() {
-        _mutedGroupIds.addAll(decoded.cast<String>());
-      });
+      if (mounted) {
+        setState(() {
+          _mutedGroupIds.addAll(decoded.cast<String>());
+        });
+      }
     }
     final pinnedStored = await BrowserStorage.getString(_pinnedKey);
     if (pinnedStored != null && pinnedStored.isNotEmpty) {
       final List<dynamic> decoded = json.decode(pinnedStored);
-      if (mounted) setState(() {
-        _pinnedGroupIds.addAll(decoded.cast<String>());
-      });
+      if (mounted) {
+        setState(() {
+          _pinnedGroupIds.addAll(decoded.cast<String>());
+        });
+      }
     }
   }
 
@@ -480,14 +484,19 @@ class _MessagesTabState extends State<_MessagesTab> {
         );
       }
 
+      // Use the real Firebase UID (fallback to onboarding name hash so
+      // the key is still unique per device even before login completes).
+      final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+      final userId = firebaseUid ?? 'user_${_onboardingService.name?.hashCode ?? 0}';
+
       // ── 1. Try to get previously assigned default groups ──────────
       List<Group> defaultGroups =
-          await _groupService.getUserGroups('current_user');
+          await _groupService.getUserGroups(userId);
 
       // ── 2. If none, try to assign now based on onboarding data ──
       if (defaultGroups.isEmpty) {
         defaultGroups =
-            await _groupService.assignUserToDefaultGroups('current_user');
+            await _groupService.assignUserToDefaultGroups(userId);
       }
 
       // ── 3. Last resort: re-join existing defaults ─────────────────
@@ -495,9 +504,9 @@ class _MessagesTabState extends State<_MessagesTab> {
         final allDefaults = _groupService.getAllDefaultGroups();
         if (allDefaults.isNotEmpty) {
           for (final g in allDefaults) {
-            _groupService.joinGroup('current_user', g.id);
+            _groupService.joinGroup(userId, g.id);
           }
-          defaultGroups = await _groupService.getUserGroups('current_user');
+          defaultGroups = await _groupService.getUserGroups(userId);
         }
       }
 

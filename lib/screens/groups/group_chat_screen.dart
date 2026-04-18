@@ -18,6 +18,9 @@ import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/huddl_user_service.dart';
+import '../../services/postcode_service.dart';
 import 'poll_detail_screen.dart';
 import 'forward_message_sheet.dart';
 import 'thread_reply_screen.dart';
@@ -2062,17 +2065,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   /// Show share sheet for public/discover groups.
-  /// Validates that the recipient's parent profile fits the group's target audience.
+  /// Loads real borough members from Firestore.
   void _showShareGroupSheet() {
-    // Demo members in the user's borough that they could share with
-    final demoMembers = [
-      {'id': 'mem_emma', 'name': 'Emma Wilson', 'parentType': 'mum', 'stages': ['parent']},
-      {'id': 'mem_sophie', 'name': 'Sophie Taylor', 'parentType': 'mum', 'stages': ['expecting']},
-      {'id': 'mem_james', 'name': 'James Brown', 'parentType': 'dad', 'stages': ['parent']},
-      {'id': 'mem_olivia', 'name': 'Olivia Davis', 'parentType': 'mum', 'stages': ['aspiring']},
-      {'id': 'mem_luke', 'name': 'Luke Martin', 'parentType': 'dad', 'stages': ['expecting']},
-      {'id': 'mem_anna', 'name': 'Anna Clark', 'parentType': 'mum', 'stages': ['parent']},
-    ];
+    final onboarding = OnboardingDataService();
+    final borough = PostcodeService().getBoroughFromPostcode(onboarding.postcode) ?? '';
+    final userService = HuddlUserService();
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
 
     showModalBottomSheet(
       context: context,
@@ -2086,105 +2084,122 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.65,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 10),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: context.hc.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    const Icon(Icons.share, color: HuddlColors.primary, size: 22),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Share with members',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
-                      ),
+          child: FutureBuilder<List<HuddlUser>>(
+            future: userService.getBoroughMembers(borough),
+            builder: (context, snapshot) {
+              final members = (snapshot.data ?? [])
+                  .where((u) => u.uid != currentUid)
+                  .toList();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 10),
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: context.hc.divider,
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Share this group with members in your borough',
-                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Divider(height: 1, color: context.hc.divider),
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: demoMembers.length,
-                  itemBuilder: (_, i) {
-                    final member = demoMembers[i];
-                    final memberName = member['name'] as String;
-                    final memberId = member['id'] as String;
-                    final memberParentType = member['parentType'] as String;
-                    final memberStages = member['stages'] as List<String>;
-                    final photoUrl = getProfilePhotoForMember(memberId);
-
-                    return ListTile(
-                      leading: photoUrl != null
-                          ? CircleAvatar(
-                              radius: 22,
-                              backgroundImage: NetworkImage(photoUrl),
-                            )
-                          : CircleAvatar(
-                              radius: 22,
-                              backgroundColor: HuddlColors.peachLight,
-                              child: Text(
-                                memberName[0],
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary,
-                                ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.share, color: HuddlColors.primary, size: 22),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Share with members',
+                            style: GoogleFonts.poppins(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'Share this group with members in your borough',
+                      style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: context.hc.divider),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: CircularProgressIndicator(color: HuddlColors.primary),
+                    )
+                  else if (members.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(
+                        'No other members in $borough yet',
+                        style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: members.length,
+                        itemBuilder: (_, i) {
+                          final member = members[i];
+                          return ListTile(
+                            leading: member.photoUrl.isNotEmpty
+                                ? CircleAvatar(
+                                    radius: 22,
+                                    backgroundImage: NetworkImage(member.photoUrl),
+                                  )
+                                : CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: HuddlColors.peachLight,
+                                    child: Text(
+                                      member.name.isNotEmpty ? member.name[0] : '?',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                            title: Text(
+                              member.name,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: context.hc.textPrimary,
                               ),
                             ),
-                      title: Text(
-                        memberName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textPrimary,
-                        ),
+                            subtitle: Text(
+                              member.parentType == 'mum' ? 'Mum' : 'Dad',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: context.hc.textTertiary,
+                              ),
+                            ),
+                            trailing: const Icon(Icons.send, size: 20, color: HuddlColors.primary),
+                            onTap: () {
+                              Navigator.pop(c);
+                              _validateAndShareWith(
+                                memberName: member.name,
+                                memberParentType: member.parentType,
+                                memberStages: member.stagesOfLife,
+                              );
+                            },
+                          );
+                        },
                       ),
-                      subtitle: Text(
-                        memberParentType == 'mum' ? 'Mum' : 'Dad',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
-                      ),
-                      trailing: const Icon(Icons.send, size: 20, color: HuddlColors.primary),
-                      onTap: () {
-                        Navigator.pop(c);
-                        _validateAndShareWith(
-                          memberName: memberName,
-                          memberParentType: memberParentType,
-                          memberStages: memberStages,
-                        );
-                      },
-                    );
-                  },
-                ),
-              ),
-            ],
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),
