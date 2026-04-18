@@ -84,7 +84,13 @@ class _TutorialOverlayState extends State<TutorialOverlay>
     )..repeat(reverse: true);
 
     _cardAnim.forward();
-    widget.onTabSwitch(_step.tabIndex);
+    // Defer the first tab-switch until after the overlay's first build.
+    // Calling onTabSwitch() directly in initState() triggers setState() on
+    // MainShell while the TutorialOverlay widget is being inflated, causing
+    // "setState() called during build" crash (main_shell.dart:77).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.onTabSwitch(_step.tabIndex);
+    });
   }
 
   @override
