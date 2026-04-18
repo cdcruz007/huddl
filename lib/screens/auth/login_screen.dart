@@ -39,15 +39,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return raw;
   }
 
-  /// Builds the full E.164-with-spaces phone number for Firebase.
-  /// Firebase test numbers are stored WITH spaces: "+44 7575 888452".
-  /// The number sent to Firebase MUST match exactly.
-  /// UK (+44) 10-digit local number → "+44 XXXX XXXXXX"
+  /// Builds the strict E.164 phone number sent to Firebase verifyPhoneNumber.
+  /// Firebase requires NO spaces in the number: "+447575888452" not "+44 7575 888452".
+  /// Firebase Console test numbers must be stored in this same format.
   String _buildFullPhone(String digits) {
-    if (_countryCode == '+44' && digits.length == 10) {
-      return '$_countryCode ${digits.substring(0, 4)} ${digits.substring(4)}';
-    }
-    return '$_countryCode $digits';
+    // Strict E.164 — no spaces anywhere
+    return '$_countryCode$digits';
   }
 
   String? _validatePhone(String raw) {

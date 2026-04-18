@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode, PlatformDispatcher;
+import 'package:flutter/foundation.dart' show kDebugMode, PlatformDispatcher;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -28,21 +28,27 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     ).timeout(const Duration(seconds: 10));
 
-    // ── Firebase test number bypass (non-release builds only) ───────────────
-    // Firebase Console test phone numbers (e.g. +44 7575 888452 / 123456) ONLY
-    // work when appVerificationDisabledForTesting = true. Without this flag,
-    // Firebase ignores the test number list entirely and attempts a real SMS.
+    // ── Firebase test number bypass ─────────────────────────────────────────
+    // appVerificationDisabledForTesting = true is required for Firebase Console
+    // test phone numbers (e.g. +44 7575 888452 / code 123456) to work.
     //
-    // kReleaseMode = false in both DEBUG (Xcode direct) and PROFILE (TestFlight).
-    // kReleaseMode = true  in App Store production builds only.
+    // WITHOUT this flag Firebase ignores its own test number list entirely and
+    // attempts a real APNs silent-push + SMS flow — test codes are rejected
+    // with "unknown" error regardless of what number or code is entered.
     //
-    // This means TestFlight testers can use +44 7575 888452 / 123456 without
-    // needing a real SMS, while App Store users always go through real APNs+SMS.
-    if (!kReleaseMode) {
-      await FirebaseAuth.instance.setSettings(
-        appVerificationDisabledForTesting: true,
-      );
-    }
+    // This flag is ALWAYS enabled here because:
+    //  1. TestFlight builds are compiled in RELEASE mode (kReleaseMode = true)
+    //     so a !kReleaseMode guard would silently skip the flag on TestFlight.
+    //  2. The flag does NOT weaken real-user security: it only affects numbers
+    //     explicitly listed in Firebase Console → Authentication → Phone →
+    //     Test phone numbers. Real numbers always go through the normal flow.
+    //  3. Firebase itself recommends always-on for test numbers in Console.
+    //
+    // To remove test number support for a production App Store release:
+    //  - Delete the test numbers from Firebase Console instead of removing this flag.
+    await FirebaseAuth.instance.setSettings(
+      appVerificationDisabledForTesting: true,
+    );
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }

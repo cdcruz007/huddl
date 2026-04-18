@@ -64,32 +64,35 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Build the phone number string sent to Firebase signInWithPhoneNumber.
+  /// Builds the E.164 phone number sent to Firebase verifyPhoneNumber.
   ///
-  /// Firebase Console stores test numbers exactly as typed — with spaces:
-  ///   "+44 7575 888452"  and  "+44 7575 677086"
-  /// The number sent to Firebase MUST match this format exactly for test
-  /// number matching to work.
-  ///
-  /// UK (+44) 10-digit numbers → "+44 XXXX XXXXXX"
-  ///   stored "7575888452"  →  "+44 7575 888452"
-  String _buildFullPhoneNumber() {
+  /// Firebase verifyPhoneNumber requires STRICT E.164: "+447575888452" (no spaces).
+  /// Firebase Console test numbers must also be stored in this exact format.
+  /// Spaces anywhere in the number cause "unknown" auth errors even when
+  /// appVerificationDisabledForTesting = true.
+  String _buildE164PhoneNumber() {
     final rawDigits = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
     final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return cc;
-    // Strip leading zero if present (e.g. "07575888452" → "7575888452")
+    // Strip leading zero (e.g. "07575888452" → "7575888452")
     final local = digits.startsWith('0') ? digits.substring(1) : digits;
-    // UK: format as "+44 XXXX XXXXXX" — exactly how Firebase Console stores it
+    // Strict E.164 — no spaces, no separators
+    return '$cc$local';
+  }
+
+  /// Display-only: formatted phone number for the UI subtitle (with spaces).
+  String _displayPhone() {
+    final rawDigits = _onboardingData.phoneNumber ?? '';
+    final cc = _onboardingData.countryCode ?? '+44';
+    final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return cc;
+    final local = digits.startsWith('0') ? digits.substring(1) : digits;
     if (cc == '+44' && local.length == 10) {
       return '$cc ${local.substring(0, 4)} ${local.substring(4)}';
     }
-    // Other countries: single space between code and digits
     return '$cc $local';
   }
-
-  /// Display string for the UI subtitle — same spaced format as Firebase.
-  String _displayPhone() => _buildFullPhoneNumber();
 
   /// Initiate Firebase phone verification (sends SMS).
   Future<void> _initiatePhoneVerification() async {
@@ -111,7 +114,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return;
     }
 
-    final fullPhone = _buildFullPhoneNumber();
+    final fullPhone = _buildE164PhoneNumber();
     if (kDebugMode) debugPrint('[VerificationScreen] Initiating verification for: $fullPhone');
 
     try {
