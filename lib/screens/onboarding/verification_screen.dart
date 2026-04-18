@@ -64,35 +64,28 @@ class _VerificationScreenState extends State<VerificationScreen> {
     super.dispose();
   }
 
-  /// Builds the E.164 phone number sent to Firebase verifyPhoneNumber.
+  /// Builds the phone number sent to Firebase verifyPhoneNumber.
   ///
-  /// Firebase verifyPhoneNumber requires STRICT E.164: "+447575888452" (no spaces).
-  /// Firebase Console test numbers must also be stored in this exact format.
-  /// Spaces anywhere in the number cause "unknown" auth errors even when
-  /// appVerificationDisabledForTesting = true.
-  String _buildE164PhoneNumber() {
+  /// The format MUST exactly match what is stored in Firebase Console →
+  /// Authentication → Phone → Test phone numbers.
+  /// Firebase Console stores: "+44 7575 888452" (with spaces).
+  /// So we must send: "+44 7575 888452" — spaces included.
+  String _buildFullPhoneNumber() {
     final rawDigits = _onboardingData.phoneNumber ?? '';
     final cc = _onboardingData.countryCode ?? '+44';
     final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
     if (digits.isEmpty) return cc;
-    // Strip leading zero (e.g. "07575888452" → "7575888452")
+    // Strip leading zero if present (e.g. "07575888452" → "7575888452")
     final local = digits.startsWith('0') ? digits.substring(1) : digits;
-    // Strict E.164 — no spaces, no separators
-    return '$cc$local';
-  }
-
-  /// Display-only: formatted phone number for the UI subtitle (with spaces).
-  String _displayPhone() {
-    final rawDigits = _onboardingData.phoneNumber ?? '';
-    final cc = _onboardingData.countryCode ?? '+44';
-    final digits = rawDigits.replaceAll(RegExp(r'\D'), '');
-    if (digits.isEmpty) return cc;
-    final local = digits.startsWith('0') ? digits.substring(1) : digits;
+    // UK (+44): format as "+44 XXXX XXXXXX" to match Firebase Console exactly
     if (cc == '+44' && local.length == 10) {
       return '$cc ${local.substring(0, 4)} ${local.substring(4)}';
     }
     return '$cc $local';
   }
+
+  /// Display string for UI — same as the number sent to Firebase.
+  String _displayPhone() => _buildFullPhoneNumber();
 
   /// Initiate Firebase phone verification (sends SMS).
   Future<void> _initiatePhoneVerification() async {
@@ -114,7 +107,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
       return;
     }
 
-    final fullPhone = _buildE164PhoneNumber();
+    final fullPhone = _buildFullPhoneNumber();
     if (kDebugMode) debugPrint('[VerificationScreen] Initiating verification for: $fullPhone');
 
     try {
