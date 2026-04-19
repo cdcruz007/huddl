@@ -22,6 +22,7 @@ import 'create_poll_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/postcode_service.dart';
+import '../../services/user_privacy_prefs_service.dart';
 import 'poll_detail_screen.dart';
 import 'forward_message_sheet.dart';
 import 'thread_reply_screen.dart';
@@ -4601,7 +4602,14 @@ class _GroupMessageStatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (status) {
+    // If the current user has read receipts disabled, cap display at "delivered".
+    final effectiveStatus =
+        (!UserPrivacyPrefsService().readReceipts &&
+                status == MessageStatus.read)
+            ? MessageStatus.delivered
+            : status;
+
+    switch (effectiveStatus) {
       case MessageStatus.sending:
         return Icon(Icons.access_time, size: 14, color: context.hc.textTertiary);
       case MessageStatus.sent:

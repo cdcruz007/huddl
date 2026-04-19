@@ -10,6 +10,7 @@ import '../../models/direct_message.dart';
 import '../../services/dm_service.dart';
 import '../../services/realtime_dm_service.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/user_privacy_prefs_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
@@ -2530,7 +2531,15 @@ class _MessageStatusIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (status) {
+    // If the current user has read receipts disabled, never show the blue
+    // "read" tick — cap the display at "delivered" (grey double-tick).
+    final effectiveStatus =
+        (!UserPrivacyPrefsService().readReceipts &&
+                status == MessageStatus.read)
+            ? MessageStatus.delivered
+            : status;
+
+    switch (effectiveStatus) {
       case MessageStatus.sending:
         return Semantics(
           label: 'Sending',

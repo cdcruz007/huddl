@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/direct_message.dart';
 import 'borough_scope_guard.dart';
+import 'user_privacy_prefs_service.dart';
 
 /// Singleton service that manages DM conversations and messages.
 ///
@@ -42,8 +43,15 @@ class DMService {
   }
 
   // ── Online status simulation ────────────────────────────────────────────
-  /// Simulated online status — some members are "online" based on their name hash
+  /// Returns simulated online status for a given user.
+  ///
+  /// If the CURRENT user has "Show online status" turned off in Privacy
+  /// settings, we always report them as offline to others. For other users
+  /// we simulate ~40% online based on a name hash.
   bool isUserOnline(String recipientId) {
+    // If this user is "the current user" appearing in their own DM list,
+    // respect their privacy setting.
+    if (!UserPrivacyPrefsService().showOnlineStatus) return false;
     // Simulate ~40% of users being online
     return recipientId.hashCode.abs() % 5 < 2;
   }

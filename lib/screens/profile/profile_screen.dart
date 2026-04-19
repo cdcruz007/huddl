@@ -28,6 +28,7 @@ import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/user_privacy_prefs_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -113,32 +114,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadSettings() async {
-    final nPush = await BrowserStorage.getString('pref_push_enabled');
-    final nGroup = await BrowserStorage.getString('pref_group_messages');
-    final nDM = await BrowserStorage.getString('pref_dm_messages');
-    final nEvent = await BrowserStorage.getString('pref_event_reminders');
-    final nComm = await BrowserStorage.getString('pref_community_updates');
-    final pOnline = await BrowserStorage.getString('pref_show_online');
-    final pProfile = await BrowserStorage.getString('pref_show_profile');
-    final pGroups = await BrowserStorage.getString('pref_show_groups');
-    final pRead = await BrowserStorage.getString('pref_read_receipts');
+    // Load from storage into the shared singleton, then copy to local state.
+    await UserPrivacyPrefsService().load();
+    final svc = UserPrivacyPrefsService();
     if (mounted) {
       setState(() {
-        if (nPush != null) _pushEnabled = nPush == 'true';
-        if (nGroup != null) _groupMessages = nGroup == 'true';
-        if (nDM != null) _dmMessages = nDM == 'true';
-        if (nEvent != null) _eventReminders = nEvent == 'true';
-        if (nComm != null) _communityUpdates = nComm == 'true';
-        if (pOnline != null) _showOnline = pOnline == 'true';
-        if (pProfile != null) _showProfile = pProfile == 'true';
-        if (pGroups != null) _showGroups = pGroups == 'true';
-        if (pRead != null) _readReceipts = pRead == 'true';
+        _pushEnabled      = svc.pushEnabled;
+        _groupMessages    = svc.groupMessages;
+        _dmMessages       = svc.dmMessages;
+        _eventReminders   = svc.eventReminders;
+        _communityUpdates = svc.communityUpdates;
+        _showOnline       = svc.showOnlineStatus;
+        _showProfile      = svc.profileVisibility;
+        _showGroups       = svc.showGroups;
+        _readReceipts     = svc.readReceipts;
       });
     }
   }
 
   Future<void> _saveSetting(String key, bool value) async {
-    await BrowserStorage.setString(key, value.toString());
+    // Persist to storage AND update the shared singleton so other screens
+    // can immediately read the new value without reloading.
+    await UserPrivacyPrefsService().setSetting(key, value);
   }
 
   Future<void> _loadProfileData() async {
@@ -2154,6 +2151,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // ── Master toggle ──────────────────────────────────────────────
             _toggleTile(
               Icons.notifications_active_outlined,
               'Push notifications',
@@ -2162,34 +2160,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
               (v) {
                 setLocal(() => _pushEnabled = v);
                 setState(() {});
-                _saveSetting('pref_push_enabled', v);
+                _saveSetting(UserPrivacyPrefsService.keyPushEnabled, v);
               },
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),
-            _toggleTile(Icons.group_outlined, 'Group messages',
-                'Notifications for new group messages', _groupMessages, (v) {
-              setLocal(() => _groupMessages = v);
-              setState(() {});
-              _saveSetting('pref_group_messages', v);
-            }),
-            _toggleTile(Icons.chat_outlined, 'Direct messages',
-                'Notifications for new DMs', _dmMessages, (v) {
-              setLocal(() => _dmMessages = v);
-              setState(() {});
-              _saveSetting('pref_dm_messages', v);
-            }),
-            _toggleTile(Icons.event_outlined, 'Meetup reminders',
-                'Reminders for upcoming meetups', _eventReminders, (v) {
-              setLocal(() => _eventReminders = v);
-              setState(() {});
-              _saveSetting('pref_event_reminders', v);
-            }),
-            _toggleTile(Icons.campaign_outlined, 'Community updates',
-                'Borough announcements and updates', _communityUpdates, (v) {
-              setLocal(() => _communityUpdates = v);
-              setState(() {});
-              _saveSetting('pref_community_updates', v);
-            }),
+            // ── Sub-toggles — greyed out & non-interactive when master off ──
+            Opacity(
+              opacity: _pushEnabled ? 1.0 : 0.4,
+              child: IgnorePointer(
+                ignoring: !_pushEnabled,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _toggleTile(Icons.group_outlined, 'Group messages',
+                        'Notifications for new group messages', _groupMessages,
+                        (v) {
+                      setLocal(() => _groupMessages = v);
+                      setState(() {});
+                      _saveSetting(UserPrivacyPrefsService.keyGroupMessages, v);
+                    }),
+                    _toggleTile(Icons.chat_outlined, 'Direct messages',
+                        'Notifications for new DMs', _dmMessages, (v) {
+                      setLocal(() => _dmMessages = v);
+                      setState(() {});
+                      _saveSetting(UserPrivacyPrefsService.keyDmMessages, v);
+                    }),
+                    _toggleTile(Icons.event_outlined, 'Meetup reminders',
+                        'Reminders for upcoming meetups', _eventReminders, (v) {
+                      setLocal(() => _eventReminders = v);
+                      setState(() {});
+                      _saveSetting(UserPrivacyPrefsService.keyEventReminders, v);
+                    }),
+                    _toggleTile(Icons.campaign_outlined, 'Community updates',
+                        'Borough announcements and updates', _communityUpdates,
+                        (v) {
+                      setLocal(() => _communityUpdates = v);
+                      setState(() {});
+                      _saveSetting(
+                          UserPrivacyPrefsService.keyCommunityUpdates, v);
+                    }),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -2215,27 +2228,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _showOnline, (v) {
               setLocal(() => _showOnline = v);
               setState(() {});
-              _saveSetting('pref_show_online', v);
+              _saveSetting(UserPrivacyPrefsService.keyShowOnline, v);
             }),
             _toggleTile(Icons.person_outline, 'Profile visibility',
                 'Let others view your profile', _showProfile, (v) {
               setLocal(() => _showProfile = v);
               setState(() {});
-              _saveSetting('pref_show_profile', v);
+              _saveSetting(UserPrivacyPrefsService.keyShowProfile, v);
             }),
             _toggleTile(Icons.people_outline, 'Show groups',
                 'Let others see which groups you\u2019re in', _showGroups,
                 (v) {
               setLocal(() => _showGroups = v);
               setState(() {});
-              _saveSetting('pref_show_groups', v);
+              _saveSetting(UserPrivacyPrefsService.keyShowGroups, v);
             }),
             _toggleTile(Icons.done_all, 'Read receipts',
                 'Let others see when you\u2019ve read messages', _readReceipts,
                 (v) {
               setLocal(() => _readReceipts = v);
               setState(() {});
-              _saveSetting('pref_read_receipts', v);
+              _saveSetting(UserPrivacyPrefsService.keyReadReceipts, v);
             }),
             const SizedBox(height: 12),
             ListTile(
@@ -3335,6 +3348,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               // Full BrowserStorage wipe as final safety net
                               await BrowserStorage.clear();
 
+                              // Reset in-memory privacy prefs singleton
+                              UserPrivacyPrefsService().reset();
+
                               // ── 3. Navigate to login ──
                               if (mounted) {
                                 Navigator.of(context).pushNamedAndRemoveUntil(
@@ -3690,7 +3706,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         await BrowserStorage.clear();
                         _onboarding.clear();
 
-                        // 3. Navigate directly to login, removing every route
+                        // 3. Reset in-memory privacy prefs singleton
+                        UserPrivacyPrefsService().reset();
+
+                        // 4. Navigate directly to login, removing every route
                         //    (bypasses splash which would re-detect the auth
                         //    token and bounce straight back to /home)
                         if (mounted) {

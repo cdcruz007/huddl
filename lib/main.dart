@@ -10,6 +10,7 @@ import 'config/router.dart';
 import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
+import 'services/user_privacy_prefs_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +128,12 @@ void main() async {
   } catch (e) {
     debugPrint('Crashlytics init error: $e');
   }
+
+  // ── Load user privacy & notification preferences ──────────────────────
+  try {
+    await UserPrivacyPrefsService().load()
+        .timeout(const Duration(seconds: 3));
+  } catch (_) {}
 
   // ── Pre-initialize subscription service ────────────────────────────────
   try {

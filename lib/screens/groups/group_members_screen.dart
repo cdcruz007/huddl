@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import '../../services/user_privacy_prefs_service.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
 const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
@@ -284,7 +285,12 @@ class _MemberTile extends StatelessWidget {
           size: 44,
           accentColor: member.accentColor,
           showOnlineDot: true,
-          isOnline: member.isOnline,
+          // If this is the current user's entry ("You") and they've turned
+          // off "Show online status", respect that preference.
+          isOnline: (member.name == 'You')
+              ? (member.isOnline &&
+                  UserPrivacyPrefsService().showOnlineStatus)
+              : member.isOnline,
         ),
         title: Row(
           children: [
