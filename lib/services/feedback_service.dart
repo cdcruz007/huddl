@@ -1,31 +1,47 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'browser_storage.dart';
 import 'package:http/http.dart' as http;
 
-/// Service that collects user feedback and ratings, then dispatches them
-/// to the Huddl team.  The destination address is never exposed to the UI.
+/// Service that collects user feedback and delivers it to the Huddl team.
+///
+/// Delivery chain (in order):
+///   1. Firestore  — written first so the record is never lost.
+///   2. EmailJS    — sends an email notification to welcome@huddlapp.co.uk.
+///
+/// If EmailJS fails (e.g. no network), the Firestore record is already saved
+/// and can be read from the Firebase console at any time.
 class FeedbackService extends ChangeNotifier {
   static final FeedbackService _instance = FeedbackService._internal();
   factory FeedbackService() => _instance;
   FeedbackService._internal();
 
-  // ── Private constants (never visible to the user) ──────────────────────
-  static const String _targetEmail = 'contact@cruzenltd.com';
+  // ── Destination (never shown to users) ────────────────────────────────
+  static const String _targetEmail = 'welcome@huddlapp.co.uk';
+
+  // ── EmailJS credentials ────────────────────────────────────────────────
+  // Sign up free at https://www.emailjs.com → Service → Gmail/SMTP
+  // Replace the three values below with your EmailJS account details.
+  static const String _emailJsServiceId  = 'service_huddl';
+  static const String _emailJsTemplateId = 'template_feedback';
+  static const String _emailJsPublicKey  = 'YOUR_EMAILJS_PUBLIC_KEY';
+
+  // ── Local cache key (BrowserStorage fallback) ─────────────────────────
   static const String _storageKey = 'huddl_feedback_ratings';
 
   // ── Cached rating data ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _allRatings = [];
   bool _initialized = false;
 
-  /// The rating displayed to users — always 4.8 regardless of actual data.
+  /// Always show 4.8 to users; the real average is for internal use only.
   double get displayRating => 4.8;
 
-  /// The real aggregate average (for internal reporting only).
   double get realAverageRating {
     if (_allRatings.isEmpty) return 0;
     final sum = _allRatings.fold<double>(
-        0, (prev, r) => prev + ((r['rating'] as num?)?.toDouble() ?? 0));
+        0, (p, r) => p + ((r['rating'] as num?)?.toDouble() ?? 0));
     return sum / _allRatings.length;
   }
 
@@ -36,8 +52,7 @@ class FeedbackService extends ChangeNotifier {
     final raw = await BrowserStorage.getString(_storageKey);
     if (raw != null) {
       try {
-        final decoded = json.decode(raw) as List<dynamic>;
-        _allRatings = decoded.cast<Map<String, dynamic>>();
+        _allRatings = (json.decode(raw) as List).cast<Map<String, dynamic>>();
       } catch (_) {
         _allRatings = [];
       }
@@ -45,95 +60,152 @@ class FeedbackService extends ChangeNotifier {
     _initialized = true;
   }
 
-  /// Submit feedback with an optional star rating (1–5).
-  /// Persists the rating locally and sends the data to the team.
+  /// Submit user feedback.
+  ///
+  /// Steps:
+  ///   1. Persist to BrowserStorage (instant, offline-safe).
+  ///   2. Write to Firestore `feedback` collection (permanent cloud record).
+  ///   3. Send email to [_targetEmail] via EmailJS.
+  ///
+  /// Returns `true` on success. Never throws — failures are logged and
+  /// the function returns `true` as long as local storage succeeded.
   Future<bool> submitFeedback({
     required String feedbackText,
     int starRating = 0,
     required String userName,
   }) async {
-    // 1) Persist locally
+    final now = DateTime.now();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anonymous';
+
     final entry = {
-      'rating': starRating,
-      'feedback': feedbackText,
-      'user': userName,
-      'timestamp': DateTime.now().toIso8601String(),
+      'rating'   : starRating,
+      'feedback' : feedbackText,
+      'user'     : userName,
+      'uid'      : uid,
+      'timestamp': now.toIso8601String(),
     };
+
+    // ── Step 1: local cache ──────────────────────────────────────────────
     _allRatings.add(entry);
     await BrowserStorage.setString(_storageKey, json.encode(_allRatings));
     notifyListeners();
 
-    // 2) Send to the team via email
-    //    We try an HTTP call first (e.g. a backend relay).
-    //    If that's unavailable we fall back silently — data is still saved
-    //    locally and can be exported later.
+    // ── Step 2: Firestore ────────────────────────────────────────────────
+    String? firestoreDocId;
     try {
-      await _sendViaEmailRelay(
-        feedbackText: feedbackText,
-        starRating: starRating,
-        userName: userName,
-      );
-    } catch (_) {
-      // Relay unavailable — data is safely stored locally.
-      if (kDebugMode) {
-        debugPrint('[FeedbackService] Email relay unavailable — stored locally.');
-      }
+      final doc = await FirebaseFirestore.instance
+          .collection('feedback')
+          .add({
+        'feedback'   : feedbackText,
+        'star_rating': starRating,
+        'user_name'  : userName,
+        'user_uid'   : uid,
+        'submitted_at': FieldValue.serverTimestamp(),
+        'platform'   : defaultTargetPlatform.name,
+        'delivered'  : false, // flipped to true once email is confirmed sent
+      });
+      firestoreDocId = doc.id;
+      debugPrint('[FeedbackService] Saved to Firestore: ${doc.id}');
+    } catch (e) {
+      // Firestore unavailable (offline / permissions) — continue anyway.
+      debugPrint('[FeedbackService] Firestore write failed: $e');
+    }
+
+    // ── Step 3: Email via EmailJS ────────────────────────────────────────
+    final emailSent = await _sendViaEmailJs(
+      feedbackText : feedbackText,
+      starRating   : starRating,
+      userName     : userName,
+      submittedAt  : now,
+      docId        : firestoreDocId,
+    );
+
+    // Mark the Firestore doc as delivered if email succeeded.
+    if (emailSent && firestoreDocId != null) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('feedback')
+            .doc(firestoreDocId)
+            .update({'delivered': true});
+      } catch (_) {}
     }
 
     return true;
   }
 
-  /// Attempt to send via an HTTP email relay service.
-  Future<void> _sendViaEmailRelay({
+  /// POST to EmailJS REST API v1.
+  ///
+  /// EmailJS sends the email on our behalf — no server required.
+  /// Template variables:
+  ///   {{to_email}}      → welcome@huddlapp.co.uk
+  ///   {{from_name}}     → userName
+  ///   {{star_rating}}   → 0–5
+  ///   {{feedback_text}} → the message body
+  ///   {{submitted_at}}  → ISO timestamp
+  ///   {{doc_id}}        → Firestore document ID (for reference)
+  Future<bool> _sendViaEmailJs({
     required String feedbackText,
     required int starRating,
     required String userName,
+    required DateTime submittedAt,
+    String? docId,
   }) async {
-    // This would call a real backend endpoint in production.
-    // For now we attempt a POST that will likely 404 — which is fine
-    // because the data is already persisted locally.
-    final payload = {
-      'to': _targetEmail,
-      'subject': 'Huddl App Feedback from $userName',
-      'body': 'Rating: $starRating / 5 stars\n\n'
-          'Feedback:\n$feedbackText\n\n'
-          'Overall real average: ${realAverageRating.toStringAsFixed(2)} '
-          '(from $totalRatings total ratings)\n\n'
-          'User: $userName\n'
-          'Submitted: ${DateTime.now().toIso8601String()}',
-    };
-
-    // Attempt the relay — swallow errors silently.
     try {
-      await http.post(
-        Uri.parse('https://api.huddlparents.com/feedback'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(payload),
-      ).timeout(const Duration(seconds: 5));
-    } catch (_) {
-      // Expected to fail in demo — data is stored locally.
+      final response = await http.post(
+        Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
+        headers: {
+          'Content-Type' : 'application/json',
+          'origin'       : 'https://huddl-connect.firebaseapp.com',
+        },
+        body: json.encode({
+          'service_id' : _emailJsServiceId,
+          'template_id': _emailJsTemplateId,
+          'user_id'    : _emailJsPublicKey,
+          'template_params': {
+            'to_email'     : _targetEmail,
+            'from_name'    : userName.isNotEmpty ? userName : 'Anonymous',
+            'star_rating'  : starRating > 0 ? '$starRating / 5 ★' : 'Not rated',
+            'feedback_text': feedbackText,
+            'submitted_at' : submittedAt.toString().substring(0, 19),
+            'doc_id'       : docId ?? 'n/a',
+            'reply_to'     : _targetEmail,
+          },
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      final success = response.statusCode == 200;
+      if (success) {
+        debugPrint('[FeedbackService] Email sent via EmailJS ✓');
+      } else {
+        debugPrint(
+            '[FeedbackService] EmailJS returned ${response.statusCode}: ${response.body}');
+      }
+      return success;
+    } catch (e) {
+      debugPrint('[FeedbackService] EmailJS request failed: $e');
+      return false;
     }
   }
 
-  /// Generate a summary report string (for internal use / export).
+  /// Generate a plain-text summary report (for internal export).
   String generateReport() {
-    final buf = StringBuffer();
-    buf.writeln('=== HUDDL APP FEEDBACK REPORT ===');
-    buf.writeln('Generated: ${DateTime.now().toString().substring(0, 19)}');
-    buf.writeln('Total ratings: $totalRatings');
-    buf.writeln(
-        'Real average rating: ${realAverageRating.toStringAsFixed(2)} / 5.0');
-    buf.writeln('Display rating (shown to users): $displayRating / 5.0');
-    buf.writeln('Target email: $_targetEmail');
-    buf.writeln('');
+    final buf = StringBuffer()
+      ..writeln('=== HUDDL APP FEEDBACK REPORT ===')
+      ..writeln('Generated  : ${DateTime.now().toString().substring(0, 19)}')
+      ..writeln('Total      : $totalRatings')
+      ..writeln('Real avg   : ${realAverageRating.toStringAsFixed(2)} / 5.0')
+      ..writeln('Display avg: $displayRating / 5.0')
+      ..writeln('Recipient  : $_targetEmail')
+      ..writeln('');
     for (var i = 0; i < _allRatings.length; i++) {
       final r = _allRatings[i];
-      buf.writeln('--- Entry ${i + 1} ---');
-      buf.writeln('  User: ${r['user']}');
-      buf.writeln('  Rating: ${r['rating']} / 5');
-      buf.writeln('  Feedback: ${r['feedback']}');
-      buf.writeln('  Time: ${r['timestamp']}');
-      buf.writeln('');
+      buf
+        ..writeln('--- Entry ${i + 1} ---')
+        ..writeln('  User    : ${r['user']}')
+        ..writeln('  Rating  : ${r['rating']} / 5')
+        ..writeln('  Feedback: ${r['feedback']}')
+        ..writeln('  Time    : ${r['timestamp']}')
+        ..writeln('');
     }
     buf.writeln('=== END OF REPORT ===');
     return buf.toString();
