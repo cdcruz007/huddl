@@ -14,6 +14,7 @@ import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
 import '../../services/browser_storage.dart';
+import '../../services/default_group_service.dart';
 import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
@@ -1949,7 +1950,37 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       onPressed: () async {
                         Navigator.pop(c);
                         final userName = _onboardingService.name ?? 'You';
+
+                        // 1. Remove from invitation service
                         await _invitationService.leaveGroup(widget.groupId, userName);
+
+                        // 2. Remove from DefaultGroupService memberships
+                        final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+                        final userId = firebaseUid ?? 'user_${_onboardingService.name?.hashCode ?? 0}';
+                        await DefaultGroupService().leaveGroup(userId, widget.groupId);
+
+                        // 3. Remove from user-created groups storage
+                        try {
+                          final raw = await BrowserStorage.getString('user_created_groups_v1');
+                          if (raw != null) {
+                            final List<dynamic> groups = json.decode(raw);
+                            groups.removeWhere((j) => (j as Map<String, dynamic>)['id'] == widget.groupId);
+                            await BrowserStorage.setString('user_created_groups_v1', json.encode(groups));
+                          }
+                        } catch (_) {}
+
+                        // 4. Persist to left-groups list so it is never re-added on reload
+                        try {
+                          final leftRaw = await BrowserStorage.getString('left_groups_v1');
+                          final List<String> leftIds = leftRaw != null
+                              ? List<String>.from(json.decode(leftRaw) as List)
+                              : [];
+                          if (!leftIds.contains(widget.groupId)) {
+                            leftIds.add(widget.groupId);
+                            await BrowserStorage.setString('left_groups_v1', json.encode(leftIds));
+                          }
+                        } catch (_) {}
+
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(

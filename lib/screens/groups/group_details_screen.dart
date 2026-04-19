@@ -1,10 +1,14 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/invitation_service.dart';
+import '../../services/default_group_service.dart';
+import '../../services/browser_storage.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/dm_service.dart';
@@ -420,11 +424,46 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         final onboarding = OnboardingDataService();
                         await onboarding.initialize();
                         final userName = onboarding.name ?? 'You';
+
+                        // 1. Remove from invitation service
                         await _invitationService.leaveGroup(widget.groupId, userName);
+
+                        // 2. Remove from DefaultGroupService memberships
+                        final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+                        final userId = firebaseUid ?? 'user_${onboarding.name?.hashCode ?? 0}';
+                        await DefaultGroupService().leaveGroup(userId, widget.groupId);
+
+                        // 3. Remove from user-created groups storage
+                        try {
+                          final raw = await BrowserStorage.getString('user_created_groups_v1');
+                          if (raw != null) {
+                            final List<dynamic> groups = json.decode(raw);
+                            groups.removeWhere((j) => (j as Map<String, dynamic>)['id'] == widget.groupId);
+                            await BrowserStorage.setString('user_created_groups_v1', json.encode(groups));
+                          }
+                        } catch (_) {}
+
+                        // 4. Persist left group to prevent re-join on reload
+                        try {
+                          final leftRaw = await BrowserStorage.getString('left_groups_v1');
+                          final List<String> leftIds = leftRaw != null
+                              ? List<String>.from(json.decode(leftRaw) as List)
+                              : [];
+                          if (!leftIds.contains(widget.groupId)) {
+                            leftIds.add(widget.groupId);
+                            await BrowserStorage.setString('left_groups_v1', json.encode(leftIds));
+                          }
+                        } catch (_) {}
+
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Left ${widget.groupName}')),
+                            SnackBar(
+                              content: Text('Left ${widget.groupName}'),
+                              backgroundColor: HuddlColors.primary,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
                           );
                         }
                       },

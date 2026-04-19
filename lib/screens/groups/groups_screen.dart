@@ -49,6 +49,8 @@ const List<String> _cambridgeImages = [
 
 // ── Persistence key for user-created groups ──────────────────────────────
 const String _userGroupsKey = 'user_created_groups_v1';
+// ── Persistence key for groups the user has explicitly left ─────────────
+const String _leftGroupsKey = 'left_groups_v1';
 
 /// Platform-adaptive font family: SF Pro on iOS, Poppins elsewhere (P2).
 TextStyle _adaptiveText({
@@ -489,24 +491,39 @@ class _MessagesTabState extends State<_MessagesTab> {
       final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
       final userId = firebaseUid ?? 'user_${_onboardingService.name?.hashCode ?? 0}';
 
+      // ── Load groups the user has explicitly left (never re-join these) ──
+      final leftGroupIds = await _getLeftGroupIds();
+
       // ── 1. Try to get previously assigned default groups ──────────
       List<Group> defaultGroups =
           await _groupService.getUserGroups(userId);
+      // Filter out any groups the user has explicitly left
+      defaultGroups = defaultGroups.where((g) => !leftGroupIds.contains(g.id)).toList();
 
       // ── 2. If none, try to assign now based on onboarding data ──
+      //    But only assign groups the user hasn't explicitly left
       if (defaultGroups.isEmpty) {
-        defaultGroups =
-            await _groupService.assignUserToDefaultGroups(userId);
+        final assigned = await _groupService.assignUserToDefaultGroups(userId);
+        defaultGroups = assigned.where((g) => !leftGroupIds.contains(g.id)).toList();
+        // Remove any re-assigned left groups from the service membership
+        for (final leftId in leftGroupIds) {
+          await _groupService.leaveGroup(userId, leftId);
+        }
       }
 
       // ── 3. Last resort: re-join existing defaults ─────────────────
+      //    Only join groups the user has NOT explicitly left
       if (defaultGroups.isEmpty) {
-        final allDefaults = _groupService.getAllDefaultGroups();
+        final allDefaults = _groupService.getAllDefaultGroups()
+            .where((g) => !leftGroupIds.contains(g.id))
+            .toList();
         if (allDefaults.isNotEmpty) {
           for (final g in allDefaults) {
             _groupService.joinGroup(userId, g.id);
           }
-          defaultGroups = await _groupService.getUserGroups(userId);
+          defaultGroups = (await _groupService.getUserGroups(userId))
+              .where((g) => !leftGroupIds.contains(g.id))
+              .toList();
         }
       }
 
@@ -526,21 +543,21 @@ class _MessagesTabState extends State<_MessagesTab> {
         items.add(_GroupItem.fromGroup(g, isDefault: true));
       }
       for (final g in userGroups) {
-        if (!items.any((i) => i.id == g.id)) {
+        if (!items.any((i) => i.id == g.id) && !leftGroupIds.contains(g.id)) {
           items.add(_GroupItem.fromGroup(g, isDefault: false));
         }
       }
 
       // ── Joined public groups (from Discover) ─────────────────────
       for (final g in _invitationService.joinedGroups) {
-        if (!items.any((i) => i.id == g.id)) {
+        if (!items.any((i) => i.id == g.id) && !leftGroupIds.contains(g.id)) {
           items.add(_GroupItem.fromGroup(g, isDefault: false));
         }
       }
 
       // ── Accepted invitations → become private group entries ──────
       for (final inv in _invitationService.acceptedInvitations) {
-        if (!items.any((i) => i.id == inv.groupId)) {
+        if (!items.any((i) => i.id == inv.groupId) && !leftGroupIds.contains(inv.groupId)) {
           items.add(_GroupItem(
             id: inv.groupId,
             name: inv.groupName,
@@ -1020,8 +1037,19 @@ class _MessagesTabState extends State<_MessagesTab> {
                         await onboarding.initialize();
                         final userName = onboarding.name ?? 'You';
 
+                        // 1. Remove from invitation service (joined-via-Discover groups)
                         await _invitationService.leaveGroup(group.id, userName);
+
+                        // 2. Remove from user-created groups storage
                         await _removeFromUserCreatedGroups(group.id);
+
+                        // 3. Remove from DefaultGroupService memberships (default/assigned groups)
+                        final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+                        final userId = firebaseUid ?? 'user_${onboarding.name?.hashCode ?? 0}';
+                        await _groupService.leaveGroup(userId, group.id);
+
+                        // 4. Persist this group ID so it never gets re-joined on reload
+                        await _persistLeftGroup(group.id);
 
                         setState(() {
                           _allGroups.removeWhere((g) => g.id == group.id);
@@ -1070,6 +1098,29 @@ class _MessagesTabState extends State<_MessagesTab> {
       await BrowserStorage.setString(_userGroupsKey, json.encode(groups));
     } catch (_) {
       // silently fail
+    }
+  }
+
+  /// Persist a group ID that the user has explicitly left so it is never
+  /// re-assigned on future loads.
+  Future<void> _persistLeftGroup(String groupId) async {
+    try {
+      final ids = await _getLeftGroupIds();
+      if (!ids.contains(groupId)) {
+        ids.add(groupId);
+        await BrowserStorage.setString(_leftGroupsKey, json.encode(ids));
+      }
+    } catch (_) {}
+  }
+
+  /// Return the set of group IDs the user has explicitly left.
+  Future<List<String>> _getLeftGroupIds() async {
+    try {
+      final raw = await BrowserStorage.getString(_leftGroupsKey);
+      if (raw == null) return [];
+      return List<String>.from(json.decode(raw) as List);
+    } catch (_) {
+      return [];
     }
   }
 
