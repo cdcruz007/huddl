@@ -27,6 +27,7 @@ import '../../models/subscription.dart';
 import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
+import '../../services/firebase_auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -3300,9 +3301,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     // 13. Borough-scoped data (GDPR Art. 17)
                     await GdprBoroughDataService().deleteAllBoroughData();
 
+                    // 14. Sign out from Firebase Auth so the user is fully logged out
+                    try {
+                      await FirebaseAuthService().signOut();
+                    } catch (_) {}
+
                     if (mounted) {
                       Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/splash', (r) => false);
+                          .pushNamedAndRemoveUntil('/login', (r) => false);
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -3619,12 +3625,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: TextButton(
                       onPressed: () async {
                         Navigator.pop(c);
-                        // Clear all persisted user data on logout
+
+                        // 1. Sign out from Firebase Auth — MUST happen first
+                        //    so the splash screen sees isSignedIn = false
+                        try {
+                          await FirebaseAuthService().signOut();
+                        } catch (_) {}
+
+                        // 2. Clear all local/persisted user data
                         await BrowserStorage.clear();
                         _onboarding.clear();
+
+                        // 3. Navigate directly to login, removing every route
+                        //    (bypasses splash which would re-detect the auth
+                        //    token and bounce straight back to /home)
                         if (mounted) {
                           Navigator.of(context)
-                              .pushNamedAndRemoveUntil('/splash', (r) => false);
+                              .pushNamedAndRemoveUntil('/login', (r) => false);
                         }
                       },
                       child: Text('Log out',
