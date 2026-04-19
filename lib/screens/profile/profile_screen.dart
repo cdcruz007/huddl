@@ -3210,125 +3210,179 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _confirmAccountDeletion() {
     showDialog(
       context: context,
-      builder: (c) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.delete_forever,
-                    size: 28, color: HuddlColors.error),
-              ),
-              const SizedBox(height: 18),
-              Text('Account deleted',
-                  style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary)),
-              const SizedBox(height: 12),
-              Text(
-                'Your account has been scheduled for deletion. All data will be permanently removed within 90 days.',
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textSecondary,
-                    height: 1.5),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    Navigator.pop(c);
-                    // Clear ALL user data — GDPR-compliant full deletion
-                    // 1. Core profile & onboarding data
-                    _onboarding.clear();
-
-                    // 2. Groups (default + user-created)
-                    _groupService.clear();
-                    await BrowserStorage.remove('user_created_groups_v1');
-
-                    // 3. Saved messages & threads
-                    final savedService = SavedMessageService();
-                    await savedService.clearAll();
-
-                    // 4. Meetups (user-created)
-                    await _meetupService.clearAll();
-
-                    // 5. Block list
-                    await _blockService.clearAll();
-
-                    // 6. Direct messages & conversations
-                    final dmService = DMService();
-                    await dmService.clearAll();
-
-                    // 7. Group invitations & joined groups
-                    final invitationService = InvitationService();
-                    await invitationService.clearAll();
-
-                    // 8. Community feed
-                    final feedService = CommunityFeedService();
-                    await feedService.clearAll();
-
-                    // 9. Announcements
-                    final announcementService = AnnouncementService();
-                    await announcementService.clearAll();
-
-                    // 10. Favourites
-                    await BrowserStorage.remove('huddl_favourite_ids');
-
-                    // 11. All notification preferences
-                    await BrowserStorage.remove('pref_push_enabled');
-                    await BrowserStorage.remove('pref_group_messages');
-                    await BrowserStorage.remove('pref_dm_messages');
-                    await BrowserStorage.remove('pref_event_reminders');
-                    await BrowserStorage.remove('pref_community_updates');
-
-                    // 12. All privacy preferences
-                    await BrowserStorage.remove('pref_show_online');
-                    await BrowserStorage.remove('pref_show_profile');
-                    await BrowserStorage.remove('pref_show_groups');
-                    await BrowserStorage.remove('pref_read_receipts');
-
-                    // 13. Borough-scoped data (GDPR Art. 17)
-                    await GdprBoroughDataService().deleteAllBoroughData();
-
-                    // 14. Sign out from Firebase Auth so the user is fully logged out
-                    try {
-                      await FirebaseAuthService().signOut();
-                    } catch (_) {}
-
-                    if (mounted) {
-                      Navigator.of(context)
-                          .pushNamedAndRemoveUntil('/login', (r) => false);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HuddlColors.primary,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    elevation: 0,
+      barrierDismissible: false,
+      builder: (c) {
+        bool isDeleting = false;
+        return StatefulBuilder(
+        builder: (ctx, setLocal) {
+          return Dialog(
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.error.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.delete_forever,
+                        size: 28, color: HuddlColors.error),
                   ),
-                  child: Text('OK',
+                  const SizedBox(height: 18),
+                  Text('Delete your account?',
                       style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white)),
-                ),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary)),
+                  const SizedBox(height: 12),
+                  Text(
+                    'This will permanently delete your Huddl account and all associated data. This cannot be undone.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: context.hc.textSecondary,
+                        height: 1.5),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: isDeleting
+                          ? null
+                          : () async {
+                              setLocal(() => isDeleting = true);
+
+                              // ── 1. Delete Firebase Auth account (+ Firestore doc) ──
+                              final authService = FirebaseAuthService();
+                              final deleteError =
+                                  await authService.deleteAccount();
+                              if (deleteError != null) {
+                                // Firebase deletion failed — do NOT clear local data
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (mounted) {
+                                  _snack(deleteError);
+                                }
+                                return;
+                              }
+
+                              // ── 2. Clear ALL local user data (GDPR Art. 17) ──
+                              // Core profile & onboarding data
+                              _onboarding.clear();
+
+                              // Groups (default + user-created)
+                              _groupService.clear();
+                              await BrowserStorage.remove(
+                                  'user_created_groups_v1');
+                              await BrowserStorage.remove('left_groups_v1');
+
+                              // Saved messages & threads
+                              final savedService = SavedMessageService();
+                              await savedService.clearAll();
+
+                              // Meetups (user-created)
+                              await _meetupService.clearAll();
+
+                              // Block list
+                              await _blockService.clearAll();
+
+                              // Direct messages & conversations
+                              final dmService = DMService();
+                              await dmService.clearAll();
+
+                              // Group invitations & joined groups
+                              final invitationService = InvitationService();
+                              await invitationService.clearAll();
+
+                              // Community feed
+                              final feedService = CommunityFeedService();
+                              await feedService.clearAll();
+
+                              // Announcements
+                              final announcementService =
+                                  AnnouncementService();
+                              await announcementService.clearAll();
+
+                              // Favourites
+                              await BrowserStorage.remove(
+                                  'huddl_favourite_ids');
+
+                              // All notification preferences
+                              await BrowserStorage.remove('pref_push_enabled');
+                              await BrowserStorage.remove(
+                                  'pref_group_messages');
+                              await BrowserStorage.remove('pref_dm_messages');
+                              await BrowserStorage.remove(
+                                  'pref_event_reminders');
+                              await BrowserStorage.remove(
+                                  'pref_community_updates');
+
+                              // All privacy preferences
+                              await BrowserStorage.remove('pref_show_online');
+                              await BrowserStorage.remove('pref_show_profile');
+                              await BrowserStorage.remove('pref_show_groups');
+                              await BrowserStorage.remove(
+                                  'pref_read_receipts');
+
+                              // Borough-scoped data (GDPR Art. 17)
+                              await GdprBoroughDataService()
+                                  .deleteAllBoroughData();
+
+                              // Full BrowserStorage wipe as final safety net
+                              await BrowserStorage.clear();
+
+                              // ── 3. Navigate to login ──
+                              if (mounted) {
+                                Navigator.of(context).pushNamedAndRemoveUntil(
+                                    '/login', (r) => false);
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.error,
+                        disabledBackgroundColor:
+                            HuddlColors.error.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                      ),
+                      child: isDeleting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : Text('Delete Account',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed:
+                          isDeleting ? null : () => Navigator.pop(ctx),
+                      child: Text('Cancel',
+                          style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        ),
-      ),
+            ),
+          );
+        },
+        );
+      },
     );
   }
 

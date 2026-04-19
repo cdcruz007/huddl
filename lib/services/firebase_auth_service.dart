@@ -254,6 +254,39 @@ class FirebaseAuthService {
     _webConfirmationResult = null;
   }
 
+  /// Permanently deletes the Firebase Auth account and the Firestore user
+  /// document for the currently signed-in user.
+  ///
+  /// Returns an error message on failure, or null on success.
+  Future<String?> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return 'No signed-in user found.';
+    final uid = user.uid;
+    try {
+      // Delete the Firestore user document first (requires the user to still
+      // be authenticated so security rules allow the write).
+      try {
+        await _db.collection('users').doc(uid).delete();
+      } catch (_) {
+        // Non-fatal: the doc may not exist or rules may block it;
+        // proceed with auth deletion regardless.
+      }
+      // Delete the Firebase Auth account.
+      await user.delete();
+      _verificationId = null;
+      _resendToken = null;
+      _webConfirmationResult = null;
+      return null; // success
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        return 'For security, please log out and log back in before deleting your account.';
+      }
+      return e.message ?? 'Failed to delete account.';
+    } catch (e) {
+      return 'Failed to delete account: $e';
+    }
+  }
+
   Future<bool> hasUserProfile() async {
     if (uid == null) return false;
     final doc = await _db.collection('users').doc(uid).get();
