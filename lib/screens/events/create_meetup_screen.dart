@@ -1799,8 +1799,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) {
-        return StatefulBuilder(
+      builder: (outerCtx) {
+        return GestureDetector(
+          onTap: () => FocusScope.of(outerCtx).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(outerCtx).bottom),
+            child: StatefulBuilder(
           builder: (sheetCtx, setSheetState) {
             final query = _memberSearchQuery.toLowerCase();
             final filtered = query.isEmpty
@@ -2038,6 +2043,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               },
             );
           },
+        ),
+          ),
         );
       },
     );

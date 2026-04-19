@@ -155,7 +155,8 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
             OnboardingProgressBar(step: OnboardingStep.phoneNumber),
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -322,6 +323,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                       enabled: _canContinue,
                       onTap: _continue,
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

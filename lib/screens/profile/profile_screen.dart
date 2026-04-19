@@ -3868,7 +3868,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => DraggableScrollableSheet(
+      builder: (sheetCtx) => GestureDetector(
+        onTap: () => FocusScope.of(sheetCtx).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom),
+          child: DraggableScrollableSheet(
         initialChildSize: 0.85,
         maxChildSize: 0.95,
         minChildSize: 0.5,
@@ -4075,6 +4080,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
       ),
+        ),
+      ),
     );
   }
 
@@ -4157,35 +4164,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: context.hc.surface,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.95,
-        minChildSize: 0.4,
-        expand: false,
-        builder: (c, scroll) => Column(
-          children: [
-            const SizedBox(height: 10),
-            Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                    color: context.hc.divider,
-                    borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            Text(title,
-                style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: context.hc.textPrimary)),
-            const SizedBox(height: 8),
-            const Divider(height: 1),
-            Expanded(
-              child: SingleChildScrollView(
-                controller: scroll,
-                child: builder(c),
-              ),
+      builder: (sheetCtx) => GestureDetector(
+        onTap: () => FocusScope.of(sheetCtx).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          // Pushes sheet content up when keyboard appears
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            maxChildSize: 0.95,
+            minChildSize: 0.4,
+            expand: false,
+            builder: (c, scroll) => Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: context.hc.divider,
+                        borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 16),
+                Text(title,
+                    style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: context.hc.textPrimary)),
+                const SizedBox(height: 8),
+                const Divider(height: 1),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scroll,
+                    child: builder(c),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

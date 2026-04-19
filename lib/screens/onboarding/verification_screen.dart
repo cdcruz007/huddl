@@ -358,7 +358,8 @@ class _VerificationScreenState extends State<VerificationScreen> {
             OnboardingProgressBar(step: OnboardingStep.verification),
 
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -580,6 +581,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

@@ -244,7 +244,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => DraggableScrollableSheet(
+      builder: (sheetCtx) => GestureDetector(
+        onTap: () => FocusScope.of(sheetCtx).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom),
+          child: DraggableScrollableSheet(
         expand: false,
         initialChildSize: 0.75,
         minChildSize: 0.4,
@@ -530,7 +535,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     width: double.infinity,
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
+                      onPressed: () => Navigator.pop(sheetCtx),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HuddlColors.primary,
                         shape: RoundedRectangleBorder(
@@ -551,6 +556,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               ],
             );
           },
+        ),
+      ),
         ),
       ),
     );

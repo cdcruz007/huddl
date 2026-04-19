@@ -62,13 +62,16 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // Scaffold automatically resizes when keyboard appears
       body: SafeArea(
         child: Column(
           children: [
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
             OnboardingProgressBar(step: OnboardingStep.postcode),
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
+                // Ensures content scrolls up when keyboard appears
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -120,6 +123,7 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                       enabled: _canContinue && !_isChecking,
                       onTap: _continue,
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),

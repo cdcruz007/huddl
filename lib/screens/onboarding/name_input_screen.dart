@@ -39,7 +39,8 @@ class _NameInputScreenState extends State<NameInputScreen> {
             _OnboardingAppBar(onBack: () => Navigator.pop(context)),
             OnboardingProgressBar(step: OnboardingStep.name),
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,6 +85,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
                       enabled: _canContinue,
                       onTap: _continue,
                     ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
