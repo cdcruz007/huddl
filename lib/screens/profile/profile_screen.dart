@@ -1382,7 +1382,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 final newPc = postcodeCtrl.text.trim().toUpperCase();
                 if (newPc.isEmpty) return;
 
-                if (!_postcodeService.isCambridgePostcode(newPc)) {
+                final isCambridge = await _postcodeService.isCambridgePostcodeAsync(newPc);
+                if (!isCambridge) {
                   if (!ctx.mounted) return;
                   showDialog(
                     context: ctx,
@@ -1456,8 +1457,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return;
                 }
 
+                // Borough was already resolved and cached by isCambridgePostcodeAsync above.
                 final newBorough =
-                    _postcodeService.getBoroughFromPostcode(newPc) ?? 'Unknown';
+                    _postcodeService.getBoroughFromPostcode(newPc) ?? await _postcodeService.lookupBoroughAsync(newPc) ?? 'Unknown';
 
                 // Capture current borough BEFORE updating
                 final previousBorough = _borough;

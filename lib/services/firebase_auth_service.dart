@@ -274,9 +274,9 @@ class FirebaseAuthService {
     final onboarding = OnboardingDataService();
     await onboarding.initialize();
 
-    // Resolve borough from postcode at profile-creation time
+    // Resolve borough via postcodes.io so the exact admin district is used.
     final postcode = onboarding.postcode ?? '';
-    final borough = PostcodeService().getBoroughFromPostcode(postcode) ?? '';
+    final borough = await PostcodeService().lookupBoroughAsync(postcode) ?? '';
 
     final name = onboarding.name ?? '';
     final parts = name.trim().split(' ');

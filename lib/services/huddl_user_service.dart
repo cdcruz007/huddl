@@ -51,7 +51,9 @@ class HuddlUserService {
     await _onboarding.initialize();
 
     final postcode = _onboarding.postcode ?? '';
-    final borough = _postcodeService.getBoroughFromPostcode(postcode) ?? '';
+    // Use the async lookup so the borough is resolved via postcodes.io
+    // rather than the outward-code fallback map.
+    final borough = await _postcodeService.lookupBoroughAsync(postcode) ?? '';
 
     final name = _onboarding.name ?? '';
     final parts = name.trim().split(' ');

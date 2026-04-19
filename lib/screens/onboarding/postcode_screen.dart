@@ -33,19 +33,25 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
   bool get _canContinue =>
       _ukPostcodeRegex.hasMatch(_ctrl.text.trim());
 
+  bool _isChecking = false;
+
   void _continue() async {
-    if (!_canContinue) return;
+    if (!_canContinue || _isChecking) return;
     final postcode = _ctrl.text.trim().toUpperCase();
     final postcodeService = PostcodeService();
 
-    // ── Cambridge-only launch gate ────────────────────────────────────
-    if (!postcodeService.isCambridgePostcode(postcode)) {
-      if (mounted) {
-        Navigator.pushNamed(context, '/not_available');
-      }
+    setState(() => _isChecking = true);
+
+    // ── Cambridge-only launch gate (authoritative postcodes.io lookup) ─
+    final isCambridge = await postcodeService.isCambridgePostcodeAsync(postcode);
+    if (!mounted) return;
+    setState(() => _isChecking = false);
+
+    if (!isCambridge) {
+      Navigator.pushNamed(context, '/not_available');
       return;
     }
-    // ─────────────────────────────────────────────────────────────────
+    // ──────────────────────────────────────────────────────────────────
 
     final service = OnboardingDataService();
     service.setPostcode(postcode);
@@ -110,8 +116,8 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
                       ),
                     const SizedBox(height: 32),
                     _OrangeButton(
-                      label: 'Continue',
-                      enabled: _canContinue,
+                      label: _isChecking ? 'Checking…' : 'Continue',
+                      enabled: _canContinue && !_isChecking,
                       onTap: _continue,
                     ),
                   ],
