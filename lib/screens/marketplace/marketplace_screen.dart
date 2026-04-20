@@ -1156,7 +1156,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           ],
         ),
       ),
-      floatingActionButton: _buildFAB(hc),
+      floatingActionButton: _buildFAB(context, hc),
     );
   }
 
@@ -2629,14 +2629,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // Material You: FAB on both Buy and Sell tabs (Android pattern).
   // On Buy: "+" for new listing. On Sell: "+" for new listing (contextual).
 
-  Widget? _buildFAB(HuddlContextColors hc) {
+  Widget? _buildFAB(BuildContext context, HuddlContextColors hc) {
     // Show FAB on Buy (0) and Sell (1) tabs
     if (_tabController.index > 1) return null;
 
     final bool isSellTab = _tabController.index == 1;
 
+    // Compute how far above the bottom edge the FAB must sit so it clears
+    // the floating bottom nav bar:
+    //   • safeArea.bottom  → iPhone home-indicator inset (~34 pt on modern iPhones)
+    //   • + 12 pt          → bottom padding applied to the nav bar container
+    //   • + 70 pt          → nav bar container height
+    //   • + 12 pt          → breathing room between FAB and nav bar
+    final double bottomInset = MediaQuery.of(context).padding.bottom + 12 + 70 + 12;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 60),
+      padding: EdgeInsets.only(bottom: bottomInset),
       child: Semantics(
         label: isSellTab ? 'Create new listing' : 'Create new listing',
         hint: 'Opens the listing creation form',
