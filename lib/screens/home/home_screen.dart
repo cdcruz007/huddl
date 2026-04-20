@@ -1315,6 +1315,7 @@ class _HomeScreenState extends State<HomeScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (_) => _FeedPreferencesSheet(
         initialPrefs: Map<String, bool>.from(_feedPrefs),
         onSaved: (updatedPrefs) {
@@ -2654,80 +2655,85 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
 
   void _toggle(String key) {
     HapticFeedback.selectionClick();
-    setState(() => _prefs[key] = !_prefs[key]!);
+    setState(() => _prefs[key] = !(_prefs[key] ?? true));
   }
 
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    return Container(
-      decoration: BoxDecoration(
-        color: hc.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const HuddlBottomSheetHandle(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.tune, color: HuddlColors.primary, size: 20),
-                const SizedBox(width: 8),
-                Text('Feed Preferences',
-                    style: GoogleFonts.poppins(
-                        fontSize: 17, fontWeight: FontWeight.w600,
-                        color: hc.textPrimary)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Choose which content appears in your feed.',
-              style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-          _tile('meetups', Icons.groups, 'Meetups I\'m going to',
-              'High priority \u2014 shown at the top'),
-          _tile('events', Icons.event, 'Events I\'m attending',
-              'Reminders as the date approaches'),
-          _tile('announcements', Icons.campaign_outlined,
-              'Community announcements', 'Pinned posts and popular activity'),
-          _tile('suggestions', Icons.group_add,
-              'Suggested meetups & groups', 'New meetups and groups near you'),
-          _tile('tips', Icons.lightbulb_outline, 'Tips & suggestions',
-              'Personalised suggestions based on your activity'),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  widget.onSaved(_prefs);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text('Save Preferences',
-                    style: GoogleFonts.poppins(
-                        fontSize: 14, fontWeight: FontWeight.w600,
-                        color: Colors.white)),
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        // Clip so rounded corners show properly
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const HuddlBottomSheetHandle(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  const Icon(Icons.tune, color: HuddlColors.primary, size: 20),
+                  const SizedBox(width: 8),
+                  Text('Feed Preferences',
+                      style: GoogleFonts.poppins(
+                          fontSize: 17, fontWeight: FontWeight.w600,
+                          color: hc.textPrimary)),
+                ],
               ),
             ),
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-        ],
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'Choose which content appears in your feed.',
+                style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            _tile('meetups', Icons.groups, 'Meetups I\'m going to',
+                'High priority \u2014 shown at the top'),
+            _tile('events', Icons.event, 'Events I\'m attending',
+                'Reminders as the date approaches'),
+            _tile('announcements', Icons.campaign_outlined,
+                'Community announcements', 'Pinned posts and popular activity'),
+            _tile('suggestions', Icons.group_add,
+                'Suggested meetups & groups', 'New meetups and groups near you'),
+            _tile('tips', Icons.lightbulb_outline, 'Tips & suggestions',
+                'Personalised suggestions based on your activity'),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    widget.onSaved(_prefs);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text('Save Preferences',
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, fontWeight: FontWeight.w600,
+                          color: Colors.white)),
+                ),
+              ),
+            ),
+            SizedBox(height: bottomInset > 0 ? bottomInset : 16),
+          ],
+        ),
       ),
     );
   }
@@ -2735,22 +2741,43 @@ class _FeedPreferencesSheetState extends State<_FeedPreferencesSheet> {
   Widget _tile(String key, IconData icon, String title, String subtitle) {
     final enabled = _prefs[key] ?? true;
     final hc = context.hc;
-    return ListTile(
-      dense: true,
-      leading: Icon(icon, size: 20,
-          color: enabled ? HuddlColors.primary : hc.textTertiary),
-      title: Text(title,
-          style: GoogleFonts.poppins(
-              fontSize: 13, fontWeight: FontWeight.w500,
-              color: enabled ? hc.textPrimary : hc.textTertiary)),
-      subtitle: Text(subtitle,
-          style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
-      trailing: Icon(
-        enabled ? Icons.check_circle : Icons.circle_outlined,
-        size: 22,
-        color: enabled ? HuddlColors.primary : hc.textTertiary,
-      ),
+    return InkWell(
       onTap: () => _toggle(key),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            Icon(icon, size: 22,
+                color: enabled ? HuddlColors.primary : hc.textTertiary),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, fontWeight: FontWeight.w500,
+                          color: enabled ? hc.textPrimary : hc.textTertiary)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: hc.textTertiary)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                enabled ? Icons.check_circle : Icons.circle_outlined,
+                key: ValueKey(enabled),
+                size: 24,
+                color: enabled ? HuddlColors.primary : hc.textTertiary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
