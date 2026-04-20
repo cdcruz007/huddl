@@ -26,7 +26,7 @@ enum MessageType {
   meetupInvite,
 }
 
-/// Safe cast helper - converts any Map type to Map<String, dynamic>
+/// Safe cast helper - converts any Map type to `Map<String, dynamic>`
 Map<String, dynamic>? _safeMap(dynamic raw) {
   if (raw == null) return null;
   if (raw is Map<String, dynamic>) return raw;
