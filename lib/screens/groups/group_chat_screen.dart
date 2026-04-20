@@ -272,8 +272,42 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       bool added = false;
       for (final m in all) {
         final id = m['id'] as String? ?? '';
-        if (id.isEmpty || _messages.any((msg) => msg.id == id)) continue;
-        // New forwarded message – add it
+        if (id.isEmpty) continue;
+
+        final msgType = m['type'] as String? ?? 'text';
+
+        // ── Image forwarded to this group ─────────────────────────────────
+        if (msgType == 'image') {
+          // Already loaded? Check _imageMessages by matching timestamp + sender
+          // (image messages don't have an 'id' tracked in _imageMessages so we
+          // use the forwarded msg id stored in the imageUrl field as fallback).
+          final alreadyLoaded = _imageMessages.any(
+            (img) => img.imageUrl == (m['imageUrl'] as String? ?? id),
+          );
+          if (alreadyLoaded) continue;
+          final imageUrl = m['imageUrl'] as String? ?? '';
+          if (imageUrl.isEmpty) continue;
+          // Restore bytes if the forward sheet stored them as base64
+          Uint8List? restoredBytes;
+          final b64 = m['bytesBase64'] as String?;
+          if (b64 != null && b64.isNotEmpty) {
+            try { restoredBytes = base64Decode(b64); } catch (_) {}
+          }
+          _imageMessages.add(_GroupImageMessage(
+            imageUrl: imageUrl,
+            bytes: restoredBytes,
+            isMe: true,
+            timestamp: DateTime.parse(m['timestamp'] as String),
+            senderName: m['senderName'] as String? ?? 'You',
+            senderAvatar: '#FF975C',
+            senderId: 'current_user',
+          ));
+          added = true;
+          continue;
+        }
+
+        // ── Text / card message ──────────────────────────────────────────
+        if (_messages.any((msg) => msg.id == id)) continue;
         Map<String, dynamic>? safeMap(dynamic raw) {
           if (raw == null) return null;
           if (raw is Map<String, dynamic>) return raw;
@@ -2442,6 +2476,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   context: context,
                                   messageText: 'Photo',
                                   imageUrl: imgMsg.imageUrl,
+                                  imageBytes: imgMsg.bytes,
                                 );
                               },
                             );
@@ -3693,6 +3728,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           .where((m) => m.isMe && m.senderId == 'current_user')
           .map((m) => {
                 'imageUrl': m.imageUrl,
+                // Persist bytes as base64 so the image survives navigation/reload
+                if (m.bytes != null) 'bytesBase64': base64Encode(m.bytes!),
                 'isMe': true,
                 'timestamp': m.timestamp.toIso8601String(),
                 'senderName': m.senderName,
@@ -3758,8 +3795,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         final imgs = (decoded['images'] as List<dynamic>?) ?? [];
         for (final j in imgs) {
           final m = j as Map<String, dynamic>;
+          // Restore bytes from persisted base64 (if present)
+          Uint8List? restoredBytes;
+          final b64 = m['bytesBase64'] as String?;
+          if (b64 != null && b64.isNotEmpty) {
+            try { restoredBytes = base64Decode(b64); } catch (_) {}
+          }
           _imageMessages.add(_GroupImageMessage(
             imageUrl: m['imageUrl'] as String,
+            bytes: restoredBytes,
             isMe: true,
             timestamp: DateTime.parse(m['timestamp'] as String),
             senderName: m['senderName'] as String,
@@ -3811,8 +3855,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           if (!_messages.any((msg) => msg.id == id)) {
             final msgType = m['type'] as String? ?? 'text';
             if (msgType == 'image' && m['imageUrl'] != null) {
+              // Restore bytes from base64 if the forward sheet persisted them
+              Uint8List? restoredBytes;
+              final b64 = m['bytesBase64'] as String?;
+              if (b64 != null && b64.isNotEmpty) {
+                try { restoredBytes = base64Decode(b64); } catch (_) {}
+              }
               _imageMessages.add(_GroupImageMessage(
                 imageUrl: m['imageUrl'] as String,
+                bytes: restoredBytes,
                 isMe: true,
                 timestamp: DateTime.parse(m['timestamp'] as String),
                 senderName: m['senderName'] as String? ?? 'You',
@@ -4854,11 +4905,14 @@ class _GroupImageBubble extends StatelessWidget {
                                 height: 240,
                                 errorBuilder: (_, __, ___) => _brokenImage(),
                               )
-                            : Image.network(
-                                imageUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _brokenImage(),
-                              ),
+                            : (imageUrl.startsWith('http://') ||
+                                    imageUrl.startsWith('https://'))
+                                ? Image.network(
+                                    imageUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _brokenImage(),
+                                  )
+                                : _brokenImage(),
                       ),
                     ),
                     // Forward button overlay

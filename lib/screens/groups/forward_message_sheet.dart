@@ -43,6 +43,7 @@ Future<void> showForwardSheet({
   required BuildContext context,
   required String messageText,
   String? imageUrl,
+  Uint8List? imageBytes,
   String? documentName,
   double? latitude,
   double? longitude,
@@ -65,6 +66,7 @@ Future<void> showForwardSheet({
     builder: (_) => _ForwardSheet(
       messageText: messageText,
       imageUrl: imageUrl,
+      imageBytes: imageBytes,
       documentName: documentName,
       latitude: latitude,
       longitude: longitude,
@@ -86,6 +88,7 @@ Future<void> showForwardSheet({
 class _ForwardSheet extends StatefulWidget {
   final String messageText;
   final String? imageUrl;
+  final Uint8List? imageBytes;
   final String? documentName;
   final double? latitude;
   final double? longitude;
@@ -104,6 +107,7 @@ class _ForwardSheet extends StatefulWidget {
   const _ForwardSheet({
     required this.messageText,
     this.imageUrl,
+    this.imageBytes,
     this.documentName,
     this.latitude,
     this.longitude,
@@ -344,6 +348,8 @@ class _ForwardSheetState extends State<_ForwardSheet>
           'isForwarded': true,
           'type': msgType,
           'imageUrl': widget.imageUrl,
+          // Store bytes as base64 so the image can be rendered after reload
+          if (widget.imageBytes != null) 'bytesBase64': base64Encode(widget.imageBytes!),
           'documentName': widget.documentName,
           'latitude': widget.latitude,
           'longitude': widget.longitude,
