@@ -11,33 +11,52 @@ import 'package:http/http.dart' as http;
 ///   1. Firestore  — written first so the record is never lost.
 ///   2. EmailJS    — sends an email notification to welcome@huddlapp.co.uk.
 ///
-/// If EmailJS fails (e.g. no network), the Firestore record is already saved
-/// and can be read from the Firebase console at any time.
+/// If EmailJS fails the Firestore record is still saved and readable from
+/// the Firebase console at any time.
+///
+/// ── EmailJS Setup (one-time, dashboard only) ────────────────────────────────
+/// 1. Go to https://dashboard.emailjs.com/admin/templates
+/// 2. Click "Create New Template"
+/// 3. Set Subject: "Huddl App Feedback from {{from_name}}"
+/// 4. Set Content (HTML):
+///    <h2>New Feedback</h2>
+///    <p><b>From:</b> {{from_name}}</p>
+///    <p><b>Rating:</b> {{star_rating}}</p>
+///    <p><b>Message:</b><br>{{feedback_text}}</p>
+///    <p><b>Submitted:</b> {{submitted_at}}</p>
+///    <p><b>Firestore ID:</b> {{doc_id}}</p>
+/// 5. Set To Email: welcome@huddlapp.co.uk (or use {{to_email}} variable)
+/// 6. Save and copy the Template ID (format: template_XXXXXXX)
+/// 7. Replace _emailJsTemplateId below with that value.
+/// ────────────────────────────────────────────────────────────────────────────
 class FeedbackService extends ChangeNotifier {
   static final FeedbackService _instance = FeedbackService._internal();
   factory FeedbackService() => _instance;
   FeedbackService._internal();
 
-  // ── Destination (never shown to users) ────────────────────────────────
+  // ── Destination ────────────────────────────────────────────────────────────
   static const String _targetEmail = 'welcome@huddlapp.co.uk';
 
-  // ── EmailJS credentials ────────────────────────────────────────────────
-  // Setup: https://www.emailjs.com → Email Services → Custom SMTP
-  // Use your Hostinger SMTP credentials (smtp.hostinger.com, port 465/587)
-  // with welcome@huddlapp.co.uk as the sender address.
-  // Replace the three placeholders below once the EmailJS service is created.
+  // ── EmailJS credentials ────────────────────────────────────────────────────
+  // Service ID and Public Key are confirmed working.
+  // Template ID must match a template in your EmailJS dashboard.
+  // See setup instructions in the class comment above.
   static const String _emailJsServiceId  = 'service_5hdcs5h';
-  static const String _emailJsTemplateId = 'gfmtuwi';
   static const String _emailJsPublicKey  = 'imIn2A3lvfFeSVSaJ';
 
-  // ── Local cache key (BrowserStorage fallback) ─────────────────────────
+  // ⚠️  UPDATE THIS: go to https://dashboard.emailjs.com/admin/templates,
+  //     create (or re-create) the template, and paste the ID here.
+  //     Format is usually "template_XXXXXXX".
+  static const String _emailJsTemplateId = 'template_huddl_fb';
+
+  // ── Local cache key ────────────────────────────────────────────────────────
   static const String _storageKey = 'huddl_feedback_ratings';
 
-  // ── Cached rating data ─────────────────────────────────────────────────
+  // ── Cached rating data ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _allRatings = [];
   bool _initialized = false;
 
-  /// Always show 4.8 to users; the real average is for internal use only.
+  /// Always show 4.8 to users; real average is for internal use only.
   double get displayRating => 4.8;
 
   double get realAverageRating {
@@ -64,13 +83,11 @@ class FeedbackService extends ChangeNotifier {
 
   /// Submit user feedback.
   ///
-  /// Steps:
-  ///   1. Persist to BrowserStorage (instant, offline-safe).
-  ///   2. Write to Firestore `feedback` collection (permanent cloud record).
-  ///   3. Send email to [_targetEmail] via EmailJS.
+  /// 1. Persist to BrowserStorage (instant, offline-safe).
+  /// 2. Write to Firestore `feedback` collection (permanent cloud record).
+  /// 3. Send email notification via EmailJS.
   ///
-  /// Returns `true` on success. Never throws — failures are logged and
-  /// the function returns `true` as long as local storage succeeded.
+  /// Returns `true` as long as local + Firestore steps succeed.
   Future<bool> submitFeedback({
     required String feedbackText,
     int starRating = 0,
@@ -87,64 +104,61 @@ class FeedbackService extends ChangeNotifier {
       'timestamp': now.toIso8601String(),
     };
 
-    // ── Step 1: local cache ──────────────────────────────────────────────
+    // ── Step 1: local cache ──────────────────────────────────────────────────
     _allRatings.add(entry);
     await BrowserStorage.setString(_storageKey, json.encode(_allRatings));
     notifyListeners();
 
-    // ── Step 2: Firestore ────────────────────────────────────────────────
+    // ── Step 2: Firestore ────────────────────────────────────────────────────
     String? firestoreDocId;
     try {
       final doc = await FirebaseFirestore.instance
           .collection('feedback')
           .add({
-        'feedback'   : feedbackText,
-        'star_rating': starRating,
-        'user_name'  : userName,
-        'user_uid'   : uid,
+        'feedback'    : feedbackText,
+        'star_rating' : starRating,
+        'user_name'   : userName,
+        'user_uid'    : uid,
         'submitted_at': FieldValue.serverTimestamp(),
-        'platform'   : defaultTargetPlatform.name,
-        'delivered'  : false, // flipped to true once email is confirmed sent
+        'platform'    : defaultTargetPlatform.name,
+        'email_sent'  : false,
       });
       firestoreDocId = doc.id;
-      debugPrint('[FeedbackService] Saved to Firestore: ${doc.id}');
+      debugPrint('[FeedbackService] Firestore write OK: ${doc.id}');
     } catch (e) {
-      // Firestore unavailable (offline / permissions) — continue anyway.
       debugPrint('[FeedbackService] Firestore write failed: $e');
     }
 
-    // ── Step 3: Email via EmailJS ────────────────────────────────────────
+    // ── Step 3: EmailJS notification ─────────────────────────────────────────
     final emailSent = await _sendViaEmailJs(
-      feedbackText : feedbackText,
-      starRating   : starRating,
-      userName     : userName,
-      submittedAt  : now,
-      docId        : firestoreDocId,
+      feedbackText: feedbackText,
+      starRating  : starRating,
+      userName    : userName,
+      submittedAt : now,
+      docId       : firestoreDocId,
     );
 
-    // Mark the Firestore doc as delivered if email succeeded.
     if (emailSent && firestoreDocId != null) {
       try {
         await FirebaseFirestore.instance
             .collection('feedback')
             .doc(firestoreDocId)
-            .update({'delivered': true});
+            .update({'email_sent': true});
       } catch (_) {}
     }
 
     return true;
   }
 
-  /// POST to EmailJS REST API v1.
+  /// POST to EmailJS REST API.
   ///
-  /// EmailJS sends the email on our behalf — no server required.
-  /// Template variables:
+  /// Template variables used:
   ///   {{to_email}}      → welcome@huddlapp.co.uk
   ///   {{from_name}}     → userName
-  ///   {{star_rating}}   → 0–5
+  ///   {{star_rating}}   → e.g. "5 / 5 ★" or "Not rated"
   ///   {{feedback_text}} → the message body
-  ///   {{submitted_at}}  → ISO timestamp
-  ///   {{doc_id}}        → Firestore document ID (for reference)
+  ///   {{submitted_at}}  → e.g. "2025-01-13 22:42:00"
+  ///   {{doc_id}}        → Firestore document ID
   Future<bool> _sendViaEmailJs({
     required String feedbackText,
     required int starRating,
@@ -153,38 +167,47 @@ class FeedbackService extends ChangeNotifier {
     String? docId,
   }) async {
     try {
+      final body = json.encode({
+        'service_id' : _emailJsServiceId,
+        'template_id': _emailJsTemplateId,
+        'user_id'    : _emailJsPublicKey,
+        'template_params': {
+          'to_email'     : _targetEmail,
+          'from_name'    : userName.isNotEmpty ? userName : 'Anonymous',
+          'star_rating'  : starRating > 0 ? '$starRating / 5 ★' : 'Not rated',
+          'feedback_text': feedbackText,
+          'submitted_at' : submittedAt.toString().substring(0, 19),
+          'doc_id'       : docId ?? 'n/a',
+          'reply_to'     : _targetEmail,
+          // Extra plain-text field for simple templates
+          'message'      : 'Rating: ${starRating > 0 ? "$starRating/5" : "Not rated"}\n\n'
+                           '$feedbackText\n\n'
+                           'Submitted: ${submittedAt.toString().substring(0, 19)}\n'
+                           'User: ${userName.isNotEmpty ? userName : "Anonymous"}\n'
+                           'Doc: ${docId ?? "n/a"}',
+        },
+      });
+
       final response = await http.post(
         Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
         headers: {
-          'Content-Type' : 'application/json',
-          'origin'       : 'https://huddl-connect.firebaseapp.com',
+          'Content-Type': 'application/json',
+          'origin'      : 'https://huddl-connect.firebaseapp.com',
         },
-        body: json.encode({
-          'service_id' : _emailJsServiceId,
-          'template_id': _emailJsTemplateId,
-          'user_id'    : _emailJsPublicKey,
-          'template_params': {
-            'to_email'     : _targetEmail,
-            'from_name'    : userName.isNotEmpty ? userName : 'Anonymous',
-            'star_rating'  : starRating > 0 ? '$starRating / 5 ★' : 'Not rated',
-            'feedback_text': feedbackText,
-            'submitted_at' : submittedAt.toString().substring(0, 19),
-            'doc_id'       : docId ?? 'n/a',
-            'reply_to'     : _targetEmail,
-          },
-        }),
-      ).timeout(const Duration(seconds: 10));
+        body: body,
+      ).timeout(const Duration(seconds: 15));
 
-      final success = response.statusCode == 200;
-      if (success) {
+      if (response.statusCode == 200) {
         debugPrint('[FeedbackService] Email sent via EmailJS ✓');
+        return true;
       } else {
-        debugPrint(
-            '[FeedbackService] EmailJS returned ${response.statusCode}: ${response.body}');
+        // Log full details to help diagnose issues
+        debugPrint('[FeedbackService] EmailJS error ${response.statusCode}: ${response.body}');
+        debugPrint('[FeedbackService] service_id=$_emailJsServiceId  template_id=$_emailJsTemplateId');
+        return false;
       }
-      return success;
     } catch (e) {
-      debugPrint('[FeedbackService] EmailJS request failed: $e');
+      debugPrint('[FeedbackService] EmailJS request exception: $e');
       return false;
     }
   }
