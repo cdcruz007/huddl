@@ -150,12 +150,10 @@ class FeedbackService extends ChangeNotifier {
   /// POST to EmailJS REST API.
   ///
   /// Template variables used:
-  ///   {{to_email}}      → welcome@huddlapp.co.uk
   ///   {{from_name}}     → userName
-  ///   {{star_rating}}   → e.g. "5 / 5 ★" or "Not rated"
-  ///   {{feedback_text}} → the message body
+  ///   {{feedback_text}} → the full feedback message
   ///   {{submitted_at}}  → e.g. "2025-01-13 22:42:00"
-  ///   {{doc_id}}        → Firestore document ID
+  ///   {{doc_id}}        → Firestore document ID (for internal reference)
   Future<bool> _sendViaEmailJs({
     required String feedbackText,
     required int starRating,
@@ -169,19 +167,10 @@ class FeedbackService extends ChangeNotifier {
         'template_id': _emailJsTemplateId,
         'user_id'    : _emailJsPublicKey,
         'template_params': {
-          'to_email'     : _targetEmail,
           'from_name'    : userName.isNotEmpty ? userName : 'Anonymous',
-          'star_rating'  : starRating > 0 ? '$starRating / 5 ★' : 'Not rated',
           'feedback_text': feedbackText,
           'submitted_at' : submittedAt.toString().substring(0, 19),
           'doc_id'       : docId ?? 'n/a',
-          'reply_to'     : _targetEmail,
-          // Extra plain-text field for simple templates
-          'message'      : 'Rating: ${starRating > 0 ? "$starRating/5" : "Not rated"}\n\n'
-                           '$feedbackText\n\n'
-                           'Submitted: ${submittedAt.toString().substring(0, 19)}\n'
-                           'User: ${userName.isNotEmpty ? userName : "Anonymous"}\n'
-                           'Doc: ${docId ?? "n/a"}',
         },
       });
 
