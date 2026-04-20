@@ -253,20 +253,9 @@ class CommunityFeedService {
       ));
     }
 
-    // New groups
-    final groupService = DefaultGroupService();
-    final allGroups = groupService.getAllDefaultGroups();
-    for (var i = 0; i < allGroups.length && i < 3; i++) {
-      _feedItems.add(FeedItem(
-        id: 'fg_$i',
-        type: FeedItemType.newGroup,
-        title: allGroups[i].name,
-        subtitle: '${allGroups[i].memberCount} members joined',
-        imageAsset: allGroups[i].imageUrl,
-        createdAt: now.subtract(Duration(hours: rng.nextInt(24) + 1)),
-        meta: {'groupId': allGroups[i].id},
-      ));
-    }
+    // Note: default/onboarding groups are intentionally excluded from the
+    // community feed. Only real user-created groups should appear here
+    // (handled separately in the smart feed builder).
 
     // Sample marketplace items (with image URLs)
     final items = [

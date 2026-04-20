@@ -2150,11 +2150,15 @@ class _HomeScreenState extends State<HomeScreen>
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Text(
-                          item.reason,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: context.hc.textTertiary,
+                        Flexible(
+                          child: Text(
+                            item.reason,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              color: context.hc.textTertiary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -2163,9 +2167,11 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Container(
+              constraints: const BoxConstraints(maxWidth: 72),
               padding: const EdgeInsets.symmetric(
-                  horizontal: 6, vertical: 2),
+                  horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 color: _feedIconBg(f.type),
                 borderRadius: BorderRadius.circular(6),
@@ -2177,6 +2183,8 @@ class _HomeScreenState extends State<HomeScreen>
                   fontWeight: FontWeight.w500,
                   color: _feedIconColor(f.type),
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
