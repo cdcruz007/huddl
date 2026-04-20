@@ -44,10 +44,7 @@ class FeedbackService extends ChangeNotifier {
   static const String _emailJsServiceId  = 'service_5hdcs5h';
   static const String _emailJsPublicKey  = 'imIn2A3lvfFeSVSaJ';
 
-  // ⚠️  UPDATE THIS: go to https://dashboard.emailjs.com/admin/templates,
-  //     create (or re-create) the template, and paste the ID here.
-  //     Format is usually "template_XXXXXXX".
-  static const String _emailJsTemplateId = 'template_huddl_fb';
+  static const String _emailJsTemplateId = 'template_z7gxw8h';
 
   // ── Local cache key ────────────────────────────────────────────────────────
   static const String _storageKey = 'huddl_feedback_ratings';
