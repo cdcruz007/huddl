@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/firebase_auth_service.dart';
 
-
-/// OTP verification screen shown after successful phone+password login.
-/// Accepts [phoneNumber] (display) and [generatedOtp] (the 6-digit code
-/// sent via SMS).  User enters the code to complete login.
+/// OTP verification screen shown after successful phone login.
+/// Calls FirebaseAuthService.verifySmsCode() to validate the real SMS code
+/// sent by Firebase — no local OTP comparison.
 class LoginOtpScreen extends StatefulWidget {
   final String phoneNumber;
+  // generatedOtp is kept for API compatibility but is no longer used —
+  // verification is done against Firebase, not a locally-generated code.
   final String generatedOtp;
 
   const LoginOtpScreen({
@@ -24,26 +25,27 @@ class LoginOtpScreen extends StatefulWidget {
 
 class _LoginOtpScreenState extends State<LoginOtpScreen> {
   final _codeController = TextEditingController();
-  int  _resendTimer   = 30;
-  bool _timerRunning  = true;
-  bool _hasError      = false;
-  bool _isVerifying   = false;
-  // New OTP generated on resend
-  late String _currentOtp;
+  final _authService    = FirebaseAuthService();
+
+  int  _resendTimer  = 30;
+  bool _timerRunning = true;
+  bool _hasError     = false;
+  bool _isVerifying  = false;
+  String? _errorText;
 
   @override
   void initState() {
     super.initState();
-    _currentOtp = widget.generatedOtp;
     _codeController.addListener(_onCodeChanged);
     _tickTimer();
-    // Notify user that code was sent
     WidgetsBinding.instance.addPostFrameCallback((_) => _showCodeSentSnackbar());
   }
 
   void _onCodeChanged() {
-    setState(() => _hasError = false);
-    // Auto-verify when 6 digits entered
+    setState(() {
+      _hasError  = false;
+      _errorText = null;
+    });
     if (_codeController.text.length == 6) {
       _verify();
     }
@@ -65,12 +67,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     super.dispose();
   }
 
-  // ── Generate a new 6-digit OTP ──────────────────────────────────────────
-  String _generateOtp() {
-    final rng = math.Random();
-    return List.generate(6, (_) => rng.nextInt(10)).join();
-  }
-
   void _showCodeSentSnackbar() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -87,47 +83,83 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     );
   }
 
+  // ── Verify against Firebase (real SMS code / Firebase test number) ──────
   Future<void> _verify() async {
     if (_isVerifying) return;
     final entered = _codeController.text.trim();
     if (entered.length < 6) return;
 
-    setState(() => _isVerifying = true);
-    await Future.delayed(const Duration(milliseconds: 500));
+    setState(() {
+      _isVerifying = true;
+      _hasError    = false;
+      _errorText   = null;
+    });
+
+    final result = await _authService.verifySmsCode(entered);
+
     if (!mounted) return;
 
-    // Verify the entered code matches the OTP sent via SMS
-    if (entered == _currentOtp) {
-      if (!mounted) return;
-
-      // Check if the user has a name set — if not, prompt for one
+    if (result.isSuccess) {
+      // ── Ensure the user has a display name set ────────────────────────
       final data = OnboardingDataService();
       await data.initialize();
       if (data.name == null || data.name!.trim().isEmpty) {
-        // Show name entry before going home
         final nameEntered = await _showNameEntrySheet();
         if (!mounted) return;
-        if (nameEntered == null || nameEntered.trim().isEmpty) {
-          // User cancelled — still need a name, use a fallback
-          data.setName('User');
-        } else {
-          data.setName(nameEntered.trim());
-        }
+        data.setName(
+          (nameEntered == null || nameEntered.trim().isEmpty)
+              ? 'User'
+              : nameEntered.trim(),
+        );
       }
-
       if (!mounted) return;
+      _authService.updateLastActive();
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
     } else {
       setState(() {
-        _hasError    = true;
         _isVerifying = false;
+        _hasError    = true;
+        _errorText   = result.errorMessage ?? 'Incorrect code. Please try again.';
       });
       _codeController.clear();
     }
   }
 
-  /// Shows a bottom sheet asking the user for their first name.
-  /// Returns the entered name, or null if the user dismisses it.
+  // ── Resend: ask Firebase to send a new SMS ───────────────────────────────
+  Future<void> _resendCode() async {
+    if (_resendTimer > 0) return;
+
+    setState(() {
+      _hasError     = false;
+      _errorText    = null;
+      _resendTimer  = 30;
+    });
+    _codeController.clear();
+    _tickTimer();
+
+    final result = await _authService.verifyPhoneNumber(widget.phoneNumber);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.status == PhoneAuthStatus.codeSent
+              ? 'New code sent to ${widget.phoneNumber}'
+              : result.errorMessage ?? 'Failed to resend code. Please try again.',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: result.status == PhoneAuthStatus.codeSent
+            ? HuddlColors.successGreen
+            : HuddlColors.error,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  /// Bottom sheet asking the user for their first name (shown only when the
+  /// returning user has no stored name — e.g. after account deletion).
   Future<String?> _showNameEntrySheet() async {
     final nameCtrl = TextEditingController();
     return showModalBottomSheet<String>(
@@ -149,7 +181,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Handle bar
                   Container(
                     width: 40, height: 4,
                     decoration: BoxDecoration(
@@ -158,7 +189,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Welcome icon
                   Container(
                     width: 56, height: 56,
                     decoration: BoxDecoration(
@@ -190,20 +220,20 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
-                  // Name text field
                   Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
+                      color: context.hc.inputBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: HuddlColors.inputBorderLight, width: 1),
+                          color: HuddlColors.inputBorderLight, width: 1),
                     ),
                     child: TextField(
                       controller: nameCtrl,
                       autofocus: true,
                       textCapitalization: TextCapitalization.words,
                       style: TextStyle(
-                          fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
+                          fontSize: 16,
+                          color: Theme.of(context).colorScheme.onSurface),
                       decoration: const InputDecoration(
                         hintText: 'Your first name',
                         hintStyle: TextStyle(
@@ -219,7 +249,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Continue button
                   GestureDetector(
                     onTap: canSave
                         ? () => Navigator.pop(ctx2, nameCtrl.text.trim())
@@ -255,19 +284,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     );
   }
 
-  void _resendCode() {
-    if (_resendTimer > 0) return;
-    final newOtp = _generateOtp();
-    setState(() {
-      _currentOtp   = newOtp;
-      _resendTimer  = 30;
-      _hasError     = false;
-    });
-    _codeController.clear();
-    _tickTimer();
-    _showCodeSentSnackbar();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,7 +291,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App bar with back + logo ──────────────────────────────
+            // ── App bar ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(children: [
@@ -306,10 +322,9 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                   children: [
                     const SizedBox(height: 40),
 
-                    // ── Lock icon ────────────────────────────────────
+                    // ── Lock icon ──────────────────────────────────────
                     Container(
-                      width: 64,
-                      height: 64,
+                      width: 64, height: 64,
                       decoration: BoxDecoration(
                         color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
@@ -320,7 +335,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── Title ─────────────────────────────────────────
+                    // ── Title ──────────────────────────────────────────
                     Text(
                       'Verify it\'s you',
                       style: TextStyle(
@@ -333,7 +348,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     const SizedBox(height: 12),
 
-                    // ── Subtitle ──────────────────────────────────────
+                    // ── Subtitle ───────────────────────────────────────
                     Text(
                       'We\'ve sent a 6-digit code to\n${widget.phoneNumber}',
                       style: const TextStyle(
@@ -346,7 +361,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     const SizedBox(height: 40),
 
-                    // ── OTP code boxes ────────────────────────────────
+                    // ── OTP boxes ──────────────────────────────────────
                     _OtpBoxRow(
                       controller: _codeController,
                       hasError: _hasError,
@@ -354,27 +369,27 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     if (_hasError) ...[
                       const SizedBox(height: 12),
-                      const Text(
-                        'Incorrect code. Please try again.',
-                        style: TextStyle(
+                      Text(
+                        _errorText ?? 'Incorrect code. Please try again.',
+                        style: const TextStyle(
                           fontSize: 13,
                           color: HuddlColors.error,
                           fontWeight: FontWeight.w500,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                     ],
 
                     const SizedBox(height: 32),
 
-                    // ── Resend button ─────────────────────────────────
+                    // ── Resend button ──────────────────────────────────
                     GestureDetector(
                       onTap: _resendCode,
                       child: Container(
                         width: double.infinity,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
+                          color: context.hc.inputBg,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                               color: HuddlColors.inputBorderLight, width: 1),
@@ -397,7 +412,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     const SizedBox(height: 24),
 
-                    // ── Verify button ─────────────────────────────────
+                    // ── Verify button ──────────────────────────────────
                     _isVerifying
                         ? SizedBox(
                             height: 54,
@@ -417,7 +432,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
                     const SizedBox(height: 32),
 
-                    // ── Help note ─────────────────────────────────────
                     Text(
                       'This keeps your Huddl account secure.',
                       style: TextStyle(
@@ -437,7 +451,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
   }
 }
 
-// ── 6-box OTP input ───────────────────────────────────────────────────────────
+// ── 6-box OTP input ────────────────────────────────────────────────────────────
 class _OtpBoxRow extends StatelessWidget {
   final TextEditingController controller;
   final bool hasError;
@@ -478,7 +492,8 @@ class _OtpBoxRow extends StatelessWidget {
                       color: hasError
                           ? HuddlColors.errorLight
                           : filled
-                              ? HuddlColors.onboardingOrange.withValues(alpha: 0.08)
+                              ? HuddlColors.onboardingOrange
+                                  .withValues(alpha: 0.08)
                               : context.hc.inputBg,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
