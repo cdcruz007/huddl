@@ -575,36 +575,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 if (_bio != null && _bio!.trim().isNotEmpty)
                   const SizedBox(height: 8),
 
-                // ── My groups horizontal list ────────────────────────────
+                // ── My groups horizontal card list ───────────────────────
                 if (_userGroups.isNotEmpty || _discoveredGroups.isNotEmpty)
                   Container(
                     color: context.hc.surface,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text('My Groups',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.hc.textTertiary)),
-                            const Spacer(),
-                            Text('$_totalGroupCount total',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: context.hc.textTertiary)),
-                          ],
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: Row(
+                            children: [
+                              Text('My Groups',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.hc.textPrimary)),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: _showMyGroupsSheet,
+                                child: Text('See all $_totalGroupCount',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: HuddlColors.primary,
+                                        fontWeight: FontWeight.w500)),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
-                          height: 90,
+                          height: 76,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(right: 16),
                             children: [
-                              ..._userGroups.map((g) => _GroupChip(group: g)),
-                              ..._discoveredGroups
-                                  .map((g) => _GroupChip(group: g)),
+                              ..._userGroups.map((g) => _GroupCard(group: g)),
+                              ..._discoveredGroups.map((g) => _GroupCard(group: g)),
                             ],
                           ),
                         ),
@@ -4459,48 +4467,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
 // HELPER WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _GroupChip extends StatelessWidget {
+/// Horizontal card for the "My Groups" section — wide enough for full names.
+class _GroupCard extends StatelessWidget {
   final Group group;
-  const _GroupChip({required this.group});
+  const _GroupCard({required this.group});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 72,
-      margin: const EdgeInsets.only(right: 14),
-      child: Column(
+      width: 180,
+      margin: const EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        color: context.hc.inputBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: HuddlColors.primary.withValues(alpha: 0.15), width: 1),
+      ),
+      child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                  color: HuddlColors.primary.withValues(alpha: 0.3), width: 1.5),
+          // ── Group image ──────────────────────────────────────
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(13),
+              bottomLeft: Radius.circular(13),
             ),
-            clipBehavior: Clip.antiAlias,
-            child: group.imageUrl.startsWith('assets/')
-                ? Image.asset(group.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _iconFallback())
-                : _iconFallback(),
+            child: SizedBox(
+              width: 76,
+              height: 76,
+              child: group.imageUrl.startsWith('assets/')
+                  ? Image.asset(group.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _imageFallback())
+                  : group.imageUrl.startsWith('http')
+                      ? Image.network(group.imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _imageFallback())
+                      : _imageFallback(),
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(group.name,
-              style: GoogleFonts.poppins(
-                  fontSize: 10, color: context.hc.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center),
+          // ── Group info ───────────────────────────────────────
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    group.name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.people_outline,
+                          size: 11, color: context.hc.textTertiary),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${group.memberCount} member${group.memberCount == 1 ? '' : 's'}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          color: context.hc.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _iconFallback() => Container(
-      color: HuddlColors.peachLight,
-      child: const Center(
-          child: Icon(Icons.people, size: 24, color: HuddlColors.primary)));
+  Widget _imageFallback() => Container(
+        color: HuddlColors.peachLight,
+        child: const Center(
+            child: Icon(Icons.people, size: 28, color: HuddlColors.primary)));
 }
 
 class _StatItem extends StatelessWidget {
