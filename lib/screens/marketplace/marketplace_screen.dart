@@ -1457,6 +1457,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         child: TextField(
                           controller: _searchController,
                           focusNode: _searchFocus,
+                          textAlignVertical: TextAlignVertical.center,
                           onChanged: (val) {
                             setState(() {
                               _searchQuery = val;

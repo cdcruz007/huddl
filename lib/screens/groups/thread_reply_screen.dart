@@ -465,6 +465,9 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 controller: _replyController,
                 focusNode: _focusNode,
                 textCapitalization: TextCapitalization.sentences,
+                textAlignVertical: TextAlignVertical.center,
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
                 style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Reply in thread...',
@@ -474,6 +477,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  isDense: true,
                 ),
                 onSubmitted: (_) => _sendReply(),
               ),

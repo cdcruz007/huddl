@@ -598,6 +598,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               controller: _inputController,
               onSubmitted: _sendMessage,
               enabled: !_isTyping,
+              textAlignVertical: TextAlignVertical.center,
               style: GoogleFonts.poppins(fontSize: 14),
               decoration: InputDecoration(
                 hintText: _isTyping

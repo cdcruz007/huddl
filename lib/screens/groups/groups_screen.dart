@@ -3917,6 +3917,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         ),
                         child: TextField(
                           controller: _searchController,
+                          textAlignVertical: TextAlignVertical.center,
                           onChanged: (val) {
                             _discoverAi.recordSearch(val);
                             setState(() {

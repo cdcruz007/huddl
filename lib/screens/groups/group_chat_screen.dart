@@ -3216,6 +3216,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     controller: _messageController,
                     focusNode: _focusNode,
                     textCapitalization: TextCapitalization.sentences,
+                    textAlignVertical: TextAlignVertical.center,
+                    maxLines: null,
+                    keyboardType: TextInputType.multiline,
                     style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Type a message...',
@@ -3229,7 +3232,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       isDense: true,
                     ),
-                    onSubmitted: (_) => _sendMessage(),
                     onTap: () {
                       // Focus text field
                     },

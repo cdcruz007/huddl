@@ -179,6 +179,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                     child: TextField(
                       onChanged: (val) =>
                           setState(() => _searchQuery = val),
+                      textAlignVertical: TextAlignVertical.center,
                       style: GoogleFonts.poppins(
                           fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
@@ -186,7 +187,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         border: InputBorder.none,
                         enabledBorder: InputBorder.none,
                         focusedBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         isDense: true,
                         hintStyle: GoogleFonts.poppins(
                             fontSize: 14, color: context.hc.textTertiary),

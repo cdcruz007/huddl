@@ -577,6 +577,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 Expanded(
                   child: TextField(
                     controller: _searchCtrl,
+                    textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.poppins(
                         fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(
@@ -585,6 +586,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                           fontSize: 14, color: context.hc.textTertiary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      isDense: true,
                     ),
                     onChanged: _applyFilter,
                   ),

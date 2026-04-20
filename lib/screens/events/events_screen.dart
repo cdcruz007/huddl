@@ -856,6 +856,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   child: TextField(
                     controller: _localSearchController,
                     onChanged: (v) => setState(() => _localSearchQuery = v),
+                    textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search meetups...',
@@ -1939,6 +1940,7 @@ class _EventsTabState extends State<_EventsTab> {
                     controller: _nlpController,
                     focusNode: _nlpFocusNode,
                     onChanged: _onNlpQueryChanged,
+                    textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'Search events...',

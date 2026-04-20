@@ -183,6 +183,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                             Expanded(
                               child: TextField(
                                 controller: _searchController,
+                                textAlignVertical: TextAlignVertical.center,
                                 style: GoogleFonts.poppins(
                                     fontSize: 14, color: context.hc.textPrimary),
                                 decoration: InputDecoration(
@@ -192,6 +193,7 @@ class _NewDMScreenState extends State<NewDMScreen> {
                                   border: InputBorder.none,
                                   contentPadding:
                                       const EdgeInsets.symmetric(vertical: 10),
+                                  isDense: true,
                                 ),
                                 onChanged: _applyFilter,
                               ),
