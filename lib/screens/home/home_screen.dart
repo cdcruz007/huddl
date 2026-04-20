@@ -318,25 +318,42 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
-    // 3. Announcements (AI-ranked by engagement + recency — max 3)
+    // 3. Announcements (ranked: own posts always first, then pinned, then
+    //    engagement + recency — max 4 so a user's new post is never buried)
+    final currentUserName = _announcementService.currentUserName;
     final sortedAnn = List<Announcement>.from(_announcements)
       ..sort((a, b) {
-        final scoreA = a.likes * 2 + a.comments * 3 + (a.isPinned ? 10 : 0);
-        final scoreB = b.likes * 2 + b.comments * 3 + (b.isPinned ? 10 : 0);
+        // Own posts always surface to the top
+        final aIsOwn = a.authorName == currentUserName ? 1 : 0;
+        final bIsOwn = b.authorName == currentUserName ? 1 : 0;
+        if (aIsOwn != bIsOwn) return bIsOwn.compareTo(aIsOwn);
+        // Then pinned
+        if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
+        // Then recency-weighted engagement: each hour of age reduces score by 1
+        final hoursAgeA = now.difference(a.createdAt).inHours;
+        final hoursAgeB = now.difference(b.createdAt).inHours;
+        final scoreA = a.likes * 2 + a.comments * 3 - hoursAgeA;
+        final scoreB = b.likes * 2 + b.comments * 3 - hoursAgeB;
         return scoreB.compareTo(scoreA);
       });
-    for (var i = 0; i < sortedAnn.length && i < 3; i++) {
+    for (var i = 0; i < sortedAnn.length && i < 4; i++) {
       final a = sortedAnn[i];
-      final score = 0.70 + (a.isPinned ? 0.15 : 0.0) +
-          (a.likes > 3 ? 0.05 : 0.0);
+      final isOwn = a.authorName == currentUserName;
+      final isNew = now.difference(a.createdAt).inMinutes < 30;
+      final score = 0.70 +
+          (a.isPinned ? 0.15 : 0.0) +
+          (a.likes > 3 ? 0.05 : 0.0) +
+          (isOwn ? 0.10 : 0.0);
       items.add(_SmartFeedItem(
         type: _SmartFeedType.announcement,
         score: score.clamp(0.0, 1.0),
-        reason: a.isPinned
-            ? 'Pinned by community'
-            : a.likes > 3
-                ? 'Popular in $_borough'
-                : 'Recent',
+        reason: isOwn && isNew
+            ? 'Just posted by you'
+            : a.isPinned
+                ? 'Pinned by community'
+                : a.likes > 3
+                    ? 'Popular in $_borough'
+                    : 'Recent',
         announcement: a,
       ));
     }
@@ -388,17 +405,17 @@ class _HomeScreenState extends State<HomeScreen>
     items.removeWhere((item) {
       switch (item.type) {
         case _SmartFeedType.meetup:
-          return !_feedPrefs['meetups']!;
+          return !(_feedPrefs['meetups'] ?? true);
         case _SmartFeedType.goingEvent:
-          return !_feedPrefs['events']!;
+          return !(_feedPrefs['events'] ?? true);
         case _SmartFeedType.announcement:
-          return !_feedPrefs['announcements']!;
+          return !(_feedPrefs['announcements'] ?? true);
         case _SmartFeedType.suggestedMeetup:
         case _SmartFeedType.group:
-          return !_feedPrefs['suggestions']!;
+          return !(_feedPrefs['suggestions'] ?? true);
         case _SmartFeedType.aiNudge:
         case _SmartFeedType.communityActivity:
-          return !_feedPrefs['tips']!;
+          return !(_feedPrefs['tips'] ?? true);
       }
     });
 
