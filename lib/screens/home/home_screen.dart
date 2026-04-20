@@ -113,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _feedStaggerCtrl;
 
   // ── AI feedback tracking ──────────────────────────────────────────────────
-  final Set<String> _feedbackGiven = {};
+
 
   // ── Adaptive: track which sections user interacts with ────────────────────
   int _meetupTaps = 0;
@@ -1423,9 +1423,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            // AI feedback thumbs
-            _buildAiFeedback('nudge_${nudge.id}'),
+
           ],
         ),
       ),
@@ -1774,7 +1772,7 @@ class _HomeScreenState extends State<HomeScreen>
                 ],
               ),
             ),
-            _buildAiFeedback('meetup_${meetup.id}'),
+
           ],
         ),
       ),
@@ -1987,8 +1985,6 @@ class _HomeScreenState extends State<HomeScreen>
                   onTap: () => _sharePost(a),
                 ),
                 const Spacer(),
-                // AI feedback
-                _buildAiFeedback('ann_${a.id}'),
               ],
             ),
           ],
@@ -2240,56 +2236,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── AI feedback thumbs (transparent AI) ───────────────────────────────────
-  Widget _buildAiFeedback(String itemId) {
-    if (_feedbackGiven.contains(itemId)) {
-      return SizedBox(
-        width: 48,
-        height: 32,
-        child: Center(
-          child: Text('Thanks!',
-              style: GoogleFonts.poppins(
-                fontSize: 9,
-                color: context.hc.textTertiary,
-              )),
-        ),
-      );
-    }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() => _feedbackGiven.add(itemId));
-          },
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: Center(
-              child: Icon(Icons.thumb_up_alt_outlined,
-                  size: 14, color: context.hc.textTertiary),
-            ),
-          ),
-        ),
-        GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() => _feedbackGiven.add(itemId));
-            // Negative feedback — could inform AI to reduce similar
-          },
-          child: SizedBox(
-            width: 32,
-            height: 32,
-            child: Center(
-              child: Icon(Icons.thumb_down_alt_outlined,
-                  size: 14, color: context.hc.textTertiary),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+
 
   // ── Nudge tap handler ─────────────────────────────────────────────────────
   void _handleNudgeTap(NudgeCard nudge) {
