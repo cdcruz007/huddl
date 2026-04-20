@@ -2931,7 +2931,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             ),
             // Divider before other items
             const PopupMenuDivider(),
-            // Share group
+            // Share group — hidden for default/onboarding groups which are
+            // automatically assigned and cannot be shared or joined manually.
+            if (!widget.isDefaultGroup)
             PopupMenuItem<String>(
               value: 'share',
               child: Row(
