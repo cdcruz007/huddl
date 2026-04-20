@@ -22,8 +22,10 @@ class FeedbackService extends ChangeNotifier {
   static const String _targetEmail = 'welcome@huddlapp.co.uk';
 
   // ── EmailJS credentials ────────────────────────────────────────────────
-  // Sign up free at https://www.emailjs.com → Service → Gmail/SMTP
-  // Replace the three values below with your EmailJS account details.
+  // Setup: https://www.emailjs.com → Email Services → Custom SMTP
+  // Use your Hostinger SMTP credentials (smtp.hostinger.com, port 465/587)
+  // with welcome@huddlapp.co.uk as the sender address.
+  // Replace the three placeholders below once the EmailJS service is created.
   static const String _emailJsServiceId  = 'service_huddl';
   static const String _emailJsTemplateId = 'template_feedback';
   static const String _emailJsPublicKey  = 'YOUR_EMAILJS_PUBLIC_KEY';
