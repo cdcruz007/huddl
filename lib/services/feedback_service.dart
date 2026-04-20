@@ -26,9 +26,9 @@ class FeedbackService extends ChangeNotifier {
   // Use your Hostinger SMTP credentials (smtp.hostinger.com, port 465/587)
   // with welcome@huddlapp.co.uk as the sender address.
   // Replace the three placeholders below once the EmailJS service is created.
-  static const String _emailJsServiceId  = 'service_huddl';
-  static const String _emailJsTemplateId = 'template_feedback';
-  static const String _emailJsPublicKey  = 'YOUR_EMAILJS_PUBLIC_KEY';
+  static const String _emailJsServiceId  = 'service_5hdcs5h';
+  static const String _emailJsTemplateId = 'gfmtuwi';
+  static const String _emailJsPublicKey  = 'imIn2A3lvfFeSVSaJ';
 
   // ── Local cache key (BrowserStorage fallback) ─────────────────────────
   static const String _storageKey = 'huddl_feedback_ratings';
