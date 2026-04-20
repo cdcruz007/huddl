@@ -5731,7 +5731,9 @@ class _SavedThreadCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 1),
                       Text(
-                        'Thread from ${savedThread.groupName}',
+                        savedThread.replies.isEmpty
+                            ? 'Message from ${savedThread.groupName}'
+                            : 'Thread from ${savedThread.groupName}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: context.hc.textTertiary,
@@ -5798,7 +5800,8 @@ class _SavedThreadCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 6),
-                  // Reply count badge
+                  // Reply count badge (only shown when there are replies/merged messages)
+                  if (savedThread.replies.isNotEmpty)
                   Row(
                     children: [
                       Icon(Icons.reply, size: 14, color: HuddlColors.blue),
@@ -5824,7 +5827,9 @@ class _SavedThreadCard extends StatelessWidget {
                 Icon(Icons.open_in_new, size: 12, color: context.hc.textTertiary),
                 const SizedBox(width: 4),
                 Text(
-                  'Tap to open thread in group',
+                  savedThread.replies.isEmpty
+                      ? 'Tap to go to group'
+                      : 'Tap to open thread in group',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     color: context.hc.textTertiary,

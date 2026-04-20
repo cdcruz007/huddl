@@ -941,48 +941,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  // ── Save message ──────────────────────────────────────────────────────
-  Future<void> _saveMessage(ChatMessage msg) async {
-    if (_savedMessageService.isMessageSaved(msg.id)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Message already saved'),
-          backgroundColor: HuddlColors.textHint,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    await _savedMessageService.saveGroupMessage(
-      messageId: msg.id,
-      message: msg.message,
-      senderName: msg.senderName,
-      timestamp: msg.timestamp,
-      groupId: widget.groupId,
-      groupName: widget.groupName,
-      groupImageUrl: widget.groupImageUrl,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.bookmark_added, color: Colors.white, size: 18),
-            const SizedBox(width: 8),
-            Expanded(child: Text('Message saved to Saved tab')),
-          ],
-        ),
-        backgroundColor: HuddlColors.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
   // ── Unsend message ──────────────────────────────────────────────────
   void _showUnsendDialog(ChatMessage msg) {
     showDialog(
@@ -1113,22 +1071,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  // ── Save entire reply thread ──────────────────────────────────────
+  // ── Save message / thread under a named topic ───────────────────────
   void _showSaveThreadDialog(ChatMessage rootMsg) {
-    // Collect thread replies from the _threadReplies map
+    // Collect thread replies from the _threadReplies map (may be empty —
+    // a single message with no replies can still be saved under a topic).
     final threadReplies = _threadReplies[rootMsg.id] ?? [];
-
-    if (threadReplies.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('No replies found for this message'),
-          backgroundColor: HuddlColors.textHint,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-      return;
-    }
 
     final topicController = TextEditingController();
     // Existing topic names for suggestions / duplicate detection
@@ -1164,7 +1111,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                     const SizedBox(height: 18),
                     Text(
-                      'Save reply thread',
+                      threadReplies.isEmpty ? 'Save message' : 'Save reply thread',
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -1174,7 +1121,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '${threadReplies.length + 1} messages in this thread',
+                      threadReplies.isEmpty
+                          ? 'Save this message under a topic'
+                          : '${threadReplies.length + 1} messages in this thread',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         color: context.hc.textSecondary,
@@ -1210,6 +1159,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: 4),
+                          if (threadReplies.isNotEmpty)
                           Text(
                             '+ ${threadReplies.length} ${threadReplies.length == 1 ? 'reply' : 'replies'}',
                             style: GoogleFonts.poppins(
@@ -1395,7 +1345,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               elevation: 0,
                             ),
                             child: Text(
-                              isExisting ? 'Add to topic' : 'Save thread',
+                              isExisting
+                                  ? 'Add to topic'
+                                  : threadReplies.isEmpty
+                                      ? 'Save message'
+                                      : 'Save thread',
                               style: GoogleFonts.poppins(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
@@ -2660,12 +2614,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                             msg.senderAvatar,
                                           ),
                                   onSave: () {
-                                    // If message has thread replies, redirect to Save Thread dialog
-                                    if (_threadReplies[msg.id] != null && _threadReplies[msg.id]!.isNotEmpty) {
-                                      _showSaveThreadDialog(msg);
-                                    } else {
-                                      _saveMessage(msg);
-                                    }
+                                    // Always show the topic-save dialog so any message
+                                    // can be filed under a named topic.
+                                    _showSaveThreadDialog(msg);
                                   },
                                   onForward: () {
                                     showForwardSheet(
