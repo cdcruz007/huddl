@@ -48,6 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final SubscriptionService _subscriptionService = SubscriptionService();
 
   bool _isLoading = true;
+  bool _isPhotoUploading = false; // true while photo is being read/encoded
 
   // Dynamic profile data
   String _name = '';
@@ -3814,23 +3815,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickProfilePhoto(ImageSource source) async {
     try {
-      // Use new image editor with crop functionality.
-      // Pass the *already-chosen* source so the ImageEditorWidget does NOT show
-      // its own "Select Image Source" sheet — preventing a double-prompt.
+      // Pass the *already-chosen* source so ImageEditorWidget does NOT show
+      // its own source-selection sheet — prevents a double-prompt.
       final file = await ImageEditorWidget.pickProfilePictureWithSource(context, source);
-      
-      if (file != null && mounted) {
-        _onboarding.setProfilePhotoPath(file.path);
-        final bytes = await file.readAsBytes();
-        final base64Str = base64Encode(bytes);
-        final mimeType = file.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
-        final dataUrl = 'data:$mimeType;base64,$base64Str';
-        _onboarding.setProfilePhotoObjectUrl(dataUrl);
-        setState(() => _photoUrl = dataUrl);
-        if (mounted) _snack('Profile photo updated');
-      }
+
+      if (file == null || !mounted) return;
+
+      // Show loading spinner immediately so the user knows something is happening
+      setState(() => _isPhotoUploading = true);
+
+      // Persist the file path and encode to a data: URL so it survives storage
+      _onboarding.setProfilePhotoPath(file.path);
+      final bytes = await file.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      final mimeType =
+          file.path.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      final dataUrl = 'data:$mimeType;base64,$base64Str';
+      _onboarding.setProfilePhotoObjectUrl(dataUrl);
+
+      if (!mounted) return;
+      // Update avatar — also store the raw file path so Image.file works
+      // instantly without waiting for base64 decode on next build.
+      setState(() {
+        _photoUrl = dataUrl;
+        _isPhotoUploading = false;
+      });
+      _snack('Profile photo updated ✓');
     } catch (e) {
       if (mounted) {
+        setState(() => _isPhotoUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Could not update photo: $e'),
             backgroundColor: HuddlColors.error));
@@ -3846,6 +3859,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildAvatar() {
+    // Show spinner overlay while encoding/saving the new photo
+    if (_isPhotoUploading) {
+      return Container(
+        width: 88,
+        height: 88,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: HuddlColors.peachLight,
+          border: Border.all(color: HuddlColors.primary, width: 2),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 2.5,
+            color: HuddlColors.primary,
+          ),
+        ),
+      );
+    }
     if (_photoUrl != null && _photoUrl!.isNotEmpty) {
       return Container(
         width: 88,

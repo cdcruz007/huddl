@@ -38,7 +38,8 @@ class ImageEditorWidget {
 
     if (pickedFile == null) return null;
 
-    // Crop the selected image
+    // Try to crop — if user dismisses the cropper (returns null), fall back
+    // to the raw picked file so the photo is never silently dropped.
     final croppedFile = await _cropImage(
       context: context,
       imagePath: pickedFile.path,
@@ -46,7 +47,7 @@ class ImageEditorWidget {
       title: title,
     );
 
-    return croppedFile;
+    return croppedFile ?? File(pickedFile.path);
   }
 
   /// Show bottom sheet to select image source (gallery or camera)
@@ -202,12 +203,15 @@ class ImageEditorWidget {
     );
     if (pickedFile == null) return null;
 
-    return _cropImage(
+    // Try to crop — if user dismisses the cropper (returns null), fall back
+    // to the raw picked file so the photo is never silently dropped.
+    final cropped = await _cropImage(
       context: context,
       imagePath: pickedFile.path,
       aspectRatio: aspectRatio,
       title: title,
     );
+    return cropped ?? File(pickedFile.path);
   }
 
   /// Quick helper for profile pictures (always square)

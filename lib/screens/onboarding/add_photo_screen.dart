@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -357,13 +358,23 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
   /// Builds the content inside the 160 px avatar circle.
   Widget _buildAvatarContent() {
     if (_pickedFile != null) {
-      // ── Show selected image ──
-      // On web, XFile.path is a blob: URL that works with Image.network.
-      // On mobile it's a file system path — but Image.network also handles
-      // file:// URIs, so we use a single code path.
+      if (kIsWeb) {
+        // Web: XFile.path is a blob: URL — use Image.network
+        return ClipOval(
+          child: Image.network(
+            _pickedFile!.path,
+            width: 160,
+            height: 160,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _defaultAvatar(),
+          ),
+        );
+      }
+      // Mobile (iOS / Android): XFile.path is a real file-system path.
+      // Image.network does NOT work for local paths on iOS — use Image.file.
       return ClipOval(
-        child: Image.network(
-          _pickedFile!.path,
+        child: Image.file(
+          File(_pickedFile!.path),
           width: 160,
           height: 160,
           fit: BoxFit.cover,
