@@ -209,7 +209,10 @@ class OnboardingDataService {
     };
   }
 
-  // Clear all data
+  // Clear all data (GDPR Art. 17 / account deletion)
+  // Also resets the initialization guard so that initialize() will re-read
+  // storage correctly if the user starts a fresh onboarding session in the
+  // same app lifecycle (e.g. after deleting their account).
   void clear() async {
     _name = null;
     _parentType = null;
@@ -228,6 +231,10 @@ class OnboardingDataService {
     _previousBorough = null;
     _assignedGroupCount = 0;
     _assignedGroupNames = [];
+    // Reset initialization guards so a subsequent initialize() call will
+    // re-read storage instead of returning the (now stale) cached future.
+    _isInitialized = false;
+    _initializationFuture = null;
     _log('All onboarding data cleared');
     await BrowserStorage.remove(_storageKey);
   }
