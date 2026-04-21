@@ -130,8 +130,14 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     }
   }
 
-  /// Shown when a valid OTP is entered but no account exists for this number.
+  /// Shown when a valid OTP is entered but no Huddl account exists for this
+  /// number. Clears any stale onboarding data then routes to the full
+  /// onboarding carousel so the user can register fresh.
   Future<void> _showAccountNotFoundDialog() async {
+    // Wipe any leftover onboarding state so every screen starts blank.
+    await OnboardingDataService().clear();
+
+    if (!mounted) return;
     await showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -140,42 +146,51 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
         title: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.person_off_outlined,
-                  size: 20, color: HuddlColors.onboardingOrange),
+              child: Icon(Icons.waving_hand_rounded,
+                  size: 22, color: HuddlColors.onboardingOrange),
             ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
-                'Account not found',
+                'No account found',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
         content: const Text(
-          'We couldn\'t find a Huddl account linked to this phone number.\n\n'
-          'It may have been deleted. Please sign up to create a new account '
-          'and set up your profile again.',
-          style: TextStyle(fontSize: 14, height: 1.5),
+          'We couldn\'t find a Huddl account linked to this number.\n\n'
+          'Join Huddl to connect with local parents — it only takes a couple '
+          'of minutes to get set up.',
+          style: TextStyle(fontSize: 14, height: 1.55),
         ),
         actions: [
+          // "Not now" dismisses and goes back to the login entry screen
+          // so the user isn't stranded on the OTP screen.
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/login',
+                (route) => false,
+              );
+            },
             child: Text(
-              'Cancel',
+              'Not now',
               style: TextStyle(color: HuddlColors.disabledText),
             ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              // Navigate to onboarding, removing all previous routes.
+              // Full onboarding journey: carousel → name → parent type → etc.
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/onboarding',
@@ -191,7 +206,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
               elevation: 0,
             ),
             child: const Text(
-              'Sign up',
+              'Join Huddl',
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,

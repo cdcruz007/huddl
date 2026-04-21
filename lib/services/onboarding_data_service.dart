@@ -213,7 +213,7 @@ class OnboardingDataService {
   // Also resets the initialization guard so that initialize() will re-read
   // storage correctly if the user starts a fresh onboarding session in the
   // same app lifecycle (e.g. after deleting their account).
-  void clear() async {
+  Future<void> clear() async {
     _name = null;
     _parentType = null;
     _stagesOfLife = [];

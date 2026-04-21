@@ -5,6 +5,7 @@ import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/onboarding_data_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -172,6 +173,9 @@ class _LoginScreenState extends State<LoginScreen> {
   /// Shown when Firebase explicitly reports that the phone number is not
   /// linked to any account (e.g. the user deleted their account previously).
   void _showAccountNotFoundDialog() {
+    // Clear any stale onboarding data before starting a fresh registration.
+    OnboardingDataService().clear();
+
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -179,34 +183,43 @@ class _LoginScreenState extends State<LoginScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.person_off_outlined,
-                size: 28, color: HuddlColors.primary),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.waving_hand_rounded,
+                  size: 22, color: HuddlColors.primary),
+            ),
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
-                'Account not found',
+                'No account found',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
         content: const Text(
-          'We couldn\'t find a Huddl account linked to this phone number.\n\n'
-          'It may have been deleted. Please sign up to create a new account '
-          'and set up your profile again.',
-          style: TextStyle(fontSize: 14, height: 1.5),
+          'We couldn\'t find a Huddl account linked to this number.\n\n'
+          'Join Huddl to connect with local parents — it only takes a couple '
+          'of minutes to get set up.',
+          style: TextStyle(fontSize: 14, height: 1.55),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              'Cancel',
+              'Not now',
               style: TextStyle(color: HuddlColors.textSecondary),
             ),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
+              // Full onboarding journey: carousel → name → parent type → etc.
               Navigator.pushNamedAndRemoveUntil(
                 context,
                 '/onboarding',
@@ -222,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
               elevation: 0,
             ),
             child: const Text(
-              'Sign up',
+              'Join Huddl',
               style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
