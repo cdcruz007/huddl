@@ -47,6 +47,8 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       _errorText = null;
     });
     if (_codeController.text.length == 6) {
+      // Dismiss the keyboard before verifying so the UI doesn't jump
+      FocusManager.instance.primaryFocus?.unfocus();
       _verify();
     }
   }
@@ -379,165 +381,176 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── App bar ────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-              child: Row(children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left,
-                      size: 30, color: HuddlColors.onboardingOrange),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                ),
-                Expanded(
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/logo_huddl_splash.png',
-                      height: 34,
-                      fit: BoxFit.contain,
+    return GestureDetector(
+      // Dismiss keyboard when tapping outside input areas
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        // Allow the scaffold to resize when the keyboard appears
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // ── App bar ──────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                child: Row(children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left,
+                        size: 30, color: HuddlColors.onboardingOrange),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Image.asset(
+                        'assets/images/logo_huddl_splash.png',
+                        height: 34,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 48),
-              ]),
-            ),
+                  const SizedBox(width: 48),
+                ]),
+              ),
 
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
+              // ── Scrollable body — keyboard pushes content up cleanly ─
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 32),
 
-                    // ── Lock icon ──────────────────────────────────────
-                    Container(
-                      width: 64, height: 64,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+                      // ── Lock icon ────────────────────────────────────
+                      Container(
+                        width: 64, height: 64,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.lock_outline_rounded,
+                            size: 32, color: HuddlColors.onboardingOrange),
                       ),
-                      child: const Icon(Icons.lock_outline_rounded,
-                          size: 32, color: HuddlColors.onboardingOrange),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                    // ── Title ──────────────────────────────────────────
-                    Text(
-                      'Verify it\'s you',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // ── Subtitle ───────────────────────────────────────
-                    Text(
-                      'We\'ve sent a 6-digit code to\n${widget.phoneNumber}',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        color: HuddlColors.disabledText,
-                        height: 1.5,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 40),
-
-                    // ── OTP boxes ──────────────────────────────────────
-                    _OtpBoxRow(
-                      controller: _codeController,
-                      hasError: _hasError,
-                    ),
-
-                    if (_hasError) ...[
-                      const SizedBox(height: 12),
+                      // ── Title ────────────────────────────────────────
                       Text(
-                        _errorText ?? 'Incorrect code. Please try again.',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: HuddlColors.error,
-                          fontWeight: FontWeight.w500,
+                        'Verify it\'s you',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                    ],
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 10),
 
-                    // ── Resend button ──────────────────────────────────
-                    GestureDetector(
-                      onTap: _resendCode,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: context.hc.inputBg,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                              color: HuddlColors.inputBorderLight, width: 1),
+                      // ── Subtitle ─────────────────────────────────────
+                      Text(
+                        'We\'ve sent a 6-digit code to\n${widget.phoneNumber}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: HuddlColors.disabledText,
+                          height: 1.5,
                         ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          _resendTimer > 0
-                              ? 'Resend code in $_resendTimer s'
-                              : 'Resend code',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: _resendTimer > 0
-                                ? HuddlColors.disabledText
-                                : HuddlColors.onboardingOrange,
+                        textAlign: TextAlign.center,
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // ── OTP boxes ────────────────────────────────────
+                      _OtpBoxRow(
+                        controller: _codeController,
+                        hasError: _hasError,
+                      ),
+
+                      if (_hasError) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          _errorText ?? 'Incorrect code. Please try again.',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: HuddlColors.error,
                             fontWeight: FontWeight.w500,
                           ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+
+                      const SizedBox(height: 28),
+
+                      // ── Resend button ────────────────────────────────
+                      GestureDetector(
+                        onTap: _resendCode,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: context.hc.inputBg,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: HuddlColors.inputBorderLight, width: 1),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _resendTimer > 0
+                                ? 'Resend code in $_resendTimer s'
+                                : 'Resend code',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: _resendTimer > 0
+                                  ? HuddlColors.disabledText
+                                  : HuddlColors.onboardingOrange,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 20),
 
-                    // ── Verify button ──────────────────────────────────
-                    _isVerifying
-                        ? SizedBox(
-                            height: 54,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: HuddlColors.onboardingOrange,
-                                strokeWidth: 2.5,
+                      // ── Verify button ────────────────────────────────
+                      _isVerifying
+                          ? SizedBox(
+                              height: 54,
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: HuddlColors.onboardingOrange,
+                                  strokeWidth: 2.5,
+                                ),
                               ),
+                            )
+                          : _OrangeButton(
+                              label: 'Verify & Log in',
+                              enabled: _codeController.text.length == 6 &&
+                                  !_hasError,
+                              onTap: _verify,
                             ),
-                          )
-                        : _OrangeButton(
-                            label: 'Verify & Log in',
-                            enabled: _codeController.text.length == 6 &&
-                                !_hasError,
-                            onTap: _verify,
-                          ),
 
-                    const SizedBox(height: 32),
+                      const SizedBox(height: 24),
 
-                    Text(
-                      'This keeps your Huddl account secure.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: HuddlColors.disabledText.withValues(alpha: 0.8),
+                      Text(
+                        'This keeps your Huddl account secure.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: HuddlColors.disabledText.withValues(alpha: 0.8),
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+
+                      // Extra bottom padding so content clears the keyboard
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -566,9 +579,12 @@ class _OtpBoxRow extends StatelessWidget {
             autofocus: true,
           ),
         ),
-        // Visual OTP boxes
+        // Visual OTP boxes — tap to open keyboard for input
         GestureDetector(
-          onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+          onTap: () {
+            // Bring the hidden text field back into focus so keyboard appears
+            FocusScope.of(context).requestFocus(FocusNode());
+          },
           child: AnimatedBuilder(
             animation: controller,
             builder: (_, __) {

@@ -125,8 +125,23 @@ class _LoginScreenState extends State<LoginScreen> {
     final fullPhone = _buildFullPhone(digits);
 
     try {
+      // ── PRE-CHECK: Does this number have a registered Huddl account? ──
+      // This runs BEFORE triggering the SMS so the user sees the "No account
+      // found" dialog immediately rather than after entering their OTP code.
+      // Falls through (returns true) on timeout/network error so legit users
+      // are never incorrectly blocked.
+      final hasAccount = await _authService.checkPhoneHasAccount(fullPhone);
+      if (!mounted) return;
+
+      if (!hasAccount) {
+        setState(() => _isLoading = false);
+        _showAccountNotFoundDialog();
+        return;
+      }
+
+      // ── Phone has a Huddl account — trigger SMS verification ─────────
       final result = await _authService.verifyPhoneNumber(fullPhone)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
+          .timeout(const Duration(seconds: 30), onTimeout: () {
         return PhoneAuthResult(
           status: PhoneAuthStatus.error,
           errorMessage: 'Verification timed out. Please try again.',
@@ -152,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
         );
       } else if (result.isAccountDeleted) {
-        // No Firebase account for this number — guide user to sign up
+        // Firebase explicitly reported no account — guide user to sign up
         setState(() => _isLoading = false);
         _showAccountNotFoundDialog();
       } else {

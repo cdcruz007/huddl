@@ -408,6 +408,44 @@ class FirebaseAuthService {
     return doc.exists;
   }
 
+  /// Pre-checks whether a phone number has a registered Huddl account in
+  /// Firestore, BEFORE triggering SMS verification.
+  ///
+  /// This avoids sending an OTP (and confusing the user with an OTP screen)
+  /// when the phone number was never registered or the account was deleted.
+  ///
+  /// Returns `true` if a matching Firestore user document exists.
+  /// Returns `false` if no account found or on any error (fails open so the
+  /// OTP path still runs if Firestore is unreachable).
+  Future<bool> checkPhoneHasAccount(String fullPhoneNumber) async {
+    try {
+      // Normalise the number the same way _createUserProfile stores it —
+      // strip spaces so both "+44 7700 900123" and "+447700900123" match.
+      final normalised = fullPhoneNumber.replaceAll(RegExp(r'\s+'), '');
+
+      // Query by the 'phone' field stored in the user document.
+      // We try both spaced and compact forms for robustness.
+      final query = await _db
+          .collection('users')
+          .where('phone', whereIn: [fullPhoneNumber, normalised])
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 6), onTimeout: () {
+            _log('checkPhoneHasAccount: Firestore timeout — allowing OTP');
+            // Return an empty snapshot on timeout so we default to true
+            // (allow the OTP flow rather than incorrectly blocking the user).
+            throw TimeoutException('Firestore timeout');
+          });
+
+      return query.docs.isNotEmpty;
+    } catch (e) {
+      // On any error (network, permissions, timeout) default to true so
+      // legitimate users are not incorrectly blocked.
+      _log('checkPhoneHasAccount: error ($e) — defaulting to allow');
+      return true;
+    }
+  }
+
   Future<Map<String, dynamic>?> getUserProfile() async {
     if (uid == null) return null;
     final doc = await _db.collection('users').doc(uid).get();
