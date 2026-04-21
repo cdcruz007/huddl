@@ -3360,10 +3360,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               // Reset in-memory privacy prefs singleton
                               UserPrivacyPrefsService().reset();
 
-                              // ── 3. Navigate to login ──
+                              // ── 3. Navigate to onboarding (Join Huddl) ──
+                              // Take the user to the full onboarding carousel
+                              // so they can re-register if they wish, rather
+                              // than the bare login screen.
                               if (mounted) {
                                 Navigator.of(context).pushNamedAndRemoveUntil(
-                                    '/login', (r) => false);
+                                    '/onboarding', (r) => false);
                               }
                             },
                       style: ElevatedButton.styleFrom(

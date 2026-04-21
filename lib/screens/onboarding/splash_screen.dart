@@ -166,11 +166,17 @@ class _SplashScreenState extends State<SplashScreen>
         }
         if (!mounted) return;
         if (hasProfile) {
-          // Returning user → go to home
+          // Returning user with a valid profile → go to home
           auth.updateLastActive();
           Navigator.of(context).pushReplacementNamed('/home');
         } else {
-          // Signed in but no profile → incomplete onboarding
+          // Signed in but NO Firestore profile — this happens when:
+          //   • A new build is installed but the old Firebase Auth session
+          //     is still cached in the iOS Keychain / Android store
+          //   • The account was deleted but Auth wasn't fully cleared
+          // Sign out the stale session so onboarding starts completely fresh.
+          await auth.signOut();
+          if (!mounted) return;
           Navigator.of(context).pushReplacementNamed('/onboarding');
         }
       } else {
