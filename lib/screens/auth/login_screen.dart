@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/browser_storage.dart';
+import '../../services/onboarding_data_service.dart';
+import '../../services/default_group_service.dart';
+import '../../services/saved_message_service.dart';
+import '../../services/meetup_service.dart';
+import '../../services/block_service.dart';
+import '../../services/dm_service.dart';
+import '../../services/invitation_service.dart';
+import '../../services/community_feed_service.dart';
+import '../../services/announcement_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading       = false;
+  bool _isResetting     = false;
   String? _errorMessage;
   String? _phoneError;
 
@@ -29,6 +41,141 @@ class _LoginScreenState extends State<LoginScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  // ── Full data reset (clears all local & server data for fresh onboarding) ──
+  Future<void> _handleFullReset() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Reset all data',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This will permanently delete all locally stored data for this device — '
+          'profile, groups, messages, meetups, events, and onboarding progress.\n\n'
+          'Any Firebase account associated with this device will also be signed out.\n\n'
+          'You will be taken back to the beginning to create a fresh account.',
+          style: GoogleFonts.poppins(fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel',
+                style: GoogleFonts.poppins(color: HuddlColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text('Reset everything',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    setState(() => _isResetting = true);
+    try {
+      // 1. Sign out from Firebase
+      final auth = FirebaseAuthService();
+      await auth.signOut();
+
+      // 2. Clear all in-memory singletons
+      OnboardingDataService().clear();
+      DefaultGroupService().clear();
+
+      // 3. Clear all persisted service data
+      await SavedMessageService().clearAll();
+      await MeetupService().clearAll();
+      await BlockService().clearAll();
+      await DMService().clearAll();
+      await InvitationService().clearAll();
+      await CommunityFeedService().clearAll();
+      await AnnouncementService().clearAll();
+
+      // 4. Wipe every key explicitly (belt-and-suspenders)
+      for (final key in const [
+        'onboarding_data_v1',
+        'default_groups_v4',
+        'user_memberships_v4',
+        'borough_image_counters_v3',
+        'user_created_groups_v1',
+        'left_groups_v1',
+        'saved_messages_v1',
+        'saved_threads_v1',
+        'saved_events_v1',
+        'huddl_user_meetups',
+        'blocked_users_v1',
+        'dm_conversations_v2',
+        'group_invitations_v1',
+        'joined_groups_v2',
+        'group_system_messages_v1',
+        'community_feed_v2',
+        'last_login_timestamp',
+        'borough_announcements_v2',
+        'tutorial_completed_v1',
+        'huddl_biometric_enabled',
+        'huddl_borough_analytics',
+        'huddl_borough_counters',
+        'huddl_postcode_borough_v1',
+        'ai_knowledge_base_v2',
+        'ai_kb_last_refresh_v2',
+        'huddl_learning_profile_v2',
+        'huddl_signal_log_v2',
+        'huddl_discover_ai_behaviour',
+        'huddl_discover_ai_feedback',
+        'huddl_msg_ai_behaviour',
+        'huddl_msg_ai_feedback',
+        'daily_ai_refresh_last',
+        'user_subscription_v2',
+        'subscription_usage_v2',
+        'trial_already_used',
+        'huddl_feedback_ratings',
+        'huddl_gdpr_borough_audit',
+        'huddl_favourite_ids',
+        'huddl_muted_ids',
+        'huddl_pinned_ids',
+        'pref_push_enabled',
+        'pref_group_messages',
+        'pref_dm_messages',
+        'pref_event_reminders',
+        'pref_community_updates',
+        'pref_show_online',
+        'pref_show_profile',
+        'pref_show_groups',
+        'pref_read_receipts',
+        'permission_media_access_v1',
+      ]) {
+        await BrowserStorage.remove(key);
+      }
+
+      // 5. Nuclear option — wipe every shared_preferences key
+      await BrowserStorage.clear();
+
+      if (!mounted) return;
+      // 6. Navigate to fresh onboarding
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/onboarding', (r) => false);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isResetting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Reset failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // ── UK phone validation (same rules as onboarding phone_number_screen) ──
@@ -506,6 +653,46 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
 
               const SizedBox(height: 32),
+
+              // ── Dev / Support: Reset all app data ────────────────
+              if (_isResetting)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          color: Colors.red,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Resetting all data…',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, color: Colors.red),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: GestureDetector(
+                    onTap: _handleFullReset,
+                    child: Text(
+                      'Start fresh / reset all app data',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Colors.red.withValues(alpha: 0.7),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
