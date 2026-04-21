@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
-import 'dart:math';
 import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
@@ -110,7 +109,8 @@ class CommunityFeedService {
   factory CommunityFeedService() => _instance;
   CommunityFeedService._internal();
 
-  static const String _storageKey = 'community_feed_v2';
+  // v3: bumped to purge any cached dummy/seed data from previous versions.
+  static const String _storageKey = 'community_feed_v3';
   static const String _lastLoginKey = 'last_login_timestamp';
 
   final OnboardingDataService _onboarding = OnboardingDataService();
@@ -153,9 +153,8 @@ class CommunityFeedService {
     _resolveBorough();
     await _loadLastLogin();
     await _loadFeed();
-    if (_feedItems.isEmpty) {
-      _seedFeed();
-    }
+    // Production: never seed dummy data.
+    // The feed starts empty and fills with real user activity only.
     // Update last-login to NOW
     await _saveLastLogin();
     _isInitialized = true;
@@ -228,98 +227,7 @@ class CommunityFeedService {
     return '${days[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}';
   }
 
-  // ── Feed Seed ───────────────────────────────────────────────────────────
-  void _seedFeed() {
-    final borough = _userBorough ?? 'Cambridge';
-    final now = DateTime.now();
-    final rng = Random(42);
-
-    // New parents who joined recently
-    final parentNames = [
-      'Sophie Andrews',
-      'Oliver Chen',
-      'Priya Sharma',
-      'Liam O\'Brien',
-      'Fatima Hassan',
-    ];
-    for (var i = 0; i < parentNames.length; i++) {
-      _feedItems.add(FeedItem(
-        id: 'fp_$i',
-        type: FeedItemType.newParent,
-        title: parentNames[i],
-        subtitle: 'Joined the $borough community',
-        iconName: 'person_add',
-        createdAt: now.subtract(Duration(hours: rng.nextInt(48) + 1)),
-      ));
-    }
-
-    // Note: default/onboarding groups are intentionally excluded from the
-    // community feed. Only real user-created groups should appear here
-    // (handled separately in the smart feed builder).
-
-    // Sample marketplace items (with image URLs)
-    final items = [
-      {
-        'title': 'Baby Jogger City Mini',
-        'price': '\u00a3180',
-        'seller': 'Emma J.',
-        'image': 'https://images.pexels.com/photos/3933096/pexels-photo-3933096.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-      {
-        'title': 'Wooden Toy Set',
-        'price': '\u00a325',
-        'seller': 'David L.',
-        'image': 'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-      {
-        'title': 'Ergobaby Carrier',
-        'price': '\u00a395',
-        'seller': 'Anna K.',
-        'image': 'https://images.pexels.com/photos/3845459/pexels-photo-3845459.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-    ];
-    for (var i = 0; i < items.length; i++) {
-      _feedItems.add(FeedItem(
-        id: 'fm_$i',
-        type: FeedItemType.newMarketplaceItem,
-        title: items[i]['title']!,
-        subtitle: '${items[i]['price']} by ${items[i]['seller']}',
-        imageAsset: items[i]['image'],
-        iconName: 'storefront',
-        createdAt: now.subtract(Duration(hours: rng.nextInt(36) + 1)),
-        meta: items[i],
-      ));
-    }
-
-    // New events (with image URLs matching meetup images)
-    final eventData = [
-      {
-        'title': 'Baby Sensory Play',
-        'image': 'https://images.pexels.com/photos/296301/pexels-photo-296301.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-      {
-        'title': 'Parents Coffee Morning',
-        'image': 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-      {
-        'title': 'Toddler Music & Movement',
-        'image': 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=400',
-      },
-    ];
-    for (var i = 0; i < eventData.length; i++) {
-      _feedItems.add(FeedItem(
-        id: 'fe_$i',
-        type: FeedItemType.newEvent,
-        title: eventData[i]['title']!,
-        subtitle: 'New meetup in $borough',
-        imageAsset: eventData[i]['image'],
-        iconName: 'event',
-        createdAt: now.subtract(Duration(hours: rng.nextInt(72) + 1)),
-      ));
-    }
-
-    _saveFeed();
-  }
+  // _seedFeed() removed — production build shows real user activity only.
 
   // ── Persistence ─────────────────────────────────────────────────────────
   Future<void> _loadFeed() async {
@@ -335,6 +243,7 @@ class CommunityFeedService {
     }
   }
 
+  // ignore: unused_element  (will be called when real feed posts are persisted)
   Future<void> _saveFeed() async {
     try {
       final encoded = json.encode(_feedItems.map((f) => f.toJson()).toList());

@@ -150,7 +150,8 @@ class AnnouncementService {
   factory AnnouncementService() => _instance;
   AnnouncementService._internal();
 
-  static const String _storageKey = 'borough_announcements_v2';
+  // v3: bumped to purge any cached dummy/seed data from previous versions.
+  static const String _storageKey = 'borough_announcements_v3';
 
   final OnboardingDataService _onboarding = OnboardingDataService();
   final PostcodeService _postcode = PostcodeService();
@@ -196,10 +197,8 @@ class AnnouncementService {
     await _onboarding.initialize();
     _resolveBorough();
     await _loadFromStorage();
-    // Seed sample announcements if none exist for this borough
-    if (_userBorough != null && boroughAnnouncements.isEmpty) {
-      _seedSampleAnnouncements();
-    }
+    // Production: never seed dummy announcements.
+    // The board starts empty and fills with real user posts only.
     _isInitialized = true;
   }
 
@@ -354,214 +353,5 @@ class AnnouncementService {
     await BrowserStorage.remove(_storageKey);
   }
 
-  /// Seed realistic sample announcements for the user's borough.
-  void _seedSampleAnnouncements() {
-    final borough = _userBorough ?? 'Cambridge';
-    final now = DateTime.now();
-    final samples = <Announcement>[
-      Announcement(
-        id: 'seed_1',
-        authorName: 'Sarah Mitchell',
-        borough: borough,
-        content:
-            'Road closure on Mill Road this Saturday for the community fair! Great activities for kids planned - face painting, puppet show, and a bouncy castle. See you there!',
-        createdAt: now.subtract(const Duration(hours: 1)),
-        likes: 18,
-        comments: 3,
-        isPinned: true,
-        commentsList: [
-          AnnouncementComment(
-            id: 'sc_1',
-            authorName: 'Emma Collins',
-            content: 'My kids are so excited for this! What time does the face painting start?',
-            createdAt: now.subtract(const Duration(minutes: 45)),
-            likes: 3,
-          ),
-          AnnouncementComment(
-            id: 'sc_2',
-            authorName: 'James Whitfield',
-            content: 'Will there be parking available nearby?',
-            createdAt: now.subtract(const Duration(minutes: 30)),
-            likes: 1,
-          ),
-          AnnouncementComment(
-            id: 'sc_3',
-            authorName: 'Lucy Brennan',
-            content: 'We went last year and it was brilliant. Highly recommend!',
-            createdAt: now.subtract(const Duration(minutes: 15)),
-            likes: 5,
-          ),
-        ],
-      ),
-      Announcement(
-        id: 'seed_2',
-        authorName: 'Emma Collins',
-        borough: borough,
-        content:
-            'Lost: Grey tabby cat near Cherry Hinton Road. Answers to "Muffin". If you see her please message me - she\'s very friendly but might be scared.',
-        createdAt: now.subtract(const Duration(hours: 3)),
-        likes: 24,
-        comments: 5,
-        commentsList: [
-          AnnouncementComment(
-            id: 'sc_4',
-            authorName: 'Kate Nguyen',
-            content: 'I think I saw a grey cat near the park this morning! Will keep an eye out.',
-            createdAt: now.subtract(const Duration(hours: 2)),
-            likes: 4,
-          ),
-          AnnouncementComment(
-            id: 'sc_5',
-            authorName: 'Priya Sharma',
-            content: 'Oh no! I hope Muffin comes home safe. Shared on my local WhatsApp group.',
-            createdAt: now.subtract(const Duration(hours: 1, minutes: 30)),
-            likes: 6,
-          ),
-          AnnouncementComment(
-            id: 'sc_6',
-            authorName: 'Oliver Chen',
-            content: 'Try leaving some food outside your door overnight. Cats often come back when it\'s quiet.',
-            createdAt: now.subtract(const Duration(hours: 1)),
-            likes: 8,
-          ),
-          AnnouncementComment(
-            id: 'sc_7',
-            authorName: 'Sarah Mitchell',
-            content: 'Have you tried the local vets? Sometimes people hand in found cats.',
-            createdAt: now.subtract(const Duration(minutes: 45)),
-            likes: 2,
-          ),
-          AnnouncementComment(
-            id: 'sc_8',
-            authorName: 'Liam O\'Brien',
-            content: 'Will keep my eyes open on my evening walks!',
-            createdAt: now.subtract(const Duration(minutes: 20)),
-            likes: 1,
-          ),
-        ],
-      ),
-      Announcement(
-        id: 'seed_3',
-        authorName: 'James Whitfield',
-        borough: borough,
-        content:
-            'The new playground at Coleridge Recreation Ground is now open! Took my little ones yesterday - the toddler section is brilliant. Highly recommend.',
-        createdAt: now.subtract(const Duration(hours: 6)),
-        likes: 31,
-        comments: 4,
-        commentsList: [
-          AnnouncementComment(
-            id: 'sc_9',
-            authorName: 'Lucy Brennan',
-            content: 'Finally! We\'ve been waiting for this. Is it suitable for 18-month-olds?',
-            createdAt: now.subtract(const Duration(hours: 5)),
-            likes: 2,
-          ),
-          AnnouncementComment(
-            id: 'sc_10',
-            authorName: 'James Whitfield',
-            content: 'Yes! There\'s a whole fenced area for under 3s with soft ground. Perfect for toddlers.',
-            createdAt: now.subtract(const Duration(hours: 4, minutes: 30)),
-            likes: 7,
-          ),
-          AnnouncementComment(
-            id: 'sc_11',
-            authorName: 'Fatima Hassan',
-            content: 'Just went today - the swings are amazing! My 2-year-old loved the little slide.',
-            createdAt: now.subtract(const Duration(hours: 3)),
-            likes: 4,
-          ),
-          AnnouncementComment(
-            id: 'sc_12',
-            authorName: 'Sophie Andrews',
-            content: 'Is there a cafe nearby or should we bring snacks?',
-            createdAt: now.subtract(const Duration(hours: 2)),
-            likes: 1,
-          ),
-        ],
-      ),
-      Announcement(
-        id: 'seed_4',
-        authorName: 'Lucy Brennan',
-        borough: borough,
-        content:
-            'Free buggy board (universal fit) available for collection from Romsey Town. Still in great condition - my toddler just outgrew it. First come first served!',
-        createdAt: now.subtract(const Duration(hours: 12)),
-        likes: 15,
-        comments: 2,
-        commentsList: [
-          AnnouncementComment(
-            id: 'sc_13',
-            authorName: 'Priya Sharma',
-            content: 'Is this still available? Would love to grab it!',
-            createdAt: now.subtract(const Duration(hours: 10)),
-            likes: 0,
-          ),
-          AnnouncementComment(
-            id: 'sc_14',
-            authorName: 'Lucy Brennan',
-            content: 'Yes still here! Send me a DM and I\'ll give you the address.',
-            createdAt: now.subtract(const Duration(hours: 9)),
-            likes: 1,
-          ),
-        ],
-      ),
-      Announcement(
-        id: 'seed_5',
-        authorName: 'Kate Nguyen',
-        borough: borough,
-        content:
-            'Anyone else noticed the potholes on Perne Road getting worse? I\'ve reported them to the council but more reports = faster action. Here\'s the link to report: fixmystreet.com',
-        createdAt: now.subtract(const Duration(days: 1)),
-        likes: 42,
-        comments: 6,
-        commentsList: [
-          AnnouncementComment(
-            id: 'sc_15',
-            authorName: 'Oliver Chen',
-            content: 'Reported! Nearly lost a wheel on my buggy last week going over one.',
-            createdAt: now.subtract(const Duration(hours: 22)),
-            likes: 9,
-          ),
-          AnnouncementComment(
-            id: 'sc_16',
-            authorName: 'James Whitfield',
-            content: 'Done! The more of us that report it, the quicker they\'ll fix it.',
-            createdAt: now.subtract(const Duration(hours: 20)),
-            likes: 5,
-          ),
-          AnnouncementComment(
-            id: 'sc_17',
-            authorName: 'Sarah Mitchell',
-            content: 'I reported them two weeks ago and got an acknowledgement but no action yet.',
-            createdAt: now.subtract(const Duration(hours: 18)),
-            likes: 3,
-          ),
-          AnnouncementComment(
-            id: 'sc_18',
-            authorName: 'Emma Collins',
-            content: 'It\'s dangerous especially with pushchairs. Will report today.',
-            createdAt: now.subtract(const Duration(hours: 15)),
-            likes: 7,
-          ),
-          AnnouncementComment(
-            id: 'sc_19',
-            authorName: 'Fatima Hassan',
-            content: 'The stretch near the junction is the worst. Nearly tripped over one yesterday.',
-            createdAt: now.subtract(const Duration(hours: 12)),
-            likes: 4,
-          ),
-          AnnouncementComment(
-            id: 'sc_20',
-            authorName: 'Liam O\'Brien',
-            content: 'Great initiative Kate! Just submitted my report.',
-            createdAt: now.subtract(const Duration(hours: 8)),
-            likes: 2,
-          ),
-        ],
-      ),
-    ];
-    _announcements.addAll(samples);
-    _save();
-  }
+  // _seedSampleAnnouncements() removed — production build shows real user posts only.
 }
