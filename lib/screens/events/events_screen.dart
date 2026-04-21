@@ -20,6 +20,7 @@ import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_widgets.dart' show HuddlBottomSheetHandle;
 import '../../services/borough_scope_guard.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 import '../groups/forward_message_sheet.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1023,6 +1024,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           child: filtered.isEmpty
               ? _EmptyState(
                   icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
+                  illustration: HuddlIllustration.meetup,
                   title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                   subtitle: _hasActiveFilter
                       ? 'Try adjusting your filters to see more meetups.'
@@ -1684,6 +1686,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     if (allGoing.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available_outlined,
+        illustration: HuddlIllustration.events,
         title: "You're not going to anything yet",
         subtitle:
             "Tap 'Count Me In' on a meetup or event to add it here!",
@@ -2123,6 +2126,7 @@ class _EventsTabState extends State<_EventsTab> {
                   icon: hasSheetFilters || _activeManualFilter != 'All'
                       ? Icons.filter_list_off
                       : Icons.event_outlined,
+                  illustration: HuddlIllustration.events,
                   title: _nlpQuery.isNotEmpty
                       ? 'No matches'
                       : (hasSheetFilters || _activeManualFilter != 'All')
@@ -3646,7 +3650,11 @@ class _FilterChipState extends State<_FilterChip>
 }
 
 class _EmptyState extends StatelessWidget {
+  /// Legacy icon param kept for call-site compatibility — ignored when
+  /// [illustration] is provided. Pass a [HuddlIllustration] asset path via
+  /// [illustration] to show the brand illustration instead.
   final IconData icon;
+  final String? illustration;
   final String title;
   final String subtitle;
   final String? actionLabel;
@@ -3654,6 +3662,7 @@ class _EmptyState extends StatelessWidget {
 
   const _EmptyState({
     required this.icon,
+    this.illustration,
     required this.title,
     required this.subtitle,
     this.actionLabel,
@@ -3662,68 +3671,12 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: HuddlColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Icon(icon, size: 40, color: HuddlColors.primary),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: context.hc.textTertiary,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: onAction,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: HuddlColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  // 48dp minimum touch target
-                  minimumSize: const Size(120, 48),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 12),
-                  elevation: 0,
-                ),
-                child: Text(
-                  actionLabel!,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.surface,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return HuddlEmptyState(
+      illustration: illustration ?? HuddlIllustration.events,
+      title: title,
+      subtitle: subtitle,
+      actionLabel: actionLabel,
+      onAction: onAction,
     );
   }
 }

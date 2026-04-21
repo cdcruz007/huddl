@@ -30,6 +30,7 @@ import '../events/events_screen.dart' show ImGoingTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 import 'forward_message_sheet.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 
@@ -4288,61 +4289,27 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             // ── Empty state ──────────────────────────────────────────
             if (groups.isEmpty)
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(40),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 64, height: 64,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.peachLight,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: const Icon(Icons.search_off,
-                            size: 32, color: HuddlColors.primary),
-                      ),
-                      const SizedBox(height: 16),
-                      Text('No groups match your search',
-                          style: _adaptiveText(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: context.hc.textPrimary)),
-                      const SizedBox(height: 8),
-                      Text('Try adjusting your filters or search terms.',
-                          style: _adaptiveText(
-                              fontSize: 14, color: context.hc.textTertiary),
-                          textAlign: TextAlign.center),
-                      if (hasActiveFilters) ...[
-                        const SizedBox(height: 16),
-                        Semantics(
-                          label: 'Clear all filters',
-                          button: true,
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() {
-                                _selectedAudiences = {};
-                                _selectedSort = 'Recommended';
-                                _searchQuery = '';
-                                _searchController.clear();
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                border: Border.all(color: HuddlColors.primary),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text('Clear Filters', style: _adaptiveText(
-                                fontSize: 14, fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary,
-                              )),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                child: HuddlEmptyState(
+                  illustration: HuddlIllustration.community,
+                  illustrationHeight: 180,
+                  title: hasActiveFilters
+                      ? 'No groups match your search'
+                      : 'No groups in your area yet',
+                  subtitle: hasActiveFilters
+                      ? 'Try adjusting your filters or search terms.'
+                      : 'Be the first to create a group\nfor parents in your borough!',
+                  actionLabel: hasActiveFilters ? 'Clear filters' : null,
+                  onAction: hasActiveFilters
+                      ? () {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _selectedAudiences = {};
+                            _selectedSort = 'Recommended';
+                            _searchQuery = '';
+                            _searchController.clear();
+                          });
+                        }
+                      : null,
                 ),
               ),
 
@@ -5176,40 +5143,10 @@ class _SavedTabState extends State<_SavedTab> {
 
     // No saved items at all — show empty state (no search bar needed)
     if (allMessages.isEmpty && allThreads.isEmpty && allEvents.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: HuddlColors.peachLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.bookmark_border,
-                size: 40,
-                color: HuddlColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No saved items yet',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Bookmark events to save them here,\nor long-press a message to save it.',
-              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+      return HuddlEmptyState(
+        illustration: HuddlIllustration.saved,
+        title: 'No saved items yet',
+        subtitle: 'Bookmark events to save them here,\nor long-press a message to save it.',
       );
     }
 
@@ -6447,43 +6384,12 @@ class _EmptyMessagesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: HuddlColors.peachLight,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Icon(
-                Icons.chat_bubble_outline,
-                size: 40,
-                color: HuddlColors.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No groups yet',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: context.hc.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Join a group to start chatting\nwith your community.',
-              style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+    return HuddlEmptyState(
+      illustration: HuddlIllustration.chat,
+      title: 'No groups yet',
+      subtitle: 'Join a group to start chatting\nwith your community.',
+      actionLabel: 'Find a group',
+      onAction: onSearch,
     );
   }
 }

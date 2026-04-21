@@ -27,6 +27,7 @@ import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/learning_maturity_indicator.dart';
 import '../../services/daily_ai_refresh_service.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 
 
 // =============================================================================
@@ -2896,9 +2897,16 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.chat_bubble_outline,
+                            Image.asset(
+                              HuddlIllustration.chat,
+                              height: 100,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.chat_bubble_outline,
                                 size: 40,
-                                color: hc.textTertiary.withValues(alpha: 0.5)),
+                                color: hc.textTertiary.withValues(alpha: 0.5),
+                              ),
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'No comments yet',

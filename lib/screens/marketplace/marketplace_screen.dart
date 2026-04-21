@@ -10,6 +10,7 @@ import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 
 
 
@@ -1652,7 +1653,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: items.isEmpty
               ? _buildEmptyState(
                   hc: hc,
-                  icon: Icons.search_off,
+                  illustration: HuddlIllustration.marketplace,
                   title: 'No items found',
                   subtitle: _hasActiveFilters
                       ? 'Try adjusting your filters to see more results.'
@@ -1797,7 +1798,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 padding: const EdgeInsets.only(top: 32),
                 child: _buildEmptyState(
                   hc: hc,
-                  icon: Icons.storefront_outlined,
+                  illustration: HuddlIllustration.marketplace,
                   title: 'No listings yet',
                   subtitle: 'Tap above to snap a photo and list your first item.',
                 ),
@@ -2523,7 +2524,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         liveRegion: true,
         child: _buildEmptyState(
           hc: hc,
-          icon: Icons.favorite_outline,
+          illustration: HuddlIllustration.saved,
           title: 'No saved items',
           subtitle: 'Tap the heart on items you love\nto save them here.',
         ),
@@ -2577,10 +2578,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   Widget _buildEmptyState({
     required HuddlContextColors hc,
-    required IconData icon,
+    required String illustration,
     required String title,
     required String subtitle,
     Widget? action,
+    // Legacy icon param kept for call-sites that use action widgets inline
+    IconData? icon,
   }) {
     return Center(
       child: Padding(
@@ -2588,14 +2591,23 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                color: HuddlColors.peachLight,
-                borderRadius: BorderRadius.circular(22),
+            Image.asset(
+              illustration,
+              height: 160,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: HuddlColors.peachLight,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: Icon(
+                  icon ?? Icons.storefront_outlined,
+                  size: 40,
+                  color: HuddlColors.primary,
+                ),
               ),
-              child: Icon(icon, size: 40, color: HuddlColors.primary),
             ),
             const SizedBox(height: 20),
             Text(
