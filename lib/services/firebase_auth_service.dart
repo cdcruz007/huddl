@@ -214,9 +214,21 @@ class FirebaseAuthService {
   // PHONE AUTH — VERIFY OTP
   // ═════════════════════════════════════════════════════════════════════════
 
+  /// Verify the SMS OTP code.
+  ///
+  /// [isOnboarding] — set to `true` when called from the onboarding
+  /// verification screen (new user registration). In this context, if Firebase
+  /// Auth still holds a stale entry for the phone number (e.g. from a
+  /// previously deleted account) but no Firestore profile exists, we treat the
+  /// user as new and create a fresh profile rather than blocking them.
+  ///
+  /// When `isOnboarding` is `false` (the default — login flow), a missing
+  /// Firestore profile means the account was deleted and the user must
+  /// re-register via the onboarding carousel.
   Future<AuthResult> verifySmsCode(String smsCode,
-      {String? verificationId}) async {
-    _log('verifySmsCode: platform=${kIsWeb ? "web" : defaultTargetPlatform.name}');
+      {String? verificationId, bool isOnboarding = false}) async {
+    _log('verifySmsCode: platform=${kIsWeb ? "web" : defaultTargetPlatform.name}, '
+        'isOnboarding=$isOnboarding');
 
     try {
       // Web: confirm via ConfirmationResult
@@ -226,11 +238,14 @@ class FirebaseAuthService {
               'Verification session expired. Please go back and request a new code.');
         }
         final userCred = await _webConfirmationResult!.confirm(smsCode);
-        if (userCred.additionalUserInfo?.isNewUser ?? false) {
+        final isNewUser = userCred.additionalUserInfo?.isNewUser ?? false;
+        if (isNewUser || (isOnboarding && !(await hasUserProfile()))) {
+          // Create a fresh profile for new users OR for re-registering users
+          // whose Auth entry persisted after Firestore deletion.
           await _createUserProfile(userCred.user!.uid);
+          _log('verifySmsCode(web): profile created (isNewUser=$isNewUser, isOnboarding=$isOnboarding)');
         } else {
           // Returning user on web — verify their Firestore profile still exists.
-          // A deleted account has no Firestore doc; treat as account-not-found.
           final profileExists = await hasUserProfile();
           if (!profileExists) {
             await _auth.signOut();
@@ -260,15 +275,26 @@ class FirebaseAuthService {
         smsCode: smsCode,
       );
       final userCred = await _auth.signInWithCredential(credential);
-      if (userCred.additionalUserInfo?.isNewUser ?? false) {
+      final isNewUser = userCred.additionalUserInfo?.isNewUser ?? false;
+
+      if (isNewUser) {
+        // Genuinely new Firebase Auth user — create profile
         await _createUserProfile(userCred.user!.uid);
+        _log('verifySmsCode: new user — profile created');
       } else {
-        // Returning user — check if their Firestore profile still exists.
-        // If the account was deleted, the Firestore doc is gone; treat as
-        // "account not found" so the user is directed to sign up.
+        // Firebase Auth already knows this phone number.
         final profileExists = await hasUserProfile();
-        if (!profileExists) {
-          // Sign out the stale auth session immediately.
+
+        if (!profileExists && isOnboarding) {
+          // Stale Auth entry from a previously deleted account, but the user
+          // is going through onboarding again → create a fresh Firestore
+          // profile so they can complete registration normally.
+          await _createUserProfile(userCred.user!.uid);
+          _log('verifySmsCode: stale Auth entry re-used during onboarding — '
+              'created fresh profile for uid=${userCred.user?.uid}');
+        } else if (!profileExists) {
+          // Login flow: missing profile means the account was deleted.
+          // Sign out the stale auth session and tell the user to sign up.
           await _auth.signOut();
           _log('verifySmsCode: phone re-used after account deletion — no profile found');
           return AuthResult.failure(
@@ -276,16 +302,15 @@ class FirebaseAuthService {
             'Please sign up to create a new account.',
             accountDeleted: true,
           );
+        } else {
+          // Normal returning user with valid profile — sync and continue.
+          await HuddlUserService().syncCurrentUserProfile();
         }
-        // Sync their profile to ensure borough is up-to-date
-        await HuddlUserService().syncCurrentUserProfile();
       }
       _log('verifySmsCode: success, uid=${userCred.user?.uid}');
       return AuthResult.success(userCred.user);
     } on FirebaseAuthException catch (e) {
       _log('verifySmsCode FirebaseAuthException: ${e.code}');
-      // user-not-found: the phone number has no associated Firebase Auth account
-      // (most likely a previously deleted account).
       if (e.code == 'user-not-found') {
         return AuthResult.failure(
           'We couldn\'t find an account linked to this number. '

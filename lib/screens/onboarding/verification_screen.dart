@@ -231,8 +231,10 @@ class _VerificationScreenState extends State<VerificationScreen> {
     }
 
     try {
-      // Mobile: verify the SMS code via Firebase phone auth
-      final result = await _authService.verifySmsCode(code)
+      // Mobile: verify the SMS code via Firebase phone auth.
+      // Pass isOnboarding: true so a stale Auth entry from a previously
+      // deleted account is treated as a fresh registration, not a block.
+      final result = await _authService.verifySmsCode(code, isOnboarding: true)
           .timeout(const Duration(seconds: 15), onTimeout: () {
         return AuthResult.failure('Verification timed out. Please try again.');
       });
@@ -242,6 +244,11 @@ class _VerificationScreenState extends State<VerificationScreen> {
       if (result.isSuccess) {
         _onboardingData.setPhoneVerified(true);
         await _completeSignUp();
+      } else if (result.isAccountDeleted) {
+        // This path is now only reached if isOnboarding=true AND profile
+        // creation itself failed — very rare. Show a friendly recovery dialog.
+        setState(() => _isVerifying = false);
+        _showRegistrationFailedDialog();
       } else {
         setState(() {
           _isVerifying = false;
@@ -255,6 +262,66 @@ class _VerificationScreenState extends State<VerificationScreen> {
         _errorMessage = 'Verification failed. Please try again.';
       });
     }
+  }
+
+  /// Shown in the rare case where profile creation fails during onboarding
+  /// re-registration. Gives the user a clean path to try again.
+  void _showRegistrationFailedDialog() {
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.refresh_rounded,
+                  size: 22, color: HuddlColors.onboardingOrange),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text('Almost there!',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        content: const Text(
+          'We had a small hiccup setting up your account. '
+          'Please go back and start the sign-up process again — '
+          'it only takes a moment.',
+          style: TextStyle(fontSize: 14, height: 1.55),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              // Clear stale data and restart onboarding from the carousel
+              OnboardingDataService().clear();
+              Navigator.pushNamedAndRemoveUntil(
+                context, '/onboarding', (route) => false);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.onboardingOrange,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              elevation: 0,
+            ),
+            child: const Text('Start again',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15)),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Complete the sign-up: assign groups & navigate to welcome.
