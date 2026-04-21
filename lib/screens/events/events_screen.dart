@@ -472,6 +472,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   // ── Local search ──────────────────────────────────────────────
   String _localSearchQuery = '';
   final TextEditingController _localSearchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   /// True when any filter beyond 'All' is active.
   bool get _hasActiveFilter =>
@@ -507,6 +508,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   @override
   void dispose() {
     _localSearchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -837,7 +839,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       if (s.boostReason != null) boostReasons[s.meetup.id] = s.boostReason!;
     }
 
-    return Column(
+    return GestureDetector(
+      onTap: () => _searchFocusNode.unfocus(),
+      behavior: HitTestBehavior.translucent,
+      child: Column(
       children: [
         // ── Unified search + filter bar ──────────────────────────
         Container(
@@ -855,6 +860,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   ),
                   child: TextField(
                     controller: _localSearchController,
+                    focusNode: _searchFocusNode,
                     onChanged: (v) => setState(() => _localSearchQuery = v),
                     textAlignVertical: TextAlignVertical.center,
                     style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
@@ -1037,6 +1043,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   color: HuddlColors.primary,
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: filtered.length,
                     itemBuilder: (_, i) {
                       final meetup = filtered[i];
@@ -1052,6 +1059,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 ),
         ),
       ],
+      ),
     );
   }
 }
@@ -2145,6 +2153,7 @@ class _EventsTabState extends State<_EventsTab> {
                   color: HuddlColors.primary,
                   child: ListView.builder(
                     padding: const EdgeInsets.all(16),
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                     itemCount: events.length + (showCarousel ? 1 : 0),
                     itemBuilder: (_, i) {
                       if (showCarousel && i == 0) {
