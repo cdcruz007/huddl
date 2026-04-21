@@ -57,6 +57,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   String? _pickedImageUrl;
   bool _isCreating = false;
   int? _maxAttendees;
+  final TextEditingController _attendeesCtrl = TextEditingController();
 
   // ── Participants ──
   final Map<String, bool> _participants = {
@@ -199,6 +200,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     _memberSearchController.dispose();
     _minAgeCtrl.dispose();
     _maxAgeCtrl.dispose();
+    _attendeesCtrl.dispose();
     super.dispose();
   }
 
@@ -1159,35 +1161,92 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: HuddlColors.gray300),
                       ),
                       child: Row(
                         children: [
-                          Expanded(
-                            child: Text(
-                              _maxAttendees != null
-                                  ? '$_maxAttendees people'
-                                  : 'Max number of people',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: _maxAttendees != null
-                                    ? HuddlColors.textDark
-                                    : HuddlColors.textHint,
+                          // − button
+                          GestureDetector(
+                            onTap: () {
+                              final current = _maxAttendees ?? 1;
+                              if (current > 1) {
+                                final next = current - 1;
+                                setState(() => _maxAttendees = next);
+                                _attendeesCtrl.text = next.toString();
+                                _attendeesCtrl.selection = TextSelection.collapsed(
+                                    offset: _attendeesCtrl.text.length);
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 14),
+                              child: Icon(
+                                Icons.remove,
+                                size: 20,
+                                color: (_maxAttendees ?? 1) > 1
+                                    ? HuddlColors.primary
+                                    : HuddlColors.gray300,
                               ),
                             ),
                           ),
+                          // Direct number input
+                          Expanded(
+                            child: TextField(
+                              controller: _attendeesCtrl,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(4),
+                              ],
+                              style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  color: HuddlColors.textDark,
+                                  fontWeight: FontWeight.w600),
+                              decoration: InputDecoration(
+                                hintText: 'Number',
+                                hintStyle: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    color: HuddlColors.textHint),
+                                border: InputBorder.none,
+                                suffixText:
+                                    _maxAttendees != null ? ' people' : null,
+                                suffixStyle: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: HuddlColors.textHint),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 14),
+                                isDense: true,
+                              ),
+                              onChanged: (v) {
+                                final parsed = int.tryParse(v);
+                                setState(() {
+                                  _maxAttendees =
+                                      (parsed != null && parsed > 0)
+                                          ? parsed
+                                          : null;
+                                });
+                              },
+                            ),
+                          ),
+                          // + button
                           GestureDetector(
                             onTap: () {
-                              setState(() {
-                                _maxAttendees = (_maxAttendees ?? 0) + 5;
-                              });
+                              final next = (_maxAttendees ?? 0) + 1;
+                              setState(() => _maxAttendees = next);
+                              _attendeesCtrl.text = next.toString();
+                              _attendeesCtrl.selection =
+                                  TextSelection.collapsed(
+                                      offset: _attendeesCtrl.text.length);
                             },
-                            child: const Icon(Icons.add,
-                                color: HuddlColors.primary, size: 22),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 14),
+                              child: const Icon(Icons.add,
+                                  color: HuddlColors.primary, size: 20),
+                            ),
                           ),
                         ],
                       ),
