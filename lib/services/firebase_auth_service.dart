@@ -92,6 +92,23 @@ class FirebaseAuthService {
             final userCred = await _auth.signInWithCredential(credential);
             if (userCred.additionalUserInfo?.isNewUser ?? false) {
               await _createUserProfile(userCred.user!.uid);
+            } else {
+              // Auto-retrieved returning user — check Firestore profile exists.
+              final profileExists = await hasUserProfile();
+              if (!profileExists) {
+                await _auth.signOut();
+                _log('verificationCompleted: phone re-used after deletion — no profile');
+                if (!completer.isCompleted) {
+                  completer.complete(PhoneAuthResult(
+                    status: PhoneAuthStatus.error,
+                    errorMessage:
+                        'We couldn\'t find an account linked to this number. '
+                        'Please sign up to create a new account.',
+                    isAccountDeleted: true,
+                  ));
+                }
+                return;
+              }
             }
             if (!completer.isCompleted) {
               completer.complete(
@@ -211,6 +228,20 @@ class FirebaseAuthService {
         final userCred = await _webConfirmationResult!.confirm(smsCode);
         if (userCred.additionalUserInfo?.isNewUser ?? false) {
           await _createUserProfile(userCred.user!.uid);
+        } else {
+          // Returning user on web — verify their Firestore profile still exists.
+          // A deleted account has no Firestore doc; treat as account-not-found.
+          final profileExists = await hasUserProfile();
+          if (!profileExists) {
+            await _auth.signOut();
+            _log('verifySmsCode(web): phone re-used after account deletion — no profile found');
+            return AuthResult.failure(
+              'We couldn\'t find an account linked to this number. '
+              'Please sign up to create a new account.',
+              accountDeleted: true,
+            );
+          }
+          await HuddlUserService().syncCurrentUserProfile();
         }
         return AuthResult.success(userCred.user);
       }
