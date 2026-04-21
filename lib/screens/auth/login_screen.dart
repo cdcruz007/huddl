@@ -150,6 +150,10 @@ class _LoginScreenState extends State<LoginScreen> {
             'generatedOtp': '',
           },
         );
+      } else if (result.isAccountDeleted) {
+        // No Firebase account for this number — guide user to sign up
+        setState(() => _isLoading = false);
+        _showAccountNotFoundDialog();
       } else {
         setState(() {
           _isLoading = false;
@@ -163,6 +167,71 @@ class _LoginScreenState extends State<LoginScreen> {
         _errorMessage = 'Login failed. Please try again.';
       });
     }
+  }
+
+  /// Shown when Firebase explicitly reports that the phone number is not
+  /// linked to any account (e.g. the user deleted their account previously).
+  void _showAccountNotFoundDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.person_off_outlined,
+                size: 28, color: HuddlColors.primary),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Account not found',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'We couldn\'t find a Huddl account linked to this phone number.\n\n'
+          'It may have been deleted. Please sign up to create a new account '
+          'and set up your profile again.',
+          style: TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: HuddlColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/onboarding',
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.primary,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Sign up',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

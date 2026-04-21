@@ -115,6 +115,11 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       if (!mounted) return;
       _authService.updateLastActive();
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+    } else if (result.isAccountDeleted) {
+      // ── Account not found — direct user to sign up ────────────────────
+      setState(() => _isVerifying = false);
+      if (!mounted) return;
+      await _showAccountNotFoundDialog();
     } else {
       setState(() {
         _isVerifying = false;
@@ -123,6 +128,79 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
       });
       _codeController.clear();
     }
+  }
+
+  /// Shown when a valid OTP is entered but no account exists for this number.
+  Future<void> _showAccountNotFoundDialog() async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.person_off_outlined,
+                  size: 20, color: HuddlColors.onboardingOrange),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Account not found',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'We couldn\'t find a Huddl account linked to this phone number.\n\n'
+          'It may have been deleted. Please sign up to create a new account '
+          'and set up your profile again.',
+          style: TextStyle(fontSize: 14, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: HuddlColors.disabledText),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              // Navigate to onboarding, removing all previous routes.
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/onboarding',
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: HuddlColors.onboardingOrange,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Sign up',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // ── Resend: ask Firebase to send a new SMS ───────────────────────────────

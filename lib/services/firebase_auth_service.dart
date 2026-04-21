@@ -112,13 +112,16 @@ class FirebaseAuthService {
           _logError(e, StackTrace.current,
               'Native verifyPhoneNumber failed: ${e.code} — ${e.message}');
           if (!completer.isCompleted) {
-            // Pass BOTH the raw code and mapped message so UI can display
-            // the exact Firebase error code for diagnosis
+            final isDeleted = e.code == 'user-not-found';
             completer.complete(PhoneAuthResult(
               status: PhoneAuthStatus.error,
               rawErrorCode: e.code,
               rawErrorMessage: e.message,
-              errorMessage: _mapAuthError(e.code),
+              errorMessage: isDeleted
+                  ? 'We couldn\'t find an account linked to this number. '
+                    'Please sign up to create a new account.'
+                  : _mapAuthError(e.code),
+              isAccountDeleted: isDeleted,
             ));
           }
         },
@@ -229,13 +232,36 @@ class FirebaseAuthService {
       if (userCred.additionalUserInfo?.isNewUser ?? false) {
         await _createUserProfile(userCred.user!.uid);
       } else {
-        // Returning user — sync their profile to ensure borough is up-to-date
+        // Returning user — check if their Firestore profile still exists.
+        // If the account was deleted, the Firestore doc is gone; treat as
+        // "account not found" so the user is directed to sign up.
+        final profileExists = await hasUserProfile();
+        if (!profileExists) {
+          // Sign out the stale auth session immediately.
+          await _auth.signOut();
+          _log('verifySmsCode: phone re-used after account deletion — no profile found');
+          return AuthResult.failure(
+            'We couldn\'t find an account linked to this number. '
+            'Please sign up to create a new account.',
+            accountDeleted: true,
+          );
+        }
+        // Sync their profile to ensure borough is up-to-date
         await HuddlUserService().syncCurrentUserProfile();
       }
       _log('verifySmsCode: success, uid=${userCred.user?.uid}');
       return AuthResult.success(userCred.user);
     } on FirebaseAuthException catch (e) {
       _log('verifySmsCode FirebaseAuthException: ${e.code}');
+      // user-not-found: the phone number has no associated Firebase Auth account
+      // (most likely a previously deleted account).
+      if (e.code == 'user-not-found') {
+        return AuthResult.failure(
+          'We couldn\'t find an account linked to this number. '
+          'Please sign up to create a new account.',
+          accountDeleted: true,
+        );
+      }
       return AuthResult.failure(_mapAuthError(e.code));
     } catch (e, stack) {
       _logError(e, stack, 'verifySmsCode catch');
@@ -254,8 +280,11 @@ class FirebaseAuthService {
     _webConfirmationResult = null;
   }
 
-  /// Permanently deletes the Firebase Auth account and the Firestore user
-  /// document for the currently signed-in user.
+  /// Permanently deletes the Firebase Auth account and ALL associated
+  /// Firestore data for the currently signed-in user (GDPR Art. 17).
+  ///
+  /// Collections purged: users, subscriptions, group_messages, direct_messages,
+  /// conversations, notifications, meetups.
   ///
   /// Returns an error message on failure, or null on success.
   Future<String?> deleteAccount() async {
@@ -263,15 +292,43 @@ class FirebaseAuthService {
     if (user == null) return 'No signed-in user found.';
     final uid = user.uid;
     try {
-      // Delete the Firestore user document first (requires the user to still
-      // be authenticated so security rules allow the write).
-      try {
-        await _db.collection('users').doc(uid).delete();
-      } catch (_) {
-        // Non-fatal: the doc may not exist or rules may block it;
-        // proceed with auth deletion regardless.
-      }
-      // Delete the Firebase Auth account.
+      // ── 1. Delete user's Firestore document ───────────────────────────
+      await _safeDelete(() => _db.collection('users').doc(uid).delete());
+
+      // ── 2. Delete all subscriptions owned by this user ────────────────
+      await _deleteQueryResults(
+        _db.collection('subscriptions').where('userId', isEqualTo: uid),
+      );
+
+      // ── 3. Delete group messages sent by this user ────────────────────
+      await _deleteQueryResults(
+        _db.collection('group_messages').where('senderId', isEqualTo: uid),
+      );
+
+      // ── 4. Delete direct messages sent or received by this user ───────
+      await _deleteQueryResults(
+        _db.collection('direct_messages').where('senderId', isEqualTo: uid),
+      );
+      await _deleteQueryResults(
+        _db.collection('direct_messages').where('receiverId', isEqualTo: uid),
+      );
+
+      // ── 5. Delete conversations involving this user ────────────────────
+      await _deleteQueryResults(
+        _db.collection('conversations').where('participantIds', arrayContains: uid),
+      );
+
+      // ── 6. Delete notifications addressed to this user ────────────────
+      await _deleteQueryResults(
+        _db.collection('notifications').where('userId', isEqualTo: uid),
+      );
+
+      // ── 7. Delete meetups created by this user ────────────────────────
+      await _deleteQueryResults(
+        _db.collection('meetups').where('creatorId', isEqualTo: uid),
+      );
+
+      // ── 8. Delete the Firebase Auth account last ──────────────────────
       await user.delete();
       _verificationId = null;
       _resendToken = null;
@@ -284,6 +341,33 @@ class FirebaseAuthService {
       return e.message ?? 'Failed to delete account.';
     } catch (e) {
       return 'Failed to delete account: $e';
+    }
+  }
+
+  /// Safely deletes a Firestore document, ignoring errors (e.g. already
+  /// deleted or permissions issues).
+  Future<void> _safeDelete(Future<void> Function() fn) async {
+    try {
+      await fn();
+    } catch (_) {}
+  }
+
+  /// Deletes all documents returned by [query] in batches of 500.
+  Future<void> _deleteQueryResults(Query query) async {
+    try {
+      const batchSize = 500;
+      QuerySnapshot snapshot;
+      do {
+        snapshot = await query.limit(batchSize).get();
+        if (snapshot.docs.isEmpty) break;
+        final batch = _db.batch();
+        for (final doc in snapshot.docs) {
+          batch.delete(doc.reference);
+        }
+        await batch.commit();
+      } while (snapshot.docs.length == batchSize);
+    } catch (_) {
+      // Non-fatal: collection may not exist or security rules may block it.
     }
   }
 
@@ -410,6 +494,9 @@ class FirebaseAuthService {
         return 'Phone sign-in is not enabled. Please contact support.';
       case 'user-disabled':
         return 'This account has been disabled.';
+      // Returned when the phone number belonged to a deleted Firebase Auth account
+      case 'user-not-found':
+        return 'account-not-found'; // sentinel — caught by UI layer
       case 'invalid-credential':
         return 'Invalid credentials. Please try again.';
       case 'too-many-requests':
@@ -448,19 +535,28 @@ class AuthResult {
   final User? user;
   final String? errorMessage;
   final String? message;
+  /// True when the OTP was technically valid but the Firebase Auth account
+  /// no longer exists (i.e. it was deleted). The UI should direct the user
+  /// to sign up / restart onboarding instead of showing a generic error.
+  final bool isAccountDeleted;
 
   AuthResult._({
     required this.isSuccess,
     this.user,
     this.errorMessage,
     this.message,
+    this.isAccountDeleted = false,
   });
 
   factory AuthResult.success(User? user, {String? message}) =>
       AuthResult._(isSuccess: true, user: user, message: message);
 
-  factory AuthResult.failure(String error) =>
-      AuthResult._(isSuccess: false, errorMessage: error);
+  factory AuthResult.failure(String error, {bool accountDeleted = false}) =>
+      AuthResult._(
+        isSuccess: false,
+        errorMessage: error,
+        isAccountDeleted: accountDeleted,
+      );
 }
 
 enum PhoneAuthStatus { codeSent, verified, error }
@@ -472,6 +568,9 @@ class PhoneAuthResult {
   // Raw Firebase error code and message — passed through for on-screen diagnosis
   final String? rawErrorCode;
   final String? rawErrorMessage;
+  /// True when Firebase explicitly reports the phone number has no associated
+  /// account (user-not-found). The UI should direct the user to sign up.
+  final bool isAccountDeleted;
 
   PhoneAuthResult({
     required this.status,
@@ -479,5 +578,6 @@ class PhoneAuthResult {
     this.errorMessage,
     this.rawErrorCode,
     this.rawErrorMessage,
+    this.isAccountDeleted = false,
   });
 }
