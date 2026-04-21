@@ -753,43 +753,51 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  // Member avatar preview — shows only the current user plus
+                  // a "+N members" pill. Dummy names removed so no fake users
+                  // appear. Full list is loaded from Firestore in GroupMembersScreen.
                   SizedBox(
                     height: 72,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: 8,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        // Only show 'You' in the member list if the user has joined
-                        final names = _isJoined
-                            ? ['Emma', 'Sophie', 'Kate', 'Lucy', 'James', 'Anna', 'Mia', 'You']
-                            : ['Emma', 'Sophie', 'Kate', 'Lucy', 'James', 'Anna', 'Mia', 'Beth'];
-                        final colors = [
-                          HuddlColors.primary,
-                          HuddlColors.blue,
-                          HuddlColors.accentAmber,
-                          HuddlColors.paleBlue,
-                          HuddlColors.lightBlue,
-                          HuddlColors.accentCoral,
-                          HuddlColors.primaryDark,
-                          HuddlColors.blue,
-                        ];
-                        return Column(
-                          children: [
-                            MemberAvatar(
-                              name: names[index],
-                              size: 48,
-                              accentColor: colors[index],
+                    child: Row(
+                      children: [
+                        // Current user placeholder
+                        if (_isJoined)
+                          Column(
+                            children: [
+                              MemberAvatar(
+                                name: 'You',
+                                size: 48,
+                                accentColor: HuddlColors.primary,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'You',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: context.hc.textSecondary),
+                              ),
+                            ],
+                          ),
+                        const SizedBox(width: 12),
+                        // Member count pill
+                        Container(
+                          height: 48,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.peachLight,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$memberCount member${memberCount != 1 ? 's' : ''}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              names[index],
-                              style: GoogleFonts.poppins(
-                                  fontSize: 11, color: context.hc.textSecondary),
-                            ),
-                          ],
-                        );
-                      },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

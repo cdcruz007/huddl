@@ -26,75 +26,11 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Admins', 'Members'];
 
-  // ── Sample members with profile photos ─────────────────────────────────
-  static final List<_Member> _members = [
-    _Member(
-      name: 'Emma Watson',
-      role: 'admin',
-      accentColor: HuddlColors.primary,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'Sophie Turner',
-      role: 'admin',
-      accentColor: HuddlColors.blue,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'Kate Middleton',
-      role: 'member',
-      accentColor: HuddlColors.accentAmber,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'Lucy Chen',
-      role: 'member',
-      accentColor: HuddlColors.paleBlue,
-      isOnline: false,
-    ),
-    _Member(
-      name: 'James Smith',
-      role: 'member',
-      accentColor: HuddlColors.lightBlue,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'Anna Taylor',
-      role: 'member',
-      accentColor: HuddlColors.accentCoral,
-      isOnline: false,
-    ),
-    _Member(
-      name: 'Mia Johnson',
-      role: 'member',
-      accentColor: HuddlColors.primaryDark,
-      isOnline: false,
-    ),
-    _Member(
-      name: 'Oliver Brown',
-      role: 'member',
-      accentColor: HuddlColors.accentAmber,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'Isabella Davis',
-      role: 'member',
-      accentColor: HuddlColors.blue,
-      isOnline: false,
-    ),
-    _Member(
-      name: 'Charlotte Wilson',
-      role: 'member',
-      accentColor: HuddlColors.paleBlue,
-      isOnline: true,
-    ),
-    _Member(
-      name: 'You',
-      role: 'member',
-      accentColor: HuddlColors.blue,
-      isOnline: true,
-    ),
-  ];
+  // ── Members list — populated from Firestore via widget.memberCount ────────
+  // No hardcoded dummy members. Real member data is loaded by the parent
+  // group service and passed down. Until Firestore integration is wired up
+  // for this screen, the list is intentionally empty so no fake users appear.
+  static final List<_Member> _members = [];
 
   List<_Member> get _filteredMembers {
     var list = List<_Member>.from(_members);

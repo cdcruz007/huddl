@@ -95,17 +95,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       widget.creatorId == 'current_user' || _adminIds.contains('current_user');
   final Set<String> _adminIds = {};
 
-  /// Sample members for the admin-picker
-  static final List<_GroupMember> _groupMembers = [
-    _GroupMember(id: 'emma', name: 'Emma Watson', accentColor: HuddlColors.primary, isAdmin: false),
-    _GroupMember(id: 'sophie', name: 'Sophie Turner', accentColor: HuddlColors.blue, isAdmin: false),
-    _GroupMember(id: 'kate', name: 'Kate Middleton', accentColor: HuddlColors.accentAmber, isAdmin: false),
-    _GroupMember(id: 'lucy', name: 'Lucy Chen', accentColor: HuddlColors.paleBlue, isAdmin: false),
-    _GroupMember(id: 'james', name: 'James Smith', accentColor: HuddlColors.lightBlue, isAdmin: false),
-    _GroupMember(id: 'anna', name: 'Anna Taylor', accentColor: HuddlColors.accentCoral, isAdmin: false),
-    _GroupMember(id: 'mia', name: 'Mia Johnson', accentColor: HuddlColors.primaryDark, isAdmin: false),
-    _GroupMember(id: 'oliver', name: 'Oliver Brown', accentColor: HuddlColors.accentAmber, isAdmin: false),
-  ];
+  /// Real members loaded from Firestore for the admin-picker.
+  /// Populated by _loadGroupMembers() — starts empty.
+  final List<_GroupMember> _groupMembers = [];
 
   List<ChatMessage> _messages = [];
   bool _isLoading = true;
@@ -209,8 +201,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _onboardingService.initialize();
     await _savedMessageService.initialize();
 
-    // Generate demo messages
-    _messages = _generateDemoMessages();
+    // Start with an empty message list — real messages come from
+    // persisted storage and Firestore below (no dummy data injected).
+    _messages = [];
 
     // Load system messages for this group (join/leave events)
     final systemMessages = _invitationService.getGroupSystemMessages(widget.groupId);
@@ -1554,13 +1547,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Add Member sheet (private group admin only) ────────────────────────
   void _showAddMemberSheet() {
-    // Simulated borough members not yet in this group
-    final availableMembers = [
-      _GroupMember(id: 'charlotte', name: 'Charlotte Wilson', accentColor: HuddlColors.paleBlue, isAdmin: false),
-      _GroupMember(id: 'isabella', name: 'Isabella Davis', accentColor: HuddlColors.blue, isAdmin: false),
-      _GroupMember(id: 'noah', name: 'Noah Martinez', accentColor: HuddlColors.accentAmber, isAdmin: false),
-      _GroupMember(id: 'amelia', name: 'Amelia Garcia', accentColor: HuddlColors.accentCoral, isAdmin: false),
-    ];
+    // Show real borough members from Firestore (excluding existing members).
+    // availableMembers will be populated via _loadGroupMembers in a future.
+    final availableMembers = _groupMembers
+        .where((m) => !m.isAdmin && m.id != 'current_user')
+        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -3989,89 +3980,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
-  // ── Demo messages ───────────────────────────────────────────────────────
-  List<ChatMessage> _generateDemoMessages() {
-    final now = DateTime.now();
-    final avatarColors = [
-      '#FF975C',
-      '#3580F0',
-      '#199A85',
-      '#A16AE9',
-      '#5B9DFF',
-      '#E8A838'
-    ];
-
-    return [
-      ChatMessage(
-        id: 'msg_1',
-        senderId: 'user_emma',
-        senderName: 'Emma',
-        senderAvatar: avatarColors[0],
-        message:
-            'Good morning everyone! Has anyone tried the new cafe near the river?',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 30)),
-      ),
-      ChatMessage(
-        id: 'msg_2',
-        senderId: 'user_sophie',
-        senderName: 'Sophie',
-        senderAvatar: avatarColors[1],
-        message:
-            'Yes! We went last weekend. They have a great kids\' menu and a lovely play area outside.',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 25)),
-      ),
-      ChatMessage(
-        id: 'msg_3',
-        senderId: 'user_kate',
-        senderName: 'Kate',
-        senderAvatar: avatarColors[2],
-        message: 'That sounds lovely! Is it buggy-friendly?',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 20)),
-      ),
-      ChatMessage(
-        id: 'msg_4',
-        senderId: 'user_sophie',
-        senderName: 'Sophie',
-        senderAvatar: avatarColors[1],
-        message:
-            'Absolutely! Wide doors, ramp access, and they even have highchairs.',
-        timestamp: now.subtract(const Duration(hours: 2, minutes: 18)),
-      ),
-      ChatMessage(
-        id: 'msg_5',
-        senderId: 'user_lucy',
-        senderName: 'Lucy',
-        senderAvatar: avatarColors[3],
-        message:
-            'Anyone fancy a group outing there this Thursday? Weather looks good!',
-        timestamp: now.subtract(const Duration(hours: 1, minutes: 45)),
-      ),
-      ChatMessage(
-        id: 'msg_6',
-        senderId: 'user_emma',
-        senderName: 'Emma',
-        senderAvatar: avatarColors[0],
-        message: 'Count me in! What time works for everyone?',
-        timestamp: now.subtract(const Duration(hours: 1, minutes: 40)),
-      ),
-      ChatMessage(
-        id: 'msg_7',
-        senderId: 'user_james',
-        senderName: 'James',
-        senderAvatar: avatarColors[4],
-        message: '10:30am would be ideal before the lunch rush.',
-        timestamp: now.subtract(const Duration(hours: 1, minutes: 35)),
-      ),
-      ChatMessage(
-        id: 'msg_8',
-        senderId: 'user_anna',
-        senderName: 'Anna',
-        senderAvatar: avatarColors[5],
-        message: 'Perfect timing! See you all there.',
-        timestamp: now.subtract(const Duration(hours: 1, minutes: 30)),
-      ),
-    ];
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
