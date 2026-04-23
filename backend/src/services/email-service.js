@@ -138,8 +138,10 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
 
 async function sendSubscriptionConfirmation({ email, firstName, tier, billingPeriod, price }) {
   // Map internal Firestore tier keys to display names
-  // Tier keys: 'explorer' = Welcome (free), 'neighbour' = Neighbour, 'circle' = Circle
-  const tierName = (tier === 'circle' || tier === 'innerCircle') ? 'Circle' : 'Neighbour';
+  // Firestore tier keys match Flutter SubscriptionTier enum .name:
+  //   'neighbourhood' → 'Neighbour', 'innerCircle' → 'Circle', 'explorer' → 'Welcome'
+  // Legacy keys ('neighbour', 'circle') also handled for safety
+  const tierName = (tier === 'innerCircle' || tier === 'circle') ? 'Circle' : 'Neighbour';
   const periodLabel = billingPeriod === 'annual' ? 'year' : 'month';
 
   const body = `
@@ -164,7 +166,8 @@ async function sendSubscriptionConfirmation({ email, firstName, tier, billingPer
 }
 
 async function sendPaymentReceipt({ email, firstName, tier, amount, currency, invoiceId, date }) {
-  const tierName = tier === 'circle' ? 'Circle' : tier === 'innerCircle' ? 'Circle' : 'Neighbour';
+  // tier key: 'neighbourhood' → 'Neighbour', 'innerCircle'/'circle' → 'Circle'
+  const tierName = (tier === 'innerCircle' || tier === 'circle') ? 'Circle' : 'Neighbour';
   const currencySymbol = currency === 'GBP' ? '&pound;' : currency === 'EUR' ? '&euro;' : '$';
 
   const body = `
@@ -234,7 +237,8 @@ async function sendTrialEndingReminder({ email, firstName, daysRemaining }) {
 }
 
 async function sendCancellationConfirmation({ email, firstName, endDate, tier }) {
-  const tierName = tier === 'circle' ? 'Circle' : tier === 'innerCircle' ? 'Circle' : 'Neighbour';
+  // tier key: 'neighbourhood' → 'Neighbour', 'innerCircle'/'circle' → 'Circle'
+  const tierName = (tier === 'innerCircle' || tier === 'circle') ? 'Circle' : 'Neighbour';
 
   const body = `
     <h2 style="color:${BRAND.dark}; margin:0 0 16px; font-size:24px;">We're sorry to see you go</h2>

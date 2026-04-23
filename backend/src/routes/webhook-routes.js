@@ -82,14 +82,15 @@ async function _handleStripeEmailAndPush(event) {
       if (!userId) return;
       const userDoc = await db.collection('users').doc(userId).get();
       const user = userDoc.data() || {};
-      const tier = obj.metadata?.tier || 'neighbour';
+      // tier is the Firestore key = Flutter SubscriptionTier enum .name
+      const tier = obj.metadata?.tier || 'neighbourhood';
       const billingPeriod = obj.metadata?.billingPeriod || 'monthly';
 
-      // Derive the display name and price from the tier key
-      const tierDisplayName = tier === 'circle' ? 'Circle' : 'Neighbour';
+      // Derive display name and price from the Firestore tier key
+      const tierDisplayName = tier === 'innerCircle' ? 'Circle' : 'Neighbour';
       const price = billingPeriod === 'annual'
-        ? (tier === 'circle' ? '99.99' : '49.99')
-        : (tier === 'circle' ? '11.99' : '5.99');
+        ? (tier === 'innerCircle' ? '99.99' : '49.99')
+        : (tier === 'innerCircle' ? '11.99' : '5.99');
 
       await sendSubscriptionConfirmation({
         email: user.email || obj.customer_details?.email,
@@ -117,7 +118,7 @@ async function _handleStripeEmailAndPush(event) {
       await sendPaymentReceipt({
         email: user.email || obj.customer_email,
         firstName: user.firstName,
-        tier: user.subscriptionTier || 'neighbour',
+        tier: user.subscriptionTier || 'neighbourhood',
         amount: (obj.amount_paid / 100).toFixed(2),
         currency: (obj.currency || 'gbp').toUpperCase(),
         invoiceId: obj.id,
@@ -152,7 +153,7 @@ async function _handleStripeEmailAndPush(event) {
       await sendCancellationConfirmation({
         email: user.email,
         firstName: user.firstName,
-        tier: obj.metadata?.tier || 'neighbour',
+        tier: obj.metadata?.tier || 'neighbourhood',
       });
       await sendToUser(userId, 'subscription_cancelled');
       break;

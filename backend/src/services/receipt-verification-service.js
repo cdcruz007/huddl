@@ -208,18 +208,22 @@ function _decodeJWS(jws) {
  * Apple product IDs mirror the Huddl product IDs.
  */
 function _mapAppleProductToTier(appleProductId) {
+  // CRITICAL: tier values MUST match Flutter's SubscriptionTier enum .name exactly:
+  //   'neighbourhood' = SubscriptionTier.neighbourhood (displays as 'Neighbour')
+  //   'innerCircle'   = SubscriptionTier.innerCircle   (displays as 'Circle')
+  //   'explorer'      = SubscriptionTier.explorer      (displays as 'Welcome')
   const mapping = {
     // Current product IDs (matching Flutter HuddlProductIds + App/Play Store)
-    huddl_neighbour_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
-    huddl_neighbour_annual:  { tier: 'neighbour', billingPeriod: 'annual'  },
-    huddl_circle_monthly:    { tier: 'circle',    billingPeriod: 'monthly' },
-    huddl_circle_annual:     { tier: 'circle',    billingPeriod: 'annual'  },
+    huddl_neighbour_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_neighbour_annual:  { tier: 'neighbourhood', billingPeriod: 'annual'  },
+    huddl_circle_monthly:    { tier: 'innerCircle',   billingPeriod: 'monthly' },
+    huddl_circle_annual:     { tier: 'innerCircle',   billingPeriod: 'annual'  },
     // Legacy product IDs (kept for existing subscribers migrating from old store entries)
-    huddl_neighbourhood_monthly:          { tier: 'neighbour', billingPeriod: 'monthly' },
-    huddl_neighbourhood_annual:           { tier: 'neighbour', billingPeriod: 'annual'  },
-    huddl_neighbourhood_founding_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
-    huddl_inner_circle_monthly:           { tier: 'circle',    billingPeriod: 'monthly' },
-    huddl_inner_circle_annual:            { tier: 'circle',    billingPeriod: 'annual'  },
+    huddl_neighbourhood_monthly:          { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_neighbourhood_annual:           { tier: 'neighbourhood', billingPeriod: 'annual'  },
+    huddl_neighbourhood_founding_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
+    huddl_inner_circle_monthly:           { tier: 'innerCircle',   billingPeriod: 'monthly' },
+    huddl_inner_circle_annual:            { tier: 'innerCircle',   billingPeriod: 'annual'  },
   };
   return mapping[appleProductId] || { tier: 'explorer', billingPeriod: 'monthly' };
 }

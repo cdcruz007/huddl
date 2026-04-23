@@ -19,10 +19,10 @@
 //   huddl_circle_monthly        → STRIPE_PRICE_CIRCLE_MONTHLY
 //   huddl_circle_annual         → STRIPE_PRICE_CIRCLE_ANNUAL
 //
-// TIER KEYS in Firestore:
-//   'explorer'   → Welcome (free)
-//   'neighbour'  → Neighbour paid tier
-//   'circle'     → Circle paid tier
+// TIER KEYS in Firestore (= Flutter SubscriptionTier enum .name values):
+//   'explorer'      → Welcome (free)
+//   'neighbourhood' → Neighbour paid tier
+//   'innerCircle'   → Circle paid tier
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -36,12 +36,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // ── Helper: get human-readable display name from internal tier key ────────────
+// tier is the Firestore key, which equals Flutter's SubscriptionTier enum .name:
+//   'neighbourhood' → 'Neighbour'  (SubscriptionTier.neighbourhood)
+//   'innerCircle'   → 'Circle'     (SubscriptionTier.innerCircle)
+//   'explorer'      → 'Welcome'    (SubscriptionTier.explorer)
 function tierDisplayName(tier) {
   switch (tier) {
-    case 'neighbour': return 'Neighbour';
-    case 'circle':    return 'Circle';
-    case 'explorer':  return 'Welcome';
-    default:          return 'Neighbour';
+    case 'neighbourhood': return 'Neighbour';
+    case 'innerCircle':   return 'Circle';
+    case 'explorer':      return 'Welcome';
+    // Legacy fallbacks for any old data still using short keys
+    case 'neighbour':     return 'Neighbour';
+    case 'circle':        return 'Circle';
+    default:              return 'Neighbour';
   }
 }
 
@@ -63,12 +70,15 @@ const REVERSE_PRICE_MAP = Object.fromEntries(
   Object.entries(PRICE_MAP).map(([k, v]) => [v, k])
 );
 
-// App product ID → { tier (Firestore key), billingPeriod }
+// App product ID → { tier (Firestore key = Flutter SubscriptionTier enum .name), billingPeriod }
+// CRITICAL: tier values MUST match Flutter's enum .name exactly:
+//   SubscriptionTier.neighbourhood.name == 'neighbourhood'
+//   SubscriptionTier.innerCircle.name   == 'innerCircle'
 const PRODUCT_TIER_MAP = {
-  huddl_neighbour_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
-  huddl_neighbour_annual:  { tier: 'neighbour', billingPeriod: 'annual'  },
-  huddl_circle_monthly:    { tier: 'circle',    billingPeriod: 'monthly' },
-  huddl_circle_annual:     { tier: 'circle',    billingPeriod: 'annual'  },
+  huddl_neighbour_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
+  huddl_neighbour_annual:  { tier: 'neighbourhood', billingPeriod: 'annual'  },
+  huddl_circle_monthly:    { tier: 'innerCircle',   billingPeriod: 'monthly' },
+  huddl_circle_annual:     { tier: 'innerCircle',   billingPeriod: 'annual'  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -110,14 +120,14 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
     metadata: {
       userId,
       productId,
-      tier: tierInfo?.tier || 'neighbour',
+      tier: tierInfo?.tier || 'neighbourhood',
       billingPeriod: tierInfo?.billingPeriod || 'monthly',
     },
     subscription_data: {
       metadata: {
         userId,
         productId,
-        tier: tierInfo?.tier || 'neighbour',
+        tier: tierInfo?.tier || 'neighbourhood',
       },
       // 7-day free trial for new subscribers
       trial_period_days: 7,
@@ -274,7 +284,7 @@ async function _handleCheckoutCompleted(db, session) {
   }
 
   const subData = {
-    tier: tierInfo.tier || 'neighbour',
+    tier: tierInfo.tier || 'neighbourhood',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive: true,
     isTrial: true, // starts with 7-day trial
@@ -292,7 +302,7 @@ async function _handleCheckoutCompleted(db, session) {
 
   await db.collection('users').doc(userId).update({
     stripeCustomerId: customerId,
-    subscriptionTier: tierInfo.tier || 'neighbour',
+    subscriptionTier: tierInfo.tier || 'neighbourhood',
     updatedAt: FieldValue.serverTimestamp(),
   });
 
@@ -381,7 +391,7 @@ async function _handleSubscriptionUpdated(db, subscription) {
   }
 
   await db.collection('subscriptions').doc(userId).update({
-    tier: tierInfo.tier || 'neighbour',
+    tier: tierInfo.tier || 'neighbourhood',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive,
     isTrial,
