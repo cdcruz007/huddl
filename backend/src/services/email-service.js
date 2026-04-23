@@ -15,24 +15,19 @@
 
 'use strict';
 
-// ── Email provider: Resend (primary) → SendGrid (fallback) → mock ────────────
+// ── Email provider: Resend → mock fallback ───────────────────────────────────
 let resendClient = null;
-let sgMail = null;
 
 if (process.env.RESEND_API_KEY) {
   const { Resend } = require('resend');
   resendClient = new Resend(process.env.RESEND_API_KEY);
-  console.log('Email provider: Resend');
-} else if (process.env.SENDGRID_API_KEY) {
-  sgMail = require('@sendgrid/mail');
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-  console.log('Email provider: SendGrid');
+  console.log('Email provider: Resend ✓');
 } else {
-  console.log('Email provider: mock (no API key set)');
+  console.log('Email provider: mock (no RESEND_API_KEY set)');
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'hello@huddlconnect.com';
-const FROM_NAME  = process.env.SENDGRID_FROM_NAME || 'Huddl';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@huddlconnect.com';
+const FROM_NAME  = 'Huddl Connect';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlconnect.com';
 
 // ── Brand colours & styles ──────────────────────────────────────────────────
@@ -277,23 +272,6 @@ async function _send(to, subject, bodyHtml) {
       return { success: true };
     } catch (err) {
       console.error(`[Resend] Email error (${to}):`, err.message);
-      return { success: false, error: err.message };
-    }
-  }
-
-  // ── SendGrid fallback ───────────────────────────────────────────────────────
-  if (sgMail) {
-    try {
-      await sgMail.send({
-        to,
-        from: { email: FROM_EMAIL, name: FROM_NAME },
-        subject,
-        html,
-      });
-      console.log(`[SendGrid] Email sent to ${to}: ${subject}`);
-      return { success: true };
-    } catch (err) {
-      console.error(`[SendGrid] Email error (${to}):`, err.message);
       return { success: false, error: err.message };
     }
   }
