@@ -34,6 +34,7 @@ import '../screens/subscription/subscription_plans_screen.dart';
 import '../screens/subscription/subscription_checkout_screen.dart';
 import '../screens/subscription/manage_subscription_screen.dart';
 import '../services/rehome_service.dart';
+import '../services/payment_service.dart';
 import '../models/subscription.dart';
 import '../screens/home/journey_map_screen.dart';
 import '../screens/profile/backup_restore_screen.dart';
@@ -247,6 +248,31 @@ class AppRouter {
       case '/manage_subscription':
         return SlidePageRoute(
           page: const ManageSubscriptionScreen(),
+        );
+
+      // ── Stripe web payment return routes ────────────────────────────
+      // Stripe redirects here after a successful checkout.
+      // Calls notifyStripeSuccess() so the checkout screen shows the
+      // success dialog and SubscriptionService updates the local tier.
+      case '/subscription/success':
+        // Extract session_id from arguments if passed by the web router
+        final successArgs = settings.arguments as Map<String, dynamic>? ?? {};
+        // Notify PaymentService — triggers onPurchaseSuccess callback
+        // which calls SubscriptionService.purchase() and shows success dialog
+        Future.microtask(() {
+          PaymentService().notifyStripeSuccess(
+            successArgs['productId'] as String? ?? '',
+          );
+        });
+        // Navigate to home — the checkout screen listener will show the dialog
+        return FadePageRoute(
+          page: MainShell(key: MainShell.shellKey),
+        );
+
+      case '/subscription/cancel':
+        // User clicked Back on Stripe Checkout — just go to home
+        return FadePageRoute(
+          page: MainShell(key: MainShell.shellKey),
         );
 
       case '/item_detail':

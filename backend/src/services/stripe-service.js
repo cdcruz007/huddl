@@ -29,15 +29,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 // ── Product ID ↔ Stripe Price ID mapping ────────────────────────────────────
 const PRICE_MAP = {
   huddl_neighbourhood_monthly:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_MONTHLY || 'price_neighbourhood_monthly',
+    process.env.STRIPE_PRICE_NEIGHBOURHOOD_MONTHLY || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
   huddl_neighbourhood_annual:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_ANNUAL || 'price_neighbourhood_annual',
+    process.env.STRIPE_PRICE_NEIGHBOURHOOD_ANNUAL || 'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
   huddl_neighbourhood_founding_monthly:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_FOUNDING || 'price_neighbourhood_founding',
+    process.env.STRIPE_PRICE_NEIGHBOURHOOD_FOUNDING || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
   huddl_inner_circle_monthly:
-    process.env.STRIPE_PRICE_INNER_CIRCLE_MONTHLY || 'price_inner_circle_monthly',
+    process.env.STRIPE_PRICE_INNER_CIRCLE_MONTHLY || 'price_1TPMkPGb8Lg9FVI57ETC2lCH',
   huddl_inner_circle_annual:
-    process.env.STRIPE_PRICE_INNER_CIRCLE_ANNUAL || 'price_inner_circle_annual',
+    process.env.STRIPE_PRICE_INNER_CIRCLE_ANNUAL || 'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
 };
 
 // Reverse mapping: Stripe Price ID → App product ID

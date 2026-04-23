@@ -60,3 +60,4 @@ backend/node_modules/
 # Signing keys
 android/release-key.jks
 android/key.properties
+.env

@@ -153,25 +153,19 @@ class StripeConfig {
       '${BackendApiService().baseUrl}/api/stripe/customer-portal';
 
   // ── Stripe Price IDs ────────────────────────────────────────────────────
-  // TODO: Replace every placeholder below with the real Price ID from
-  //       https://dashboard.stripe.com/prices
-  //       Format: price_<alphanumeric>   e.g. price_1OXxyzABCDEFGHIJ
+  // Live Stripe Price IDs — configured Apr 2025
   //
-  //       These placeholders will cause "No such price" errors in production.
-  //       The backend reads productId from the request body and looks up the
-  //       corresponding priceId to pass to stripe.checkout.sessions.create().
-  //
-  //  Product          Period   Placeholder                → Replace with
-  //  ───────────────  ───────  ─────────────────────────   ────────────────
-  //  Neighbour        Monthly  'price_neighbour_monthly'  → 'price_1Abc...'
-  //  Neighbour        Annual   'price_neighbour_annual'   → 'price_2Abc...'
-  //  Circle           Monthly  'price_circle_monthly'     → 'price_3Abc...'
-  //  Circle           Annual   'price_circle_annual'      → 'price_4Abc...'
+  //  Product          Period   Stripe Price ID
+  //  ───────────────  ───────  ──────────────────────────────────────
+  //  Neighbour        Monthly  price_1TPMiQGb8Lg9FVI5hzdkzA23
+  //  Neighbour        Annual   price_1TPMjBGb8Lg9FVI5zZwvMgVe
+  //  Circle           Monthly  price_1TPMkPGb8Lg9FVI57ETC2lCH
+  //  Circle           Annual   price_1TPMl5Gb8Lg9FVI5YKuJNSRL
   static const Map<String, String> priceIds = {
-    HuddlProductIds.neighbourhoodMonthly: 'price_neighbour_monthly', // TODO: replace
-    HuddlProductIds.neighbourhoodAnnual:  'price_neighbour_annual',  // TODO: replace
-    HuddlProductIds.innerCircleMonthly:   'price_circle_monthly',    // TODO: replace
-    HuddlProductIds.innerCircleAnnual:    'price_circle_annual',     // TODO: replace
+    HuddlProductIds.neighbourhoodMonthly: 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
+    HuddlProductIds.neighbourhoodAnnual:  'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
+    HuddlProductIds.innerCircleMonthly:   'price_1TPMkPGb8Lg9FVI57ETC2lCH',
+    HuddlProductIds.innerCircleAnnual:    'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
   };
 }
 
@@ -544,13 +538,7 @@ class PaymentService extends ChangeNotifier {
   ///  • Webhook secret:    Set STRIPE_WEBHOOK_SECRET env var on backend.
   ///
   /// ─── PRODUCT / PRICE IDS IN STRIPE DASHBOARD ──────────────────────────
-  /// TODO: Replace the placeholder price IDs in [StripeConfig.priceIds] with
-  ///       your real Stripe Price IDs from https://dashboard.stripe.com/prices
-  ///       Current placeholders (will cause "No such price" errors in prod):
-  ///         'price_neighbour_monthly'  → e.g. 'price_1AbcDEFGhiJK'
-  ///         'price_neighbour_annual'   → e.g. 'price_2AbcDEFGhiJK'
-  ///         'price_circle_monthly'     → e.g. 'price_3AbcDEFGhiJK'
-  ///         'price_circle_annual'      → e.g. 'price_4AbcDEFGhiJK'
+  /// Live Stripe Price IDs are configured in StripeConfig.priceIds.
   Future<bool> _purchaseViaStripe(String productId) async {
     try {
       final api = BackendApiService();
