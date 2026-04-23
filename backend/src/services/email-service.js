@@ -225,7 +225,7 @@ async function sendTrialEndingReminder({ email, firstName, daysRemaining }) {
     <div style="background:${BRAND.light}; border-radius:12px; padding:20px; margin:20px 0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Neighbour</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">&pound;5.99/month or &pound;49.99/year</td></tr>
-        <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Circle</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">&pound;11.99/month or &pound;99.99/year</td></tr>
+        <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Circle</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">&pound;12.99/month or &pound;99.99/year</td></tr>
       </table>
     </div>
     ${_button('Upgrade Now', `${FRONTEND_URL}/subscription/upgrade`)}

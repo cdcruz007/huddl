@@ -13,7 +13,7 @@
 //    Unlocks the full AI suite: AI Chat Helper, AI Listing Writer,
 //    Daily Events Finder, and AI Group Summaries.
 //
-// 3. CIRCLE (£11.99/mo | £99.99/yr) — "Lead your community"
+// 3. CIRCLE (£12.99/mo | £99.99/yr) — "Lead your community"
 //    Everything in Neighbour, plus truly unlimited AI usage,
 //    AI Meetup Matchmaker, unlimited listings, and 50 photo uploads.
 //
@@ -164,7 +164,7 @@ class TierLimits {
     aiSynthesisAccess: true,
   );
 
-  // ---- CIRCLE (£11.99/mo) -------------------------------------------------------
+  // ---- CIRCLE (£12.99/mo) -------------------------------------------------------
   // Everything in Neighbour + unlimited AI, AI Meetup Matchmaker, unlimited listings.
   static const TierLimits innerCircle = TierLimits(
     maxGroups: 999,
@@ -313,13 +313,13 @@ class SubscriptionPlan {
       ],
     ),
 
-    // ---- CIRCLE (£11.99/mo | £99.99/yr) ----------------------------------------
+    // ---- CIRCLE (£12.99/mo | £99.99/yr) ----------------------------------------
     SubscriptionPlan(
       tier: SubscriptionTier.innerCircle,
       name: 'Circle',
       tagline: 'Lead your community with unlimited AI',
       subtitle: 'For active community builders',
-      monthlyPrice: 11.99,
+      monthlyPrice: 12.99,
       annualPrice: 99.99,
       limits: TierLimits.innerCircle,
       highlights: [

@@ -119,7 +119,7 @@ class _UpgradePromptSheet extends StatelessWidget {
 
               _QuickTierPreview(
                 name: 'Circle',
-                price: '\u00A311.99/mo',
+                price: '\u00A312.99/mo',
                 color: HuddlColors.teal,
                 icon: Icons.workspace_premium,
                 benefits: const [

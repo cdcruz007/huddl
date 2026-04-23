@@ -9,7 +9,7 @@
 // TIERS (3 tiers, no founding member):
 //   welcome      — free, explorer enum key in Firestore
 //   neighbour    — £5.99/mo | £49.99/yr
-//   circle       — £11.99/mo | £99.99/yr
+//   circle       — £12.99/mo | £99.99/yr
 //
 // PRODUCT ID MAPPING (must match Flutter HuddlProductIds + App/Play Store)
 // ──────────────────

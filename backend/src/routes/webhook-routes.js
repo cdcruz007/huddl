@@ -90,7 +90,7 @@ async function _handleStripeEmailAndPush(event) {
       const tierDisplayName = tier === 'innerCircle' ? 'Circle' : 'Neighbour';
       const price = billingPeriod === 'annual'
         ? (tier === 'innerCircle' ? '99.99' : '49.99')
-        : (tier === 'innerCircle' ? '11.99' : '5.99');
+        : (tier === 'innerCircle' ? '12.99' : '5.99');
 
       await sendSubscriptionConfirmation({
         email: user.email || obj.customer_details?.email,

@@ -74,13 +74,13 @@ async function main() {
 
   const icMonthly = await stripe.prices.create({
     product: innerCircle.id,
-    unit_amount: 1199, // £11.99
+    unit_amount: 1299, // £12.99
     currency: 'gbp',
     recurring: { interval: 'month' },
     metadata: { productId: 'huddl_inner_circle_monthly' },
     lookup_key: 'huddl_inner_circle_monthly',
   });
-  console.log(`  Monthly: £11.99/mo (${icMonthly.id})`);
+  console.log(`  Monthly: £12.99/mo (${icMonthly.id})`);
 
   const icAnnual = await stripe.prices.create({
     product: innerCircle.id,

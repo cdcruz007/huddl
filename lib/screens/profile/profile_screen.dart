@@ -294,7 +294,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       planLabel = 'Circle';
       subtitle = sub.billingPeriod == BillingPeriod.annual
           ? '\u00A399.99/year'
-          : '\u00A311.99/month';
+          : '\u00A312.99/month';
     }
 
     return Container(
