@@ -132,11 +132,15 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
       // 7-day free trial for new subscribers
       trial_period_days: 7,
     },
-    automatic_tax: { enabled: false }, // Enable when Stripe Tax is configured
+    automatic_tax: { enabled: true }, // Stripe Tax activated — handles UK VAT automatically
     allow_promotion_codes: true,
     locale: 'en-GB',
-    payment_method_types: ['card'],
+    // Omitting payment_method_types lets Stripe auto-present card, Apple Pay,
+    // and Google Pay based on the user's device/browser — no manual list needed.
     billing_address_collection: 'required',
+    customer_update: {
+      address: 'auto', // Required for automatic_tax — persists billing address to customer
+    },
   };
 
   const session = await stripe.checkout.sessions.create(sessionParams);
