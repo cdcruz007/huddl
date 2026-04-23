@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: huddl-connect-backend
+    env: node
+    region: frankfurt  # Closest to UK users
+    plan: starter
+    buildCommand: npm install --production
+    startCommand: node src/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      # ── Add these in Render dashboard (Settings → Environment) ──
+      # STRIPE_SECRET_KEY            → sk_live_51J29Cx...
+      # STRIPE_PUBLISHABLE_KEY       → pk_live_51J29Cx...
+      # STRIPE_WEBHOOK_SECRET        → whsec_NrvFWpNM...
+      # STRIPE_PRICE_NEIGHBOURHOOD_MONTHLY → price_1TPMiQGb...
+      # STRIPE_PRICE_NEIGHBOURHOOD_ANNUAL  → price_1TPMjBGb...
+      # STRIPE_PRICE_INNER_CIRCLE_MONTHLY  → price_1TPMkPGb...
+      # STRIPE_PRICE_INNER_CIRCLE_ANNUAL   → price_1TPMl5Gb...
+      # FIREBASE_PROJECT_ID          → huddl-connect
+      # SENDGRID_API_KEY             → SG.xxx
+      # JWT_SECRET                   → (random 64-char string)
+      # FRONTEND_URL                 → https://huddlconnect.com

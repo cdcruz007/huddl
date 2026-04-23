@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Environment secrets — NEVER commit these
+.env
+.env.local
+.env.production
+
+# Firebase service account (use FIREBASE_SERVICE_ACCOUNT_JSON env var on cloud)
+config/firebase-admin-sdk.json
+config/apple-subscription-key.p8
+
+# Logs
+*.log
+logs/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
