@@ -55,7 +55,7 @@ app.use(cors({
     process.env.FRONTEND_URL || 'http://localhost:5060',
     'https://huddlapp.co.uk',
     'https://www.huddlapp.co.uk',
-    /\.huddlconnect\.com$/,
+    /\.huddlapp\.co\.uk$/,
   ],
   credentials: true,
 }));
