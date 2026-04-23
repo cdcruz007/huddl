@@ -86,10 +86,10 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
     line_items: [{ price: priceId, quantity: 1 }],
     success_url:
       successUrl ||
-      `${process.env.STRIPE_SUCCESS_URL || 'https://huddlconnect.com/subscription/success'}?session_id={CHECKOUT_SESSION_ID}`,
+      `${process.env.STRIPE_SUCCESS_URL || 'https://huddlapp.co.uk/subscription/success'}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url:
       cancelUrl ||
-      `${process.env.STRIPE_CANCEL_URL || 'https://huddlconnect.com/subscription/cancel'}`,
+      `${process.env.STRIPE_CANCEL_URL || 'https://huddlapp.co.uk/subscription/cancel'}`,
     metadata: {
       userId,
       productId,
@@ -156,7 +156,7 @@ async function createPortalSession(userId) {
 
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: process.env.FRONTEND_URL || 'https://huddlconnect.com',
+    return_url: process.env.FRONTEND_URL || 'https://huddlapp.co.uk',
   });
 
   return { url: session.url };

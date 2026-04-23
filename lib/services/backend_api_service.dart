@@ -28,7 +28,7 @@ class BackendApiService {
   // ── Configuration ──────────────────────────────────────────────────────
   // In production, point to your deployed backend URL.
   // In development, use the local backend or the sandbox URL.
-  static const String _prodBaseUrl = 'https://api.huddlconnect.com';
+  static const String _prodBaseUrl = 'https://api.huddlapp.co.uk';
   static const String _devBaseUrl = 'http://localhost:3000';
 
   String get baseUrl {
