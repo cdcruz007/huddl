@@ -186,6 +186,45 @@ class BackendApiService {
     );
   }
 
+  /// Send welcome email and push notification to a newly registered user.
+  /// Called once immediately after profile creation in _createUserProfile.
+  Future<void> sendWelcomeNotification({
+    required String email,
+    String? firstName,
+    String? borough,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/notifications/welcome'),
+        headers: headers,
+        body: jsonEncode({
+          'email': email,
+          'firstName': firstName ?? '',
+          'borough': borough ?? '',
+        }),
+      );
+    } catch (e) {
+      // Non-fatal — log but don't block user flow
+      if (kDebugMode) debugPrint('[BackendApiService] sendWelcomeNotification error: $e');
+    }
+  }
+
+  /// Called when a user adds their email address to their profile for the
+  /// first time. Triggers the welcome email if it hasn't been sent yet.
+  Future<void> notifyEmailAdded(String email) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/notifications/email-added'),
+        headers: headers,
+        body: jsonEncode({'email': email}),
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyEmailAdded error: $e');
+    }
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // RESPONSE HANDLING
   // ═════════════════════════════════════════════════════════════════════════

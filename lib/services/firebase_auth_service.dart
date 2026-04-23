@@ -8,6 +8,7 @@ import 'onboarding_data_service.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'subscription_service.dart';
+import 'backend_api_service.dart';
 import '../models/subscription.dart';
 
 /// Centralised Firebase Authentication service for Huddl Connect.
@@ -776,6 +777,16 @@ class FirebaseAuthService {
 
     // Trigger a full profile sync so all fields are set correctly
     await HuddlUserService().syncCurrentUserProfile();
+
+    // Send welcome push notification via backend (non-fatal if backend unreachable).
+    // Email will be sent later once/if the user adds an email to their profile.
+    unawaited(
+      BackendApiService().sendWelcomeNotification(
+        email: '', // no email at sign-up (phone-auth only); email sent when profile updated
+        firstName: firstName,
+        borough: borough,
+      ).catchError((_) {}),
+    );
 
     if (kDebugMode) {
       debugPrint('FirebaseAuthService: profile created for $userId, borough=$borough');
