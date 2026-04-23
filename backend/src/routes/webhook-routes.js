@@ -166,7 +166,7 @@ async function _handleStripeEmailAndPush(event) {
 //
 // Setup:
 //   App Store Connect > App > General > App Store Server Notifications
-//   URL: https://api.huddlconnect.com/api/webhooks/apple
+//   URL: https://api.huddlapp.co.uk/api/webhooks/apple
 //   Version: Version 2
 router.post('/apple', express.json(), async (req, res) => {
   try {
@@ -191,7 +191,7 @@ router.post('/apple', express.json(), async (req, res) => {
 //   2. Create push subscription → URL: https://api.huddlapp.co.uk/api/webhooks/google
 //   3. Google Play Console > Monetization > Monetization setup > Real-time notifications
 //      → Set topic to the Pub/Sub topic
-//   URL: https://api.huddlconnect.com/api/webhooks/google
+//   URL: https://api.huddlapp.co.uk/api/webhooks/google
 router.post('/google', express.json(), async (req, res) => {
   try {
     const message = req.body.message;
