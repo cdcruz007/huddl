@@ -102,18 +102,21 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
     if (!mounted) return;
 
     if (result.isSuccess) {
-      // ── Ensure the user has a display name set ────────────────────────
-      final data = OnboardingDataService();
-      await data.initialize();
-      if (data.name == null || data.name!.trim().isEmpty) {
-        final nameEntered = await _showNameEntrySheet();
+      if (!mounted) return;
+
+      if (result.requiresOnboarding) {
+        // Account exists in Firebase Auth but onboarding was never completed —
+        // clear any stale local data and send them through the full onboarding
+        // flow so they can set their name, postcode, parent type, etc.
+        await OnboardingDataService().clear();
         if (!mounted) return;
-        data.setName(
-          (nameEntered == null || nameEntered.trim().isEmpty)
-              ? 'User'
-              : nameEntered.trim(),
-        );
+        Navigator.pushNamedAndRemoveUntil(context, '/onboarding', (_) => false);
+        return;
       }
+
+      // ── Restore user profile from Firestore into local cache ────────────
+      await _authService.restoreProfileFromFirestore();
+
       if (!mounted) return;
       _authService.updateLastActive();
       Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
@@ -255,130 +258,6 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
 
   /// Bottom sheet asking the user for their first name (shown only when the
   /// returning user has no stored name — e.g. after account deletion).
-  Future<String?> _showNameEntrySheet() async {
-    final nameCtrl = TextEditingController();
-    return showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx2, setLocal) {
-            final canSave = nameCtrl.text.trim().isNotEmpty;
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                  24, 28, 24, MediaQuery.of(ctx2).viewInsets.bottom + 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.disabledText.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    width: 56, height: 56,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.onboardingOrange.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(Icons.waving_hand_rounded,
-                        size: 28, color: HuddlColors.onboardingOrange),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Welcome! What should we\ncall you?',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      height: 1.3,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Enter your first name to personalise your experience.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: HuddlColors.disabledText,
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 28),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: context.hc.inputBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: HuddlColors.inputBorderLight, width: 1),
-                    ),
-                    child: TextField(
-                      controller: nameCtrl,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.words,
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Theme.of(context).colorScheme.onSurface),
-                      decoration: const InputDecoration(
-                        hintText: 'Your first name',
-                        hintStyle: TextStyle(
-                            fontSize: 16, color: HuddlColors.disabledText),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 16),
-                      ),
-                      onChanged: (_) => setLocal(() {}),
-                      onSubmitted: (v) {
-                        if (v.trim().isNotEmpty) Navigator.pop(ctx2, v.trim());
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  GestureDetector(
-                    onTap: canSave
-                        ? () => Navigator.pop(ctx2, nameCtrl.text.trim())
-                        : null,
-                    child: Container(
-                      width: double.infinity,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: canSave
-                            ? HuddlColors.onboardingOrange
-                            : HuddlColors.disabled,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: canSave
-                              ? Colors.white
-                              : HuddlColors.disabledText,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

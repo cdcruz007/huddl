@@ -28,7 +28,9 @@ import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/huddl_user_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
+import '../../services/biometric_auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -86,6 +88,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _showGroups = true;
   bool _readReceipts = true;
 
+  // Biometric login
+  final _biometricService = BiometricAuthService();
+  bool _biometricEnabled   = false;
+  bool _biometricAvailable = false;
+  String _biometricLabel   = 'Biometrics';
+
   @override
   void initState() {
     super.initState();
@@ -131,6 +139,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _readReceipts     = svc.readReceipts;
       });
     }
+    // Load biometric state (non-blocking)
+    _loadBiometricState();
+  }
+
+  Future<void> _loadBiometricState() async {
+    final available = await _biometricService.isAvailable;
+    final enabled   = await _biometricService.isEnabled;
+    final label     = await _biometricService.biometricLabel;
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = available;
+        _biometricEnabled   = enabled;
+        _biometricLabel     = label;
+      });
+    }
   }
 
   Future<void> _saveSetting(String key, bool value) async {
@@ -142,7 +165,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _loadProfileData() async {
     setState(() => _isLoading = true);
     try {
-      await _onboarding.initialize();
+      // Force-reload from storage on every profile load so we always
+      // pick up values written by syncCurrentUserProfile / restoreProfile
+      // even if the singleton was already initialised with stale empty data.
+      await _onboarding.initialize(forceReload: true);
+
+      // If local name is still missing after the fresh storage read,
+      // go directly to Firestore as the authoritative source.
+      if (_onboarding.name == null || _onboarding.name!.trim().isEmpty) {
+        try {
+          await FirebaseAuthService().restoreProfileFromFirestore()
+              .timeout(const Duration(seconds: 5));
+          // Force-reload again so the values just written by restore are read
+          await _onboarding.initialize(forceReload: true);
+        } catch (_) {}
+      }
+
       await _groupService.initialize();
 
       String borough = 'Not set';
@@ -396,6 +434,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
+                // ── Name-repair banner ──────────────────────────────────
+                // Shown when the user's name is missing or is a phone-number
+                // placeholder left by the automatic self-repair after a
+                // Firestore name-overwrite bug. Tapping it opens Edit Profile.
+                if (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
+                  GestureDetector(
+                    onTap: _showEditProfileSheet,
+                    child: Container(
+                      width: double.infinity,
+                      color: HuddlColors.primary.withValues(alpha: 0.10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline,
+                              color: HuddlColors.primary, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Tap here to add your name to complete your profile',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: HuddlColors.primary,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right,
+                              color: HuddlColors.primary, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
                 // ── Profile header ──────────────────────────────────────
                 Container(
                   color: context.hc.surface,
@@ -443,11 +512,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(_name,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textPrimary)),
+                          GestureDetector(
+                            onTap: _showEditProfileSheet,
+                            child: Text(
+                                (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
+                                    ? 'Tap to add name'
+                                    : _name,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    color: (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
+                                        ? HuddlColors.primary.withValues(alpha: 0.6)
+                                        : context.hc.textPrimary)),
+                          ),
                           if (_subscriptionService.isPaid) ...[
                             const SizedBox(width: 6),
                             Container(
@@ -791,7 +868,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showEditProfileSheet() {
-    final nameCtrl = TextEditingController(text: _name);
+    // If name is a phone number placeholder or empty, show blank field so
+    // the user can type their real name without having to clear "+44..." first
+    final displayName = (_name.isEmpty || _name == 'User' || _name.startsWith('+'))
+        ? ''
+        : _name;
+    final nameCtrl = TextEditingController(text: displayName);
     final bioCtrl = TextEditingController(text: _bio ?? '');
 
     _showSheet(
@@ -804,18 +886,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 16),
           _sheetField(bioCtrl, 'About me', Icons.edit_note, maxLines: 4),
           const SizedBox(height: 24),
-          _sheetButton('Save Changes', () {
+          _sheetButton('Save Changes', () async {
             final newName = nameCtrl.text.trim();
+            final newBio = bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim();
             if (newName.isNotEmpty) {
               _onboarding.setName(newName);
-              _onboarding.setBio(bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim());
+              _onboarding.setBio(newBio);
               setState(() {
                 _name = newName;
-                _bio = bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim();
+                _bio = newBio;
               });
+              // Also push name to Firestore immediately so it persists across
+              // reinstalls and fresh installs (fixes blank name after restore)
+              try {
+                await HuddlUserService().syncCurrentUserProfile()
+                    .timeout(const Duration(seconds: 5));
+              } catch (_) {}
             }
-            Navigator.pop(c);
-            _snack('Profile updated');
+            if (mounted) {
+              Navigator.pop(c);
+              _snack('Profile updated');
+            }
           }),
           const SizedBox(height: 16),
         ],
@@ -2225,11 +2316,141 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showPrivacySheet() {
     _showSheet(
-      title: 'Privacy',
+      title: 'Privacy & Security',
       builder: (c) => StatefulBuilder(
         builder: (ctx, setLocal) => Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+
+            // ── Security section ─────────────────────────────────────────
+            if (_biometricAvailable) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.security_rounded,
+                        size: 16, color: HuddlColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'SECURITY',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Biometric toggle
+              SwitchListTile.adaptive(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                secondary: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    _biometricLabel.contains('Face')
+                        ? Icons.face_retouching_natural_rounded
+                        : Icons.fingerprint_rounded,
+                    size: 20,
+                    color: HuddlColors.primary,
+                  ),
+                ),
+                title: Text(
+                  '$_biometricLabel Login',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: ctx.hc.textPrimary,
+                  ),
+                ),
+                subtitle: Text(
+                  _biometricEnabled
+                      ? 'Tap to disable — you\'ll use your password instead'
+                      : 'Use $_biometricLabel to log in quickly and securely',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: ctx.hc.textTertiary,
+                  ),
+                ),
+                value: _biometricEnabled,
+                activeThumbColor: HuddlColors.primary,
+                activeTrackColor: HuddlColors.primary.withValues(alpha: 0.5),
+                onChanged: (v) async {
+                  if (v) {
+                    // User wants to enable — run a biometric test first
+                    final confirmed =
+                        await _biometricService.verifyBeforeEnabling();
+                    if (!confirmed) {
+                      if (ctx.mounted) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Biometric verification failed — not enabled.',
+                            ),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                    // Store the current user's phone for auto-login
+                    final phone = OnboardingDataService().phoneNumber ?? '';
+                    await _biometricService.setEnabled(true,
+                        phoneNumber: phone);
+                    setLocal(() => _biometricEnabled = true);
+                    setState(() => _biometricEnabled = true);
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(
+                          content:
+                              Text('$_biometricLabel login enabled!'),
+                          backgroundColor: HuddlColors.primary,
+                        ),
+                      );
+                    }
+                  } else {
+                    await _biometricService.setEnabled(false);
+                    setLocal(() => _biometricEnabled = false);
+                    setState(() => _biometricEnabled = false);
+                    if (ctx.mounted) {
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              '$_biometricLabel login disabled.'),
+                        ),
+                      );
+                    }
+                  }
+                },
+              ),
+              const Divider(indent: 16, endIndent: 16),
+              // Privacy section header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.privacy_tip_outlined,
+                        size: 16, color: HuddlColors.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      'PRIVACY',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.primary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
             _toggleTile(
                 Icons.circle,
                 'Show online status',
@@ -3942,7 +4163,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           height: 84,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Center(
-            child: Text(_name.isNotEmpty ? _name[0].toUpperCase() : 'U',
+            child: Text(
+                (_name.isNotEmpty && !_name.startsWith('+') && _name != 'User')
+                    ? _name[0].toUpperCase()
+                    : 'U',
                 style: GoogleFonts.poppins(
                     fontSize: 36,
                     fontWeight: FontWeight.w600,

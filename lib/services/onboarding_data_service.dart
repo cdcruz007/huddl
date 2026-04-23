@@ -239,12 +239,21 @@ class OnboardingDataService {
     await BrowserStorage.remove(_storageKey);
   }
   
-  /// Initialize and load data from persistent storage
-  Future<void> initialize() async {
+  /// Initialize and load data from persistent storage.
+  ///
+  /// Normally returns the cached result after the first call.
+  /// Pass [forceReload] = true to discard the cache and re-read storage —
+  /// useful when you know storage was just written by another code path
+  /// (e.g. after restoreProfileFromFirestore sets the name).
+  Future<void> initialize({bool forceReload = false}) async {
+    if (forceReload) {
+      // Discard existing cache so _loadFromStorage re-reads storage
+      _isInitialized = false;
+      _initializationFuture = null;
+    }
     if (_initializationFuture != null) {
       return _initializationFuture;
     }
-    
     _initializationFuture = _loadFromStorage();
     return _initializationFuture;
   }

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../constants/app_text_styles.dart';
 import '../../widgets/common/primary_button.dart';
 import '../../widgets/common/logo_widget.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/onboarding_data_service.dart';
+import 'package:local_auth/local_auth.dart';
+import '../../services/biometric_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,6 +27,64 @@ class _LoginScreenState extends State<LoginScreen> {
 
   // Country code — locked to UK (+44) matching onboarding
   static const _countryCode = '+44';
+
+  // Biometric state
+  final _biometric = BiometricAuthService();
+  bool _biometricEnabled    = false;
+  bool _biometricAvailable  = false;
+  String _biometricLabel    = 'Biometrics';
+  bool _isFaceId            = false;
+  String? _enrolledPhone;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometric();
+  }
+
+  Future<void> _checkBiometric() async {
+    final enabled   = await _biometric.isEnabled;
+    final available = await _biometric.isAvailable;
+    final label     = await _biometric.biometricLabel;
+    final types     = await _biometric.availableBiometrics;
+    final phone     = await _biometric.enrolledPhone;
+    if (!mounted) return;
+    setState(() {
+      _biometricEnabled   = enabled;
+      _biometricAvailable = available;
+      _biometricLabel     = label;
+      _isFaceId           = types.contains(BiometricType.face);
+      _enrolledPhone      = phone;
+    });
+  }
+
+  Future<void> _loginWithBiometric() async {
+    setState(() => _isLoading = true);
+    final success = await _biometric.authenticateForLogin();
+    if (!mounted) return;
+    if (success) {
+      final auth = FirebaseAuthService();
+      // Biometric passed — user is already signed in via Firebase session,
+      // just verify the profile exists then go home.
+      final hasProfile = await auth.hasUserProfile()
+          .timeout(const Duration(seconds: 5), onTimeout: () => false);
+      if (!mounted) return;
+      if (hasProfile) {
+        auth.updateLastActive();
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+      } else {
+        setState(() {
+          _isLoading    = false;
+          _errorMessage = 'Could not verify your account. Please log in with your password.';
+        });
+      }
+    } else {
+      setState(() {
+        _isLoading    = false;
+        _errorMessage = null; // user cancelled — don't show error
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -507,6 +568,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: _canLogin ? _handleLogin : null,
                     ),
 
+              // ── Biometric login button (shown if enabled + available) ─
+              if (_biometricEnabled && _biometricAvailable && !_isLoading) ...[
+                const SizedBox(height: 16),
+                _BiometricLoginButton(
+                  label: _biometricLabel,
+                  isFaceId: _isFaceId,
+                  enrolledPhone: _enrolledPhone,
+                  onTap: _loginWithBiometric,
+                ),
+              ],
+
               const SizedBox(height: 40),
 
               // ── Sign up link ─────────────────────────────────
@@ -723,6 +795,82 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+// ── Biometric login button ────────────────────────────────────────────────────
+class _BiometricLoginButton extends StatelessWidget {
+  final String  label;
+  final bool    isFaceId;
+  final String? enrolledPhone;
+  final VoidCallback onTap;
+
+  const _BiometricLoginButton({
+    required this.label,
+    required this.isFaceId,
+    required this.onTap,
+    this.enrolledPhone,
+  });
+
+  /// Format enrolled phone for display: +44 7575 888452 → ••• ••• 8452
+  String get _maskedPhone {
+    if (enrolledPhone == null || enrolledPhone!.length < 4) return '';
+    final last4 = enrolledPhone!.substring(enrolledPhone!.length - 4);
+    return '••• ••• $last4';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: HuddlColors.primary.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isFaceId
+                  ? Icons.face_retouching_natural_rounded
+                  : Icons.fingerprint_rounded,
+              size: 26,
+              color: HuddlColors.primary,
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Use $label',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary,
+                  ),
+                ),
+                if (_maskedPhone.isNotEmpty)
+                  Text(
+                    _maskedPhone,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.textSecondary,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

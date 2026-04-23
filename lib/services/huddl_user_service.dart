@@ -48,8 +48,92 @@ class HuddlUserService {
       return;
     }
 
-    await _onboarding.initialize();
+    await _onboarding.initialize(forceReload: true);
 
+    // ── CRITICAL: Check if local onboarding data is populated ────────────────
+    // If local data was cleared (e.g. fresh install, BrowserStorage reset) but
+    // the user already has a Firestore profile, we must NOT push empty strings
+    // back to Firestore — that would overwrite real data with blanks.
+    //
+    // Strategy: if the local name is empty, fetch the Firestore profile first
+    // and restore local state, THEN push the merged result.
+    final localName = _onboarding.name ?? '';
+    if (localName.trim().isEmpty) {
+      try {
+        final doc = await _db
+            .collection('users')
+            .doc(uid)
+            .get()
+            .timeout(const Duration(seconds: 5));
+        if (doc.exists) {
+          final data = doc.data()!;
+          // Restore local state from Firestore so subsequent reads are correct
+          String firestoreName = (data['name'] as String?) ?? '';
+          // ── Self-repair: if Firestore name is blank (previously overwritten
+          //    by the BrowserStorage.clear bug), try firstName then phone ──
+          if (firestoreName.trim().isEmpty) {
+            final fn = (data['firstName'] as String?) ?? '';
+            if (fn.trim().isNotEmpty) {
+              firestoreName = fn.trim();
+            } else {
+              final authPhone = _auth.currentUser?.phoneNumber ?? '';
+              if (authPhone.isNotEmpty) firestoreName = authPhone;
+            }
+            // Write the recovered name back to Firestore immediately
+            if (firestoreName.trim().isNotEmpty) {
+              try {
+                final nameParts = firestoreName.trim().split(' ');
+                await _db.collection('users').doc(uid).update({
+                  'name': firestoreName.trim(),
+                  'firstName': nameParts.first,
+                  if (nameParts.length > 1) 'lastName': nameParts.sublist(1).join(' '),
+                });
+              } catch (_) {}
+            }
+          }
+          if (firestoreName.trim().isNotEmpty) {
+            _onboarding.setName(firestoreName.trim());
+          }
+          final firestorePostcode = (data['postcode'] as String?) ?? '';
+          if (firestorePostcode.isNotEmpty && (_onboarding.postcode == null || _onboarding.postcode!.isEmpty)) {
+            _onboarding.setPostcode(firestorePostcode);
+          }
+          final firestoreParentType = (data['parentType'] as String?) ?? '';
+          if (firestoreParentType.isNotEmpty && _onboarding.parentType == null) {
+            _onboarding.setParentType(firestoreParentType);
+          }
+          final firestoreStages = data['stagesOfLife'];
+          if (firestoreStages is List && firestoreStages.isNotEmpty && _onboarding.stagesOfLife.isEmpty) {
+            _onboarding.setStagesOfLife(List<String>.from(firestoreStages));
+          }
+          final firestorePhone = (data['phone'] as String?) ?? '';
+          final firestoreCountry = (data['countryCode'] as String?) ?? '+44';
+          if (firestorePhone.isNotEmpty && _onboarding.phoneNumber == null) {
+            final subscriber = firestorePhone.startsWith(firestoreCountry)
+                ? firestorePhone.substring(firestoreCountry.length)
+                : firestorePhone;
+            _onboarding.setPhoneNumber(subscriber, countryCode: firestoreCountry);
+            _onboarding.setPhoneVerified(true);
+          }
+          _log('syncCurrentUserProfile: restored local state from Firestore for uid=$uid');
+
+          // Only update presence fields — DO NOT overwrite data-bearing fields
+          // because we just restored them correctly from Firestore.
+          await _db.collection('users').doc(uid).update({
+            'isOnline': true,
+            'lastActiveAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          _log('syncCurrentUserProfile: presence-only update for uid=$uid (local was empty)');
+          return;
+        }
+      } catch (e) {
+        _log('syncCurrentUserProfile: Firestore restore failed: $e — skipping push to avoid overwrite');
+        return; // Do not push empty data
+      }
+    }
+
+    // ── Local data is populated — safe to push ────────────────────────────────
     final postcode = _onboarding.postcode ?? '';
     // Use the async lookup so the borough is resolved via postcodes.io
     // rather than the outward-code fallback map.
@@ -60,32 +144,57 @@ class HuddlUserService {
     final firstName = parts.isNotEmpty ? parts.first : '';
     final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
+    // Build the profile update — only include fields with real values
+    // to avoid accidentally overwriting Firestore data with empty strings.
     final Map<String, dynamic> profile = {
       'uid': uid,
-      'name': name,
-      'firstName': firstName,
-      'lastName': lastName,
-      'phone': _onboarding.fullPhoneNumber ?? _auth.currentUser?.phoneNumber ?? '',
-      'countryCode': _onboarding.countryCode ?? '+44',
-      'parentType': _onboarding.parentType ?? '',
-      'stagesOfLife': _onboarding.stagesOfLife,
-      'postcode': postcode,
-      'borough': borough,
-      'children': _onboarding.children,
-      'bio': _onboarding.bio ?? '',
-      'photoUrl': _onboarding.profilePhotoPath ?? '',
-      'tier': 'explorer',
       'isPhoneVerified': true,
       'isOnline': true,
       'lastActiveAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
+    // Only add fields to the update when they have meaningful values
+    if (name.trim().isNotEmpty) {
+      profile['name'] = name;
+      profile['firstName'] = firstName;
+      profile['lastName'] = lastName;
+      // A real name being synced means the user has completed onboarding.
+      // Clear the isOnboarding flag so cold starts go straight to /home.
+      profile['isOnboarding'] = false;
+    }
+    final phone = _onboarding.fullPhoneNumber ?? _auth.currentUser?.phoneNumber ?? '';
+    if (phone.isNotEmpty) {
+      profile['phone'] = phone;
+      profile['countryCode'] = _onboarding.countryCode ?? '+44';
+    }
+    if ((_onboarding.parentType ?? '').isNotEmpty) {
+      profile['parentType'] = _onboarding.parentType!;
+    }
+    if (_onboarding.stagesOfLife.isNotEmpty) {
+      profile['stagesOfLife'] = _onboarding.stagesOfLife;
+    }
+    if (postcode.isNotEmpty) {
+      profile['postcode'] = postcode;
+    }
+    if (borough.isNotEmpty) {
+      profile['borough'] = borough;
+    }
+    if (_onboarding.children.isNotEmpty) {
+      profile['children'] = _onboarding.children;
+    }
+    if ((_onboarding.bio ?? '').isNotEmpty) {
+      profile['bio'] = _onboarding.bio!;
+    }
+    if ((_onboarding.profilePhotoPath ?? '').isNotEmpty) {
+      profile['photoUrl'] = _onboarding.profilePhotoPath!;
+    }
+
     try {
       // Use set with merge so we don't overwrite fields set elsewhere
       // (e.g. createdAt set on first login, fcmToken set by messaging).
       await _db.collection('users').doc(uid).set(profile, SetOptions(merge: true));
-      _log('Profile synced for uid=$uid borough=$borough');
+      _log('Profile synced for uid=$uid name=$name borough=$borough');
     } catch (e) {
       _log('ERROR syncing profile: $e');
     }

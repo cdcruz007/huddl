@@ -16,6 +16,7 @@ import '../screens/onboarding/add_photo_screen.dart';
 import '../screens/onboarding/about_you_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/login_otp_screen.dart';
+import '../screens/auth/biometric_lock_screen.dart';
 import '../screens/ai/ai_copilot_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/groups/group_chat_screen.dart';
@@ -92,6 +93,9 @@ class AppRouter {
 
       case '/login':
         return FadePageRoute(page: const LoginScreen());
+
+      case '/biometric_lock':
+        return FadePageRoute(page: const BiometricLockScreen());
 
       case '/login_otp':
         final args = settings.arguments as Map<String, String>?;

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/default_group_service.dart';
+import '../../services/huddl_user_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -59,6 +60,17 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
       if (kDebugMode) {
         debugPrint('Could not assign default groups at onboarding: $e');
       }
+    }
+
+    if (!mounted) return;
+
+    // ── SYNC profile to Firestore and mark onboarding complete ───────────
+    // This writes name, postcode, parentType, etc. to Firestore and clears
+    // the isOnboarding flag so subsequent cold starts go straight to /home.
+    try {
+      await HuddlUserService().syncCurrentUserProfile();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Could not sync profile at onboarding end: $e');
     }
 
     if (!mounted) return;

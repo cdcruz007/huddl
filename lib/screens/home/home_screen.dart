@@ -28,6 +28,7 @@ import '../../services/borough_scope_guard.dart';
 import '../../widgets/learning_maturity_indicator.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../widgets/common/huddl_empty_state.dart';
+import '../../services/firebase_auth_service.dart';
 
 
 // =============================================================================
@@ -173,7 +174,22 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      await _onboarding.initialize();
+      // Force-reload from storage so we always pick up values written by
+      // syncCurrentUserProfile / restoreProfile even if the singleton was
+      // already initialised earlier with stale empty data.
+      await _onboarding.initialize(forceReload: true);
+
+      // If name is still empty after storage reload, restore directly from
+      // Firestore — this covers the case where storage was cleared but
+      // Firestore has the correct name.
+      if (_onboarding.name == null || _onboarding.name!.trim().isEmpty) {
+        try {
+          await FirebaseAuthService().restoreProfileFromFirestore()
+              .timeout(const Duration(seconds: 5));
+          await _onboarding.initialize(forceReload: true);
+        } catch (_) {}
+      }
+
       await _groupService.initialize();
       await _announcementService.initialize();
       await _feedService.initialize();

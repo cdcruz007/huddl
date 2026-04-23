@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_data_service.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
@@ -31,10 +32,37 @@ class FirebaseAuthService {
   // Web only: signInWithPhoneNumber stores ConfirmationResult
   ConfirmationResult? _webConfirmationResult;
 
+  // ── Session flag key ─────────────────────────────────────────────────────
+  // Written on explicit logout. Splash screen checks this: if the user
+  // deliberately logged out, they must go through /login again even though
+  // the Firebase Auth Keychain token is still valid (iOS persists tokens
+  // across reinstalls). Cleared on successful OTP verification.
+  static const String _loggedOutKey = 'huddl_user_logged_out';
+
   // ── Getters ──────────────────────────────────────────────────────────────
   User? get currentUser => _auth.currentUser;
   bool get isSignedIn => _auth.currentUser != null;
   String? get uid => _auth.currentUser?.uid;
+
+  /// True if the user has explicitly logged out since the last sign-in.
+  /// Checked by the splash screen to force /login even when a Keychain
+  /// token is still present.
+  static Future<bool> get hasExplicitlyLoggedOut async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_loggedOutKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Clear the explicit logout flag after a successful login.
+  static Future<void> clearLoggedOutFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_loggedOutKey);
+    } catch (_) {}
+  }
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   // ── No-op configure kept for call-site compatibility ─────────────────────
@@ -258,7 +286,16 @@ class FirebaseAuthService {
           }
           await HuddlUserService().syncCurrentUserProfile();
         }
-        return AuthResult.success(userCred.user);
+        // Clear the explicit logout flag — user has successfully authenticated
+        await clearLoggedOutFlag();
+        // Check if this account still needs onboarding (isOnboarding=true in Firestore)
+        bool needsOnboarding = false;
+        try {
+          final doc = await _db.collection('users').doc(userCred.user!.uid).get()
+              .timeout(const Duration(seconds: 3));
+          needsOnboarding = (doc.data()?['isOnboarding'] as bool?) ?? false;
+        } catch (_) {}
+        return AuthResult.success(userCred.user, requiresOnboarding: needsOnboarding);
       }
 
       // iOS + Android: PhoneAuthCredential from verificationId + smsCode
@@ -308,7 +345,16 @@ class FirebaseAuthService {
         }
       }
       _log('verifySmsCode: success, uid=${userCred.user?.uid}');
-      return AuthResult.success(userCred.user);
+      // Clear the explicit logout flag — user has successfully authenticated
+      await clearLoggedOutFlag();
+      // Check if this account still needs onboarding (isOnboarding=true in Firestore)
+      bool needsOnboarding = false;
+      try {
+        final doc = await _db.collection('users').doc(userCred.user!.uid).get()
+            .timeout(const Duration(seconds: 3));
+        needsOnboarding = (doc.data()?['isOnboarding'] as bool?) ?? false;
+      } catch (_) {}
+      return AuthResult.success(userCred.user, requiresOnboarding: needsOnboarding);
     } on FirebaseAuthException catch (e) {
       _log('verifySmsCode FirebaseAuthException: ${e.code}');
       if (e.code == 'user-not-found') {
@@ -330,6 +376,13 @@ class FirebaseAuthService {
   // ═════════════════════════════════════════════════════════════════════════
 
   Future<void> signOut() async {
+    // Write the explicit logout flag BEFORE signing out so the splash screen
+    // knows the user deliberately logged out (as opposed to just a fresh
+    // install where the Keychain token persists but local data was cleared).
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_loggedOutKey, true);
+    } catch (_) {}
     await _auth.signOut();
     _verificationId = null;
     _resendToken = null;
@@ -477,13 +530,142 @@ class FirebaseAuthService {
     return doc.data();
   }
 
+  /// Restores the signed-in user's profile from Firestore into the local
+  /// [OnboardingDataService] cache.
+  ///
+  /// Call this at app startup (splash screen) and after OTP verification for
+  /// returning users to ensure the local cache always reflects Firestore —
+  /// regardless of whether local storage was wiped (fresh install, reset, etc.)
+  ///
+  /// Returns `true` if the profile was successfully loaded from Firestore and
+  /// at least the user's name was restored. Returns `false` on any error or
+  /// if the profile document doesn't exist.
+  Future<bool> restoreProfileFromFirestore() async {
+    if (uid == null) return false;
+    try {
+      final doc = await _db
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 5));
+      if (!doc.exists) return false;
+
+      final data = doc.data()!;
+      final onboarding = OnboardingDataService();
+      await onboarding.initialize(forceReload: true);
+
+      // Restore every field — only overwrite local value if local is empty/null
+      String firestoreName = (data['name'] as String?) ?? '';
+
+      // ── Self-repair: Firestore name was previously overwritten with "" ───
+      // If both Firestore and local name are blank, try to recover a sensible
+      // display name from other available sources so the user sees something
+      // meaningful rather than "User". We also write the recovered name back
+      // to Firestore so subsequent restores have real data.
+      if (firestoreName.trim().isEmpty) {
+        // Try firstName field
+        final firstName = (data['firstName'] as String?) ?? '';
+        if (firstName.trim().isNotEmpty) {
+          firestoreName = firstName.trim();
+        } else {
+          // Fall back to the Firebase Auth phone number as a last resort —
+          // at least the user can see their own number while they fix it.
+          final authPhone = _auth.currentUser?.phoneNumber ?? '';
+          if (authPhone.isNotEmpty) {
+            firestoreName = authPhone;
+          }
+        }
+        // Write the recovered name back to Firestore so it is fixed for future
+        if (firestoreName.isNotEmpty) {
+          try {
+            final nameParts = firestoreName.trim().split(' ');
+            await _db.collection('users').doc(uid).update({
+              'name': firestoreName,
+              'firstName': nameParts.first,
+              if (nameParts.length > 1) 'lastName': nameParts.sublist(1).join(' '),
+            });
+          } catch (_) {} // non-fatal
+        }
+      }
+
+      if (firestoreName.trim().isNotEmpty &&
+          (onboarding.name == null || onboarding.name!.trim().isEmpty)) {
+        onboarding.setName(firestoreName.trim());
+      }
+
+      final firestorePostcode = (data['postcode'] as String?) ?? '';
+      if (firestorePostcode.isNotEmpty &&
+          (onboarding.postcode == null || onboarding.postcode!.isEmpty)) {
+        onboarding.setPostcode(firestorePostcode);
+      }
+
+      final firestoreParentType = (data['parentType'] as String?) ?? '';
+      if (firestoreParentType.isNotEmpty && onboarding.parentType == null) {
+        onboarding.setParentType(firestoreParentType);
+      }
+
+      final firestoreStages = data['stagesOfLife'];
+      if (firestoreStages is List &&
+          firestoreStages.isNotEmpty &&
+          onboarding.stagesOfLife.isEmpty) {
+        onboarding.setStagesOfLife(List<String>.from(firestoreStages));
+      }
+
+      final firestorePhone = (data['phone'] as String?) ?? '';
+      final firestoreCountry = (data['countryCode'] as String?) ?? '+44';
+      if (firestorePhone.isNotEmpty && onboarding.phoneNumber == null) {
+        final subscriber = firestorePhone.startsWith(firestoreCountry)
+            ? firestorePhone.substring(firestoreCountry.length)
+            : firestorePhone;
+        onboarding.setPhoneNumber(subscriber, countryCode: firestoreCountry);
+        onboarding.setPhoneVerified(true);
+      }
+
+      // Children list
+      final firestoreChildren = data['children'];
+      if (firestoreChildren is List &&
+          firestoreChildren.isNotEmpty &&
+          onboarding.children.isEmpty) {
+        // children is stored as List<Map<String, dynamic>> in Firestore
+        // but OnboardingDataService uses List<Map<String, String>>
+        final childList = firestoreChildren
+            .whereType<Map>()
+            .map((c) => c.map((k, v) => MapEntry(k.toString(), v?.toString() ?? '')))
+            .toList()
+            .cast<Map<String, String>>();
+        if (childList.isNotEmpty) {
+          onboarding.setChildren(childList);
+        }
+      }
+
+      // Bio
+      final firestoreBio = (data['bio'] as String?) ?? '';
+      if (firestoreBio.isNotEmpty && (onboarding.bio == null || onboarding.bio!.isEmpty)) {
+        onboarding.setBio(firestoreBio);
+      }
+
+      // Photo URL
+      final firestorePhoto = (data['photoUrl'] as String?) ?? '';
+      if (firestorePhoto.isNotEmpty &&
+          (onboarding.profilePhotoPath == null || onboarding.profilePhotoPath!.isEmpty)) {
+        onboarding.setProfilePhotoObjectUrl(firestorePhoto);
+      }
+
+      _log('restoreProfileFromFirestore: restored name="${onboarding.name}" postcode="${onboarding.postcode}"');
+      return (onboarding.name ?? '').trim().isNotEmpty;
+    } catch (e) {
+      _log('restoreProfileFromFirestore: error $e');
+      return false;
+    }
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // USER PROFILE
   // ═════════════════════════════════════════════════════════════════════════
 
   Future<void> _createUserProfile(String userId) async {
     final onboarding = OnboardingDataService();
-    await onboarding.initialize();
+    await onboarding.initialize(forceReload: true);
 
     // Resolve borough via postcodes.io so the exact admin district is used.
     final postcode = onboarding.postcode ?? '';
@@ -633,6 +815,9 @@ class AuthResult {
   /// no longer exists (i.e. it was deleted). The UI should direct the user
   /// to sign up / restart onboarding instead of showing a generic error.
   final bool isAccountDeleted;
+  /// True when Firestore user document has isOnboarding=true — account exists
+  /// but onboarding was never completed. Route to /onboarding, not /home.
+  final bool requiresOnboarding;
 
   AuthResult._({
     required this.isSuccess,
@@ -640,10 +825,11 @@ class AuthResult {
     this.errorMessage,
     this.message,
     this.isAccountDeleted = false,
+    this.requiresOnboarding = false,
   });
 
-  factory AuthResult.success(User? user, {String? message}) =>
-      AuthResult._(isSuccess: true, user: user, message: message);
+  factory AuthResult.success(User? user, {String? message, bool requiresOnboarding = false}) =>
+      AuthResult._(isSuccess: true, user: user, message: message, requiresOnboarding: requiresOnboarding);
 
   factory AuthResult.failure(String error, {bool accountDeleted = false}) =>
       AuthResult._(

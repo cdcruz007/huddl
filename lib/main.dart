@@ -15,18 +15,8 @@ import 'services/user_privacy_prefs_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── One-time data reset (bump version to purge legacy demo data) ──────────
-  // v3: removes old demo meetups, DM conversations, group memberships and
-  //     marketplace items that were cached from the simulated data era.
-  try {
-    final resetDone = await BrowserStorage.getString('data_reset_v3');
-    if (resetDone == null) {
-      await BrowserStorage.clear();
-      await BrowserStorage.setString('data_reset_v3', 'done');
-    }
-  } catch (_) {}
-
   // ── Initialize Firebase ────────────────────────────────────────────────
+  // MUST come first — FirebaseAuth.instance.currentUser requires it.
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -56,6 +46,27 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase init error: $e');
   }
+
+  // ── One-time data reset (safe version — runs AFTER Firebase init) ─────────
+  // v4: Only clears BrowserStorage when no Firebase Auth session is active.
+  //     The old v3 reset ran unconditionally and cleared SharedPreferences for
+  //     returning signed-in users, wiping cached name/postcode/etc. on install.
+  //     That empty local data was then pushed back to Firestore by
+  //     syncCurrentUserProfile(), overwriting real profile data with blanks.
+  try {
+    final resetDone = await BrowserStorage.getString('data_reset_v4');
+    if (resetDone == null) {
+      // Firebase is now initialized — we can safely check current user
+      final hasFirebaseUser = FirebaseAuth.instance.currentUser != null;
+      if (!hasFirebaseUser) {
+        // No signed-in user: safe to clear stale demo/legacy cache
+        await BrowserStorage.clear();
+      }
+      // Mark both v3 and v4 done regardless of whether we cleared
+      await BrowserStorage.setString('data_reset_v4', 'done');
+      await BrowserStorage.setString('data_reset_v3', 'done');
+    }
+  } catch (_) {}
 
   // ── Crashlytics: catch all Flutter + async errors ──────────────────────
   // This replaces the old ErrorWidget builder and gives us real crash reports

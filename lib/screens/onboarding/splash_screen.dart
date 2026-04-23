@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 import '../../theme/huddl_colors.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/biometric_auth_service.dart';
+import '../../services/onboarding_data_service.dart';
 
 /// ── Huddl Splash Screen ────────────────────────────────────────────────────
 /// Design:
@@ -137,50 +139,114 @@ class _SplashScreenState extends State<SplashScreen>
       });
     });
 
-    // Absolute safety net: if nothing has navigated within 6 seconds, force
-    // navigation to /onboarding so the user never sees a stuck splash.
-    Future.delayed(const Duration(seconds: 6), () {
+    // Absolute safety net: if nothing has navigated within 8 seconds, force
+    // navigation so the user never sees a stuck splash.
+    Future.delayed(const Duration(seconds: 8), () async {
       if (!mounted) return;
-      // If we're still on this screen, force navigation
       if (ModalRoute.of(context)?.isCurrent ?? false) {
-        Navigator.of(context).pushReplacementNamed('/onboarding');
+        // Respect the logout flag even in the safety timeout
+        final loggedOut = await FirebaseAuthService.hasExplicitlyLoggedOut;
+        if (!mounted) return;
+        Navigator.of(context).pushReplacementNamed(
+          loggedOut ? '/login' : '/onboarding',
+        );
       }
     });
   }
 
   /// Check Firebase Auth state and navigate to the right screen.
-  /// Wraps the entire check in a timeout so the splash screen never hangs.
+  /// If the user is signed in AND has biometric login enabled, show
+  /// the biometric prompt before entering the app.
   Future<void> _navigateBasedOnAuth() async {
     try {
-      final auth = FirebaseAuthService();
+      final auth      = FirebaseAuthService();
+      final biometric = BiometricAuthService();
+
+      // ── Check if user explicitly logged out ────────────────────────────
+      // On iOS the Firebase Auth Keychain token survives app reinstalls,
+      // so isSignedIn can be true even after an explicit logout. We use a
+      // SharedPreferences flag to distinguish "still actively logged in"
+      // from "explicitly logged out — must re-authenticate".
+      final explicitlyLoggedOut = await FirebaseAuthService.hasExplicitlyLoggedOut;
+      if (!mounted) return;
+
+      if (explicitlyLoggedOut) {
+        // User deliberately logged out — require full login again
+        Navigator.of(context).pushReplacementNamed('/login');
+        return;
+      }
+
       if (auth.isSignedIn) {
-        // User is already signed in — check if they have a Firestore profile
-        // Use a 5-second timeout so the splash screen never hangs
+        // Check Firestore profile exists
         bool hasProfile = false;
         try {
           hasProfile = await auth.hasUserProfile()
               .timeout(const Duration(seconds: 5), onTimeout: () => false);
         } catch (_) {
-          // If Firestore is unreachable, treat as no profile
           hasProfile = false;
         }
         if (!mounted) return;
+
         if (hasProfile) {
-          // Returning user with a valid profile → go to home
-          auth.updateLastActive();
-          Navigator.of(context).pushReplacementNamed('/home');
+          // ── Check if this user still needs to complete onboarding ───────
+          // Accounts can exist in Firestore with isOnboarding:true when they
+          // authenticated but never finished the registration flow (e.g. test
+          // accounts that were reset). Route them through onboarding so they
+          // can set their name, postcode, parent type, etc.
+          bool needsOnboarding = false;
+          try {
+            final profileData = await auth.getUserProfile()
+                .timeout(const Duration(seconds: 5));
+            needsOnboarding = (profileData?['isOnboarding'] as bool?) ?? false;
+          } catch (_) {
+            needsOnboarding = false;
+          }
+          if (!mounted) return;
+
+          if (needsOnboarding) {
+            // Clear any stale local cache so onboarding starts clean
+            await OnboardingDataService().clear();
+            if (!mounted) return;
+            Navigator.of(context).pushReplacementNamed('/onboarding');
+            return;
+          }
+
+          // ── Restore profile from Firestore into local cache ─────────────
+          // Critical on fresh installs / after BrowserStorage resets:
+          // local SharedPreferences may be empty even though the user has a
+          // valid Firestore profile. Restore before entering the app so
+          // every screen sees the correct name, postcode, and profile data.
+          try {
+            await auth.restoreProfileFromFirestore()
+                .timeout(const Duration(seconds: 5));
+          } catch (_) {
+            // Non-fatal — app still loads; data will restore on next action
+          }
+          if (!mounted) return;
+
+          // Check if biometric login is enabled for this device
+          final biometricEnabled = await biometric.isEnabled;
+          final biometricAvailable = await biometric.isAvailable;
+
+          if (biometricEnabled && biometricAvailable) {
+            // Show biometric gate — user must authenticate before entering app
+            if (!mounted) return;
+            Navigator.of(context).pushReplacementNamed('/biometric_lock');
+          } else {
+            // Returning user, no biometric — go straight to home
+            auth.updateLastActive();
+            Navigator.of(context).pushReplacementNamed('/home');
+          }
         } else {
-          // Signed in but NO Firestore profile — this happens when:
-          //   • A new build is installed but the old Firebase Auth session
-          //     is still cached in the iOS Keychain / Android store
-          //   • The account was deleted but Auth wasn't fully cleared
-          // Sign out the stale session so onboarding starts completely fresh.
+          // Signed in but NO Firestore profile — stale auth session
           await auth.signOut();
           if (!mounted) return;
-          Navigator.of(context).pushReplacementNamed('/onboarding');
+          Navigator.of(context).pushReplacementNamed('/login');
         }
       } else {
-        // Not signed in → show onboarding / login
+        // Not signed in at all → could be brand new user or someone who was
+        // never registered. Show the onboarding carousel so they can sign up
+        // or tap 'Already have an account' to get to login.
         if (!mounted) return;
         Navigator.of(context).pushReplacementNamed('/onboarding');
       }
