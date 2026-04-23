@@ -31,9 +31,9 @@ if (process.env.RESEND_API_KEY) {
   console.log('Email provider: mock (no API key set)');
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'welcome@huddlapp.co.uk';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'hello@huddlconnect.com';
 const FROM_NAME  = process.env.SENDGRID_FROM_NAME || 'Huddl';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlapp.co.uk';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlconnect.com';
 
 // ── Brand colours & styles ──────────────────────────────────────────────────
 const BRAND = {
@@ -181,7 +181,7 @@ async function sendPaymentReceipt({ email, firstName, tier, amount, currency, in
       </table>
     </div>
     <p style="color:#9999AA; font-size:13px; margin-top:24px;">
-      This payment was processed securely. If you have questions, contact us at welcome@huddlapp.co.uk.
+      This payment was processed securely. If you have questions, contact us at hello@huddlconnect.com.
     </p>`;
 
   return _send(email, `Huddl payment receipt — ${currencySymbol}${amount}`, body);
