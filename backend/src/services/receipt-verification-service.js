@@ -155,18 +155,24 @@ async function verifyAppleReceipt({ userId, receiptData, productId, transactionI
  * Generate a signed JWT for Apple App Store Server API authentication.
  */
 function _generateAppleJWT() {
-  const privateKeyPath =
-    process.env.APPLE_PRIVATE_KEY_PATH ||
-    path.join(__dirname, '../../config/apple-subscription-key.p8');
+  // Try env var first (Railway / cloud deployments where files don't persist),
+  // then fall back to file path (local development).
+  let privateKey = process.env.APPLE_PRIVATE_KEY
+    ? process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    : null;
 
-  let privateKey;
-  try {
-    privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-  } catch (err) {
-    throw new Error(
-      `Cannot read Apple private key at ${privateKeyPath}. ` +
-      'Download it from App Store Connect > Users and Access > Keys > In-App Purchase.'
-    );
+  if (!privateKey) {
+    const privateKeyPath =
+      process.env.APPLE_PRIVATE_KEY_PATH ||
+      path.join(__dirname, '../../config/apple-subscription-key.p8');
+    try {
+      privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    } catch (err) {
+      throw new Error(
+        `Cannot read Apple private key. Set APPLE_PRIVATE_KEY env var (Railway) ` +
+        `or place the .p8 file at ${privateKeyPath}.`
+      );
+    }
   }
 
   const now = Math.floor(Date.now() / 1000);
