@@ -683,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 12),
                         SizedBox(
-                          height: 76,
+                          height: 88,
                           child: ListView(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.only(right: 16),
@@ -4719,8 +4719,8 @@ class _GroupCard extends StatelessWidget {
               bottomLeft: Radius.circular(13),
             ),
             child: SizedBox(
-              width: 76,
-              height: 76,
+              width: 80,
+              height: 88,
               child: group.imageUrl.startsWith('assets/')
                   ? Image.asset(group.imageUrl,
                       fit: BoxFit.cover,
