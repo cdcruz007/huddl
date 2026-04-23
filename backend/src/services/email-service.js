@@ -35,9 +35,9 @@ if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
   console.log('Email provider: mock (no SMTP credentials set)');
 }
 
-const FROM_EMAIL = process.env.SMTP_USER || 'hello@huddlconnect.com';
+const FROM_EMAIL = process.env.SMTP_USER || 'welcome@huddlapp.co.uk';
 const FROM_NAME  = 'Huddl Connect';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlconnect.com';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.huddlapp.co.uk';
 
 // ── Brand colours & styles ──────────────────────────────────────────────────
 const BRAND = {
@@ -185,7 +185,7 @@ async function sendPaymentReceipt({ email, firstName, tier, amount, currency, in
       </table>
     </div>
     <p style="color:#9999AA; font-size:13px; margin-top:24px;">
-      This payment was processed securely. If you have questions, contact us at hello@huddlconnect.com.
+      This payment was processed securely. If you have questions, contact us at welcome@huddlapp.co.uk.
     </p>`;
 
   return _send(email, `Huddl payment receipt — ${currencySymbol}${amount}`, body);

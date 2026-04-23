@@ -119,7 +119,7 @@ class HuddlProductIds {
 // ║     Then copy the Price ID (starts with price_) for each plan/period.   ║
 // ║                                                                          ║
 // ║  3. WEBHOOK                                                              ║
-// ║     Endpoint: POST https://api.huddlconnect.com/api/stripe/webhook      ║
+// ║     Endpoint: POST https://api.huddlapp.co.uk/api/stripe/webhook      ║
 // ║     Events:   customer.subscription.created                             ║
 // ║               customer.subscription.updated                             ║
 // ║               invoice.paid                                              ║
@@ -128,7 +128,7 @@ class HuddlProductIds {
 // ║     Secret:   Set STRIPE_WEBHOOK_SECRET env var on the backend server.  ║
 // ║     Obtain:   https://dashboard.stripe.com/webhooks                     ║
 // ║                                                                          ║
-// ║  4. BACKEND ENVIRONMENT VARIABLES (api.huddlconnect.com)                  ║
+// ║  4. BACKEND ENVIRONMENT VARIABLES (api.huddlapp.co.uk)                    ║
 // ║     STRIPE_SECRET_KEY=sk_live_xxx                                       ║
 // ║     STRIPE_WEBHOOK_SECRET=whsec_xxx                                     ║
 // ║                                                                          ║
@@ -530,7 +530,7 @@ class PaymentService extends ChangeNotifier {
   ///     and show the success dialog.
   ///
   /// ─── STRIPE DASHBOARD SETUP REQUIRED ──────────────────────────────────
-  ///  • Webhook endpoint:  POST https://api.huddlconnect.com/api/stripe/webhook
+  ///  • Webhook endpoint:  POST https://api.huddlapp.co.uk/api/stripe/webhook
   ///  • Events to listen:  customer.subscription.created
   ///                        customer.subscription.updated
   ///                        invoice.paid
@@ -546,7 +546,7 @@ class PaymentService extends ChangeNotifier {
       // Build return URLs.  On web, window.location.origin is available via
       // Uri.base.  The backend embeds ?session_id={CHECKOUT_SESSION_ID} in
       // the successUrl so it can verify the session on return.
-      final origin = kIsWeb ? Uri.base.origin : 'https://www.huddlconnect.com';
+      final origin = kIsWeb ? Uri.base.origin : 'https://www.huddlapp.co.uk';
       final successUrl =
           '$origin/subscription/success?session_id={CHECKOUT_SESSION_ID}';
       final cancelUrl = '$origin/subscription/cancel';

@@ -30,7 +30,7 @@ const { getDb } = require('../services/firebase-service');
 //
 // Setup:
 //   1. Stripe Dashboard > Developers > Webhooks > Add endpoint
-//   2. URL: https://api.huddlconnect.com/api/webhooks/stripe
+//   2. URL: https://api.huddlapp.co.uk/api/webhooks/stripe
 //   3. Events: checkout.session.completed, invoice.payment_succeeded,
 //              invoice.payment_failed, customer.subscription.updated,
 //              customer.subscription.deleted
@@ -163,7 +163,7 @@ async function _handleStripeEmailAndPush(event) {
 //
 // Setup:
 //   App Store Connect > App > General > App Store Server Notifications
-//   URL: https://api.huddlconnect.com/api/webhooks/apple
+//   URL: https://api.huddlapp.co.uk/api/webhooks/apple
 //   Version: Version 2
 router.post('/apple', express.json(), async (req, res) => {
   try {
@@ -185,7 +185,7 @@ router.post('/apple', express.json(), async (req, res) => {
 //
 // Setup:
 //   1. Google Cloud Console > Pub/Sub > Create topic
-//   2. Create push subscription → URL: https://api.huddlconnect.com/api/webhooks/google
+//   2. Create push subscription → URL: https://api.huddlapp.co.uk/api/webhooks/google
 //   3. Google Play Console > Monetization > Monetization setup > Real-time notifications
 //      → Set topic to the Pub/Sub topic
 router.post('/google', express.json(), async (req, res) => {

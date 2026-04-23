@@ -42,7 +42,7 @@ router.post('/register-token', authMiddleware, async (req, res, next) => {
 //
 // In production, call this via:
 //   - Google Cloud Scheduler → HTTPS target
-//   - or a cron job running: curl -X POST https://api.huddlconnect.com/api/notifications/process-trial-reminders
+//   - or a cron job running: curl -X POST https://api.huddlapp.co.uk/api/notifications/process-trial-reminders
 //
 // Security: In production, add a shared secret header for cron authentication.
 router.post('/process-trial-reminders', async (req, res, next) => {
