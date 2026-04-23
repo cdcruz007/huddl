@@ -60,7 +60,7 @@ const PRICE_MAP = {
   huddl_neighbour_annual:
     process.env.STRIPE_PRICE_NEIGHBOUR_ANNUAL  || 'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
   huddl_circle_monthly:
-    process.env.STRIPE_PRICE_CIRCLE_MONTHLY    || 'price_1TPMkPGb8Lg9FVI57ETC2lCH',
+    process.env.STRIPE_PRICE_CIRCLE_MONTHLY    || 'price_1TPUqjGb8Lg9FVI5uk3rAKlJ',
   huddl_circle_annual:
     process.env.STRIPE_PRICE_CIRCLE_ANNUAL     || 'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
 };
