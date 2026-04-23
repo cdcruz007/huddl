@@ -15,15 +15,24 @@
 
 'use strict';
 
-const sgMail = require('@sendgrid/mail');
+// ── Email provider: Resend (primary) → SendGrid (fallback) → mock ────────────
+let resendClient = null;
+let sgMail = null;
 
-// Initialize SendGrid
-if (process.env.SENDGRID_API_KEY) {
+if (process.env.RESEND_API_KEY) {
+  const { Resend } = require('resend');
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('Email provider: Resend');
+} else if (process.env.SENDGRID_API_KEY) {
+  sgMail = require('@sendgrid/mail');
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+  console.log('Email provider: SendGrid');
+} else {
+  console.log('Email provider: mock (no API key set)');
 }
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'hello@huddlconnect.com';
-const FROM_NAME = process.env.SENDGRID_FROM_NAME || 'Huddl Connect';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'hello@huddlconnect.com';
+const FROM_NAME  = process.env.SENDGRID_FROM_NAME || 'Huddl';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlconnect.com';
 
 // ── Brand colours & styles ──────────────────────────────────────────────────
@@ -253,25 +262,45 @@ async function sendCancellationConfirmation({ email, firstName, endDate, tier })
 // ── Internal send helper ────────────────────────────────────────────────────
 
 async function _send(to, subject, bodyHtml) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
-    return { success: true, mock: true };
+  const html = _baseTemplate(subject, bodyHtml);
+
+  // ── Resend ──────────────────────────────────────────────────────────────────
+  if (resendClient) {
+    try {
+      await resendClient.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject,
+        html,
+      });
+      console.log(`[Resend] Email sent to ${to}: ${subject}`);
+      return { success: true };
+    } catch (err) {
+      console.error(`[Resend] Email error (${to}):`, err.message);
+      return { success: false, error: err.message };
+    }
   }
 
-  try {
-    const html = _baseTemplate(subject, bodyHtml);
-    await sgMail.send({
-      to,
-      from: { email: FROM_EMAIL, name: FROM_NAME },
-      subject,
-      html,
-    });
-    console.log(`Email sent to ${to}: ${subject}`);
-    return { success: true };
-  } catch (err) {
-    console.error(`Email send error (${to}):`, err.message);
-    return { success: false, error: err.message };
+  // ── SendGrid fallback ───────────────────────────────────────────────────────
+  if (sgMail) {
+    try {
+      await sgMail.send({
+        to,
+        from: { email: FROM_EMAIL, name: FROM_NAME },
+        subject,
+        html,
+      });
+      console.log(`[SendGrid] Email sent to ${to}: ${subject}`);
+      return { success: true };
+    } catch (err) {
+      console.error(`[SendGrid] Email error (${to}):`, err.message);
+      return { success: false, error: err.message };
+    }
   }
+
+  // ── Mock fallback (no provider configured) ──────────────────────────────────
+  console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
+  return { success: true, mock: true };
 }
 
 module.exports = {
