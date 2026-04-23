@@ -82,23 +82,25 @@ async function _handleStripeEmailAndPush(event) {
       if (!userId) return;
       const userDoc = await db.collection('users').doc(userId).get();
       const user = userDoc.data() || {};
-      const tier = obj.metadata?.tier || 'neighbourhood';
+      const tier = obj.metadata?.tier || 'neighbour';
       const billingPeriod = obj.metadata?.billingPeriod || 'monthly';
-      const founding = obj.metadata?.founding === 'true';
+
+      // Derive the display name and price from the tier key
+      const tierDisplayName = tier === 'circle' ? 'Circle' : 'Neighbour';
+      const price = billingPeriod === 'annual'
+        ? (tier === 'circle' ? '99.99' : '49.99')
+        : (tier === 'circle' ? '11.99' : '5.99');
 
       await sendSubscriptionConfirmation({
         email: user.email || obj.customer_details?.email,
         firstName: user.firstName,
         tier,
         billingPeriod,
-        price: billingPeriod === 'annual'
-          ? (tier === 'innerCircle' ? '99.99' : '49.99')
-          : (founding ? '3.99' : tier === 'innerCircle' ? '11.99' : '5.99'),
-        isFoundingMember: founding,
+        price,
       });
 
       await sendToUser(userId, 'subscription_activated', {
-        tierName: tier === 'innerCircle' ? 'Inner Circle' : 'Neighbourhood',
+        tierName: tierDisplayName,
       });
       break;
     }
@@ -115,7 +117,7 @@ async function _handleStripeEmailAndPush(event) {
       await sendPaymentReceipt({
         email: user.email || obj.customer_email,
         firstName: user.firstName,
-        tier: user.subscriptionTier || 'neighbourhood',
+        tier: user.subscriptionTier || 'neighbour',
         amount: (obj.amount_paid / 100).toFixed(2),
         currency: (obj.currency || 'gbp').toUpperCase(),
         invoiceId: obj.id,
@@ -150,7 +152,7 @@ async function _handleStripeEmailAndPush(event) {
       await sendCancellationConfirmation({
         email: user.email,
         firstName: user.firstName,
-        tier: obj.metadata?.tier || 'neighbourhood',
+        tier: obj.metadata?.tier || 'neighbour',
       });
       await sendToUser(userId, 'subscription_cancelled');
       break;
@@ -163,7 +165,7 @@ async function _handleStripeEmailAndPush(event) {
 //
 // Setup:
 //   App Store Connect > App > General > App Store Server Notifications
-//   URL: https://api.huddlapp.co.uk/api/webhooks/apple
+//   URL: https://api.huddlconnect.com/api/webhooks/apple
 //   Version: Version 2
 router.post('/apple', express.json(), async (req, res) => {
   try {
@@ -188,6 +190,7 @@ router.post('/apple', express.json(), async (req, res) => {
 //   2. Create push subscription → URL: https://api.huddlapp.co.uk/api/webhooks/google
 //   3. Google Play Console > Monetization > Monetization setup > Real-time notifications
 //      → Set topic to the Pub/Sub topic
+//   URL: https://api.huddlconnect.com/api/webhooks/google
 router.post('/google', express.json(), async (req, res) => {
   try {
     const message = req.body.message;

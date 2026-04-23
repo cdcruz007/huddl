@@ -6,14 +6,23 @@
 // lifecycle: Checkout Session creation, Customer Portal, webhook event
 // processing, and subscription state synchronization with Firestore.
 //
-// PRODUCT ID MAPPING
+// TIERS (3 tiers, no founding member):
+//   welcome      — free, explorer enum key in Firestore
+//   neighbour    — £5.99/mo | £49.99/yr
+//   circle       — £11.99/mo | £99.99/yr
+//
+// PRODUCT ID MAPPING (must match Flutter HuddlProductIds + App/Play Store)
 // ──────────────────
-//   App product ID                         → Stripe Price ID
-//   huddl_neighbourhood_monthly            → price_neighbourhood_monthly
-//   huddl_neighbourhood_annual             → price_neighbourhood_annual
-//   huddl_neighbourhood_founding_monthly   → price_neighbourhood_founding
-//   huddl_inner_circle_monthly             → price_inner_circle_monthly
-//   huddl_inner_circle_annual              → price_inner_circle_annual
+//   App product ID              → Stripe Price ID env var
+//   huddl_neighbour_monthly     → STRIPE_PRICE_NEIGHBOUR_MONTHLY
+//   huddl_neighbour_annual      → STRIPE_PRICE_NEIGHBOUR_ANNUAL
+//   huddl_circle_monthly        → STRIPE_PRICE_CIRCLE_MONTHLY
+//   huddl_circle_annual         → STRIPE_PRICE_CIRCLE_ANNUAL
+//
+// TIER KEYS in Firestore:
+//   'explorer'   → Welcome (free)
+//   'neighbour'  → Neighbour paid tier
+//   'circle'     → Circle paid tier
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -26,18 +35,27 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-04-10',
 });
 
+// ── Helper: get human-readable display name from internal tier key ────────────
+function tierDisplayName(tier) {
+  switch (tier) {
+    case 'neighbour': return 'Neighbour';
+    case 'circle':    return 'Circle';
+    case 'explorer':  return 'Welcome';
+    default:          return 'Neighbour';
+  }
+}
+
 // ── Product ID ↔ Stripe Price ID mapping ────────────────────────────────────
+// Product IDs match Flutter's HuddlProductIds constants exactly.
 const PRICE_MAP = {
-  huddl_neighbourhood_monthly:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_MONTHLY || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
-  huddl_neighbourhood_annual:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_ANNUAL || 'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
-  huddl_neighbourhood_founding_monthly:
-    process.env.STRIPE_PRICE_NEIGHBOURHOOD_FOUNDING || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
-  huddl_inner_circle_monthly:
-    process.env.STRIPE_PRICE_INNER_CIRCLE_MONTHLY || 'price_1TPMkPGb8Lg9FVI57ETC2lCH',
-  huddl_inner_circle_annual:
-    process.env.STRIPE_PRICE_INNER_CIRCLE_ANNUAL || 'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
+  huddl_neighbour_monthly:
+    process.env.STRIPE_PRICE_NEIGHBOUR_MONTHLY || 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
+  huddl_neighbour_annual:
+    process.env.STRIPE_PRICE_NEIGHBOUR_ANNUAL  || 'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
+  huddl_circle_monthly:
+    process.env.STRIPE_PRICE_CIRCLE_MONTHLY    || 'price_1TPMkPGb8Lg9FVI57ETC2lCH',
+  huddl_circle_annual:
+    process.env.STRIPE_PRICE_CIRCLE_ANNUAL     || 'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
 };
 
 // Reverse mapping: Stripe Price ID → App product ID
@@ -45,13 +63,12 @@ const REVERSE_PRICE_MAP = Object.fromEntries(
   Object.entries(PRICE_MAP).map(([k, v]) => [v, k])
 );
 
-// App product ID → { tier, billingPeriod }
+// App product ID → { tier (Firestore key), billingPeriod }
 const PRODUCT_TIER_MAP = {
-  huddl_neighbourhood_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-  huddl_neighbourhood_annual: { tier: 'neighbourhood', billingPeriod: 'annual' },
-  huddl_neighbourhood_founding_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly', founding: true },
-  huddl_inner_circle_monthly: { tier: 'innerCircle', billingPeriod: 'monthly' },
-  huddl_inner_circle_annual: { tier: 'innerCircle', billingPeriod: 'annual' },
+  huddl_neighbour_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
+  huddl_neighbour_annual:  { tier: 'neighbour', billingPeriod: 'annual'  },
+  huddl_circle_monthly:    { tier: 'circle',    billingPeriod: 'monthly' },
+  huddl_circle_annual:     { tier: 'circle',    billingPeriod: 'annual'  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -64,7 +81,7 @@ const PRODUCT_TIER_MAP = {
  * @param {Object} params
  * @param {string} params.userId        - Firebase UID
  * @param {string} params.email         - User email for Stripe customer
- * @param {string} params.productId     - Huddl product ID (e.g. 'huddl_neighbourhood_monthly')
+ * @param {string} params.productId     - Huddl product ID (e.g. 'huddl_neighbour_monthly')
  * @param {string} [params.successUrl]  - Redirect URL on success
  * @param {string} [params.cancelUrl]   - Redirect URL on cancel
  * @returns {Object} { sessionId, url }
@@ -72,7 +89,7 @@ const PRODUCT_TIER_MAP = {
 async function createCheckoutSession({ userId, email, productId, successUrl, cancelUrl }) {
   const priceId = PRICE_MAP[productId];
   if (!priceId) {
-    throw new Error(`Unknown product ID: ${productId}`);
+    throw new Error(`Unknown product ID: ${productId}. Valid IDs: ${Object.keys(PRICE_MAP).join(', ')}`);
   }
 
   const tierInfo = PRODUCT_TIER_MAP[productId];
@@ -93,28 +110,22 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
     metadata: {
       userId,
       productId,
-      tier: tierInfo?.tier || 'unknown',
-      billingPeriod: tierInfo?.billingPeriod || 'unknown',
-      founding: tierInfo?.founding ? 'true' : 'false',
+      tier: tierInfo?.tier || 'neighbour',
+      billingPeriod: tierInfo?.billingPeriod || 'monthly',
     },
     subscription_data: {
       metadata: {
         userId,
         productId,
-        tier: tierInfo?.tier || 'unknown',
+        tier: tierInfo?.tier || 'neighbour',
       },
       // 7-day free trial for new subscribers
       trial_period_days: 7,
     },
-    // Enable automatic tax calculation (UK VAT)
     automatic_tax: { enabled: false }, // Enable when Stripe Tax is configured
-    // Allow promotion codes
     allow_promotion_codes: true,
-    // Locale
     locale: 'en-GB',
-    // Payment method types
     payment_method_types: ['card'],
-    // Billing address collection
     billing_address_collection: 'required',
   };
 
@@ -175,12 +186,10 @@ async function findOrCreateCustomer(userId, email) {
   const userDoc = await userRef.get();
   const userData = userDoc.data() || {};
 
-  // If we already have a Stripe customer ID, return it
   if (userData.stripeCustomerId) {
     return userData.stripeCustomerId;
   }
 
-  // Create a new Stripe customer
   const customer = await stripe.customers.create({
     email: email || userData.email || `${userId}@huddl.app`,
     name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || undefined,
@@ -190,7 +199,6 @@ async function findOrCreateCustomer(userId, email) {
     },
   });
 
-  // Store the Stripe customer ID in Firestore
   await userRef.update({
     stripeCustomerId: customer.id,
     updatedAt: FieldValue.serverTimestamp(),
@@ -257,7 +265,6 @@ async function _handleCheckoutCompleted(db, session) {
   const subscriptionId = session.subscription;
   const customerId = session.customer;
 
-  // Update user's subscription in Firestore
   const now = new Date();
   const renewalDate = new Date(now);
   if (tierInfo.billingPeriod === 'annual') {
@@ -267,12 +274,11 @@ async function _handleCheckoutCompleted(db, session) {
   }
 
   const subData = {
-    tier: tierInfo.tier || 'neighbourhood',
+    tier: tierInfo.tier || 'neighbour',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive: true,
-    isTrial: session.subscription ? true : false, // trial starts with subscription
+    isTrial: true, // starts with 7-day trial
     trialDaysRemaining: 7,
-    isFoundingMember: tierInfo.founding || false,
     startDate: now.toISOString(),
     renewalDate: renewalDate.toISOString(),
     stripeSubscriptionId: subscriptionId,
@@ -281,18 +287,15 @@ async function _handleCheckoutCompleted(db, session) {
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  // Update or create the subscription document
   const subRef = db.collection('subscriptions').doc(userId);
   await subRef.set(subData, { merge: true });
 
-  // Update user document with Stripe IDs
   await db.collection('users').doc(userId).update({
     stripeCustomerId: customerId,
-    subscriptionTier: tierInfo.tier || 'neighbourhood',
+    subscriptionTier: tierInfo.tier || 'neighbour',
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  // Update checkout session tracking
   await db.collection('stripe_sessions').doc(session.id).update({
     status: 'completed',
     subscriptionId,
@@ -306,7 +309,6 @@ async function _handlePaymentSucceeded(db, invoice) {
   const customerId = invoice.customer;
   if (!customerId) return;
 
-  // Find user by Stripe customer ID
   const userSnap = await db.collection('users')
     .where('stripeCustomerId', '==', customerId)
     .limit(1)
@@ -319,10 +321,10 @@ async function _handlePaymentSucceeded(db, invoice) {
 
   const userId = userSnap.docs[0].id;
 
-  // Update subscription to active (in case it was in grace period)
   await db.collection('subscriptions').doc(userId).update({
     isActive: true,
     isTrial: false,
+    paymentFailed: false,
     lastPaymentAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -343,14 +345,12 @@ async function _handlePaymentFailed(db, invoice) {
 
   const userId = userSnap.docs[0].id;
 
-  // Mark as payment failed (grace period — Stripe retries automatically)
   await db.collection('subscriptions').doc(userId).update({
     paymentFailed: true,
     paymentFailedAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  // Create a notification for the user
   await db.collection('notifications').add({
     userId,
     type: 'payment_failed',
@@ -381,7 +381,7 @@ async function _handleSubscriptionUpdated(db, subscription) {
   }
 
   await db.collection('subscriptions').doc(userId).update({
-    tier: tierInfo.tier || 'neighbourhood',
+    tier: tierInfo.tier || 'neighbour',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive,
     isTrial,
@@ -398,14 +398,13 @@ async function _handleSubscriptionDeleted(db, subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
 
-  // Downgrade to Explorer (free) tier
+  // Downgrade to Welcome (free / explorer) tier
   await db.collection('subscriptions').doc(userId).set({
     tier: 'explorer',
     billingPeriod: 'monthly',
     isActive: true,
     isTrial: false,
     trialDaysRemaining: 0,
-    isFoundingMember: false,
     startDate: new Date().toISOString(),
     renewalDate: null,
     stripeSubscriptionId: null,
@@ -413,23 +412,21 @@ async function _handleSubscriptionDeleted(db, subscription) {
     updatedAt: FieldValue.serverTimestamp(),
   }, { merge: false });
 
-  // Update user tier
   await db.collection('users').doc(userId).update({
     subscriptionTier: 'explorer',
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  // Notify user
   await db.collection('notifications').add({
     userId,
     type: 'subscription_cancelled',
     title: 'Subscription Ended',
-    body: 'Your subscription has ended. You\'ve been moved to the free Explorer plan. Upgrade anytime to get back your features!',
+    body: 'Your subscription has ended. You\'ve been moved to the Welcome plan. Upgrade anytime to get back your features!',
     read: false,
     createdAt: FieldValue.serverTimestamp(),
   });
 
-  console.log(`Subscription cancelled for user ${userId} — downgraded to Explorer`);
+  console.log(`Subscription cancelled for user ${userId} — downgraded to Welcome (explorer)`);
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -438,6 +435,7 @@ async function _handleSubscriptionDeleted(db, subscription) {
 
 /**
  * Get the current subscription status for a user.
+ * Returns explorer (Welcome) by default for new/unknown users.
  */
 async function getSubscriptionStatus(userId) {
   const db = getDb();
@@ -458,6 +456,7 @@ async function getSubscriptionStatus(userId) {
 
 /**
  * Cancel a subscription (marks as cancel-at-period-end in Stripe).
+ * Optionally pauses for pauseMonths instead of cancelling.
  */
 async function cancelSubscription(userId, { reason, pauseMonths } = {}) {
   const db = getDb();
@@ -469,7 +468,6 @@ async function cancelSubscription(userId, { reason, pauseMonths } = {}) {
   }
 
   if (pauseMonths && pauseMonths > 0) {
-    // Pause instead of cancel (1-month pause on cancellation)
     const resumeDate = new Date();
     resumeDate.setMonth(resumeDate.getMonth() + pauseMonths);
 
@@ -490,7 +488,6 @@ async function cancelSubscription(userId, { reason, pauseMonths } = {}) {
     return { status: 'paused', resumesAt: resumeDate.toISOString() };
   }
 
-  // Cancel at end of billing period
   await stripe.subscriptions.update(subData.stripeSubscriptionId, {
     cancel_at_period_end: true,
   });
@@ -510,6 +507,7 @@ module.exports = {
   PRICE_MAP,
   REVERSE_PRICE_MAP,
   PRODUCT_TIER_MAP,
+  tierDisplayName,
   createCheckoutSession,
   createPortalSession,
   findOrCreateCustomer,

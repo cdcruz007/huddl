@@ -209,11 +209,17 @@ function _decodeJWS(jws) {
  */
 function _mapAppleProductToTier(appleProductId) {
   const mapping = {
-    huddl_neighbourhood_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_neighbourhood_annual: { tier: 'neighbourhood', billingPeriod: 'annual' },
-    huddl_neighbourhood_founding_monthly: { tier: 'neighbourhood', billingPeriod: 'monthly' },
-    huddl_inner_circle_monthly: { tier: 'innerCircle', billingPeriod: 'monthly' },
-    huddl_inner_circle_annual: { tier: 'innerCircle', billingPeriod: 'annual' },
+    // Current product IDs (matching Flutter HuddlProductIds + App/Play Store)
+    huddl_neighbour_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
+    huddl_neighbour_annual:  { tier: 'neighbour', billingPeriod: 'annual'  },
+    huddl_circle_monthly:    { tier: 'circle',    billingPeriod: 'monthly' },
+    huddl_circle_annual:     { tier: 'circle',    billingPeriod: 'annual'  },
+    // Legacy product IDs (kept for existing subscribers migrating from old store entries)
+    huddl_neighbourhood_monthly:          { tier: 'neighbour', billingPeriod: 'monthly' },
+    huddl_neighbourhood_annual:           { tier: 'neighbour', billingPeriod: 'annual'  },
+    huddl_neighbourhood_founding_monthly: { tier: 'neighbour', billingPeriod: 'monthly' },
+    huddl_inner_circle_monthly:           { tier: 'circle',    billingPeriod: 'monthly' },
+    huddl_inner_circle_annual:            { tier: 'circle',    billingPeriod: 'annual'  },
   };
   return mapping[appleProductId] || { tier: 'explorer', billingPeriod: 'monthly' };
 }

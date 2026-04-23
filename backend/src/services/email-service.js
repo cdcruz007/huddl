@@ -118,7 +118,7 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
       We're so glad you're here.
     </p>
     <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      You're starting with a <strong>7-day free trial</strong> of Huddl Neighbourhood — 
+      You're starting with a <strong>7-day free trial</strong> of Huddl Neighbour — 
       unlimited groups, messaging, meetups, and more. No card required.
     </p>
     <h3 style="color:${BRAND.dark}; margin:24px 0 12px; font-size:18px;">Here's what to do first:</h3>
@@ -136,8 +136,10 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
   return _send(email, `Welcome to Huddl, ${firstName || 'there'}!`, body);
 }
 
-async function sendSubscriptionConfirmation({ email, firstName, tier, billingPeriod, price, isFoundingMember }) {
-  const tierName = tier === 'innerCircle' ? 'Inner Circle' : 'Neighbourhood';
+async function sendSubscriptionConfirmation({ email, firstName, tier, billingPeriod, price }) {
+  // Map internal Firestore tier keys to display names
+  // Tier keys: 'explorer' = Welcome (free), 'neighbour' = Neighbour, 'circle' = Circle
+  const tierName = (tier === 'circle' || tier === 'innerCircle') ? 'Circle' : 'Neighbour';
   const periodLabel = billingPeriod === 'annual' ? 'year' : 'month';
 
   const body = `
@@ -146,12 +148,6 @@ async function sendSubscriptionConfirmation({ email, firstName, tier, billingPer
       Thanks for upgrading, ${firstName || 'there'}! Your <strong>Huddl ${tierName}</strong> 
       subscription is now active.
     </p>
-    ${isFoundingMember ? `
-    <div style="background:linear-gradient(135deg,#FFF3E0,#FFF8E1); border-radius:12px; padding:16px 20px; margin:20px 0; border-left:4px solid #FF9800;">
-      <p style="margin:0; color:#E65100; font-size:14px; font-weight:600;">
-        Founding Member — Your rate of &pound;${price}/${periodLabel} is locked for life. You're one of our first 500!
-      </p>
-    </div>` : ''}
     <div style="background:${BRAND.light}; border-radius:12px; padding:20px; margin:20px 0;">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Plan</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">${tierName} (${billingPeriod})</td></tr>
@@ -168,7 +164,7 @@ async function sendSubscriptionConfirmation({ email, firstName, tier, billingPer
 }
 
 async function sendPaymentReceipt({ email, firstName, tier, amount, currency, invoiceId, date }) {
-  const tierName = tier === 'innerCircle' ? 'Inner Circle' : 'Neighbourhood';
+  const tierName = tier === 'circle' ? 'Circle' : tier === 'innerCircle' ? 'Circle' : 'Neighbour';
   const currencySymbol = currency === 'GBP' ? '&pound;' : currency === 'EUR' ? '&euro;' : '$';
 
   const body = `
@@ -214,29 +210,31 @@ async function sendTrialEndingReminder({ email, firstName, daysRemaining }) {
   const body = `
     <h2 style="color:${BRAND.dark}; margin:0 0 16px; font-size:24px;">Your trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}</h2>
     <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      Hi ${firstName || 'there'}! You've been making the most of Huddl Neighbourhood — 
-      here's a quick look at what you've done:
+      Hi ${firstName || 'there'}! You've been making the most of Huddl Neighbour — 
+      keep the features you love by upgrading before your trial ends.
     </p>
     <div style="background:linear-gradient(135deg,${BRAND.light},#E8F5E9); border-radius:12px; padding:20px; margin:20px 0; text-align:center;">
       <p style="color:${BRAND.primary}; font-size:32px; font-weight:700; margin:0;">Don't lose access</p>
       <p style="color:${BRAND.text}; font-size:16px; margin:8px 0 0;">
-        Upgrade to keep unlimited groups, messaging, meetups, and your Neighbourhood badge.
+        Upgrade to keep unlimited groups, messaging, meetups, and your Neighbour badge.
       </p>
     </div>
-    <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      <strong>Founding Member special:</strong> Lock in &pound;3.99/month (save 33%) — 
-      only <strong>77 spots left</strong> out of 500.
-    </p>
-    ${_button('Upgrade Now — from &pound;3.99/mo', `${FRONTEND_URL}/subscription/upgrade`)}
+    <div style="background:${BRAND.light}; border-radius:12px; padding:20px; margin:20px 0;">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Neighbour</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">&pound;5.99/month or &pound;49.99/year</td></tr>
+        <tr><td style="padding:8px 0; color:${BRAND.text}; font-size:14px;">Circle</td><td style="padding:8px 0; color:${BRAND.dark}; font-weight:600; text-align:right;">&pound;11.99/month or &pound;99.99/year</td></tr>
+      </table>
+    </div>
+    ${_button('Upgrade Now', `${FRONTEND_URL}/subscription/upgrade`)}
     <p style="color:#9999AA; font-size:13px; margin-top:24px;">
-      After your trial, you'll move to the free Explorer plan (2 groups, 5 DMs, 2 meetups/month).
+      After your trial, you'll move to the free Welcome plan (2 groups, 5 DMs, 2 meetups/month).
     </p>`;
 
   return _send(email, `Your Huddl trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`, body);
 }
 
 async function sendCancellationConfirmation({ email, firstName, endDate, tier }) {
-  const tierName = tier === 'innerCircle' ? 'Inner Circle' : 'Neighbourhood';
+  const tierName = tier === 'circle' ? 'Circle' : tier === 'innerCircle' ? 'Circle' : 'Neighbour';
 
   const body = `
     <h2 style="color:${BRAND.dark}; margin:0 0 16px; font-size:24px;">We're sorry to see you go</h2>
@@ -245,7 +243,7 @@ async function sendCancellationConfirmation({ email, firstName, endDate, tier })
       You'll keep your benefits until <strong>${endDate || 'the end of your billing period'}</strong>.
     </p>
     <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      After that, you'll move to the free Explorer plan. Your groups and conversations will 
+      After that, you'll move to the free Welcome plan. Your groups and conversations will 
       still be there — you just won't be able to create new ones beyond the free limits.
     </p>
     <div style="background:${BRAND.light}; border-radius:12px; padding:20px; margin:20px 0; text-align:center;">

@@ -25,19 +25,19 @@ const TEMPLATES = {
   // ── Trial ─────────────────────────────────────────────────────────────
   trial_day5_reminder: {
     title: 'Your trial ends in 2 days',
-    body: 'Upgrade to Neighbourhood to keep unlimited groups, messaging, and meetups. Founding member rate: just £3.99/mo!',
+    body: 'Upgrade to Neighbour to keep unlimited groups, messaging, and meetups — from £5.99/mo.',
     data: { route: '/subscription/upgrade', type: 'trial_reminder' },
   },
   trial_day7_expiry: {
     title: 'Your trial has ended',
-    body: 'You\'re now on the free Explorer plan. Upgrade anytime to unlock unlimited features — from £3.99/mo.',
+    body: 'You\'re now on the free Welcome plan. Upgrade anytime to unlock unlimited features — from £5.99/mo.',
     data: { route: '/subscription/upgrade', type: 'trial_expired' },
   },
 
   // ── Subscription ──────────────────────────────────────────────────────
   subscription_activated: {
     title: 'Welcome to Huddl {tierName}!',
-    body: 'Your subscription is active. Enjoy unlimited groups, messaging, and more.',
+    body: 'Your {tierName} subscription is active. Enjoy unlimited groups, messaging, and more.',
     data: { route: '/home', type: 'subscription_activated' },
   },
   subscription_renewed: {
@@ -83,7 +83,7 @@ const TEMPLATES = {
  *
  * @param {string} userId    - Firebase UID
  * @param {string} template  - Template key from TEMPLATES
- * @param {Object} [vars]    - Template variable replacements (e.g. { tierName: 'Neighbourhood' })
+ * @param {Object} [vars]    - Template variable replacements (e.g. { tierName: 'Neighbour' })
  * @returns {Object} { success, messageId?, error? }
  */
 async function sendToUser(userId, template, vars = {}) {
@@ -234,7 +234,7 @@ async function processTrialReminders() {
       // Day 7 — trial expired, downgrade to Explorer
       await sendToUser(userId, 'trial_day7_expiry');
 
-      // Update subscription
+      // Update subscription — downgrade to Welcome (explorer) tier
       await doc.ref.update({
         isTrial: false,
         tier: 'explorer',

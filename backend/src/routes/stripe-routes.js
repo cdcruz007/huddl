@@ -16,7 +16,7 @@ const {
 // Creates a Stripe Checkout session for a new subscription.
 //
 // Body:
-//   { productId: 'huddl_neighbourhood_monthly', successUrl?, cancelUrl? }
+//   { productId: 'huddl_neighbour_monthly', successUrl?, cancelUrl? }
 //
 // Headers:
 //   Authorization: Bearer <Firebase ID token>

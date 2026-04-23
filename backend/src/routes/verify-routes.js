@@ -18,7 +18,7 @@ const {
 // Body:
 //   {
 //     receiptData:   <base64 receipt>,
-//     productId:     'huddl_neighbourhood_monthly',
+//     productId:     'huddl_neighbour_monthly',
 //     transactionId: 'original_transaction_id'
 //   }
 //
@@ -61,7 +61,7 @@ router.post('/apple', authMiddleware, async (req, res, next) => {
 // Body:
 //   {
 //     purchaseToken: '<token from Google Play>',
-//     productId:     'huddl_neighbourhood_monthly'
+//     productId:     'huddl_neighbour_monthly'
 //   }
 //
 // Headers:
