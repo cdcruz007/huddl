@@ -15,18 +15,27 @@
 
 'use strict';
 
-// ── Email provider: Resend → mock fallback ───────────────────────────────────
-let resendClient = null;
+// ── Email provider: Hostinger SMTP → mock fallback ───────────────────────────
+const nodemailer = require('nodemailer');
 
-if (process.env.RESEND_API_KEY) {
-  const { Resend } = require('resend');
-  resendClient = new Resend(process.env.RESEND_API_KEY);
-  console.log('Email provider: Resend ✓');
+let transporter = null;
+
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '465'),
+    secure: process.env.SMTP_PORT !== '587', // true for 465, false for 587
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+  console.log('Email provider: Hostinger SMTP ✓');
 } else {
-  console.log('Email provider: mock (no RESEND_API_KEY set)');
+  console.log('Email provider: mock (no SMTP credentials set)');
 }
 
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'hello@huddlconnect.com';
+const FROM_EMAIL = process.env.SMTP_USER || 'hello@huddlconnect.com';
 const FROM_NAME  = 'Huddl Connect';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://huddlconnect.com';
 
@@ -259,24 +268,24 @@ async function sendCancellationConfirmation({ email, firstName, endDate, tier })
 async function _send(to, subject, bodyHtml) {
   const html = _baseTemplate(subject, bodyHtml);
 
-  // ── Resend ──────────────────────────────────────────────────────────────────
-  if (resendClient) {
+  // ── Hostinger SMTP ──────────────────────────────────────────────────────────
+  if (transporter) {
     try {
-      await resendClient.emails.send({
-        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      await transporter.sendMail({
+        from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
         to,
         subject,
         html,
       });
-      console.log(`[Resend] Email sent to ${to}: ${subject}`);
+      console.log(`[SMTP] Email sent to ${to}: ${subject}`);
       return { success: true };
     } catch (err) {
-      console.error(`[Resend] Email error (${to}):`, err.message);
+      console.error(`[SMTP] Email error (${to}):`, err.message);
       return { success: false, error: err.message };
     }
   }
 
-  // ── Mock fallback (no provider configured) ──────────────────────────────────
+  // ── Mock fallback (no SMTP credentials set) ─────────────────────────────────
   console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
   return { success: true, mock: true };
 }
