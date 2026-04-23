@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'onboarding_data_service.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
+import 'subscription_service.dart';
+import '../models/subscription.dart';
 
 /// Centralised Firebase Authentication service for Huddl Connect.
 ///
@@ -649,6 +651,51 @@ class FirebaseAuthService {
       if (firestorePhoto.isNotEmpty &&
           (onboarding.profilePhotoPath == null || onboarding.profilePhotoPath!.isEmpty)) {
         onboarding.setProfilePhotoObjectUrl(firestorePhoto);
+      }
+
+      // ── Restore subscription tier from Firestore ─────────────────────────
+      // On a fresh install BrowserStorage is empty so SubscriptionService
+      // defaults to 'explorer'. Fetch the subscriptions collection and
+      // reinstate the correct tier so all paid features are immediately
+      // accessible without requiring the user to go through a payment flow.
+      try {
+        final subDocs = await _db
+            .collection('subscriptions')
+            .where('userId', isEqualTo: uid)
+            .get()
+            .timeout(const Duration(seconds: 5));
+        if (subDocs.docs.isNotEmpty) {
+          final subData = subDocs.docs.first.data();
+          final tierStr = (subData['tier'] as String?) ?? 'explorer';
+          final isActive = (subData['isActive'] as bool?) ?? false;
+          if (isActive && tierStr != 'explorer') {
+            final tier = SubscriptionTier.values.firstWhere(
+              (t) => t.name == tierStr,
+              orElse: () => SubscriptionTier.explorer,
+            );
+            final periodStr = (subData['billingPeriod'] as String?) ?? 'monthly';
+            final period = BillingPeriod.values.firstWhere(
+              (p) => p.name == periodStr,
+              orElse: () => BillingPeriod.monthly,
+            );
+            DateTime? renewalDate;
+            final renewalStr = subData['renewalDate'] as String?;
+            if (renewalStr != null) {
+              try { renewalDate = DateTime.parse(renewalStr); } catch (_) {}
+            }
+            final subService = SubscriptionService();
+            await subService.initialize();
+            await subService.restoreFromFirestore(
+              tier: tier,
+              period: period,
+              renewalDate: renewalDate,
+              isFoundingMember: (subData['isFoundingMember'] as bool?) ?? false,
+            );
+            _log('restoreProfileFromFirestore: subscription restored → $tierStr');
+          }
+        }
+      } catch (e) {
+        _log('restoreProfileFromFirestore: subscription restore skipped ($e)');
       }
 
       _log('restoreProfileFromFirestore: restored name="${onboarding.name}" postcode="${onboarding.postcode}"');

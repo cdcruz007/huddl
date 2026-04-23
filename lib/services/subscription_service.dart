@@ -101,6 +101,42 @@ class SubscriptionService extends ChangeNotifier {
   }
 
   // ===========================================================================
+  // FIRESTORE RESTORE
+  // Called by FirebaseAuthService.restoreProfileFromFirestore() on fresh
+  // installs to reinstate a paid subscription from Firestore data so the user
+  // does not lose their tier when BrowserStorage is empty.
+  // ===========================================================================
+
+  Future<void> restoreFromFirestore({
+    required SubscriptionTier tier,
+    required BillingPeriod period,
+    DateTime? renewalDate,
+    bool isFoundingMember = false,
+  }) async {
+    if (!_initialized) await initialize();
+
+    // Only restore if the local subscription is currently on explorer (free).
+    // If the user already has a paid local subscription, leave it untouched.
+    if (!_subscription.isFree) return;
+
+    final now = DateTime.now();
+    _subscription = UserSubscription(
+      tier: tier,
+      billingPeriod: period,
+      startDate: now,
+      renewalDate: renewalDate ?? now.add(const Duration(days: 365)),
+      isActive: true,
+      isTrial: false,
+      cancelledAtPeriodEnd: false,
+      scheduledTier: null,
+      scheduledPeriod: null,
+    );
+
+    await _persist();
+    notifyListeners();
+  }
+
+  // ===========================================================================
   // USAGE TRACKING (internal)
   // ===========================================================================
 
