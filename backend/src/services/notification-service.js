@@ -242,11 +242,17 @@ async function processTrialReminders() {
         updatedAt: FieldValue.serverTimestamp(),
       });
 
-      // Update user
-      await db.collection('users').doc(userId).update({
-        subscriptionTier: 'explorer',
-        updatedAt: FieldValue.serverTimestamp(),
-      });
+      // Update user — only if the user document actually exists
+      const userRef = db.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+      if (userSnap.exists) {
+        await userRef.update({
+          subscriptionTier: 'explorer',
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      } else {
+        console.warn(`processTrialReminders: user doc missing for ${userId} — subscription downgraded but user doc skipped`);
+      }
 
       day7Count++;
     }
