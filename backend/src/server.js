@@ -7,7 +7,7 @@
 //   2. Stripe webhook processing (subscription lifecycle)
 //   3. Apple App Store receipt verification (Server Notifications v2)
 //   4. Google Play receipt verification (Real-Time Developer Notifications)
-//   5. Transactional email (SendGrid) — welcome, receipt, cancellation
+//   5. Transactional email (Hostinger SMTP) — welcome, receipt, cancellation
 //   6. FCM push notifications — trial reminders, subscription events
 //
 // Endpoints:

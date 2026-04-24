@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// Email Service — SendGrid transactional emails
+// Email Service — Hostinger SMTP transactional emails (via nodemailer)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Sends branded HTML emails for:

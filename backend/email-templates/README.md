@@ -14,10 +14,13 @@ using branded HTML with the Huddl colour palette.
 | Trial Ending Reminder (Day 5)   | Daily cron job                       | 2 days before trial ends       |
 | Cancellation Confirmation       | customer.subscription.deleted webhook| When subscription is cancelled |
 
-## Testing
+## Email Provider
 
-In development (no SENDGRID_API_KEY set), emails are logged to the console
-instead of sent. Set the API key to test with real emails.
+Emails are sent via **Hostinger SMTP** using nodemailer.
+Set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, and `SMTP_PASS` in your environment.
+
+In development (no SMTP credentials set), emails are logged to the console
+instead of sent.
 
 ## Brand Colours
 

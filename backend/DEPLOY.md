@@ -42,10 +42,12 @@ APPLE_KEY_ID=YOUR_APPLE_KEY_ID
 # Google Play
 GOOGLE_PLAY_PACKAGE_NAME=com.huddlconnect.huddl_connect
 
-# SendGrid (fill in your key)
-SENDGRID_API_KEY=SG.YOUR_KEY_HERE
-SENDGRID_FROM_EMAIL=hello@huddlapp.co.uk
-SENDGRID_FROM_NAME=Huddl
+# Email — Hostinger SMTP
+# Hostinger: Emails → Manage → SMTP settings  (host: smtp.hostinger.com)
+SMTP_HOST=smtp.hostinger.com
+SMTP_PORT=465
+SMTP_USER=hello@huddlapp.co.uk
+SMTP_PASS=YOUR_HOSTINGER_EMAIL_PASSWORD
 
 # JWT
 JWT_SECRET=GENERATE_A_RANDOM_64_CHAR_STRING_HERE
