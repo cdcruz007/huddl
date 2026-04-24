@@ -267,12 +267,27 @@ async function verifyGoogleReceipt({ userId, purchaseToken, productId }) {
       process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.huddlconnect.huddl_connect';
 
     // ── Step 1: Authenticate with Google APIs ─────────────────────────
-    const auth = new google.auth.GoogleAuth({
-      keyFile:
-        process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-        path.join(__dirname, '../../config/firebase-admin-sdk.json'),
-      scopes: ['https://www.googleapis.com/auth/androidpublisher'],
-    });
+    // On Railway/cloud: use FIREBASE_SERVICE_ACCOUNT_JSON env var (base64 or raw JSON).
+    // Locally: fall back to FIREBASE_SERVICE_ACCOUNT_PATH or the default file.
+    let authConfig;
+    if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+      let raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON.trim();
+      if (!raw.startsWith('{')) {
+        raw = Buffer.from(raw, 'base64').toString('utf8');
+      }
+      authConfig = {
+        credentials: JSON.parse(raw),
+        scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+      };
+    } else {
+      authConfig = {
+        keyFile:
+          process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
+          path.join(__dirname, '../../config/firebase-admin-sdk.json'),
+        scopes: ['https://www.googleapis.com/auth/androidpublisher'],
+      };
+    }
+    const auth = new google.auth.GoogleAuth(authConfig);
 
     const androidPublisher = google.androidpublisher({
       version: 'v3',
