@@ -27,12 +27,11 @@ STRIPE_SECRET_KEY=sk_live_51J29CxGb8Lg9FVI5YJXtbTe7yC3NViyECeavxIcbKt2bHx8Jk8Foz
 STRIPE_PUBLISHABLE_KEY=pk_live_51J29CxGb8Lg9FVI5PQEEj71cpf0Atd5VIOJmLfUsXCurf5ogOJ2dgff2iKwrhQUuCi0kaBCMxoV98hp9vC2IPgqQ00wF0RKjiR
 STRIPE_WEBHOOK_SECRET=whsec_NrvFWpNMGtedrfVkrUOMUqZfnophXtYQ
 
-# Stripe Price IDs
-STRIPE_PRICE_NEIGHBOURHOOD_MONTHLY=price_1TPMiQGb8Lg9FVI5hzdkzA23
-STRIPE_PRICE_NEIGHBOURHOOD_ANNUAL=price_1TPMjBGb8Lg9FVI5zZwvMgVe
-STRIPE_PRICE_NEIGHBOURHOOD_FOUNDING=price_1TPMiQGb8Lg9FVI5hzdkzA23
-STRIPE_PRICE_INNER_CIRCLE_MONTHLY=price_1TPMkPGb8Lg9FVI57ETC2lCH
-STRIPE_PRICE_INNER_CIRCLE_ANNUAL=price_1TPMl5Gb8Lg9FVI5YKuJNSRL
+# Stripe Price IDs (names must match stripe-service.js PRICE_MAP exactly)
+STRIPE_PRICE_NEIGHBOUR_MONTHLY=price_1TPMiQGb8Lg9FVI5hzdkzA23
+STRIPE_PRICE_NEIGHBOUR_ANNUAL=price_1TPMjBGb8Lg9FVI5zZwvMgVe
+STRIPE_PRICE_CIRCLE_MONTHLY=price_1TPUqjGb8Lg9FVI5uk3rAKlJ
+STRIPE_PRICE_CIRCLE_ANNUAL=price_1TPMl5Gb8Lg9FVI5YKuJNSRL
 
 # Apple App Store (fill in when ready)
 APPLE_SHARED_SECRET=YOUR_APP_STORE_SHARED_SECRET
@@ -45,7 +44,7 @@ GOOGLE_PLAY_PACKAGE_NAME=com.huddlconnect.huddl_connect
 
 # SendGrid (fill in your key)
 SENDGRID_API_KEY=SG.YOUR_KEY_HERE
-SENDGRID_FROM_EMAIL=hello@huddlconnect.com
+SENDGRID_FROM_EMAIL=hello@huddlapp.co.uk
 SENDGRID_FROM_NAME=Huddl
 
 # JWT
@@ -53,9 +52,9 @@ JWT_SECRET=GENERATE_A_RANDOM_64_CHAR_STRING_HERE
 JWT_EXPIRY=7d
 
 # Frontend URLs
-FRONTEND_URL=https://huddlconnect.com
-STRIPE_SUCCESS_URL=https://huddlconnect.com/subscription/success
-STRIPE_CANCEL_URL=https://huddlconnect.com/subscription/cancel
+FRONTEND_URL=https://huddlapp.co.uk
+STRIPE_SUCCESS_URL=https://huddlapp.co.uk/subscription/success
+STRIPE_CANCEL_URL=https://huddlapp.co.uk/subscription/cancel
 ```
 
 ### Step 3 — Generate Firebase Base64 Value
@@ -67,12 +66,12 @@ base64 -i config/firebase-admin-sdk.json | tr -d '\n'
 Paste the output as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`.
 
 ### Step 4 — Add Custom Domain
-1. Railway → Settings → Domains → Add Custom Domain → `api.huddlconnect.com`
+1. Railway → Settings → Domains → Add Custom Domain → `api.huddlapp.co.uk`
 2. Add the CNAME record shown to your DNS provider (GoDaddy, Cloudflare, etc.)
 
 ### Step 5 — Update Stripe Webhook
 1. Go to **https://dashboard.stripe.com/webhooks**
-2. Edit your webhook endpoint to point to: `https://api.huddlconnect.com/api/webhooks/stripe`
+2. Edit your webhook endpoint to point to: `https://api.huddlapp.co.uk/api/webhooks/stripe`
 3. Ensure these events are enabled:
    - `checkout.session.completed`
    - `invoice.payment_succeeded`
@@ -89,7 +88,7 @@ Paste the output as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`.
 3. Build command: `npm install --production`
 4. Start command: `node src/server.js`
 5. Add all environment variables from Step 2 above
-6. Add custom domain `api.huddlconnect.com`
+6. Add custom domain `api.huddlapp.co.uk`
 
 ---
 
@@ -97,7 +96,7 @@ Paste the output as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`.
 
 Once deployed, verify the backend is running:
 ```
-GET https://api.huddlconnect.com/health
+GET https://api.huddlapp.co.uk/health
 ```
 Expected response:
 ```json
