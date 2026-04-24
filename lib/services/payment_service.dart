@@ -159,12 +159,12 @@ class StripeConfig {
   //  ───────────────  ───────  ──────────────────────────────────────
   //  Neighbour        Monthly  price_1TPMiQGb8Lg9FVI5hzdkzA23
   //  Neighbour        Annual   price_1TPMjBGb8Lg9FVI5zZwvMgVe
-  //  Circle           Monthly  price_1TPMkPGb8Lg9FVI57ETC2lCH
+  //  Circle           Monthly  price_1TPUqjGb8Lg9FVI5uk3rAKlJ  (£12.99 — updated)
   //  Circle           Annual   price_1TPMl5Gb8Lg9FVI5YKuJNSRL
   static const Map<String, String> priceIds = {
     HuddlProductIds.neighbourhoodMonthly: 'price_1TPMiQGb8Lg9FVI5hzdkzA23',
     HuddlProductIds.neighbourhoodAnnual:  'price_1TPMjBGb8Lg9FVI5zZwvMgVe',
-    HuddlProductIds.innerCircleMonthly:   'price_1TPMkPGb8Lg9FVI57ETC2lCH',
+    HuddlProductIds.innerCircleMonthly:   'price_1TPUqjGb8Lg9FVI5uk3rAKlJ',
     HuddlProductIds.innerCircleAnnual:    'price_1TPMl5Gb8Lg9FVI5YKuJNSRL',
   };
 }
