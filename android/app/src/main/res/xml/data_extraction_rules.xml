@@ -3,14 +3,16 @@
     HUDDL CONNECT — ANDROID DATA EXTRACTION RULES (API 31+)
     =========================================================
     Used by Android 12+ for both cloud backup AND device-to-device transfer.
-    Mirrors backup_rules.xml but using the newer <cloud-backup> and
-    <device-transfer> format required from API 31.
+    Valid domains: file, database, sharedpref, external, root,
+                   device_file, device_database, device_sharedpref, device_root
+    Note: 'cache' and 'external-cache' are NOT valid here — use domain="file"
+    with a specific path, or omit entirely (cache is excluded by default).
 -->
 <data-extraction-rules>
 
     <!-- ── CLOUD BACKUP (Google Drive) ───────────────────────────────── -->
     <cloud-backup>
-        <!-- Include everything in shared preferences (all BrowserStorage data) -->
+        <!-- Include everything in shared preferences -->
         <include domain="sharedpref" path="." />
 
         <!-- Exclude transient / device-specific entries -->
@@ -22,9 +24,8 @@
         <!-- Include all app files (photos stored by media attach service) -->
         <include domain="file" path="." />
 
-        <!-- Exclude large Android-managed caches -->
-        <exclude domain="cache" path="." />
-        <exclude domain="external-cache" path="." />
+        <!-- Exclude app database files (contain ephemeral session data) -->
+        <exclude domain="database" path="." />
     </cloud-backup>
 
     <!-- ── DEVICE-TO-DEVICE TRANSFER (e.g. Quick Switch) ────────────── -->
@@ -37,8 +38,6 @@
 
         <!-- Include all app files -->
         <include domain="file" path="." />
-        <exclude domain="cache" path="." />
-        <exclude domain="external-cache" path="." />
     </device-transfer>
 
 </data-extraction-rules>
