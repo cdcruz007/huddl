@@ -1,18 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     HUDDL CONNECT — ANDROID DATA EXTRACTION RULES (API 31+)
-    =========================================================
-    Used by Android 12+ for both cloud backup AND device-to-device transfer.
-    Valid domains: file, database, sharedpref, external, root,
-                   device_file, device_database, device_sharedpref, device_root
-    Note: 'cache' and 'external-cache' are NOT valid here — use domain="file"
-    with a specific path, or omit entirely (cache is excluded by default).
+    Valid domains: file, database, sharedpref, external, root
+    Rule: you can only <exclude> a path that was first <include>d
 -->
 <data-extraction-rules>
 
     <!-- ── CLOUD BACKUP (Google Drive) ───────────────────────────────── -->
-    <cloud-backup>
-        <!-- Include everything in shared preferences -->
+    <cloud-backup disableIfNoEncryptionCapabilities="false">
+        <!-- Include all shared preferences -->
         <include domain="sharedpref" path="." />
 
         <!-- Exclude transient / device-specific entries -->
@@ -20,12 +16,6 @@
         <exclude domain="sharedpref" path="last_login_timestamp" />
         <exclude domain="sharedpref" path="data_reset_v2" />
         <exclude domain="sharedpref" path="FlutterSharedPreferences" />
-
-        <!-- Include all app files (photos stored by media attach service) -->
-        <include domain="file" path="." />
-
-        <!-- Exclude app database files (contain ephemeral session data) -->
-        <exclude domain="database" path="." />
     </cloud-backup>
 
     <!-- ── DEVICE-TO-DEVICE TRANSFER (e.g. Quick Switch) ────────────── -->
@@ -35,9 +25,6 @@
         <exclude domain="sharedpref" path="ai_discovery_last_run" />
         <exclude domain="sharedpref" path="last_login_timestamp" />
         <exclude domain="sharedpref" path="data_reset_v2" />
-
-        <!-- Include all app files -->
-        <include domain="file" path="." />
     </device-transfer>
 
 </data-extraction-rules>
