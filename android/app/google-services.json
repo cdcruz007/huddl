@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:879152141283:android:85d9abe330f0ef969186d6",
+        "android_client_info": {
+          "package_name": "com.huddlconnect.connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPWoXNhqNY-HZLG8cBmE8voZ75TRKBTOw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:879152141283:android:e33a13e587e540519186d6",
         "android_client_info": {
           "package_name": "com.huddlconnect.huddl_connect"

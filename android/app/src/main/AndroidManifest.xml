@@ -10,17 +10,10 @@
     <uses-permission android:name="com.android.vending.BILLING"/>
 
     <application
-        android:label="@string/app_name"
+        android:label="Huddl"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:enableOnBackInvokedCallback="true"
-
-        <!-- ── Backup & Restore ──────────────────────────────────────────
-             allowBackup=true  : enables Android Auto Backup to Google Drive
-             fullBackupContent : rules for API 23-30 (Android 6-11)
-             dataExtractionRules : rules for API 31+ (Android 12+)
-             Restores automatically on reinstall / new device migration.
-        ──────────────────────────────────────────────────────────────── -->
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -72,4 +65,5 @@
         <package android:name="com.android.vending"/>
     </queries>
 </manifest>
+
 
