@@ -3,7 +3,6 @@ import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
-
 class NameInputScreen extends StatefulWidget {
   const NameInputScreen({super.key});
 
@@ -12,20 +11,39 @@ class NameInputScreen extends StatefulWidget {
 }
 
 class _NameInputScreenState extends State<NameInputScreen> {
-  final _ctrl = TextEditingController();
+  final _nameCtrl  = TextEditingController();
+  final _emailCtrl = TextEditingController();
+
+  // Track email validity separately for inline error hint
+  bool _emailTouched = false;
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
     super.dispose();
   }
 
-  bool get _canContinue => _ctrl.text.trim().isNotEmpty;
+  bool get _nameOk  => _nameCtrl.text.trim().isNotEmpty;
+  bool get _emailOk => _isValidEmail(_emailCtrl.text.trim());
+  bool get _canContinue => _nameOk && _emailOk;
+
+  bool _isValidEmail(String v) {
+    // Standard RFC-5322 simplified regex — good enough for UX gating
+    return RegExp(
+      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
+    ).hasMatch(v);
+  }
 
   void _continue() {
-    final name = _ctrl.text.trim();
-    if (name.isEmpty) return;
-    OnboardingDataService().setName(name);
+    final name  = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim().toLowerCase();
+    if (name.isEmpty || !_isValidEmail(email)) return;
+
+    final svc = OnboardingDataService();
+    svc.setName(name);
+    svc.setEmail(email);
+
     Navigator.pushNamed(context, '/parent_type');
   }
 
@@ -46,7 +64,8 @@ class _NameInputScreenState extends State<NameInputScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 40),
-                    // Title
+
+                    // ── Title ───────────────────────────────────────────
                     Center(
                       child: Text(
                         "What's your first name?",
@@ -71,20 +90,60 @@ class _NameInputScreenState extends State<NameInputScreen> {
                         textAlign: TextAlign.center,
                       ),
                     ),
+
                     const SizedBox(height: 40),
-                    // Input field
+
+                    // ── First name field ────────────────────────────────
                     _UnderlineInput(
-                      controller: _ctrl,
+                      controller: _nameCtrl,
                       hint: 'First name',
+                      keyboardType: TextInputType.name,
+                      textCapitalization: TextCapitalization.words,
                       onChanged: (_) => setState(() {}),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    // ── Email field ─────────────────────────────────────
+                    _UnderlineInput(
+                      controller: _emailCtrl,
+                      hint: 'Email address',
+                      keyboardType: TextInputType.emailAddress,
+                      onChanged: (_) => setState(() {
+                        _emailTouched = true;
+                      }),
+                      showError: _emailTouched &&
+                          _emailCtrl.text.trim().isNotEmpty &&
+                          !_emailOk,
+                      errorText: 'Please enter a valid email address',
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ── Privacy reassurance note ────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        'Add your email for receipts & updates. Don\'t worry, you can '
+                        'unsubscribe from any emails you receive from the Huddl team '
+                        'directly from your inbox.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: HuddlColors.textSecondary,
+                          height: 1.55,
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 32),
-                    // Continue button
+
+                    // ── Continue button ─────────────────────────────────
                     _OrangeButton(
                       label: 'Continue',
                       enabled: _canContinue,
                       onTap: _continue,
                     ),
+
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -171,36 +230,81 @@ class _OrangeButton extends StatelessWidget {
 }
 
 /// Underline text field (grey background, bottom border)
+/// Optional [showError] flag + [errorText] for inline validation messages.
 class _UnderlineInput extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
   final ValueChanged<String>? onChanged;
+  final TextInputType keyboardType;
+  final TextCapitalization textCapitalization;
+  final bool showError;
+  final String? errorText;
 
   const _UnderlineInput({
     required this.controller,
     required this.hint,
     this.onChanged,
+    this.keyboardType = TextInputType.text,
+    this.textCapitalization = TextCapitalization.none,
+    this.showError = false,
+    this.errorText,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).inputDecorationTheme.fillColor ?? context.hc.inputBg,
-        border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor, width: 1.2)),
-      ),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(fontSize: 16, color: HuddlColors.disabledText),
-          border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    final borderColor = showError
+        ? Colors.redAccent
+        : Theme.of(context).dividerColor;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).inputDecorationTheme.fillColor ??
+                context.hc.inputBg,
+            border: Border(
+              bottom: BorderSide(color: borderColor, width: 1.2),
+            ),
+          ),
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            keyboardType: keyboardType,
+            textCapitalization: textCapitalization,
+            autocorrect: false,
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: const TextStyle(
+                fontSize: 16,
+                color: HuddlColors.disabledText,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
+            ),
+          ),
         ),
-      ),
+        if (showError && errorText != null) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              errorText!,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.redAccent,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

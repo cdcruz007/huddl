@@ -189,6 +189,10 @@ class HuddlUserService {
     if ((_onboarding.profilePhotoPath ?? '').isNotEmpty) {
       profile['photoUrl'] = _onboarding.profilePhotoPath!;
     }
+    // Sync email when present — captured at onboarding step 1 or updated in Profile
+    if ((_onboarding.email ?? '').isNotEmpty) {
+      profile['email'] = _onboarding.email!;
+    }
 
     try {
       // Use set with merge so we don't overwrite fields set elsewhere

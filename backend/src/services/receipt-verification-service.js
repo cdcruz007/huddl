@@ -22,6 +22,27 @@ const fs = require('fs');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const { getDb, FieldValue } = require('./firebase-service');
+const {
+  sendSubscriptionConfirmation,
+  sendPaymentReceipt,
+  sendPaymentFailedWarning,
+  sendCancellationConfirmation,
+  sendSubscriptionRenewed,
+} = require('./email-service');
+
+// ── Helper: fetch user email + firstName from Firestore ──────────────────────
+async function _getUserEmailData(db, userId) {
+  try {
+    const doc = await db.collection('users').doc(userId).get();
+    const data = doc.data() || {};
+    return {
+      email:     data.email     || '',
+      firstName: data.firstName || data.name || '',
+    };
+  } catch (_) {
+    return { email: '', firstName: '' };
+  }
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 // APPLE APP STORE VERIFICATION
@@ -424,20 +445,47 @@ async function handleAppleNotification(signedPayload) {
   const userId = subSnap.docs[0].id;
   const tierMapping = _mapAppleProductToTier(appleProductId);
 
+  // Fetch user email data once — used across multiple cases below
+  const { email, firstName } = await _getUserEmailData(db, userId);
+  const renewalDateIso = transactionInfo.expiresDate
+    ? new Date(transactionInfo.expiresDate).toISOString()
+    : null;
+  const renewalDateDisplay = transactionInfo.expiresDate
+    ? new Date(transactionInfo.expiresDate).toLocaleDateString('en-GB')
+    : null;
+
   switch (notificationType) {
     case 'SUBSCRIBED':
-    case 'DID_RENEW':
+    case 'DID_RENEW': {
+      const isNewPurchase = notificationType === 'SUBSCRIBED' && subtype === 'INITIAL_BUY';
       await db.collection('subscriptions').doc(userId).update({
         isActive: true,
-        isTrial: notificationType === 'SUBSCRIBED' && subtype === 'INITIAL_BUY',
+        isTrial: false,
         tier: tierMapping.tier,
         billingPeriod: tierMapping.billingPeriod,
-        renewalDate: transactionInfo.expiresDate
-          ? new Date(transactionInfo.expiresDate).toISOString()
-          : null,
+        renewalDate: renewalDateIso,
         updatedAt: FieldValue.serverTimestamp(),
       });
+      // Send confirmation email on new purchase; renewal email on renewals
+      if (email) {
+        if (isNewPurchase) {
+          sendSubscriptionConfirmation({
+            email, firstName,
+            tier: tierMapping.tier,
+            billingPeriod: tierMapping.billingPeriod,
+            platform: 'ios',
+          }).catch(e => console.error('[email] Apple SUBSCRIBED:', e.message));
+        } else {
+          sendSubscriptionRenewed({
+            email, firstName,
+            tier: tierMapping.tier,
+            renewalDate: renewalDateDisplay,
+            platform: 'ios',
+          }).catch(e => console.error('[email] Apple DID_RENEW:', e.message));
+        }
+      }
       break;
+    }
 
     case 'DID_FAIL_TO_RENEW':
       await db.collection('subscriptions').doc(userId).update({
@@ -445,10 +493,15 @@ async function handleAppleNotification(signedPayload) {
         paymentFailedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
+      if (email) {
+        sendPaymentFailedWarning({ email, firstName, platform: 'ios' })
+          .catch(e => console.error('[email] Apple DID_FAIL_TO_RENEW:', e.message));
+      }
       break;
 
     case 'EXPIRED':
-    case 'REVOKE':
+    case 'REVOKE': {
+      const prevTier = (subSnap.docs[0].data() || {}).tier || 'neighbourhood';
       await db.collection('subscriptions').doc(userId).set({
         tier: 'explorer',
         billingPeriod: 'monthly',
@@ -463,9 +516,17 @@ async function handleAppleNotification(signedPayload) {
         subscriptionTier: 'explorer',
         updatedAt: FieldValue.serverTimestamp(),
       });
+      if (email) {
+        sendCancellationConfirmation({
+          email, firstName,
+          tier: prevTier,
+          platform: 'ios',
+        }).catch(e => console.error('[email] Apple EXPIRED/REVOKE:', e.message));
+      }
       break;
+    }
 
-    case 'DID_CHANGE_RENEWAL_STATUS':
+    case 'DID_CHANGE_RENEWAL_STATUS': {
       const autoRenew = renewalInfo?.autoRenewStatus === 1;
       await db.collection('subscriptions').doc(userId).update({
         autoRenewing: autoRenew,
@@ -473,6 +534,7 @@ async function handleAppleNotification(signedPayload) {
         updatedAt: FieldValue.serverTimestamp(),
       });
       break;
+    }
 
     default:
       console.log(`Unhandled Apple notification: ${notificationType} (${subtype})`);
@@ -543,6 +605,47 @@ async function handleGoogleNotification(message) {
     12: 'REVOKED', 13: 'EXPIRED',
   };
 
+  // Fetch user email once for all email triggers
+  const { email, firstName } = await _getUserEmailData(db, userId);
+  const prevTier = (subSnap.docs[0].data() || {}).tier || 'neighbourhood';
+
+  // Purchased / Recovered / Restarted → active subscription
+  if ([1, 4, 7].includes(notificationType)) {
+    const isNewPurchase = notificationType === 4; // PURCHASED
+    if (email && result && result.subscription) {
+      if (isNewPurchase) {
+        sendSubscriptionConfirmation({
+          email, firstName,
+          tier: result.subscription.tier,
+          billingPeriod: result.subscription.billingPeriod,
+          platform: 'android',
+        }).catch(e => console.error('[email] Google PURCHASED:', e.message));
+      } else {
+        // RECOVERED (1) or RESTARTED (7)
+        sendSubscriptionRenewed({
+          email, firstName,
+          tier: result.subscription.tier,
+          platform: 'android',
+        }).catch(e => console.error('[email] Google RECOVERED/RESTARTED:', e.message));
+      }
+    }
+  }
+
+  // Renewed → send renewal confirmation
+  if (notificationType === 2 && email) {
+    sendSubscriptionRenewed({
+      email, firstName,
+      tier: prevTier,
+      platform: 'android',
+    }).catch(e => console.error('[email] Google RENEWED:', e.message));
+  }
+
+  // Payment failed / grace period
+  if ([5, 6].includes(notificationType) && email) {
+    sendPaymentFailedWarning({ email, firstName, platform: 'android' })
+      .catch(e => console.error('[email] Google ON_HOLD/GRACE:', e.message));
+  }
+
   // Handle specific notification types
   if ([3, 12, 13].includes(notificationType)) {
     // CANCELED, REVOKED, EXPIRED — downgrade to Explorer
@@ -561,6 +664,15 @@ async function handleGoogleNotification(message) {
       subscriptionTier: 'explorer',
       updatedAt: FieldValue.serverTimestamp(),
     });
+
+    // Send cancellation email
+    if (email) {
+      sendCancellationConfirmation({
+        email, firstName,
+        tier: prevTier,
+        platform: 'android',
+      }).catch(e => console.error('[email] Google CANCELED/EXPIRED:', e.message));
+    }
   }
 
   console.log(

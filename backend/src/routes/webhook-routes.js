@@ -21,6 +21,7 @@ const {
   sendPaymentReceipt,
   sendPaymentFailedWarning,
   sendCancellationConfirmation,
+  sendSubscriptionRenewed,
 } = require('../services/email-service');
 const { sendToUser } = require('../services/notification-service');
 const { getDb } = require('../services/firebase-service');

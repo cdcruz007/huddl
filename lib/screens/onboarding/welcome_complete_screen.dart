@@ -1,11 +1,28 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/backend_api_service.dart';
 import '../../theme/huddl_colors.dart';
 
 class WelcomeCompleteScreen extends StatelessWidget {
   const WelcomeCompleteScreen({super.key});
+
+  /// Fire welcome email once — non-blocking, backend is idempotent (welcomeEmailSent guard).
+  void _fireWelcomeEmail() {
+    final onboarding = OnboardingDataService();
+    final email = (onboarding.email ?? '').trim();
+    if (email.isEmpty) return;
+    BackendApiService().sendWelcomeNotification(
+      email: email,
+      firstName: onboarding.name,
+      borough: onboarding.postcode,
+    ).catchError((Object e) {
+      if (kDebugMode) debugPrint('[WelcomeComplete] welcome email error: $e');
+      return null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -258,8 +275,10 @@ class WelcomeCompleteScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 54,
                 child: ElevatedButton(
-                  onPressed: () =>
-                      Navigator.pushNamed(context, '/add_photo'),
+                  onPressed: () {
+                    _fireWelcomeEmail();
+                    Navigator.pushNamed(context, '/add_photo');
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HuddlColors.primary,
                     elevation: 0,

@@ -13,6 +13,7 @@ class OnboardingDataService {
 
   // User onboarding data
   String? _name;
+  String? _email; // Collected at step 1 of onboarding — used for transactional emails
   String? _parentType; // 'mum' or 'dad'
   List<String> _stagesOfLife = [];
   String? _postcode;
@@ -33,6 +34,7 @@ class OnboardingDataService {
 
   // Getters
   String? get name => _name;
+  String? get email => _email;
   String? get parentType => _parentType;
   List<String> get stagesOfLife => _stagesOfLife;
   String? get postcode => _postcode;
@@ -60,6 +62,12 @@ class OnboardingDataService {
 
 
   // Setters
+  void setEmail(String email) {
+    _email = email.trim().toLowerCase();
+    _log('Email set (length: ${_email!.length})');
+    _saveToStorage();
+  }
+
   void setName(String name) {
     _name = name;
     _log('Name set: $name');
@@ -215,6 +223,7 @@ class OnboardingDataService {
   // same app lifecycle (e.g. after deleting their account).
   Future<void> clear() async {
     _name = null;
+    _email = null;
     _parentType = null;
     _stagesOfLife = [];
     _postcode = null;
@@ -269,6 +278,7 @@ class OnboardingDataService {
         final Map<String, dynamic> data = json.decode(dataJson);
         
         _name = data['name'] as String?;
+        _email = data['email'] as String?;
         _parentType = data['parent_type'] as String?;
         _stagesOfLife = List<String>.from(data['stages_of_life'] ?? []);
         _postcode = data['postcode'] as String?;
@@ -315,6 +325,7 @@ class OnboardingDataService {
     try {
       final data = {
         'name': _name,
+        'email': _email,
         'parent_type': _parentType,
         'stages_of_life': _stagesOfLife,
         'postcode': _postcode,

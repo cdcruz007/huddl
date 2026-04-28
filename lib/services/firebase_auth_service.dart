@@ -724,11 +724,14 @@ class FirebaseAuthService {
     final firstName = parts.isNotEmpty ? parts.first : '';
     final lastName = parts.length > 1 ? parts.sublist(1).join(' ') : '';
 
+    final email = (onboarding.email ?? '').trim();
+
     final Map<String, dynamic> profile = {
       'uid': userId,
       'name': name,
       'firstName': firstName,
       'lastName': lastName,
+      'email': email,                       // captured at onboarding step 1
       'phone':
           onboarding.fullPhoneNumber ?? _auth.currentUser?.phoneNumber ?? '',
       'countryCode': onboarding.countryCode ?? '+44',
@@ -778,11 +781,11 @@ class FirebaseAuthService {
     // Trigger a full profile sync so all fields are set correctly
     await HuddlUserService().syncCurrentUserProfile();
 
-    // Send welcome push notification via backend (non-fatal if backend unreachable).
-    // Email will be sent later once/if the user adds an email to their profile.
+    // Send welcome push notification + email via backend.
+    // Email address is captured at onboarding step 1 — available immediately.
     unawaited(
       BackendApiService().sendWelcomeNotification(
-        email: '', // no email at sign-up (phone-auth only); email sent when profile updated
+        email: email,
         firstName: firstName,
         borough: borough,
       ).catchError((_) {}),
