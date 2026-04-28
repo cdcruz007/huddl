@@ -19,7 +19,6 @@ class SubscriptionService extends ChangeNotifier {
 
   static const String _subKey = 'user_subscription_v2';
   static const String _usageKey = 'subscription_usage_v2';
-  static const String _trialUsedKey = 'trial_already_used';
 
   bool _initialized = false;
   late UserSubscription _subscription;
@@ -451,39 +450,6 @@ class SubscriptionService extends ChangeNotifier {
     }
   }
 
-  /// Start a 7-day free trial of Neighbour
-  Future<bool> startTrial() async {
-    if (!_initialized) await initialize();
-
-    // Check if trial was already used
-    final trialUsed = await BrowserStorage.getString(_trialUsedKey);
-    if (trialUsed == 'true') return false;
-
-    // Only allow trial if user is on Explorer
-    if (_subscription.tier != SubscriptionTier.explorer) return false;
-
-    final now = DateTime.now();
-    _subscription = UserSubscription(
-      tier: SubscriptionTier.neighbourhood,
-      billingPeriod: BillingPeriod.monthly,
-      startDate: now,
-      renewalDate: now.add(const Duration(days: 7)),
-      isActive: true,
-      isTrial: true,
-      trialDaysRemaining: 7,
-    );
-
-    await BrowserStorage.setString(_trialUsedKey, 'true');
-    await _persist();
-    notifyListeners();
-    return true;
-  }
-
-  /// Whether the user has already used their trial
-  Future<bool> hasUsedTrial() async {
-    final trialUsed = await BrowserStorage.getString(_trialUsedKey);
-    return trialUsed == 'true';
-  }
 
   /// Cancel subscription -- sets cancelledAtPeriodEnd so the user retains
   /// access at the current tier until the end of the billing period.

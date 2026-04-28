@@ -332,11 +332,6 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               if (_service.isPendingCancellation || _service.hasScheduledChange)
                 const SizedBox(height: 16),
 
-              // 7-day Neighbour trial CTA
-              if (_service.isFree) ...[
-                _TrialBanner(onTap: _startTrial),
-                const SizedBox(height: 12),
-              ],
 
               const SizedBox(height: 8),
 
@@ -408,11 +403,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                       'Your account will be charged for renewal within 24 hours '
                       'prior to the end of the current period at the rate of '
                       'your selected plan. You can manage and cancel your '
-                      'subscriptions by going to your account settings on the '
-                      'App Store or Google Play Store after purchase. Any '
-                      'unused portion of a free trial period will be forfeited '
-                      'when you purchase a subscription. Prices shown are in '
-                      'GBP and may vary by region.',
+                      'subscriptions in your App Store or Google Play account '
+                      'settings. Prices shown are in GBP and may vary by region.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                           fontSize: 10, color: HuddlColors.textLight),
@@ -461,27 +453,6 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     );
   }
 
-  Future<void> _startTrial() async {
-    final ok = await _service.startTrial();
-    if (ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('7-day Neighbour trial activated! Enjoy unlimited access.',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
-          backgroundColor: HuddlColors.teal,
-        ),
-      );
-      Navigator.pop(context, true);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Trial already used. Choose a plan to continue!',
-              style: GoogleFonts.poppins(color: HuddlColors.white)),
-          backgroundColor: HuddlColors.textHint,
-        ),
-      );
-    }
-  }
 
   Future<void> _restorePurchases() async {
     final restored = await _service.restorePurchases();
@@ -632,71 +603,6 @@ class _GateBanner extends StatelessWidget {
   }
 }
 
-/// 7-day Neighbour trial banner
-class _TrialBanner extends StatelessWidget {
-  final VoidCallback onTap;
-  const _TrialBanner({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.star_rounded, color: HuddlColors.primary, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Try Neighbour free for 7 days',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary)),
-                const SizedBox(height: 2),
-                Text(
-                    'Unlimited groups, DMs, meetups & more. No card required.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: context.hc.textSecondary)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text('Start',
-                  style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.white)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Billing period toggle
 class _BillingToggle extends StatelessWidget {

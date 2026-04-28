@@ -136,12 +136,13 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
   const body = `
     <h2 style="color:${BRAND.dark}; margin:0 0 16px; font-size:24px;">Welcome to Huddl, ${firstName || 'there'}!</h2>
     <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      You've just joined Cambridge's friendliest parent community${borough ? ` in <strong>${borough}</strong>` : ''}. 
+      You've just joined your local parent community${borough ? ` in <strong>${borough}</strong>` : ''}. 
       We're so glad you're here.
     </p>
     <p style="color:${BRAND.text}; font-size:16px; line-height:1.6;">
-      You're starting with a <strong>7-day free trial</strong> of Huddl Neighbour — 
-      unlimited groups, messaging, meetups, and more. No card required.
+      You're on the <strong>Welcome plan</strong> — free forever, no card required. 
+      When you're ready for unlimited groups, messaging, meetups and AI tools, 
+      upgrading to Neighbour or Circle takes just a few taps.
     </p>
     <h3 style="color:${BRAND.dark}; margin:24px 0 12px; font-size:18px;">Here's what to do first:</h3>
     <ol style="color:${BRAND.text}; font-size:15px; line-height:1.8; padding-left:20px;">
@@ -152,7 +153,7 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
     </ol>
     ${_button('Open Huddl', FRONTEND_URL)}
     <p style="color:#9999AA; font-size:13px; margin-top:24px;">
-      Your trial ends in 7 days. You can upgrade anytime from the app, or we'll remind you before it ends.
+      Upgrade anytime from the app to unlock unlimited features from £5.99/month.
     </p>`;
 
   return _send(email, `Welcome to Huddl, ${firstName || 'there'}!`, body);
