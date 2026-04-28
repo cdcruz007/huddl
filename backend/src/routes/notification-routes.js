@@ -203,6 +203,8 @@ router.get('/smtp-check', async (req, res) => {
   }
 
   const config = {
+    RESEND_API_KEY: process.env.RESEND_API_KEY ? `(set, length ${process.env.RESEND_API_KEY.length})` : '(NOT SET)',
+    RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL || '(not set)',
     SMTP_HOST: process.env.SMTP_HOST || '(not set)',
     SMTP_PORT: process.env.SMTP_PORT || '(not set, defaulting to 465)',
     SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER : '(not set)',

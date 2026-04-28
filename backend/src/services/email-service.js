@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// Email Service — Hostinger SMTP transactional emails (via nodemailer)
+// Email Service — Resend (primary, HTTPS/443) → SMTP fallback → mock
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Sends branded HTML emails for:
@@ -11,47 +11,54 @@
 //   6. Cancellation confirmation
 //   7. Win-back / re-engagement
 //
+// Provider priority:
+//   1. Resend (RESEND_API_KEY set) — uses HTTPS port 443, works on Railway
+//   2. Nodemailer SMTP (SMTP_HOST + SMTP_USER + SMTP_PASS set) — fallback
+//   3. Mock logger — development / no credentials
 // ═══════════════════════════════════════════════════════════════════════════════
 
 'use strict';
 
-// ── Email provider: Hostinger SMTP → mock fallback ───────────────────────────
 const nodemailer = require('nodemailer');
 
-let transporter = null;
+// ── Provider selection ────────────────────────────────────────────────────────
+let resendClient = null;
+let transporter  = null;
 
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+if (process.env.RESEND_API_KEY) {
+  // Primary: Resend — pure HTTPS, no SMTP port issues on Railway
+  const { Resend } = require('resend');
+  resendClient = new Resend(process.env.RESEND_API_KEY);
+  console.log('Email provider: Resend ✓');
+} else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  // Fallback: Nodemailer SMTP (Hostinger)
   const smtpPort = parseInt(process.env.SMTP_PORT || '465');
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: smtpPort,
-    secure: smtpPort === 465, // true for 465 (SSL), false for 587 (STARTTLS)
+    secure: smtpPort === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    // Connection + greeting timeouts to prevent Railway hanging forever
-    connectionTimeout: 10000,  // 10 s to establish TCP connection
-    greetingTimeout: 10000,    // 10 s to receive SMTP greeting
-    socketTimeout: 30000,      // 30 s per socket operation
-    // Force IPv4 — Railway may route IPv6 differently, causing hangs
+    connectionTimeout: 10000,
+    greetingTimeout:   10000,
+    socketTimeout:     30000,
     family: 4,
   });
-  // Verify SMTP connectivity at startup (non-blocking)
   transporter.verify((err) => {
     if (err) {
       console.error('[SMTP] Connection verification failed:', err.message);
-      console.error('[SMTP] Emails will fall back to mock mode for this session.');
     } else {
-      console.log('Email provider: Hostinger SMTP ✓ (connection verified)');
+      console.log(`Email provider: Hostinger SMTP ✓ (${process.env.SMTP_HOST}:${smtpPort})`);
     }
   });
 } else {
-  console.log('Email provider: mock (no SMTP credentials set)');
+  console.log('Email provider: mock (no credentials set)');
 }
 
-const FROM_EMAIL = process.env.SMTP_USER || 'welcome@huddlapp.co.uk';
-const FROM_NAME  = 'Huddl Connect';
+const FROM_EMAIL   = process.env.RESEND_FROM_EMAIL || process.env.SMTP_USER || 'welcome@huddlapp.co.uk';
+const FROM_NAME    = 'Huddl Connect';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://www.huddlapp.co.uk';
 
 // ── Brand colours & styles ──────────────────────────────────────────────────
@@ -285,10 +292,30 @@ async function sendCancellationConfirmation({ email, firstName, endDate, tier })
 async function _send(to, subject, bodyHtml) {
   const html = _baseTemplate(subject, bodyHtml);
 
-  // ── Hostinger SMTP ──────────────────────────────────────────────────────────
+  // ── 1. Resend (HTTPS — works on Railway) ────────────────────────────────────
+  if (resendClient) {
+    try {
+      const { data, error } = await resendClient.emails.send({
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
+        to,
+        subject,
+        html,
+      });
+      if (error) {
+        console.error(`[Resend] Error sending to ${to}:`, error);
+        return { success: false, error: error.message || JSON.stringify(error) };
+      }
+      console.log(`[Resend] Email sent to ${to}: ${subject} (id: ${data?.id})`);
+      return { success: true, id: data?.id };
+    } catch (err) {
+      console.error(`[Resend] Exception sending to ${to}:`, err.message);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // ── 2. Nodemailer SMTP fallback ─────────────────────────────────────────────
   if (transporter) {
     try {
-      // Wrap sendMail in a 35-second timeout so Railway never hangs indefinitely
       const sendPromise = transporter.sendMail({
         from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
         to,
@@ -296,7 +323,7 @@ async function _send(to, subject, bodyHtml) {
         html,
       });
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('SMTP sendMail timed out after 35 seconds')), 35000)
+        setTimeout(() => reject(new Error('SMTP sendMail timed out after 20 seconds')), 20000)
       );
       await Promise.race([sendPromise, timeoutPromise]);
       console.log(`[SMTP] Email sent to ${to}: ${subject}`);
@@ -307,7 +334,7 @@ async function _send(to, subject, bodyHtml) {
     }
   }
 
-  // ── Mock fallback (no SMTP credentials set) ─────────────────────────────────
+  // ── 3. Mock fallback ────────────────────────────────────────────────────────
   console.log(`[EMAIL MOCK] To: ${to} | Subject: ${subject}`);
   return { success: true, mock: true };
 }
