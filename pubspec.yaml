@@ -1,7 +1,7 @@
 name: huddl_connect
 description: Huddl - Connect with your community through groups, meetups and marketplace.
 publish_to: 'none'
-version: 1.0.4+5
+version: 1.0.5+6
 
 environment:
   sdk: ^3.9.0
