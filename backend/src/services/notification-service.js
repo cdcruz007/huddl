@@ -22,18 +22,6 @@ const { getMessaging, getDb, FieldValue } = require('./firebase-service');
 // ── Notification templates ──────────────────────────────────────────────────
 
 const TEMPLATES = {
-  // ── Trial ─────────────────────────────────────────────────────────────
-  trial_day5_reminder: {
-    title: 'Your trial ends in 2 days',
-    body: 'Upgrade to Neighbour to keep unlimited groups, messaging, and meetups — from £5.99/mo.',
-    data: { route: '/subscription/upgrade', type: 'trial_reminder' },
-  },
-  trial_day7_expiry: {
-    title: 'Your trial has ended',
-    body: 'You\'re now on the free Welcome plan. Upgrade anytime to unlock unlimited features — from £5.99/mo.',
-    data: { route: '/subscription/upgrade', type: 'trial_expired' },
-  },
-
   // ── Subscription ──────────────────────────────────────────────────────
   subscription_activated: {
     title: 'Welcome to Huddl {tierName}!',
@@ -189,84 +177,8 @@ async function sendToUsers(userIds, template, vars = {}) {
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
-// SCHEDULED JOBS — Trial Reminder Logic
-// ═════════════════════════════════════════════════════════════════════════════
-
-/**
- * Check all active trials and send Day-5 and Day-7 notifications.
- * Should be called daily by a cron job or Cloud Scheduler.
- */
-async function processTrialReminders() {
-  const db = getDb();
-  const now = new Date();
-
-  // Get all active trial subscriptions
-  const trialSubs = await db.collection('subscriptions')
-    .where('isTrial', '==', true)
-    .where('isActive', '==', true)
-    .get();
-
-  let day5Count = 0;
-  let day7Count = 0;
-
-  for (const doc of trialSubs.docs) {
-    const sub = doc.data();
-    const userId = doc.id;
-    const startDate = new Date(sub.startDate);
-    const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
-
-    if (daysSinceStart === 5) {
-      // Day 5 reminder
-      await sendToUser(userId, 'trial_day5_reminder');
-      // Also send email
-      const { sendTrialEndingReminder } = require('./email-service');
-      const userDoc = await db.collection('users').doc(userId).get();
-      const userData = userDoc.data() || {};
-      // Only send email if user has a real email address on their profile
-      if (userData.email) {
-        await sendTrialEndingReminder({
-          email: userData.email,
-          firstName: userData.firstName,
-          daysRemaining: 2,
-        });
-      }
-      // Push notification always sent (above) regardless of email availability
-      day5Count++;
-    } else if (daysSinceStart >= 7) {
-      // Day 7 — trial expired, downgrade to Explorer
-      await sendToUser(userId, 'trial_day7_expiry');
-
-      // Update subscription — downgrade to Welcome (explorer) tier
-      await doc.ref.update({
-        isTrial: false,
-        tier: 'explorer',
-        trialDaysRemaining: 0,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-
-      // Update user — only if the user document actually exists
-      const userRef = db.collection('users').doc(userId);
-      const userSnap = await userRef.get();
-      if (userSnap.exists) {
-        await userRef.update({
-          subscriptionTier: 'explorer',
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      } else {
-        console.warn(`processTrialReminders: user doc missing for ${userId} — subscription downgraded but user doc skipped`);
-      }
-
-      day7Count++;
-    }
-  }
-
-  console.log(`Trial reminders processed: ${day5Count} Day-5, ${day7Count} Day-7 expirations`);
-  return { day5Count, day7Count };
-}
-
 module.exports = {
   TEMPLATES,
   sendToUser,
   sendToUsers,
-  processTrialReminders,
 };

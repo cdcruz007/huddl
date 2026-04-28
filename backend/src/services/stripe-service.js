@@ -129,8 +129,6 @@ async function createCheckoutSession({ userId, email, productId, successUrl, can
         productId,
         tier: tierInfo?.tier || 'neighbourhood',
       },
-      // 7-day free trial for new subscribers
-      trial_period_days: 7,
     },
     automatic_tax: { enabled: true }, // Stripe Tax activated — handles UK VAT automatically
     allow_promotion_codes: true,
@@ -291,8 +289,8 @@ async function _handleCheckoutCompleted(db, session) {
     tier: tierInfo.tier || 'neighbourhood',
     billingPeriod: tierInfo.billingPeriod || 'monthly',
     isActive: true,
-    isTrial: true, // starts with 7-day trial
-    trialDaysRemaining: 7,
+    isTrial: false,
+    trialDaysRemaining: 0,
     startDate: now.toISOString(),
     renewalDate: renewalDate.toISOString(),
     stripeSubscriptionId: subscriptionId,
@@ -385,14 +383,9 @@ async function _handleSubscriptionUpdated(db, subscription) {
   const productId = REVERSE_PRICE_MAP[priceId];
   const tierInfo = productId ? PRODUCT_TIER_MAP[productId] : {};
 
-  const isTrial = subscription.status === 'trialing';
-  const isActive = ['active', 'trialing'].includes(subscription.status);
-
-  let trialDaysRemaining = 0;
-  if (isTrial && subscription.trial_end) {
-    const trialEnd = new Date(subscription.trial_end * 1000);
-    trialDaysRemaining = Math.max(0, Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24)));
-  }
+  const isTrial = false; // No free trials offered
+  const isActive = subscription.status === 'active';
+  const trialDaysRemaining = 0;
 
   await db.collection('subscriptions').doc(userId).update({
     tier: tierInfo.tier || 'neighbourhood',

@@ -354,8 +354,6 @@ class UserSubscription {
   final DateTime startDate;
   final DateTime? renewalDate;
   final bool isActive;
-  final bool isTrial;
-  final int trialDaysRemaining;
 
   // ── Scheduled plan change (upgrade / downgrade) ─────────────────────
   final SubscriptionTier? scheduledTier;
@@ -370,8 +368,6 @@ class UserSubscription {
     required this.startDate,
     this.renewalDate,
     this.isActive = true,
-    this.isTrial = false,
-    this.trialDaysRemaining = 0,
     this.scheduledTier,
     this.scheduledPeriod,
     this.cancelledAtPeriodEnd = false,
@@ -454,8 +450,6 @@ class UserSubscription {
         'startDate': startDate.toIso8601String(),
         'renewalDate': renewalDate?.toIso8601String(),
         'isActive': isActive,
-        'isTrial': isTrial,
-        'trialDaysRemaining': trialDaysRemaining,
         'scheduledTier': scheduledTier?.name,
         'scheduledPeriod': scheduledPeriod?.name,
         'cancelledAtPeriodEnd': cancelledAtPeriodEnd,
@@ -504,8 +498,6 @@ class UserSubscription {
           ? DateTime.parse(json['renewalDate'] as String)
           : null,
       isActive: json['isActive'] as bool? ?? true,
-      isTrial: json['isTrial'] as bool? ?? false,
-      trialDaysRemaining: json['trialDaysRemaining'] as int? ?? 0,
       scheduledTier: schedTier,
       scheduledPeriod: schedPeriod,
       cancelledAtPeriodEnd: json['cancelledAtPeriodEnd'] as bool? ?? false,

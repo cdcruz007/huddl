@@ -873,23 +873,7 @@ class _CurrentPlanCard extends StatelessWidget {
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: context.hc.textPrimary)),
-                        if (subscription.isTrial) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color:
-                                  HuddlColors.accentAmber.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text('Trial',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                    color: HuddlColors.yellowDark)),
-                          ),
-                        ],
+
 
                       ],
                     ),
@@ -898,9 +882,7 @@ class _CurrentPlanCard extends StatelessWidget {
                       Text(
                         subscription.cancelledAtPeriodEnd
                             ? 'Cancels ${_formatDate(subscription.renewalDate!)}'
-                            : (subscription.isTrial
-                                ? 'Trial ends ${_formatDate(subscription.renewalDate!)}'
-                                : 'Auto-renews ${_formatDate(subscription.renewalDate!)}'),
+                            : 'Auto-renews ${_formatDate(subscription.renewalDate!)}',
                         style: GoogleFonts.poppins(
                             fontSize: 12,
                             color: subscription.cancelledAtPeriodEnd

@@ -8,7 +8,7 @@ const express = require('express');
 const router = express.Router();
 const { authMiddleware } = require('../middleware/auth-middleware');
 const { getDb, FieldValue } = require('../services/firebase-service');
-const { processTrialReminders, sendToUser } = require('../services/notification-service');
+const { sendToUser } = require('../services/notification-service');
 const { sendWelcomeEmail } = require('../services/email-service');
 
 // ── POST /api/notifications/register-token ──────────────────────────────────
@@ -38,31 +38,6 @@ router.post('/register-token', authMiddleware, async (req, res, next) => {
   }
 });
 
-// ── POST /api/notifications/process-trial-reminders ─────────────────────────
-// Cron endpoint: process trial reminders (Day 5 and Day 7).
-//
-// In production, call this via:
-//   - Google Cloud Scheduler → HTTPS target
-//   - or a cron job running: curl -X POST https://api.huddlapp.co.uk/api/notifications/process-trial-reminders
-//
-// Security: In production, add a shared secret header for cron authentication.
-router.post('/process-trial-reminders', async (req, res, next) => {
-  try {
-    // Simple shared-secret auth for cron jobs
-    const cronSecret = req.headers['x-cron-secret'];
-    if (
-      process.env.NODE_ENV === 'production' &&
-      cronSecret !== process.env.CRON_SECRET
-    ) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const result = await processTrialReminders();
-    res.json({ success: true, ...result });
-  } catch (err) {
-    next(err);
-  }
-});
 
 // ── POST /api/notifications/email-added ─────────────────────────────────────
 // Called when a user adds their email address to their profile for the first time.

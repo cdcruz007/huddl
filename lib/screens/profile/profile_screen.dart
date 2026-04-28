@@ -283,9 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       accentColor = HuddlColors.primary;
       icon = Icons.home_outlined;
       planLabel = 'Neighbour';
-      subtitle = sub.isTrial
-          ? 'Trial \u2022 ${sub.trialDaysRemaining} days left'
-          : sub.billingPeriod == BillingPeriod.annual
+      subtitle = sub.billingPeriod == BillingPeriod.annual
               ? '\u00A349.99/year'
               : '\u00A35.99/month';
     } else if (isInnerCircle) {
@@ -357,23 +355,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
                                     color: context.hc.textPrimary)),
-                            if (sub.isTrial) ...[
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.accentAmber
-                                      .withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text('Trial',
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: HuddlColors.yellowDark)),
-                              ),
-                            ],
                           ],
                         ),
                         const SizedBox(height: 1),
