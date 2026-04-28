@@ -38,17 +38,6 @@ import 'group_chat_screen.dart' show GroupChatScreen;
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
 
-// ── Cambridge-area image assets (same pool as DefaultGroupService) ────────
-const List<String> _cambridgeImages = [
-  'assets/images/groups/cambridge_kings_college.jpg',
-  'assets/images/groups/cambridge_punting.jpg',
-  'assets/images/groups/cambridge_trinity.jpg',
-  'assets/images/groups/cambridge_the_backs.jpg',
-  'assets/images/groups/cambridge_river_boats.jpg',
-  'assets/images/groups/east_cambs_ely_cathedral.jpg',
-  'assets/images/groups/south_cambs_village.jpg',
-];
-
 // ── Persistence key for user-created groups ──────────────────────────────
 const String _userGroupsKey = 'user_created_groups_v1';
 // ── Persistence key for groups the user has explicitly left ─────────────
@@ -600,10 +589,8 @@ class _MessagesTabState extends State<_MessagesTab> {
         }
       }
 
-      // If nothing, show demo items
-      if (items.isEmpty) {
-        items.addAll(_demoCommunityGroups());
-      }
+      // If nothing loaded, leave items empty — no fake demo fallback in production
+      // (user will see empty state prompting them to complete onboarding)
 
       // ── Enrich last-message info from local storage ───────────────
       // Read the actual most-recent message for each group so the list
@@ -619,11 +606,11 @@ class _MessagesTabState extends State<_MessagesTab> {
         _isLoading = false;
       });
     } catch (e) {
-      // Fallback to demo items AND show error
+      // Show error state with empty list — no fake demo data in production
       setState(() {
-        _allGroups = _demoCommunityGroups();
+        _allGroups = [];
         _hasLoadError = true;
-        _errorMessage = 'Could not load your groups. Showing demo data.';
+        _errorMessage = 'Could not load your groups. Please check your connection.';
         _applyFilter();
         _isLoading = false;
       });
@@ -2310,80 +2297,6 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
-  // ── Demo community groups (fallback when no onboarding data) ───────────
-  List<_GroupItem> _demoCommunityGroups() {
-    return [
-      _GroupItem(
-        id: 'demo_cambridge_parents',
-        name: '2021 Cambridge Parents',
-        description:
-            'Connect with parents in Cambridge whose children were born in 2021.',
-        imageUrl: _cambridgeImages[0],
-        memberCount: 42,
-        category: 'Default Community',
-        isDefault: true,
-        isImageLocked: true,
-        unreadCount: 0,
-      ),
-      _GroupItem(
-        id: 'demo_expecting_cambridge',
-        name: 'Cambridge Expecting Parents',
-        description:
-            'For expecting parents in Cambridge preparing for their new arrival.',
-        imageUrl: _cambridgeImages[1],
-        memberCount: 28,
-        category: 'Default Community',
-        isDefault: true,
-        isImageLocked: true,
-        unreadCount: 0,
-      ),
-      _GroupItem(
-        id: 'demo_2019_cambridge',
-        name: '2019 Cambridge Parents',
-        description:
-            'Parents with children born in 2019 in the Cambridge area.',
-        imageUrl: _cambridgeImages[2],
-        memberCount: 67,
-        category: 'Default Community',
-        isDefault: true,
-        isImageLocked: true,
-        unreadCount: 0,
-      ),
-      _GroupItem(
-        id: 'demo_toddler_activities',
-        name: 'Toddler Activities Cambridge',
-        description: 'Share and discover toddler-friendly activities in Cambridge.',
-        imageUrl: _cambridgeImages[3],
-        memberCount: 156,
-        category: 'Activities',
-        isDefault: false,
-        isImageLocked: false,
-        unreadCount: 0,
-      ),
-      _GroupItem(
-        id: 'demo_baby_sleep',
-        name: 'Baby Sleep Support',
-        description: 'Support group for parents navigating baby sleep challenges.',
-        imageUrl: _cambridgeImages[4],
-        memberCount: 89,
-        category: 'Support',
-        isDefault: false,
-        isImageLocked: false,
-        unreadCount: 0,
-      ),
-      _GroupItem(
-        id: 'demo_south_cambs',
-        name: 'South Cambridgeshire Parents',
-        description: 'Parents living in the South Cambridgeshire villages.',
-        imageUrl: _cambridgeImages[6],
-        memberCount: 34,
-        category: 'Default Community',
-        isDefault: true,
-        isImageLocked: true,
-        unreadCount: 0,
-      ),
-    ];
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

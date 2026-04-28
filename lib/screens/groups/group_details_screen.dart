@@ -12,6 +12,7 @@ import '../../services/browser_storage.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/dm_service.dart';
+import '../../services/firestore_service.dart';
 import 'group_polls_screen.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
@@ -53,6 +54,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final InvitationService _invitationService = InvitationService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isCreator = false;
+  int? _firestoreMemberCount; // live count from Firestore
 
   /// Public groups are immutable -- details cannot be changed by anyone.
   bool get _isPublicGroup => !widget.isPrivate;
@@ -72,13 +74,24 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   void initState() {
     super.initState();
     _isJoined = widget.isJoined;
-    _isCreator = widget.creatorId == 'current_user';
+    _isCreator = widget.creatorId != null &&
+        widget.creatorId == FirebaseAuth.instance.currentUser?.uid;
     _editableName = widget.groupName;
     _editableDescription = widget.groupDescription ??
         'Connect with parents in your community. Share experiences, advice, and build lasting friendships with people who understand your journey.';
     _nameEditController.text = _editableName;
     _descEditController.text = _editableDescription;
     _checkJoinStatus();
+    _loadMemberCount();
+  }
+
+  Future<void> _loadMemberCount() async {
+    try {
+      final group = await FirestoreService().getGroup(widget.groupId);
+      if (group != null && mounted) {
+        setState(() => _firestoreMemberCount = group.memberCount);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -110,7 +123,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       name: widget.groupName,
       description: widget.groupDescription ?? '',
       imageUrl: widget.groupImageUrl,
-      memberCount: (widget.memberCount ?? 42) + 1,
+      memberCount: (_firestoreMemberCount ?? widget.memberCount ?? 0) + 1,
       category: '',
       isJoined: true,
       privacy: widget.isPrivate ? GroupPrivacy.private_ : GroupPrivacy.public,
@@ -492,7 +505,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     final description = _editableDescription;
-    final memberCount = widget.memberCount ?? 42;
+    final memberCount = _firestoreMemberCount ?? widget.memberCount ?? 0;
     final savedCount = _savedMessageService.getSavedForGroup(widget.groupId).length;
 
     return Scaffold(
