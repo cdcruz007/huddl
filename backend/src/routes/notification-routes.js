@@ -164,21 +164,6 @@ router.post('/welcome', authMiddleware, async (req, res, next) => {
 // ── POST /api/notifications/test-email ──────────────────────────────────────
 // Internal diagnostic endpoint — send a test welcome email to any address.
 // Protected by the same CRON_SECRET used for cron jobs.
-//
-// Body:
-//   { email: 'you@example.com' }
-//
-// Usage (Windows CMD):
-//   curl -X POST https://api.huddlapp.co.uk/api/notifications/test-email ^
-//     -H "Content-Type: application/json" ^
-//     -H "x-cron-secret: <CRON_SECRET>" ^
-//     -d "{\"email\":\"you@example.com\"}"
-//
-// Usage (macOS/Linux/sandbox):
-//   curl -X POST https://api.huddlapp.co.uk/api/notifications/test-email \
-//     -H "Content-Type: application/json" \
-//     -H "x-cron-secret: <CRON_SECRET>" \
-//     -d '{"email":"you@example.com"}'
 router.post('/test-email', async (req, res, next) => {
   try {
     const cronSecret = req.headers['x-cron-secret'];
@@ -203,6 +188,52 @@ router.post('/test-email', async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+// ── GET /api/notifications/smtp-check ───────────────────────────────────────
+// Diagnostic: verify SMTP config & connectivity without sending an email.
+// Protected by x-cron-secret header.
+router.get('/smtp-check', async (req, res) => {
+  const cronSecret = req.headers['x-cron-secret'];
+  if (
+    process.env.NODE_ENV === 'production' &&
+    cronSecret !== process.env.CRON_SECRET
+  ) {
+    return res.status(401).json({ error: 'Unauthorized — x-cron-secret header required' });
+  }
+
+  const config = {
+    SMTP_HOST: process.env.SMTP_HOST || '(not set)',
+    SMTP_PORT: process.env.SMTP_PORT || '(not set, defaulting to 465)',
+    SMTP_USER: process.env.SMTP_USER ? process.env.SMTP_USER : '(not set)',
+    SMTP_PASS: process.env.SMTP_PASS ? `(set, length ${process.env.SMTP_PASS.length})` : '(NOT SET)',
+  };
+
+  // Try a TCP connection to SMTP host/port with a 8-second timeout
+  const net = require('net');
+  const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
+  const port = parseInt(process.env.SMTP_PORT || '465');
+
+  const tcpResult = await new Promise((resolve) => {
+    const socket = new net.Socket();
+    const timer = setTimeout(() => {
+      socket.destroy();
+      resolve({ connected: false, error: `TCP connection to ${host}:${port} timed out after 8s` });
+    }, 8000);
+
+    socket.connect(port, host, () => {
+      clearTimeout(timer);
+      socket.destroy();
+      resolve({ connected: true, message: `TCP connection to ${host}:${port} succeeded` });
+    });
+
+    socket.on('error', (err) => {
+      clearTimeout(timer);
+      resolve({ connected: false, error: `TCP error: ${err.message}` });
+    });
+  });
+
+  res.json({ config, tcp: tcpResult });
 });
 
 module.exports = router;
