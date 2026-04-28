@@ -209,31 +209,34 @@ router.get('/smtp-check', async (req, res) => {
     SMTP_PASS: process.env.SMTP_PASS ? `(set, length ${process.env.SMTP_PASS.length})` : '(NOT SET)',
   };
 
-  // Try a TCP connection to SMTP host/port with a 8-second timeout
+  // Try TCP connections to both SMTP ports with an 8-second timeout each
   const net = require('net');
   const host = process.env.SMTP_HOST || 'smtp.hostinger.com';
-  const port = parseInt(process.env.SMTP_PORT || '465');
 
-  const tcpResult = await new Promise((resolve) => {
-    const socket = new net.Socket();
-    const timer = setTimeout(() => {
-      socket.destroy();
-      resolve({ connected: false, error: `TCP connection to ${host}:${port} timed out after 8s` });
-    }, 8000);
+  async function testPort(port) {
+    return new Promise((resolve) => {
+      const socket = new net.Socket();
+      const timer = setTimeout(() => {
+        socket.destroy();
+        resolve({ port, connected: false, error: `Timed out after 8s (Railway may be blocking port ${port})` });
+      }, 8000);
 
-    socket.connect(port, host, () => {
-      clearTimeout(timer);
-      socket.destroy();
-      resolve({ connected: true, message: `TCP connection to ${host}:${port} succeeded` });
+      socket.connect(port, host, () => {
+        clearTimeout(timer);
+        socket.destroy();
+        resolve({ port, connected: true, message: `TCP connection to ${host}:${port} OK` });
+      });
+
+      socket.on('error', (err) => {
+        clearTimeout(timer);
+        resolve({ port, connected: false, error: `${err.code || 'ERROR'}: ${err.message}` });
+      });
     });
+  }
 
-    socket.on('error', (err) => {
-      clearTimeout(timer);
-      resolve({ connected: false, error: `TCP error: ${err.message}` });
-    });
-  });
+  const [tcp465, tcp587] = await Promise.all([testPort(465), testPort(587)]);
 
-  res.json({ config, tcp: tcpResult });
+  res.json({ config, tcp465, tcp587 });
 });
 
 module.exports = router;
