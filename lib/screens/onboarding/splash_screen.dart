@@ -216,13 +216,37 @@ class _SplashScreenState extends State<SplashScreen>
           // local SharedPreferences may be empty even though the user has a
           // valid Firestore profile. Restore before entering the app so
           // every screen sees the correct name, postcode, and profile data.
+          Map<String, dynamic>? profileData;
           try {
             await auth.restoreProfileFromFirestore()
+                .timeout(const Duration(seconds: 5));
+            profileData = await auth.getUserProfile()
                 .timeout(const Duration(seconds: 5));
           } catch (_) {
             // Non-fatal — app still loads; data will restore on next action
           }
           if (!mounted) return;
+
+          // ── Email verification gate ──────────────────────────────────────
+          // If the user has an email address on file but hasn't verified it
+          // yet, route them to the pending-verification screen instead of home.
+          // Users with no email stored are allowed through (they pre-date the
+          // mandatory email requirement and should not be blocked).
+          final hasEmail = (profileData?['email'] as String? ?? '').isNotEmpty;
+          final emailVerified = (profileData?['emailVerified'] as bool?) ?? false;
+
+          if (hasEmail && !emailVerified) {
+            // Populate local cache with stored email so the pending screen
+            // can display it masked.
+            final storedEmail = (profileData?['email'] as String? ?? '').trim();
+            if (storedEmail.isNotEmpty) {
+              OnboardingDataService().setEmail(storedEmail);
+            }
+            if (!mounted) return;
+            Navigator.of(context)
+                .pushReplacementNamed('/email_pending_verification');
+            return;
+          }
 
           // Check if biometric login is enabled for this device
           final biometricEnabled = await biometric.isEnabled;

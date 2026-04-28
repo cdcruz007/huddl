@@ -225,6 +225,43 @@ class BackendApiService {
     }
   }
 
+  /// Polls whether the signed-in user has verified their email address.
+  /// Returns a map with at least `{ emailVerified: bool, email: String }`.
+  Future<Map<String, dynamic>> checkEmailVerified() async {
+    try {
+      final headers = await _authHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/api/notifications/check-verified'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return {'emailVerified': false};
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] checkEmailVerified error: $e');
+      return {'emailVerified': false};
+    }
+  }
+
+  /// Resends the verification email for the currently signed-in user.
+  /// Throws a [BackendApiException] if the server returns an error (e.g. no
+  /// email on file). Rate-limiting is enforced client-side (60 s cooldown).
+  Future<void> resendVerificationEmail() async {
+    final headers = await _authHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/notifications/resend-verification'),
+      headers: headers,
+    ).timeout(const Duration(seconds: 15));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      throw BackendApiException(
+        statusCode: response.statusCode,
+        message: body['error'] as String? ?? 'Failed to resend verification email',
+      );
+    }
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // RESPONSE HANDLING
   // ═════════════════════════════════════════════════════════════════════════

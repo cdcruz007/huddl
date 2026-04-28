@@ -75,8 +75,11 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
 
     if (!mounted) return;
 
-    // Navigate home after completing onboarding
-    Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+    // Navigate to email verification gate — user must confirm email before
+    // entering the app. The welcome email (with Verify button) was already
+    // sent earlier in the onboarding flow when "Let's go!" was tapped.
+    Navigator.pushNamedAndRemoveUntil(
+        context, '/email_pending_verification', (route) => false);
   }
 
   @override

@@ -31,8 +31,6 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
-import '../../services/backend_api_service.dart';
-import 'dart:async' show unawaited;
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -56,7 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Dynamic profile data
   String _name = '';
-  String _email = '';
+
   String _borough = '';
   String? _bio;
   String? _photoUrl;
@@ -212,7 +210,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() {
         _name = _onboarding.name ?? 'User';
-        _email = _onboarding.email ?? '';
         _borough = borough;
         _bio = _onboarding.bio;
         _photoUrl = _onboarding.profilePhotoObjectUrl;
@@ -859,11 +856,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ? ''
         : _name;
     final nameCtrl  = TextEditingController(text: displayName);
-    final emailCtrl = TextEditingController(text: _email);
     final bioCtrl   = TextEditingController(text: _bio ?? '');
-
-    // Track whether to show email validation error
-    bool emailTouched = false;
 
     _showSheet(
       title: 'Edit Profile',
@@ -874,43 +867,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 16),
             _sheetField(nameCtrl, 'Name', Icons.person_outline),
             const SizedBox(height: 16),
-            // ── Email field ──────────────────────────────────────────────
-            _sheetField(
-              emailCtrl,
-              'Email address',
-              Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              onChanged: (_) => setLocal(() { emailTouched = true; }),
-            ),
-            if (emailTouched &&
-                emailCtrl.text.trim().isNotEmpty &&
-                !_isValidEmail(emailCtrl.text.trim()))
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                child: Text(
-                  'Please enter a valid email address',
-                  style: const TextStyle(fontSize: 12, color: Colors.redAccent),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-              child: Text(
-                'Used for receipts & updates. Unsubscribe anytime from your inbox.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: HuddlColors.textSecondary,
-                  height: 1.4,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             _sheetField(bioCtrl, 'About me', Icons.edit_note, maxLines: 4),
             const SizedBox(height: 24),
             _sheetButton('Save Changes', () async {
-              final newName  = nameCtrl.text.trim();
-              final newEmail = emailCtrl.text.trim().toLowerCase();
-              final newBio   = bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim();
-              final hadEmail = _email.isEmpty;
+              final newName = nameCtrl.text.trim();
+              final newBio  = bioCtrl.text.trim().isEmpty ? null : bioCtrl.text.trim();
 
               if (newName.isNotEmpty) {
                 _onboarding.setName(newName);
@@ -919,20 +880,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _name = newName;
                   _bio  = newBio;
                 });
-              }
-
-              // Save email if valid
-              if (newEmail.isNotEmpty && _isValidEmail(newEmail)) {
-                _onboarding.setEmail(newEmail);
-                setState(() => _email = newEmail);
-                // If this is the first time email is provided,
-                // call email-added endpoint to trigger welcome email
-                if (hadEmail) {
-                  unawaited(
-                    BackendApiService().notifyEmailAdded(newEmail)
-                        .catchError((_) {}),
-                  );
-                }
               }
 
               // Push all changes to Firestore
@@ -951,12 +898,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
-  }
-
-  bool _isValidEmail(String v) {
-    return RegExp(
-      r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$',
-    ).hasMatch(v);
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

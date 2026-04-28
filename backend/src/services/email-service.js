@@ -206,12 +206,42 @@ function _divider() {
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. WELCOME EMAIL
 // ─────────────────────────────────────────────────────────────────────────────
-async function sendWelcomeEmail({ email, firstName, borough }) {
+async function sendWelcomeEmail({ email, firstName, borough, verifyUrl }) {
   if (!email) return { success: false, error: 'no email address' };
 
   const name = firstName || 'there';
+
+  // ── Verification button block — shown when a verifyUrl is supplied ────────
+  const verifyBlock = verifyUrl ? `
+    <!-- ══ EMAIL VERIFICATION CALLOUT ══════════════════════════════════════ -->
+    <div style="background:linear-gradient(135deg,${B.primary},${B.primaryDark});
+                border-radius:16px;padding:24px;margin:0 0 28px;text-align:center;">
+      <p style="margin:0 0 6px;font-size:18px;font-weight:800;color:#ffffff;">
+        One last step 🎉
+      </p>
+      <p style="margin:0 0 20px;font-size:14px;color:rgba(255,255,255,0.9);line-height:1.5;">
+        Tap the button below to verify your email address and unlock full access to Huddl.
+      </p>
+      <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 auto;">
+        <tr>
+          <td style="background:#ffffff;border-radius:50px;padding:0;">
+            <a href="${verifyUrl}"
+               style="display:inline-block;padding:14px 40px;color:${B.primary};
+                      font-weight:800;font-size:16px;text-decoration:none;
+                      border-radius:50px;letter-spacing:0.3px;">
+              Verify My Email &rarr;
+            </a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:16px 0 0;font-size:12px;color:rgba(255,255,255,0.7);">
+        This link expires in 72 hours. If you didn't create a Huddl account,
+        you can safely ignore this email.
+      </p>
+    </div>
+    <!-- ════════════════════════════════════════════════════════════════════ -->` : '';
+
   const body = `
-    <!-- Greeting illustration placeholder (emoji as fallback) -->
     <div style="text-align:center;font-size:48px;margin-bottom:8px;">👋</div>
 
     <h2 style="margin:0 0 12px;font-size:22px;font-weight:800;
@@ -220,10 +250,12 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
     </h2>
 
     <p style="color:${B.text};font-size:15px;line-height:1.65;text-align:center;
-               margin:0 0 20px;">
+               margin:0 0 24px;">
       You've just joined your local parent community${borough ? ` in <strong>${borough}</strong>` : ''}.
       We're so glad you're here.
     </p>
+
+    ${verifyBlock}
 
     <div style="background:${B.peachLight};border-radius:14px;padding:20px 24px;
                  margin:0 0 24px;border-left:4px solid ${B.primary};">
@@ -238,7 +270,7 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
     </div>
 
     <h3 style="margin:0 0 14px;font-size:16px;font-weight:700;color:${B.dark};">
-      Here's what to do first:
+      Here's what to do once you're in:
     </h3>
     <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
       ${[
@@ -256,9 +288,7 @@ async function sendWelcomeEmail({ email, firstName, borough }) {
         </tr>`).join('')}
     </table>
 
-    ${_btn('Open Huddl', FRONTEND_URL)}
-
-    <p style="margin:0;font-size:12px;color:${B.textLight};text-align:center;">
+    <p style="margin:24px 0 0;font-size:12px;color:${B.textLight};text-align:center;">
       Upgrade anytime from the app to unlock unlimited features from &pound;5.99/month.
     </p>`;
 
