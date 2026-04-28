@@ -11,7 +11,7 @@ import 'subscription_service.dart';
 import 'backend_api_service.dart';
 import '../models/subscription.dart';
 
-/// Centralised Firebase Authentication service for Huddl Connect.
+/// Centralised Firebase Authentication service for Huddl.
 ///
 /// Platform strategy:
 ///   iOS + Android → verifyPhoneNumber  (native SMS path via Firebase iOS SDK 10.x)

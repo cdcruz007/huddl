@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Default [FirebaseOptions] for the Huddl Connect project.
+/// Default [FirebaseOptions] for the Huddl project.
 ///
 /// Generated from:
 ///   - google-services.json  (Android)

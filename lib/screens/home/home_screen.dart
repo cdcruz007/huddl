@@ -571,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _showShareTargetSheet(Announcement announcement) {
     final shareText =
-        '${announcement.authorName}: "${announcement.content}" - via Huddl Connect';
+        '${announcement.authorName}: "${announcement.content}" - via Huddl';
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,

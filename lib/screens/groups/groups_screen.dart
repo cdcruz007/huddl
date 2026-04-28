@@ -4740,11 +4740,11 @@ ${group.creatorName != null && group.creatorName!.isNotEmpty ? '║ ✨ Created 
 ║
 ╚═══════════════════════════════
 
-💬 Join this group on Huddl Connect!
+💬 Join this group on Huddl!
 🔗 Tap "Join" to become a member
 
 ---
-Shared from Huddl Connect 🚀
+Shared from Huddl 🚀
 '''.trim();
 
     // Show forward sheet to send as group card

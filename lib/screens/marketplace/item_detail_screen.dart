@@ -142,7 +142,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final shareText =
         '${item.title}\n${item.priceDisplay} \u00B7 ${item.condition.label}'
         '\n\uD83D\uDCCD ${item.sellerLocation}'
-        '\n\nCheck it out on Huddl Connect Market!';
+        '\n\nCheck it out on Huddl Marketplace!';
     
     // Show forward sheet to send as item card
     showForwardSheet(

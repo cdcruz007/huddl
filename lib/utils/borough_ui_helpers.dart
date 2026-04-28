@@ -105,7 +105,7 @@ class BoroughUiHelpers {
         ),
         content: Text(
           '$featureLabel is only available within $borough.\n\n'
-          'Huddl Connect is a hyper-local community app. To keep '
+          'Huddl is a hyper-local community app. To keep '
           'interactions safe and relevant, most features are limited to '
           'parents in your borough.'
           '${targetBorough != null ? "\n\nYou tried to access content from $targetBorough." : ""}',

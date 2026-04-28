@@ -154,7 +154,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     final shareText =
         '$_editableName\n👥 ${widget.memberCount ?? 0} members'
         '${widget.isPrivate ? ' · Private group' : ''}'
-        '\n\nJoin us on Huddl Connect!';
+        '\n\nJoin us on Huddl!';
     Clipboard.setData(ClipboardData(text: shareText));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

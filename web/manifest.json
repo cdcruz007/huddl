@@ -1,11 +1,11 @@
 {
-    "name": "huddl_connect",
-    "short_name": "huddl_connect",
+    "name": "Huddl",
+    "short_name": "Huddl",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Connect with your local community through groups, meetups and marketplace.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

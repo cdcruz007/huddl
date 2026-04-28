@@ -146,7 +146,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
               _StepRow(step: '1', text: 'Open Settings on your iPhone'),
               _StepRow(step: '2', text: 'Tap your name at the top'),
               _StepRow(step: '3', text: 'Tap Subscriptions'),
-              _StepRow(step: '4', text: 'Tap Huddl Connect'),
+              _StepRow(step: '4', text: 'Tap Huddl'),
               _StepRow(step: '5', text: 'Tap Cancel Subscription'),
             ] else ...[
               _StepRow(step: '1', text: 'Open Google Play Store'),

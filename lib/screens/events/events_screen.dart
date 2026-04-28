@@ -3030,7 +3030,7 @@ class _MeetupCard extends StatelessWidget {
 
 ${meetup.description.isNotEmpty ? meetup.description : ''}
 ---
-Shared from Huddl Connect
+Shared from Huddl
 '''.trim();
 
     // Show forward sheet to send as meetup card

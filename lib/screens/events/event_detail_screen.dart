@@ -96,7 +96,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final organiser = e['organiser'] as String? ?? '';
     final shareText = title.isNotEmpty
         ? '$title\n📅 $date${time.isNotEmpty ? ' · $time' : ''}\n📍 $location${organiser.isNotEmpty ? '\nBy $organiser' : ''}'
-        : 'Check out this event on Huddl Connect!';
+        : 'Check out this event on Huddl!';
 
     // Build a serialisable eventData map for the rich card
     // Note: Color and IconData cannot be serialised, so we use

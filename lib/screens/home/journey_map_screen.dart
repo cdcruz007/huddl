@@ -520,7 +520,7 @@ class _CompetitorTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    final isHuddl = entry.name == 'Huddl Connect';
+    final isHuddl = entry.name == 'Huddl';
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
       padding: const EdgeInsets.all(14),

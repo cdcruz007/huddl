@@ -20,7 +20,7 @@
 // NOTE: No founding member / promotional pricing offered.
 // =====================================================================================
 
-/// Subscription tier levels for Huddl Connect
+/// Subscription tier levels for Huddl
 enum SubscriptionTier { explorer, neighbourhood, innerCircle }
 
 /// Billing period

@@ -87,7 +87,7 @@ class HuddlJourneyMaps {
       weakness: 'Not family-aware',
     ),
     CompetitorEntry(
-      name: 'Huddl Connect',
+      name: 'Huddl',
       strength: 'AI + real-parent community intelligence, age-aware checklists, gamified expert badges',
       weakness: 'Differentiator (ours)',
     ),
