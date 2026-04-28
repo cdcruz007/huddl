@@ -12,9 +12,9 @@ import '../screens/onboarding/phone_number_screen.dart';
 import '../screens/onboarding/password_screen.dart';
 import '../screens/onboarding/verification_screen.dart';
 import '../screens/onboarding/welcome_complete_screen.dart';
-import '../screens/onboarding/email_pending_verification_screen.dart';
 import '../screens/onboarding/add_photo_screen.dart';
 import '../screens/onboarding/about_you_screen.dart';
+import '../screens/onboarding/email_pending_verification_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/login_otp_screen.dart';
 import '../screens/auth/biometric_lock_screen.dart';
@@ -87,14 +87,14 @@ class AppRouter {
       case '/welcome_complete':
         return ScalePageRoute(page: const WelcomeCompleteScreen());
 
-      case '/email_pending_verification':
-        return FadePageRoute(page: const EmailPendingVerificationScreen());
-
       case '/add_photo':
         return SlidePageRoute(page: const AddPhotoScreen());
 
       case '/about_you':
         return SlidePageRoute(page: const AboutYouScreen());
+
+      case '/email_pending_verification':
+        return FadePageRoute(page: const EmailPendingVerificationScreen());
 
       case '/login':
         return FadePageRoute(page: const LoginScreen());
