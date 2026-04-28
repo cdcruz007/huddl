@@ -23,6 +23,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
+import '../../services/firestore_service.dart';
 import 'poll_detail_screen.dart';
 import 'forward_message_sheet.dart';
 import 'thread_reply_screen.dart';
@@ -158,6 +159,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// IDs of messages unsent "for everyone" (shown as "This message was deleted")
   final Set<String> _deletedForEveryoneIds = {};
 
+  /// Firestore real-time message stream subscription
+  StreamSubscription<List<Map<String, dynamic>>>? _firestoreMsgSub;
+
+  /// Track Firestore message IDs already shown to avoid duplicates
+  final Set<String> _firestoreMsgIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -168,6 +175,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _forwardedMsgTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) _reloadForwardedMessages();
     });
+    // Subscribe to real-time Firestore messages for cross-device chat
+    _subscribeToFirestoreMessages();
   }
 
   /// Determine whether the 'Leave group' option should be shown.
@@ -189,11 +198,74 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   void dispose() {
     _forwardedMsgTimer?.cancel();
+    _firestoreMsgSub?.cancel();
     _messageController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  /// Subscribe to real-time Firestore group messages.
+  /// Merges incoming messages from other users into the local list.
+  void _subscribeToFirestoreMessages() {
+    final currentUid = FirebaseAuth.instance.currentUser?.uid;
+    _firestoreMsgSub = FirestoreService()
+        .groupMessagesStream(widget.groupId)
+        .listen((messages) {
+      if (!mounted) return;
+      bool added = false;
+      for (final m in messages) {
+        final id = m['id'] as String? ?? '';
+        if (id.isEmpty) continue;
+        // Skip messages we already have (own sent messages or previously loaded)
+        if (_firestoreMsgIds.contains(id)) continue;
+        final senderId = m['senderId'] as String? ?? '';
+        // Skip our own messages — already shown optimistically in _sendMessage()
+        if (senderId == currentUid) {
+          _firestoreMsgIds.add(id); // track so we don't add again
+          continue;
+        }
+        _firestoreMsgIds.add(id);
+        final tsRaw = m['timestamp'];
+        DateTime ts;
+        if (tsRaw is String) {
+          ts = DateTime.tryParse(tsRaw) ?? DateTime.now();
+        } else {
+          ts = DateTime.now();
+        }
+        final chatMsg = ChatMessage(
+          id: id,
+          senderId: senderId,
+          senderName: m['senderName'] as String? ?? 'Member',
+          senderAvatar: m['senderAvatar'] as String? ?? '',
+          message: m['message'] as String? ?? '',
+          timestamp: ts,
+          isMe: false,
+        );
+        // Only add if not already present by id
+        if (!_messages.any((existing) => existing.id == id)) {
+          _messages.add(chatMsg);
+          added = true;
+        }
+      }
+      if (added) {
+        _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        setState(() {});
+        // Auto-scroll to latest
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
+    }, onError: (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Firestore stream error: $e');
+    });
   }
 
   Future<void> _loadMessages() async {
@@ -240,6 +312,42 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     // Load persisted polls for this group
     await _pollService.loadPolls(widget.groupId);
+
+    // ── Load existing Firestore messages (cross-device history) ──────────
+    // Fetch once on open so messages from other users appear immediately,
+    // before the real-time stream delivers its first update.
+    try {
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+      final firestoreMsgs = await FirestoreService()
+          .groupMessagesStream(widget.groupId)
+          .first
+          .timeout(const Duration(seconds: 5));
+
+      for (final m in firestoreMsgs) {
+        final id = m['id'] as String? ?? '';
+        if (id.isEmpty) continue;
+        _firestoreMsgIds.add(id); // register all so stream doesn't re-add
+        final senderId = m['senderId'] as String? ?? '';
+        final isMe = senderId == currentUid;
+        final tsRaw = m['timestamp'];
+        final ts = tsRaw is String
+            ? (DateTime.tryParse(tsRaw) ?? DateTime.now())
+            : DateTime.now();
+        if (!_messages.any((e) => e.id == id)) {
+          _messages.add(ChatMessage(
+            id: id,
+            senderId: senderId,
+            senderName: m['senderName'] as String? ?? 'Member',
+            senderAvatar: m['senderAvatar'] as String? ?? '',
+            message: m['message'] as String? ?? '',
+            timestamp: ts,
+            isMe: isMe,
+          ));
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Firestore history load error: $e');
+    }
 
     // Re-sort everything
     _messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
@@ -428,11 +536,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (text.isEmpty) return;
 
     final msgId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
 
     setState(() {
       _messages.add(ChatMessage(
         id: msgId,
-        senderId: 'current_user',
+        senderId: currentUid,
         senderName: _onboardingService.name ?? 'You',
         senderAvatar: '',
         message: text,
@@ -441,23 +550,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ));
       _messageStatuses[msgId] = MessageStatus.sending;
     });
+    // Track optimistic id so stream doesn't add it again
+    _firestoreMsgIds.add(msgId);
 
     _messageController.clear();
-    // Await persist so storage is written before the Messages tab reads it.
-    await _persistUserTextMessages();
-    // Notify Messages tab to re-sort the conversation list.
     _fireMessageSentNotifier();
 
-    // Simulate status progression: sending -> sent -> delivered -> read
-    Future.delayed(const Duration(milliseconds: 500), () {
+    // ── Write to Firestore for real cross-device delivery ───────────────
+    try {
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: text,
+      );
       if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.sent);
-    });
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.delivered);
-    });
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.read);
-    });
+      // Persist locally too so message survives navigation
+      await _persistUserTextMessages();
+      // Mark delivered after Firestore write confirmed
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.delivered);
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Firestore send error: $e');
+      // Still show as sent locally even if Firestore fails
+      if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.sent);
+      await _persistUserTextMessages();
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {

@@ -217,23 +217,33 @@ class FirestoreService {
   // ═════════════════════════════════════════════════════════════════════════
 
   /// Stream messages for a group in real-time (ordered newest-first).
+  /// NOTE: No orderBy to avoid requiring a composite Firestore index —
+  /// sorting is done in the app after fetching.
   Stream<List<Map<String, dynamic>>> groupMessagesStream(String groupId) {
     return _db
         .collection('group_messages')
         .where('groupId', isEqualTo: groupId)
-        .orderBy('timestamp', descending: true)
         .limit(100)
         .snapshots()
-        .map((snap) => snap.docs.map((d) {
-              final data = d.data();
-              data['id'] = d.id;
-              // Convert Timestamp to ISO string for model compatibility
-              if (data['timestamp'] is Timestamp) {
-                data['timestamp'] =
-                    (data['timestamp'] as Timestamp).toDate().toIso8601String();
-              }
-              return data;
-            }).toList());
+        .map((snap) {
+          final list = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            // Convert Timestamp to ISO string for model compatibility
+            if (data['timestamp'] is Timestamp) {
+              data['timestamp'] =
+                  (data['timestamp'] as Timestamp).toDate().toIso8601String();
+            }
+            return data;
+          }).toList();
+          // Sort oldest-first in app (avoids composite Firestore index requirement)
+          list.sort((a, b) {
+            final ta = a['timestamp'] as String? ?? '';
+            final tb = b['timestamp'] as String? ?? '';
+            return ta.compareTo(tb);
+          });
+          return list;
+        });
   }
 
   /// Send a message to a group.
