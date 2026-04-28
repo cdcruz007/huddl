@@ -161,4 +161,48 @@ router.post('/welcome', authMiddleware, async (req, res, next) => {
   }
 });
 
+// ── POST /api/notifications/test-email ──────────────────────────────────────
+// Internal diagnostic endpoint — send a test welcome email to any address.
+// Protected by the same CRON_SECRET used for cron jobs.
+//
+// Body:
+//   { email: 'you@example.com' }
+//
+// Usage (Windows CMD):
+//   curl -X POST https://api.huddlapp.co.uk/api/notifications/test-email ^
+//     -H "Content-Type: application/json" ^
+//     -H "x-cron-secret: <CRON_SECRET>" ^
+//     -d "{\"email\":\"you@example.com\"}"
+//
+// Usage (macOS/Linux/sandbox):
+//   curl -X POST https://api.huddlapp.co.uk/api/notifications/test-email \
+//     -H "Content-Type: application/json" \
+//     -H "x-cron-secret: <CRON_SECRET>" \
+//     -d '{"email":"you@example.com"}'
+router.post('/test-email', async (req, res, next) => {
+  try {
+    const cronSecret = req.headers['x-cron-secret'];
+    if (
+      process.env.NODE_ENV === 'production' &&
+      cronSecret !== process.env.CRON_SECRET
+    ) {
+      return res.status(401).json({ error: 'Unauthorized — x-cron-secret header required' });
+    }
+
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'email is required' });
+
+    const result = await sendWelcomeEmail({
+      email,
+      firstName: 'Test',
+      borough: 'Cambridge',
+    });
+
+    console.log(`[test-email] Sent to ${email}:`, result);
+    res.json({ success: true, email, result });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
