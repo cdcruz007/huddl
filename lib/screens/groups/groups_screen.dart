@@ -31,6 +31,7 @@ import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
 import '../../widgets/common/huddl_empty_state.dart';
+import '../../services/firestore_service.dart';
 import 'forward_message_sheet.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 
@@ -537,11 +538,33 @@ class _MessagesTabState extends State<_MessagesTab> {
             decoded.map((j) => Group.fromJson(j as Map<String, dynamic>)).toList();
       }
 
+      // ── Load groups from Firestore (cross-device, real memberIds) ────
+      // This ensures users see shared groups regardless of which device
+      // assigned them locally. Groups stored in Firestore with the user's
+      // Firebase UID in memberIds are always shown.
+      List<Group> firestoreGroups = [];
+      try {
+        firestoreGroups = await FirestoreService().getMyGroups()
+            .timeout(const Duration(seconds: 5));
+      } catch (e) {
+        if (kDebugMode) debugPrint('[groups_screen] Firestore groups load error: $e');
+      }
+
       // ── Merge into _GroupItem list ─────────────────────────────
       final List<_GroupItem> items = [];
 
+      // Firestore groups take priority — they're the source of truth
+      for (final g in firestoreGroups) {
+        if (!leftGroupIds.contains(g.id)) {
+          items.add(_GroupItem.fromGroup(g, isDefault: true));
+        }
+      }
+
+      // Local default groups (device-only) that aren't already in Firestore
       for (final g in defaultGroups) {
-        items.add(_GroupItem.fromGroup(g, isDefault: true));
+        if (!items.any((i) => i.id == g.id)) {
+          items.add(_GroupItem.fromGroup(g, isDefault: true));
+        }
       }
       for (final g in userGroups) {
         if (!items.any((i) => i.id == g.id) && !leftGroupIds.contains(g.id)) {

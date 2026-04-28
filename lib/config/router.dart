@@ -157,8 +157,10 @@ class AppRouter {
         final args = settings.arguments as Map<String, dynamic>? ?? {};
         return SlidePageRoute(
           page: GroupMembersScreen(
+            groupId: args['groupId'] as String? ?? '',
             groupName: args['groupName'] as String? ?? 'Group',
             memberCount: args['memberCount'] as int? ?? 0,
+            creatorId: args['creatorId'] as String?,
           ),
         );
 

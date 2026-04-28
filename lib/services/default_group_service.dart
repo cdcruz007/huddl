@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/group.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
@@ -596,7 +598,63 @@ class DefaultGroupService {
       
       // Save to storage
       _saveToStorage();
+
+      // ── Sync to Firestore so other devices can see this user ──────────
+      // Use the real Firebase Auth UID for cross-device visibility.
+      // We upsert the group doc (create if new, update memberIds if existing)
+      // so both users share the same group in Firestore.
+      final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+      if (firebaseUid != null) {
+        _syncGroupMembershipToFirestore(group, firebaseUid);
+      }
     }
+  }
+
+  /// Upsert a default group into Firestore and add [firebaseUid] to memberIds.
+  /// Called fire-and-forget from joinGroup — errors are swallowed so they
+  /// never block the local in-memory flow.
+  void _syncGroupMembershipToFirestore(Group group, String firebaseUid) {
+    final db = FirebaseFirestore.instance;
+    final ref = db.collection('groups').doc(group.id);
+
+    db.runTransaction((tx) async {
+      final snap = await tx.get(ref);
+      if (snap.exists) {
+        // Group already in Firestore — just add this UID to memberIds
+        tx.update(ref, {
+          'memberIds': FieldValue.arrayUnion([firebaseUid]),
+          'memberCount': FieldValue.increment(1),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // Create the group document in Firestore for the first time
+        tx.set(ref, {
+          'id': group.id,
+          'name': group.name,
+          'description': group.description,
+          'imageUrl': group.imageUrl,
+          'memberIds': [firebaseUid],
+          'memberCount': 1,
+          'category': group.category,
+          'privacy': 'public',
+          'borough': _onboardingService.postcode != null
+              ? (_postcodeService.getBoroughFromPostcode(_onboardingService.postcode!) ?? '')
+              : '',
+          'postcode': _onboardingService.postcode ?? '',
+          'creatorId': firebaseUid,
+          'creatorName': _onboardingService.name ?? '',
+          'isImageLocked': true,
+          'invitedMemberIds': [],
+          'lastMessage': group.lastMessage ?? 'Welcome to the group!',
+          'lastSenderName': group.lastSenderName ?? 'Huddl',
+          'lastMessageTime': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }).catchError((e) {
+      if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
+    });
   }
 
   /// Leave a default group. Only allowed for groups from a previous borough

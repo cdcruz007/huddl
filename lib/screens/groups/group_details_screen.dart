@@ -740,8 +740,10 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         onTap: () {
                           Navigator.pushNamed(context, '/group_members',
                               arguments: {
+                                'groupId': widget.groupId,
                                 'groupName': widget.groupName,
                                 'memberCount': memberCount,
+                                'creatorId': widget.creatorId,
                               });
                         },
                         child: Text(

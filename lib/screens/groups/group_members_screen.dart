@@ -1,20 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/user_privacy_prefs_service.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
-const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
+const Color _kOnline = HuddlColors.teal;
 
 class GroupMembersScreen extends StatefulWidget {
+  final String groupId;
   final String groupName;
   final int memberCount;
+  final String? creatorId;
 
   const GroupMembersScreen({
     super.key,
+    required this.groupId,
     required this.groupName,
     required this.memberCount,
+    this.creatorId,
   });
 
   @override
@@ -26,34 +33,110 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Admins', 'Members'];
 
-  // ── Members list — populated from Firestore via widget.memberCount ────────
-  // No hardcoded dummy members. Real member data is loaded by the parent
-  // group service and passed down. Until Firestore integration is wired up
-  // for this screen, the list is intentionally empty so no fake users appear.
-  static final List<_Member> _members = [];
+  List<_Member> _members = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMembers();
+  }
+
+  Future<void> _loadMembers() async {
+    try {
+      setState(() { _isLoading = true; _error = null; });
+
+      final db = FirebaseFirestore.instance;
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+
+      // 1. Fetch the group doc to get the memberIds array
+      final groupDoc = await db.collection('groups').doc(widget.groupId).get();
+      if (!groupDoc.exists) {
+        setState(() { _isLoading = false; _error = 'Group not found.'; });
+        return;
+      }
+
+      final data = groupDoc.data() ?? {};
+      final memberIds = List<String>.from(data['memberIds'] ?? []);
+      final creatorId = widget.creatorId ?? data['creatorId'] as String?;
+
+      if (memberIds.isEmpty) {
+        setState(() { _isLoading = false; _members = []; });
+        return;
+      }
+
+      // 2. Fetch user documents in batches of 10 (Firestore whereIn limit)
+      final List<_Member> loaded = [];
+      for (int i = 0; i < memberIds.length; i += 10) {
+        final batch = memberIds.sublist(i, i + 10 > memberIds.length ? memberIds.length : i + 10);
+        final snap = await db.collection('users')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get();
+
+        for (final doc in snap.docs) {
+          final ud = doc.data();
+          final uid = doc.id;
+          final name = (ud['name'] as String?)?.trim() ?? '';
+          if (name.isEmpty) continue; // skip users with no name yet
+
+          final isOnline = (ud['isOnline'] as bool?) ?? false;
+          final isCreator = uid == creatorId;
+          final isCurrentUser = uid == currentUid;
+
+          loaded.add(_Member(
+            uid: uid,
+            name: isCurrentUser ? 'You' : name,
+            role: isCreator ? 'admin' : 'member',
+            accentColor: _colorForUid(uid),
+            isOnline: isOnline,
+            parentType: (ud['parentType'] as String?) ?? '',
+            borough: (ud['borough'] as String?) ?? '',
+          ));
+        }
+      }
+
+      // Sort: admins first, then online, then alphabetical
+      loaded.sort((a, b) {
+        if (a.role == 'admin' && b.role != 'admin') return -1;
+        if (a.role != 'admin' && b.role == 'admin') return 1;
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+        return a.name.compareTo(b.name);
+      });
+
+      setState(() { _members = loaded; _isLoading = false; });
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupMembersScreen] Error loading members: $e');
+      setState(() { _isLoading = false; _error = 'Could not load members. Tap to retry.'; });
+    }
+  }
+
+  Color _colorForUid(String uid) {
+    const colors = [
+      HuddlColors.primary,
+      HuddlColors.teal,
+      Color(0xFF7C5CBF),
+      Color(0xFFE8843B),
+      Color(0xFF3B82F6),
+      Color(0xFF10B981),
+    ];
+    return colors[uid.hashCode.abs() % colors.length];
+  }
 
   List<_Member> get _filteredMembers {
     var list = List<_Member>.from(_members);
-
     if (_selectedFilter == 'Admins') {
       list = list.where((m) => m.role == 'admin').toList();
     } else if (_selectedFilter == 'Members') {
       list = list.where((m) => m.role == 'member').toList();
     }
-
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
-      list = list.where((m) => m.name.toLowerCase().contains(q)).toList();
+      list = list.where((m) =>
+          m.name.toLowerCase().contains(q) ||
+          m.borough.toLowerCase().contains(q)).toList();
     }
-
-    list.sort((a, b) {
-      if (a.role == 'admin' && b.role != 'admin') return -1;
-      if (a.role != 'admin' && b.role == 'admin') return 1;
-      if (a.isOnline && !b.isOnline) return -1;
-      if (!a.isOnline && b.isOnline) return 1;
-      return a.name.compareTo(b.name);
-    });
-
     return list;
   }
 
@@ -83,9 +166,8 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
               ),
             ),
             Text(
-              '${_members.length} members',
-              style:
-                  GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+              _isLoading ? 'Loading...' : '${_members.length} member${_members.length == 1 ? '' : 's'}',
+              style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
             ),
           ],
         ),
@@ -113,11 +195,9 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
-                      onChanged: (val) =>
-                          setState(() => _searchQuery = val),
+                      onChanged: (val) => setState(() => _searchQuery = val),
                       textAlignVertical: TextAlignVertical.center,
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textPrimary),
+                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Search members',
                         border: InputBorder.none,
@@ -125,8 +205,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                         focusedBorder: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 10),
                         isDense: true,
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textTertiary),
+                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
                       ),
                     ),
                   ),
@@ -147,26 +226,19 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedFilter = f),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color:
-                            isSelected ? HuddlColors.primary : HuddlColors.white,
+                        color: isSelected ? HuddlColors.primary : HuddlColors.white,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: isSelected
-                                ? HuddlColors.primary
-                                : HuddlColors.divider),
+                            color: isSelected ? HuddlColors.primary : HuddlColors.divider),
                       ),
                       child: Text(
                         f,
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected
-                              ? HuddlColors.white
-                              : HuddlColors.textSecondary,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: isSelected ? HuddlColors.white : HuddlColors.textSecondary,
                         ),
                       ),
                     ),
@@ -178,27 +250,42 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
 
           // ── Members list ────────────────────────────────────────────
           Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No members found',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14, color: context.hc.textTertiary),
-                    ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    itemCount: filtered.length,
-                    separatorBuilder: (_, __) => Divider(
-                      height: 1,
-                      indent: 72,
-                      color: context.hc.divider,
-                    ),
-                    itemBuilder: (context, index) {
-                      final member = filtered[index];
-                      return _MemberTile(member: member);
-                    },
-                  ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
+                : _error != null
+                    ? GestureDetector(
+                        onTap: _loadMembers,
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.refresh, size: 40, color: context.hc.textTertiary),
+                              const SizedBox(height: 12),
+                              Text(_error!,
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 14, color: context.hc.textTertiary),
+                                  textAlign: TextAlign.center),
+                            ],
+                          ),
+                        ),
+                      )
+                    : filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              _searchQuery.isNotEmpty ? 'No members found' : 'No members yet',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14, color: context.hc.textTertiary),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) =>
+                                Divider(height: 1, indent: 72, color: context.hc.divider),
+                            itemBuilder: (context, index) {
+                              return _MemberTile(member: filtered[index]);
+                            },
+                          ),
           ),
         ],
       ),
@@ -215,18 +302,14 @@ class _MemberTile extends StatelessWidget {
     return Container(
       color: context.hc.surface,
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         leading: MemberAvatar(
           name: member.name,
           size: 44,
           accentColor: member.accentColor,
           showOnlineDot: true,
-          // If this is the current user's entry ("You") and they've turned
-          // off "Show online status", respect that preference.
           isOnline: (member.name == 'You')
-              ? (member.isOnline &&
-                  UserPrivacyPrefsService().showOnlineStatus)
+              ? (member.isOnline && UserPrivacyPrefsService().showOnlineStatus)
               : member.isOnline,
         ),
         title: Row(
@@ -242,8 +325,7 @@ class _MemberTile extends StatelessWidget {
             if (member.role == 'admin') ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
                   color: HuddlColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -261,37 +343,37 @@ class _MemberTile extends StatelessWidget {
           ],
         ),
         subtitle: Text(
-          member.isOnline ? 'Online' : 'Offline',
+          member.borough.isNotEmpty
+              ? '${member.isOnline ? 'Online' : 'Offline'} · ${member.borough}'
+              : (member.isOnline ? 'Online' : 'Offline'),
           style: GoogleFonts.poppins(
             fontSize: 12,
             color: member.isOnline ? _kOnline : context.hc.textTertiary,
           ),
         ),
-        trailing:
-            Icon(Icons.chevron_right, color: context.hc.textTertiary),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Viewing ${member.name}\'s profile'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        },
+        trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+        onTap: () {},
       ),
     );
   }
 }
 
 class _Member {
+  final String uid;
   final String name;
   final String role;
   final Color accentColor;
   final bool isOnline;
+  final String parentType;
+  final String borough;
 
   const _Member({
+    required this.uid,
     required this.name,
     required this.role,
     required this.accentColor,
     required this.isOnline,
+    required this.parentType,
+    required this.borough,
   });
 }
