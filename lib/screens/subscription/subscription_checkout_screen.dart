@@ -6,6 +6,7 @@ import '../../theme/huddl_colors.dart';
 import '../../models/subscription.dart';
 import '../../services/subscription_service.dart';
 import '../../services/payment_service.dart';
+import '../../services/firebase_auth_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SUBSCRIPTION CHECKOUT — multi-platform payment integration
@@ -106,8 +107,15 @@ class _SubscriptionCheckoutScreenState
   // ── Payment callbacks ──────────────────────────────────────────────────
 
   void _onPurchaseSuccess(String productId, dynamic details) {
+    // Optimistically update local state immediately so the UI responds fast.
     final (tier, period) = HuddlProductIds.tierForProduct(productId);
     _subService.purchase(tier, period);
+
+    // B6 fix: also sync authoritative subscription data from Firestore so that
+    // the server-verified tier/expiry is used rather than the locally-generated
+    // values.  This ensures multi-device consistency and picks up any trial
+    // flags or grace periods set by the backend receipt-verification service.
+    _syncSubscriptionFromFirestore();
 
     if (mounted) {
       showDialog(
@@ -119,6 +127,20 @@ class _SubscriptionCheckoutScreenState
       ).then((_) {
         if (mounted) Navigator.pop(context, true);
       });
+    }
+  }
+
+  /// Pull the verified subscription record from Firestore and refresh the
+  /// local SubscriptionService state.  Non-blocking — any failure is silent
+  /// because the optimistic local update already went through.
+  Future<void> _syncSubscriptionFromFirestore() async {
+    try {
+      await FirebaseAuthService().restoreProfileFromFirestore()
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('SubscriptionCheckout: Firestore sync after purchase failed: $e');
+      }
     }
   }
 

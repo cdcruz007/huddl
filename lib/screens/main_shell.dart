@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/huddl_colors.dart';
@@ -8,6 +9,7 @@ import 'events/events_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
+import '../services/firebase_auth_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 
 class MainShell extends StatefulWidget {
@@ -21,7 +23,7 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => MainShellState();
 }
 
-class MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   int _currentIndex = 0;
 
   // Track which tabs have been activated at least once.
@@ -33,11 +35,37 @@ class MainShellState extends State<MainShell> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Defer tutorial check until after the first frame so it never
     // calls setState while MainShell itself is being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _checkTutorial();
     });
+  }
+
+  // ── G6: Refresh subscription state when app returns to foreground ────────
+  // This ensures a user who subscribes on another device (or whose subscription
+  // was updated by the backend webhook) sees the correct tier after switching
+  // away from the app and back.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _syncSubscriptionInBackground();
+    }
+  }
+
+  /// Non-blocking Firestore subscription sync — runs silently in the background
+  /// so it never delays the UI.  Any error is logged in debug mode only.
+  Future<void> _syncSubscriptionInBackground() async {
+    try {
+      await FirebaseAuthService()
+          .restoreProfileFromFirestore()
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('MainShell: background subscription sync failed: $e');
+      }
+    }
   }
 
   Future<void> _checkTutorial() async {
@@ -65,6 +93,12 @@ class MainShellState extends State<MainShell> {
         _switchTab(0);
       },
     );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   /// Switch to a specific tab by index.

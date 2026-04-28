@@ -285,7 +285,7 @@ function _mapAppleProductToTier(appleProductId) {
 async function verifyGoogleReceipt({ userId, purchaseToken, productId }) {
   try {
     const packageName =
-      process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.huddlconnect.huddl_connect';
+      process.env.GOOGLE_PLAY_PACKAGE_NAME || 'com.huddlconnect.connect';
 
     // ── Step 1: Authenticate with Google APIs ─────────────────────────
     // On Railway/cloud: use FIREBASE_SERVICE_ACCOUNT_JSON env var (base64 or raw JSON).

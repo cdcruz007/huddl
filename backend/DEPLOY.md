@@ -38,16 +38,14 @@ APPLE_SHARED_SECRET=4bf37233a58e4688bd061ee0ea50da68
 APPLE_BUNDLE_ID=com.huddlconnect.huddlConnect
 APPLE_ISSUER_ID=865a0b1f-f8c6-401f-9d00-c3330b81a36c
 APPLE_KEY_ID=G47KFBNUBQ
-# Paste the FULL contents of your .p8 file as a single value.
-# In the Railway UI enter the value exactly as below (Railway preserves newlines):
-#   -----BEGIN PRIVATE KEY-----
-#   MIGHAgEAMBMG...
-#   -----END PRIVATE KEY-----
-# The code automatically converts \n escape sequences to real newlines.
-APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\n<your_key_body_here>\n-----END PRIVATE KEY-----
+# Key file: SubscriptionKey_G47KFBNUBQ.p8  (stored in backend/config/)
+# In the Railway UI paste the full .p8 contents including BEGIN/END headers.
+# Railway preserves newlines — paste it exactly.  The code also handles
+# escaped \n sequences if you prefer single-line entry.
+APPLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgLyI2hGxTARfJmW93\n2JXLU+zy1UhgE98waPcYpMaF9bqgCgYIKoZIzj0DAQehRANCAASnO/phC0tMHroK\nTDtM30VsY0jWhXeoewnUe1qc/TAO/wwLvVinJuwKpKzYhpHsJiv2XgQ0oVJhFOKr\nKm+WouWT\n-----END PRIVATE KEY-----
 
-# Google Play
-GOOGLE_PLAY_PACKAGE_NAME=com.huddlconnect.huddl_connect
+# Google Play — must match applicationId in android/app/build.gradle.kts
+GOOGLE_PLAY_PACKAGE_NAME=com.huddlconnect.connect
 
 # Email — Hostinger SMTP
 SMTP_HOST=smtp.hostinger.com
@@ -78,12 +76,23 @@ Paste the output as the value of `FIREBASE_SERVICE_ACCOUNT_JSON`.
 
 ### Step 4 — Apple Private Key in Railway
 
-In Railway, set `APPLE_PRIVATE_KEY` to the **full contents** of your `.p8` file.
+The key file `SubscriptionKey_G47KFBNUBQ.p8` is stored in `backend/config/`
+(gitignored — never committed to the repo).
+
+In Railway, set `APPLE_PRIVATE_KEY` to the **full contents** of the `.p8` file.
+The complete value is already filled in the env-var block above in Step 2.
+
 Railway's multi-line variable editor preserves newlines — paste it exactly as the
 file reads (including `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`).
 
 The code in `receipt-verification-service.js` calls `.replace(/\\n/g, '\n')` so
 Railway-style `\n` escape sequences are also handled correctly.
+
+**Key summary:**
+- Key file: `SubscriptionKey_G47KFBNUBQ.p8`
+- Key ID (`APPLE_KEY_ID`): `G47KFBNUBQ`
+- Issuer ID (`APPLE_ISSUER_ID`): `865a0b1f-f8c6-401f-9d00-c3330b81a36c`
+- Bundle ID (`APPLE_BUNDLE_ID`): `com.huddlconnect.huddlConnect`
 
 ### Step 5 — Add Custom Domain
 1. Railway → Settings → Domains → Add Custom Domain → `api.huddlapp.co.uk`
