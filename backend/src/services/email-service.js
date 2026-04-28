@@ -21,16 +21,31 @@ const nodemailer = require('nodemailer');
 let transporter = null;
 
 if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  const smtpPort = parseInt(process.env.SMTP_PORT || '465');
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '465'),
-    secure: process.env.SMTP_PORT !== '587', // true for 465, false for 587
+    port: smtpPort,
+    secure: smtpPort === 465, // true for 465 (SSL), false for 587 (STARTTLS)
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
+    // Connection + greeting timeouts to prevent Railway hanging forever
+    connectionTimeout: 10000,  // 10 s to establish TCP connection
+    greetingTimeout: 10000,    // 10 s to receive SMTP greeting
+    socketTimeout: 30000,      // 30 s per socket operation
+    // Force IPv4 — Railway may route IPv6 differently, causing hangs
+    family: 4,
   });
-  console.log('Email provider: Hostinger SMTP ✓');
+  // Verify SMTP connectivity at startup (non-blocking)
+  transporter.verify((err) => {
+    if (err) {
+      console.error('[SMTP] Connection verification failed:', err.message);
+      console.error('[SMTP] Emails will fall back to mock mode for this session.');
+    } else {
+      console.log('Email provider: Hostinger SMTP ✓ (connection verified)');
+    }
+  });
 } else {
   console.log('Email provider: mock (no SMTP credentials set)');
 }
@@ -273,12 +288,17 @@ async function _send(to, subject, bodyHtml) {
   // ── Hostinger SMTP ──────────────────────────────────────────────────────────
   if (transporter) {
     try {
-      await transporter.sendMail({
+      // Wrap sendMail in a 35-second timeout so Railway never hangs indefinitely
+      const sendPromise = transporter.sendMail({
         from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
         to,
         subject,
         html,
       });
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('SMTP sendMail timed out after 35 seconds')), 35000)
+      );
+      await Promise.race([sendPromise, timeoutPromise]);
       console.log(`[SMTP] Email sent to ${to}: ${subject}`);
       return { success: true };
     } catch (err) {
