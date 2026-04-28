@@ -768,8 +768,8 @@ class FirebaseAuthService {
       'startDate': DateTime.now().toIso8601String(),
       'renewalDate': null,
       'isActive': true,
-      'isTrial': true,
-      'trialDaysRemaining': 7,
+      'isTrial': false,         // Welcome is free forever — NOT a trial
+      'trialDaysRemaining': 0,  // No time limit on Welcome tier
       'isFoundingMember': false,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),

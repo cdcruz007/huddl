@@ -222,13 +222,15 @@ async function processTrialReminders() {
       const { sendTrialEndingReminder } = require('./email-service');
       const userDoc = await db.collection('users').doc(userId).get();
       const userData = userDoc.data() || {};
-      if (userData.email || userData.phone) {
+      // Only send email if user has a real email address on their profile
+      if (userData.email) {
         await sendTrialEndingReminder({
-          email: userData.email || `${userData.phone}@huddl.app`,
+          email: userData.email,
           firstName: userData.firstName,
           daysRemaining: 2,
         });
       }
+      // Push notification always sent (above) regardless of email availability
       day5Count++;
     } else if (daysSinceStart >= 7) {
       // Day 7 — trial expired, downgrade to Explorer
