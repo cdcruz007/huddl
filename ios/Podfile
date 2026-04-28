@@ -55,12 +55,6 @@ target 'Runner' do
   # alone can be overridden by a newer FlutterFire podspec in the Mac pub cache.
   pod 'Firebase', '= 10.27.0'
 
-  # ── Use pre-compiled Firestore binary to avoid gRPC-C++ compile hang ─────
-  # FirebaseFirestore/Binary ships a pre-built XCFramework that skips compiling
-  # gRPC-Core + gRPC-C++ (~1,500 C++ files). Without this, the first Xcode build
-  # hangs for 20-45 min. The binary subspec is functionally identical.
-  pod 'FirebaseFirestore/Binary', '= 10.27.0'
-
   target 'RunnerTests' do
     inherit! :search_paths
   end
@@ -107,10 +101,11 @@ post_install do |installer|
       # Swift pods (FlutterFire requires dynamic frameworks).
       config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
 
-      # ── Parallel compilation ───────────────────────────────────────────────
-      # Allow Clang to use all available CPU cores per file. Speeds up builds
-      # significantly on Apple Silicon Macs.
+      # ── Speed up compilation ──────────────────────────────────────────────
+      # Disable Xcode source indexing during pod builds (no benefit, costs time).
       config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
+      # Skip debug symbols for pods in release (not needed, saves link time).
+      config.build_settings['DEBUG_INFORMATION_FORMAT'] = 'dwarf'
     end
 
     # ── Strip -G from per-file COMPILER_FLAGS (BoringSSL-GRPC) ───────────────
