@@ -29,7 +29,6 @@ import '../../widgets/learning_maturity_indicator.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../../services/firebase_auth_service.dart';
-import '../../services/firestore_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/rehome_service.dart';
 import '../../screens/marketplace/item_detail_screen.dart';
@@ -185,15 +184,21 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// Subscribe to real-time Firestore notifications so the bell badge
   /// reflects the true unread count even when the app is in the foreground.
+  /// If new unread notifications arrive after the user already opened the
+  /// sheet, reset _notificationsRead so the badge lights up again.
   void _subscribeToNotifications() {
     try {
       _notifStreamSub?.cancel();
-      _notifStreamSub = FirestoreService()
-          .notificationsStream()
+      _notifStreamSub = HuddlNotificationService()
+          .stream()
           .listen((notifs) {
         if (!mounted) return;
         final unread = notifs.where((n) => n['read'] != true).length;
-        setState(() => _realUnreadNotifCount = unread);
+        setState(() {
+          // If new unread items arrive, un-silence the badge so it shows.
+          if (unread > _realUnreadNotifCount) _notificationsRead = false;
+          _realUnreadNotifCount = unread;
+        });
       }, onError: (_) {
         // Silent — bell will fall back to heuristic count
       });
@@ -856,8 +861,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _openNotifications() {
-    // Reset local flag so the badge re-evaluates from Firestore after close
-    setState(() => _notificationsRead = false);
+    // The badge will clear naturally once markAllRead / markOneRead runs.
+    // We don't pre-clear here so tapping the bell always shows the live list.
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -3469,9 +3474,43 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         }
         break;
 
-      // ── Marketplace: offer, sold, relisted ─────────────────────────────
-      case 'offer_received':
+      // ── offer_accepted → auto-open DM with the seller ─────────────────
       case 'offer_accepted':
+        {
+          final sellerId   = data['sellerId']   as String? ?? '';
+          final sellerName = data['sellerName'] as String?
+              ?? n['senderName'] as String?
+              ?? 'Seller';
+          final itemId = data['itemId'] as String? ?? '';
+          if (sellerId.isNotEmpty) {
+            // Open (or create) a DM conversation with the seller so the
+            // buyer can arrange the handover immediately.
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => DMChatScreen(
+                recipientId: sellerId,
+                recipientName: sellerName,
+                recipientAvatarColor: '#FF975C',
+                conversationId: null, // getOrCreate on first send
+              ),
+            ));
+          } else {
+            // Fallback: open the item detail if we have it
+            final item = itemId.isNotEmpty
+                ? RehomeService().getItemById(itemId)
+                : null;
+            if (item != null) {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ItemDetailScreen(item: item),
+              ));
+            } else {
+              widget.onNavigate(3);
+            }
+          }
+        }
+        break;
+
+      // ── Marketplace: other offer/sold/relisted notifications ───────────
+      case 'offer_received':
       case 'offer_declined':
       case 'item_sold':
       case 'saved_item_sold':
