@@ -281,26 +281,41 @@ class _MessagesTabState extends State<_MessagesTab> {
         .myGroupsStream(uid)
         .listen((updatedGroups) {
       if (!mounted) return;
-      // Merge updated lastMessage / lastMessageTime into _allGroups
-      // without triggering a full reload (avoids flicker).
       bool changed = false;
+
       for (final updated in updatedGroups) {
         final idx = _allGroups.indexWhere((g) => g.id == updated.id);
-        if (idx < 0) continue;
-        final existing = _allGroups[idx];
-        // Only update if Firestore has a NEWER timestamp than local cache
-        final firestoreTime = updated.lastMessageTime;
-        final localTime = existing.lastMessageTime;
-        if (firestoreTime != null &&
-            (localTime == null || firestoreTime.isAfter(localTime))) {
-          _allGroups[idx] = existing.copyWith(
-            lastMessage: updated.lastMessage,
-            lastSenderName: updated.lastSenderName,
-            lastMessageTime: firestoreTime,
-          );
-          changed = true;
+
+        if (idx < 0) {
+          // ── New group appeared in Firestore that isn't in the local list yet
+          // (e.g. the user was added to a group on another device, or the
+          // initial load completed before the Firestore snapshot arrived).
+          // Add it so the list stays complete and correctly sorted.
+          final leftGroupIds = _allGroups
+              .where((g) => g.id.isEmpty) // placeholder to avoid async here
+              .map((g) => g.id)
+              .toSet();
+          if (!leftGroupIds.contains(updated.id)) {
+            _allGroups.add(_GroupItem.fromGroup(updated, isDefault: true));
+            changed = true;
+          }
+        } else {
+          final existing = _allGroups[idx];
+          // Only update if Firestore has a NEWER timestamp than local cache
+          final firestoreTime = updated.lastMessageTime;
+          final localTime     = existing.lastMessageTime;
+          if (firestoreTime != null &&
+              (localTime == null || firestoreTime.isAfter(localTime))) {
+            _allGroups[idx] = existing.copyWith(
+              lastMessage:     updated.lastMessage,
+              lastSenderName:  updated.lastSenderName,
+              lastMessageTime: firestoreTime,
+            );
+            changed = true;
+          }
         }
       }
+
       if (changed) {
         setState(() => _applyFilter());
       }

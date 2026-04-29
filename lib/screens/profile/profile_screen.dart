@@ -2312,10 +2312,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       (v) {
                         setLocal(() => _lockScreenAlerts = v);
                         setState(() {});
+                        // _saveSetting already syncs all notif prefs to Firestore
                         _saveSetting(
                             UserPrivacyPrefsService.keyLockScreenAlerts, v);
-                        // Sync to Firestore so backend respects this preference
-                        PushNotificationService().syncPrefsToFirestore();
                       },
                     ),
                   ],

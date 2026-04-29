@@ -320,12 +320,22 @@ class RealtimeDMService {
     return _db
         .collection('conversations')
         .where('participants', arrayContains: uid)
-        .orderBy('lastMessageAt', descending: true)
+        // NOTE: No .orderBy() here — combining where('participants', arrayContains)
+        // with orderBy('lastMessageAt') requires a composite Firestore index that
+        // may not exist in all environments and silently fails (returns empty stream).
+        // We sort in-memory instead, which is equally fast for typical conversation counts.
         .snapshots()
-        .map((snap) => snap.docs
-            .map((doc) =>
-                RealtimeDMConversation.fromFirestore(doc.data(), doc.id, uid))
-            .toList());
+        .map((snap) {
+          final convs = snap.docs
+              .map((doc) =>
+                  RealtimeDMConversation.fromFirestore(doc.data(), doc.id, uid))
+              .toList();
+          // Sort newest first in-memory — avoids composite index requirement
+          convs.sort((a, b) =>
+              (b.lastMessageAt ?? DateTime(2000))
+                  .compareTo(a.lastMessageAt ?? DateTime(2000)));
+          return convs;
+        });
   }
 
   // ── Mark messages as read ─────────────────────────────────────────────────
