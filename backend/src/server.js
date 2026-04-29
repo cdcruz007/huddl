@@ -39,6 +39,7 @@ const verifyRoutes = require('./routes/verify-routes');
 const subscriptionRoutes = require('./routes/subscription-routes');
 const webhookRoutes = require('./routes/webhook-routes');
 const notificationRoutes = require('./routes/notification-routes');
+const messageRoutes      = require('./routes/message-routes');
 const { errorHandler } = require('./middleware/error-handler');
 const { rateLimiter } = require('./middleware/rate-limiter');
 
@@ -76,6 +77,7 @@ app.use('/api/stripe', stripeRoutes);
 app.use('/api/verify', verifyRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/messages',      messageRoutes);
 
 // ── Health check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

@@ -210,6 +210,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   List<DMConversation> _dmConversations = [];
   List<DMConversation> _filteredDMs = [];
   StreamSubscription<List<RealtimeDMConversation>>? _firestoreConvSub;
+  StreamSubscription<void>? _firestoreGroupsSub;   // watches groups for remote last-message updates
   final Set<String> _pinnedGroupIds = {};
   final Set<String> _mutedGroupIds = {};
   bool _isLoading = true;
@@ -245,6 +246,7 @@ class _MessagesTabState extends State<_MessagesTab> {
       _loadGroups();
       _loadMutedAndPinned();
       _loadDemoSummaries();
+      _subscribeToFirestoreGroups();
     });
   }
 
@@ -252,6 +254,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   void dispose() {
     _searchDebounce?.cancel();
     _firestoreConvSub?.cancel();
+    _firestoreGroupsSub?.cancel();
     EventService.groupChatCreated.removeListener(_onGroupsChanged);
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _invitationService.removeListener(_onGroupsChanged);
@@ -263,6 +266,47 @@ class _MessagesTabState extends State<_MessagesTab> {
 
   void _onGroupsChanged() {
     _loadGroups();
+  }
+
+  /// Subscribe to Firestore groups collection for the current user.
+  /// When another user sends a message the group doc's lastMessage /
+  /// lastMessageTime fields are updated — this stream picks that up and
+  /// re-sorts the list without a full reload.
+  void _subscribeToFirestoreGroups() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    _firestoreGroupsSub?.cancel();
+    _firestoreGroupsSub = FirestoreService()
+        .myGroupsStream(uid)
+        .listen((updatedGroups) {
+      if (!mounted) return;
+      // Merge updated lastMessage / lastMessageTime into _allGroups
+      // without triggering a full reload (avoids flicker).
+      bool changed = false;
+      for (final updated in updatedGroups) {
+        final idx = _allGroups.indexWhere((g) => g.id == updated.id);
+        if (idx < 0) continue;
+        final existing = _allGroups[idx];
+        // Only update if Firestore has a NEWER timestamp than local cache
+        final firestoreTime = updated.lastMessageTime;
+        final localTime = existing.lastMessageTime;
+        if (firestoreTime != null &&
+            (localTime == null || firestoreTime.isAfter(localTime))) {
+          _allGroups[idx] = existing.copyWith(
+            lastMessage: updated.lastMessage,
+            lastSenderName: updated.lastSenderName,
+            lastMessageTime: firestoreTime,
+          );
+          changed = true;
+        }
+      }
+      if (changed) {
+        setState(() => _applyFilter());
+      }
+    }, onError: (e) {
+      if (kDebugMode) debugPrint('[groups_screen] Firestore groups stream error: $e');
+    });
   }
 
   /// Called whenever the user sends a message in any GroupChatScreen.

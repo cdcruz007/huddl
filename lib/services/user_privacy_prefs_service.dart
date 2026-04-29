@@ -19,6 +19,7 @@ class UserPrivacyPrefsService {
   static const String keyDmMessages        = 'pref_dm_messages';
   static const String keyEventReminders    = 'pref_event_reminders';
   static const String keyCommunityUpdates  = 'pref_community_updates';
+  static const String keyLockScreenAlerts  = 'pref_lock_screen_alerts';
   static const String keyShowOnline        = 'pref_show_online';
   static const String keyShowProfile       = 'pref_show_profile';
   static const String keyShowGroups        = 'pref_show_groups';
@@ -30,6 +31,7 @@ class UserPrivacyPrefsService {
   bool dmMessages       = true;
   bool eventReminders   = true;
   bool communityUpdates = true;
+  bool lockScreenAlerts = true;  // show alerts on lock screen when phone is locked
 
   // ── Privacy prefs (default: all enabled) ──────────────────────────────
   bool showOnlineStatus   = true;
@@ -44,6 +46,7 @@ class UserPrivacyPrefsService {
     final nDM     = await BrowserStorage.getString(keyDmMessages);
     final nEvent  = await BrowserStorage.getString(keyEventReminders);
     final nComm   = await BrowserStorage.getString(keyCommunityUpdates);
+    final nLock   = await BrowserStorage.getString(keyLockScreenAlerts);
     final pOnline = await BrowserStorage.getString(keyShowOnline);
     final pProf   = await BrowserStorage.getString(keyShowProfile);
     final pGrps   = await BrowserStorage.getString(keyShowGroups);
@@ -54,6 +57,7 @@ class UserPrivacyPrefsService {
     if (nDM     != null) dmMessages       = nDM     == 'true';
     if (nEvent  != null) eventReminders   = nEvent  == 'true';
     if (nComm   != null) communityUpdates = nComm   == 'true';
+    if (nLock   != null) lockScreenAlerts = nLock   == 'true';
     if (pOnline != null) showOnlineStatus = pOnline == 'true';
     if (pProf   != null) profileVisibility = pProf  == 'true';
     if (pGrps   != null) showGroups       = pGrps   == 'true';
@@ -70,6 +74,7 @@ class UserPrivacyPrefsService {
       case keyDmMessages:       dmMessages       = value; break;
       case keyEventReminders:   eventReminders   = value; break;
       case keyCommunityUpdates: communityUpdates = value; break;
+      case keyLockScreenAlerts: lockScreenAlerts = value; break;
       case keyShowOnline:       showOnlineStatus = value; break;
       case keyShowProfile:      profileVisibility = value; break;
       case keyShowGroups:       showGroups       = value; break;
@@ -84,6 +89,7 @@ class UserPrivacyPrefsService {
     dmMessages       = true;
     eventReminders   = true;
     communityUpdates = true;
+    lockScreenAlerts = true;
     showOnlineStatus = true;
     profileVisibility = true;
     showGroups       = true;

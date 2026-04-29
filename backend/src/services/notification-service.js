@@ -60,6 +60,18 @@ const TEMPLATES = {
     body: '{meetupTitle} at {meetupLocation} — {meetupTime}',
     data: { route: '/meetups/{meetupId}', type: 'meetup_reminder' },
   },
+
+  // ── Messaging ─────────────────────────────────────────────────────────
+  new_group_message: {
+    title: '{groupName}',
+    body: '{senderName}: {messagePreview}',
+    data: { route: '/groups/{groupId}', type: 'new_group_message', groupId: '{groupId}' },
+  },
+  new_dm: {
+    title: '{senderName}',
+    body: '{messagePreview}',
+    data: { route: '/dm/{conversationId}', type: 'new_dm', conversationId: '{conversationId}' },
+  },
 };
 
 // ═════════════════════════════════════════════════════════════════════════════

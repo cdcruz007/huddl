@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
 import 'groups/groups_screen.dart';
@@ -10,6 +12,7 @@ import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
+import '../services/push_notification_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 
 class MainShell extends StatefulWidget {
@@ -39,8 +42,90 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     // Defer tutorial check until after the first frame so it never
     // calls setState while MainShell itself is being built.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _checkTutorial();
+      if (mounted) {
+        _checkTutorial();
+        _initialisePushNotifications();
+      }
     });
+  }
+
+  // ── Push notifications ───────────────────────────────────────────────────
+
+  void _initialisePushNotifications() {
+    final push = PushNotificationService();
+
+    // Show an in-app banner when a message arrives while the app is open.
+    push.onForegroundMessage = (RemoteMessage message) {
+      if (!mounted) return;
+      final title = message.notification?.title ?? '';
+      final body  = message.notification?.body  ?? '';
+      if (title.isEmpty && body.isEmpty) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          backgroundColor: HuddlColors.primary,
+          duration: const Duration(seconds: 4),
+          content: Row(
+            children: [
+              const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (title.isNotEmpty)
+                      Text(title,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13)),
+                    if (body.isNotEmpty)
+                      Text(body,
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: 'Open',
+            textColor: Colors.white,
+            onPressed: () => _handleNotificationTap(message),
+          ),
+        ),
+      );
+    };
+
+    // Navigate when the user taps a notification (background or terminated).
+    push.onNotificationTap = _handleNotificationTap;
+
+    // Ensure FCM is initialised (safe to call again — idempotent)
+    unawaited(push.initialise());
+
+    // Sync notification prefs to Firestore so the backend has up-to-date
+    // preferences immediately after the shell mounts.
+    unawaited(push.syncPrefsToFirestore());
+  }
+
+  void _handleNotificationTap(RemoteMessage message) {
+    if (!mounted) return;
+    final data  = message.data;
+    final type  = data['type'] as String? ?? '';
+    final route = data['route'] as String? ?? '';
+
+    if (type == 'new_group_message' || type == 'new_dm') {
+      // Navigate to the Connect tab — the specific chat will be visible there.
+      _switchTab(1);
+    } else if (route.isNotEmpty) {
+      Navigator.of(context).pushNamed(route);
+    }
   }
 
   // ── G6: Refresh subscription state when app returns to foreground ────────

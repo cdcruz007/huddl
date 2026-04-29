@@ -10,6 +10,7 @@ import 'config/router.dart';
 import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
+import 'services/push_notification_service.dart';
 import 'services/user_privacy_prefs_service.dart';
 
 void main() async {
@@ -160,6 +161,19 @@ void main() async {
     if (FirebaseAuth.instance.currentUser != null) {
       await HuddlUserService().syncCurrentUserProfile()
           .timeout(const Duration(seconds: 5));
+    }
+  } catch (_) {}
+
+  // ── Push notifications — initialise FCM and register token ────────────
+  // Must run AFTER Firebase init. Safe to call when no user is signed in
+  // (the service skips token registration until a UID is available).
+  try {
+    if (FirebaseAuth.instance.currentUser != null) {
+      // Returning user — initialise FCM immediately
+      unawaited(
+        PushNotificationService().initialise()
+            .timeout(const Duration(seconds: 10)),
+      );
     }
   } catch (_) {}
 

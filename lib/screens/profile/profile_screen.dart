@@ -30,6 +30,7 @@ import '../../services/gdpr_borough_data_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/photo_upload_service.dart';
+import '../../services/push_notification_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
 
@@ -84,6 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _dmMessages = true;
   bool _eventReminders = true;
   bool _communityUpdates = true;
+  bool _lockScreenAlerts = true;
 
   // Privacy settings (persisted)
   bool _showOnline = true;
@@ -136,6 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _dmMessages       = svc.dmMessages;
         _eventReminders   = svc.eventReminders;
         _communityUpdates = svc.communityUpdates;
+        _lockScreenAlerts = svc.lockScreenAlerts;
         _showOnline       = svc.showOnlineStatus;
         _showProfile      = svc.profileVisibility;
         _showGroups       = svc.showGroups;
@@ -163,6 +166,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Persist to storage AND update the shared singleton so other screens
     // can immediately read the new value without reloading.
     await UserPrivacyPrefsService().setSetting(key, value);
+    // Sync notification prefs to Firestore so the backend respects them
+    // when sending FCM push notifications.
+    const notifKeys = {
+      UserPrivacyPrefsService.keyPushEnabled,
+      UserPrivacyPrefsService.keyGroupMessages,
+      UserPrivacyPrefsService.keyDmMessages,
+      UserPrivacyPrefsService.keyEventReminders,
+      UserPrivacyPrefsService.keyCommunityUpdates,
+      UserPrivacyPrefsService.keyLockScreenAlerts,
+    };
+    if (notifKeys.contains(key)) {
+      PushNotificationService().syncPrefsToFirestore();
+    }
   }
 
   Future<void> _loadProfileData() async {
@@ -2287,6 +2303,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _saveSetting(
                           UserPrivacyPrefsService.keyCommunityUpdates, v);
                     }),
+                    const Divider(height: 1, indent: 16, endIndent: 16),
+                    _toggleTile(
+                      Icons.lock_outline_rounded,
+                      'Lock screen alerts',
+                      'Show message previews on lock screen when phone is locked',
+                      _lockScreenAlerts,
+                      (v) {
+                        setLocal(() => _lockScreenAlerts = v);
+                        setState(() {});
+                        _saveSetting(
+                            UserPrivacyPrefsService.keyLockScreenAlerts, v);
+                        // Sync to Firestore so backend respects this preference
+                        PushNotificationService().syncPrefsToFirestore();
+                      },
+                    ),
                   ],
                 ),
               ),

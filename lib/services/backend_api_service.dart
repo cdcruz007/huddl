@@ -263,6 +263,62 @@ class BackendApiService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
+  // MESSAGE PUSH NOTIFICATIONS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Fan-out a push notification to all group members except the sender.
+  /// Called immediately after [FirestoreService.sendGroupMessage] writes to Firestore.
+  /// Non-fatal — errors are logged but never bubble up to the UI.
+  Future<void> notifyGroupMessage({
+    required String groupId,
+    required String groupName,
+    required String senderName,
+    required String messagePreview,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-group'),
+        headers: headers,
+        body: jsonEncode({
+          'groupId': groupId,
+          'groupName': groupName,
+          'senderName': senderName,
+          'messagePreview': messagePreview,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyGroupMessage error: $e');
+    }
+  }
+
+  /// Push a notification to the DM recipient.
+  /// Called immediately after [RealtimeDMService.sendMessage] writes to Firestore.
+  /// Non-fatal — errors are logged but never bubble up to the UI.
+  Future<void> notifyDmMessage({
+    required String conversationId,
+    required String recipientId,
+    required String senderName,
+    required String messagePreview,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-dm'),
+        headers: headers,
+        body: jsonEncode({
+          'conversationId': conversationId,
+          'recipientId': recipientId,
+          'senderName': senderName,
+          'messagePreview': messagePreview,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyDmMessage error: $e');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
   // RESPONSE HANDLING
   // ═════════════════════════════════════════════════════════════════════════
 

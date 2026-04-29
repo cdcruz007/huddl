@@ -48,6 +48,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
+import 'backend_api_service.dart';
 
 class RealtimeDMService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -265,6 +266,22 @@ class RealtimeDMService {
         'lastMessageAt': FieldValue.serverTimestamp(),
         ...unreadUpdate,
       });
+
+      // ── Push notification to the other participant (fire-and-forget) ────
+      final recipientId = participants.firstWhere(
+        (p) => p != uid,
+        orElse: () => '',
+      );
+      if (recipientId.isNotEmpty) {
+        unawaited(
+          BackendApiService().notifyDmMessage(
+            conversationId: conversationId,
+            recipientId: recipientId,
+            senderName: senderName,
+            messagePreview: displayText,
+          ),
+        );
+      }
 
       _log('sendMessage: sent in $conversationId');
       return true;

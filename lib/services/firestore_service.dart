@@ -41,7 +41,9 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../models/group.dart';
+import 'backend_api_service.dart';
 
 class FirestoreService {
   // ── Singleton ──────────────────────────────────────────────────────────
@@ -103,6 +105,17 @@ class FirestoreService {
     return snap.docs.map((d) => _groupFromFirestore(d)).toList()
       ..sort((a, b) =>
           (b.lastMessageTime ?? DateTime(2000)).compareTo(a.lastMessageTime ?? DateTime(2000)));
+  }
+
+  /// Real-time stream of groups the [uid] belongs to.
+  /// Fires whenever any group's lastMessage / lastMessageTime changes so the
+  /// groups list re-sorts instantly when another user sends a message.
+  Stream<List<Group>> myGroupsStream(String uid) {
+    return _db
+        .collection('groups')
+        .where('memberIds', arrayContains: uid)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => _groupFromFirestore(d)).toList());
   }
 
   /// Get all public groups (for Discover tab).
@@ -285,6 +298,24 @@ class FirestoreService {
       'lastSenderName': senderName,
       'lastMessageTime': FieldValue.serverTimestamp(),
     });
+
+    // ── Fan-out push notifications to group members (fire-and-forget) ────
+    // Fetch group name for the push title, then trigger the backend fan-out.
+    try {
+      final groupSnap = await _db.collection('groups').doc(groupId).get();
+      final groupName = groupSnap.data()?['name'] as String? ?? 'Group message';
+      final displayName = senderName.isNotEmpty ? senderName : 'Someone';
+      unawaited(
+        BackendApiService().notifyGroupMessage(
+          groupId: groupId,
+          groupName: groupName,
+          senderName: displayName,
+          messagePreview: message,
+        ),
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] push notify error: $e');
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════
