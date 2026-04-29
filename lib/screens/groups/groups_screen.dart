@@ -516,6 +516,7 @@ class _MessagesTabState extends State<_MessagesTab> {
               recipientId: fc.otherUserId,
               recipientName: fc.otherUserName,
               recipientAvatarColor: _avatarColorForUid(fc.otherUserId),
+              recipientPhotoUrl: fc.otherUserPhotoUrl.isNotEmpty ? fc.otherUserPhotoUrl : null,
               lastMessage: fc.lastMessage,
               lastSenderName: fc.lastSenderName,
               lastMessageTime: fc.lastMessageAt,
@@ -2804,6 +2805,7 @@ class _DMMessageRow extends StatelessWidget {
                 // ── Person avatar with profile photo ──────────────
                 MemberAvatar(
                   name: conversation.recipientName,
+                  imageUrl: conversation.recipientPhotoUrl,
                   size: 54,
                   accentColor: color,
                   showOnlineDot: true,

@@ -125,7 +125,7 @@ class RealtimeDMService {
         'lastMessageAt': FieldValue.serverTimestamp(),
         'createdAt': FieldValue.serverTimestamp(),
         'borough': myBorough,
-        'unreadCount': {uid: 0, otherUserId: 0},
+        'unreadCount': <String, int>{uid: 0, otherUserId: 0},
       });
 
       _log('Created conversation $conversationId ($myBorough)');
@@ -259,11 +259,15 @@ class RealtimeDMService {
         }
       }
 
+      // Also refresh the sender's avatar in participantAvatars so the
+      // recipient always sees the most up-to-date profile photo.
+      final myPhotoUrl = me?.photoUrl ?? '';
       await _db.collection('conversations').doc(conversationId).update({
         'lastMessage': displayText,
         'lastSenderId': uid,
         'lastSenderName': senderName,
         'lastMessageAt': FieldValue.serverTimestamp(),
+        'participantAvatars.$uid': myPhotoUrl,
         ...unreadUpdate,
       });
 

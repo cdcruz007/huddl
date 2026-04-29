@@ -198,6 +198,7 @@ class DMConversation {
   final String recipientId;
   final String recipientName;
   final String recipientAvatarColor; // hex colour string
+  final String? recipientPhotoUrl;   // profile photo URL from Firestore participantAvatars
   final String? lastMessage;
   final String? lastSenderName;
   final DateTime? lastMessageTime;
@@ -211,6 +212,7 @@ class DMConversation {
     required this.recipientId,
     required this.recipientName,
     required this.recipientAvatarColor,
+    this.recipientPhotoUrl,
     this.lastMessage,
     this.lastSenderName,
     this.lastMessageTime,
@@ -256,12 +258,14 @@ class DMConversation {
     bool? isTyping,
     bool? isMuted,
     bool? isOnline,
+    String? recipientPhotoUrl,
   }) {
     return DMConversation(
       id: id,
       recipientId: recipientId,
       recipientName: recipientName,
       recipientAvatarColor: recipientAvatarColor,
+      recipientPhotoUrl: recipientPhotoUrl ?? this.recipientPhotoUrl,
       lastMessage: lastMessage ?? this.lastMessage,
       lastSenderName: lastSenderName ?? this.lastSenderName,
       lastMessageTime: lastMessageTime ?? this.lastMessageTime,
