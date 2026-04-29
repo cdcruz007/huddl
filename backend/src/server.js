@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — BACKEND SERVER
+// HUDDL — BACKEND SERVER
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Express server providing:
@@ -98,7 +98,7 @@ app.use(errorHandler);
 
 // ── Start server ────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`Huddl Connect backend listening on port ${PORT}`);
+  console.log(`Huddl backend listening on port ${PORT})`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
 });

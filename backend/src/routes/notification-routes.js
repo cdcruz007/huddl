@@ -347,32 +347,43 @@ function _verifyPage(type, message) {
   <title>Email Verification — Huddl</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#FFF8F3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    body{background:#FFF8F3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
          display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
-    .card{background:#fff;border-radius:20px;padding:40px 32px;max-width:480px;width:100%;
-          text-align:center;box-shadow:0 4px 24px rgba(252,168,120,0.15);}
+    .card{background:#fff;border-radius:20px;padding:0;max-width:480px;width:100%;
+          text-align:center;box-shadow:0 4px 24px rgba(53,128,240,0.10);overflow:hidden;}
+    .header{background:#3580F0;padding:24px 32px 20px;}
+    .logo{font-size:22px;font-weight:900;color:#FCA878;letter-spacing:-0.5px;
+          background:#fff;border-radius:10px;display:inline-block;
+          padding:6px 18px;line-height:1;}
+    .tagline{color:rgba(255,255,255,0.85);font-size:12px;margin-top:8px;letter-spacing:0.4px;}
+    .body{padding:36px 32px 28px;}
     .icon{font-size:56px;margin-bottom:16px;}
-    h1{font-size:22px;font-weight:800;color:#43464D;margin-bottom:12px;}
-    p{font-size:15px;color:#6C6C6C;line-height:1.6;margin-bottom:24px;}
-    .btn{display:inline-block;background:#FCA878;color:#fff;font-weight:700;font-size:15px;
-         padding:14px 36px;border-radius:50px;text-decoration:none;letter-spacing:0.2px;}
-    .footer{margin-top:28px;font-size:12px;color:#B0B0B0;}
-    .logo{font-size:18px;font-weight:900;color:#FCA878;margin-bottom:24px;letter-spacing:-0.5px;}
+    h1{font-size:22px;font-weight:800;color:#1E2235;margin-bottom:12px;}
+    p{font-size:15px;color:#4A4A5A;line-height:1.6;margin-bottom:24px;}
+    .btn{display:inline-block;background:#FCA878;color:#fff;font-weight:800;font-size:15px;
+         padding:14px 40px;border-radius:50px;text-decoration:none;letter-spacing:0.3px;}
+    .footer-strip{background:#FFF0E6;border-top:1px solid #FFD4B2;padding:16px 32px;
+                  font-size:12px;color:#9E9E9E;}
   </style>
 </head>
 <body>
   <div class="card">
-    <div class="logo">H huddl</div>
-    <div class="icon">${icon}</div>
-    <h1>${isOk ? 'Email Verified!' : 'Verification Failed'}</h1>
-    <p>${message}</p>
-    ${isOk
-      ? `<a href="${FRONTEND_URL}" class="btn">Open Huddl App</a>`
-      : `<p style="font-size:13px;color:#B0B0B0;">
-           Return to the app and tap <strong>"Resend email"</strong> to get a fresh link.
-         </p>`
-    }
-    <div class="footer">Huddl Connect Ltd &middot; Cambridge, UK</div>
+    <div class="header">
+      <div class="logo">huddl</div>
+      <div class="tagline">Your local parent community</div>
+    </div>
+    <div class="body">
+      <div class="icon">${icon}</div>
+      <h1>${isOk ? 'Email Verified!' : 'Verification Failed'}</h1>
+      <p>${message}</p>
+      ${isOk
+        ? `<a href="${FRONTEND_URL}" class="btn">Open Huddl App</a>`
+        : `<p style="font-size:13px;color:#9E9E9E;">
+             Return to the app and tap <strong>&ldquo;Resend email&rdquo;</strong> to get a fresh link.
+           </p>`
+      }
+    </div>
+    <div class="footer-strip">Huddl &middot; Cambridge, UK</div>
   </div>
 </body>
 </html>`;
