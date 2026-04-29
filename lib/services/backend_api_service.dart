@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — BACKEND API SERVICE
+// HUDDL — BACKEND API SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Centralised HTTP client for communicating with the Huddl Node.js backend.

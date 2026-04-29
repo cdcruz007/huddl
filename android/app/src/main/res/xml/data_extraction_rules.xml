@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    HUDDL CONNECT — ANDROID DATA EXTRACTION RULES (API 31+)
+    HUDDL — ANDROID DATA EXTRACTION RULES (API 31+)
     Valid domains: file, database, sharedpref, external, root
     Rule: you can only <exclude> a path that was first <include>d
 -->

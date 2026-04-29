@@ -1,4 +1,4 @@
-# Huddl Connect Email Templates
+# Huddl Email Templates
 
 All transactional email templates are defined inline in `src/services/email-service.js`
 using branded HTML with the Huddl colour palette.

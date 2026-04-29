@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — BACKUP & RESTORE SERVICE
+// HUDDL — BACKUP & RESTORE SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Provides MANUAL backup/restore that works across platforms:

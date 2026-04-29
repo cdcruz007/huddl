@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    HUDDL CONNECT — ANDROID AUTO BACKUP RULES
+    HUDDL — ANDROID AUTO BACKUP RULES
     ==========================================
     Controls what gets backed up to Google Drive via Android Auto Backup
     (Android 6.0+ / API 23+). Restored automatically when user reinstalls

@@ -10,7 +10,7 @@ import 'ai_knowledge_base_service.dart';
 import 'ai_learning_engine_service.dart';
 
 // =====================================================================================
-// HUDDL CONNECT -- AI DEALS CURATION SERVICE  — ENRICHED V4 (Steps 5,10)
+// HUDDL -- AI DEALS CURATION SERVICE  — ENRICHED V4 (Steps 5,10)
 // =====================================================================================
 //
 // UPGRADES from v3:

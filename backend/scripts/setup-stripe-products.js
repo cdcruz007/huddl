@@ -21,7 +21,7 @@ const Stripe = require('stripe');
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 async function main() {
-  console.log('Creating Huddl Connect products in Stripe...\n');
+  console.log('Creating Huddl products in Stripe...\n');
 
   // ── 1. Neighbourhood tier ───────────────────────────────────────────────
   const neighbourhood = await stripe.products.create({

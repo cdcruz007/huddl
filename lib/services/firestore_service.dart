@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — FIRESTORE SERVICE  (FUTURE / NOT ACTIVE)
+// HUDDL — FIRESTORE SERVICE  (FUTURE / NOT ACTIVE)
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // ⚠️  STORAGE ARCHITECTURE — READ BEFORE USING ⚠️

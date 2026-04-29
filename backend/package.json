@@ -1,7 +1,7 @@
 {
   "name": "huddl-connect-backend",
   "version": "1.0.0",
-  "description": "Huddl Connect backend server - Stripe, OTP, email, receipt verification",
+  "description": "Huddl backend server - Stripe, OTP, email, receipt verification",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",

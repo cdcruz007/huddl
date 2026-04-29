@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — PHOTO UPLOAD SERVICE
+// HUDDL — PHOTO UPLOAD SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Uploads a picked image file to Firebase Storage and returns a permanent

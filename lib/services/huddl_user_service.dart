@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — HUDDL USER SERVICE
+// HUDDL — HUDDL USER SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // This service is the single source of truth for:

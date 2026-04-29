@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — REALTIME DM SERVICE
+// HUDDL — REALTIME DM SERVICE
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Replaces the local BrowserStorage DM system with Firestore-backed real-time

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════════════
-// HUDDL CONNECT — BACKUP & RESTORE SCREEN
+// HUDDL — BACKUP & RESTORE SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 //
 // Allows users to manually export and import all their Huddl data.

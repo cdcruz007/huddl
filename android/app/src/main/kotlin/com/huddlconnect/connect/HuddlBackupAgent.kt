@@ -6,7 +6,7 @@ import android.app.backup.FileBackupHelper
 import android.content.Context
 
 /**
- * HUDDL CONNECT — ANDROID BACKUP AGENT
+ * HUDDL — ANDROID BACKUP AGENT
  * ======================================
  * Registered in AndroidManifest.xml as android:backupAgent=".HuddlBackupAgent"
  *

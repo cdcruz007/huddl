@@ -1,4 +1,4 @@
-# Huddl Connect Backend — Deployment Guide
+# Huddl Backend — Deployment Guide
 
 ## Quick Start (Railway — Recommended)
 
