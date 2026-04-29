@@ -1714,6 +1714,11 @@ class _MessagesTabState extends State<_MessagesTab> {
                 isMuted: item.isMuted,
                 onTap: () {
                   _aiService.recordConversationTap(item.id);
+                  // Clear Firestore unread badge immediately on tap
+                  if (item.dmConversation!.id.startsWith('conv_')) {
+                    _realtimeDMService.markConversationRead(
+                        item.dmConversation!.id);
+                  }
                   Navigator.pushNamed(context, '/dm_chat', arguments: {
                     'recipientId': item.dmConversation!.recipientId,
                     'recipientName': item.dmConversation!.recipientName,
@@ -2111,9 +2116,13 @@ class _MessagesTabState extends State<_MessagesTab> {
         });
       }
     } else {
-      // DM: use the service so it persists
+      // DM: use Firestore service for real convs, local service for demo
       if (item.unreadCount > 0) {
-        _dmService.markConversationRead(item.id);
+        if (item.id.startsWith('conv_')) {
+          _realtimeDMService.markConversationRead(item.id);
+        } else {
+          _dmService.markConversationRead(item.id);
+        }
       } else {
         _dmService.markConversationUnread(item.id);
       }
@@ -2312,7 +2321,12 @@ class _MessagesTabState extends State<_MessagesTab> {
                 onTap: () async {
                   Navigator.pop(c);
                   if (isUnread) {
-                    await _dmService.markConversationRead(dm.id);
+                    // Clear Firestore unread for real conversations
+                    if (dm.id.startsWith('conv_')) {
+                      await _realtimeDMService.markConversationRead(dm.id);
+                    } else {
+                      await _dmService.markConversationRead(dm.id);
+                    }
                   } else {
                     await _dmService.markConversationUnread(dm.id);
                   }
