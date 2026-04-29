@@ -29,6 +29,7 @@ import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_user_service.dart';
+import '../../services/photo_upload_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
 
@@ -51,6 +52,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoading = true;
   bool _isPhotoUploading = false; // true while photo is being read/encoded
+  final _photoUpload = PhotoUploadService();
 
   // Dynamic profile data
   String _name = '';
@@ -4042,8 +4044,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Show loading spinner immediately so the user knows something is happening
       setState(() => _isPhotoUploading = true);
 
-      // Persist the file path and encode to a data: URL so it survives storage
-      _onboarding.setProfilePhotoPath(file.path);
+      // Build a base64 data URL for immediate local preview (survives storage /
+      // app restarts; raw local file paths break on other devices and after the
+      // OS clears its temp directory).
       final bytes = await file.readAsBytes();
       final base64Str = base64Encode(bytes);
       final mimeType =
@@ -4051,13 +4054,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final dataUrl = 'data:$mimeType;base64,$base64Str';
       _onboarding.setProfilePhotoObjectUrl(dataUrl);
 
+      // Show preview immediately — don't wait for upload
+      if (mounted) {
+        setState(() {
+          _photoUrl = dataUrl;
+          _isPhotoUploading = true; // keep spinner while uploading
+        });
+      }
+
+      // Upload to Firebase Storage and get a permanent HTTPS download URL.
+      // This is the URL that gets written to Firestore — safe from any device.
+      // ImageEditorWidget returns a dart:io File, so use the File overload.
+      final downloadUrl = await _photoUpload.uploadProfilePhotoFromFile(file);
+      if (downloadUrl != null) {
+        _onboarding.setProfilePhotoPath(downloadUrl);
+      } else {
+        // Upload failed — keep data URL as local fallback but it won't sync
+        // to other devices. Show a warning so the user knows.
+        _onboarding.setProfilePhotoPath(dataUrl);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Photo saved locally — sync may take a moment'),
+            backgroundColor: HuddlColors.warning,
+          ));
+        }
+      }
+
       if (!mounted) return;
-      // Update avatar — also store the raw file path so Image.file works
-      // instantly without waiting for base64 decode on next build.
-      setState(() {
-        _photoUrl = dataUrl;
-        _isPhotoUploading = false;
-      });
+      setState(() => _isPhotoUploading = false);
       _snack('Profile photo updated ✓');
     } catch (e) {
       if (mounted) {

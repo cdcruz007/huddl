@@ -186,8 +186,14 @@ class HuddlUserService {
     if ((_onboarding.bio ?? '').isNotEmpty) {
       profile['bio'] = _onboarding.bio!;
     }
-    if ((_onboarding.profilePhotoPath ?? '').isNotEmpty) {
-      profile['photoUrl'] = _onboarding.profilePhotoPath!;
+    // Only write photoUrl to Firestore when it is a permanent remote URL.
+    // Local iOS/Android temp paths (/private/var/mobile/...) and blob: URLs
+    // are device-specific and become broken links for every other user.
+    // The PhotoUploadService uploads to Firebase Storage and stores the
+    // resulting https:// download URL via setProfilePhotoPath().
+    final photoPath = _onboarding.profilePhotoPath ?? '';
+    if (photoPath.startsWith('https://') || photoPath.startsWith('http://')) {
+      profile['photoUrl'] = photoPath;
     }
     // Sync email when present — captured at onboarding step 1 or updated in Profile
     if ((_onboarding.email ?? '').isNotEmpty) {

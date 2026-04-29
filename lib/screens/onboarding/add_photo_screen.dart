@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/photo_upload_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
 
@@ -24,6 +25,7 @@ class AddPhotoScreen extends StatefulWidget {
 class _AddPhotoScreenState extends State<AddPhotoScreen> {
   final _picker = ImagePicker();
   final _onboarding = OnboardingDataService();
+  final _photoUpload = PhotoUploadService();
 
   XFile? _pickedFile;        // selected image (mobile / web)
   bool   _isLoading = false;
@@ -132,19 +134,30 @@ class _AddPhotoScreenState extends State<AddPhotoScreen> {
         imageQuality: 85,
         preferredCameraDevice: CameraDevice.front,
       );
-      if (file != null && mounted) {
-        setState(() => _pickedFile = file);
-        _onboarding.setProfilePhotoPath(kIsWeb ? file.name : file.path);
+      if (file == null || !mounted) return;
 
-        // Convert to base64 data URL so it persists across page reloads.
-        // blob: URLs die when the page refreshes, data: URLs survive in localStorage.
-        final bytes = await file.readAsBytes();
-        final base64Str = base64Encode(bytes);
-        final mimeType = file.name.toLowerCase().endsWith('.png')
-            ? 'image/png'
-            : 'image/jpeg';
-        final dataUrl = 'data:$mimeType;base64,$base64Str';
-        _onboarding.setProfilePhotoObjectUrl(dataUrl);
+      setState(() => _pickedFile = file);
+
+      // Build a base64 data URL for local preview (survives app restarts /
+      // browser refreshes; blob: URLs do not).
+      final bytes = await file.readAsBytes();
+      final base64Str = base64Encode(bytes);
+      final mimeType =
+          file.name.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
+      final dataUrl = 'data:$mimeType;base64,$base64Str';
+      _onboarding.setProfilePhotoObjectUrl(dataUrl);
+
+      // Upload to Firebase Storage and store the permanent HTTPS URL.
+      // This runs in the background while the user sees the preview; the
+      // profilePhotoPath will be set to the download URL once ready.
+      final downloadUrl = await _photoUpload.uploadProfilePhoto(file);
+      if (downloadUrl != null) {
+        // Store the HTTPS URL — safe to write to Firestore from any device.
+        _onboarding.setProfilePhotoPath(downloadUrl);
+      } else {
+        // Upload failed — fall back to data URL so the photo still shows
+        // locally, but flag as non-remote so it won't be saved to Firestore.
+        _onboarding.setProfilePhotoPath(dataUrl);
       }
     } catch (e) {
       if (mounted) {
