@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
+import 'huddl_notification_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AGE STAGE — the primary filter dimension ("Who is this for?")
@@ -464,6 +467,45 @@ class RehomeService extends ChangeNotifier {
     if (myIdx >= 0) {
       _myListings[myIdx].isSold = true;
     }
+
+    // ── Notify seller + saved users (fire-and-forget) ─────────────────────
+    final item = getItemById(id);
+    if (item != null) {
+      final me = FirebaseAuth.instance.currentUser;
+      final myId = me?.uid ?? '';
+      // Find the accepted offer's buyer name (if any)
+      final acceptedOffer = _offers
+          .where((o) => o.itemId == id && o.status == 'accepted')
+          .isNotEmpty
+          ? _offers.firstWhere((o) => o.itemId == id && o.status == 'accepted')
+          : null;
+      // Notify seller if seller ≠ current user (they marked it sold themselves)
+      if (item.sellerId.isNotEmpty && item.sellerId != myId) {
+        HuddlNotificationService().itemSold(
+          sellerId: item.sellerId,
+          itemTitle: item.title,
+          itemId: item.id,
+          buyerName: acceptedOffer?.buyerName ?? 'a buyer',
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] itemSold notif error: $e');
+        });
+      }
+      // Notify users who saved this item
+      final savedIds = savedByUserIds(id)
+          .where((uid) => uid != myId && uid != item.sellerId)
+          .toList();
+      for (final uid in savedIds) {
+        HuddlNotificationService().savedItemSold(
+          savedByUserId: uid,
+          itemTitle: item.title,
+          itemId: item.id,
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] savedItemSold notif error: $e');
+        });
+      }
+    }
   }
 
   void relistItem(String id) {
@@ -475,6 +517,25 @@ class RehomeService extends ChangeNotifier {
     final myIdx = _myListings.indexWhere((i) => i.id == id);
     if (myIdx >= 0) {
       _myListings[myIdx].isSold = false;
+    }
+
+    // ── Notify saved users this item is available again (fire-and-forget) ──
+    final item = getItemById(id);
+    if (item != null) {
+      final myId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final savedIds = savedByUserIds(id)
+          .where((uid) => uid != myId && uid != item.sellerId)
+          .toList();
+      for (final uid in savedIds) {
+        HuddlNotificationService().itemRelisted(
+          savedByUserId: uid,
+          itemTitle: item.title,
+          itemId: item.id,
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] itemRelisted notif error: $e');
+        });
+      }
     }
   }
 
@@ -503,6 +564,27 @@ class RehomeService extends ChangeNotifier {
     final myIdx = _myListings.indexWhere((i) => i.id == offer.itemId);
     if (myIdx >= 0) _myListings[myIdx].offerCount++;
     notifyListeners();
+
+    // ── Notify seller of new offer (fire-and-forget) ─────────────────────
+    final item = getItemById(offer.itemId);
+    if (item != null && item.sellerId.isNotEmpty) {
+      final me = FirebaseAuth.instance.currentUser;
+      final myId = me?.uid ?? '';
+      // Only notify if the buyer ≠ the seller
+      if (myId != item.sellerId) {
+        HuddlNotificationService().offerReceived(
+          sellerId: item.sellerId,
+          buyerName: offer.buyerName,
+          itemTitle: offer.itemTitle,
+          itemId: offer.itemId,
+          offerId: offer.id,
+          offerAmount: offer.amountDisplay,
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] offerReceived notif error: $e');
+        });
+      }
+    }
   }
 
   void acceptOffer(String offerId, {String? message}) {
@@ -513,6 +595,41 @@ class RehomeService extends ChangeNotifier {
         _offers[idx].responseMessage = message.trim();
       }
       notifyListeners();
+
+      // ── Notify buyer their offer was accepted (fire-and-forget) ──────────
+      final offer = _offers[idx];
+      final item = getItemById(offer.itemId);
+      if (item != null && offer.buyerId.isNotEmpty) {
+        final me = FirebaseAuth.instance.currentUser;
+        HuddlNotificationService().offerAccepted(
+          buyerId: offer.buyerId,
+          sellerName: item.sellerName,
+          itemTitle: offer.itemTitle,
+          itemId: offer.itemId,
+          sellerId: item.sellerId,
+          offerAmount: offer.amountDisplay,
+          responseMessage: message,
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] offerAccepted notif error: $e');
+        });
+        // Notify other pending buyers this item is sold
+        final otherBuyers = _offers
+            .where((o) => o.itemId == offer.itemId && o.id != offerId && o.buyerId.isNotEmpty && o.buyerId != (me?.uid ?? ''))
+            .map((o) => o.buyerId)
+            .toSet()
+            .toList();
+        if (otherBuyers.isNotEmpty) {
+          HuddlNotificationService().offerOnOtherBuyerDeclined(
+            otherBuyerIds: otherBuyers,
+            itemTitle: offer.itemTitle,
+            itemId: offer.itemId,
+            itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+          ).catchError((e) {
+            if (kDebugMode) debugPrint('[RehomeService] offerOnOtherBuyer notif error: $e');
+          });
+        }
+      }
     }
   }
 
@@ -524,6 +641,22 @@ class RehomeService extends ChangeNotifier {
         _offers[idx].responseMessage = message.trim();
       }
       notifyListeners();
+
+      // ── Notify buyer their offer was declined (fire-and-forget) ──────────
+      final offer = _offers[idx];
+      final item = getItemById(offer.itemId);
+      if (item != null && offer.buyerId.isNotEmpty) {
+        HuddlNotificationService().offerDeclined(
+          buyerId: offer.buyerId,
+          sellerName: item.sellerName,
+          itemTitle: offer.itemTitle,
+          itemId: offer.itemId,
+          responseMessage: message,
+          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[RehomeService] offerDeclined notif error: $e');
+        });
+      }
     }
   }
 
@@ -544,5 +677,17 @@ class RehomeService extends ChangeNotifier {
     if (myIdx >= 0) return _myListings[myIdx];
     return null;
   }
+
+  /// Returns user IDs of everyone who has saved a given item.
+  /// Currently returns saved buyers from local offers list where isSaved is true.
+  /// In a full Firestore implementation this would query a savedBy subcollection.
+  List<String> savedByUserIds(String itemId) {
+    return _offers
+        .where((o) => o.itemId == itemId && o.buyerId.isNotEmpty)
+        .map((o) => o.buyerId)
+        .toSet()
+        .toList();
+  }
+
 
 }

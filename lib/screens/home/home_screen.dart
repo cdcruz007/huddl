@@ -30,6 +30,11 @@ import '../../services/daily_ai_refresh_service.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/firestore_service.dart';
+import '../../services/huddl_notification_service.dart';
+import '../../services/rehome_service.dart';
+import '../../screens/marketplace/item_detail_screen.dart';
+import '../../screens/groups/group_chat_screen.dart';
+import '../../screens/groups/dm_chat_screen.dart';
 import 'dart:async';
 
 
@@ -851,6 +856,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _openNotifications() {
+    // Reset local flag so the badge re-evaluates from Firestore after close
+    setState(() => _notificationsRead = false);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -861,12 +868,11 @@ class _HomeScreenState extends State<HomeScreen>
         borough: _borough,
         meetups: _meetupService.meetups,
         onNavigate: (int tabIndex) {
-          Navigator.pop(context);
+          // Sheet closes itself before calling onNavigate
           _switchToTab(tabIndex);
         },
         onNavigateToGroupChat:
             (String groupId, String groupName, String groupImageUrl) {
-          Navigator.pop(context);
           Navigator.of(context).pushNamed(
             '/group_chat',
             arguments: {
@@ -877,7 +883,6 @@ class _HomeScreenState extends State<HomeScreen>
           );
         },
         onNavigateToMeetup: (Meetup meetup) {
-          Navigator.pop(context);
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => MeetupDetailScreen(meetup: meetup),
@@ -885,7 +890,8 @@ class _HomeScreenState extends State<HomeScreen>
           );
         },
         onMarkAllRead: () {
-          setState(() => _notificationsRead = true);
+          // Badge will auto-update via Firestore stream
+          setState(() => _realUnreadNotifCount = 0);
         },
       ),
     );
@@ -3240,14 +3246,20 @@ class _CommentsSheetState extends State<_CommentsSheet> {
 }
 
 // ── Notifications Sheet ─────────────────────────────────────────────────────
+// Streams all notification types from Firestore in real-time.
+// Tapping a notification deep-links directly to the related screen.
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _NotificationsSheet extends StatefulWidget {
+  // Legacy feed/meetup params kept so _openNotifications() call-site compiles
+  // without changes. They are only used as a secondary fallback when Firestore
+  // has no notifications yet.
   final List<FeedItem> feedItems;
   final List<Announcement> announcements;
   final String borough;
   final List<Meetup> meetups;
   final void Function(int tabIndex) onNavigate;
-  final void Function(
-          String groupId, String groupName, String groupImageUrl)
+  final void Function(String groupId, String groupName, String groupImageUrl)
       onNavigateToGroupChat;
   final void Function(Meetup meetup) onNavigateToMeetup;
   final VoidCallback onMarkAllRead;
@@ -3264,253 +3276,409 @@ class _NotificationsSheet extends StatefulWidget {
   });
 
   @override
-  State<_NotificationsSheet> createState() =>
-      _NotificationsSheetState();
+  State<_NotificationsSheet> createState() => _NotificationsSheetState();
 }
 
 class _NotificationsSheetState extends State<_NotificationsSheet> {
-  late List<_NotifItem> _notifs;
+  late Stream<List<Map<String, dynamic>>> _stream;
   bool _showUnreadOnly = false;
-
-  List<_NotifItem> get _displayedNotifs => _showUnreadOnly
-      ? _notifs.where((n) => !n.isRead).toList()
-      : _notifs;
 
   @override
   void initState() {
     super.initState();
-    _notifs = _buildNotifications();
+    _stream = HuddlNotificationService().stream();
   }
 
-  List<_NotifItem> _buildNotifications() {
-    final List<_NotifItem> notifs = [];
-    for (final f in widget.feedItems.take(5)) {
-      notifs.add(_NotifItem(
-        icon: _iconForType(f.type),
-        color: _colorForType(f.type),
-        bgColor: _bgForType(f.type),
-        title: f.title,
-        subtitle: f.subtitle,
-        timeAgo: f.timeAgo,
-        feedType: f.type,
-        imageUrl: f.imageAsset,
-        personName:
-            f.type == FeedItemType.newParent ? f.title : null,
-        meta: f.meta,
-        isRead: false,
-      ));
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  IconData _iconFor(String type) {
+    switch (type) {
+      // Messaging
+      case 'new_dm':            return Icons.chat_bubble_outline;
+      case 'new_group_message': return Icons.group;
+      case 'voice_message_dm':  return Icons.mic;
+      case 'voice_message_group': return Icons.mic;
+      case 'message_reaction':  return Icons.favorite;
+      case 'thread_reply':      return Icons.reply;
+      // Groups & social
+      case 'group_invitation':    return Icons.group_add;
+      case 'invitation_accepted': return Icons.check_circle_outline;
+      case 'group_member_joined': return Icons.person_add;
+      case 'post_liked':          return Icons.favorite;
+      case 'post_commented':      return Icons.comment_outlined;
+      case 'comment_replied':     return Icons.reply;
+      case 'poll_created':        return Icons.poll_outlined;
+      // Events
+      case 'meetup_rsvp':         return Icons.event_available;
+      case 'meetup_reminder':     return Icons.alarm;
+      case 'new_meetup_nearby':   return Icons.location_on_outlined;
+      case 'event_update':        return Icons.update;
+      // Marketplace
+      case 'offer_received':      return Icons.local_offer_outlined;
+      case 'offer_accepted':      return Icons.handshake_outlined;
+      case 'offer_declined':      return Icons.cancel_outlined;
+      case 'item_sold':           return Icons.sell_outlined;
+      case 'saved_item_sold':     return Icons.bookmark_remove_outlined;
+      case 'item_relisted':       return Icons.refresh;
+      // System
+      case 'subscription_activated': return Icons.star_outline;
+      case 'payment_failed':         return Icons.payment;
+      case 'welcome':                return Icons.waving_hand;
+      default:                       return Icons.notifications_outlined;
     }
-    for (final a
-        in widget.announcements.where((a) => a.likes > 0).take(3)) {
-      notifs.add(_NotifItem(
-        icon: Icons.favorite,
-        color: HuddlColors.primary,
-        bgColor: HuddlColors.peachLight,
-        title: '${a.authorName}\'s post',
-        subtitle: '${a.likes} people liked this post',
-        timeAgo: a.timeAgo,
-        feedType: null,
-        personName: a.authorName,
-        imageUrl: a.authorPhotoUrl,
-        meta: const {},
-        isRead: false,
-      ));
-    }
-    notifs.sort((a, b) => a.timeAgo.compareTo(b.timeAgo));
-    return notifs;
   }
 
-  void _markAllRead() {
-    setState(() {
-      for (final n in _notifs) {
-        n.isRead = true;
-      }
-    });
-    widget.onMarkAllRead();
+  Color _colorFor(String type) {
+    switch (type) {
+      case 'new_dm':
+      case 'new_group_message':
+      case 'voice_message_dm':
+      case 'voice_message_group':
+      case 'thread_reply':
+        return HuddlColors.primary;
+      case 'message_reaction':
+      case 'post_liked':
+        return Colors.pinkAccent;
+      case 'group_invitation':
+      case 'invitation_accepted':
+      case 'group_member_joined':
+        return HuddlColors.blue;
+      case 'post_commented':
+      case 'comment_replied':
+      case 'poll_created':
+        return HuddlColors.primary;
+      case 'meetup_rsvp':
+      case 'meetup_reminder':
+      case 'new_meetup_nearby':
+      case 'event_update':
+        return Colors.teal;
+      case 'offer_received':
+      case 'offer_accepted':
+        return Colors.green;
+      case 'offer_declined':
+      case 'item_sold':
+      case 'saved_item_sold':
+        return Colors.orange;
+      case 'item_relisted':
+        return Colors.blueAccent;
+      case 'subscription_activated':
+        return HuddlColors.accentAmber;
+      case 'payment_failed':
+        return Colors.red;
+      default:
+        return HuddlColors.primary;
+    }
   }
 
-  void _onNotifTap(_NotifItem n) {
-    setState(() => n.isRead = true);
-    if (n.feedType == null) {
-      widget.onNavigate(0);
-      return;
+  Color _bgFor(String type) {
+    final c = _colorFor(type);
+    return c.withValues(alpha: 0.12);
+  }
+
+  String _timeAgo(Map<String, dynamic> n) {
+    final raw = n['createdAt'];
+    if (raw == null) return 'just now';
+    DateTime? dt;
+    if (raw is String) dt = DateTime.tryParse(raw);
+    if (dt == null) return 'just now';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return 'just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${(diff.inDays / 7).floor()}w ago';
+  }
+
+  // ── Deep-link routing ─────────────────────────────────────────────────────
+
+  void _onTap(Map<String, dynamic> n) {
+    // Mark as read
+    final id = n['id'] as String? ?? '';
+    if (id.isNotEmpty && n['read'] != true) {
+      HuddlNotificationService().markOneRead(id);
     }
-    switch (n.feedType!) {
-      case FeedItemType.newGroup:
-        final groupId = n.meta['groupId'] as String?;
-        if (groupId != null) {
-          widget.onNavigateToGroupChat(
-              groupId, n.title, n.imageUrl ?? '');
-        } else {
-          widget.onNavigate(1);
+
+    final type = n['type'] as String? ?? '';
+    final data = (n['data'] as Map<String, dynamic>?) ?? {};
+
+    Navigator.pop(context); // Close sheet first
+
+    switch (type) {
+      // ── DM / Voice DM ──────────────────────────────────────────────────
+      case 'new_dm':
+      case 'voice_message_dm':
+        {
+          final convId = data['conversationId'] as String? ?? '';
+          final recipientId = data['recipientId'] as String? ?? '';
+          final senderName = n['senderName'] as String? ?? 'Chat';
+          Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => DMChatScreen(
+              recipientId: recipientId,
+              recipientName: senderName,
+              recipientAvatarColor: '#FF975C',
+              conversationId: convId.isEmpty ? null : convId,
+            ),
+          ));
         }
         break;
-      case FeedItemType.newEvent:
-        final match =
-            widget.meetups.where((m) => m.title == n.title).toList();
-        if (match.isNotEmpty) {
-          widget.onNavigateToMeetup(match.first);
-        } else {
-          widget.onNavigate(2);
+
+      // ── Group messages / voice / reaction / thread ─────────────────────
+      case 'new_group_message':
+      case 'voice_message_group':
+      case 'message_reaction':
+      case 'thread_reply':
+      case 'group_invitation':
+      case 'invitation_accepted':
+      case 'group_member_joined':
+      case 'poll_created':
+        {
+          final groupId = data['groupId'] as String? ?? '';
+          final groupName = data['groupName'] as String? ?? 'Group';
+          final groupImageUrl = data['groupImageUrl'] as String? ?? '';
+          if (groupId.isNotEmpty) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => GroupChatScreen(
+                groupId: groupId,
+                groupName: groupName,
+                groupImageUrl: groupImageUrl,
+              ),
+            ));
+          } else {
+            widget.onNavigate(1); // Groups tab
+          }
         }
         break;
-      case FeedItemType.newMarketplaceItem:
-        widget.onNavigate(3);
+
+      // ── Meetup events ──────────────────────────────────────────────────
+      case 'meetup_rsvp':
+      case 'meetup_reminder':
+      case 'new_meetup_nearby':
+      case 'event_update':
+        {
+          final meetupId = data['meetupId'] as String? ?? '';
+          final meetupTitle = data['meetupTitle'] as String? ?? '';
+          // Try to find matching meetup in local list
+          final match = widget.meetups
+              .where((m) => m.id == meetupId || m.title == meetupTitle)
+              .toList();
+          if (match.isNotEmpty) {
+            widget.onNavigateToMeetup(match.first);
+          } else {
+            widget.onNavigate(2); // Events tab
+          }
+        }
         break;
-      case FeedItemType.newParent:
-      case FeedItemType.milestone:
+
+      // ── Marketplace: offer, sold, relisted ─────────────────────────────
+      case 'offer_received':
+      case 'offer_accepted':
+      case 'offer_declined':
+      case 'item_sold':
+      case 'saved_item_sold':
+      case 'item_relisted':
+        {
+          final itemId = data['itemId'] as String? ?? '';
+          // Try to find item in RehomeService
+          final item = itemId.isNotEmpty
+              ? RehomeService().getItemById(itemId)
+              : null;
+          if (item != null) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => ItemDetailScreen(item: item),
+            ));
+          } else {
+            widget.onNavigate(3); // Marketplace tab
+          }
+        }
+        break;
+
+      // ── System / subscription ──────────────────────────────────────────
+      case 'subscription_activated':
+      case 'payment_failed':
+        widget.onNavigate(4); // Profile tab (where subscription lives)
+        break;
+
+      // ── Fallback ───────────────────────────────────────────────────────
+      default:
         widget.onNavigate(0);
         break;
     }
   }
 
+  Future<void> _markAllRead(List<Map<String, dynamic>> notifs) async {
+    await HuddlNotificationService().markAllRead();
+    widget.onMarkAllRead();
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    final unreadCount = _notifs.where((n) => !n.isRead).length;
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: BoxDecoration(
-        color: context.hc.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const HuddlBottomSheetHandle(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.notifications,
-                    color: HuddlColors.primary, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  'Notifications',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
-                  ),
-                ),
-                if (unreadCount > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$unreadCount',
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _stream,
+      builder: (context, snapshot) {
+        final allNotifs = snapshot.data ?? [];
+        final unread = allNotifs.where((n) => n['read'] != true).length;
+        final displayed = _showUnreadOnly
+            ? allNotifs.where((n) => n['read'] != true).toList()
+            : allNotifs;
+
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.78,
+          ),
+          decoration: BoxDecoration(
+            color: context.hc.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const HuddlBottomSheetHandle(),
+              // ── Header row ──────────────────────────────────────────
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.notifications,
+                        color: HuddlColors.primary, size: 22),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Notifications',
                       style: GoogleFonts.poppins(
-                        fontSize: 11,
+                        fontSize: 18,
                         fontWeight: FontWeight.w600,
-                        color: context.hc.surface,
+                        color: context.hc.textPrimary,
                       ),
                     ),
-                  ),
-                ],
-                const Spacer(),
-                TextButton(
-                  onPressed: unreadCount > 0 ? _markAllRead : null,
-                  child: Text(
-                    'Mark all read',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: unreadCount > 0
-                          ? HuddlColors.primary
-                          : HuddlColors.textHint,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: context.hc.divider),
-          // Unread / All filter row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                _notifFilterChip('All', !_showUnreadOnly, () {
-                  setState(() => _showUnreadOnly = false);
-                }),
-                const SizedBox(width: 8),
-                _notifFilterChip(
-                  'Unread${unreadCount > 0 ? ' ($unreadCount)' : ''}',
-                  _showUnreadOnly,
-                  () {
-                    setState(() => _showUnreadOnly = true);
-                  },
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: context.hc.divider),
-          Flexible(
-            child: _displayedNotifs.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.notifications_none,
-                              size: 48,
-                              color: context.hc.textTertiary
-                                  .withValues(alpha: 0.4)),
-                          const SizedBox(height: 12),
-                          Text(
-                            _showUnreadOnly
-                                ? 'No unread notifications'
-                                : 'No new notifications',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
-                            ),
+                    if (unread > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$unread',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'You\'re all caught up!',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: context.hc.textTertiary,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    TextButton(
+                      onPressed: unread > 0
+                          ? () => _markAllRead(allNotifs)
+                          : null,
+                      child: Text(
+                        'Mark all read',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: unread > 0
+                              ? HuddlColors.primary
+                              : HuddlColors.textHint,
+                        ),
                       ),
                     ),
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    shrinkWrap: true,
-                    itemCount: _displayedNotifs.length,
-                    separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        indent: 72,
-                        color: context.hc.divider),
-                    itemBuilder: (_, index) {
-                      final n = _displayedNotifs[index];
-                      return _buildNotifTile(n);
-                    },
-                  ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: context.hc.divider),
+              // ── Filter chips ────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 6),
+                child: Row(
+                  children: [
+                    _filterChip('All', !_showUnreadOnly, () {
+                      setState(() => _showUnreadOnly = false);
+                    }),
+                    const SizedBox(width: 8),
+                    _filterChip(
+                      'Unread${unread > 0 ? ' ($unread)' : ''}',
+                      _showUnreadOnly,
+                      () => setState(() => _showUnreadOnly = true),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: context.hc.divider),
+              // ── List ────────────────────────────────────────────────
+              Flexible(
+                child: snapshot.connectionState ==
+                            ConnectionState.waiting &&
+                        allNotifs.isEmpty
+                    ? const Center(child: CircularProgressIndicator())
+                    : displayed.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.notifications_none,
+                                      size: 48,
+                                      color: context.hc.textTertiary
+                                          .withValues(alpha: 0.4)),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _showUnreadOnly
+                                        ? 'No unread notifications'
+                                        : 'No notifications yet',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: context.hc.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "You're all caught up!",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      color: context.hc.textTertiary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 8),
+                            shrinkWrap: true,
+                            itemCount: displayed.length,
+                            separatorBuilder: (_, __) => Divider(
+                                height: 1,
+                                indent: 72,
+                                color: context.hc.divider),
+                            itemBuilder: (_, i) =>
+                                _buildTile(displayed[i]),
+                          ),
+              ),
+              SizedBox(
+                  height: MediaQuery.of(context).padding.bottom + 8),
+            ],
           ),
-          SizedBox(
-              height: MediaQuery.of(context).padding.bottom + 8),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _notifFilterChip(String label, bool selected, VoidCallback onTap) {
+  Widget _filterChip(
+      String label, bool selected, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
         decoration: BoxDecoration(
           color: selected
               ? HuddlColors.primary.withValues(alpha: 0.12)
@@ -3526,82 +3694,88 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
           label,
           style: GoogleFonts.poppins(
             fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? HuddlColors.primary : HuddlColors.textSecondary,
+            fontWeight:
+                selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected
+                ? HuddlColors.primary
+                : HuddlColors.textSecondary,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildNotifTile(_NotifItem n) {
-    final resolvedPhoto = n.personName != null
-        ? MemberPhotoService.getPhotoByName(n.personName!)
-        : null;
-    final photoUrl = resolvedPhoto ?? n.imageUrl;
-    final hasPhoto = photoUrl != null && photoUrl.isNotEmpty;
+  Widget _buildTile(Map<String, dynamic> n) {
+    final type = n['type'] as String? ?? '';
+    final title = n['title'] as String? ?? '';
+    final body = n['body'] as String? ?? '';
+    final isRead = n['read'] == true;
+    final photoUrl = n['senderPhotoUrl'] as String? ??
+        n['imageUrl'] as String? ?? '';
+    final icon = _iconFor(type);
+    final color = _colorFor(type);
+    final bg = _bgFor(type);
+    final timeAgo = _timeAgo(n);
+
     return Material(
-      color: n.isRead
-          ? HuddlColors.white
-          : HuddlColors.peachLight.withValues(alpha: 0.3),
+      color: isRead
+          ? context.hc.surface
+          : HuddlColors.peachLight.withValues(alpha: 0.25),
       child: InkWell(
-        onTap: () => _onNotifTap(n),
+        onTap: () => _onTap(n),
         child: Padding(
           padding: const EdgeInsets.symmetric(
               horizontal: 16, vertical: 10),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Avatar / icon badge
               SizedBox(
                 width: 48,
                 height: 48,
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
-                    if (hasPhoto)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: _buildNotifImage(photoUrl),
-                      )
-                    else
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: n.bgColor,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child:
-                            Icon(n.icon, color: n.color, size: 24),
-                      ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(24),
+                      child: photoUrl.isNotEmpty
+                          ? _buildPhoto(photoUrl, bg)
+                          : Container(
+                              width: 48,
+                              height: 48,
+                              color: bg,
+                              child: Icon(icon, color: color, size: 24),
+                            ),
+                    ),
                     Positioned(
-                      right: -2,
-                      bottom: -2,
+                      right: -3,
+                      bottom: -3,
                       child: Container(
                         width: 20,
                         height: 20,
                         decoration: BoxDecoration(
-                          color: n.bgColor,
+                          color: bg,
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: context.hc.surface, width: 1.5),
                         ),
-                        child:
-                            Icon(n.icon, size: 11, color: n.color),
+                        child: Icon(icon, size: 11, color: color),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
+              // Text content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      n.title,
+                      title,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
-                        fontWeight: n.isRead
+                        fontWeight: isRead
                             ? FontWeight.w400
                             : FontWeight.w600,
                         color: context.hc.textPrimary,
@@ -3609,37 +3783,40 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      n.subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
+                    if (body.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        body,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: context.hc.textTertiary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
+              // Time + unread dot
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    n.timeAgo,
+                    timeAgo,
                     style: GoogleFonts.poppins(
                       fontSize: 10,
-                      color: n.isRead
+                      color: isRead
                           ? HuddlColors.textHint
                           : HuddlColors.primary,
-                      fontWeight: n.isRead
+                      fontWeight: isRead
                           ? FontWeight.w400
                           : FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (!n.isRead)
+                  if (!isRead)
                     Container(
                       width: 8,
                       height: 8,
@@ -3659,119 +3836,26 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
     );
   }
 
-  Widget _buildNotifImage(String url) {
-    if (url.startsWith('data:')) {
-      try {
-        final parts = url.split(',');
-        if (parts.length > 1) {
-          final bytes = base64Decode(parts[1]);
-          return Image.memory(bytes,
-              width: 48, height: 48, fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _notifImageFallback());
-        }
-      } catch (_) {}
-      return _notifImageFallback();
-    }
-    if (url.startsWith('http') || url.startsWith('blob:')) {
+  Widget _buildPhoto(String url, Color fallbackBg) {
+    if (url.startsWith('http')) {
       return Image.network(url,
-          width: 48, height: 48, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _notifImageFallback());
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              Container(width: 48, height: 48, color: fallbackBg));
     }
     if (url.startsWith('assets/')) {
       return Image.asset(url,
-          width: 48, height: 48, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _notifImageFallback());
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) =>
+              Container(width: 48, height: 48, color: fallbackBg));
     }
-    return _notifImageFallback();
-  }
-
-  Widget _notifImageFallback() {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: HuddlColors.peachLight,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: const Icon(Icons.person,
-          color: HuddlColors.primary, size: 24),
-    );
-  }
-
-  IconData _iconForType(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return Icons.person_add;
-      case FeedItemType.newGroup:
-        return Icons.people;
-      case FeedItemType.newEvent:
-        return Icons.event;
-      case FeedItemType.newMarketplaceItem:
-        return Icons.storefront;
-      case FeedItemType.milestone:
-        return Icons.emoji_events;
-    }
-  }
-
-  Color _colorForType(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return HuddlColors.blue;
-      case FeedItemType.newGroup:
-        return HuddlColors.primary;
-      case FeedItemType.newEvent:
-        return HuddlColors.blue;
-      case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowDark;
-      case FeedItemType.milestone:
-        return HuddlColors.accentAmber;
-    }
-  }
-
-  Color _bgForType(FeedItemType t) {
-    switch (t) {
-      case FeedItemType.newParent:
-        return HuddlColors.successBg;
-      case FeedItemType.newGroup:
-        return HuddlColors.peachLight;
-      case FeedItemType.newEvent:
-        return HuddlColors.blueBackground;
-      case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowBackground;
-      case FeedItemType.milestone:
-        return HuddlColors.yellowSoft;
-    }
+    return Container(width: 48, height: 48, color: fallbackBg);
   }
 }
-
-class _NotifItem {
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  final String title;
-  final String subtitle;
-  final String timeAgo;
-  final FeedItemType? feedType;
-  final String? imageUrl;
-  final String? personName;
-  final Map<String, dynamic> meta;
-  bool isRead;
-
-  _NotifItem({
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-    required this.title,
-    required this.subtitle,
-    required this.timeAgo,
-    required this.feedType,
-    this.imageUrl,
-    this.personName,
-    this.meta = const {},
-    this.isRead = false,
-  });
-}
-
 // ── Share Post Sheet ────────────────────────────────────────────────────────
 class _SharePostSheet extends StatefulWidget {
   final String shareText;

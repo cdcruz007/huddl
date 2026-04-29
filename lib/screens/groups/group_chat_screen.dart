@@ -36,6 +36,7 @@ import '../../widgets/item_invite_card.dart';
 import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
+import '../../services/huddl_notification_service.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -674,6 +675,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         // New emoji - clear all previous reactions (replace behavior) and set new one
         msgReactions.clear();
         msgReactions[emoji] = 1;
+
+        // ── Notify the message author (fire-and-forget) ─────────────────
+        final msg = _messages.where((m) => m.id == messageId).isNotEmpty
+            ? _messages.firstWhere((m) => m.id == messageId)
+            : null;
+        final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+        if (msg != null &&
+            msg.senderId.isNotEmpty &&
+            msg.senderId != 'system' &&
+            msg.senderId != myUid) {
+          final myName = _onboardingService.name ?? 'Someone';
+          HuddlNotificationService().messageReaction(
+            recipientId: msg.senderId,
+            reactorName: myName,
+            emoji: emoji,
+            messagePreview: msg.message.length > 60
+                ? '${msg.message.substring(0, 60)}…'
+                : msg.message,
+            contextType: 'group',
+            groupId: widget.groupId,
+            groupName: widget.groupName,
+          ).catchError((e) {
+            if (kDebugMode) debugPrint('[GroupChat] reaction notif error: $e');
+          });
+        }
       }
       if (msgReactions.isEmpty) {
         _reactions.remove(messageId);

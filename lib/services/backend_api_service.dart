@@ -319,6 +319,133 @@ class BackendApiService {
   }
 
   // ═════════════════════════════════════════════════════════════════════════
+  // MARKETPLACE NOTIFICATIONS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Notify a seller that they received a new offer on their listing.
+  Future<void> notifyOfferReceived({
+    required String sellerId,
+    required String buyerName,
+    required String itemTitle,
+    required String itemId,
+    required String offerId,
+    required String offerAmount,
+    String? notePreview,
+    String? itemImageUrl,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-offer'),
+        headers: headers,
+        body: jsonEncode({
+          'sellerId': sellerId,
+          'buyerName': buyerName,
+          'itemTitle': itemTitle,
+          'itemId': itemId,
+          'offerId': offerId,
+          'offerAmount': offerAmount,
+          if (notePreview != null) 'notePreview': notePreview,
+          if (itemImageUrl != null) 'itemImageUrl': itemImageUrl,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyOfferReceived error: $e');
+    }
+  }
+
+  /// Notify a buyer that the seller accepted or declined their offer.
+  Future<void> notifyOfferResponse({
+    required String buyerId,
+    required String sellerName,
+    required String itemTitle,
+    required String itemId,
+    required bool accepted,
+    String? sellerId,
+    String? responseMessage,
+    String? itemImageUrl,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-offer-response'),
+        headers: headers,
+        body: jsonEncode({
+          'buyerId': buyerId,
+          'sellerName': sellerName,
+          'itemTitle': itemTitle,
+          'itemId': itemId,
+          'accepted': accepted,
+          if (sellerId != null) 'sellerId': sellerId,
+          if (responseMessage != null) 'responseMessage': responseMessage,
+          if (itemImageUrl != null) 'itemImageUrl': itemImageUrl,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyOfferResponse error: $e');
+    }
+  }
+
+  /// Notify seller + other buyers when an item is marked as sold.
+  Future<void> notifyItemSold({
+    required String sellerId,
+    required String itemTitle,
+    required String itemId,
+    String? buyerName,
+    List<String>? otherBuyerIds,
+    String? itemImageUrl,
+  }) async {
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-item-sold'),
+        headers: headers,
+        body: jsonEncode({
+          'sellerId': sellerId,
+          'itemTitle': itemTitle,
+          'itemId': itemId,
+          if (buyerName != null) 'buyerName': buyerName,
+          if (otherBuyerIds != null) 'otherBuyerIds': otherBuyerIds,
+          if (itemImageUrl != null) 'itemImageUrl': itemImageUrl,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyItemSold error: $e');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
+  // SOCIAL / GROUP EVENT NOTIFICATIONS
+  // ═════════════════════════════════════════════════════════════════════════
+
+  /// Generic fan-out for social events: group join, invitation, RSVP, reaction, poll.
+  Future<void> notifyGroupEvent({
+    required List<String> recipientIds,
+    required String type,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    if (recipientIds.isEmpty) return;
+    try {
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/messages/notify-group-event'),
+        headers: headers,
+        body: jsonEncode({
+          'recipientIds': recipientIds,
+          'type': type,
+          'title': title,
+          'body': body,
+          if (data != null) 'data': data,
+        }),
+      ).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyGroupEvent error: $e');
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════
   // RESPONSE HANDLING
   // ═════════════════════════════════════════════════════════════════════════
 

@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/group.dart';
 import 'borough_scope_guard.dart';
+import 'huddl_notification_service.dart';
 
 /// Represents a group invitation sent to a user
 class GroupInvitation {
@@ -287,6 +289,21 @@ class InvitationService extends ChangeNotifier {
 
       notifyListeners();
       _log('Accepted invitation: $invitationId');
+
+      // ── Notify the inviter that their invitation was accepted ──────────────
+      if (inv.invitedById.isNotEmpty) {
+        final me = FirebaseAuth.instance.currentUser;
+        final myName = me?.displayName ?? 'Someone';
+        HuddlNotificationService().invitationAccepted(
+          recipientId: inv.invitedById,
+          acceptorName: myName,
+          groupName: inv.groupName,
+          groupId: inv.groupId,
+          groupImageUrl: inv.groupImageUrl.isNotEmpty ? inv.groupImageUrl : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[InvitationService] invitationAccepted notif error: $e');
+        });
+      }
     }
   }
 
@@ -346,6 +363,23 @@ class InvitationService extends ChangeNotifier {
 
     notifyListeners();
     _log('Joined public group: "${group.name}"');
+
+    // ── Notify group creator that a new member joined ──────────────────────
+    if (group.creatorId != null && group.creatorId!.isNotEmpty) {
+      final me = FirebaseAuth.instance.currentUser;
+      final myId = me?.uid ?? '';
+      if (group.creatorId != myId) {
+        HuddlNotificationService().groupMemberJoined(
+          adminId: group.creatorId!,
+          newMemberName: userName,
+          groupName: group.name,
+          groupId: group.id,
+          groupImageUrl: group.imageUrl.isNotEmpty ? group.imageUrl : null,
+        ).catchError((e) {
+          if (kDebugMode) debugPrint('[InvitationService] groupMemberJoined notif error: $e');
+        });
+      }
+    }
   }
 
   /// Check if a group has been joined

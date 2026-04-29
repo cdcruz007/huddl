@@ -8,6 +8,8 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
+import '../../services/huddl_notification_service.dart';
+import '../../services/backend_api_service.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
@@ -285,6 +287,37 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
               // Persist to service so the seller sees it in the Sell tab
               _service.addOffer(offer);
+
+              // ── Notify seller via Firestore + FCM (fire-and-forget) ──────
+              final noteSummary = noteController.text.trim().isEmpty
+                  ? null
+                  : noteController.text.trim();
+              final amountDisplay =
+                  item.isFree ? 'Free' : '£${amount.toStringAsFixed(0)}';
+              HuddlNotificationService().offerReceived(
+                sellerId: item.sellerId,
+                buyerName: buyerName,
+                itemTitle: item.title,
+                itemId: item.id,
+                offerId: offer.id,
+                offerAmount: amountDisplay,
+                notePreview: noteSummary,
+                itemImageUrl: item.imageUrls.isNotEmpty
+                    ? item.imageUrls.first
+                    : null,
+              );
+              BackendApiService().notifyOfferReceived(
+                sellerId: item.sellerId,
+                buyerName: buyerName,
+                itemTitle: item.title,
+                itemId: item.id,
+                offerId: offer.id,
+                offerAmount: amountDisplay,
+                notePreview: noteSummary,
+                itemImageUrl: item.imageUrls.isNotEmpty
+                    ? item.imageUrls.first
+                    : null,
+              );
 
               Navigator.pop(ctx);
 

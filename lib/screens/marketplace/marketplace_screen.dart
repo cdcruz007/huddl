@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
+import '../../services/huddl_notification_service.dart';
+import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../../widgets/borough_badge.dart';
@@ -2297,6 +2299,30 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               if (isAccept) {
                                 _ai.recordOfferAccept();
                                 _service.acceptOffer(offer.id, message: msg);
+                                // Notify buyer via Firestore + FCM
+                                final offerItem = _service.getItemById(offer.itemId);
+                                final me = _service.myListings.isNotEmpty
+                                    ? _service.myListings.first.sellerName
+                                    : 'Seller';
+                                HuddlNotificationService().offerAccepted(
+                                  buyerId: offer.buyerId,
+                                  sellerName: me,
+                                  itemTitle: offer.itemTitle,
+                                  itemId: offer.itemId,
+                                  sellerId: offerItem?.sellerId ?? '',
+                                  offerAmount: offer.amountDisplay,
+                                  responseMessage: msg,
+                                  itemImageUrl: offerItem?.imageUrls.isNotEmpty == true
+                                      ? offerItem!.imageUrls.first : null,
+                                );
+                                BackendApiService().notifyOfferResponse(
+                                  buyerId: offer.buyerId,
+                                  sellerName: me,
+                                  itemTitle: offer.itemTitle,
+                                  itemId: offer.itemId,
+                                  accepted: true,
+                                  responseMessage: msg,
+                                );
                                 if (mounted) {
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(SnackBar(
@@ -2330,6 +2356,28 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                               } else {
                                 _ai.recordOfferDecline();
                                 _service.declineOffer(offer.id, message: msg);
+                                // Notify buyer via Firestore + FCM
+                                final offerItem = _service.getItemById(offer.itemId);
+                                final me = _service.myListings.isNotEmpty
+                                    ? _service.myListings.first.sellerName
+                                    : 'Seller';
+                                HuddlNotificationService().offerDeclined(
+                                  buyerId: offer.buyerId,
+                                  sellerName: me,
+                                  itemTitle: offer.itemTitle,
+                                  itemId: offer.itemId,
+                                  responseMessage: msg,
+                                  itemImageUrl: offerItem?.imageUrls.isNotEmpty == true
+                                      ? offerItem!.imageUrls.first : null,
+                                );
+                                BackendApiService().notifyOfferResponse(
+                                  buyerId: offer.buyerId,
+                                  sellerName: me,
+                                  itemTitle: offer.itemTitle,
+                                  itemId: offer.itemId,
+                                  accepted: false,
+                                  responseMessage: msg,
+                                );
                                 if (mounted) {
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(SnackBar(
@@ -2450,6 +2498,39 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   Navigator.pop(context);
                   HapticFeedback.mediumImpact();
                   _service.markSold(item.id);
+                  // Notify seller + all buyers who had pending offers
+                  final pendingBuyerIds = _service.pendingOffers
+                      .where((o) => o.itemId == item.id && o.buyerId.isNotEmpty)
+                      .map((o) => o.buyerId)
+                      .toList();
+                  HuddlNotificationService().itemSold(
+                    sellerId: item.sellerId,
+                    itemTitle: item.title,
+                    itemId: item.id,
+                    buyerName: pendingBuyerIds.isNotEmpty
+                        ? (_service.pendingOffers
+                            .firstWhere((o) => o.itemId == item.id,
+                                orElse: () => _service.pendingOffers.first)
+                            .buyerName)
+                        : 'a buyer',
+                    itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+                  );
+                  BackendApiService().notifyItemSold(
+                    sellerId: item.sellerId,
+                    itemTitle: item.title,
+                    itemId: item.id,
+                    otherBuyerIds: pendingBuyerIds,
+                    itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+                  );
+                  // Notify saved-item users
+                  for (final savedUser in _service.savedByUserIds(item.id)) {
+                    HuddlNotificationService().savedItemSold(
+                      savedByUserId: savedUser,
+                      itemTitle: item.title,
+                      itemId: item.id,
+                      itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+                    );
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(children: [
@@ -2468,6 +2549,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   Navigator.pop(context);
                   HapticFeedback.mediumImpact();
                   _service.relistItem(item.id);
+                  // Notify users who saved this item
+                  for (final savedUser in _service.savedByUserIds(item.id)) {
+                    HuddlNotificationService().itemRelisted(
+                      savedByUserId: savedUser,
+                      itemTitle: item.title,
+                      itemId: item.id,
+                      itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+                    );
+                  }
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(children: [

@@ -223,4 +223,147 @@ router.post('/notify-dm', authMiddleware, async (req, res, next) => {
   }
 });
 
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/messages/notify-offer
+// ─────────────────────────────────────────────────────────────────────────────
+// Notify the seller when a buyer makes an offer on their listing.
+// Body: { sellerId, buyerName, itemTitle, itemId, offerId, offerAmount, notePreview?, itemImageUrl? }
+router.post('/notify-offer', authMiddleware, async (req, res, next) => {
+  try {
+    const { sellerId, buyerName, itemTitle, itemId, offerId, offerAmount, notePreview, itemImageUrl } = req.body;
+    if (!sellerId || !buyerName || !itemTitle) {
+      return res.status(400).json({ error: 'sellerId, buyerName and itemTitle are required' });
+    }
+
+    const db        = getDb();
+    const messaging = getMessaging();
+
+    const body = notePreview
+      ? `${buyerName} offered ${offerAmount} · "${notePreview.substring(0, 60)}"`
+      : `${buyerName} offered ${offerAmount} for your ${itemTitle}`;
+
+    const data = {
+      type:      'offer_received',
+      itemId:    itemId    || '',
+      itemTitle,
+      offerId:   offerId   || '',
+      route:     '/marketplace',
+      tab:       'sell',
+    };
+
+    await _sendToRecipient(db, messaging, sellerId, `New offer on "${itemTitle}"`, body, data);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/messages/notify-offer-response
+// ─────────────────────────────────────────────────────────────────────────────
+// Notify the buyer when the seller accepts or declines their offer.
+// Body: { buyerId, sellerName, itemTitle, itemId, accepted, responseMessage?, itemImageUrl? }
+router.post('/notify-offer-response', authMiddleware, async (req, res, next) => {
+  try {
+    const { buyerId, sellerName, itemTitle, itemId, accepted, responseMessage, sellerId } = req.body;
+    if (!buyerId || !sellerName || !itemTitle) {
+      return res.status(400).json({ error: 'buyerId, sellerName and itemTitle are required' });
+    }
+
+    const db        = getDb();
+    const messaging = getMessaging();
+
+    const type  = accepted ? 'offer_accepted' : 'offer_declined';
+    const title = accepted ? 'Offer accepted! 🤝' : 'Offer not accepted';
+    const body  = responseMessage
+      ? `${sellerName}: "${responseMessage.substring(0, 80)}"`
+      : accepted
+        ? `${sellerName} accepted your offer for "${itemTitle}"`
+        : `${sellerName} declined your offer for "${itemTitle}"`;
+
+    const data = {
+      type,
+      itemId:     itemId   || '',
+      itemTitle,
+      sellerId:   sellerId || '',
+      sellerName,
+      route:      accepted ? '/marketplace' : '/marketplace',
+      tab:        accepted ? 'buy'          : 'buy',
+      action:     accepted ? 'open_seller_chat' : '',
+    };
+
+    await _sendToRecipient(db, messaging, buyerId, title, body, data);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/messages/notify-item-sold
+// ─────────────────────────────────────────────────────────────────────────────
+// Notify the seller when their item is marked as sold.
+// Also notifies other pending buyers that the item is gone.
+// Body: { sellerId, buyerName, itemTitle, itemId, otherBuyerIds?, itemImageUrl? }
+router.post('/notify-item-sold', authMiddleware, async (req, res, next) => {
+  try {
+    const { sellerId, buyerName, itemTitle, itemId, otherBuyerIds } = req.body;
+    if (!sellerId || !itemTitle) {
+      return res.status(400).json({ error: 'sellerId and itemTitle are required' });
+    }
+
+    const db        = getDb();
+    const messaging = getMessaging();
+
+    // Notify seller
+    await _sendToRecipient(db, messaging, sellerId,
+      `"${itemTitle}" sold 🎉`,
+      `Great sale to ${buyerName || 'a buyer'}! Your listing has been closed.`,
+      { type: 'item_sold', itemId: itemId || '', itemTitle, route: '/marketplace', tab: 'sell' }
+    );
+
+    // Notify other interested buyers
+    if (Array.isArray(otherBuyerIds)) {
+      for (const uid of otherBuyerIds) {
+        await _sendToRecipient(db, messaging, uid,
+          'Item no longer available',
+          `"${itemTitle}" you offered on has been sold`,
+          { type: 'saved_item_sold', itemId: itemId || '', itemTitle, route: '/marketplace', tab: 'buy' }
+        );
+      }
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// POST /api/messages/notify-group-event
+// ─────────────────────────────────────────────────────────────────────────────
+// Generic social event notifications (invitation, join, reaction, RSVP, poll).
+// Body: { recipientIds[], type, title, body, data }
+router.post('/notify-group-event', authMiddleware, async (req, res, next) => {
+  try {
+    const { recipientIds, type, title, body, data } = req.body;
+    if (!Array.isArray(recipientIds) || !type || !title) {
+      return res.status(400).json({ error: 'recipientIds, type and title are required' });
+    }
+
+    const db        = getDb();
+    const messaging = getMessaging();
+
+    const notifData = { type, ...(data || {}) };
+
+    for (const uid of recipientIds) {
+      await _sendToRecipient(db, messaging, uid, title, body || '', notifData);
+    }
+
+    res.json({ success: true, recipientCount: recipientIds.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

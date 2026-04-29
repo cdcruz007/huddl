@@ -44,6 +44,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/group.dart';
 import 'backend_api_service.dart';
+import 'huddl_notification_service.dart';
 
 class FirestoreService {
   // ── Singleton ──────────────────────────────────────────────────────────
@@ -305,12 +306,17 @@ class FirestoreService {
       'lastMessageTime': FieldValue.serverTimestamp(),
     });
 
-    // ── Fan-out push notifications to group members (fire-and-forget) ────
-    // Fetch group name for the push title, then trigger the backend fan-out.
+    // ── Fan-out push + in-app notifications to group members ─────────────
     try {
       final groupSnap = await _db.collection('groups').doc(groupId).get();
-      final groupName = groupSnap.data()?['name'] as String? ?? 'Group message';
+      final groupData = groupSnap.data() ?? {};
+      final groupName = groupData['name'] as String? ?? 'Group message';
+      final groupImageUrl = groupData['imageUrl'] as String? ?? '';
       final displayName = senderName.isNotEmpty ? senderName : 'Someone';
+      final memberIds = List<String>.from(groupData['memberIds'] ?? []);
+      final otherMembers = memberIds.where((id) => id != uid).toList();
+
+      // Push notification via backend
       unawaited(
         BackendApiService().notifyGroupMessage(
           groupId: groupId,
@@ -319,6 +325,34 @@ class FirestoreService {
           messagePreview: message,
         ),
       );
+
+      // In-app Firestore notification
+      if (otherMembers.isNotEmpty) {
+        final isVoice = (type == 'voice_note') ||
+            (audioUrl != null && audioUrl.isNotEmpty);
+        if (isVoice) {
+          unawaited(
+            HuddlNotificationService().voiceMessageGroup(
+              recipientIds: otherMembers,
+              senderName: displayName,
+              groupName: groupName,
+              groupId: groupId,
+              groupImageUrl: groupImageUrl.isNotEmpty ? groupImageUrl : null,
+            ),
+          );
+        } else {
+          unawaited(
+            HuddlNotificationService().newGroupMessage(
+              recipientIds: otherMembers,
+              senderName: displayName,
+              groupName: groupName,
+              groupId: groupId,
+              messagePreview: message,
+              groupImageUrl: groupImageUrl.isNotEmpty ? groupImageUrl : null,
+            ),
+          );
+        }
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[FirestoreService] push notify error: $e');
     }
@@ -531,6 +565,26 @@ class FirestoreService {
         'attendeeNames': FieldValue.arrayUnion([name]),
         'attendeeCount': FieldValue.increment(1),
       });
+
+      // ── Notify organiser of new RSVP (fire-and-forget) ────────────────
+      try {
+        final meetupSnap = await _db.collection('meetups').doc(meetupId).get();
+        final meetupData = meetupSnap.data() ?? {};
+        final organiserId = meetupData['organiserId'] as String? ?? '';
+        final meetupTitle = meetupData['title'] as String? ?? 'Meetup';
+        if (organiserId.isNotEmpty && organiserId != uid) {
+          unawaited(
+            HuddlNotificationService().meetupRsvp(
+              organiserId: organiserId,
+              attendeeName: name.isNotEmpty ? name : 'Someone',
+              meetupTitle: meetupTitle,
+              meetupId: meetupId,
+            ),
+          );
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[FirestoreService] meetupRsvp notif error: $e');
+      }
     } else {
       await _db.collection('meetups').doc(meetupId).update({
         'attendeeIds': FieldValue.arrayRemove([uid]),
@@ -549,6 +603,35 @@ class FirestoreService {
     meetupData['attendeeIds'] = [uid];
     final ref = await _db.collection('meetups').add(meetupData);
     await ref.update({'id': ref.id});
+
+    // ── Notify borough members about new meetup (fire-and-forget) ─────────
+    try {
+      final borough = meetupData['borough'] as String? ?? '';
+      final meetupTitle = meetupData['title'] as String? ?? 'New meetup';
+      final meetupDate = meetupData['date'] as String? ?? '';
+      if (borough.isNotEmpty) {
+        final usersSnap = await _db
+            .collection('users')
+            .where('borough', isEqualTo: borough)
+            .get();
+        final boroughUserIds =
+            usersSnap.docs.map((d) => d.id).toList();
+        if (boroughUserIds.isNotEmpty) {
+          unawaited(
+            HuddlNotificationService().newMeetupNearby(
+              boroughUserIds: boroughUserIds,
+              meetupTitle: meetupTitle,
+              meetupId: ref.id,
+              meetupDate: meetupDate,
+              organiserId: uid,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] newMeetupNearby notif error: $e');
+    }
+
     return ref.id;
   }
 

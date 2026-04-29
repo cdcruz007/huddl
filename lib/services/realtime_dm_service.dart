@@ -49,6 +49,7 @@ import 'huddl_user_service.dart';
 import 'postcode_service.dart';
 import 'onboarding_data_service.dart';
 import 'backend_api_service.dart';
+import 'huddl_notification_service.dart';
 
 class RealtimeDMService {
   // ── Singleton ─────────────────────────────────────────────────────────────
@@ -277,12 +278,13 @@ class RealtimeDMService {
         ...unreadUpdate,
       });
 
-      // ── Push notification to the other participant (fire-and-forget) ────
+      // ── Push + in-app notification to the other participant ─────────────
       final recipientId = participants.firstWhere(
         (p) => p != uid,
         orElse: () => '',
       );
       if (recipientId.isNotEmpty) {
+        // Backend push notification
         unawaited(
           BackendApiService().notifyDmMessage(
             conversationId: conversationId,
@@ -291,6 +293,30 @@ class RealtimeDMService {
             messagePreview: displayText,
           ),
         );
+        // In-app Firestore notification
+        final isVoice = type == 'voice_note' ||
+            (msgData['audioUrl'] != null &&
+                (msgData['audioUrl'] as String).isNotEmpty);
+        if (isVoice) {
+          unawaited(
+            HuddlNotificationService().voiceMessageDm(
+              recipientId: recipientId,
+              senderName: senderName,
+              conversationId: conversationId,
+              senderPhotoUrl: myPhotoUrl.isNotEmpty ? myPhotoUrl : null,
+            ),
+          );
+        } else {
+          unawaited(
+            HuddlNotificationService().newDm(
+              recipientId: recipientId,
+              senderName: senderName,
+              messagePreview: displayText,
+              conversationId: conversationId,
+              senderPhotoUrl: myPhotoUrl.isNotEmpty ? myPhotoUrl : null,
+            ),
+          );
+        }
       }
 
       _log('sendMessage: sent in $conversationId');
