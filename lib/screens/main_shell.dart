@@ -116,16 +116,45 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   void _handleNotificationTap(RemoteMessage message) {
     if (!mounted) return;
-    final data  = message.data;
-    final type  = data['type'] as String? ?? '';
-    final route = data['route'] as String? ?? '';
+    final data           = message.data;
+    final type           = data['type'] as String? ?? '';
+    final route          = data['route'] as String? ?? '';
+    final groupId        = data['groupId'] as String? ?? '';
+    final groupName      = data['groupName'] as String? ?? 'Group';
+    final conversationId = data['conversationId'] as String? ?? '';
+    final recipientId    = data['recipientId'] as String? ?? '';
+    final recipientName  = data['recipientName'] as String? ?? '';
 
-    if (type == 'new_group_message' || type == 'new_dm') {
-      // Navigate to the Connect tab — the specific chat will be visible there.
-      _switchTab(1);
-    } else if (route.isNotEmpty) {
-      Navigator.of(context).pushNamed(route);
-    }
+    // Always switch to Connect tab first so the user lands on the right tab
+    _switchTab(1);
+
+    // Then navigate to the specific chat screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (type == 'new_group_message' && groupId.isNotEmpty) {
+        Navigator.of(context).pushNamed(
+          '/group_chat',
+          arguments: {
+            'groupId':       groupId,
+            'groupName':     groupName,
+            'groupImageUrl': '',
+          },
+        );
+      } else if (type == 'new_dm' &&
+          (conversationId.isNotEmpty || recipientId.isNotEmpty)) {
+        Navigator.of(context).pushNamed(
+          '/dm_chat',
+          arguments: {
+            'recipientId':          recipientId,
+            'recipientName':        recipientName,
+            'recipientAvatarColor': '#FF975C',
+            'conversationId':       conversationId,
+          },
+        );
+      } else if (route.isNotEmpty) {
+        Navigator.of(context).pushNamed(route);
+      }
+    });
   }
 
   // ── G6: Refresh subscription state when app returns to foreground ────────

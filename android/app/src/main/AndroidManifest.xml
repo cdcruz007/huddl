@@ -12,6 +12,11 @@
          notification permission prompt. Without this the system blocks the
          requestPermission() call and no push notifications are delivered. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- RECORD_AUDIO: Required for voice message recording -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- READ/WRITE external storage for saving voice recordings (API < 29) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
 
     <application
         android:label="Huddl"

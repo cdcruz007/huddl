@@ -265,6 +265,9 @@ class FirestoreService {
     required String message,
     String? replyToText,
     String? replyToSender,
+    String? audioUrl,
+    int? audioDuration,
+    String? type,
   }) async {
     final uid = _uid;
     if (uid == null) return;
@@ -287,6 +290,9 @@ class FirestoreService {
       'replyToText': replyToText,
       'replyToSender': replyToSender,
       'meetupData': null,
+      'type': type ?? 'text',
+      'audioUrl': audioUrl,
+      'audioDuration': audioDuration,
     };
 
     final ref = await _db.collection('group_messages').add(msgData);

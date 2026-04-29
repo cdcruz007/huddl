@@ -293,6 +293,9 @@ class DMService {
         case MessageType.meetupInvite:
           displayText = '\u{1F4C5} Meetup invite';
           break;
+        case MessageType.voiceNote:
+          displayText = '\u{1F3A4} Voice message';
+          break;
         case MessageType.text:
           break;
       }

@@ -177,6 +177,8 @@ class RealtimeDMService {
     String? replyToText,
     String? replyToSender,
     String? imageUrl,
+    String? audioUrl,
+    int? audioDuration,
     String? documentName,
     int? documentSize,
     double? latitude,
@@ -214,6 +216,8 @@ class RealtimeDMService {
         'replyToText': replyToText,
         'replyToSender': replyToSender,
         'imageUrl': imageUrl,
+        'audioUrl': audioUrl,
+        'audioDuration': audioDuration,
         'documentName': documentName,
         'documentSize': documentSize,
         'latitude': latitude,
@@ -242,6 +246,8 @@ class RealtimeDMService {
         displayText = '📅 Event: ${eventData['title'] ?? 'Event'}';
       } else if (type == 'image') {
         displayText = '📷 Photo';
+      } else if (type == 'voice_note') {
+        displayText = '🎤 Voice message';
       } else if (type == 'document') {
         displayText = '📄 ${documentName ?? 'Document'}';
       } else if (type == 'location') {
@@ -410,6 +416,8 @@ class RealtimeDMMessage {
   final String? replyToText;
   final String? replyToSender;
   final String? imageUrl;
+  final String? audioUrl;        // Firebase Storage URL for voice note
+  final int? audioDuration;      // voice note duration in seconds
   final String? documentName;
   final int? documentSize;
   final double? latitude;
@@ -435,6 +443,8 @@ class RealtimeDMMessage {
     this.replyToText,
     this.replyToSender,
     this.imageUrl,
+    this.audioUrl,
+    this.audioDuration,
     this.documentName,
     this.documentSize,
     this.latitude,
@@ -471,6 +481,8 @@ class RealtimeDMMessage {
       replyToText: data['replyToText'] as String?,
       replyToSender: data['replyToSender'] as String?,
       imageUrl: data['imageUrl'] as String?,
+      audioUrl: data['audioUrl'] as String?,
+      audioDuration: data['audioDuration'] as int?,
       documentName: data['documentName'] as String?,
       documentSize: data['documentSize'] as int?,
       latitude: (data['latitude'] as num?)?.toDouble(),

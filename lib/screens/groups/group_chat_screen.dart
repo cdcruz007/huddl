@@ -34,6 +34,8 @@ import '../../widgets/meetup_invite_card.dart';
 import '../../widgets/group_invite_card.dart';
 import '../../widgets/item_invite_card.dart';
 import '../../widgets/event_invite_card.dart';
+import '../../widgets/voice_message_bubble.dart';
+import '../../services/voice_message_service.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -87,6 +89,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   final BlockService _blockService = BlockService();
+  final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
+  bool _isVoiceRecording = false;
 
   /// Whether the user has changed borough and this is an old-borough default group
   bool _canLeaveGroup = false;
@@ -242,6 +246,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           message: m['message'] as String? ?? '',
           timestamp: ts,
           isMe: false,
+          isVoiceNote: (m['type'] as String? ?? 'text') == 'voice_note',
+          audioUrl: m['audioUrl'] as String?,
+          audioDuration: m['audioDuration'] as int?,
         );
         // Only add if not already present by id
         if (!_messages.any((existing) => existing.id == id)) {
@@ -2715,6 +2722,39 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             );
                           }
 
+                          // Voice note message
+                          if (msg.isVoiceNote && msg.audioUrl != null) {
+                            final showTsVoice = msgIdx == 0 ||
+                                msg.timestamp
+                                        .difference(_messages[msgIdx - 1].timestamp)
+                                        .inMinutes >
+                                    5;
+                            return Column(
+                              children: [
+                                if (showTsVoice)
+                                  _TimestampDivider(timestamp: msg.timestamp),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: 4, bottom: 4,
+                                    left: msg.isMe ? 60 : 8,
+                                    right: msg.isMe ? 8 : 60,
+                                  ),
+                                  child: Align(
+                                    alignment: msg.isMe
+                                        ? Alignment.centerRight
+                                        : Alignment.centerLeft,
+                                    child: VoiceMessageBubble(
+                                      audioUrl: msg.audioUrl!,
+                                      durationSeconds: msg.audioDuration ?? 0,
+                                      isMe: msg.isMe,
+                                      timestamp: msg.timestamp,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
                           final showAvatar = msgIdx == 0 ||
                               _messages[msgIdx - 1].senderId != msg.senderId ||
                               _messages[msgIdx - 1].isSystem;
@@ -3280,11 +3320,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Widget _buildInputBar() {
+    // ── Voice recording mode ────────────────────────────────────────────────
+    if (_isVoiceRecording) {
+      return VoiceRecordingIndicator(
+        onCancel: () async {
+          await _voiceSvc.cancelRecording();
+          if (mounted) setState(() => _isVoiceRecording = false);
+        },
+        onSend: _sendVoiceMessage,
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Attach menu now handled via bottom sheet (WhatsApp-style)
-        // ── Main input row ─────────────────────────────────────────
+        // ── Main input row ──────────────────────────────────────────────────
         Container(
           padding: EdgeInsets.fromLTRB(
               8, 8, 8, MediaQuery.of(context).padding.bottom + 8),
@@ -3328,30 +3378,116 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       isDense: true,
                     ),
-                    onTap: () {
-                      // Focus text field
-                    },
                   ),
                 ),
               ),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: _sendMessage,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
-                ),
+              // Send when text exists; mic (hold to record) when empty
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _messageController,
+                builder: (context, value, _) {
+                  final hasText = value.text.trim().isNotEmpty;
+                  if (hasText) {
+                    return GestureDetector(
+                      onTap: _sendMessage,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: const BoxDecoration(
+                          gradient: HuddlColors.primaryGradient,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                      ),
+                    );
+                  }
+                  return GestureDetector(
+                    onLongPressStart: (_) async {
+                      final hasPerms = await _voiceSvc.hasPermission();
+                      if (!hasPerms) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("Microphone permission required.")),
+                          );
+                        }
+                        return;
+                      }
+                      HapticFeedback.mediumImpact();
+                      await _voiceSvc.startRecording();
+                      if (mounted) setState(() => _isVoiceRecording = true);
+                    },
+                    onLongPressEnd: (_) async {
+                      if (_isVoiceRecording) await _sendVoiceMessage();
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        gradient: HuddlColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.mic, size: 20, color: HuddlColors.white),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  // ── Send voice message ────────────────────────────────────────────────────
+  Future<void> _sendVoiceMessage() async {
+    final result = await _voiceSvc.stopRecording();
+    if (mounted) setState(() => _isVoiceRecording = false);
+    if (result == null || result.duration < 1) return;
+
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'local';
+      final audioUrl = await _voiceSvc.uploadVoiceNote(
+        result.path,
+        conversationId: widget.groupId,
+      );
+      final me = _onboardingService.name ?? 'You';
+      final ts = DateTime.now();
+      final optimisticMsg = ChatMessage(
+        id: 'vm_${ts.millisecondsSinceEpoch}',
+        senderId: uid,
+        senderName: me,
+        senderAvatar: '',
+        message: '🎤 Voice message',
+        timestamp: ts,
+        isMe: true,
+        isVoiceNote: true,
+        audioUrl: audioUrl,
+        audioDuration: result.duration,
+      );
+      setState(() => _messages.insert(0, optimisticMsg));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '🎤 Voice message',
+        audioUrl: audioUrl,
+        audioDuration: result.duration,
+        type: 'voice_note',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send voice message: $e')),
+        );
+      }
+    }
   }
 
   // _buildAttachOption removed — replaced by WhatsApp-style attach_bottom_sheet.dart

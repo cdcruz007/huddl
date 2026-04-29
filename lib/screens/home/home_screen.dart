@@ -29,6 +29,8 @@ import '../../widgets/learning_maturity_indicator.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/firestore_service.dart';
+import 'dart:async';
 
 
 // =============================================================================
@@ -91,14 +93,17 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Notification state ───────────────────────────────────────────────────
   bool _notificationsRead = false;
+  int _realUnreadNotifCount = 0;           // live count from Firestore
+  StreamSubscription<List<Map<String, dynamic>>>? _notifStreamSub;
 
   int get _notifBadgeCount {
     if (_notificationsRead) return 0;
-    // Same logic as the notification sheet: feedItems.take(5) + liked announcements.take(3)
+    // Prefer the real Firestore unread count when available
+    if (_realUnreadNotifCount > 0) return _realUnreadNotifCount.clamp(0, 9);
+    // Fallback: local feed heuristic
     final feedCount = _feedItems.take(5).length;
     final annCount = _announcements.where((a) => a.likes > 0).take(3).length;
     final total = feedCount + annCount;
-    // Always show at least the count of meetups + events to ensure visibility
     final meetupNotifs = _upcomingMeetups.isNotEmpty ? 1 : 0;
     return (total > 0 ? total : meetupNotifs).clamp(0, 9);
   }
@@ -155,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _notifStreamSub?.cancel();
     _greetingAnimCtrl.dispose();
     _feedStaggerCtrl.dispose();
     _postController.dispose();
@@ -169,6 +175,26 @@ class _HomeScreenState extends State<HomeScreen>
   Future<void> _initHome() async {
     await _loadFeedPrefs();
     await _loadData();
+    _subscribeToNotifications();
+  }
+
+  /// Subscribe to real-time Firestore notifications so the bell badge
+  /// reflects the true unread count even when the app is in the foreground.
+  void _subscribeToNotifications() {
+    try {
+      _notifStreamSub?.cancel();
+      _notifStreamSub = FirestoreService()
+          .notificationsStream()
+          .listen((notifs) {
+        if (!mounted) return;
+        final unread = notifs.where((n) => n['read'] != true).length;
+        setState(() => _realUnreadNotifCount = unread);
+      }, onError: (_) {
+        // Silent — bell will fall back to heuristic count
+      });
+    } catch (_) {
+      // Firestore not available (e.g. demo mode) — fall back gracefully
+    }
   }
 
   Future<void> _loadData() async {

@@ -24,6 +24,7 @@ enum MessageType {
   location,
   contact,
   meetupInvite,
+  voiceNote,
 }
 
 /// Safe cast helper - converts any Map type to `Map<String, dynamic>`
@@ -49,6 +50,8 @@ class DirectMessage {
   /// Extended fields for rich message types
   final MessageType type;
   final String? imageUrl;       // for image messages
+  final String? audioUrl;       // for voice note messages (Firebase Storage URL)
+  final int? audioDuration;     // voice note duration in seconds
   final String? documentName;   // for document messages
   final int? documentSize;      // bytes
   final double? latitude;       // for location messages
@@ -74,6 +77,8 @@ class DirectMessage {
     this.replyToSender,
     this.type = MessageType.text,
     this.imageUrl,
+    this.audioUrl,
+    this.audioDuration,
     this.documentName,
     this.documentSize,
     this.latitude,
@@ -100,6 +105,8 @@ class DirectMessage {
         'replyToSender': replyToSender,
         'type': type.name,
         'imageUrl': imageUrl,
+        'audioUrl': audioUrl,
+        'audioDuration': audioDuration,
         'documentName': documentName,
         'documentSize': documentSize,
         'latitude': latitude,
@@ -144,6 +151,8 @@ class DirectMessage {
         orElse: () => MessageType.text,
       ),
       imageUrl: json['imageUrl'] as String?,
+      audioUrl: json['audioUrl'] as String?,
+      audioDuration: json['audioDuration'] as int?,
       documentName: json['documentName'] as String?,
       documentSize: json['documentSize'] as int?,
       latitude: (json['latitude'] as num?)?.toDouble(),
@@ -176,6 +185,8 @@ class DirectMessage {
       replyToSender: replyToSender,
       type: type,
       imageUrl: imageUrl,
+      audioUrl: audioUrl,
+      audioDuration: audioDuration,
       documentName: documentName,
       documentSize: documentSize,
       latitude: latitude,
@@ -250,6 +261,8 @@ class DMConversation {
     );
   }
 
+  // NOTE: This copyWith belongs to DMConversation, not DirectMessage.
+  // DirectMessage is immutable — create new instances directly.
   DMConversation copyWith({
     String? lastMessage,
     String? lastSenderName,

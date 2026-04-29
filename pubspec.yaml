@@ -44,6 +44,11 @@ dependencies:
   # Material You dynamic colour (P3 audit recommendation)
   dynamic_color: ^1.7.0            # Android 12+ dynamic colour extraction
 
+  # Voice messages
+  record: 5.2.0                    # Audio recording (mic → m4a/aac file)
+  audioplayers: 6.1.0              # Audio playback for voice message bubbles
+  path_provider: ^2.1.4            # Temp directory for voice recordings
+
   # dependency_overrides: force web sub-packages to versions that accept
   # firebase_core 3.1.0. These are the platform-web implementations bundled
   # inside firebase_auth and firebase_messaging — they are not used on iOS/Android

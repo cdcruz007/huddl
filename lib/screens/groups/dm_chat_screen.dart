@@ -23,6 +23,8 @@ import '../../widgets/meetup_invite_card.dart';
 import '../../widgets/group_invite_card.dart';
 import '../../widgets/item_invite_card.dart';
 import '../../widgets/event_invite_card.dart';
+import '../../widgets/voice_message_bubble.dart';
+import '../../services/voice_message_service.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -83,6 +85,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
   final OnboardingDataService _onboardingService = OnboardingDataService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   final BlockService _blockService = BlockService();
+  final VoiceMessageService _voiceSvc = VoiceMessageService.instance;
+  bool _isVoiceRecording = false;
 
   List<DirectMessage> _messages = [];
   bool _isLoading = true;
@@ -137,6 +141,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     _focusNode.dispose();
     _refreshTimer?.cancel();
     _firestoreMsgSub?.cancel();
+    if (_isVoiceRecording) _voiceSvc.cancelRecording();
     _dmService.removeListener(_onServiceUpdate);
     super.dispose();
   }
@@ -237,6 +242,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
       case 'meetupInvite':
         msgType = MessageType.meetupInvite;
         break;
+      case 'voice_note':
+        msgType = MessageType.voiceNote;
+        break;
       default:
         msgType = MessageType.text;
     }
@@ -277,6 +285,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
       replyToSender: m.replyToSender,
       type: msgType,
       imageUrl: m.imageUrl,
+      audioUrl: m.audioUrl,
+      audioDuration: m.audioDuration,
       documentName: m.documentName,
       documentSize: m.documentSize,
       latitude: m.latitude,
@@ -742,6 +752,31 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                 EventInviteCard(
                                   eventData: msg.eventData!,
                                   isMe: msg.isMe,
+                                ),
+                              ],
+                            );
+                          }
+
+                          // Voice note message
+                          if (msg.type == MessageType.voiceNote && msg.audioUrl != null) {
+                            return Column(
+                              children: [
+                                if (showTimestamp) _TimestampDivider(timestamp: msg.timestamp),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: 4, bottom: 4,
+                                    left: msg.isMe ? 60 : 8,
+                                    right: msg.isMe ? 8 : 60,
+                                  ),
+                                  child: Align(
+                                    alignment: msg.isMe ? Alignment.centerRight : Alignment.centerLeft,
+                                    child: VoiceMessageBubble(
+                                      audioUrl: msg.audioUrl!,
+                                      durationSeconds: msg.audioDuration ?? 0,
+                                      isMe: msg.isMe,
+                                      timestamp: msg.timestamp,
+                                    ),
+                                  ),
                                 ),
                               ],
                             );
@@ -1256,10 +1291,20 @@ class _DMChatScreenState extends State<DMChatScreen> {
       );
     }
 
+    // ── Voice recording mode ─────────────────────────────────────────────────
+    if (_isVoiceRecording) {
+      return VoiceRecordingIndicator(
+        onCancel: () async {
+          await _voiceSvc.cancelRecording();
+          if (mounted) setState(() => _isVoiceRecording = false);
+        },
+        onSend: _sendVoiceMessage,
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Attach menu now handled via bottom sheet (WhatsApp-style)
         // ── Main input row ─────────────────────────────────────────
         Container(
           padding: EdgeInsets.fromLTRB(
@@ -1304,37 +1349,101 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       isDense: true,
                     ),
-                    onTap: () {
-                      // Focus text field
-                    },
                   ),
                 ),
               ),
               const SizedBox(width: 4),
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  _sendMessage();
-                },
-                child: Semantics(
-                  label: 'Send message',
-                  button: true,
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      gradient: HuddlColors.primaryGradient,
-                      shape: BoxShape.circle,
+              // Mic button (hold to record) when text is empty; send button when text exists
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _messageController,
+                builder: (context, value, _) {
+                  final hasText = value.text.trim().isNotEmpty;
+                  if (hasText) {
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _sendMessage();
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          gradient: HuddlColors.primaryGradient,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
+                      ),
+                    );
+                  }
+                  // Mic button – hold to record
+                  return GestureDetector(
+                    onLongPressStart: (_) async {
+                      final hasPerms = await _voiceSvc.hasPermission();
+                      if (!hasPerms) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Microphone permission required for voice messages.')),
+                          );
+                        }
+                        return;
+                      }
+                      HapticFeedback.mediumImpact();
+                      await _voiceSvc.startRecording();
+                      if (mounted) setState(() => _isVoiceRecording = true);
+                    },
+                    onLongPressEnd: (_) async {
+                      if (_isVoiceRecording) await _sendVoiceMessage();
+                    },
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: const BoxDecoration(
+                        gradient: HuddlColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.mic, size: 20, color: HuddlColors.white),
                     ),
-                    child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
-                  ),
-                ),
+                  );
+                },
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  // ── Send voice message ──────────────────────────────────────────────────
+  Future<void> _sendVoiceMessage() async {
+    final result = await _voiceSvc.stopRecording();
+    if (mounted) setState(() => _isVoiceRecording = false);
+    if (result == null || result.duration < 1) return; // too short – discard
+
+    try {
+      // Upload to Firebase Storage
+      final convId = _conversationId;
+      final audioUrl = await _voiceSvc.uploadVoiceNote(
+        result.path,
+        conversationId: convId,
+      );
+
+      // Send via realtime service if real user
+      if (_isRealUser && convId != null) {
+        await _realtimeDMService.sendMessage(
+          conversationId: convId,
+          message: '🎤 Voice message',
+          type: 'voice_note',
+          audioUrl: audioUrl,
+          audioDuration: result.duration,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send voice message: $e')),
+        );
+      }
+    }
   }
 
   // ── Unsend message ──────────────────────────────────────────────────
@@ -1964,6 +2073,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       case MessageType.location: displayMsg = locationLabel ?? 'Location'; break;
       case MessageType.contact: displayMsg = contactName ?? 'Contact'; break;
       case MessageType.meetupInvite: displayMsg = 'Meetup invite'; break;
+      case MessageType.voiceNote: displayMsg = '🎤 Voice message'; break;
       case MessageType.text: break;
     }
 
