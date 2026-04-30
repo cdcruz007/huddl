@@ -3348,6 +3348,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Widget _buildInputBar() {
     // ── Voice recording mode ────────────────────────────────────────────────
     if (_isVoiceRecording) {
+      // Ensure keyboard is fully dismissed when recording UI shows
+      FocusScope.of(context).unfocus();
       return VoiceRecordingIndicator(
         onCancel: () async {
           await _voiceSvc.cancelRecording();
@@ -3429,6 +3431,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   }
                   return GestureDetector(
                     onLongPressStart: (_) async {
+                      // Dismiss keyboard FIRST so iOS doesn't swallow the gesture
+                      FocusScope.of(context).unfocus();
+                      await Future.delayed(const Duration(milliseconds: 80));
+                      if (!mounted) return;
                       final hasPerms = await _voiceSvc.hasPermission();
                       if (!hasPerms) {
                         if (mounted) {

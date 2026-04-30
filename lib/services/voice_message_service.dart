@@ -77,10 +77,11 @@ class VoiceMessageService {
 
     String path;
     if (kIsWeb) {
-      // Web: record to an in-memory blob; path is a data URI
       path = 'voice_${DateTime.now().millisecondsSinceEpoch}.webm';
     } else {
       final dir = await getTemporaryDirectory();
+      // Plain filesystem path — no file:// prefix. The record package
+      // writes here and we pass this same path to uploadVoiceNote.
       path = '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
     }
 
@@ -159,7 +160,16 @@ class VoiceMessageService {
       // record's `stream` mode in a future iteration.
       return localPath;
     } else {
-      final file = File(localPath);
+      // iOS sometimes returns a path with a 'file://' scheme prefix.
+      // File() requires a plain filesystem path — strip the prefix to
+      // prevent firebase_storage/object-not-found errors.
+      final cleanPath = localPath.startsWith('file://')
+          ? Uri.parse(localPath).toFilePath()
+          : localPath;
+      final file = File(cleanPath);
+      if (!await file.exists()) {
+        throw Exception('Voice recording not found: $cleanPath');
+      }
       task = ref.putFile(
         file,
         SettableMetadata(contentType: 'audio/mp4'),
@@ -172,7 +182,10 @@ class VoiceMessageService {
     // Clean up temp file
     if (!kIsWeb) {
       try {
-        final f = File(localPath);
+        final cleanPath = localPath.startsWith('file://')
+            ? Uri.parse(localPath).toFilePath()
+            : localPath;
+        final f = File(cleanPath);
         if (await f.exists()) await f.delete();
       } catch (_) {}
     }
