@@ -169,18 +169,37 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Track Firestore message IDs already shown to avoid duplicates
   final Set<String> _firestoreMsgIds = {};
 
+  /// Live group image URL — starts as widget.groupImageUrl, then resolved
+  /// from Firestore if the widget value is blank (e.g. opened via notification).
+  late String _liveGroupImageUrl;
+
   @override
   void initState() {
     super.initState();
+    _liveGroupImageUrl = widget.groupImageUrl;
     _loadMessages();
     _blockService.initialize();
     _checkLeaveGroupEligibility();
+    _resolveGroupImageIfNeeded();
     // Periodically reload forwarded messages so cards appear without manual refresh
     _forwardedMsgTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) _reloadForwardedMessages();
     });
     // Subscribe to real-time Firestore messages for cross-device chat
     _subscribeToFirestoreMessages();
+  }
+
+  /// If the group image URL wasn't passed in (e.g. opened from a notification),
+  /// fetch it directly from Firestore using the public getGroup() API.
+  Future<void> _resolveGroupImageIfNeeded() async {
+    if (_liveGroupImageUrl.isNotEmpty) return; // already have it
+    try {
+      final group = await FirestoreService().getGroup(widget.groupId);
+      final url = group?.imageUrl ?? '';
+      if (url.isNotEmpty && mounted) {
+        setState(() => _liveGroupImageUrl = url);
+      }
+    } catch (_) {}
   }
 
   /// Determine whether the 'Leave group' option should be shown.
@@ -3298,6 +3317,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Widget _buildGroupAvatar(double size) {
+    final url = _liveGroupImageUrl;
     return Container(
       width: size,
       height: size,
@@ -3306,21 +3326,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         color: HuddlColors.peachLight,
       ),
       clipBehavior: Clip.antiAlias,
-      child: widget.groupImageUrl.startsWith('assets/')
+      child: url.startsWith('assets/')
           ? Image.asset(
-              widget.groupImageUrl,
+              url,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Icon(Icons.people,
                   size: size * 0.5, color: HuddlColors.primary),
             )
-          : widget.groupImageUrl.startsWith('http')
+          : url.startsWith('http')
               ? Image.network(
-                  widget.groupImageUrl,
+                  url,
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Icon(Icons.people,
                       size: size * 0.5, color: HuddlColors.primary),
                 )
-              : widget.groupImageUrl.startsWith('data:')
+              : url.startsWith('data:')
                   ? _buildDataImage(size)
                   : Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary),
     );
@@ -4832,8 +4852,10 @@ const String _kMumAvatarAsset = 'assets/images/avatars/Emma.png';
 const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
 
 /// Per-session cache: senderId → 'mum' | 'dad' | '' (unknown).
-/// Populated on first render; prevents repeated Firestore reads.
 final Map<String, String> _senderParentTypeCache = {};
+
+/// Per-session cache: senderId → real Firestore photoUrl ('' = no photo).
+final Map<String, String> _senderPhotoCache = {};
 
 class _SenderAvatar extends StatefulWidget {
   final String colorHex;
@@ -4857,29 +4879,34 @@ class _SenderAvatar extends StatefulWidget {
 }
 
 class _SenderAvatarState extends State<_SenderAvatar> {
-  // 'mum', 'dad', or '' when unknown/fetched
-  String _parentType = '';
+  String _parentType = '';   // 'mum' | 'dad' | ''
+  String _firestorePhoto = ''; // real profile photo URL or ''
   bool _fetching = false;
 
   @override
   void initState() {
     super.initState();
-    _resolveParentType();
+    _resolveProfile();
   }
 
   @override
   void didUpdateWidget(_SenderAvatar old) {
     super.didUpdateWidget(old);
-    if (old.senderId != widget.senderId) _resolveParentType();
+    if (old.senderId != widget.senderId) _resolveProfile();
   }
 
-  Future<void> _resolveParentType() async {
+  Future<void> _resolveProfile() async {
     final id = widget.senderId;
     if (id == null || id.isEmpty) return;
 
-    // Already cached?
-    if (_senderParentTypeCache.containsKey(id)) {
-      if (mounted) setState(() => _parentType = _senderParentTypeCache[id]!);
+    // Use both caches — if both are already populated, update state and return
+    final ptCached = _senderParentTypeCache.containsKey(id);
+    final photoCached = _senderPhotoCache.containsKey(id);
+    if (ptCached && photoCached) {
+      if (mounted) setState(() {
+        _parentType = _senderParentTypeCache[id]!;
+        _firestorePhoto = _senderPhotoCache[id]!;
+      });
       return;
     }
 
@@ -4889,10 +4916,16 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     try {
       final doc = await FirestoreService().getUserProfile(id);
       final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      final photo = (doc?['photoUrl'] as String? ?? '').trim();
       _senderParentTypeCache[id] = pt;
-      if (mounted) setState(() => _parentType = pt);
+      _senderPhotoCache[id] = photo;
+      if (mounted) setState(() {
+        _parentType = pt;
+        _firestorePhoto = photo;
+      });
     } catch (_) {
       _senderParentTypeCache[id] = '';
+      _senderPhotoCache[id] = '';
     } finally {
       _fetching = false;
     }
@@ -4939,11 +4972,12 @@ class _SenderAvatarState extends State<_SenderAvatar> {
   Widget build(BuildContext context) {
     final color = _colorFromHex(widget.colorHex);
 
-    // Priority: direct photoUrl from message → null (show illustration)
-    final resolvedPhoto =
-        (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
-            ? widget.photoUrl
-            : null;
+    // Priority 1: photoUrl passed on the message (stored when sent)
+    // Priority 2: real photoUrl fetched live from Firestore profile
+    // Priority 3: illustration fallback (John/Emma) with initial overlay
+    final resolvedPhoto = (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
+        ? widget.photoUrl!
+        : (_firestorePhoto.startsWith('http') ? _firestorePhoto : null);
 
     return Stack(
       children: [

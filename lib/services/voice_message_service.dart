@@ -104,7 +104,17 @@ class VoiceMessageService {
   Future<({String path, int duration})?> stopRecording() async {
     if (!_isRecording) return null;
 
-    final path = await _recorder.stop();
+    // Capture the known path BEFORE calling stop() — on iOS the record package
+    // sometimes returns null or a mismatched path from stop(), so we fall back
+    // to the path we stored at startRecording() time.
+    final knownPath = _currentRecordingPath;
+
+    String? stoppedPath;
+    try {
+      stoppedPath = await _recorder.stop();
+    } catch (_) {
+      stoppedPath = null;
+    }
     _isRecording = false;
 
     final duration = _recordingStarted != null
@@ -112,8 +122,25 @@ class VoiceMessageService {
         : 0;
     _recordingStarted = null;
 
-    if (path == null) return null;
-    return (path: path, duration: duration);
+    // Use the path returned by stop(); if null, fall back to the known start path.
+    final resolvedPath = stoppedPath ?? knownPath;
+    if (resolvedPath == null) return null;
+
+    // Strip file:// scheme so File() works on iOS
+    final cleanPath = resolvedPath.startsWith('file://')
+        ? Uri.parse(resolvedPath).toFilePath()
+        : resolvedPath;
+
+    // Give the OS up to 500 ms to flush the file
+    if (!kIsWeb) {
+      for (var i = 0; i < 5; i++) {
+        if (await File(cleanPath).exists()) break;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    }
+
+    _currentRecordingPath = null;
+    return (path: cleanPath, duration: duration);
   }
 
   /// Cancel recording and discard the audio.
@@ -160,15 +187,13 @@ class VoiceMessageService {
       // record's `stream` mode in a future iteration.
       return localPath;
     } else {
-      // iOS sometimes returns a path with a 'file://' scheme prefix.
-      // File() requires a plain filesystem path — strip the prefix to
-      // prevent firebase_storage/object-not-found errors.
+      // stopRecording() already strips file:// — handle both just in case.
       final cleanPath = localPath.startsWith('file://')
           ? Uri.parse(localPath).toFilePath()
           : localPath;
       final file = File(cleanPath);
       if (!await file.exists()) {
-        throw Exception('Voice recording not found: $cleanPath');
+        throw Exception('Voice recording not found at path: $cleanPath');
       }
       task = ref.putFile(
         file,

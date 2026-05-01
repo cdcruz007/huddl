@@ -2795,6 +2795,9 @@ const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
 /// Per-session cache: memberId → 'mum' | 'dad' | '' (unknown).
 final Map<String, String> _dmParentTypeCache = {};
 
+/// Per-session cache: memberId → real Firestore photoUrl ('' = no photo).
+final Map<String, String> _dmPhotoCache = {};
+
 class _RecipientAvatar extends StatefulWidget {
   final String name;
   final String colorHex;
@@ -2813,27 +2816,33 @@ class _RecipientAvatar extends StatefulWidget {
 }
 
 class _RecipientAvatarState extends State<_RecipientAvatar> {
-  String _parentType = '';
+  String _parentType = '';    // 'mum' | 'dad' | ''
+  String _firestorePhoto = ''; // real profile photo URL or ''
   bool _fetching = false;
 
   @override
   void initState() {
     super.initState();
-    _resolveParentType();
+    _resolveProfile();
   }
 
   @override
   void didUpdateWidget(_RecipientAvatar old) {
     super.didUpdateWidget(old);
-    if (old.memberId != widget.memberId) _resolveParentType();
+    if (old.memberId != widget.memberId) _resolveProfile();
   }
 
-  Future<void> _resolveParentType() async {
+  Future<void> _resolveProfile() async {
     final id = widget.memberId;
     if (id == null || id.isEmpty) return;
 
-    if (_dmParentTypeCache.containsKey(id)) {
-      if (mounted) setState(() => _parentType = _dmParentTypeCache[id]!);
+    final ptCached = _dmParentTypeCache.containsKey(id);
+    final photoCached = _dmPhotoCache.containsKey(id);
+    if (ptCached && photoCached) {
+      if (mounted) setState(() {
+        _parentType = _dmParentTypeCache[id]!;
+        _firestorePhoto = _dmPhotoCache[id]!;
+      });
       return;
     }
 
@@ -2843,10 +2852,16 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     try {
       final doc = await FirestoreService().getUserProfile(id);
       final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      final photo = (doc?['photoUrl'] as String? ?? '').trim();
       _dmParentTypeCache[id] = pt;
-      if (mounted) setState(() => _parentType = pt);
+      _dmPhotoCache[id] = photo;
+      if (mounted) setState(() {
+        _parentType = pt;
+        _firestorePhoto = photo;
+      });
     } catch (_) {
       _dmParentTypeCache[id] = '';
+      _dmPhotoCache[id] = '';
     } finally {
       _fetching = false;
     }
@@ -2891,10 +2906,14 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(widget.colorHex);
-    // Priority: legacy hardcoded map (demo IDs) → illustration fallback
-    final resolvedPhoto = widget.memberId != null
-        ? getProfilePhotoForMember(widget.memberId!)
-        : null;
+    // Priority 1: real Firestore photoUrl
+    // Priority 2: legacy hardcoded demo map
+    // Priority 3: illustration fallback (John/Emma) with initial overlay
+    final resolvedPhoto = _firestorePhoto.startsWith('http')
+        ? _firestorePhoto
+        : (widget.memberId != null
+            ? getProfilePhotoForMember(widget.memberId!)
+            : null);
 
     return Container(
       width: widget.size,
