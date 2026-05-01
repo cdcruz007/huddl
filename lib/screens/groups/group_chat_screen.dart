@@ -4401,6 +4401,11 @@ class _ChatBubble extends StatelessWidget {
                         name: message.senderName,
                         senderId: message.senderId,
                         showTapHint: onAvatarTap != null,
+                        // Pass the stored photo URL directly so real Firebase
+                        // users always show their profile photo
+                        photoUrl: message.senderAvatar.startsWith('http')
+                            ? message.senderAvatar
+                            : null,
                       ),
                     )
                   else
@@ -4828,18 +4833,25 @@ class _SenderAvatar extends StatelessWidget {
   final String name;
   final String? senderId;
   final bool showTapHint;
+  /// Direct photo URL from the message/Firestore — takes priority over
+  /// the legacy hardcoded map so real users always show their photo.
+  final String? photoUrl;
 
   const _SenderAvatar({
     required this.colorHex,
     required this.name,
     this.senderId,
     this.showTapHint = false,
+    this.photoUrl,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(colorHex);
-    final photoUrl = senderId != null ? getProfilePhotoForMember(senderId!) : null;
+    // Priority: direct photoUrl from message → legacy hardcoded map → null
+    final resolvedPhoto = (photoUrl != null && photoUrl!.startsWith('http'))
+        ? photoUrl
+        : (senderId != null ? getProfilePhotoForMember(senderId!) : null);
 
     return Stack(
       children: [
@@ -4854,9 +4866,9 @@ class _SenderAvatar extends StatelessWidget {
                 : null,
           ),
           clipBehavior: Clip.antiAlias,
-          child: photoUrl != null
+          child: resolvedPhoto != null
               ? Image.network(
-                  photoUrl,
+                  resolvedPhoto,
                   fit: BoxFit.cover,
                   width: 32,
                   height: 32,
