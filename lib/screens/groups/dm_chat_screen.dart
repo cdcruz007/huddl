@@ -25,6 +25,7 @@ import '../../widgets/item_invite_card.dart';
 import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
+import '../../services/firestore_service.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -2787,7 +2788,14 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 // RECIPIENT AVATAR — circle with initials
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _RecipientAvatar extends StatelessWidget {
+// ── Illustration avatar asset paths (dad = John.png, mum = Emma.png) ──────
+const String _kMumAvatarAsset = 'assets/images/avatars/Emma.png';
+const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
+
+/// Per-session cache: memberId → 'mum' | 'dad' | '' (unknown).
+final Map<String, String> _dmParentTypeCache = {};
+
+class _RecipientAvatar extends StatefulWidget {
   final String name;
   final String colorHex;
   final String? memberId;
@@ -2801,45 +2809,84 @@ class _RecipientAvatar extends StatelessWidget {
   });
 
   @override
+  State<_RecipientAvatar> createState() => _RecipientAvatarState();
+}
+
+class _RecipientAvatarState extends State<_RecipientAvatar> {
+  String _parentType = '';
+  bool _fetching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveParentType();
+  }
+
+  @override
+  void didUpdateWidget(_RecipientAvatar old) {
+    super.didUpdateWidget(old);
+    if (old.memberId != widget.memberId) _resolveParentType();
+  }
+
+  Future<void> _resolveParentType() async {
+    final id = widget.memberId;
+    if (id == null || id.isEmpty) return;
+
+    if (_dmParentTypeCache.containsKey(id)) {
+      if (mounted) setState(() => _parentType = _dmParentTypeCache[id]!);
+      return;
+    }
+
+    if (_fetching) return;
+    _fetching = true;
+
+    try {
+      final doc = await FirestoreService().getUserProfile(id);
+      final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      _dmParentTypeCache[id] = pt;
+      if (mounted) setState(() => _parentType = pt);
+    } catch (_) {
+      _dmParentTypeCache[id] = '';
+    } finally {
+      _fetching = false;
+    }
+  }
+
+  String get _fallbackAsset =>
+      (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
+
+  Widget _buildFallback() => Image.asset(
+        _fallbackAsset,
+        fit: BoxFit.cover,
+        width: widget.size,
+        height: widget.size,
+      );
+
+  @override
   Widget build(BuildContext context) {
-    final color = _colorFromHex(colorHex);
-    final photoUrl = memberId != null ? getProfilePhotoForMember(memberId!) : null;
+    final color = _colorFromHex(widget.colorHex);
+    // Priority: legacy hardcoded map (demo IDs) → illustration fallback
+    final resolvedPhoto = widget.memberId != null
+        ? getProfilePhotoForMember(widget.memberId!)
+        : null;
 
     return Container(
-      width: size,
-      height: size,
+      width: widget.size,
+      height: widget.size,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         shape: BoxShape.circle,
       ),
       clipBehavior: Clip.antiAlias,
-      child: photoUrl != null
+      child: resolvedPhoto != null
           ? Image.network(
-              photoUrl,
+              resolvedPhoto,
               fit: BoxFit.cover,
-              width: size,
-              height: size,
-              errorBuilder: (_, __, ___) => Center(
-                child: Text(
-                  name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: size * 0.4,
-                    fontWeight: FontWeight.w600,
-                    color: color,
-                  ),
-                ),
-              ),
+              width: widget.size,
+              height: widget.size,
+              errorBuilder: (_, __, ___) => _buildFallback(),
             )
-          : Center(
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: GoogleFonts.poppins(
-                  fontSize: size * 0.4,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-            ),
+          : _buildFallback(),
     );
   }
 }

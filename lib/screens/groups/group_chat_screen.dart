@@ -17,7 +17,6 @@ import '../../services/browser_storage.dart';
 import '../../services/default_group_service.dart';
 import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
-import 'dm_chat_screen.dart' show getProfilePhotoForMember;
 import 'create_poll_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/huddl_user_service.dart';
@@ -4828,13 +4827,21 @@ class _GroupMessageStatusIcon extends StatelessWidget {
   }
 }
 
-class _SenderAvatar extends StatelessWidget {
+// ── Illustration avatar asset paths (match onboarding add_photo_screen) ──
+const String _kMumAvatarAsset = 'assets/images/avatars/Emma.png';
+const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
+
+/// Per-session cache: senderId → 'mum' | 'dad' | '' (unknown).
+/// Populated on first render; prevents repeated Firestore reads.
+final Map<String, String> _senderParentTypeCache = {};
+
+class _SenderAvatar extends StatefulWidget {
   final String colorHex;
   final String name;
   final String? senderId;
   final bool showTapHint;
-  /// Direct photo URL from the message/Firestore — takes priority over
-  /// the legacy hardcoded map so real users always show their photo.
+
+  /// Direct photo URL stored on the Firestore message — shown when non-empty.
   final String? photoUrl;
 
   const _SenderAvatar({
@@ -4846,12 +4853,72 @@ class _SenderAvatar extends StatelessWidget {
   });
 
   @override
+  State<_SenderAvatar> createState() => _SenderAvatarState();
+}
+
+class _SenderAvatarState extends State<_SenderAvatar> {
+  // 'mum', 'dad', or '' when unknown/fetched
+  String _parentType = '';
+  bool _fetching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveParentType();
+  }
+
+  @override
+  void didUpdateWidget(_SenderAvatar old) {
+    super.didUpdateWidget(old);
+    if (old.senderId != widget.senderId) _resolveParentType();
+  }
+
+  Future<void> _resolveParentType() async {
+    final id = widget.senderId;
+    if (id == null || id.isEmpty) return;
+
+    // Already cached?
+    if (_senderParentTypeCache.containsKey(id)) {
+      if (mounted) setState(() => _parentType = _senderParentTypeCache[id]!);
+      return;
+    }
+
+    if (_fetching) return;
+    _fetching = true;
+
+    try {
+      final doc = await FirestoreService().getUserProfile(id);
+      final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      _senderParentTypeCache[id] = pt;
+      if (mounted) setState(() => _parentType = pt);
+    } catch (_) {
+      _senderParentTypeCache[id] = '';
+    } finally {
+      _fetching = false;
+    }
+  }
+
+  /// Returns the asset path of the gender-matched illustration fallback.
+  String get _fallbackAsset =>
+      (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
+
+  /// Builds the fallback illustration widget (dad or mum illustration).
+  Widget _buildFallback() => Image.asset(
+        _fallbackAsset,
+        fit: BoxFit.cover,
+        width: 32,
+        height: 32,
+      );
+
+  @override
   Widget build(BuildContext context) {
-    final color = _colorFromHex(colorHex);
-    // Priority: direct photoUrl from message → legacy hardcoded map → null
-    final resolvedPhoto = (photoUrl != null && photoUrl!.startsWith('http'))
-        ? photoUrl
-        : (senderId != null ? getProfilePhotoForMember(senderId!) : null);
+    final color = _colorFromHex(widget.colorHex);
+
+    // Priority: direct photoUrl from message → null (show illustration)
+    final resolvedPhoto =
+        (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
+            ? widget.photoUrl
+            : null;
 
     return Stack(
       children: [
@@ -4861,7 +4928,7 @@ class _SenderAvatar extends StatelessWidget {
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.15),
             shape: BoxShape.circle,
-            border: showTapHint
+            border: widget.showTapHint
                 ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
                 : null,
           ),
@@ -4872,29 +4939,12 @@ class _SenderAvatar extends StatelessWidget {
                   fit: BoxFit.cover,
                   width: 32,
                   height: 32,
-                  errorBuilder: (_, __, ___) => Center(
-                    child: Text(
-                      name.isNotEmpty ? name[0].toUpperCase() : '?',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
-                    ),
-                  ),
+                  // If the network photo fails, fall back to illustration
+                  errorBuilder: (_, __, ___) => _buildFallback(),
                 )
-              : Center(
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
-                ),
+              : _buildFallback(),
         ),
-        if (showTapHint)
+        if (widget.showTapHint)
           Positioned(
             right: -1,
             bottom: -1,
