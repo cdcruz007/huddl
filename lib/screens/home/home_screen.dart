@@ -472,8 +472,28 @@ class _HomeScreenState extends State<HomeScreen>
       }
     });
 
-    // Sort by score descending
-    items.sort((a, b) => b.score.compareTo(a.score));
+    // ── Fixed section order (score only breaks ties within each section) ──
+    // 1. Community posts / announcements  (own posts first, then recent)
+    // 2. Upcoming meetups & events the user is going to  (soonest first)
+    // 3. Suggested meetups & new groups  (by score within section)
+    // 4. Community activity feed  (AI-ranked)
+    // 5. Tips / AI nudges  (always at the bottom)
+    const sectionOrder = {
+      _SmartFeedType.announcement:       0,
+      _SmartFeedType.meetup:             1,
+      _SmartFeedType.goingEvent:         1,
+      _SmartFeedType.suggestedMeetup:    2,
+      _SmartFeedType.group:              2,
+      _SmartFeedType.communityActivity:  3,
+      _SmartFeedType.aiNudge:            4,
+    };
+    items.sort((a, b) {
+      final sA = sectionOrder[a.type] ?? 99;
+      final sB = sectionOrder[b.type] ?? 99;
+      if (sA != sB) return sA.compareTo(sB);
+      // Within the same section, higher score first
+      return b.score.compareTo(a.score);
+    });
 
     setState(() => _smartFeed = items);
   }
@@ -1430,6 +1450,51 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  /// Returns a short, plain-English category label for each nudge type so
+  /// users always know at a glance what kind of content they are seeing.
+  String _nudgeCategoryLabel(NudgeType type) {
+    switch (type) {
+      case NudgeType.knowledgeNudge:
+        return 'Parenting tip';
+      case NudgeType.vaccinationReminder:
+        return 'Health reminder';
+      case NudgeType.seasonalActivity:
+        return 'Activity idea';
+      case NudgeType.dadSpecific:
+        return 'For dads';
+      case NudgeType.digitalSafetyTip:
+        return 'Online safety';
+      case NudgeType.charityEvent:
+        return 'Charity event';
+      case NudgeType.emotionalIntelligence:
+        return 'Wellbeing';
+      case NudgeType.ecoParenting:
+        return 'Eco parenting';
+      case NudgeType.schoolReadiness:
+        return 'School readiness';
+      case NudgeType.siblingSupport:
+        return 'Sibling support';
+      case NudgeType.separationSupport:
+        return 'Family support';
+      case NudgeType.nearbyMeetup:
+        return 'Nearby meetup';
+      case NudgeType.groupSuggestion:
+        return 'Suggested group';
+      case NudgeType.weatherActivity:
+        return 'Today\'s activity';
+      case NudgeType.weeklyDigest:
+        return 'Weekly digest';
+      case NudgeType.communityWelcome:
+        return 'Welcome';
+      case NudgeType.trendingItem:
+        return 'Trending nearby';
+      case NudgeType.reengagement:
+        return 'Back in the loop';
+      case NudgeType.milestone:
+        return 'Milestone';
+    }
+  }
+
   /// Inline AI nudge — compact, not a carousel.
   /// Uses dark-mode-aware colours so the card remains readable regardless of
   /// the system brightness.
@@ -1437,17 +1502,18 @@ class _HomeScreenState extends State<HomeScreen>
     final nudge = item.nudge!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Card colours — light gradient in light mode, dark elevated surface in dark mode
+    // Card colours
     final gradientColors = isDark
         ? [HuddlColors.darkSurfaceVariant, HuddlColors.darkSurface]
         : [HuddlColors.blueBackground, HuddlColors.white];
     final borderColor = isDark
         ? HuddlColors.darkDivider
         : HuddlColors.blue.withValues(alpha: 0.15);
-
-    // Text colours — always contrast against their card background
     final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
     final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
+    final labelColor = isDark ? HuddlColors.primary.withValues(alpha: 0.85) : HuddlColors.primary;
+
+    final categoryLabel = _nudgeCategoryLabel(nudge.type).toUpperCase();
 
     return GestureDetector(
       onTap: () => _handleNudgeTap(nudge),
@@ -1471,6 +1537,17 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Category label — tells the user what this card is
+                  Text(
+                    categoryLabel,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: labelColor,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
                   Text(
                     nudge.title,
                     style: GoogleFonts.poppins(
@@ -1488,13 +1565,13 @@ class _HomeScreenState extends State<HomeScreen>
                       color: subtitleColor,
                       height: 1.3,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-
+            Icon(Icons.chevron_right, size: 18, color: subtitleColor),
           ],
         ),
       ),
