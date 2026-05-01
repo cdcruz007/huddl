@@ -4902,12 +4902,37 @@ class _SenderAvatarState extends State<_SenderAvatar> {
   String get _fallbackAsset =>
       (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
 
-  /// Builds the fallback illustration widget (dad or mum illustration).
-  Widget _buildFallback() => Image.asset(
-        _fallbackAsset,
-        fit: BoxFit.cover,
-        width: 32,
-        height: 32,
+  /// Builds the illustration avatar with the first-name initial overlaid.
+  Widget _buildFallback() => Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            _fallbackAsset,
+            fit: BoxFit.cover,
+            width: 32,
+            height: 32,
+          ),
+          Container(
+            width: 32,
+            height: 32,
+            color: Colors.black.withValues(alpha: 0.18),
+          ),
+          Text(
+            widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              shadows: [
+                const Shadow(
+                  color: Colors.black38,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
 
   @override

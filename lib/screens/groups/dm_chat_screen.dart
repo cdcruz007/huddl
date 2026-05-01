@@ -2855,11 +2855,37 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
   String get _fallbackAsset =>
       (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
 
-  Widget _buildFallback() => Image.asset(
-        _fallbackAsset,
-        fit: BoxFit.cover,
-        width: widget.size,
-        height: widget.size,
+  /// Builds the illustration avatar with the first-name initial overlaid.
+  Widget _buildFallback() => Stack(
+        alignment: Alignment.center,
+        children: [
+          Image.asset(
+            _fallbackAsset,
+            fit: BoxFit.cover,
+            width: widget.size,
+            height: widget.size,
+          ),
+          Container(
+            width: widget.size,
+            height: widget.size,
+            color: Colors.black.withValues(alpha: 0.18),
+          ),
+          Text(
+            widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
+            style: GoogleFonts.poppins(
+              fontSize: widget.size * 0.38,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              shadows: const [
+                Shadow(
+                  color: Colors.black38,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
 
   @override
