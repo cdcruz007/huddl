@@ -2839,10 +2839,12 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     final ptCached = _dmParentTypeCache.containsKey(id);
     final photoCached = _dmPhotoCache.containsKey(id);
     if (ptCached && photoCached) {
-      if (mounted) setState(() {
-        _parentType = _dmParentTypeCache[id]!;
-        _firestorePhoto = _dmPhotoCache[id]!;
-      });
+      if (mounted) {
+        setState(() {
+          _parentType = _dmParentTypeCache[id]!;
+          _firestorePhoto = _dmPhotoCache[id]!;
+        });
+      }
       return;
     }
 
@@ -2855,10 +2857,12 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
       final photo = (doc?['photoUrl'] as String? ?? '').trim();
       _dmParentTypeCache[id] = pt;
       _dmPhotoCache[id] = photo;
-      if (mounted) setState(() {
-        _parentType = pt;
-        _firestorePhoto = photo;
-      });
+      if (mounted) {
+        setState(() {
+          _parentType = pt;
+          _firestorePhoto = photo;
+        });
+      }
     } catch (_) {
       _dmParentTypeCache[id] = '';
       _dmPhotoCache[id] = '';

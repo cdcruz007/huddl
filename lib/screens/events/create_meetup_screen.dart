@@ -1158,100 +1158,161 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     child: _sectionLabel('Number of attendees'),
                   ),
                   const SizedBox(height: 12),
+                  // ── No-limit toggle ──────────────────────────────────────
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: HuddlColors.gray300),
-                      ),
-                      child: Row(
-                        children: [
-                          // − button
-                          GestureDetector(
-                            onTap: () {
-                              final current = _maxAttendees ?? 1;
-                              if (current > 1) {
-                                final next = current - 1;
-                                setState(() => _maxAttendees = next);
-                                _attendeesCtrl.text = next.toString();
-                                _attendeesCtrl.selection = TextSelection.collapsed(
-                                    offset: _attendeesCtrl.text.length);
-                              }
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 14),
-                              child: Icon(
-                                Icons.remove,
-                                size: 20,
-                                color: (_maxAttendees ?? 1) > 1
-                                    ? HuddlColors.primary
-                                    : HuddlColors.gray300,
-                              ),
-                            ),
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (_maxAttendees == null) {
+                            // Switch to fixed limit — default 10
+                            _maxAttendees = 10;
+                            _attendeesCtrl.text = '10';
+                          } else {
+                            // Switch to no limit
+                            _maxAttendees = null;
+                            _attendeesCtrl.clear();
+                          }
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: _maxAttendees == null
+                              ? HuddlColors.primary
+                              : HuddlColors.primary.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: HuddlColors.primary.withValues(alpha: 0.35),
                           ),
-                          // Direct number input
-                          Expanded(
-                            child: TextField(
-                              controller: _attendeesCtrl,
-                              keyboardType: TextInputType.number,
-                              textAlign: TextAlign.center,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(4),
-                              ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.all_inclusive,
+                              size: 17,
+                              color: _maxAttendees == null
+                                  ? Colors.white
+                                  : HuddlColors.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              _maxAttendees == null
+                                  ? 'No limit  (tap to set a cap)'
+                                  : 'No limit',
                               style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  color: HuddlColors.textDark,
-                                  fontWeight: FontWeight.w600),
-                              decoration: InputDecoration(
-                                hintText: 'Number',
-                                hintStyle: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    color: HuddlColors.textHint),
-                                border: InputBorder.none,
-                                suffixText:
-                                    _maxAttendees != null ? ' people' : null,
-                                suffixStyle: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: HuddlColors.textHint),
-                                contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 14),
-                                isDense: true,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: _maxAttendees == null
+                                    ? Colors.white
+                                    : HuddlColors.primary,
                               ),
-                              onChanged: (v) {
-                                final parsed = int.tryParse(v);
-                                setState(() {
-                                  _maxAttendees =
-                                      (parsed != null && parsed > 0)
-                                          ? parsed
-                                          : null;
-                                });
-                              },
                             ),
-                          ),
-                          // + button
-                          GestureDetector(
-                            onTap: () {
-                              final next = (_maxAttendees ?? 0) + 1;
-                              setState(() => _maxAttendees = next);
-                              _attendeesCtrl.text = next.toString();
-                              _attendeesCtrl.selection =
-                                  TextSelection.collapsed(
-                                      offset: _attendeesCtrl.text.length);
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 14),
-                              child: const Icon(Icons.add,
-                                  color: HuddlColors.primary, size: 20),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
+                  // ── Fixed-number stepper (only when a cap is set) ────────
+                  if (_maxAttendees != null) ...[
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: HuddlColors.gray300),
+                        ),
+                        child: Row(
+                          children: [
+                            // − button
+                            GestureDetector(
+                              onTap: () {
+                                final current = _maxAttendees ?? 1;
+                                if (current > 1) {
+                                  final next = current - 1;
+                                  setState(() => _maxAttendees = next);
+                                  _attendeesCtrl.text = next.toString();
+                                  _attendeesCtrl.selection =
+                                      TextSelection.collapsed(
+                                          offset: _attendeesCtrl.text.length);
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 14),
+                                child: Icon(
+                                  Icons.remove,
+                                  size: 20,
+                                  color: (_maxAttendees ?? 1) > 1
+                                      ? HuddlColors.primary
+                                      : HuddlColors.gray300,
+                                ),
+                              ),
+                            ),
+                            // Direct number input
+                            Expanded(
+                              child: TextField(
+                                controller: _attendeesCtrl,
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(4),
+                                ],
+                                style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    color: HuddlColors.textDark,
+                                    fontWeight: FontWeight.w600),
+                                decoration: InputDecoration(
+                                  hintText: 'Number',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      color: HuddlColors.textHint),
+                                  border: InputBorder.none,
+                                  suffixText: ' people',
+                                  suffixStyle: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: HuddlColors.textHint),
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  isDense: true,
+                                ),
+                                onChanged: (v) {
+                                  final parsed = int.tryParse(v);
+                                  setState(() {
+                                    _maxAttendees =
+                                        (parsed != null && parsed > 0)
+                                            ? parsed
+                                            : 1;
+                                  });
+                                },
+                              ),
+                            ),
+                            // + button
+                            GestureDetector(
+                              onTap: () {
+                                final next = (_maxAttendees ?? 0) + 1;
+                                setState(() => _maxAttendees = next);
+                                _attendeesCtrl.text = next.toString();
+                                _attendeesCtrl.selection =
+                                    TextSelection.collapsed(
+                                        offset: _attendeesCtrl.text.length);
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 14, vertical: 14),
+                                child: const Icon(Icons.add,
+                                    color: HuddlColors.primary, size: 20),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 20),
 

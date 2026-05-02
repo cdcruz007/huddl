@@ -412,9 +412,9 @@ class AiFeedService with BoroughAiContext {
       _nudges.add(NudgeCard(
         id: 'nudge_first_1000_days',
         type: NudgeType.knowledgeNudge,
-        title: 'Your Baby\u2019s Amazing Brain',
-        subtitle: '80% of brain development happens in the early years. '
-            'Tap to discover simple everyday activities that make a big difference \u2014 backed by NCT research.',
+        title: 'Parenting tip: early brain development',
+        subtitle: '80% of brain development happens in the first few years. '
+            'Discover simple everyday activities that make a real difference \u2014 backed by NCT research.',
         emoji: '\u{1F9E0}',
         actionLabel: 'Explore Tips',
         actionRoute: '/copilot',

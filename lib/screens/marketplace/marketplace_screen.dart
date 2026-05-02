@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -2853,6 +2854,39 @@ class _FilterChip extends StatelessWidget {
 }
 
 // =============================================================================
+// SHARED IMAGE HELPER — handles data:URI (base64), http, and empty URLs
+// =============================================================================
+
+Widget _buildItemImage(String url, RehomeItem item) {
+  final fallback = Container(
+    color: HuddlColors.peachLight,
+    child: Center(
+      child: Icon(item.category.icon,
+          size: 44, color: item.category.color.withValues(alpha: 0.5)),
+    ),
+  );
+  if (url.isEmpty) return fallback;
+  if (url.startsWith('data:')) {
+    try {
+      final comma = url.indexOf(',');
+      if (comma >= 0) {
+        final bytes = base64Decode(url.substring(comma + 1));
+        return Image.memory(bytes, fit: BoxFit.cover, width: double.infinity,
+            height: double.infinity,
+            errorBuilder: (_, __, ___) => fallback);
+      }
+    } catch (_) {}
+    return fallback;
+  }
+  if (url.startsWith('http')) {
+    return Image.network(url, fit: BoxFit.cover, width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => fallback);
+  }
+  return fallback;
+}
+
+// =============================================================================
 // PRODUCT CARD — clean, no AI badges, no thumbs up/down
 // Long-press triggers "not interested" feedback (invisible AI signal)
 // =============================================================================
@@ -2945,18 +2979,9 @@ class _ProductCardState extends State<_ProductCard>
                   child: Stack(
                     children: [
                       SizedBox.expand(
-                        child: Image.network(
-                          item.imageUrls.first,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: HuddlColors.peachLight,
-                            child: Center(
-                              child: Icon(item.category.icon,
-                                  size: 44,
-                                  color: item.category.color
-                                      .withValues(alpha: 0.5)),
-                            ),
-                          ),
+                        child: _buildItemImage(
+                          item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                          item,
                         ),
                       ),
                       // Save button — animated heart, 48dp touch target
@@ -3272,14 +3297,9 @@ class _SellListingTileState extends State<_SellListingTile>
                               height: 60,
                               child: Opacity(
                                 opacity: widget.isSold ? 0.5 : 1.0,
-                                child: Image.network(
-                                  item.imageUrls.first,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: HuddlColors.peachLight,
-                                    child: Icon(item.category.icon,
-                                        color: HuddlColors.primary, size: 24),
-                                  ),
+                                child: _buildItemImage(
+                                  item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                                  item,
                                 ),
                               ),
                             ),

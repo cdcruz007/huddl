@@ -679,20 +679,32 @@ class HuddlNotificationService {
   Stream<List<Map<String, dynamic>>> stream() {
     final uid = _uid;
     if (uid == null) return Stream.value([]);
+    // NOTE: No .orderBy() here — adding orderBy('createdAt') alongside
+    // where('userId') requires a composite Firestore index that may not exist,
+    // causing the snapshot to error and return nothing (empty badge + list).
+    // We sort in-memory below instead.
     return _db
         .collection('notifications')
         .where('userId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
         .limit(60)
         .snapshots()
-        .map((snap) => snap.docs.map((d) {
-              final data = d.data();
-              data['id'] = d.id;
-              final ts = data['createdAt'];
-              if (ts is Timestamp) {
-                data['createdAt'] = ts.toDate().toIso8601String();
-              }
-              return data;
-            }).toList());
+        .map((snap) {
+          final docs = snap.docs.map((d) {
+            final data = d.data();
+            data['id'] = d.id;
+            final ts = data['createdAt'];
+            if (ts is Timestamp) {
+              data['createdAt'] = ts.toDate().toIso8601String();
+            }
+            return data;
+          }).toList();
+          // Sort newest-first in memory (no index needed)
+          docs.sort((a, b) {
+            final aStr = a['createdAt'] as String? ?? '';
+            final bStr = b['createdAt'] as String? ?? '';
+            return bStr.compareTo(aStr);
+          });
+          return docs;
+        });
   }
 }
