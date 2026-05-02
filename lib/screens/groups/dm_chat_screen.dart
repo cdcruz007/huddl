@@ -2806,11 +2806,7 @@ class _TypingIndicatorState extends State<_TypingIndicator>
 // RECIPIENT AVATAR — circle with initials
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// ── Illustration avatar asset paths (dad = John.png, mum = Emma.png) ──────
-const String _kMumAvatarAsset = 'assets/images/avatars/Emma.png';
-const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
-
-/// Per-session cache: memberId → 'mum' | 'dad' | '' (unknown).
+/// Per-session cache: memberId → parentType (kept for Firestore read consistency).
 final Map<String, String> _dmParentTypeCache = {};
 
 /// Per-session cache: memberId → real Firestore photoUrl ('' = no photo).
@@ -2838,7 +2834,6 @@ class _RecipientAvatar extends StatefulWidget {
 }
 
 class _RecipientAvatarState extends State<_RecipientAvatar> {
-  String _parentType = '';    // 'mum' | 'dad' | ''
   String _firestorePhoto = ''; // real profile photo URL or ''
   bool _fetching = false;
 
@@ -2875,7 +2870,6 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     if (ptCached && photoCached) {
       if (mounted) {
         setState(() {
-          _parentType = _dmParentTypeCache[id]!;
           // Only override the pre-resolved URL if cache has a newer one
           if (_firestorePhoto.isEmpty) _firestorePhoto = _dmPhotoCache[id]!;
         });
@@ -2894,7 +2888,6 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
       _dmPhotoCache[id] = photo;
       if (mounted) {
         setState(() {
-          _parentType = pt;
           _firestorePhoto = photo;
         });
       }
@@ -2906,57 +2899,39 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     }
   }
 
-  String get _fallbackAsset =>
-      (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
-
-  /// Builds the illustration avatar with the first-name initial overlaid.
-  Widget _buildFallback() => Stack(
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            _fallbackAsset,
-            fit: BoxFit.cover,
-            width: widget.size,
-            height: widget.size,
+  /// Plain coloured-circle fallback showing only the sender's first initial.
+  Widget _buildFallback() {
+    final color = _colorFromHex(widget.colorHex);
+    final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+    return Container(
+      width: widget.size,
+      height: widget.size,
+      color: color.withValues(alpha: 0.20),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.poppins(
+            fontSize: widget.size * 0.38,
+            fontWeight: FontWeight.w700,
+            color: color,
           ),
-          Container(
-            width: widget.size,
-            height: widget.size,
-            color: Colors.black.withValues(alpha: 0.18),
-          ),
-          Text(
-            widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-            style: GoogleFonts.poppins(
-              fontSize: widget.size * 0.38,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              shadows: const [
-                Shadow(
-                  color: Colors.black38,
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(widget.colorHex);
     // Priority 1: pre-resolved photo from message doc (fastest — no network)
     // Priority 2: live Firestore profile photo
-    // Priority 3: legacy hardcoded demo map
-    // Priority 4: illustration fallback (John/Emma) with initial overlay
+    // Priority 3: plain coloured-circle with first initial (no illustration)
     final preResolved = widget.photoUrl;
     final resolvedPhoto = (preResolved != null && preResolved.startsWith('http'))
         ? preResolved
         : _firestorePhoto.startsWith('http')
             ? _firestorePhoto
-            : (widget.memberId != null
-                ? getProfilePhotoForMember(widget.memberId!)
-                : null);
+            : null;
 
     return Container(
       width: widget.size,

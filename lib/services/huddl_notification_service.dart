@@ -131,6 +131,7 @@ class HuddlNotificationService {
     required String groupId,
     required String messagePreview,
     String? groupImageUrl,
+    String? senderPhotoUrl,
   }) async {
     for (final id in recipientIds) {
       await _write(
@@ -139,6 +140,7 @@ class HuddlNotificationService {
         title: groupName,
         body: '$senderName: $messagePreview',
         senderName: senderName,
+        senderPhotoUrl: senderPhotoUrl,
         imageUrl: groupImageUrl,
         data: {
           'groupId': groupId,
@@ -176,6 +178,7 @@ class HuddlNotificationService {
     required String groupName,
     required String groupId,
     String? groupImageUrl,
+    String? senderPhotoUrl,
   }) async {
     for (final id in recipientIds) {
       await _write(
@@ -184,6 +187,7 @@ class HuddlNotificationService {
         title: groupName,
         body: '$senderName sent a voice message 🎤',
         senderName: senderName,
+        senderPhotoUrl: senderPhotoUrl,
         imageUrl: groupImageUrl,
         data: {
           'groupId': groupId,
@@ -704,7 +708,27 @@ class HuddlNotificationService {
             final bStr = b['createdAt'] as String? ?? '';
             return bStr.compareTo(aStr);
           });
-          return docs;
+          // De-duplicate: if two notifications share the same type + groupId/conversationId
+          // and arrived within 60 seconds of each other, keep only the newest one.
+          // This prevents double-entries caused by the backend FCM fan-out AND the
+          // in-app Firestore write both firing for the same message.
+          final seen = <String>{};
+          final deduped = <Map<String, dynamic>>[];
+          for (final n in docs) {
+            final type    = n['type'] as String? ?? '';
+            final data    = n['data'] as Map<String, dynamic>? ?? {};
+            final groupId = data['groupId'] as String? ?? '';
+            final convId  = data['conversationId'] as String? ?? '';
+            final tsStr   = n['createdAt'] as String? ?? '';
+            // Build a bucket key: type + conversation identifier + minute-precision timestamp
+            // (truncate to the minute so messages sent <60 s apart collapse into one entry)
+            final minuteKey = tsStr.length >= 16 ? tsStr.substring(0, 16) : tsStr;
+            final bucketKey = '$type|${groupId.isNotEmpty ? groupId : convId}|$minuteKey';
+            if (seen.contains(bucketKey)) continue;
+            seen.add(bucketKey);
+            deduped.add(n);
+          }
+          return deduped;
         });
   }
 }

@@ -4874,11 +4874,7 @@ class _GroupMessageStatusIcon extends StatelessWidget {
   }
 }
 
-// ── Illustration avatar asset paths (match onboarding add_photo_screen) ──
-const String _kMumAvatarAsset = 'assets/images/avatars/Emma.png';
-const String _kDadAvatarAsset = 'assets/images/avatars/John.png';
-
-/// Per-session cache: senderId → 'mum' | 'dad' | '' (unknown).
+/// Per-session cache: senderId → parentType (kept for Firestore read consistency).
 final Map<String, String> _senderParentTypeCache = {};
 
 /// Per-session cache: senderId → real Firestore photoUrl ('' = no photo).
@@ -4906,7 +4902,6 @@ class _SenderAvatar extends StatefulWidget {
 }
 
 class _SenderAvatarState extends State<_SenderAvatar> {
-  String _parentType = '';   // 'mum' | 'dad' | ''
   String _firestorePhoto = ''; // real profile photo URL or ''
   bool _fetching = false;
 
@@ -4947,7 +4942,6 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     if (ptCached && photoCached) {
       if (mounted) {
         setState(() {
-          _parentType = _senderParentTypeCache[id]!;
           _firestorePhoto = _senderPhotoCache[id]!;
         });
       }
@@ -4965,7 +4959,6 @@ class _SenderAvatarState extends State<_SenderAvatar> {
       _senderPhotoCache[id] = photo;
       if (mounted) {
         setState(() {
-          _parentType = pt;
           _firestorePhoto = photo;
         });
       }
@@ -4977,42 +4970,27 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     }
   }
 
-  /// Returns the asset path of the gender-matched illustration fallback.
-  String get _fallbackAsset =>
-      (_parentType == 'dad') ? _kDadAvatarAsset : _kMumAvatarAsset;
-
-  /// Builds the illustration avatar with the first-name initial overlaid.
-  Widget _buildFallback() => Stack(
-        alignment: Alignment.center,
-        children: [
-          Image.asset(
-            _fallbackAsset,
-            fit: BoxFit.cover,
-            width: 32,
-            height: 32,
+  /// Plain coloured-circle fallback showing only the sender's first initial.
+  /// No illustration asset — keeps avatars clean when no photo is available.
+  Widget _buildFallback() {
+    final color = _colorFromHex(widget.colorHex);
+    final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
+    return Container(
+      width: 32,
+      height: 32,
+      color: color.withValues(alpha: 0.20),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: color,
           ),
-          Container(
-            width: 32,
-            height: 32,
-            color: Colors.black.withValues(alpha: 0.18),
-          ),
-          Text(
-            widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?',
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              shadows: [
-                const Shadow(
-                  color: Colors.black38,
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -5020,7 +4998,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
 
     // Priority 1: photoUrl passed on the message (stored when sent)
     // Priority 2: real photoUrl fetched live from Firestore profile
-    // Priority 3: illustration fallback (John/Emma) with initial overlay
+    // Priority 3: plain coloured-circle with first initial (no illustration)
     final resolvedPhoto = (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
         ? widget.photoUrl!
         : (_firestorePhoto.startsWith('http') ? _firestorePhoto : null);
@@ -5049,6 +5027,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
                 )
               : _buildFallback(),
         ),
+        // Tap-hint chat-bubble badge
         if (widget.showTapHint)
           Positioned(
             right: -1,

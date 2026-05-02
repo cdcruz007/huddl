@@ -498,19 +498,19 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     // ── Fixed section order (score only breaks ties within each section) ──
-    // 0. Top AI nudge  (highest-relevance parenting tip / reminder — always first)
-    // 1. Community posts / announcements  (own posts first, then recent)
-    // 2. Upcoming meetups & events the user is going to  (soonest first)
-    // 3. Suggested meetups & new groups  (by score within section)
-    // 4. Community activity feed  (AI-ranked)
+    // 0. Community posts / announcements  (own posts first, then recent)
+    // 1. Upcoming meetups & events the user is going to  (soonest first)
+    // 2. Suggested meetups & new groups  (by score within section)
+    // 3. Community activity feed  (AI-ranked)
+    // 4. AI nudge / Parenting tip  (always at the bottom of the feed)
     const sectionOrder = {
-      _SmartFeedType.aiNudge:            0,
-      _SmartFeedType.announcement:       1,
-      _SmartFeedType.meetup:             2,
-      _SmartFeedType.goingEvent:         2,
-      _SmartFeedType.suggestedMeetup:    3,
-      _SmartFeedType.group:              3,
-      _SmartFeedType.communityActivity:  4,
+      _SmartFeedType.announcement:       0,
+      _SmartFeedType.meetup:             1,
+      _SmartFeedType.goingEvent:         1,
+      _SmartFeedType.suggestedMeetup:    2,
+      _SmartFeedType.group:              2,
+      _SmartFeedType.communityActivity:  3,
+      _SmartFeedType.aiNudge:            4,
     };
     items.sort((a, b) {
       final sA = sectionOrder[a.type] ?? 99;

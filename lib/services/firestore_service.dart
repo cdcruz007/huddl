@@ -330,6 +330,10 @@ class FirestoreService {
       if (otherMembers.isNotEmpty) {
         final isVoice = (type == 'voice_note') ||
             (audioUrl != null && audioUrl.isNotEmpty);
+        final senderPhotoUrl =
+            (profile?['photoUrl'] as String? ?? '').isNotEmpty
+                ? profile!['photoUrl'] as String
+                : null;
         if (isVoice) {
           unawaited(
             HuddlNotificationService().voiceMessageGroup(
@@ -338,6 +342,7 @@ class FirestoreService {
               groupName: groupName,
               groupId: groupId,
               groupImageUrl: groupImageUrl.isNotEmpty ? groupImageUrl : null,
+              senderPhotoUrl: senderPhotoUrl,
             ),
           );
         } else {
@@ -349,6 +354,7 @@ class FirestoreService {
               groupId: groupId,
               messagePreview: message,
               groupImageUrl: groupImageUrl.isNotEmpty ? groupImageUrl : null,
+              senderPhotoUrl: senderPhotoUrl,
             ),
           );
         }
