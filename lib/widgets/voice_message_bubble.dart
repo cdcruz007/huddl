@@ -103,20 +103,27 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
         children: [
           Row(
             children: [
-              // Play / pause button
+              // Play / pause button — 48×48 hit area (iOS 44pt minimum)
               GestureDetector(
                 onTap: _toggle,
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: iconColor.withValues(alpha: 0.15),
-                  ),
-                  child: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: iconColor,
-                    size: 20,
+                behavior: HitTestBehavior.opaque,
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Center(
+                    child: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: iconColor.withValues(alpha: 0.15),
+                      ),
+                      child: Icon(
+                        _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                        color: iconColor,
+                        size: 24,
+                      ),
+                    ),
                   ),
                 ),
               ),

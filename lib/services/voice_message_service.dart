@@ -50,38 +50,20 @@ class VoiceMessageService {
     if (_initialised) return;
     _initialised = true;
 
-    // iOS: configure audio session to play through the speaker (not earpiece)
-    // and allow mixing with other apps (e.g. background music).
-    if (!kIsWeb && Platform.isIOS) {
+    // Configure audio context for speaker playback.
+    //
+    // iOS: `defaultToSpeaker` is only valid with `playAndRecord` category.
+    // Using `playback` category alone is correct for playback-only and routes
+    // audio to the speaker automatically (not the earpiece).
+    // `allowBluetooth` requires `playAndRecord` or `record` — omit it here.
+    if (!kIsWeb) {
       try {
         await _player.setAudioContext(
           AudioContext(
             iOS: AudioContextIOS(
               category: AVAudioSessionCategory.playback,
-              options: const {
-                AVAudioSessionOptions.defaultToSpeaker,
-                AVAudioSessionOptions.allowBluetooth,
-              },
+              options: const {}, // no extra options — playback routes to speaker by default
             ),
-            android: AudioContextAndroid(
-              isSpeakerphoneOn: true,
-              stayAwake: false,
-              contentType: AndroidContentType.music,
-              usageType: AndroidUsageType.media,
-              audioFocus: AndroidAudioFocus.gain,
-            ),
-          ),
-        );
-      } catch (e) {
-        if (kDebugMode) debugPrint('[VoiceMessageService] audio context error: $e');
-      }
-    }
-
-    // Android: route audio through speaker
-    if (!kIsWeb && Platform.isAndroid) {
-      try {
-        await _player.setAudioContext(
-          AudioContext(
             android: AudioContextAndroid(
               isSpeakerphoneOn: true,
               stayAwake: false,
@@ -98,9 +80,10 @@ class VoiceMessageService {
 
     _player.onPlayerStateChanged.listen((state) {
       _isPlaying = state == PlayerState.playing;
+      // Emit the current URL so bubble widgets update their icon immediately
+      _playingUrlController.add(_isPlaying ? _playingUrl : null);
       if (state == PlayerState.completed || state == PlayerState.stopped) {
         _playingUrl = null;
-        _playingUrlController.add(null);
       }
     });
     _player.onPositionChanged.listen((pos) {

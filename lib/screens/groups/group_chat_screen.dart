@@ -3476,6 +3476,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     );
                   }
                   return GestureDetector(
+                    behavior: HitTestBehavior.opaque,
                     onLongPressStart: (_) async {
                       // Dismiss keyboard FIRST so iOS doesn't swallow the gesture
                       FocusScope.of(context).unfocus();
@@ -3497,14 +3498,28 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     onLongPressEnd: (_) async {
                       if (_isVoiceRecording) await _sendVoiceMessage();
                     },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
-                        shape: BoxShape.circle,
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Hold to record a voice message'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                    child: SizedBox(
+                      width: 52,
+                      height: 52,
+                      child: Center(
+                        child: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: const BoxDecoration(
+                            gradient: HuddlColors.primaryGradient,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.mic, size: 22, color: HuddlColors.white),
+                        ),
                       ),
-                      child: const Icon(Icons.mic, size: 20, color: HuddlColors.white),
                     ),
                   );
                 },
