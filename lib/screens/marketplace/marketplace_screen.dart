@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/rehome_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
@@ -539,7 +541,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   // UI state
   bool _showSuggestions = false;
-
+  bool _isLoadingItems = false;
 
   @override
   void initState() {
@@ -550,10 +552,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _service.addListener(_onServiceChange);
+      // Load real listings from Firestore on first open
+      _loadListingsFromFirestore();
     });
     _searchFocus.addListener(() {
       if (mounted) setState(() => _showSuggestions = _searchFocus.hasFocus);
     });
+  }
+
+  /// Load all active marketplace listings from Firestore and populate the
+  /// in-memory RehomeService so they survive screen rebuilds.
+  Future<void> _loadListingsFromFirestore() async {
+    if (_isLoadingItems) return;
+    setState(() => _isLoadingItems = true);
+    try {
+      final docs = await FirestoreService().getMarketplaceListings();
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      for (final d in docs) {
+        final item = RehomeItem.fromFirestore(d);
+        if (item.id.isEmpty) continue;
+        // Avoid duplicates (item already added by a local create action)
+        if (_service.allItems.any((i) => i.id == item.id)) continue;
+        _service.addListing(item);
+        // Track own listings
+        if (uid != null && item.sellerId == uid) {
+          _service.addMyListing(item);
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Marketplace] loadFromFirestore error: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingItems = false);
+    }
   }
 
   void _onServiceChange() {

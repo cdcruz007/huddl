@@ -4899,9 +4899,11 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     final id = widget.senderId;
     if (id == null || id.isEmpty) return;
 
-    // Use both caches — if both are already populated, update state and return
+    // Only use cache if we have a confirmed non-empty photo.  Caching an
+    // empty string locks out users who later upload a profile photo.
     final ptCached = _senderParentTypeCache.containsKey(id);
-    final photoCached = _senderPhotoCache.containsKey(id);
+    final photoCached = _senderPhotoCache.containsKey(id) &&
+        _senderPhotoCache[id]!.isNotEmpty;
     if (ptCached && photoCached) {
       if (mounted) {
         setState(() {

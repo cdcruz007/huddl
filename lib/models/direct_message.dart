@@ -65,6 +65,10 @@ class DirectMessage {
   final Map<String, dynamic>? itemData;   // for item invite cards
   final Map<String, dynamic>? eventData;  // for event invite cards
 
+  /// Sender's profile photo URL stored at send time — avoids a live Firestore
+  /// lookup in every bubble widget.  May be null for legacy messages.
+  final String? senderAvatar;
+
   DirectMessage({
     required this.id,
     required this.senderId,
@@ -91,6 +95,7 @@ class DirectMessage {
     this.groupData,
     this.itemData,
     this.eventData,
+    this.senderAvatar,
   });
 
   Map<String, dynamic> toJson() => {
@@ -119,6 +124,7 @@ class DirectMessage {
         'groupData': groupData,
         'itemData': itemData,
         'eventData': eventData,
+        'senderAvatar': senderAvatar,
       };
 
   factory DirectMessage.fromJson(Map<String, dynamic> json) {
@@ -165,6 +171,7 @@ class DirectMessage {
       groupData:  _safeMap(json['groupData']),
       itemData:   _safeMap(json['itemData']),
       eventData:  _safeMap(json['eventData']),
+      senderAvatar: json['senderAvatar'] as String?,
     );
   }
 
@@ -199,6 +206,7 @@ class DirectMessage {
       groupData: groupData,
       itemData: itemData,
       eventData: eventData,
+      senderAvatar: senderAvatar,
     );
   }
 }

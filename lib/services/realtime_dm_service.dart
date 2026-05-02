@@ -198,6 +198,9 @@ class RealtimeDMService {
     try {
       final me = await _userService.getUser(uid);
       final senderName = me?.name ?? 'Unknown';
+      // Snapshot the sender's current profile photo so every bubble can show
+      // the correct avatar without an extra Firestore round-trip per message.
+      final senderAvatar = me?.photoUrl ?? '';
 
       final msgRef = _db
           .collection('conversations')
@@ -209,6 +212,7 @@ class RealtimeDMService {
         'id': msgRef.id,
         'senderId': uid,
         'senderName': senderName,
+        'senderAvatar': senderAvatar,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
         'type': type,
@@ -455,6 +459,8 @@ class RealtimeDMMessage {
   final Map<String, dynamic>? groupData;
   final Map<String, dynamic>? itemData;
   final Map<String, dynamic>? eventData;
+  /// Sender's profile photo URL snapshotted at send time.
+  final String? senderAvatar;
 
   const RealtimeDMMessage({
     required this.id,
@@ -482,6 +488,7 @@ class RealtimeDMMessage {
     this.groupData,
     this.itemData,
     this.eventData,
+    this.senderAvatar,
   });
 
   factory RealtimeDMMessage.fromFirestore(
@@ -528,6 +535,7 @@ class RealtimeDMMessage {
       eventData: data['eventData'] != null
           ? Map<String, dynamic>.from(data['eventData'])
           : null,
+      senderAvatar: data['senderAvatar'] as String?,
     );
   }
 }

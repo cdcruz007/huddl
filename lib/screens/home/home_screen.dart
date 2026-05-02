@@ -35,6 +35,7 @@ import '../../screens/marketplace/item_detail_screen.dart';
 import '../../screens/groups/group_chat_screen.dart';
 import '../../screens/groups/dm_chat_screen.dart';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 
 
 // =============================================================================
@@ -99,6 +100,7 @@ class _HomeScreenState extends State<HomeScreen>
   bool _notificationsRead = false;
   int _realUnreadNotifCount = 0;           // live count from Firestore
   StreamSubscription<List<Map<String, dynamic>>>? _notifStreamSub;
+  StreamSubscription<User?>? _authStateSub;  // watches auth ready before subscribing
 
   int get _notifBadgeCount {
     if (_notificationsRead) return 0;
@@ -164,6 +166,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   void dispose() {
+    _authStateSub?.cancel();
     _notifStreamSub?.cancel();
     _greetingAnimCtrl.dispose();
     _feedStaggerCtrl.dispose();
@@ -186,7 +189,29 @@ class _HomeScreenState extends State<HomeScreen>
   /// reflects the true unread count even when the app is in the foreground.
   /// If new unread notifications arrive after the user already opened the
   /// sheet, reset _notificationsRead so the badge lights up again.
+  ///
+  /// Uses authStateChanges to guard against the cold-start race where
+  /// FirebaseAuth.currentUser is still null when the widget first mounts,
+  /// causing stream() to return Stream.value([]) and the badge/list to
+  /// appear empty even though notifications exist in Firestore.
   void _subscribeToNotifications() {
+    _authStateSub?.cancel();
+    // If already signed in, start immediately; otherwise wait for auth.
+    final current = FirebaseAuth.instance.currentUser;
+    if (current != null) {
+      _startNotifStream();
+    } else {
+      _authStateSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+        if (user != null && mounted) {
+          _authStateSub?.cancel();
+          _authStateSub = null;
+          _startNotifStream();
+        }
+      });
+    }
+  }
+
+  void _startNotifStream() {
     try {
       _notifStreamSub?.cancel();
       _notifStreamSub = HuddlNotificationService()
@@ -473,19 +498,19 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     // ── Fixed section order (score only breaks ties within each section) ──
+    // 0. Top AI nudge  (highest-relevance parenting tip / reminder — always first)
     // 1. Community posts / announcements  (own posts first, then recent)
     // 2. Upcoming meetups & events the user is going to  (soonest first)
     // 3. Suggested meetups & new groups  (by score within section)
     // 4. Community activity feed  (AI-ranked)
-    // 5. Tips / AI nudges  (always at the bottom)
     const sectionOrder = {
-      _SmartFeedType.announcement:       0,
-      _SmartFeedType.meetup:             1,
-      _SmartFeedType.goingEvent:         1,
-      _SmartFeedType.suggestedMeetup:    2,
-      _SmartFeedType.group:              2,
-      _SmartFeedType.communityActivity:  3,
-      _SmartFeedType.aiNudge:            4,
+      _SmartFeedType.aiNudge:            0,
+      _SmartFeedType.announcement:       1,
+      _SmartFeedType.meetup:             2,
+      _SmartFeedType.goingEvent:         2,
+      _SmartFeedType.suggestedMeetup:    3,
+      _SmartFeedType.group:              3,
+      _SmartFeedType.communityActivity:  4,
     };
     items.sort((a, b) {
       final sA = sectionOrder[a.type] ?? 99;
@@ -3368,7 +3393,18 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
   @override
   void initState() {
     super.initState();
-    _stream = HuddlNotificationService().stream();
+    // Guard against the auth race: if the user is already signed in use the
+    // stream directly; otherwise fall back to an auth-state stream that
+    // switches over once a UID becomes available.
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _stream = HuddlNotificationService().stream();
+    } else {
+      _stream = FirebaseAuth.instance.authStateChanges().asyncExpand((user) {
+        if (user == null) return const Stream.empty();
+        return HuddlNotificationService().stream();
+      });
+    }
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

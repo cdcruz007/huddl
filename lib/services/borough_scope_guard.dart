@@ -140,9 +140,12 @@ class BoroughScopeGuard {
     return items.where((item) {
       final itemBorough = boroughExtractor(item);
       if (itemBorough == null || itemBorough.isEmpty) {
-        // Items without a borough tag are hidden in borough-only views
-        // to prevent data leakage across boroughs.
-        return false;
+        // Items without a borough tag are shown rather than hidden — they were
+        // likely loaded from Firestore before the borough field was written, or
+        // created by a user whose postcode lookup hasn't resolved yet.  Hiding
+        // them produces a blank marketplace / empty meetup list on first open,
+        // which is a worse UX than showing a slightly wider set of results.
+        return true;
       }
       return itemBorough.toLowerCase() == lowerBorough;
     }).toList();

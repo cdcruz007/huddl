@@ -294,6 +294,69 @@ class RehomeItem {
 
   bool get isFree => price == 0;
 
+  /// Build a RehomeItem from a Firestore document map.
+  factory RehomeItem.fromFirestore(Map<String, dynamic> d) {
+    // Parse AgeStage from stored label string
+    AgeStage parseAge(String? s) {
+      if (s == null) return AgeStage.allAges;
+      return AgeStage.values.firstWhere(
+        (e) => e.label == s || e.name == s,
+        orElse: () => AgeStage.allAges,
+      );
+    }
+    // Parse ItemCategory from stored label string
+    ItemCategory parseCat(String? s) {
+      if (s == null) return ItemCategory.other;
+      return ItemCategory.values.firstWhere(
+        (e) => e.label == s || e.name == s,
+        orElse: () => ItemCategory.other,
+      );
+    }
+    // Parse ItemCondition from stored label string
+    ItemCondition parseCond(String? s) {
+      if (s == null) return ItemCondition.good;
+      return ItemCondition.values.firstWhere(
+        (e) => e.label == s || e.name == s,
+        orElse: () => ItemCondition.good,
+      );
+    }
+    // Parse DateTime from either Timestamp or ISO string
+    DateTime parseDate(dynamic v) {
+      if (v == null) return DateTime.now();
+      if (v is DateTime) return v;
+      if (v is String) return DateTime.tryParse(v) ?? DateTime.now();
+      return DateTime.now();
+    }
+    // imageUrls may be stored as List or single string
+    List<String> parseImages(dynamic v) {
+      if (v == null) return [];
+      if (v is List) return v.map((e) => e.toString()).toList();
+      if (v is String && v.isNotEmpty) return [v];
+      return [];
+    }
+
+    return RehomeItem(
+      id: d['id'] as String? ?? '',
+      title: d['title'] as String? ?? '',
+      description: d['description'] as String? ?? '',
+      ageStage: parseAge(d['ageStage'] as String?),
+      category: parseCat(d['category'] as String?),
+      condition: parseCond(d['condition'] as String?),
+      price: (d['price'] as num?)?.toDouble() ?? 0,
+      imageUrls: parseImages(d['imageUrls'] ?? d['images']),
+      sellerName: d['sellerName'] as String? ?? '',
+      sellerId: d['sellerId'] as String? ?? 'seller_unknown',
+      sellerLocation:
+          d['sellerLocation'] as String? ?? d['sellerBorough'] as String? ?? '',
+      listedAt: parseDate(d['createdAt'] ?? d['listedAt']),
+      isSold: d['status'] == 'sold' || d['isSold'] == true,
+      viewCount: (d['viewCount'] as num?)?.toInt() ?? 0,
+      offerCount: (d['offerCount'] as num?)?.toInt() ?? 0,
+      borough:
+          d['borough'] as String? ?? d['sellerBorough'] as String?,
+    );
+  }
+
   String get priceDisplay =>
       isFree ? 'Free' : '\u00A3${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}';
 
@@ -454,6 +517,15 @@ class RehomeService extends ChangeNotifier {
         : item;
     _items.insert(0, toAdd);
     _myListings.insert(0, toAdd);
+    notifyListeners();
+  }
+
+  /// Add an item that belongs to the current user's listings without
+  /// duplicating it in the global browse list (called when loading from
+  /// Firestore where the item was already inserted via addListing).
+  void addMyListing(RehomeItem item) {
+    if (_myListings.any((i) => i.id == item.id)) return;
+    _myListings.insert(0, item);
     notifyListeners();
   }
 

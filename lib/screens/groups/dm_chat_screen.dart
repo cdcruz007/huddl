@@ -299,6 +299,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       groupData: m.groupData,
       itemData: m.itemData,
       eventData: m.eventData,
+      senderAvatar: m.senderAvatar,
     );
   }
 
@@ -831,6 +832,10 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   isHighlighted: isHighlighted,
                                   searchQuery: _searchQuery,
                                   isSaved: _savedMessageService.isMessageSaved(msg.id),
+                                  // Pass the snapshotted sender avatar so the
+                                  // bubble renders immediately without a per-
+                                  // message Firestore profile lookup.
+                                  senderAvatarUrl: msg.isMe ? null : msg.senderAvatar,
                                   onSave: () => _saveMessage(msg),
                                   onForward: () {
                                     showForwardSheet(
@@ -2221,6 +2226,9 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onResend;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
+  /// Pre-resolved sender photo URL — forwarded to _RecipientAvatar so the
+  /// avatar renders immediately without a per-bubble Firestore lookup.
+  final String? senderAvatarUrl;
 
   const _DMBubble({
     required this.message,
@@ -2239,6 +2247,7 @@ class _DMBubble extends StatelessWidget {
     this.onResend,
     this.reactions = const {},
     this.onTapReaction,
+    this.senderAvatarUrl,
   });
 
   @override
@@ -2272,6 +2281,7 @@ class _DMBubble extends StatelessWidget {
                       colorHex: recipientAvatarColor,
                       memberId: recipientId,
                       size: 32,
+                      photoUrl: senderAvatarUrl,
                     ),
                   ),
                 if (!isMe) const SizedBox(width: 8),
@@ -2803,12 +2813,16 @@ class _RecipientAvatar extends StatefulWidget {
   final String colorHex;
   final String? memberId;
   final double size;
+  /// Pre-resolved photo URL from the message doc — skips Firestore fetch
+  /// when non-empty.  Falls back to live lookup when null or empty.
+  final String? photoUrl;
 
   const _RecipientAvatar({
     required this.name,
     required this.colorHex,
     this.memberId,
     this.size = 32,
+    this.photoUrl,
   });
 
   @override
@@ -2836,13 +2850,26 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     final id = widget.memberId;
     if (id == null || id.isEmpty) return;
 
+    // If the caller already resolved the photo (e.g. from message.senderAvatar)
+    // use it immediately and skip the Firestore lookup entirely.
+    final preResolved = widget.photoUrl;
+    if (preResolved != null && preResolved.startsWith('http')) {
+      if (mounted) setState(() => _firestorePhoto = preResolved);
+      // Still fetch parent type for the illustration fallback in case the
+      // network image fails, but don't block the avatar on it.
+    }
+
     final ptCached = _dmParentTypeCache.containsKey(id);
-    final photoCached = _dmPhotoCache.containsKey(id);
+    // Only use the photo cache when it holds a real URL.  Caching an empty
+    // string prevents re-fetching after the user later uploads a profile photo.
+    final photoCached = _dmPhotoCache.containsKey(id) &&
+        _dmPhotoCache[id]!.isNotEmpty;
     if (ptCached && photoCached) {
       if (mounted) {
         setState(() {
           _parentType = _dmParentTypeCache[id]!;
-          _firestorePhoto = _dmPhotoCache[id]!;
+          // Only override the pre-resolved URL if cache has a newer one
+          if (_firestorePhoto.isEmpty) _firestorePhoto = _dmPhotoCache[id]!;
         });
       }
       return;
@@ -2910,14 +2937,18 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
   @override
   Widget build(BuildContext context) {
     final color = _colorFromHex(widget.colorHex);
-    // Priority 1: real Firestore photoUrl
-    // Priority 2: legacy hardcoded demo map
-    // Priority 3: illustration fallback (John/Emma) with initial overlay
-    final resolvedPhoto = _firestorePhoto.startsWith('http')
-        ? _firestorePhoto
-        : (widget.memberId != null
-            ? getProfilePhotoForMember(widget.memberId!)
-            : null);
+    // Priority 1: pre-resolved photo from message doc (fastest — no network)
+    // Priority 2: live Firestore profile photo
+    // Priority 3: legacy hardcoded demo map
+    // Priority 4: illustration fallback (John/Emma) with initial overlay
+    final preResolved = widget.photoUrl;
+    final resolvedPhoto = (preResolved != null && preResolved.startsWith('http'))
+        ? preResolved
+        : _firestorePhoto.startsWith('http')
+            ? _firestorePhoto
+            : (widget.memberId != null
+                ? getProfilePhotoForMember(widget.memberId!)
+                : null);
 
     return Container(
       width: widget.size,
