@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
 
+
 /// Singleton service that handles voice message recording, uploading, and playback.
 /// Recording uses the `record` package (m4a/aac on device, webm on web).
 /// Playback uses the `audioplayers` package.
@@ -41,7 +42,60 @@ class VoiceMessageService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  void init() {
+  bool _initialised = false;
+
+  /// Call once after Firebase is ready (e.g. in main_shell initState).
+  /// Idempotent — safe to call multiple times.
+  Future<void> init() async {
+    if (_initialised) return;
+    _initialised = true;
+
+    // iOS: configure audio session to play through the speaker (not earpiece)
+    // and allow mixing with other apps (e.g. background music).
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        await _player.setAudioContext(
+          AudioContext(
+            iOS: AudioContextIOS(
+              category: AVAudioSessionCategory.playback,
+              options: const {
+                AVAudioSessionOptions.defaultToSpeaker,
+                AVAudioSessionOptions.allowBluetooth,
+              },
+            ),
+            android: AudioContextAndroid(
+              isSpeakerphoneOn: true,
+              stayAwake: false,
+              contentType: AndroidContentType.music,
+              usageType: AndroidUsageType.media,
+              audioFocus: AndroidAudioFocus.gain,
+            ),
+          ),
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[VoiceMessageService] audio context error: $e');
+      }
+    }
+
+    // Android: route audio through speaker
+    if (!kIsWeb && Platform.isAndroid) {
+      try {
+        await _player.setAudioContext(
+          AudioContext(
+            android: AudioContextAndroid(
+              isSpeakerphoneOn: true,
+              stayAwake: false,
+              contentType: AndroidContentType.music,
+              usageType: AndroidUsageType.media,
+              audioFocus: AndroidAudioFocus.gain,
+            ),
+          ),
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[VoiceMessageService] audio context error: $e');
+      }
+    }
+
     _player.onPlayerStateChanged.listen((state) {
       _isPlaying = state == PlayerState.playing;
       if (state == PlayerState.completed || state == PlayerState.stopped) {

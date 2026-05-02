@@ -13,6 +13,7 @@ import 'profile/profile_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
+import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
 
 class MainShell extends StatefulWidget {
@@ -58,6 +59,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       if (mounted) {
         _checkTutorial();
         _initialisePushNotifications();
+        // Initialise voice playback engine once at app-level so the
+        // AudioPlayer listeners and iOS/Android audio session are ready
+        // before any chat screen tries to play a voice message.
+        VoiceMessageService.instance.init();
       }
     });
   }
