@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
+import '../main_shell.dart';
 
 import '../../services/dm_service.dart';
 import '../../services/realtime_dm_service.dart';
@@ -132,10 +133,17 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
     _savedMessageService.initialize();
     _blockService.initialize();
+    // Tell the shell this DM is now active so foreground FCM banners
+    // for this conversation are suppressed (OS heads-up is sufficient).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      MainShell.shellKey.currentState?.setActiveDmChat(widget.recipientId);
+    });
   }
 
   @override
   void dispose() {
+    // Clear active chat so banners resume for other conversations.
+    MainShell.shellKey.currentState?.setActiveDmChat(null);
     _messageController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -2880,7 +2888,7 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
 
     try {
       final doc = await FirestoreService().getUserProfile(id);
-      final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      final pt = (doc?['parentType'] as String? ?? '').toLowerCase();
       final photo = (doc?['photoUrl'] as String? ?? '').trim();
       _dmParentTypeCache[id] = pt;
       _dmPhotoCache[id] = photo;

@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
+import '../main_shell.dart';
 import '../../services/invitation_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
@@ -173,6 +174,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// from Firestore if the widget value is blank (e.g. opened via notification).
   late String _liveGroupImageUrl;
 
+  /// Current user's own profile photo URL — resolved once in initState and
+  /// reused for every optimistic outgoing message so the sender avatar is
+  /// correct immediately (before the Firestore write returns).
+  String _myPhotoUrl = '';
+
   @override
   void initState() {
     super.initState();
@@ -181,12 +187,18 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _blockService.initialize();
     _checkLeaveGroupEligibility();
     _resolveGroupImageIfNeeded();
+    _resolveMyPhotoUrl();
     // Periodically reload forwarded messages so cards appear without manual refresh
     _forwardedMsgTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) _reloadForwardedMessages();
     });
     // Subscribe to real-time Firestore messages for cross-device chat
     _subscribeToFirestoreMessages();
+    // Tell the shell this group chat is now active so foreground FCM banners
+    // for this conversation are suppressed (OS heads-up is sufficient).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      MainShell.shellKey.currentState?.setActiveGroupChat(widget.groupId);
+    });
   }
 
   /// If the group image URL wasn't passed in (e.g. opened from a notification),
@@ -198,6 +210,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       final url = group?.imageUrl ?? '';
       if (url.isNotEmpty && mounted) {
         setState(() => _liveGroupImageUrl = url);
+      }
+    } catch (_) {}
+  }
+
+  /// Fetch the current user's own photoUrl once and cache it in [_myPhotoUrl].
+  /// Used so that every optimistic outgoing message shows the correct sender
+  /// avatar immediately — without waiting for the Firestore write to return.
+  Future<void> _resolveMyPhotoUrl() async {
+    try {
+      final profile = await FirestoreService().getCurrentUserProfile();
+      final photo = (profile?['photoUrl'] as String? ?? '').trim();
+      if (photo.isNotEmpty && mounted) {
+        setState(() => _myPhotoUrl = photo);
       }
     } catch (_) {}
   }
@@ -220,6 +245,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   @override
   void dispose() {
+    // Clear active chat so banners resume for other conversations.
+    MainShell.shellKey.currentState?.setActiveGroupChat(null);
     _forwardedMsgTimer?.cancel();
     _firestoreMsgSub?.cancel();
     _messageController.dispose();
@@ -569,7 +596,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         id: msgId,
         senderId: currentUid,
         senderName: _onboardingService.name ?? 'You',
-        senderAvatar: '',
+        senderAvatar: _myPhotoUrl,
         message: text,
         timestamp: DateTime.now(),
         isMe: true,
@@ -3507,7 +3534,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         id: 'vm_${ts.millisecondsSinceEpoch}',
         senderId: uid,
         senderName: me,
-        senderAvatar: '',
+        senderAvatar: _myPhotoUrl,
         message: '🎤 Voice message',
         timestamp: ts,
         isMe: true,
@@ -4886,6 +4913,12 @@ class _SenderAvatarState extends State<_SenderAvatar> {
   @override
   void initState() {
     super.initState();
+    // Seed immediately from the photoUrl already stored on the message so
+    // the correct avatar shows before the async Firestore fetch completes.
+    final directPhoto = widget.photoUrl;
+    if (directPhoto != null && directPhoto.startsWith('http')) {
+      _firestorePhoto = directPhoto;
+    }
     _resolveProfile();
   }
 
@@ -4893,6 +4926,13 @@ class _SenderAvatarState extends State<_SenderAvatar> {
   void didUpdateWidget(_SenderAvatar old) {
     super.didUpdateWidget(old);
     if (old.senderId != widget.senderId) _resolveProfile();
+    // Also update immediately if the passed-in photoUrl changed.
+    if (old.photoUrl != widget.photoUrl) {
+      final directPhoto = widget.photoUrl;
+      if (directPhoto != null && directPhoto.startsWith('http')) {
+        _firestorePhoto = directPhoto;
+      }
+    }
   }
 
   Future<void> _resolveProfile() async {
@@ -4919,7 +4959,7 @@ class _SenderAvatarState extends State<_SenderAvatar> {
 
     try {
       final doc = await FirestoreService().getUserProfile(id);
-      final pt = (doc?['parent_type'] as String? ?? '').toLowerCase();
+      final pt = (doc?['parentType'] as String? ?? '').toLowerCase();
       final photo = (doc?['photoUrl'] as String? ?? '').trim();
       _senderParentTypeCache[id] = pt;
       _senderPhotoCache[id] = photo;

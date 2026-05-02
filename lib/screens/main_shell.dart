@@ -35,6 +35,19 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   // because every screen's initState async work raced with the build phase.
   final Set<int> _activatedTabs = {0}; // Home is always pre-activated
 
+  // ── Active chat tracking (used to suppress duplicate foreground banners) ──
+  // When the user is already inside a group chat or DM, the OS shows the FCM
+  // heads-up banner AND our SnackBar would fire simultaneously.  By tracking
+  // the currently-open chat we can skip the SnackBar for that conversation.
+  String? _activeGroupId;       // non-null while a group chat is open
+  String? _activeDmRecipientId; // non-null while a DM screen is open
+
+  /// Called by group chat screen on push/pop so we know when it's visible.
+  void setActiveGroupChat(String? groupId) => _activeGroupId = groupId;
+
+  /// Called by DM chat screen on push/pop so we know when it's visible.
+  void setActiveDmChat(String? recipientId) => _activeDmRecipientId = recipientId;
+
   @override
   void initState() {
     super.initState();
@@ -60,6 +73,20 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       final title = message.notification?.title ?? '';
       final body  = message.notification?.body  ?? '';
       if (title.isEmpty && body.isEmpty) return;
+
+      // Suppress SnackBar if the user is already viewing the conversation
+      // that triggered this notification — the OS heads-up is sufficient.
+      final data            = message.data;
+      final notifType       = data['type'] as String? ?? '';
+      final notifGroupId    = data['groupId'] as String? ?? '';
+      final notifRecipId    = data['recipientId'] as String? ?? '';
+      final alreadyInGroup  = notifType == 'new_group_message' &&
+          notifGroupId.isNotEmpty &&
+          notifGroupId == _activeGroupId;
+      final alreadyInDm     = (notifType == 'new_dm' || notifType == 'voice_message_dm') &&
+          notifRecipId.isNotEmpty &&
+          notifRecipId == _activeDmRecipientId;
+      if (alreadyInGroup || alreadyInDm) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
