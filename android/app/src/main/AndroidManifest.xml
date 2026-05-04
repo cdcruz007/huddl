@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- ── Permissions ────────────────────────────────────────────────────────
          INTERNET        : Required for Firebase, backend API calls, and Stripe.
@@ -15,7 +16,7 @@
     <!-- RECORD_AUDIO: Required for voice message recording -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- READ/WRITE external storage for saving voice recordings (API < 29) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
 
     <application
