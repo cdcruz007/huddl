@@ -578,22 +578,6 @@ class _DMChatScreenState extends State<DMChatScreen> {
               ),
             ),
 
-          // ── TEMP DEBUG BANNER ─────────────────────────────────────
-          FutureBuilder<String>(
-            future: _dumpStorage(),
-            builder: (ctx, snap) => GestureDetector(
-              onTap: () => setState(() {}), // tap to refresh
-              child: Container(
-                color: Colors.amber.shade100,
-                padding: const EdgeInsets.all(6),
-                child: Text(
-                  snap.data ?? 'Loading storage...',
-                  style: const TextStyle(fontSize: 9, color: Colors.black87, fontFamily: 'monospace'),
-                ),
-              ),
-            ),
-          ),
-
           // ── Messages list ─────────────────────────────────────────
           Expanded(
             child: _isLoading

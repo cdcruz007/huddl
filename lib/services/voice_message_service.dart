@@ -83,7 +83,10 @@ class VoiceMessageService {
       // Emit the current URL so bubble widgets update their icon immediately
       _playingUrlController.add(_isPlaying ? _playingUrl : null);
       if (state == PlayerState.completed || state == PlayerState.stopped) {
+        // Reset position to zero and notify listeners so bubble resets
+        _positionController.add(Duration.zero);
         _playingUrl = null;
+        _playingUrlController.add(null);
       }
     });
     _player.onPositionChanged.listen((pos) {
@@ -324,6 +327,6 @@ class VoiceMessageService {
   static String formatDurationObj(Duration d) {
     final m = d.inMinutes;
     final s = d.inSeconds % 60;
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '00')}';
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 }
