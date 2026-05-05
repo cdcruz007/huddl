@@ -1,0 +1,86 @@
+[
+  {
+    "description": "Navigate to login via 'Login' link on onboarding carousel (OCR vision match)",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Login"
+  },
+  {
+    "description": "Wait 2 s for login screen to fully render before injecting credentials",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 2000
+  },
+  {
+    "description": "Tap phone field to focus it. Pixel 6 (2400x1080px, density 2.625): AppBar ~56dp + phone row centre ~248dp from body top = 304dp from safe-area = 798px physical. Screen centre x = 539px.",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input tap 539 798"
+  },
+  {
+    "description": "Wait for soft keyboard to appear",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 1000
+  },
+  {
+    "description": "Inject phone number digits via OS-level ADB input. Bypasses Flutter accessibility tree, input formatters, and Semantics wrappers entirely. The _phoneController listener fires setState() -> _canLogin recalculates.",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input text 7575888452"
+  },
+  {
+    "description": "Dismiss keyboard with KEYCODE_ESCAPE so we can tap the password field",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input keyevent 111"
+  },
+  {
+    "description": "Wait for keyboard to fully dismiss",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 800
+  },
+  {
+    "description": "Tap password field. Password row centre ~352dp from body top = 432dp from safe-area = 1134px physical.",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input tap 539 1134"
+  },
+  {
+    "description": "Wait for soft keyboard",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 1000
+  },
+  {
+    "description": "Inject password. Password is client-side only (never sent to Firebase - app uses phone OTP auth). Value meets validation rules: >=8 chars, uppercase D, lowercase evon, digits 1100. No special chars to avoid ADB shell-escaping issues with @.",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input text Devon1100"
+  },
+  {
+    "description": "Dismiss keyboard",
+    "crawlStage": "crawl",
+    "eventType": "ADB_SHELL_COMMAND",
+    "command": "input keyevent 111"
+  },
+  {
+    "description": "Wait for Flutter controller listeners to fire setState() -> _canLogin=true -> login button onPressed enabled",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 1500
+  },
+  {
+    "description": "Tap Log in button via OCR vision match (more reliable than coordinate tap for the button itself)",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Log in"
+  },
+  {
+    "description": "Wait 6 s for Firebase verificationCompleted auto-verify + Navigator to push /home",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 6000
+  }
+]

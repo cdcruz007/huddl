@@ -33,6 +33,7 @@ class PrimaryButton extends StatelessWidget {
       width: width ?? double.infinity,
       height: height,
       child: ElevatedButton(
+        key: key,
         onPressed: (enabled && !isLoading) ? () {
           HapticFeedback.mediumImpact();
           onPressed?.call();

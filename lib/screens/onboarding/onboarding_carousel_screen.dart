@@ -137,14 +137,19 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
                   'Already have an account? ',
                   style: TextStyle(fontSize: 14, color: HuddlColors.disabledText),
                 ),
-                GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/login'),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: HuddlColors.onboardingOrange,
-                      fontWeight: FontWeight.w500,
+                Semantics(
+                  label: 'already_have_account',
+                  button: true,
+                  child: GestureDetector(
+                    key: const Key('alreadyHaveAccountButton'),
+                    onTap: () => Navigator.pushNamed(context, '/login'),
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: HuddlColors.onboardingOrange,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ),

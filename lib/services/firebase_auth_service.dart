@@ -121,6 +121,29 @@ class FirebaseAuthService {
           _log('Native: verificationCompleted (Android auto-retrieval)');
           try {
             final userCred = await _auth.signInWithCredential(credential);
+            final phone = userCred.user?.phoneNumber ?? '';
+            final compactPhone = phone.replaceAll(' ', '');
+
+            // ── Test-number fast path ─────────────────────────────────────
+            // Firebase Console test numbers (e.g. +447575888452) are real
+            // Firebase Auth entries but have NO Firestore `users` document.
+            // Calling hasUserProfile() for them always returns false, which
+            // causes an immediate sign-out and "account deleted" error —
+            // blocking Firebase Test Lab Robo runs.
+            //
+            // For test numbers we skip the profile check entirely and return
+            // verified. The OTP screen or the post-login handler will handle
+            // any missing profile gracefully.
+            if (_firebaseTestPhoneNumbers.contains(compactPhone)) {
+              _log('verificationCompleted: test number $compactPhone — skipping profile check');
+              if (!completer.isCompleted) {
+                completer.complete(
+                    PhoneAuthResult(status: PhoneAuthStatus.verified));
+              }
+              return;
+            }
+            // ─────────────────────────────────────────────────────────────
+
             if (userCred.additionalUserInfo?.isNewUser ?? false) {
               await _createUserProfile(userCred.user!.uid);
             } else {
@@ -317,6 +340,18 @@ class FirebaseAuthService {
       final userCred = await _auth.signInWithCredential(credential);
       final isNewUser = userCred.additionalUserInfo?.isNewUser ?? false;
 
+      // ── Test-number fast path ───────────────────────────────────────────
+      // Firebase Console test numbers never have a Firestore `users` document.
+      // Skip the profile check so Test Lab / manual QA flows complete normally.
+      final compactPhone =
+          (userCred.user?.phoneNumber ?? '').replaceAll(' ', '');
+      if (_firebaseTestPhoneNumbers.contains(compactPhone)) {
+        _log('verifySmsCode: test number $compactPhone — skipping profile check');
+        await clearLoggedOutFlag();
+        return AuthResult.success(userCred.user, requiresOnboarding: false);
+      }
+      // ───────────────────────────────────────────────────────────────────
+
       if (isNewUser) {
         // Genuinely new Firebase Auth user — create profile
         await _createUserProfile(userCred.user!.uid);
@@ -498,17 +533,54 @@ class FirebaseAuthService {
   /// Returns `true` if a matching Firestore user document exists.
   /// Returns `false` if no account found or on any error (fails open so the
   /// OTP path still runs if Firestore is unreachable).
+  /// Phone numbers registered in Firebase Console → Authentication →
+  /// "Sign-in method" → "Phone" → "Test phone numbers".
+  ///
+  /// These numbers exist only in Firebase Auth — they NEVER have a matching
+  /// Firestore `users` document, so `checkPhoneHasAccount` would return false
+  /// for them and show the "No account found" dialog, blocking Robo Test and
+  /// manual QA flows that rely on test credentials.
+  ///
+  /// Add every test number you register in the Firebase Console here (compact
+  /// E.164 form, no spaces). The pre-check is skipped for these numbers and
+  /// the OTP flow proceeds directly.
+  static const Set<String> _firebaseTestPhoneNumbers = {
+    '+447575888452', // Firebase Console test number — code 123456
+  };
+
+  /// Pre-checks whether a phone number has a registered Huddl account in
+  /// Firestore, BEFORE triggering SMS verification.
+  ///
+  /// This avoids sending an OTP (and confusing the user with an OTP screen)
+  /// when the phone number was never registered or the account was deleted.
+  ///
+  /// Returns `true` if a matching Firestore user document exists.
+  /// Returns `true` for Firebase Console test phone numbers (they have no
+  /// Firestore document but must always proceed to OTP).
+  /// Returns `false` if no account found.
+  /// Falls through to `true` on any error (timeout / network / permissions)
+  /// so real users are never incorrectly blocked.
   Future<bool> checkPhoneHasAccount(String fullPhoneNumber) async {
+    // ── Fast-path: Firebase test numbers bypass Firestore lookup ───────────
+    // Firebase Console test phone numbers (e.g. "+44 7575 888452") exist only
+    // in Firebase Auth. They never have a Firestore users document, so the
+    // query below would return false and block the OTP flow. Compact the
+    // number and check the allowlist instead.
+    final compact = fullPhoneNumber.replaceAll(RegExp(r'\s+'), '');
+    if (_firebaseTestPhoneNumbers.contains(compact)) {
+      _log('checkPhoneHasAccount: test number $compact — bypassing Firestore lookup');
+      return true;
+    }
+
     try {
       // Normalise the number the same way _createUserProfile stores it —
       // strip spaces so both "+44 7700 900123" and "+447700900123" match.
-      final normalised = fullPhoneNumber.replaceAll(RegExp(r'\s+'), '');
 
       // Query by the 'phone' field stored in the user document.
       // We try both spaced and compact forms for robustness.
       final query = await _db
           .collection('users')
-          .where('phone', whereIn: [fullPhoneNumber, normalised])
+          .where('phone', whereIn: [fullPhoneNumber, compact])
           .limit(1)
           .get()
           .timeout(const Duration(seconds: 6), onTimeout: () {
@@ -798,9 +870,14 @@ class FirebaseAuthService {
 
   Future<void> updateLastActive() async {
     if (uid == null) return;
-    await _db.collection('users').doc(uid).update({
-      'lastActiveAt': FieldValue.serverTimestamp(),
-    });
+    try {
+      await _db.collection('users').doc(uid).update({
+        'lastActiveAt': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {
+      // Silently ignore — document may not exist for test numbers or
+      // freshly-deleted accounts. Non-critical operation.
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════

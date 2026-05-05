@@ -405,6 +405,7 @@ class _LoginOtpScreenState extends State<LoginOtpScreen> {
                               ),
                             )
                           : _OrangeButton(
+                              key: const Key('otpVerifyButton'),
                               label: 'Verify & Log in',
                               enabled: _codeController.text.length == 6 &&
                                   !_hasError,
@@ -447,24 +448,15 @@ class _OtpBoxRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Hidden text field that captures input
-        Opacity(
-          opacity: 0,
-          child: TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            autofocus: true,
-          ),
-        ),
-        // Visual OTP boxes — tap to open keyboard for input
-        GestureDetector(
-          onTap: () {
-            // Bring the hidden text field back into focus so keyboard appears
-            FocusScope.of(context).requestFocus(FocusNode());
-          },
-          child: AnimatedBuilder(
+        // Hidden text field that captures input.
+        //
+        // IMPORTANT: Use a 1×1 SizedBox + transparent color instead of
+        // Opacity(opacity:0). Opacity(0) keeps the node in the a11y tree but
+        // collapses its paint bounds, so Android Accessibility / Robo Test
+        // cannot reliably inject text into it via setText(). A 1-pixel
+        // transparent container keeps the node fully accessible to Robo.
+        // Visual OTP boxes
+        AnimatedBuilder(
             animation: controller,
             builder: (_, __) {
               final code = controller.text.padRight(6);
@@ -515,6 +507,31 @@ class _OtpBoxRow extends StatelessWidget {
               );
             },
           ),
+        // Full-size transparent TextField overlaid on top of the boxes.
+        // Robo Test requires a widget with real paint bounds to inject text —
+        // a 1×1 SizedBox collapses to nothing in the accessibility tree.
+        // This overlay is visually invisible but fully accessible to Robo.
+        Positioned.fill(
+          child: Semantics(
+            label: 'otp_field',
+            textField: true,
+            child: TextField(
+              key: const Key('otpField'),
+              controller: controller,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              autofocus: true,
+              style: const TextStyle(color: Colors.transparent),
+              cursorColor: Colors.transparent,
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                counterText: '',
+                fillColor: Colors.transparent,
+                filled: true,
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -527,26 +544,30 @@ class _OrangeButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback onTap;
   const _OrangeButton(
-      {required this.label, required this.enabled, required this.onTap});
+      {super.key, required this.label, required this.enabled, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: enabled ? onTap : null,
-      child: Container(
-        width: double.infinity,
-        height: 54,
-        decoration: BoxDecoration(
-          color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
-          borderRadius: BorderRadius.circular(12),
+    return Semantics(
+      label: 'otp_verify_button',
+      button: true,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        child: Container(
+          width: double.infinity,
+          height: 54,
+          decoration: BoxDecoration(
+            color: enabled ? HuddlColors.onboardingOrange : HuddlColors.disabled,
+            borderRadius: BorderRadius.circular(12),
         ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: enabled ? Colors.white : HuddlColors.disabledText,
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: enabled ? Colors.white : HuddlColors.disabledText,
+            ),
           ),
         ),
       ),
