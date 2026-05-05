@@ -36,11 +36,25 @@ class BiometricAuthService {
   }
 
   /// True if at least one biometric (fingerprint / face / iris) is enrolled.
+  ///
+  /// IMPORTANT: We intentionally use [getAvailableBiometrics()] here instead
+  /// of [canCheckBiometrics]. On Android API 23+, calling [canCheckBiometrics]
+  /// when no biometric is enrolled can trigger the system "Set up fingerprint"
+  /// enrollment dialog — a system-level overlay that causes Firebase Test Lab
+  /// Robo tests to report "Outside of app" / UiAutomator timeout, ending the
+  /// test with "Test failed to run".
+  ///
+  /// [getAvailableBiometrics()] returns an empty list silently without ever
+  /// showing any system UI, making it safe to call in any context.
   Future<bool> get canCheckBiometrics async {
     if (kIsWeb) return false;
     try {
-      return await _auth.canCheckBiometrics;
+      final biometrics = await _auth.getAvailableBiometrics()
+          .timeout(const Duration(seconds: 3), onTimeout: () => []);
+      return biometrics.isNotEmpty;
     } on PlatformException {
+      return false;
+    } catch (_) {
       return false;
     }
   }
@@ -48,15 +62,28 @@ class BiometricAuthService {
   /// Combined check: device supports biometrics AND at least one is enrolled.
   Future<bool> get isAvailable async {
     if (kIsWeb) return false;
-    return await isDeviceSupported && await canCheckBiometrics;
+    try {
+      // Check device support first (fast, no system UI)
+      final supported = await isDeviceSupported;
+      if (!supported) return false;
+      // Then check enrollment via getAvailableBiometrics (no system dialog)
+      return await canCheckBiometrics;
+    } catch (_) {
+      return false;
+    }
   }
 
   /// The list of enrolled biometric types on this device.
+  ///
+  /// Returns an empty list (never throws, never shows system UI) on any error.
   Future<List<BiometricType>> get availableBiometrics async {
     if (kIsWeb) return [];
     try {
-      return await _auth.getAvailableBiometrics();
+      return await _auth.getAvailableBiometrics()
+          .timeout(const Duration(seconds: 3), onTimeout: () => []);
     } on PlatformException {
+      return [];
+    } catch (_) {
       return [];
     }
   }

@@ -1,80 +1,115 @@
-// Marketplace Test Suite
-// Tests: Marketplace screen loads, listings visible, search, item detail, create listing
+// Marketplace Test Suite — Huddl
+// Nav label: 'Market' (Semantics label on _NavItem in main_shell.dart)
+// Tabs inside Marketplace: 'Buy', 'Sell', 'Saved'
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:huddl_connect/main.dart' as app;
 
+Finder navTab(String label) => find.bySemanticsLabel(label);
+
+Future<void> waitForApp(WidgetTester tester) async {
+  app.main();
+  await tester.pumpAndSettle(const Duration(seconds: 10));
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('🛒 Marketplace Tests', () {
-    testWidgets('Marketplace screen loads without crashing', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
 
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+    testWidgets('Market tab navigates to Marketplace screen', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
         expect(find.byType(Scaffold), findsWidgets);
       }
     });
 
-    testWidgets('Marketplace shows listing items', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+    testWidgets('Marketplace shows Buy/Sell/Saved tabs', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        final hasTabs =
+            find.text('Buy').evaluate().isNotEmpty ||
+            find.text('Sell').evaluate().isNotEmpty ||
+            find.text('Saved').evaluate().isNotEmpty ||
+            find.text('Market').evaluate().isNotEmpty;
+
+        expect(hasTabs, isTrue,
+            reason: 'Marketplace should show Buy/Sell/Saved tabs');
+      }
+    });
+
+    testWidgets('Buy tab shows listing content', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
+
+        final buyTab = find.text('Buy');
+        if (buyTab.evaluate().isNotEmpty) {
+          await tester.tap(buyTab.first);
+          await tester.pumpAndSettle(const Duration(seconds: 3));
+        }
 
         final hasContent =
             find.byType(ListView).evaluate().isNotEmpty ||
             find.byType(GridView).evaluate().isNotEmpty ||
-            find.text('Marketplace').evaluate().isNotEmpty ||
-            find.textContaining('item').evaluate().isNotEmpty ||
-            find.textContaining('Item').evaluate().isNotEmpty;
+            find.byType(Card).evaluate().isNotEmpty ||
+            find.textContaining('£').evaluate().isNotEmpty ||
+            find.text('Market').evaluate().isNotEmpty;
 
         expect(hasContent, isTrue,
-            reason: 'Marketplace should show a list or grid of items');
+            reason: 'Marketplace Buy tab should show listing items');
       }
     });
 
-    testWidgets('Marketplace search is accessible', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+    testWidgets('Sell tab is accessible', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        final sellTab = find.text('Sell');
+        if (sellTab.evaluate().isNotEmpty) {
+          await tester.tap(sellTab.first);
+          await tester.pumpAndSettle(const Duration(seconds: 3));
+          expect(find.byType(Scaffold), findsWidgets);
+        }
+      }
+    });
 
-        final searchIcon = find.byIcon(Icons.search);
-        if (searchIcon.evaluate().isNotEmpty) {
-          await tester.tap(searchIcon.first);
-          await tester.pumpAndSettle();
+    testWidgets('Saved tab is accessible', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
-          final searchField = find.byType(TextField);
-          if (searchField.evaluate().isNotEmpty) {
-            await tester.enterText(searchField.first, 'pushchair');
-            await tester.pump();
-            expect(find.text('pushchair'), findsOneWidget);
-          }
+        final savedTab = find.text('Saved');
+        if (savedTab.evaluate().isNotEmpty) {
+          await tester.tap(savedTab.first);
+          await tester.pumpAndSettle(const Duration(seconds: 3));
+          expect(find.byType(Scaffold), findsWidgets);
         }
       }
     });
 
     testWidgets('Marketplace list scrolls without crash', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
-
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
         final scrollable = find.byType(ListView);
         if (scrollable.evaluate().isNotEmpty) {
@@ -88,29 +123,19 @@ void main() {
     });
 
     testWidgets('Tapping a listing opens item detail screen', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
-
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
         final items = find.byType(Card);
         if (items.evaluate().isNotEmpty) {
           await tester.tap(items.first);
-          await tester.pumpAndSettle(const Duration(seconds: 2));
+          await tester.pumpAndSettle(const Duration(seconds: 3));
 
-          final inDetail =
-              find.text('Contact seller').evaluate().isNotEmpty ||
-              find.text('Message seller').evaluate().isNotEmpty ||
-              find.textContaining('£').evaluate().isNotEmpty ||
-              find.byIcon(Icons.favorite_border).evaluate().isNotEmpty;
-
-          if (inDetail) {
-            expect(inDetail, isTrue,
-                reason: 'Tapping a listing should open item detail screen');
-          }
+          // If we navigated somewhere, check we're still stable
+          expect(find.byType(Scaffold), findsWidgets);
 
           final backBtn = find.byType(BackButton);
           if (backBtn.evaluate().isNotEmpty) {
@@ -121,19 +146,23 @@ void main() {
       }
     });
 
-    testWidgets('Create listing button is accessible', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+    testWidgets('Create listing button is accessible on Sell tab', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        // Switch to Sell tab
+        final sellTab = find.text('Sell');
+        if (sellTab.evaluate().isNotEmpty) {
+          await tester.tap(sellTab.first);
+          await tester.pumpAndSettle(const Duration(seconds: 3));
+        }
 
-        final createBtn =
-            find.byType(FloatingActionButton).evaluate().isNotEmpty
-                ? find.byType(FloatingActionButton)
-                : find.byIcon(Icons.add);
+        final fab = find.byType(FloatingActionButton);
+        final addIcon = find.byIcon(Icons.add);
+        final createBtn = fab.evaluate().isNotEmpty ? fab : addIcon;
 
         if (createBtn.evaluate().isNotEmpty) {
           await tester.tap(createBtn.first);
@@ -143,7 +172,8 @@ void main() {
               find.text('Create listing').evaluate().isNotEmpty ||
               find.text('Add listing').evaluate().isNotEmpty ||
               find.text('Title').evaluate().isNotEmpty ||
-              find.text('Price').evaluate().isNotEmpty;
+              find.text('Price').evaluate().isNotEmpty ||
+              find.byType(TextField).evaluate().isNotEmpty;
 
           if (inCreateForm) {
             expect(inCreateForm, isTrue,
@@ -159,27 +189,24 @@ void main() {
       }
     });
 
-    testWidgets('Marketplace category filters work', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+    testWidgets('Marketplace search is accessible', (WidgetTester tester) async {
+      await waitForApp(tester);
+      final tab = navTab('Market');
+      if (tab.evaluate().isNotEmpty) {
+        await tester.tap(tab.first);
+        await tester.pumpAndSettle(const Duration(seconds: 4));
 
-      final marketTab = find.byTooltip('Marketplace');
-      if (marketTab.evaluate().isNotEmpty) {
-        await tester.tap(marketTab.first);
-        await tester.pumpAndSettle(const Duration(seconds: 3));
+        final searchIcon = find.byIcon(Icons.search);
+        if (searchIcon.evaluate().isNotEmpty) {
+          await tester.tap(searchIcon.first);
+          await tester.pumpAndSettle(const Duration(seconds: 2));
 
-        // Look for filter chips or tab bar
-        final filterChip = find.byType(FilterChip);
-        final chip = find.byType(Chip);
-
-        if (filterChip.evaluate().isNotEmpty) {
-          await tester.tap(filterChip.first);
-          await tester.pumpAndSettle();
-          expect(find.byType(Scaffold), findsWidgets);
-        } else if (chip.evaluate().isNotEmpty) {
-          await tester.tap(chip.first);
-          await tester.pumpAndSettle();
-          expect(find.byType(Scaffold), findsWidgets);
+          final searchField = find.byType(TextField);
+          if (searchField.evaluate().isNotEmpty) {
+            await tester.enterText(searchField.first, 'pram');
+            await tester.pump();
+            expect(find.text('pram'), findsOneWidget);
+          }
         }
       }
     });

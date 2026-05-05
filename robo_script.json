@@ -1,86 +1,119 @@
 [
   {
-    "description": "Navigate to login via 'Login' link on onboarding carousel (OCR vision match)",
+    "id": 1000,
+    "description": "Login flow: tap Login, enter credentials, submit",
     "crawlStage": "crawl",
-    "eventType": "VIEW_CLICKED",
-    "visionText": "Login"
-  },
-  {
-    "description": "Wait 2 s for login screen to fully render before injecting credentials",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 2000
-  },
-  {
-    "description": "Tap phone field to focus it. Pixel 6 (2400x1080px, density 2.625): AppBar ~56dp + phone row centre ~248dp from body top = 304dp from safe-area = 798px physical. Screen centre x = 539px.",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input tap 539 798"
-  },
-  {
-    "description": "Wait for soft keyboard to appear",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 1000
-  },
-  {
-    "description": "Inject phone number digits via OS-level ADB input. Bypasses Flutter accessibility tree, input formatters, and Semantics wrappers entirely. The _phoneController listener fires setState() -> _canLogin recalculates.",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input text 7575888452"
-  },
-  {
-    "description": "Dismiss keyboard with KEYCODE_ESCAPE so we can tap the password field",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input keyevent 111"
-  },
-  {
-    "description": "Wait for keyboard to fully dismiss",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 800
-  },
-  {
-    "description": "Tap password field. Password row centre ~352dp from body top = 432dp from safe-area = 1134px physical.",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input tap 539 1134"
-  },
-  {
-    "description": "Wait for soft keyboard",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 1000
-  },
-  {
-    "description": "Inject password. Password is client-side only (never sent to Firebase - app uses phone OTP auth). Value meets validation rules: >=8 chars, uppercase D, lowercase evon, digits 1100. No special chars to avoid ADB shell-escaping issues with @.",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input text Devon1100"
-  },
-  {
-    "description": "Dismiss keyboard",
-    "crawlStage": "crawl",
-    "eventType": "ADB_SHELL_COMMAND",
-    "command": "input keyevent 111"
-  },
-  {
-    "description": "Wait for Flutter controller listeners to fire setState() -> _canLogin=true -> login button onPressed enabled",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 1500
-  },
-  {
-    "description": "Tap Log in button via OCR vision match (more reliable than coordinate tap for the button itself)",
-    "crawlStage": "crawl",
-    "eventType": "VIEW_CLICKED",
-    "visionText": "Log in"
-  },
-  {
-    "description": "Wait 6 s for Firebase verificationCompleted auto-verify + Navigator to push /home",
-    "crawlStage": "crawl",
-    "eventType": "WAIT",
-    "delayTime": 6000
+    "contextDescriptor": {
+      "condition": "app_under_test_shown"
+    },
+    "actions": [
+      {
+        "description": "Wait for onboarding carousel to render",
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "description": "Tap Login button on onboarding carousel",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Login"
+      },
+      {
+        "description": "Wait for login screen to render",
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "description": "Enter phone number into first text field",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "7575888452",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "description": "Wait for phone field controller update",
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "description": "Enter password into second text field",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Devon1100",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText",
+            "groupViewChildPosition": 1
+          }
+        ]
+      },
+      {
+        "description": "Wait for _canLogin flag to evaluate",
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "description": "Tap Log in button",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Log in"
+      },
+      {
+        "description": "Wait for Firebase auth and home screen navigation",
+        "eventType": "WAIT",
+        "delayTime": 20000
+      },
+      {
+        "description": "Tap Connect tab",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Connect"
+      },
+      {
+        "description": "Wait for Connect tab to load",
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "description": "Tap Discover tab",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Discover"
+      },
+      {
+        "description": "Wait for Discover tab to load",
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "description": "Tap Market tab",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Market"
+      },
+      {
+        "description": "Wait for Market tab to load",
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "description": "Tap Profile tab",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Profile"
+      },
+      {
+        "description": "Wait for Profile tab to load",
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "description": "Return to Home tab for free Robo crawl",
+        "eventType": "VIEW_CLICKED",
+        "visionText": "Home"
+      },
+      {
+        "description": "Wait on Home screen for Robo to crawl content",
+        "eventType": "WAIT",
+        "delayTime": 8000
+      }
+    ]
   }
 ]

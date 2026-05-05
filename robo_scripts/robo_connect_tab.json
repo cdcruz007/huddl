@@ -1,0 +1,88 @@
+[
+  {
+    "description": "Login - tap Login link",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Login"
+  },
+  {
+    "description": "Wait for login screen",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 3000
+  },
+  {
+    "description": "Enter phone number",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_TEXT_CHANGED",
+    "replacementText": "7575888452",
+    "elementDescriptors": [{"className": "android.widget.EditText", "groupViewChildPosition": 0}]
+  },
+  {
+    "description": "Wait",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 2000
+  },
+  {
+    "description": "Enter password",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_TEXT_CHANGED",
+    "replacementText": "Devon1100",
+    "elementDescriptors": [{"className": "android.widget.EditText", "groupViewChildPosition": 1}]
+  },
+  {
+    "description": "Wait",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 2000
+  },
+  {
+    "description": "Tap Log in",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Log in"
+  },
+  {
+    "description": "Wait for home screen",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 10000
+  },
+  {
+    "description": "Tap Connect tab",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Connect"
+  },
+  {
+    "description": "Wait for groups to load",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 4000
+  },
+  {
+    "description": "Tap Invitations button if visible",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Invitations"
+  },
+  {
+    "description": "Wait",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 2000
+  },
+  {
+    "description": "Go back to groups list",
+    "crawlStage": "crawl",
+    "eventType": "VIEW_CLICKED",
+    "visionText": "Connect"
+  },
+  {
+    "description": "Wait",
+    "crawlStage": "crawl",
+    "eventType": "WAIT",
+    "delayTime": 3000
+  }
+]

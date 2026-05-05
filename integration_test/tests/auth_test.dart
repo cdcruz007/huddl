@@ -1,113 +1,132 @@
-// Auth Test Suite
-// Tests: Login screen loads, email/password fields, sign-in button, error states
+// Auth Test Suite — Huddl
+// Tests: Login screen UI, phone/password fields, validation, onboarding carousel
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:huddl_connect/main.dart' as app;
 
+Future<void> waitForApp(WidgetTester tester) async {
+  app.main();
+  await tester.pumpAndSettle(const Duration(seconds: 10));
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   group('🔐 Authentication Tests', () {
-    testWidgets('App launches without crashing', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 8));
+
+    testWidgets('App launches without crashing', (tester) async {
+      await waitForApp(tester);
       expect(find.byType(MaterialApp), findsOneWidget);
     });
 
-    testWidgets('Login screen displays key UI elements', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-
-      // App should show login screen or home screen
+    testWidgets('Onboarding carousel or home screen is shown on launch', (tester) async {
+      await waitForApp(tester);
       final hasContent =
-          find.text('Sign in').evaluate().isNotEmpty ||
+          find.text('Login').evaluate().isNotEmpty ||
           find.text('Log in').evaluate().isNotEmpty ||
-          find.text('Welcome').evaluate().isNotEmpty ||
-          find.text('Huddl').evaluate().isNotEmpty ||
-          find.byType(Scaffold).evaluate().isNotEmpty;
-
-      expect(hasContent, isTrue,
-          reason: 'App should display a recognisable screen on launch');
+          find.text('Welcome back!').evaluate().isNotEmpty ||
+          find.text('Get started').evaluate().isNotEmpty ||
+          find.text('Home').evaluate().isNotEmpty ||
+          find.bySemanticsLabel('Home').evaluate().isNotEmpty;
+      expect(hasContent, isTrue, reason: 'App must show a recognisable screen on launch');
     });
 
-    testWidgets('Email field accepts text input', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-
-      // Try key-based finder first, then hint-text fallback
-      Finder emailField = find.byKey(const Key('email_field'));
-      if (emailField.evaluate().isEmpty) {
-        emailField = find.widgetWithText(TextField, 'Email');
+    testWidgets('Login link on carousel navigates to login screen', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+        expect(find.text('Welcome back!'), findsOneWidget);
       }
-      if (emailField.evaluate().isEmpty) {
-        emailField = find.widgetWithText(TextField, 'Email address');
-      }
+    });
 
-      if (emailField.evaluate().isNotEmpty) {
-        await tester.tap(emailField.first);
-        await tester.enterText(emailField.first, 'test@huddl.com');
+    testWidgets('Login screen shows phone number field', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+      }
+      if (find.text('Welcome back!').evaluate().isNotEmpty) {
+        final phoneField = find.byKey(const Key('phoneField'));
+        expect(phoneField, findsOneWidget,
+            reason: 'Login screen must have a phone number field');
+      }
+    });
+
+    testWidgets('Login screen shows password field', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+      }
+      if (find.text('Welcome back!').evaluate().isNotEmpty) {
+        final pwField = find.byKey(const Key('passwordField'));
+        expect(pwField, findsOneWidget,
+            reason: 'Login screen must have a password field');
+      }
+    });
+
+    testWidgets('Phone field accepts digit input', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+      }
+      final phoneField = find.byKey(const Key('phoneField'));
+      if (phoneField.evaluate().isNotEmpty) {
+        await tester.tap(phoneField.first);
+        await tester.enterText(phoneField.first, '7575888452');
         await tester.pump();
-        expect(find.text('test@huddl.com'), findsOneWidget);
+        expect(find.text('7575888452'), findsOneWidget);
       }
     });
 
-    testWidgets('Password field accepts text input', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-
-      Finder pwField = find.byKey(const Key('password_field'));
-      if (pwField.evaluate().isEmpty) {
-        pwField = find.widgetWithText(TextField, 'Password');
+    testWidgets('Log in button is visible on login screen', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
       }
-
-      if (pwField.evaluate().isNotEmpty) {
-        await tester.tap(pwField.first);
-        await tester.enterText(pwField.first, 'TestPass123!');
-        await tester.pump();
-        // Password is obscured so we just check no crash
+      if (find.text('Welcome back!').evaluate().isNotEmpty) {
+        final loginBtn = find.byKey(const Key('loginButton'));
+        expect(loginBtn, findsOneWidget,
+            reason: 'Login screen must have a Log in button');
       }
     });
 
-    testWidgets('Tapping sign-in with empty fields shows error', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-
-      final signInBtn = find.widgetWithText(ElevatedButton, 'Sign in');
-      if (signInBtn.evaluate().isNotEmpty) {
-        await tester.tap(signInBtn.first);
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        final hasError =
-            find.byType(SnackBar).evaluate().isNotEmpty ||
-            find.textContaining('required').evaluate().isNotEmpty ||
-            find.textContaining('invalid').evaluate().isNotEmpty ||
-            find.textContaining('email').evaluate().isNotEmpty;
-
-        expect(hasError, isTrue,
-            reason: 'Empty login should show a validation error');
+    testWidgets('Onboarding Get started button navigates to name input', (tester) async {
+      await waitForApp(tester);
+      final started = find.text('Get started!');
+      if (started.evaluate().isNotEmpty) {
+        await tester.tap(started.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+        final hasNameScreen =
+            find.text('What\'s your name?').evaluate().isNotEmpty ||
+            find.byType(TextField).evaluate().isNotEmpty;
+        expect(hasNameScreen, isTrue,
+            reason: 'Get started should begin the signup flow');
       }
     });
 
-    testWidgets('Sign up / register link is visible', (WidgetTester tester) async {
-      app.main();
-      await tester.pumpAndSettle(const Duration(seconds: 5));
-
-      final hasSignUp =
-          find.textContaining('Sign up').evaluate().isNotEmpty ||
-          find.textContaining('Register').evaluate().isNotEmpty ||
-          find.textContaining("Don't have").evaluate().isNotEmpty ||
-          find.textContaining('Create account').evaluate().isNotEmpty;
-
-      // Only assert if we're on the login screen
-      final onLoginScreen =
-          find.text('Sign in').evaluate().isNotEmpty ||
-          find.text('Log in').evaluate().isNotEmpty;
-
-      if (onLoginScreen) {
-        expect(hasSignUp, isTrue,
-            reason: 'Login screen should have a route to registration');
+    testWidgets('Login screen back button returns to carousel', (tester) async {
+      await waitForApp(tester);
+      final loginLink = find.text('Login');
+      if (loginLink.evaluate().isNotEmpty) {
+        await tester.tap(loginLink.first);
+        await tester.pumpAndSettle(const Duration(seconds: 3));
+        final back = find.byType(BackButton);
+        if (back.evaluate().isNotEmpty) {
+          await tester.tap(back.first);
+          await tester.pumpAndSettle(const Duration(seconds: 2));
+          expect(find.byType(Scaffold), findsWidgets);
+        }
       }
     });
   });

@@ -90,6 +90,115 @@ class FirebaseAuthService {
     }
   }
 
+  /// Direct sign-in for Firebase Console test phone numbers ONLY.
+  ///
+  /// For test numbers (e.g. +447575888452 / OTP 123456), Firebase's
+  /// verifyPhoneNumber fires BOTH codeSent AND verificationCompleted.
+  /// Whichever completes the Completer first wins — on many devices codeSent
+  /// fires first, routing the app to the OTP screen instead of auto-verifying.
+  ///
+  /// This method completely bypasses verifyPhoneNumber by calling
+  /// verifyPhoneNumber internally just to obtain a verificationId, then
+  /// immediately signing in with the known test OTP — no race condition.
+  ///
+  /// MUST only be called for numbers in [_firebaseTestPhoneNumbers].
+  Future<PhoneAuthResult> loginWithTestCredential(String phoneNumber) async {
+    _log('loginWithTestCredential: $phoneNumber');
+    try {
+      // ── FAST PATH: Direct sign-in without verifyPhoneNumber callbacks ────
+      //
+      // The old approach called verifyPhoneNumber() and waited up to 35 s for
+      // codeSent / verificationCompleted callbacks.  Firebase Test Lab's
+      // UiAutomator has a 1-second "window update" watchdog: if the UI does
+      // not change within 1 s after a tap it reports "Outside of app" and
+      // aborts the Robo test — even though _isLoading=true is already set and
+      // the screen rebuilds immediately.  The 30+ second wait for callbacks
+      // reliably triggers that watchdog.
+      //
+      // Fix: use a two-stage approach that resolves in < 5 seconds:
+      //   1. Call verifyPhoneNumber with a very short timeout (5 s) so
+      //      codeSent fires quickly (it fires in < 1 s for test numbers).
+      //   2. Once we have a verificationId, immediately sign in with the
+      //      known OTP code — no further waiting needed.
+      //
+      // If we already have a cached verificationId from a previous call reuse
+      // it directly, skipping verifyPhoneNumber entirely.
+
+      String? effectiveVId = _verificationId;
+
+      if (effectiveVId == null || effectiveVId.isEmpty) {
+        // Step 1: get a verificationId as fast as possible.
+        final idCompleter = Completer<String?>();
+
+        // Fire-and-forget — we only need codeSent to resolve the completer.
+        unawaited(_auth.verifyPhoneNumber(
+          phoneNumber: phoneNumber,
+          timeout: const Duration(seconds: 5), // short — test numbers respond fast
+          verificationCompleted: (PhoneAuthCredential cred) async {
+            // Auto-verified path: sign in directly and complete with null
+            // so the caller knows it doesn't need the vId route.
+            _log('loginWithTestCredential: verificationCompleted fired');
+            try {
+              await _auth.signInWithCredential(cred);
+            } catch (_) {}
+            if (!idCompleter.isCompleted) idCompleter.complete(null);
+          },
+          verificationFailed: (FirebaseAuthException e) {
+            _log('loginWithTestCredential: verificationFailed ${e.code}');
+            if (!idCompleter.isCompleted) idCompleter.complete(null);
+          },
+          codeSent: (String verificationId, int? resendToken) {
+            _verificationId = verificationId;
+            _log('loginWithTestCredential: codeSent vId=$verificationId');
+            if (!idCompleter.isCompleted) idCompleter.complete(verificationId);
+          },
+          codeAutoRetrievalTimeout: (String verificationId) {
+            _verificationId = verificationId;
+            if (!idCompleter.isCompleted) idCompleter.complete(verificationId);
+          },
+        ).catchError((_) {
+          if (!idCompleter.isCompleted) idCompleter.complete(null);
+        }));
+
+        // Wait up to 10 s for the first callback.
+        effectiveVId = await idCompleter.future
+            .timeout(const Duration(seconds: 10), onTimeout: () => _verificationId);
+      }
+
+      // If verificationCompleted auto-signed us in, we're done.
+      if (_auth.currentUser != null) {
+        _log('loginWithTestCredential: already signed in, uid=${_auth.currentUser?.uid}');
+        await clearLoggedOutFlag();
+        return PhoneAuthResult(status: PhoneAuthStatus.verified);
+      }
+
+      if (effectiveVId == null || effectiveVId.isEmpty) {
+        _log('loginWithTestCredential: no verificationId obtained');
+        return PhoneAuthResult(
+          status: PhoneAuthStatus.error,
+          errorMessage: 'Could not obtain verification session. Please try again.',
+        );
+      }
+
+      // Step 2: sign in immediately with the known test OTP.
+      _log('loginWithTestCredential: signing in with vId + OTP 123456');
+      final credential = PhoneAuthProvider.credential(
+        verificationId: effectiveVId,
+        smsCode: '123456',
+      );
+      await _auth.signInWithCredential(credential);
+      _log('loginWithTestCredential: success, uid=${_auth.currentUser?.uid}');
+      await clearLoggedOutFlag();
+      return PhoneAuthResult(status: PhoneAuthStatus.verified);
+    } catch (e, stack) {
+      _logError(e, stack, 'loginWithTestCredential');
+      return PhoneAuthResult(
+        status: PhoneAuthStatus.error,
+        errorMessage: 'Test login failed: $e',
+      );
+    }
+  }
+
   // ── iOS + Android: verifyPhoneNumber ─────────────────────────────────────
   //
   // Uses Firebase iOS SDK 10.27.0 (via firebase_auth 5.1.0 + firebase_core 3.1.0).

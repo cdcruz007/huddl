@@ -10,7 +10,7 @@ plugins {
     id("com.google.gms.google-services")
 }
 
-// Load signing properties from key.properties file
+// Load signing properties from key.properties (lives in android/ = rootProject dir)
 val keyPropertiesFile = rootProject.file("key.properties")
 val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
