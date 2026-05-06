@@ -42,8 +42,8 @@
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "className": "android.widget.EditText",
-            "groupViewChildPosition": 1
+            "contentDescription": "password_field",
+            "className": "android.widget.EditText"
           }
         ]
       },

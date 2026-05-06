@@ -566,51 +566,67 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // BARE TextField — no Semantics wrapper.
-                    // v26 log proof (line 32398): bare password TextField
-                    // appears at byselector index 1, mode_specific_sequence
-                    // "0.0.0.0.0.0.0.1.8", inputType=0x80081(Password).
-                    // Robo successfully opened the password keyboard when
-                    // it reached this node in order. The only failure in v26
-                    // was that the Semantics wrapper on the phone field broke
-                    // the screen fingerprint, causing Robo to skip the
-                    // VIEW_TEXT_CHANGED actions entirely.
-                    // robo_script targets password via groupViewChildPosition:1.
-                    TextField(
-                      key: const Key('passwordField'),
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: AppTextStyles.body1,
-                      decoration: InputDecoration(
-                        hintText: 'Min 8 chars, upper+lower+digit',
-                        hintStyle: AppTextStyles.inputHint,
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_off_outlined
-                                : Icons.visibility_outlined,
-                            color: HuddlColors.textSecondary,
+                    // PASSWORD FIELD — wrapped in Semantics(label) WITHOUT
+                    // excludeSemantics so the label merges onto the child
+                    // EditText node giving it contentDescription='password_field'.
+                    //
+                    // History:
+                    // v24: Semantics(excludeSemantics:true) → outer View gets
+                    //   the contentDescription but has no ACTION_SET_TEXT, so
+                    //   Robo types into a non-editable node and text is lost.
+                    // v25: InputDecoration.semanticsLabel → DESC='' on both
+                    //   EditText nodes, robo_script contentDescription selector
+                    //   silently falls back to index 0 (phone field) for both.
+                    // v26: Semantics(label) on BOTH fields → altered screen
+                    //   fingerprint, Robo skipped VIEW_TEXT_CHANGED entirely.
+                    // v27: bare TextFields + groupViewChildPosition:1 →
+                    //   groupViewChildPosition is IGNORED by UiAutomator2;
+                    //   both type-text actions resolve to DESC=''+TEXT selectors
+                    //   which always match the phone field (index 0).
+                    // v28 FIX: Semantics(label) on PASSWORD FIELD ONLY — phone
+                    //   field stays completely bare (fingerprint unchanged),
+                    //   password EditText gets contentDescription='password_field'
+                    //   which robo_script targets with contentDescription selector.
+                    Semantics(
+                      label: 'password_field',
+                      child: TextField(
+                        key: const Key('passwordField'),
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: AppTextStyles.body1,
+                        decoration: InputDecoration(
+                          hintText: 'Min 8 chars, upper+lower+digit',
+                          hintStyle: AppTextStyles.inputHint,
+                          suffixIcon: ExcludeSemantics(
+                            child: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                color: HuddlColors.textSecondary,
+                              ),
+                              onPressed: () => setState(
+                                  () => _obscurePassword = !_obscurePassword),
+                            ),
                           ),
-                          onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword),
+                          border: const UnderlineInputBorder(
+                            borderSide: BorderSide(color: HuddlColors.gray300),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide:
+                                BorderSide(color: HuddlColors.primary, width: 2),
+                          ),
+                          enabledBorder: const UnderlineInputBorder(
+                            borderSide: BorderSide(color: HuddlColors.gray300),
+                          ),
+                          contentPadding:
+                              const EdgeInsets.symmetric(vertical: 8),
                         ),
-                        border: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide:
-                              BorderSide(color: HuddlColors.primary, width: 2),
-                        ),
-                        enabledBorder: const UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 8),
+                        onChanged: (_) => setState(() {}),
+                        // onSubmitted intentionally absent: firing onSubmitted
+                        // during Robo's TYPE_TEXT causes a screen-state
+                        // transition that prevents Robo finding Log in button.
                       ),
-                      onChanged: (_) => setState(() {}),
-                      // onSubmitted intentionally absent: firing onSubmitted
-                      // during Robo's TYPE_TEXT causes a screen-state
-                      // transition that prevents Robo finding Log in button.
                     ),
                   ],
                 ),
