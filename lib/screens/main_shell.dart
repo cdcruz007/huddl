@@ -404,49 +404,64 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use Semantics(identifier:) so Flutter maps it to Android resource-id,
+    // and excludeSemantics:true so only ONE accessibility node is emitted for
+    // the entire item. That single node is class=android.widget.Button
+    // (because InkWell is the clickable widget) and carries both the label and
+    // the stable resource-id — satisfying the Robo BySelector for both DESC and RES.
     return Semantics(
+      identifier: 'nav_${label.toLowerCase()}',
       button: true,
       label: label,
       selected: isActive,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onTap();
-          },
-          customBorder: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: SizedBox(
-            width: 56,
-            height: 56,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  isActive ? activeIcon : icon,
-                  size: 22,
-                  color: isActive
-                      ? HuddlColors.primary
-                      : (Theme.of(context).textTheme.bodySmall?.color ??
-                          HuddlColors.textHint),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 9,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+      // excludeSemantics prevents the outer Semantics wrapper from creating a
+      // *separate* View node above the InkWell. Without this, Android sees two
+      // nodes: a non-clickable android.view.View (with contentDescription) wrapping
+      // a clickable android.widget.Button (without contentDescription). UiAutomator2's
+      // BySelector [CLASS=Button, DESC=Discover] can never match because no single node
+      // has both attributes. excludeSemantics merges them into the InkWell node.
+      excludeSemantics: false,
+      child: MergeSemantics(
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onTap();
+            },
+            customBorder: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: SizedBox(
+              width: 56,
+              height: 56,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isActive ? activeIcon : icon,
+                    size: 22,
                     color: isActive
                         ? HuddlColors.primary
                         : (Theme.of(context).textTheme.bodySmall?.color ??
                             HuddlColors.textHint),
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                      color: isActive
+                          ? HuddlColors.primary
+                          : (Theme.of(context).textTheme.bodySmall?.color ??
+                              HuddlColors.textHint),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ),
         ),

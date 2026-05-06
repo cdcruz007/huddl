@@ -1,7 +1,7 @@
 [
   {
     "id": 1000,
-    "description": "Login flow",
+    "description": "Login flow v31 — resource-id nav selectors",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
@@ -66,17 +66,23 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
+            "resourceId": "nav_connect"
+          },
+          {
             "contentDescription": "Connect"
           }
         ]
       },
       {
         "eventType": "WAIT",
-        "delayTime": 4000
+        "delayTime": 5000
       },
       {
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
+          {
+            "resourceId": "nav_discover"
+          },
           {
             "contentDescription": "Discover"
           }
@@ -84,11 +90,14 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 4000
+        "delayTime": 5000
       },
       {
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
+          {
+            "resourceId": "nav_market"
+          },
           {
             "contentDescription": "Market"
           }
@@ -96,11 +105,14 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 4000
+        "delayTime": 5000
       },
       {
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
+          {
+            "resourceId": "nav_profile"
+          },
           {
             "contentDescription": "Profile"
           }
@@ -108,11 +120,14 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 4000
+        "delayTime": 5000
       },
       {
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
+          {
+            "resourceId": "nav_home"
+          },
           {
             "contentDescription": "Home"
           }
