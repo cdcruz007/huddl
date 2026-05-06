@@ -42,8 +42,7 @@
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "contentDescription": "password_field",
-            "className": "android.widget.EditText"
+            "resourceId": "password_field"
           }
         ]
       },

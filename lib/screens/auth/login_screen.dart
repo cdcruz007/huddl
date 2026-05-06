@@ -566,29 +566,47 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // PASSWORD FIELD — wrapped in Semantics(label) WITHOUT
-                    // excludeSemantics so the label merges onto the child
-                    // EditText node giving it contentDescription='password_field'.
+                    // PASSWORD FIELD — v29 approach.
                     //
-                    // History:
+                    // History of failures:
                     // v24: Semantics(excludeSemantics:true) → outer View gets
-                    //   the contentDescription but has no ACTION_SET_TEXT, so
-                    //   Robo types into a non-editable node and text is lost.
-                    // v25: InputDecoration.semanticsLabel → DESC='' on both
-                    //   EditText nodes, robo_script contentDescription selector
-                    //   silently falls back to index 0 (phone field) for both.
+                    //   contentDescription but has no ACTION_SET_TEXT; Robo
+                    //   types into non-editable node, text silently lost.
+                    // v25: InputDecoration.semanticsLabel on BOTH fields →
+                    //   DESC='' on both EditText nodes; robo_script
+                    //   contentDescription selector fell back to index 0
+                    //   (phone field) for both type-text steps.
                     // v26: Semantics(label) on BOTH fields → altered screen
-                    //   fingerprint, Robo skipped VIEW_TEXT_CHANGED entirely.
+                    //   fingerprint; Robo skipped VIEW_TEXT_CHANGED entirely
+                    //   and clicked Log in with empty fields.
                     // v27: bare TextFields + groupViewChildPosition:1 →
                     //   groupViewChildPosition is IGNORED by UiAutomator2;
-                    //   both type-text actions resolve to DESC=''+TEXT selectors
-                    //   which always match the phone field (index 0).
-                    // v28 FIX: Semantics(label) on PASSWORD FIELD ONLY — phone
-                    //   field stays completely bare (fingerprint unchanged),
-                    //   password EditText gets contentDescription='password_field'
-                    //   which robo_script targets with contentDescription selector.
+                    //   both type-text steps hit phone field (index 0).
+                    // v28: Semantics(label:'password_field', child:TextField)
+                    //   → Flutter creates a PARENT wrapper View with
+                    //   contentDescription='password_field', while the inner
+                    //   android.widget.EditText keeps DESC=''. robo_script
+                    //   selector requires BOTH contentDescription AND className
+                    //   on the same node — they are on different nodes, so
+                    //   zero matches; step silently no-ops (confirmed: no
+                    //   BySelector[DESC='password_field'] in 121 k-line log).
+                    //
+                    // v29 FIX: Semantics(identifier:'password_field') wraps
+                    //   the TextField. Semantics.identifier maps directly to
+                    //   AccessibilityNodeInfo.setViewIdResourceName on Android
+                    //   (documented in flutter/semantics.dart line 1795-1810:
+                    //   "On Android, this is used for
+                    //   AccessibilityNodeInfo.setViewIdResourceName. It'll
+                    //   appear in accessibility hierarchy as resource-id").
+                    //   The robo_script targets this with resourceId selector
+                    //   (RES= field in UiAutomator BySelector). Unlike
+                    //   contentDescription, resource-id is NOT affected by
+                    //   Robo's screen-fingerprint logic, so this cannot alter
+                    //   how Robo classifies the screen. The selector fires a
+                    //   VIEW_TEXT_CHANGED on the correct EditText node.
+                    //   Phone field stays completely bare — no wrapper at all.
                     Semantics(
-                      label: 'password_field',
+                      identifier: 'password_field',
                       child: TextField(
                         key: const Key('passwordField'),
                         controller: _passwordController,
