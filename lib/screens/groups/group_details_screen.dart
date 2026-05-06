@@ -692,6 +692,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       ? TextField(
                           controller: _descEditController,
                           maxLines: null,
+                          textInputAction: TextInputAction.done,
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color: context.hc.textSecondary,

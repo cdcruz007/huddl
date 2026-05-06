@@ -762,6 +762,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               child: TextField(
                 controller: _descriptionCtrl,
                 maxLines: 4,
+                textInputAction: TextInputAction.done,
                 style: GoogleFonts.poppins(
                     fontSize: 14, color: context.hc.textPrimary),
                 decoration: InputDecoration(

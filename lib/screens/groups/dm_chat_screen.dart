@@ -1337,6 +1337,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                     textAlignVertical: TextAlignVertical.center,
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.send,
                     style: GoogleFonts.poppins(
                         fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(

@@ -151,6 +151,7 @@ class _AboutYouScreenState extends State<AboutYouScreen> {
                     maxLines: null,
                     expands: true,
                     textAlignVertical: TextAlignVertical.top,
+                    textInputAction: TextInputAction.done,
                     style: TextStyle(
                       fontSize: 15,
                       color: Theme.of(context).colorScheme.onSurface,

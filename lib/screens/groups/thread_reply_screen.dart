@@ -468,6 +468,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 textAlignVertical: TextAlignVertical.center,
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.send,
                 style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Reply in thread...',

@@ -989,6 +989,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 controller: _descriptionController,
                 onChanged: (_) => setState(() {}),
                 maxLines: 4,
+                textInputAction: TextInputAction.done,
                 style: GoogleFonts.poppins(
                     fontSize: 14, color: context.hc.textPrimary),
                 decoration: InputDecoration(
