@@ -1,7 +1,7 @@
 [
   {
     "id": 1000,
-    "description": "Huddl v32 — Exhaustive Robo stress-test: login → Home (feed, composer, AI copilot, search) → Connect (groups, chat, send, mic/voice, reactions, thread, polls, DM, saved, swipe, filter, AI, create group) → Discover (groups, join, meetups, going/bookmark/share, events/bookmark, filter) → Market (buy/scroll/detail/offer, sell/create, saved, filter, AI suggestions) → Profile (view, edit, change password, my groups/meetups/listings, saved, notifications, privacy, help, T&Cs, log out) → Subscriptions (plans, billing toggle, paywall) → Final tab sweep",
+    "description": "Huddl v32 - Exhaustive Robo stress-test: login -> Home (feed, composer, AI copilot, search) -> Connect (groups, chat, send, mic/voice, reactions, thread, polls, DM, saved, swipe, filter, AI, create group) -> Discover (groups, join, meetups, going/bookmark/share, events/bookmark, filter) -> Market (buy/scroll/detail/offer, sell/create, saved, filter, AI suggestions) -> Profile (view, edit, change password, my groups/meetups/listings, saved, notifications, privacy, help, T&Cs, log out) -> Subscriptions (plans, billing toggle, paywall) -> Final tab sweep",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
@@ -504,7 +504,7 @@
       },
       {
         "eventType": "VIEW_TEXT_CHANGED",
-        "replacementText": "Hello from the Robo test! 👋",
+        "replacementText": "Hello from the Robo test!",
         "elementDescriptors": [
           {
             "className": "android.widget.EditText"
@@ -839,7 +839,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "Join "
+            "contentDescription": "Join"
           }
         ],
         "description": "Tap Join on first suggested group"
@@ -852,7 +852,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "Share "
+            "contentDescription": "Share"
           }
         ],
         "description": "Share a group"
@@ -1429,7 +1429,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "Accept offer from "
+            "contentDescription": "Accept offer from"
           }
         ],
         "description": "Accept / decline offer"
@@ -1855,7 +1855,7 @@
             "text": "Log out"
           }
         ],
-        "description": "Tap Log out — then Cancel"
+        "description": "Tap Log out - then Cancel"
       },
       {
         "eventType": "WAIT",
@@ -2073,7 +2073,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "React with 👍"
+            "contentDescription": "React with"
           }
         ],
         "description": "Tap thumbs-up reaction"
@@ -2086,7 +2086,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "😂"
+            "contentDescription": ""
           }
         ],
         "description": "Laugh emoji reaction"
@@ -2099,7 +2099,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "❤️"
+            "contentDescription": ""
           }
         ],
         "description": "Heart emoji reaction"
@@ -2388,7 +2388,7 @@
       },
       {
         "eventType": "VIEW_TEXT_CHANGED",
-        "replacementText": "Thread reply from Robo ✅",
+        "replacementText": "Thread reply from Robo",
         "elementDescriptors": [
           {
             "className": "android.widget.EditText"
