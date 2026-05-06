@@ -1,19 +1,19 @@
 [
   {
     "id": 1000,
-    "description": "Login flow: wait for onboarding to fully load, navigate to login, enter credentials, submit",
+    "description": "Login flow: wait for onboarding, navigate to login, enter credentials, submit",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
     },
     "actions": [
       {
-        "description": "Wait for splash screen Firebase init + onboarding carousel to fully render (cold start is slow on Test Lab)",
+        "description": "Wait for splash screen Firebase init + onboarding carousel to fully render",
         "eventType": "WAIT",
         "delayTime": 12000
       },
       {
-        "description": "Tap the Login link — contentDescription confirmed from actions.json seq 9 and seq 21",
+        "description": "Tap the Login link",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -27,13 +27,12 @@
         "delayTime": 4000
       },
       {
-        "description": "Enter phone number — groupViewChildPosition 0 = first EditText on the login screen (the phone field). No Semantics wrapper on this field so it is the raw EditText node.",
+        "description": "Enter phone number. v26 fix: Semantics(label:'phone_field') WITHOUT excludeSemantics:true merges the label onto the child EditText's own contentDescription node (no separate wrapper View). v25 proof: semanticsLabel on InputDecoration produces DESC='' in BySelector log (lines 38893, 40948) — never propagates to android.widget.EditText.contentDescription. v24 proof: Semantics(excludeSemantics:true) created outer android.view.View with contentDescription but inner EditText was untouched.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "7575888452",
         "elementDescriptors": [
           {
-            "className": "android.widget.EditText",
-            "groupViewChildPosition": 0
+            "contentDescription": "phone_field"
           }
         ]
       },
@@ -43,13 +42,12 @@
         "delayTime": 2000
       },
       {
-        "description": "Enter password — groupViewChildPosition:1 targets the second android.widget.EditText on screen (index 0 = phone field, index 1 = password field). Log confirmed the Semantics wrapper creates an outer android.view.View at mode_specific_sequence 0.0.0.0.0.0.0.1.8 and the inner EditText at 0.0.0.0.0.0.0.1.9 — contentDescription selector hits the outer non-clickable View (component_type:2, no ACTION_SET_TEXT), not the EditText (component_type:5). Using className+groupViewChildPosition directly targets the editable node, same mechanism that works for the phone field at index 0.",
+        "description": "Enter password. v26 fix: Semantics(label:'password_field') WITHOUT excludeSemantics:true sets contentDescription directly on the android.widget.EditText (Password inputType=0x80081). v25 root cause: both type-text actions resolved to same element @177a9041 (phone EditText, bounds 255,892-1017,1018, inputType=Phone) because DESC='' matched index 0 for both. Password field was never focused — confirmed by inputType=0x3(Phone) on both IME events at lines 38909 and 40954.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "className": "android.widget.EditText",
-            "groupViewChildPosition": 1
+            "contentDescription": "password_field"
           }
         ]
       },
@@ -59,7 +57,7 @@
         "delayTime": 2000
       },
       {
-        "description": "Tap Log in button — contentDescription 'Log in' confirmed from actions.json seq 13",
+        "description": "Tap Log in button",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -68,12 +66,12 @@
         ]
       },
       {
-        "description": "Wait for Firebase auth and navigation to home screen (loginWithTestCredential has a 45s timeout)",
+        "description": "Wait for Firebase auth and navigation to home screen",
         "eventType": "WAIT",
         "delayTime": 40000
       },
       {
-        "description": "Tap Connect tab — contentDescription 'Connect' set by Semantics(label: label) in _NavItem",
+        "description": "Tap Connect tab",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {

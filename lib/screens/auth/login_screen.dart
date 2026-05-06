@@ -484,12 +484,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        // No Semantics wrapper here — wrapping a TextField
-                        // creates two accessibility nodes and Robo's
-                        // ACTION_SET_TEXT lands on the outer (non-editable)
-                        // node, discarding the text. The Key alone is enough
-                        // for widget tests; Robo uses visionText to locate it.
-                        child: TextField(
+                        // v26 fix: Semantics(label:'phone_field') WITHOUT
+                        // excludeSemantics:true merges the label onto the
+                        // child EditText's own contentDescription rather than
+                        // creating a separate wrapper View node.
+                        // v25 proof: semanticsLabel on InputDecoration sets
+                        // DESC='' in the BySelector log — it does not propagate
+                        // to android.widget.EditText.contentDescription.
+                        child: Semantics(
+                          label: 'phone_field',
+                          child: TextField(
                           key: const Key('phoneField'),
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
@@ -532,6 +536,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _phoneError = err);
                           },
                         ),
+                        ), // closes Semantics(label:'phone_field')
                       ),
                     ],
                   ),
@@ -559,24 +564,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // NO Semantics wrapper here — log proof from v24 run:
-                    // Semantics(label:'password_field', excludeSemantics:true)
-                    // does NOT merge nodes into one editable node. It creates:
-                    //   outer android.view.View  @ seq 0.0.0.0.0.0.0.1.8
-                    //     (component_type:2, className:android.view.View,
-                    //      contentDescription:'password_field',
-                    //      actions:[ACTION_ACCESSIBILITY_FOCUS only],
-                    //      clickable:false)
-                    //   inner android.widget.EditText @ seq 0.0.0.0.0.0.0.1.9
-                    //     (component_type:5, editable, clickable:true)
-                    // robo_script.json contentDescription:'password_field'
-                    // matches the outer View — keyboard opens but no text is
-                    // committed because VIEW_TEXT_CHANGED has no ACTION_SET_TEXT
-                    // on a non-editable View.
-                    // Fix: bare TextField (no wrapper) puts the EditText at
-                    // groupViewChildPosition:1 (second EditText on screen),
-                    // exactly like the phone field at groupViewChildPosition:0.
-                    TextField(
+                    // v24 proof: Semantics(excludeSemantics:true) creates an
+                    // OUTER android.view.View with contentDescription='password_field'
+                    // PLUS an inner android.widget.EditText — two nodes. Robo's
+                    // contentDescription selector matched the outer View, which
+                    // only has ACTION_ACCESSIBILITY_FOCUS (no ACTION_SET_TEXT),
+                    // so the keyboard opened but text was discarded.
+                    //
+                    // v25 proof (log lines 40931-40954): removing the wrapper
+                    // and using semanticsLabel on InputDecoration did NOT set
+                    // contentDescription on the EditText — the BySelector log
+                    // shows DESC='' for both fields. Robo fell back to
+                    // className+index 0 for both type-text actions, hitting
+                    // the phone EditText twice (same element @177a9041,
+                    // bounds 255,892–1017,1018 both times). inputType=0x3(Phone)
+                    // on both keyboard events confirms the password field was
+                    // never focused.
+                    //
+                    // v26 fix: Semantics(label:'password_field') WITHOUT
+                    // excludeSemantics:true. Flutter merges the label downward
+                    // onto the child EditText node rather than creating a
+                    // separate wrapper, setting the EditText's own
+                    // contentDescription='password_field'. Robo's
+                    // contentDescription selector then uniquely resolves to
+                    // the correct (non-phone) EditText at runtime.
+                    Semantics(
+                      label: 'password_field',
+                      child: TextField(
                       key: const Key('passwordField'),
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -612,6 +626,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // screen-state transition that prevents Robo from finding
                       // the Log in button on the next step.
                     ),
+                    ), // closes Semantics(label:'password_field')
                   ],
                 ),
 
