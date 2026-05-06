@@ -43,12 +43,13 @@
         "delayTime": 2000
       },
       {
-        "description": "Enter password — contentDescription 'password_field' set via Semantics(label:'password_field', excludeSemantics:true) which produces a single merged node. excludeSemantics:true prevents the double-node problem where ACTION_SET_TEXT hit the outer non-editable node.",
+        "description": "Enter password — groupViewChildPosition:1 targets the second android.widget.EditText on screen (index 0 = phone field, index 1 = password field). Log confirmed the Semantics wrapper creates an outer android.view.View at mode_specific_sequence 0.0.0.0.0.0.0.1.8 and the inner EditText at 0.0.0.0.0.0.0.1.9 — contentDescription selector hits the outer non-clickable View (component_type:2, no ACTION_SET_TEXT), not the EditText (component_type:5). Using className+groupViewChildPosition directly targets the editable node, same mechanism that works for the phone field at index 0.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "contentDescription": "password_field"
+            "className": "android.widget.EditText",
+            "groupViewChildPosition": 1
           }
         ]
       },

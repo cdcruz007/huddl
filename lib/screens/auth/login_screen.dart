@@ -559,19 +559,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // Semantics with excludeSemantics: true produces a SINGLE
-                    // merged accessibility node with contentDescription =
-                    // 'password_field'.  This avoids the double-node problem
-                    // (label node + EditText node) that caused v23 to fail:
-                    // Robo's ACTION_SET_TEXT was landing on the outer
-                    // non-editable node and discarding the text.
-                    // excludeSemantics: true merges children into this one
-                    // node so there is exactly one Android EditText node that
-                    // also carries contentDescription = 'password_field'.
-                    Semantics(
-                      label: 'password_field',
-                      excludeSemantics: true,
-                      child: TextField(
+                    // NO Semantics wrapper here — log proof from v24 run:
+                    // Semantics(label:'password_field', excludeSemantics:true)
+                    // does NOT merge nodes into one editable node. It creates:
+                    //   outer android.view.View  @ seq 0.0.0.0.0.0.0.1.8
+                    //     (component_type:2, className:android.view.View,
+                    //      contentDescription:'password_field',
+                    //      actions:[ACTION_ACCESSIBILITY_FOCUS only],
+                    //      clickable:false)
+                    //   inner android.widget.EditText @ seq 0.0.0.0.0.0.0.1.9
+                    //     (component_type:5, editable, clickable:true)
+                    // robo_script.json contentDescription:'password_field'
+                    // matches the outer View — keyboard opens but no text is
+                    // committed because VIEW_TEXT_CHANGED has no ACTION_SET_TEXT
+                    // on a non-editable View.
+                    // Fix: bare TextField (no wrapper) puts the EditText at
+                    // groupViewChildPosition:1 (second EditText on screen),
+                    // exactly like the phone field at groupViewChildPosition:0.
+                    TextField(
                       key: const Key('passwordField'),
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -603,14 +608,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const EdgeInsets.symmetric(vertical: 8),
                       ),
                       onChanged: (_) => setState(() {}),
-                      // onSubmitted removed: firing _handleLogin() on keyboard
-                      // "Done" causes a screen-state transition mid-script when
-                      // Robo Test Lab uses TYPE_TEXT, which confuses Robo's
-                      // screen tracker and prevents it from finding the Log in
-                      // button on the next step.  The Log in button tap is the
-                      // only submit path.
+                      // onSubmitted removed: TYPE_TEXT mid-script triggers a
+                      // screen-state transition that prevents Robo from finding
+                      // the Log in button on the next step.
                     ),
-                    ), // closes Semantics(label: 'password_field')
                   ],
                 ),
 
