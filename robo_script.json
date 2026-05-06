@@ -1,7 +1,5 @@
 [
   {
-    "id": 1000,
-    "description": "Huddl v32 - Exhaustive Robo stress-test: login -> Home (feed, composer, AI copilot, search) -> Connect (groups, chat, send, mic/voice, reactions, thread, polls, DM, saved, swipe, filter, AI, create group) -> Discover (groups, join, meetups, going/bookmark/share, events/bookmark, filter) -> Market (buy/scroll/detail/offer, sell/create, saved, filter, AI suggestions) -> Profile (view, edit, change password, my groups/meetups/listings, saved, notifications, privacy, help, T&Cs, log out) -> Subscriptions (plans, billing toggle, paywall) -> Final tab sweep",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
@@ -89,8 +87,7 @@
           {
             "contentDescription": "Home"
           }
-        ],
-        "description": "=== HOME TAB ==="
+        ]
       },
       {
         "eventType": "WAIT",
@@ -102,8 +99,7 @@
           {
             "contentDescription": "Your profile"
           }
-        ],
-        "description": "Tap profile avatar in home app bar"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -127,8 +123,7 @@
           {
             "contentDescription": "Post to your community notice board"
           }
-        ],
-        "description": "Tap post composer bar"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -166,8 +161,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll home feed down"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -179,8 +173,7 @@
           {
             "contentDescription": "Post options menu"
           }
-        ],
-        "description": "Post options menu"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -208,8 +201,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "up",
-        "description": "Scroll home feed up"
+        "swipeDirection": "up"
       },
       {
         "eventType": "WAIT",
@@ -225,8 +217,7 @@
             "className": "android.widget.ImageView",
             "groupViewChildPosition": 1
           }
-        ],
-        "description": "Open search on home screen"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -266,8 +257,7 @@
           {
             "contentDescription": "Connect"
           }
-        ],
-        "description": "=== CONNECT TAB ==="
+        ]
       },
       {
         "eventType": "WAIT",
@@ -279,8 +269,7 @@
           {
             "text": "Chats"
           }
-        ],
-        "description": "Tap Chats sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -293,8 +282,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll groups list down"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -307,8 +295,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "up",
-        "description": "Scroll groups list up"
+        "swipeDirection": "up"
       },
       {
         "eventType": "WAIT",
@@ -322,8 +309,7 @@
             "groupViewChildPosition": 0
           }
         ],
-        "swipeDirection": "right",
-        "description": "Swipe first group item right to reveal pin/mute"
+        "swipeDirection": "right"
       },
       {
         "eventType": "WAIT",
@@ -352,8 +338,7 @@
             "groupViewChildPosition": 0
           }
         ],
-        "swipeDirection": "left",
-        "description": "Swipe first group item left to reveal archive/delete"
+        "swipeDirection": "left"
       },
       {
         "eventType": "WAIT",
@@ -383,8 +368,7 @@
           {
             "text": "Undo"
           }
-        ],
-        "description": "Undo the archive action"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -399,8 +383,7 @@
           {
             "className": "android.widget.ImageView"
           }
-        ],
-        "description": "Search in Connect"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -425,8 +408,7 @@
           {
             "contentDescription": "Clear search"
           }
-        ],
-        "description": "Clear search"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -441,8 +423,7 @@
           {
             "contentDescription": "Active filters"
           }
-        ],
-        "description": "Filter groups sheet"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -481,8 +462,7 @@
           {
             "contentDescription": "Toggle AI recommendations"
           }
-        ],
-        "description": "Toggle AI recommendations"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -495,8 +475,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Open first group chat"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -509,8 +488,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Type in group chat"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -525,8 +503,7 @@
           {
             "contentDescription": "Send"
           }
-        ],
-        "description": "Tap send button"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -539,8 +516,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "up",
-        "description": "Scroll chat list up (older messages)"
+        "swipeDirection": "up"
       },
       {
         "eventType": "WAIT",
@@ -553,8 +529,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Long press first message for action menu"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -569,8 +544,7 @@
           {
             "text": "Copy message"
           }
-        ],
-        "description": "Tap Copy from action menu"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -585,8 +559,7 @@
           {
             "contentDescription": "Attach"
           }
-        ],
-        "description": "Tap attach button"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -598,8 +571,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Dismiss attachment sheet"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -614,8 +586,7 @@
           {
             "contentDescription": "Group info"
           }
-        ],
-        "description": "Tap group info from AppBar"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -639,8 +610,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from group chat"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -652,8 +622,7 @@
           {
             "text": "Messages"
           }
-        ],
-        "description": "Messages sub-tab (DM list)"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -666,8 +635,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Open first DM"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -680,8 +648,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Type in DM"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -706,8 +673,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "up",
-        "description": "Scroll DM list"
+        "swipeDirection": "up"
       },
       {
         "eventType": "WAIT",
@@ -731,8 +697,7 @@
           {
             "contentDescription": "New direct message"
           }
-        ],
-        "description": "New DM button"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -756,8 +721,7 @@
           {
             "text": "Saved"
           }
-        ],
-        "description": "Saved sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -783,8 +747,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Search saved messages"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -799,8 +762,7 @@
           {
             "contentDescription": "Discover"
           }
-        ],
-        "description": "=== DISCOVER TAB ==="
+        ]
       },
       {
         "eventType": "WAIT",
@@ -815,8 +777,7 @@
           {
             "text": "Groups"
           }
-        ],
-        "description": "Discover Groups sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -841,8 +802,7 @@
           {
             "contentDescription": "Join"
           }
-        ],
-        "description": "Tap Join on first suggested group"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -854,8 +814,7 @@
           {
             "contentDescription": "Share"
           }
-        ],
-        "description": "Share a group"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -879,8 +838,7 @@
           {
             "contentDescription": "This group is relevant to me"
           }
-        ],
-        "description": "Relevant / not relevant feedback"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -892,8 +850,7 @@
           {
             "resourceId": "groups-borough"
           }
-        ],
-        "description": "Borough / UK-Wide scope toggle"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -920,8 +877,7 @@
           {
             "text": "Meetups"
           }
-        ],
-        "description": "Discover Meetups sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -947,8 +903,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Search meetups"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -976,8 +931,7 @@
           {
             "contentDescription": "Filters active. Tap to change."
           }
-        ],
-        "description": "Filter meetups sheet"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1016,8 +970,7 @@
           {
             "resourceId": "meetups-borough"
           }
-        ],
-        "description": "Borough scope toggle (meetups)"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1030,8 +983,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Tap first meetup card"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1055,8 +1007,7 @@
           {
             "contentDescription": "Share meetup"
           }
-        ],
-        "description": "Share meetup"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1083,8 +1034,7 @@
           {
             "text": "Events"
           }
-        ],
-        "description": "Discover Events sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1110,8 +1060,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Search events"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1139,8 +1088,7 @@
           {
             "contentDescription": "Remove bookmark"
           }
-        ],
-        "description": "Bookmark first event"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1153,8 +1101,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Tap first event card for detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1181,8 +1128,7 @@
           {
             "contentDescription": "Market"
           }
-        ],
-        "description": "=== MARKET TAB ==="
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1194,8 +1140,7 @@
           {
             "text": "Buy"
           }
-        ],
-        "description": "Buy sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1220,8 +1165,7 @@
           {
             "contentDescription": "Search market items"
           }
-        ],
-        "description": "Search market items"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1246,8 +1190,7 @@
           {
             "contentDescription": "Clear search"
           }
-        ],
-        "description": "Clear search"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1262,8 +1205,7 @@
           {
             "contentDescription": "Filters active. Tap to change."
           }
-        ],
-        "description": "Filter items sheet"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1278,8 +1220,7 @@
           {
             "text": "Free"
           }
-        ],
-        "description": "Select Free price filter"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1294,8 +1235,7 @@
           {
             "text": "Any age"
           }
-        ],
-        "description": "Select Any age filter"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1310,8 +1250,7 @@
           {
             "text": "All"
           }
-        ],
-        "description": "Select All categories filter"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1338,8 +1277,7 @@
           {
             "text": "Clear filters"
           }
-        ],
-        "description": "Clear all filters"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1352,8 +1290,7 @@
             "className": "android.view.ViewGroup",
             "groupViewChildPosition": 0
           }
-        ],
-        "description": "Tap first listing for detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1377,8 +1314,7 @@
           {
             "text": "Sell"
           }
-        ],
-        "description": "Sell sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1393,8 +1329,7 @@
           {
             "contentDescription": "Create a new listing"
           }
-        ],
-        "description": "Create listing FAB"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1418,8 +1353,7 @@
           {
             "contentDescription": "Helpful suggestion"
           }
-        ],
-        "description": "AI suggestion helpful"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1431,8 +1365,7 @@
           {
             "contentDescription": "Accept offer from"
           }
-        ],
-        "description": "Accept / decline offer"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1457,8 +1390,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll sell list"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -1470,8 +1402,7 @@
           {
             "text": "Saved"
           }
-        ],
-        "description": "Saved sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1499,8 +1430,7 @@
           {
             "contentDescription": "Profile"
           }
-        ],
-        "description": "=== PROFILE TAB ==="
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1512,8 +1442,7 @@
           {
             "text": "Edit profile"
           }
-        ],
-        "description": "Edit profile"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1538,8 +1467,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll profile down to see settings"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -1551,8 +1479,7 @@
           {
             "text": "Notifications"
           }
-        ],
-        "description": "Notifications settings"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1576,8 +1503,7 @@
           {
             "text": "Privacy"
           }
-        ],
-        "description": "Privacy settings"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1601,8 +1527,7 @@
           {
             "text": "Help & Support"
           }
-        ],
-        "description": "Help & Support"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1626,8 +1551,7 @@
           {
             "text": "Terms of Service"
           }
-        ],
-        "description": "Terms of Service"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1651,8 +1575,7 @@
           {
             "text": "Privacy Policy"
           }
-        ],
-        "description": "Privacy Policy"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1676,8 +1599,7 @@
           {
             "text": "My Groups"
           }
-        ],
-        "description": "My Groups"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1714,8 +1636,7 @@
           {
             "text": "My Meetups"
           }
-        ],
-        "description": "My Meetups"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1752,8 +1673,7 @@
           {
             "text": "My listings"
           }
-        ],
-        "description": "My listings"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1777,8 +1697,7 @@
           {
             "text": "Saved"
           }
-        ],
-        "description": "Saved items"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1802,8 +1721,7 @@
           {
             "text": "Change password"
           }
-        ],
-        "description": "Change password"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1828,8 +1746,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll down to see Log out / version"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -1854,8 +1771,7 @@
           {
             "text": "Log out"
           }
-        ],
-        "description": "Tap Log out - then Cancel"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1882,8 +1798,7 @@
           {
             "text": "Manage Subscription"
           }
-        ],
-        "description": "Upgrade / Manage Subscription"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1898,8 +1813,7 @@
           {
             "text": "Annually"
           }
-        ],
-        "description": "Billing toggle Monthly/Annual"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1931,8 +1845,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK A: Voice message flow ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -1940,8 +1853,7 @@
           {
             "resourceId": "nav_connect"
           }
-        ],
-        "description": "Back to Connect for voice test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1953,8 +1865,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open first group chat for mic test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1966,8 +1877,7 @@
           {
             "contentDescription": "Record voice message"
           }
-        ],
-        "description": "Tap mic to record voice note"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1979,8 +1889,7 @@
           {
             "contentDescription": "Voice message"
           }
-        ],
-        "description": "Alternate mic button label"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -1992,8 +1901,7 @@
           {
             "contentDescription": "mic"
           }
-        ],
-        "description": "Mic icon button"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2005,8 +1913,7 @@
           {
             "contentDescription": "Stop recording"
           }
-        ],
-        "description": "Stop voice recording"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2018,8 +1925,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from group chat"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2027,8 +1933,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK B: Emoji reactions ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2036,8 +1941,7 @@
           {
             "resourceId": "nav_connect"
           }
-        ],
-        "description": "Connect tab for emoji test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2049,8 +1953,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open group chat for reaction test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2062,8 +1965,7 @@
           {
             "className": "android.view.View"
           }
-        ],
-        "description": "Long-press message bubble to open reaction menu"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2075,8 +1977,7 @@
           {
             "contentDescription": "React with"
           }
-        ],
-        "description": "Tap thumbs-up reaction"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2088,8 +1989,7 @@
           {
             "contentDescription": ""
           }
-        ],
-        "description": "Laugh emoji reaction"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2101,8 +2001,7 @@
           {
             "contentDescription": ""
           }
-        ],
-        "description": "Heart emoji reaction"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2114,8 +2013,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from chat after emoji"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2123,8 +2021,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK C: Poll creation ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2132,8 +2029,7 @@
           {
             "resourceId": "nav_connect"
           }
-        ],
-        "description": "Connect tab for poll test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2145,8 +2041,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open group chat for poll test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2158,8 +2053,7 @@
           {
             "contentDescription": "add_circle_outline"
           }
-        ],
-        "description": "Open attach sheet"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2171,8 +2065,7 @@
           {
             "contentDescription": "Create poll"
           }
-        ],
-        "description": "Tap Create poll option"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2185,8 +2078,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Enter poll question"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2199,8 +2091,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Poll option 1"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2212,8 +2103,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Cancel/back from poll creator"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2225,8 +2115,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from chat after poll"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2234,8 +2123,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK D: Create group flow ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2243,8 +2131,7 @@
           {
             "resourceId": "nav_connect"
           }
-        ],
-        "description": "Connect tab for create group"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2256,8 +2143,7 @@
           {
             "contentDescription": "Create new group"
           }
-        ],
-        "description": "Tap create new group FAB"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2270,8 +2156,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Enter group name in create flow"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2283,8 +2168,7 @@
           {
             "text": "Next"
           }
-        ],
-        "description": "Next step in create group"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2296,8 +2180,7 @@
           {
             "text": "Next"
           }
-        ],
-        "description": "Skip category step"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2309,8 +2192,7 @@
           {
             "text": "Create"
           }
-        ],
-        "description": "Submit create group"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2322,8 +2204,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back after create group attempt"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2331,8 +2212,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK E: Thread reply ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2340,8 +2220,7 @@
           {
             "resourceId": "nav_connect"
           }
-        ],
-        "description": "Connect tab for thread test"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2353,8 +2232,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open group chat for thread"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2366,8 +2244,7 @@
           {
             "className": "android.view.View"
           }
-        ],
-        "description": "Long-press to open message action menu for thread"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2379,8 +2256,7 @@
           {
             "contentDescription": "Reply in thread"
           }
-        ],
-        "description": "Tap Reply in thread action"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2393,8 +2269,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Type thread reply"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2406,8 +2281,7 @@
           {
             "contentDescription": "send"
           }
-        ],
-        "description": "Send thread reply"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2419,8 +2293,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from thread"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2432,8 +2305,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from group chat"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2441,8 +2313,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK F: AI Copilot / FAB ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2450,8 +2321,7 @@
           {
             "resourceId": "nav_home"
           }
-        ],
-        "description": "Go Home for AI copilot"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2463,8 +2333,7 @@
           {
             "contentDescription": "Open AI Copilot"
           }
-        ],
-        "description": "Tap AI Copilot FAB"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2477,8 +2346,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "AI copilot prompt"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2490,8 +2358,7 @@
           {
             "contentDescription": "Send message"
           }
-        ],
-        "description": "Send AI prompt"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2503,8 +2370,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Close AI copilot"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2512,8 +2378,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK G: Marketplace item detail + offer ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2521,8 +2386,7 @@
           {
             "resourceId": "nav_market"
           }
-        ],
-        "description": "Market tab for item detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2534,8 +2398,7 @@
           {
             "text": "Buy"
           }
-        ],
-        "description": "Market Buy tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2548,8 +2411,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll Buy list"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -2561,8 +2423,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open first marketplace item"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2574,8 +2435,7 @@
           {
             "contentDescription": "Make an offer"
           }
-        ],
-        "description": "Tap make offer"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2588,8 +2448,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Enter offer price"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2601,8 +2460,7 @@
           {
             "text": "Send offer"
           }
-        ],
-        "description": "Submit offer"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2614,8 +2472,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from item detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2623,8 +2480,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK H: Events going + bookmark ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2632,8 +2488,7 @@
           {
             "resourceId": "nav_discover"
           }
-        ],
-        "description": "Discover tab for events"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2645,8 +2500,7 @@
           {
             "text": "Meetups"
           }
-        ],
-        "description": "Meetups sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2659,8 +2513,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll meetups list"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -2672,8 +2525,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open first meetup detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2685,8 +2537,7 @@
           {
             "contentDescription": "Going"
           }
-        ],
-        "description": "Mark meetup as Going"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2698,8 +2549,7 @@
           {
             "contentDescription": "Not going"
           }
-        ],
-        "description": "Toggle back to not going"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2711,8 +2561,7 @@
           {
             "contentDescription": "Bookmark meetup"
           }
-        ],
-        "description": "Bookmark the meetup"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2724,8 +2573,7 @@
           {
             "contentDescription": "Share meetup"
           }
-        ],
-        "description": "Share meetup"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2737,8 +2585,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from meetup detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2750,8 +2597,7 @@
           {
             "text": "Events"
           }
-        ],
-        "description": "Events sub-tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2764,8 +2610,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll events list"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -2777,8 +2622,7 @@
           {
             "className": "android.widget.LinearLayout"
           }
-        ],
-        "description": "Open first event detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2790,8 +2634,7 @@
           {
             "contentDescription": "Bookmark event"
           }
-        ],
-        "description": "Bookmark event"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2803,8 +2646,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from event detail"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2812,8 +2654,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK I: Profile edit + change password ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2821,8 +2662,7 @@
           {
             "resourceId": "nav_profile"
           }
-        ],
-        "description": "Profile tab"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2834,8 +2674,7 @@
           {
             "contentDescription": "Edit profile"
           }
-        ],
-        "description": "Open edit profile"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2848,8 +2687,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Edit display name in profile"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2861,8 +2699,7 @@
           {
             "text": "Save"
           }
-        ],
-        "description": "Save profile edits"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2874,8 +2711,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from edit profile"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2887,8 +2723,7 @@
           {
             "contentDescription": "Change password"
           }
-        ],
-        "description": "Open change password screen"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2901,8 +2736,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Enter current password"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2915,8 +2749,7 @@
           {
             "className": "android.widget.EditText"
           }
-        ],
-        "description": "Enter new password"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2928,8 +2761,7 @@
           {
             "text": "Update password"
           }
-        ],
-        "description": "Submit password change"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2941,8 +2773,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from change password"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2950,8 +2781,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 2000,
-        "description": "--- BLOCK J: Subscription paywall ---"
+        "delayTime": 2000
       },
       {
         "eventType": "VIEW_CLICKED",
@@ -2959,8 +2789,7 @@
           {
             "resourceId": "nav_profile"
           }
-        ],
-        "description": "Profile tab for subscription"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2972,8 +2801,7 @@
           {
             "contentDescription": "Upgrade"
           }
-        ],
-        "description": "Open subscription/upgrade screen"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -2986,8 +2814,7 @@
             "className": "androidx.recyclerview.widget.RecyclerView"
           }
         ],
-        "swipeDirection": "down",
-        "description": "Scroll subscription plans"
+        "swipeDirection": "down"
       },
       {
         "eventType": "WAIT",
@@ -2999,8 +2826,7 @@
           {
             "text": "Annual"
           }
-        ],
-        "description": "Select annual billing"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -3012,8 +2838,7 @@
           {
             "text": "Monthly"
           }
-        ],
-        "description": "Select monthly billing"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -3025,8 +2850,7 @@
           {
             "text": "Neighbourhood"
           }
-        ],
-        "description": "Select Neighbourhood plan"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -3038,8 +2862,7 @@
           {
             "className": "android.widget.ImageButton"
           }
-        ],
-        "description": "Back from subscription"
+        ]
       },
       {
         "eventType": "WAIT",
@@ -3054,8 +2877,7 @@
           {
             "contentDescription": "Connect"
           }
-        ],
-        "description": "=== FINAL NAVIGATION CYCLE ==="
+        ]
       },
       {
         "eventType": "WAIT",
