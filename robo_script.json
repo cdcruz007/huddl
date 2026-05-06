@@ -1,29 +1,33 @@
 [
   {
     "id": 1000,
-    "description": "Login flow: tap Login, enter credentials, submit",
+    "description": "Login flow: wait for onboarding to fully load, navigate to login, enter credentials, submit",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
     },
     "actions": [
       {
-        "description": "Wait for onboarding carousel to render",
+        "description": "Wait for splash screen Firebase init + onboarding carousel to fully render (cold start is slow on Test Lab)",
+        "eventType": "WAIT",
+        "delayTime": 12000
+      },
+      {
+        "description": "Tap the Login link — contentDescription confirmed from actions.json seq 9 and seq 21",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "already_have_account\nLogin"
+          }
+        ]
+      },
+      {
+        "description": "Wait for login screen to fully render and accessibility tree to populate",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Tap Login button on onboarding carousel",
-        "eventType": "VIEW_CLICKED",
-        "visionText": "Login"
-      },
-      {
-        "description": "Wait for login screen to render",
-        "eventType": "WAIT",
-        "delayTime": 3000
-      },
-      {
-        "description": "Enter phone number into first text field",
+        "description": "Enter phone number — groupViewChildPosition 0 = first EditText on the login screen (the phone field). No Semantics wrapper on this field so it is the raw EditText node.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "7575888452",
         "elementDescriptors": [
@@ -34,40 +38,47 @@
         ]
       },
       {
-        "description": "Wait for phone field controller update",
+        "description": "Wait for phone field controller and UK formatter to process input",
         "eventType": "WAIT",
         "delayTime": 2000
       },
       {
-        "description": "Enter password into second text field",
+        "description": "Enter password — contentDescription 'password_field' set via Semantics(label:'password_field', excludeSemantics:true) which produces a single merged node. excludeSemantics:true prevents the double-node problem where ACTION_SET_TEXT hit the outer non-editable node.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "className": "android.widget.EditText",
-            "groupViewChildPosition": 1
+            "contentDescription": "password_field"
           }
         ]
       },
       {
-        "description": "Wait for _canLogin flag to evaluate",
+        "description": "Wait for password field and _canLogin to evaluate to true",
         "eventType": "WAIT",
         "delayTime": 2000
       },
       {
-        "description": "Tap Log in button",
+        "description": "Tap Log in button — contentDescription 'Log in' confirmed from actions.json seq 13",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Log in"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Log in"
+          }
+        ]
       },
       {
-        "description": "Wait for Firebase auth and home screen navigation",
+        "description": "Wait for Firebase auth and navigation to home screen (loginWithTestCredential has a 45s timeout)",
         "eventType": "WAIT",
-        "delayTime": 20000
+        "delayTime": 40000
       },
       {
-        "description": "Tap Connect tab",
+        "description": "Tap Connect tab — contentDescription 'Connect' set by Semantics(label: label) in _NavItem",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Connect"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Connect"
+          }
+        ]
       },
       {
         "description": "Wait for Connect tab to load",
@@ -77,7 +88,11 @@
       {
         "description": "Tap Discover tab",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Discover"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Discover"
+          }
+        ]
       },
       {
         "description": "Wait for Discover tab to load",
@@ -87,7 +102,11 @@
       {
         "description": "Tap Market tab",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Market"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Market"
+          }
+        ]
       },
       {
         "description": "Wait for Market tab to load",
@@ -97,7 +116,11 @@
       {
         "description": "Tap Profile tab",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Profile"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Profile"
+          }
+        ]
       },
       {
         "description": "Wait for Profile tab to load",
@@ -107,7 +130,11 @@
       {
         "description": "Return to Home tab for free Robo crawl",
         "eventType": "VIEW_CLICKED",
-        "visionText": "Home"
+        "elementDescriptors": [
+          {
+            "contentDescription": "Home"
+          }
+        ]
       },
       {
         "description": "Wait on Home screen for Robo to crawl content",

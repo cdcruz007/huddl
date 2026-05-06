@@ -493,6 +493,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           key: const Key('phoneField'),
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
+                          autofillHints: const [AutofillHints.telephoneNumberNational],
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
                             _UKMobileInputFormatter(),
@@ -558,41 +559,58 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // No Semantics wrapper — same reason as phone field above.
-                    TextField(
+                    // Semantics with excludeSemantics: true produces a SINGLE
+                    // merged accessibility node with contentDescription =
+                    // 'password_field'.  This avoids the double-node problem
+                    // (label node + EditText node) that caused v23 to fail:
+                    // Robo's ACTION_SET_TEXT was landing on the outer
+                    // non-editable node and discarding the text.
+                    // excludeSemantics: true merges children into this one
+                    // node so there is exactly one Android EditText node that
+                    // also carries contentDescription = 'password_field'.
+                    Semantics(
+                      label: 'password_field',
+                      excludeSemantics: true,
+                      child: TextField(
                       key: const Key('passwordField'),
                       controller: _passwordController,
                       obscureText: _obscurePassword,
-                        style: AppTextStyles.body1,
-                        decoration: InputDecoration(
-                          hintText: 'Min 8 chars, upper+lower+digit',
-                          hintStyle: AppTextStyles.inputHint,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                              color: HuddlColors.textSecondary,
-                            ),
-                            onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword),
+                      style: AppTextStyles.body1,
+                      decoration: InputDecoration(
+                        hintText: 'Min 8 chars, upper+lower+digit',
+                        hintStyle: AppTextStyles.inputHint,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: HuddlColors.textSecondary,
                           ),
-                          border: const UnderlineInputBorder(
-                            borderSide: BorderSide(color: HuddlColors.gray300),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide:
-                                BorderSide(color: HuddlColors.primary, width: 2),
-                          ),
-                          enabledBorder: const UnderlineInputBorder(
-                            borderSide: BorderSide(color: HuddlColors.gray300),
-                          ),
-                          contentPadding:
-                              const EdgeInsets.symmetric(vertical: 8),
+                          onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
                         ),
+                        border: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: HuddlColors.gray300),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: HuddlColors.primary, width: 2),
+                        ),
+                        enabledBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: HuddlColors.gray300),
+                        ),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 8),
+                      ),
                       onChanged: (_) => setState(() {}),
-                      onSubmitted: (_) => _handleLogin(),
+                      // onSubmitted removed: firing _handleLogin() on keyboard
+                      // "Done" causes a screen-state transition mid-script when
+                      // Robo Test Lab uses TYPE_TEXT, which confuses Robo's
+                      // screen tracker and prevents it from finding the Log in
+                      // button on the next step.  The Log in button tap is the
+                      // only submit path.
                     ),
+                    ), // closes Semantics(label: 'password_field')
                   ],
                 ),
 

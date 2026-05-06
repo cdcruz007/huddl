@@ -1,4 +1,3 @@
-import 'dart:async' show unawaited;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show PlatformDispatcher, debugPrint;
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +10,6 @@ import 'config/router.dart';
 import 'services/subscription_service.dart';
 import 'services/browser_storage.dart';
 import 'services/huddl_user_service.dart';
-import 'services/push_notification_service.dart';
 import 'services/user_privacy_prefs_service.dart';
 
 void main() async {
@@ -165,18 +163,25 @@ void main() async {
     }
   } catch (_) {}
 
-  // ── Push notifications — initialise FCM and register token ────────────
-  // Must run AFTER Firebase init. Safe to call when no user is signed in
-  // (the service skips token registration until a UID is available).
-  try {
-    if (FirebaseAuth.instance.currentUser != null) {
-      // Returning user — initialise FCM immediately
-      unawaited(
-        PushNotificationService().initialise()
-            .timeout(const Duration(seconds: 10)),
-      );
-    }
-  } catch (_) {}
+  // ── Push notifications — DEFERRED to MainShell ────────────────────────
+  // FCM initialisation (getNotificationSettings + requestPermission) is
+  // intentionally NOT called here in main().
+  //
+  // Reason: on Android 13+ (API 33), calling getNotificationSettings() on a
+  // fresh device (notDetermined status) internally initialises the FCM channel
+  // and triggers the POST_NOTIFICATIONS system permission dialog — a
+  // system-level overlay that fires BEFORE runApp(), causing Firebase Test Lab
+  // Robo / UiAutomator to immediately report "Outside of app" and time out,
+  // ending the test with "Test failed to run".
+  //
+  // FCM is initialised in MainShell._initialisePushNotifications() instead,
+  // which runs AFTER the app UI is fully built and the user has navigated to
+  // the home screen. This is the correct lifecycle point for permission
+  // dialogs — the user can see and interact with them properly.
+  //
+  // There is NO functional loss: the _initialised flag in PushNotificationService
+  // prevents double-initialisation, and the token is registered on the first
+  // MainShell mount, which happens within seconds of the user reaching home.
 
   runApp(const HuddlApp());
 }

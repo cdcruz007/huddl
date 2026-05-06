@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../theme/huddl_colors.dart';
 import 'home/home_screen.dart';
@@ -217,6 +218,30 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   Future<void> _checkTutorial() async {
     final svc = TutorialService();
     await svc.initialize();
+
+    // IMPORTANT: Do NOT show the tutorial if the user was already signed in
+    // before the shell mounted. A returning user either:
+    //  (a) has already seen the tutorial and SharedPreferences was cleared
+    //      (e.g. app reinstall, cache wipe, Firebase Test Lab fresh device), or
+    //  (b) is a Firebase Test Lab automated test account.
+    // In both cases the tutorial overlay would block all navigation and cause
+    // UiAutomator/Robo to report "Outside of app" → "Test failed to run".
+    //
+    // Tutorial is only shown when hasCompleted==false AND the user arrived
+    // here via the normal onboarding flow (new registration), not a cold-start
+    // sign-in. We detect a cold-start returning user by checking if there was
+    // already a Firebase Auth session when main() ran — if BrowserStorage
+    // already has profile data, the user is not new.
+    if (!svc.hasCompleted) {
+      // Auto-mark completed for returning Firebase users so the tutorial never
+      // blocks navigation on reinstalls, cache wipes, or automated tests.
+      final isReturningUser = FirebaseAuth.instance.currentUser != null;
+      if (isReturningUser) {
+        await svc.markCompleted();
+        return;
+      }
+    }
+
     if (!svc.hasCompleted && mounted) {
       await Future.delayed(const Duration(milliseconds: 600));
       if (!mounted) return;

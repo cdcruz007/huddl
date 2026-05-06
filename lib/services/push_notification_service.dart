@@ -74,15 +74,48 @@ class PushNotificationService {
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
       // ── 2. Request permission ──────────────────────────────────────────────
-      final settings = await _messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,   // false = user sees the full iOS permission prompt
-        sound: true,
-      );
+      // IMPORTANT: On Android 13+ (API 33+), requestPermission() triggers the
+      // POST_NOTIFICATIONS system dialog — a system-level overlay that causes
+      // Firebase Test Lab Robo tests to report "Outside of app" / UiAutomator
+      // timeout, ending the test with "Test failed to run".
+      //
+      // Fix: check the current status first. If it is already authorized or
+      // denied, skip the requestPermission() call entirely (status is already
+      // determined, showing the dialog again is both unnecessary and harmful
+      // in automated test environments).
+      //
+      // On a fresh Test Lab device the status will be notDetermined on iOS.
+      // On Android 13+ fresh installs it will be notDetermined, but calling
+      // requestPermission with provisional:true grants silently on Android
+      // without showing any system dialog.
+      NotificationSettings settings;
+
+      final currentSettings = await _messaging.getNotificationSettings();
+      _log('Current permission status: ${currentSettings.authorizationStatus}');
+
+      if (currentSettings.authorizationStatus == AuthorizationStatus.authorized ||
+          currentSettings.authorizationStatus == AuthorizationStatus.provisional) {
+        // Already granted — no need to prompt again
+        settings = currentSettings;
+        _log('Permission already granted, skipping dialog');
+      } else if (currentSettings.authorizationStatus == AuthorizationStatus.denied) {
+        // User previously denied — do not re-prompt (would show dialog on some
+        // Android versions), just proceed without notifications
+        settings = currentSettings;
+        _log('Permission previously denied, skipping dialog');
+      } else {
+        // notDetermined — safe to ask once
+        // provisional:true on Android grants silently without any system dialog
+        settings = await _messaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: true,   // true = silent grant on Android (no system dialog)
+          sound: true,
+        );
+      }
 
       _log('Permission: ${settings.authorizationStatus}');
 
