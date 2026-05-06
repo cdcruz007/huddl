@@ -15,7 +15,7 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "already_have_account\nLogin"
+            "contentDescription": "already_have_account Login"
           },
           {
             "contentDescription": "Login"
