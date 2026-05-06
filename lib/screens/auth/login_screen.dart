@@ -484,16 +484,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        // v26 fix: Semantics(label:'phone_field') WITHOUT
-                        // excludeSemantics:true merges the label onto the
-                        // child EditText's own contentDescription rather than
-                        // creating a separate wrapper View node.
-                        // v25 proof: semanticsLabel on InputDecoration sets
-                        // DESC='' in the BySelector log — it does not propagate
-                        // to android.widget.EditText.contentDescription.
-                        child: Semantics(
-                          label: 'phone_field',
-                          child: TextField(
+                        // BARE TextField — no Semantics wrapper of any kind.
+                        // v24: Semantics(excludeSemantics:true) → outer View + inner
+                        //   EditText, Robo matched outer non-editable View.
+                        // v25: semanticsLabel on InputDecoration → DESC='' in
+                        //   BySelector, Robo hit phone EditText twice (index 0 both).
+                        // v26: Semantics(label) WITHOUT excludeSemantics → altered
+                        //   screen fingerprint, Robo skipped VIEW_TEXT_CHANGED
+                        //   entirely and clicked Log in with empty fields.
+                        // v27: bare TextField. Phone = byselector index 0 (proven
+                        //   in every log). Password = byselector index 1 (proven
+                        //   in v26 log line 32398). robo_script targets index 1
+                        //   for password using groupViewChildPosition:1.
+                        child: TextField(
                           key: const Key('phoneField'),
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
@@ -536,7 +539,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             setState(() => _phoneError = err);
                           },
                         ),
-                        ), // closes Semantics(label:'phone_field')
                       ),
                     ],
                   ),
@@ -564,33 +566,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // v24 proof: Semantics(excludeSemantics:true) creates an
-                    // OUTER android.view.View with contentDescription='password_field'
-                    // PLUS an inner android.widget.EditText — two nodes. Robo's
-                    // contentDescription selector matched the outer View, which
-                    // only has ACTION_ACCESSIBILITY_FOCUS (no ACTION_SET_TEXT),
-                    // so the keyboard opened but text was discarded.
-                    //
-                    // v25 proof (log lines 40931-40954): removing the wrapper
-                    // and using semanticsLabel on InputDecoration did NOT set
-                    // contentDescription on the EditText — the BySelector log
-                    // shows DESC='' for both fields. Robo fell back to
-                    // className+index 0 for both type-text actions, hitting
-                    // the phone EditText twice (same element @177a9041,
-                    // bounds 255,892–1017,1018 both times). inputType=0x3(Phone)
-                    // on both keyboard events confirms the password field was
-                    // never focused.
-                    //
-                    // v26 fix: Semantics(label:'password_field') WITHOUT
-                    // excludeSemantics:true. Flutter merges the label downward
-                    // onto the child EditText node rather than creating a
-                    // separate wrapper, setting the EditText's own
-                    // contentDescription='password_field'. Robo's
-                    // contentDescription selector then uniquely resolves to
-                    // the correct (non-phone) EditText at runtime.
-                    Semantics(
-                      label: 'password_field',
-                      child: TextField(
+                    // BARE TextField — no Semantics wrapper.
+                    // v26 log proof (line 32398): bare password TextField
+                    // appears at byselector index 1, mode_specific_sequence
+                    // "0.0.0.0.0.0.0.1.8", inputType=0x80081(Password).
+                    // Robo successfully opened the password keyboard when
+                    // it reached this node in order. The only failure in v26
+                    // was that the Semantics wrapper on the phone field broke
+                    // the screen fingerprint, causing Robo to skip the
+                    // VIEW_TEXT_CHANGED actions entirely.
+                    // robo_script targets password via groupViewChildPosition:1.
+                    TextField(
                       key: const Key('passwordField'),
                       controller: _passwordController,
                       obscureText: _obscurePassword,
@@ -622,11 +608,10 @@ class _LoginScreenState extends State<LoginScreen> {
                             const EdgeInsets.symmetric(vertical: 8),
                       ),
                       onChanged: (_) => setState(() {}),
-                      // onSubmitted removed: TYPE_TEXT mid-script triggers a
-                      // screen-state transition that prevents Robo from finding
-                      // the Log in button on the next step.
+                      // onSubmitted intentionally absent: firing onSubmitted
+                      // during Robo's TYPE_TEXT causes a screen-state
+                      // transition that prevents Robo finding Log in button.
                     ),
-                    ), // closes Semantics(label:'password_field')
                   ],
                 ),
 

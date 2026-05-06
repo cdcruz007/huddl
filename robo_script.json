@@ -1,19 +1,17 @@
 [
   {
     "id": 1000,
-    "description": "Login flow: wait for onboarding, navigate to login, enter credentials, submit",
+    "description": "Login flow",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
     },
     "actions": [
       {
-        "description": "Wait for splash screen Firebase init + onboarding carousel to fully render",
         "eventType": "WAIT",
         "delayTime": 12000
       },
       {
-        "description": "Tap the Login link",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -22,42 +20,38 @@
         ]
       },
       {
-        "description": "Wait for login screen to fully render and accessibility tree to populate",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Enter phone number. v26 fix: Semantics(label:'phone_field') WITHOUT excludeSemantics:true merges the label onto the child EditText's own contentDescription node (no separate wrapper View). v25 proof: semanticsLabel on InputDecoration produces DESC='' in BySelector log (lines 38893, 40948) — never propagates to android.widget.EditText.contentDescription. v24 proof: Semantics(excludeSemantics:true) created outer android.view.View with contentDescription but inner EditText was untouched.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "7575888452",
         "elementDescriptors": [
           {
-            "contentDescription": "phone_field"
+            "className": "android.widget.EditText",
+            "groupViewChildPosition": 0
           }
         ]
       },
       {
-        "description": "Wait for phone field controller and UK formatter to process input",
         "eventType": "WAIT",
         "delayTime": 2000
       },
       {
-        "description": "Enter password. v26 fix: Semantics(label:'password_field') WITHOUT excludeSemantics:true sets contentDescription directly on the android.widget.EditText (Password inputType=0x80081). v25 root cause: both type-text actions resolved to same element @177a9041 (phone EditText, bounds 255,892-1017,1018, inputType=Phone) because DESC='' matched index 0 for both. Password field was never focused — confirmed by inputType=0x3(Phone) on both IME events at lines 38909 and 40954.",
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "Devon1100",
         "elementDescriptors": [
           {
-            "contentDescription": "password_field"
+            "className": "android.widget.EditText",
+            "groupViewChildPosition": 1
           }
         ]
       },
       {
-        "description": "Wait for password field and _canLogin to evaluate to true",
         "eventType": "WAIT",
         "delayTime": 2000
       },
       {
-        "description": "Tap Log in button",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -66,12 +60,10 @@
         ]
       },
       {
-        "description": "Wait for Firebase auth and navigation to home screen",
         "eventType": "WAIT",
         "delayTime": 40000
       },
       {
-        "description": "Tap Connect tab",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -80,12 +72,10 @@
         ]
       },
       {
-        "description": "Wait for Connect tab to load",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Tap Discover tab",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -94,12 +84,10 @@
         ]
       },
       {
-        "description": "Wait for Discover tab to load",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Tap Market tab",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -108,12 +96,10 @@
         ]
       },
       {
-        "description": "Wait for Market tab to load",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Tap Profile tab",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -122,12 +108,10 @@
         ]
       },
       {
-        "description": "Wait for Profile tab to load",
         "eventType": "WAIT",
         "delayTime": 4000
       },
       {
-        "description": "Return to Home tab for free Robo crawl",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -136,7 +120,6 @@
         ]
       },
       {
-        "description": "Wait on Home screen for Robo to crawl content",
         "eventType": "WAIT",
         "delayTime": 8000
       }
