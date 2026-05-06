@@ -1,7 +1,7 @@
 [
   {
     "id": 1000,
-    "description": "Login flow v31 — resource-id nav selectors",
+    "description": "Huddl v32 — Exhaustive Robo stress-test: login → Home (feed, composer, AI copilot, search) → Connect (groups, chat, send, mic/voice, reactions, thread, polls, DM, saved, swipe, filter, AI, create group) → Discover (groups, join, meetups, going/bookmark/share, events/bookmark, filter) → Market (buy/scroll/detail/offer, sell/create, saved, filter, AI suggestions) → Profile (view, edit, change password, my groups/meetups/listings, saved, notifications, privacy, help, T&Cs, log out) → Subscriptions (plans, billing toggle, paywall) → Final tab sweep",
     "crawlStage": "crawl",
     "contextDescriptor": {
       "condition": "app_under_test_shown"
@@ -16,6 +16,12 @@
         "elementDescriptors": [
           {
             "contentDescription": "already_have_account\nLogin"
+          },
+          {
+            "contentDescription": "Login"
+          },
+          {
+            "text": "Login"
           }
         ]
       },
@@ -27,6 +33,9 @@
         "eventType": "VIEW_TEXT_CHANGED",
         "replacementText": "7575888452",
         "elementDescriptors": [
+          {
+            "resourceId": "phoneField"
+          },
           {
             "className": "android.widget.EditText",
             "groupViewChildPosition": 0
@@ -43,6 +52,9 @@
         "elementDescriptors": [
           {
             "resourceId": "password_field"
+          },
+          {
+            "resourceId": "passwordField"
           }
         ]
       },
@@ -54,15 +66,199 @@
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
-            "contentDescription": "Log in"
+            "contentDescription": "login_button"
+          },
+          {
+            "resourceId": "loginButton"
+          },
+          {
+            "text": "Log in"
           }
         ]
       },
       {
         "eventType": "WAIT",
-        "delayTime": 40000
+        "delayTime": 45000
       },
       {
+        "comment": "=== HOME TAB ===",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_home"
+          },
+          {
+            "contentDescription": "Home"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "comment": "Tap profile avatar in home app bar",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Your profile"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap post composer bar",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Post to your community notice board"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Hello Huddl community! Testing the post composer.",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll home feed down",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Post options menu",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Post options menu"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Pin post"
+          },
+          {
+            "text": "Pin post"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll home feed up",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "up",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Open search on home screen",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "search"
+          },
+          {
+            "className": "android.widget.ImageView",
+            "groupViewChildPosition": 1
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "community",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "=== CONNECT TAB ===",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -78,6 +274,524 @@
         "delayTime": 5000
       },
       {
+        "comment": "Tap Chats sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Chats"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Scroll groups list down",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll groups list up",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "up",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Swipe first group item right to reveal pin/mute",
+        "eventType": "VIEW_SWIPED",
+        "direction": "right",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Pin"
+          },
+          {
+            "contentDescription": "Unpin"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Swipe first group item left to reveal archive/delete",
+        "eventType": "VIEW_SWIPED",
+        "direction": "left",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Archive"
+          },
+          {
+            "text": "Archive"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Undo the archive action",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Undo"
+          },
+          {
+            "text": "Undo"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Search in Connect",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "search"
+          },
+          {
+            "className": "android.widget.ImageView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "test",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Clear search",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Clear search"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Filter groups sheet",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Filter groups"
+          },
+          {
+            "contentDescription": "Active filters"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Reset all filters"
+          },
+          {
+            "text": "Reset all filters"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Close filter sheet"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Toggle AI recommendations",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Toggle AI recommendations"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Open first group chat",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "comment": "Type in group chat",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Hello from the Robo test! 👋",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap send button",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "send"
+          },
+          {
+            "contentDescription": "Send"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Scroll chat list up (older messages)",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "up",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Long press first message for action menu",
+        "eventType": "VIEW_LONG_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap Copy from action menu",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Copy"
+          },
+          {
+            "text": "Copy message"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap attach button",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "add_circle_outline"
+          },
+          {
+            "contentDescription": "Attach"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Dismiss attachment sheet",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap group info from AppBar",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Tap here for group info"
+          },
+          {
+            "contentDescription": "Group info"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Back from group chat",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Messages sub-tab (DM list)",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Messages"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Open first DM",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "comment": "Type in DM",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Hey! Robo test checking DMs.",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll DM list",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "up",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "New DM button",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "New direct message"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Saved sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Saved"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Search saved messages",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "hello",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "=== DISCOVER TAB ===",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -93,6 +807,373 @@
         "delayTime": 5000
       },
       {
+        "comment": "Discover Groups sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Groups"
+          },
+          {
+            "text": "Groups"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap Join on first suggested group",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Join "
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Share a group",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Share "
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Relevant / not relevant feedback",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "This group is relevant to me"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Borough / UK-Wide scope toggle",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "groups-borough"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "uk-wide"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Discover Meetups sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Meetups"
+          },
+          {
+            "text": "Meetups"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Search meetups",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "community",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Filter meetups sheet",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Filter meetups"
+          },
+          {
+            "contentDescription": "Filters active. Tap to change."
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Reset all filters"
+          },
+          {
+            "contentDescription": "Reset all filters"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Borough scope toggle (meetups)",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "meetups-borough"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap first meetup card",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Share meetup",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Share meetup"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Discover Events sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Events"
+          },
+          {
+            "text": "Events"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Search events",
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "music",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Bookmark first event",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Bookmark event"
+          },
+          {
+            "contentDescription": "Remove bookmark"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap first event card for detail",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "=== MARKET TAB ===",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -108,6 +1189,309 @@
         "delayTime": 5000
       },
       {
+        "comment": "Buy sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Buy"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Search market items",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Search market items"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "bike",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Clear search",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Clear search"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Filter items sheet",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Filter items"
+          },
+          {
+            "contentDescription": "Filters active. Tap to change."
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Select Free price filter",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Free"
+          },
+          {
+            "text": "Free"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Select Any age filter",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Any age"
+          },
+          {
+            "text": "Any age"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Select All categories filter",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "All"
+          },
+          {
+            "text": "All"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Clear all filters",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Clear all filters"
+          },
+          {
+            "text": "Clear filters"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap first listing for detail",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.view.ViewGroup",
+            "groupViewChildPosition": 0
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Sell sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Sell"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "Create listing FAB",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Create new listing"
+          },
+          {
+            "contentDescription": "Create a new listing"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "AI suggestion helpful",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Helpful suggestion"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Accept / decline offer",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Accept offer from "
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Cancel"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "comment": "Scroll sell list",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Saved sub-tab",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Saved"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "=== PROFILE TAB ===",
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -123,6 +1507,1606 @@
         "delayTime": 5000
       },
       {
+        "comment": "Edit profile",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Edit profile"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll profile down to see settings",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Notifications settings",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Notifications"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Privacy settings",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Privacy"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Help & Support",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Help & Support"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Terms of Service",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Terms of Service"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Privacy Policy",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Privacy Policy"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "My Groups",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "My Groups"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "My Meetups",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "My Meetups"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "My listings",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "My listings"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Saved items",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Saved"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Change password",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Change password"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Scroll down to see Log out / version",
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Tap Log out — then Cancel",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Log out"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Cancel"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "comment": "Upgrade / Manage Subscription",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Upgrade"
+          },
+          {
+            "text": "Manage Subscription"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "comment": "Billing toggle Monthly/Annual",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Annual"
+          },
+          {
+            "text": "Annually"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Monthly"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK A: Voice message flow ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          }
+        ],
+        "comment": "Back to Connect for voice test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open first group chat for mic test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Record voice message"
+          }
+        ],
+        "comment": "Tap mic to record voice note"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Voice message"
+          }
+        ],
+        "comment": "Alternate mic button label"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "mic"
+          }
+        ],
+        "comment": "Mic icon button"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Stop recording"
+          }
+        ],
+        "comment": "Stop voice recording"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from group chat"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK B: Emoji reactions ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          }
+        ],
+        "comment": "Connect tab for emoji test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open group chat for reaction test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_LONG_CLICKED",
+        "comment": "Long-press message bubble to open reaction menu",
+        "elementDescriptors": [
+          {
+            "className": "android.view.View"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "React with 👍"
+          }
+        ],
+        "comment": "Tap thumbs-up reaction"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "😂"
+          }
+        ],
+        "comment": "Laugh emoji reaction"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "❤️"
+          }
+        ],
+        "comment": "Heart emoji reaction"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from chat after emoji"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK C: Poll creation ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          }
+        ],
+        "comment": "Connect tab for poll test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open group chat for poll test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "add_circle_outline"
+          }
+        ],
+        "comment": "Open attach sheet"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Create poll"
+          }
+        ],
+        "comment": "Tap Create poll option"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Which neighbourhood is best?",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Enter poll question"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Hackney",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Poll option 1"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 1000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Cancel/back from poll creator"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from chat after poll"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK D: Create group flow ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          }
+        ],
+        "comment": "Connect tab for create group"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Create new group"
+          }
+        ],
+        "comment": "Tap create new group FAB"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Robo Test Group",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Enter group name in create flow"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Next"
+          }
+        ],
+        "comment": "Next step in create group"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Next"
+          }
+        ],
+        "comment": "Skip category step"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Create"
+          }
+        ],
+        "comment": "Submit create group"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back after create group attempt"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK E: Thread reply ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          }
+        ],
+        "comment": "Connect tab for thread test"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open group chat for thread"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_LONG_CLICKED",
+        "comment": "Long-press to open message action menu for thread",
+        "elementDescriptors": [
+          {
+            "className": "android.view.View"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Reply in thread"
+          }
+        ],
+        "comment": "Tap Reply in thread action"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Thread reply from Robo ✅",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Type thread reply"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "send"
+          }
+        ],
+        "comment": "Send thread reply"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from thread"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from group chat"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK F: AI Copilot / FAB ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_home"
+          }
+        ],
+        "comment": "Go Home for AI copilot"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Open AI Copilot"
+          }
+        ],
+        "comment": "Tap AI Copilot FAB"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Suggest community events near me",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "AI copilot prompt"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Send message"
+          }
+        ],
+        "comment": "Send AI prompt"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Close AI copilot"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK G: Marketplace item detail + offer ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_market"
+          }
+        ],
+        "comment": "Market tab for item detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Buy"
+          }
+        ],
+        "comment": "Market Buy tab"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ],
+        "comment": "Scroll Buy list"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open first marketplace item"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Make an offer"
+          }
+        ],
+        "comment": "Tap make offer"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "15",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Enter offer price"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Send offer"
+          }
+        ],
+        "comment": "Submit offer"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from item detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK H: Events going + bookmark ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_discover"
+          }
+        ],
+        "comment": "Discover tab for events"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Meetups"
+          }
+        ],
+        "comment": "Meetups sub-tab"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ],
+        "comment": "Scroll meetups list"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open first meetup detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Going"
+          }
+        ],
+        "comment": "Mark meetup as Going"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Not going"
+          }
+        ],
+        "comment": "Toggle back to not going"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Bookmark meetup"
+          }
+        ],
+        "comment": "Bookmark the meetup"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Share meetup"
+          }
+        ],
+        "comment": "Share meetup"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from meetup detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Events"
+          }
+        ],
+        "comment": "Events sub-tab"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ],
+        "comment": "Scroll events list"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.LinearLayout"
+          }
+        ],
+        "comment": "Open first event detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Bookmark event"
+          }
+        ],
+        "comment": "Bookmark event"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from event detail"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK I: Profile edit + change password ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_profile"
+          }
+        ],
+        "comment": "Profile tab"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Edit profile"
+          }
+        ],
+        "comment": "Open edit profile"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Devon",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Edit display name in profile"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Save"
+          }
+        ],
+        "comment": "Save profile edits"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from edit profile"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Change password"
+          }
+        ],
+        "comment": "Open change password screen"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Devon1100",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Enter current password"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_TEXT_CHANGED",
+        "replacementText": "Devon1101",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.EditText"
+          }
+        ],
+        "comment": "Enter new password"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Update password"
+          }
+        ],
+        "comment": "Submit password change"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from change password"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000,
+        "comment": "--- BLOCK J: Subscription paywall ---"
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_profile"
+          }
+        ],
+        "comment": "Profile tab for subscription"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 4000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "contentDescription": "Upgrade"
+          }
+        ],
+        "comment": "Open subscription/upgrade screen"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_SCROLLED",
+        "direction": "down",
+        "elementDescriptors": [
+          {
+            "className": "androidx.recyclerview.widget.RecyclerView"
+          }
+        ],
+        "comment": "Scroll subscription plans"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Annual"
+          }
+        ],
+        "comment": "Select annual billing"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Monthly"
+          }
+        ],
+        "comment": "Select monthly billing"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 2000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "text": "Neighbourhood"
+          }
+        ],
+        "comment": "Select Neighbourhood plan"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "className": "android.widget.ImageButton"
+          }
+        ],
+        "comment": "Back from subscription"
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "comment": "=== FINAL NAVIGATION CYCLE ===",
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_connect"
+          },
+          {
+            "contentDescription": "Connect"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_discover"
+          },
+          {
+            "contentDescription": "Discover"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_market"
+          },
+          {
+            "contentDescription": "Market"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
+        "eventType": "VIEW_CLICKED",
+        "elementDescriptors": [
+          {
+            "resourceId": "nav_profile"
+          },
+          {
+            "contentDescription": "Profile"
+          }
+        ]
+      },
+      {
+        "eventType": "WAIT",
+        "delayTime": 3000
+      },
+      {
         "eventType": "VIEW_CLICKED",
         "elementDescriptors": [
           {
@@ -135,7 +3119,7 @@
       },
       {
         "eventType": "WAIT",
-        "delayTime": 8000
+        "delayTime": 5000
       }
     ]
   }
