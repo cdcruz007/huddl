@@ -58,8 +58,28 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       }
 
       final data = groupDoc.data() ?? {};
-      final memberIds = List<String>.from(data['memberIds'] ?? []);
+      List<String> memberIds = List<String>.from(data['memberIds'] ?? []);
       final creatorId = widget.creatorId ?? data['creatorId'] as String?;
+
+      // Bug 3b fix: if memberIds is empty (common for onboarding-created groups
+      // that weren't written with a memberIds array), fall back to querying the
+      // users collection for anyone whose groupIds array contains this groupId.
+      if (memberIds.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('[GroupMembersScreen] memberIds empty for ${widget.groupId}, '
+              'falling back to groupIds query');
+        }
+        try {
+          final fallbackSnap = await db
+              .collection('users')
+              .where('groupIds', arrayContains: widget.groupId)
+              .get();
+          memberIds = fallbackSnap.docs.map((d) => d.id).toList();
+        } catch (_) {
+          // groupIds field may not exist — leave memberIds empty and show
+          // the empty state rather than crashing.
+        }
+      }
 
       if (memberIds.isEmpty) {
         setState(() { _isLoading = false; _members = []; });
@@ -84,6 +104,9 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
           final isCreator = uid == creatorId;
           final isCurrentUser = uid == currentUid;
 
+          // Bug 4 fix: read photoUrl from the user document
+          final photoUrl = (ud['photoUrl'] as String?)?.trim();
+
           loaded.add(_Member(
             uid: uid,
             name: isCurrentUser ? 'You' : name,
@@ -92,6 +115,7 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
             isOnline: isOnline,
             parentType: (ud['parentType'] as String?) ?? '',
             borough: (ud['borough'] as String?) ?? '',
+            photoUrl: (photoUrl != null && photoUrl.isNotEmpty) ? photoUrl : null,
           ));
         }
       }
@@ -311,6 +335,8 @@ class _MemberTile extends StatelessWidget {
           isOnline: (member.name == 'You')
               ? (member.isOnline && UserPrivacyPrefsService().showOnlineStatus)
               : member.isOnline,
+          // Bug 4 fix: pass photoUrl so real profile photos are shown
+          imageUrl: member.photoUrl,
         ),
         title: Row(
           children: [
@@ -366,6 +392,7 @@ class _Member {
   final bool isOnline;
   final String parentType;
   final String borough;
+  final String? photoUrl;  // Bug 4 fix: profile photo URL
 
   const _Member({
     required this.uid,
@@ -375,5 +402,6 @@ class _Member {
     required this.isOnline,
     required this.parentType,
     required this.borough,
+    this.photoUrl,
   });
 }

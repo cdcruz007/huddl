@@ -235,8 +235,20 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     if (!svc.hasCompleted) {
       // Auto-mark completed for returning Firebase users so the tutorial never
       // blocks navigation on reinstalls, cache wipes, or automated tests.
-      final isReturningUser = FirebaseAuth.instance.currentUser != null;
-      if (isReturningUser) {
+      // On Android, Firebase Auth session restoration can be slightly delayed
+      // on cold-start — wait up to 3 seconds before concluding the user is new.
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        try {
+          currentUser = await FirebaseAuth.instance
+              .authStateChanges()
+              .first
+              .timeout(const Duration(seconds: 3));
+        } catch (_) {
+          currentUser = null;
+        }
+      }
+      if (currentUser != null) {
         await svc.markCompleted();
         return;
       }

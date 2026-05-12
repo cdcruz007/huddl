@@ -195,7 +195,7 @@ class FirestoreService {
       name: d['name'] as String? ?? '',
       description: d['description'] as String? ?? '',
       imageUrl: d['imageUrl'] as String? ?? '',
-      memberCount: d['memberCount'] as int? ?? 0,
+      memberCount: memberIds.isNotEmpty ? memberIds.length : (d['memberCount'] as int? ?? 0),
       category: d['category'] as String? ?? 'General',
       isJoined: isJoined,
       lastMessage: d['lastMessage'] as String?,
@@ -212,6 +212,19 @@ class FirestoreService {
       creatorBorough: d['creatorBorough'] as String?,
       invitedMemberIds: List<String>.from(d['invitedMemberIds'] ?? []),
     );
+  }
+
+  /// Resolves a display name from a Firestore user profile map.
+  /// Priority: firstName+lastName → name field → empty string.
+  /// Callers use `.isNotEmpty ? name : 'Anonymous'` where needed.
+  String _resolveDisplayName(Map<String, dynamic>? profile) {
+    if (profile == null) return '';
+    final first = (profile['firstName'] as String? ?? '').trim();
+    final last  = (profile['lastName']  as String? ?? '').trim();
+    final full  = '$first $last'.trim();
+    if (full.isNotEmpty) return full;
+    // Fallback: single 'name' field (used on some profile paths)
+    return (profile['name'] as String? ?? '').trim();
   }
 
   GroupPrivacy _parseGroupPrivacy(String? val) {
@@ -273,8 +286,7 @@ class FirestoreService {
     final uid = _uid;
     if (uid == null) return;
     final profile = await getCurrentUserProfile();
-    final senderName =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
+    final senderName = _resolveDisplayName(profile);
 
     final msgData = {
       'groupId': groupId,
@@ -431,8 +443,7 @@ class FirestoreService {
     final uid = _uid;
     if (uid == null) return;
     final profile = await getCurrentUserProfile();
-    final senderName =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
+    final senderName = _resolveDisplayName(profile);
 
     final msgData = {
       'conversationId': conversationId,
@@ -477,8 +488,7 @@ class FirestoreService {
     final uid = _uid;
     if (uid == null) throw Exception('Not authenticated');
     final profile = await getCurrentUserProfile();
-    final myName =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
+    final myName = _resolveDisplayName(profile);
 
     // Check if conversation already exists
     final existing = await _db
@@ -562,8 +572,7 @@ class FirestoreService {
     final uid = _uid;
     if (uid == null) return;
     final profile = await getCurrentUserProfile();
-    final name =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
+    final name = _resolveDisplayName(profile);
 
     if (going) {
       await _db.collection('meetups').doc(meetupId).update({
@@ -698,8 +707,7 @@ class FirestoreService {
     if (uid == null) throw Exception('Not authenticated');
     final profile = await getCurrentUserProfile();
     listingData['sellerId'] = uid;
-    listingData['sellerName'] =
-        '${profile?['firstName'] ?? ''} ${profile?['lastName'] ?? ''}'.trim();
+    listingData['sellerName'] = _resolveDisplayName(profile);
     listingData['sellerBorough'] = profile?['borough'] ?? '';
     listingData['status'] = 'active';
     listingData['viewCount'] = 0;

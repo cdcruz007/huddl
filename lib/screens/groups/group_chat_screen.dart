@@ -20,6 +20,7 @@ import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
 import 'create_poll_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
@@ -281,6 +282,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         DateTime ts;
         if (tsRaw is String) {
           ts = DateTime.tryParse(tsRaw) ?? DateTime.now();
+        } else if (tsRaw is Timestamp) {
+          ts = tsRaw.toDate();
         } else {
           ts = DateTime.now();
         }
@@ -383,9 +386,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         final senderId = m['senderId'] as String? ?? '';
         final isMe = senderId == currentUid;
         final tsRaw = m['timestamp'];
-        final ts = tsRaw is String
-            ? (DateTime.tryParse(tsRaw) ?? DateTime.now())
-            : DateTime.now();
+        final DateTime ts;
+        if (tsRaw is String) {
+          ts = DateTime.tryParse(tsRaw) ?? DateTime.now();
+        } else if (tsRaw is Timestamp) {
+          ts = tsRaw.toDate();
+        } else {
+          ts = DateTime.now();
+        }
         if (!_messages.any((e) => e.id == id)) {
           _messages.add(ChatMessage(
             id: id,
