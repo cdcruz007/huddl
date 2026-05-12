@@ -283,7 +283,13 @@ class _UnderlineInput extends StatelessWidget {
                 fontSize: 16,
                 color: HuddlColors.disabledText,
               ),
+              // filled: false is required to prevent the theme's filled:true
+              // from painting a second background layer inside the TextField on
+              // Android Material 3, which collapses the field to zero height.
+              filled: false,
               border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 16,
