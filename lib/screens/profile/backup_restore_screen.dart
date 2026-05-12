@@ -573,56 +573,69 @@ class _ActionCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
+          // ── Icon + text row ─────────────────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary)),
+                    const SizedBox(height: 3),
+                    Text(subtitle,
+                        style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: context.hc.textSecondary,
+                            height: 1.4)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: context.hc.textPrimary)),
-                const SizedBox(height: 3),
-                Text(subtitle,
-                    style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: context.hc.textSecondary,
-                        height: 1.4)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
+          const SizedBox(height: 14),
+          // ── Full-width button below so text never gets squeezed ────
           isLoading
-              ? SizedBox(
-                  width: 24,
-                  height: 24,
-                  child:
-                      CircularProgressIndicator(color: btnColor, strokeWidth: 2))
-              : ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: btnColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    textStyle:
-                        GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+              ? Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        color: btnColor, strokeWidth: 2),
                   ),
-                  onPressed: onTap,
-                  child: Text(buttonLabel),
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: btnColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      textStyle: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: onTap,
+                    child: Text(buttonLabel),
+                  ),
                 ),
         ],
       ),

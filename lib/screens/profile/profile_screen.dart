@@ -2373,7 +2373,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               // Biometric toggle
-              SwitchListTile.adaptive(
+              SwitchListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                 secondary: Container(
                   width: 36,
@@ -2409,7 +2409,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 value: _biometricEnabled,
                 activeThumbColor: HuddlColors.primary,
-                activeTrackColor: HuddlColors.primary.withValues(alpha: 0.5),
+                activeTrackColor: HuddlColors.primary.withValues(alpha: 0.4),
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: Colors.grey.shade300,
                 onChanged: (v) async {
                   if (v) {
                     // User wants to enable — run a biometric test first
@@ -2575,7 +2577,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             // Consent toggle
-            SwitchListTile.adaptive(
+            SwitchListTile(
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
               secondary: Container(
                 width: 36,
@@ -2601,13 +2603,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               subtitle: Text(
                 _voiceConsent
-                    ? 'Microphone consent granted \u2014 you can record and send audio'
+                    ? 'Microphone consent granted — you can record and send audio'
                     : 'Enable to record and send audio messages in chats',
                 style: GoogleFonts.poppins(fontSize: 12, color: ctx.hc.textTertiary),
               ),
               value: _voiceConsent,
               activeThumbColor: HuddlColors.primary,
-              activeTrackColor: HuddlColors.primary.withValues(alpha: 0.5),
+              activeTrackColor: HuddlColors.primary.withValues(alpha: 0.4),
+              inactiveThumbColor: Colors.white,
+              inactiveTrackColor: Colors.grey.shade300,
               onChanged: (v) async {
                 if (v) {
                   // Show explicit GDPR consent dialog before enabling
