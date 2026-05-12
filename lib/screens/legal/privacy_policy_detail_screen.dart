@@ -795,6 +795,68 @@ k) Language:
 • This Privacy Policy is drafted in English
 • Translations provided for convenience only; English version prevails in case of conflict''',
             ),
+            _buildSection(
+              '16. Voice Messages & Microphone Access',
+              '''a) Overview:
+Huddl provides a voice message feature that allows you to record and send short audio messages within group chats and direct messages. This section explains specifically how we handle microphone access and voice message data.
+
+b) Microphone Permission:
+• We request access to your device microphone solely to enable voice message recording
+• The android.permission.RECORD_AUDIO (Android) and NSMicrophoneUsageDescription (iOS) permissions are used exclusively for this feature
+• Microphone access is only active during the brief period you are actively recording a voice message
+• We do NOT listen to, record, or access your microphone at any other time
+• You may deny or revoke microphone permission at any time in your device settings — this will disable voice message recording but will not affect any other feature
+
+c) Data Collected:
+• Audio recordings: Temporary audio files (M4A/AAC format on mobile, WebM on web) created during recording
+• Recording metadata: Duration (in seconds) and timestamp of recording
+• Conversation context: The group or direct message conversation the voice message was sent in
+• Sender identity: Your user ID is associated with each voice message you send
+
+d) How Voice Message Data Is Processed:
+• Temporary local file: A short-lived audio file is created in your device's temporary directory during recording
+• Upload to Firebase Storage: Upon sending, the audio file is uploaded to Firebase Cloud Storage under a path scoped to the conversation (e.g. voice_notes/{conversationId}/{userId}_{timestamp}.m4a)
+• Transmission: Audio data is transmitted over an encrypted HTTPS connection
+• Local file deletion: The temporary file on your device is deleted immediately after successful upload
+• Playback: Stored voice messages are retrieved from Firebase Storage via a secure download URL for playback within the app
+
+e) Legal Basis for Processing (UK GDPR Article 6):
+• Consent (Article 6(1)(a)): Voice message recording and sending is based on your freely given, specific, informed, and unambiguous consent — granted when you explicitly enable voice messages in your Profile settings. You may withdraw consent at any time.
+• Contract performance (Article 6(1)(b)): Transmission and storage of sent voice messages is necessary to deliver the messaging service you have contracted for.
+
+f) Your Consent Controls:
+• You must actively enable voice messages in Profile → Privacy & Security → Voice Messages before you can record or send audio
+• You may withdraw consent at any time by toggling this setting off — this will prevent future recordings; it will not automatically delete previously sent voice messages already received by other participants
+• To delete voice messages you have already sent, contact us at privacy@huddl.app
+
+g) Data Retention:
+• Voice messages are retained for as long as the conversation they belong to exists, or until you delete your account
+• When you delete your Huddl account (Profile → Privacy & Security → Delete my account & data), all voice messages stored in Firebase Storage under your user ID are permanently deleted
+• Temporary recording files on your device are deleted immediately after upload (or immediately if you cancel the recording)
+
+h) Data Sharing:
+• Voice messages are accessible to all participants in the group or direct message conversation they were sent in
+• Firebase Storage (Google LLC) acts as our data processor for audio file storage. Firebase complies with GDPR through Standard Contractual Clauses. See Google's privacy policy at https://policies.google.com/privacy
+• Voice message audio is NOT shared with any other third parties, used for advertising, or used to train AI models
+
+i) Children and Sensitive Data:
+• Huddl is restricted to users aged 18 and over. Voice messages are never collected from minors.
+• Audio recordings are not considered special category data under UK GDPR Article 9; however, we apply equivalent care to their handling
+
+j) Your Rights Regarding Voice Messages:
+• Right of access (Article 15): You may request a list of voice messages associated with your account
+• Right to erasure (Article 17): Contact privacy@huddl.app to request deletion of specific voice messages
+• Right to withdraw consent (Article 7(3)): Toggle off voice messages in Profile → Privacy & Security at any time; withdrawal does not affect the lawfulness of processing carried out before withdrawal
+• Right to object (Article 21): You may object to voice message processing by disabling the feature and contacting dpo@huddl.app
+
+k) Security Measures:
+• All audio data in transit is encrypted using TLS 1.2+
+• Firebase Storage enforces access control rules limiting read/write access to authenticated participants of the relevant conversation
+• Temporary local audio files are stored in the operating system's sandboxed temporary directory and are not accessible to other apps
+
+l) Contact:
+For any questions about voice message data processing, contact our Data Protection Officer at dpo@huddl.app.''',
+            ),
             const SizedBox(height: 8),
             _buildDataProtectionSummary(),
             const SizedBox(height: 24),
@@ -821,7 +883,7 @@ k) Language:
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last Updated: April 2026',
+                  'Last Updated: May 2026',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -829,7 +891,7 @@ k) Language:
                   ),
                 ),
                 Text(
-                  'Version 2.0 - Comprehensive GDPR & CCPA Compliant',
+                  'Version 2.1 - Voice Message & Microphone Data Added',
                   style: GoogleFonts.poppins(
                       fontSize: 11, color: HuddlColors.textSecondary),
                 ),

@@ -24,6 +24,7 @@ class UserPrivacyPrefsService {
   static const String keyShowProfile       = 'pref_show_profile';
   static const String keyShowGroups        = 'pref_show_groups';
   static const String keyReadReceipts      = 'pref_read_receipts';
+  static const String keyVoiceConsent      = 'pref_voice_consent';
 
   // ── Notification prefs (default: all enabled) ─────────────────────────
   bool pushEnabled      = true;
@@ -39,6 +40,9 @@ class UserPrivacyPrefsService {
   bool showGroups         = true;
   bool readReceipts       = true;
 
+  // ── Voice message consent (default: false — must be explicitly granted) ──
+  bool voiceMessageConsent = false;
+
   // ── Load from storage ─────────────────────────────────────────────────
   Future<void> load() async {
     final nPush   = await BrowserStorage.getString(keyPushEnabled);
@@ -51,6 +55,7 @@ class UserPrivacyPrefsService {
     final pProf   = await BrowserStorage.getString(keyShowProfile);
     final pGrps   = await BrowserStorage.getString(keyShowGroups);
     final pRead   = await BrowserStorage.getString(keyReadReceipts);
+    final pVoice  = await BrowserStorage.getString(keyVoiceConsent);
 
     if (nPush   != null) pushEnabled      = nPush   == 'true';
     if (nGroup  != null) groupMessages    = nGroup  == 'true';
@@ -62,6 +67,7 @@ class UserPrivacyPrefsService {
     if (pProf   != null) profileVisibility = pProf  == 'true';
     if (pGrps   != null) showGroups       = pGrps   == 'true';
     if (pRead   != null) readReceipts     = pRead   == 'true';
+    if (pVoice  != null) voiceMessageConsent = pVoice == 'true';
   }
 
   // ── Write a single setting ─────────────────────────────────────────────
@@ -79,6 +85,7 @@ class UserPrivacyPrefsService {
       case keyShowProfile:      profileVisibility = value; break;
       case keyShowGroups:       showGroups       = value; break;
       case keyReadReceipts:     readReceipts     = value; break;
+      case keyVoiceConsent:     voiceMessageConsent = value; break;
     }
   }
 
@@ -94,5 +101,6 @@ class UserPrivacyPrefsService {
     profileVisibility = true;
     showGroups       = true;
     readReceipts     = true;
+    voiceMessageConsent = false;
   }
 }

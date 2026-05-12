@@ -93,6 +93,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _showGroups = true;
   bool _readReceipts = true;
 
+  // Voice message consent (GDPR — explicit opt-in, default: false)
+  bool _voiceConsent = false;
+
   // Biometric login
   final _biometricService = BiometricAuthService();
   bool _biometricEnabled   = false;
@@ -143,6 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _showProfile      = svc.profileVisibility;
         _showGroups       = svc.showGroups;
         _readReceipts     = svc.readReceipts;
+        _voiceConsent     = svc.voiceMessageConsent;
       });
     }
     // Load biometric state (non-blocking)
@@ -2498,7 +2502,279 @@ class _ProfileScreenState extends State<ProfileScreen> {
               setState(() {});
               _saveSetting(UserPrivacyPrefsService.keyReadReceipts, v);
             }),
-            const SizedBox(height: 12),
+
+            // ── GDPR Voice Message Consent ────────────────────────────────
+            const Divider(indent: 16, endIndent: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.mic_outlined, size: 16, color: HuddlColors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'VOICE MESSAGES',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: HuddlColors.primary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Consent notice box
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: HuddlColors.teal.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.25)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.info_outline, size: 16, color: HuddlColors.teal),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Voice messages let you record and send short audio clips in '
+                            'group chats and DMs. Your microphone is accessed only '
+                            'while you are actively recording.',
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: HuddlColors.teal, height: 1.45),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Legal basis: your explicit consent (UK GDPR Art. 6(1)(a)). '
+                      'You may withdraw at any time by toggling this off. '
+                      'See Privacy Policy \u00a7 16 for full details.',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.teal,
+                          fontStyle: FontStyle.italic,
+                          height: 1.4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Consent toggle
+            SwitchListTile.adaptive(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
+              secondary: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: (_voiceConsent ? HuddlColors.primary : HuddlColors.textHint)
+                      .withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _voiceConsent ? Icons.mic : Icons.mic_off_outlined,
+                  size: 20,
+                  color: _voiceConsent ? HuddlColors.primary : HuddlColors.textHint,
+                ),
+              ),
+              title: Text(
+                _voiceConsent ? 'Voice messages enabled' : 'Voice messages disabled',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: ctx.hc.textPrimary,
+                ),
+              ),
+              subtitle: Text(
+                _voiceConsent
+                    ? 'Microphone consent granted \u2014 you can record and send audio'
+                    : 'Enable to record and send audio messages in chats',
+                style: GoogleFonts.poppins(fontSize: 12, color: ctx.hc.textTertiary),
+              ),
+              value: _voiceConsent,
+              activeThumbColor: HuddlColors.primary,
+              activeTrackColor: HuddlColors.primary.withValues(alpha: 0.5),
+              onChanged: (v) async {
+                if (v) {
+                  // Show explicit GDPR consent dialog before enabling
+                  final agreed = await showDialog<bool>(
+                    context: ctx,
+                    barrierDismissible: false,
+                    builder: (dCtx) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      title: Row(
+                        children: [
+                          const Icon(Icons.mic, color: HuddlColors.primary, size: 24),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text('Enable Voice Messages?',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: HuddlColors.textDark)),
+                          ),
+                        ],
+                      ),
+                      content: SingleChildScrollView(
+                        child: Text(
+                          'By enabling voice messages, you consent to:\n\n'
+                          '\u2022 Huddl accessing your device microphone while you record\n'
+                          '\u2022 Your audio being temporarily stored on device, then uploaded '
+                          'to secure encrypted cloud storage\n'
+                          '\u2022 Voice messages being transmitted to recipients in your conversations\n\n'
+                          'Legal basis: UK GDPR Article 6(1)(a) \u2014 Consent.\n\n'
+                          'You may withdraw this consent at any time by toggling off '
+                          'Voice Messages here. Withdrawal does not affect previously '
+                          'sent messages already received by others.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: HuddlColors.textSecondary,
+                              height: 1.5),
+                        ),
+                      ),
+                      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      actions: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(dCtx, false),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: HuddlColors.textSecondary,
+                            side: const BorderSide(color: HuddlColors.divider),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                          ),
+                          child: Text('Decline',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, fontWeight: FontWeight.w500)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HuddlColors.primary,
+                            foregroundColor: HuddlColors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                            elevation: 0,
+                          ),
+                          child: Text('I Consent',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (agreed != true) return;
+                  setLocal(() => _voiceConsent = true);
+                  setState(() => _voiceConsent = true);
+                  await _saveSetting(UserPrivacyPrefsService.keyVoiceConsent, true);
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                      content: Text('Voice messages enabled.',
+                          style: GoogleFonts.poppins(fontSize: 13)),
+                      backgroundColor: HuddlColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ));
+                  }
+                } else {
+                  // Withdrawal of consent \u2014 confirm first
+                  final confirmed = await showDialog<bool>(
+                    context: ctx,
+                    builder: (dCtx) => AlertDialog(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      title: Text('Disable Voice Messages?',
+                          style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: HuddlColors.textDark)),
+                      content: Text(
+                        'This withdraws your consent and prevents future recordings.\n\n'
+                        'Previously sent voice messages remain visible to recipients. '
+                        'To request deletion of past voice messages, contact '
+                        'privacy@huddl.app.',
+                        style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: HuddlColors.textSecondary,
+                            height: 1.5),
+                      ),
+                      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dCtx, false),
+                          child: Text('Cancel',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: HuddlColors.textSecondary)),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.pop(dCtx, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HuddlColors.error,
+                            foregroundColor: HuddlColors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                            elevation: 0,
+                          ),
+                          child: Text('Withdraw Consent',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, fontWeight: FontWeight.w600)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed != true) return;
+                  setLocal(() => _voiceConsent = false);
+                  setState(() => _voiceConsent = false);
+                  await _saveSetting(UserPrivacyPrefsService.keyVoiceConsent, false);
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                      content: Text('Voice messages disabled. Consent withdrawn.',
+                          style: GoogleFonts.poppins(fontSize: 13)),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ));
+                  }
+                }
+              },
+            ),
+            // Privacy Policy link
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 2, 20, 10),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pop(c);
+                  Navigator.pushNamed(context, '/privacy');
+                },
+                child: Text(
+                  'Read full voice message data policy (Privacy Policy \u00a7 16) \u2192',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: HuddlColors.primary,
+                      fontWeight: FontWeight.w500,
+                      decoration: TextDecoration.underline,
+                      decorationColor: HuddlColors.primary),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 4),
             ListTile(
               leading: const Icon(Icons.block, color: HuddlColors.error, size: 22),
               title: Text('Blocked users',
@@ -2716,6 +2992,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'Profile visibility': _showProfile,
         'Show groups': _showGroups,
         'Read receipts': _readReceipts,
+      },
+      'Voice Message Consent (GDPR Art. 6(1)(a))': {
+        'Consent granted': _voiceConsent,
+        'Feature': 'Voice message recording and sending',
+        'Legal basis': 'Explicit consent — UK GDPR Article 6(1)(a)',
+        'Withdraw': 'Profile → Privacy & Security → Voice Messages (toggle off)',
+        'Data contact': 'privacy@huddl.app',
       },
       'Blocked Users': _blockService.blockedUserIds.isEmpty
           ? 'None'

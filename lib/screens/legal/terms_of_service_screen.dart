@@ -51,6 +51,7 @@ By using this Service, you acknowledge that you have read, understood, and agree
 • Social networking for parents and families
 • Local community groups and connections (borough-specific)
 • Direct messaging and group communications
+• Voice messages (short audio recordings sent within group chats and direct messages — requires microphone permission and explicit user consent; see Section 18)
 • Event organization and meetup coordination
 • Marketplace for buying and selling children's items
 • AI-powered recommendations and matching
@@ -100,6 +101,10 @@ You must NOT:
 • Share, collect, or solicit personal information of minors (including full names, addresses, schools, or identifying photos)
 • Post contact information of minors publicly
 • Violate any applicable privacy laws or regulations
+• Record voice messages without having provided explicit consent via the in-app consent toggle (Profile → Privacy & Security → Voice Messages)
+• Send voice messages containing unlawful, abusive, harassing, threatening, or otherwise prohibited content
+• Attempt to intercept, copy, or re-distribute voice messages sent by other users outside the Huddl platform
+• Use the voice message feature to circumvent content moderation (e.g. conveying through audio what would be prohibited in text)
 • Attempt to gain unauthorized access to the Service or other users' accounts
 • Use automated systems, scripts, bots, or web scrapers to access the Service
 • Reverse engineer, decompile, or attempt to extract source code
@@ -616,6 +621,53 @@ BY USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ THESE TERMS IN THEIR EN
 
 If you do not agree to these Terms, do not use the Service.''',
             ),
+            _buildSection(
+              '18. Voice Messages — Specific Terms',
+              '''a) Opt-In Requirement:
+The voice message feature is disabled by default. You must explicitly enable it in Profile → Privacy & Security → Voice Messages before you can record or send audio messages. Enabling the feature constitutes your informed consent to the microphone access and data processing described in Section 16 of our Privacy Policy.
+
+b) How Voice Messages Work:
+• You may record short audio messages and send them within group chats and direct messages on the Huddl platform
+• Recording uses your device microphone (Android permission: RECORD_AUDIO; iOS permission: NSMicrophoneUsageDescription)
+• Audio is encoded in M4A/AAC format (mobile) or WebM (web) at 64 kbps / 16 kHz mono
+• Upon sending, the audio file is uploaded to Firebase Cloud Storage and the temporary local file is deleted
+• Sent voice messages are visible to all participants in the conversation they were sent in
+
+c) Your Responsibilities When Using Voice Messages:
+• You are solely responsible for all content contained in voice messages you send
+• Voice messages are subject to the same content rules as text messages (see Section 4)
+• You must not record or send voice messages that contain:
+  — Abusive, threatening, harassing, or discriminatory content
+  — Content that infringes third-party intellectual property or privacy rights
+  — Sexually explicit, violent, or otherwise prohibited material
+  — Personal or sensitive data of third parties shared without their consent
+• You grant Cruzen Ltd a licence to store and transmit your voice messages solely for the purpose of delivering them to intended recipients, consistent with our Privacy Policy
+
+d) Withdrawal of Consent:
+• You may withdraw your consent to voice message processing at any time by disabling the feature in Profile → Privacy & Security → Voice Messages
+• Withdrawal of consent prevents future recordings but does not automatically delete voice messages already received by other participants, as those form part of a shared conversation
+• To request deletion of previously sent voice messages, contact privacy@huddl.app
+• Withdrawal of consent is without prejudice to the lawfulness of processing carried out before withdrawal (UK GDPR Article 7(3))
+
+e) Data Retention and Deletion:
+• Voice messages are retained for the duration of the conversation or until your account is deleted
+• On account deletion, all voice messages stored under your user ID are permanently erased from Firebase Storage
+• See Privacy Policy Section 16 for full details on voice message data handling
+
+f) No Recording Guarantee:
+• Cruzen Ltd does not guarantee the delivery, quality, or availability of voice messages
+• Voice messages may be unavailable due to network conditions, device limitations, or Service maintenance
+• We are not liable for voice messages that fail to deliver, are corrupted, or are lost
+
+g) Platform-Specific Notes:
+• On web browsers, voice messages use the WebM format and are subject to browser codec availability
+• On iOS and Android, voice messages use the M4A format
+• Voice message recording is not available on platforms where microphone access is restricted by the operating system or device policy
+
+h) Modification or Removal:
+• We reserve the right to modify, restrict, or remove the voice message feature at any time, with reasonable notice where practicable
+• Material changes to voice message data processing will be notified in accordance with our Privacy Policy update procedure''',
+            ),
             const SizedBox(height: 8),
             _buildAcceptanceNotice(),
             const SizedBox(height: 24),
@@ -642,7 +694,7 @@ If you do not agree to these Terms, do not use the Service.''',
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last Updated: April 2026',
+                  'Last Updated: May 2026',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -650,7 +702,7 @@ If you do not agree to these Terms, do not use the Service.''',
                   ),
                 ),
                 Text(
-                  'Version 2.0 - Comprehensive Legal Protection',
+                  'Version 2.1 - Voice Message Terms Added',
                   style: GoogleFonts.poppins(
                       fontSize: 11, color: HuddlColors.textSecondary),
                 ),
