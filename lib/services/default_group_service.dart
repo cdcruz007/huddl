@@ -446,6 +446,7 @@ class DefaultGroupService {
   ///  • **Aspiring parents** → one generic group (no year)
   Future<List<Group>> assignUserToDefaultGroups(String userId) async {
     await initialize();
+    userId = _resolveUserId(userId);
     // CRITICAL: ensure onboarding data is loaded from storage before reading
     await _onboardingService.initialize();
     final List<Group> assignedGroups = [];
@@ -604,11 +605,48 @@ class DefaultGroupService {
         .toList();
   }
 
+  /// Resolve the canonical user-ID key used in [_userGroupMemberships].
+  ///
+  /// Legacy call sites pass the placeholder string `'current_user'` that was
+  /// used before Firebase Auth UIDs were available everywhere.  We normalise
+  /// that here — once — so every public method automatically gets the real UID
+  /// without requiring changes at each call site.
+  ///
+  /// Resolution order:
+  ///   1. If [userId] is already a non-placeholder string, use it as-is.
+  ///   2. If the placeholder (`'current_user'` or `'user_…'`) is detected,
+  ///      substitute the live Firebase Auth UID when signed in.
+  ///   3. Keep the placeholder as a last resort (unauthenticated state) so
+  ///      behaviour is no worse than before.
+  ///
+  /// Additionally migrates any data previously stored under the placeholder
+  /// key so existing memberships survive the first login after this change.
+  String _resolveUserId(String userId) {
+    const placeholder = 'current_user';
+    final isPlaceholder = userId == placeholder || userId.startsWith('user_');
+    if (!isPlaceholder) return userId;
+
+    final realUid = FirebaseAuth.instance.currentUser?.uid;
+    if (realUid == null) return userId; // not yet signed in — keep placeholder
+
+    // ── One-time migration: move data from placeholder key → real UID key ──
+    if (_userGroupMemberships.containsKey(userId) &&
+        !_userGroupMemberships.containsKey(realUid)) {
+      _userGroupMemberships[realUid] = _userGroupMemberships.remove(userId)!;
+      _log('🔑 Migrated memberships from "$userId" → "$realUid"');
+      // Fire-and-forget persist so it survives next cold start
+      _saveToStorage();
+    }
+
+    return realUid;
+  }
+
   /// Get user's assigned groups
   Future<List<Group>> getUserGroups(String userId) async {
     // Ensure initialized
     await initialize();
-    final groupIds = _userGroupMemberships[userId] ?? [];
+    final resolvedId = _resolveUserId(userId);
+    final groupIds = _userGroupMemberships[resolvedId] ?? [];
     return groupIds
         .map((id) => _defaultGroups[id])
         .whereType<Group>()
@@ -620,6 +658,7 @@ class DefaultGroupService {
   /// HYPERLOCAL RULE: A user can only join groups that belong to their
   /// current borough. Cross-borough joins are silently blocked and logged.
   void joinGroup(String userId, String groupId) {
+    userId = _resolveUserId(userId);
     if (!_defaultGroups.containsKey(groupId)) {
       _log('Group not found: $groupId');
       return;
@@ -746,6 +785,7 @@ class DefaultGroupService {
   /// Returns true if the user was removed from the group.
   Future<bool> leaveGroup(String userId, String groupId) async {
     await initialize();
+    userId = _resolveUserId(userId);
     final userGroups = _userGroupMemberships[userId] ?? [];
     if (!userGroups.contains(groupId)) return false;
 
@@ -771,6 +811,7 @@ class DefaultGroupService {
   Future<List<Group>> getUserGroupsForBorough(
       String userId, String borough) async {
     await initialize();
+    userId = _resolveUserId(userId);
     final groupIds = _userGroupMemberships[userId] ?? [];
     final boroughLower = borough.toLowerCase();
     return groupIds
@@ -860,6 +901,7 @@ class DefaultGroupService {
     String? postcode,
   }) async {
     await initialize();
+    userId = _resolveUserId(userId);
     // Remove existing group memberships for this user
     final existing = _userGroupMemberships[userId] ?? [];
     for (final gId in existing) {
