@@ -824,7 +824,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.description_outlined,
                       title: 'Terms of Service',
                       onTap: () => launchUrl(
-                        Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/terms-of-service.html'),
+                        Uri.parse('https://www.huddlapp.co.uk/terms-of-service.html'),
                         mode: LaunchMode.externalApplication,
                       ),
                     ),
@@ -832,7 +832,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.privacy_tip_outlined,
                       title: 'Privacy Policy',
                       onTap: () => launchUrl(
-                        Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/privacy-policy.html'),
+                        Uri.parse('https://www.huddlapp.co.uk/privacy-policy.html'),
                         mode: LaunchMode.externalApplication,
                       ),
                     ),
@@ -2768,7 +2768,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.pop(c);
                   launchUrl(
-                    Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/privacy-policy.html#s16'),
+                    Uri.parse('https://www.huddlapp.co.uk/privacy-policy.html#s16'),
                     mode: LaunchMode.externalApplication,
                   );
                 },

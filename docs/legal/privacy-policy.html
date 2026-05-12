@@ -3,286 +3,408 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Privacy Policy — Huddl</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <title>Privacy Policy — huddl</title>
+  <meta name="description" content="huddl Privacy Policy. Learn how Cruzen Ltd collects, uses, and protects your personal data. UK GDPR compliant." />
+  <link rel="canonical" href="https://www.huddlapp.co.uk/privacy-policy.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary:     #E8744A;
-      --primary-dk:  #C45A2E;
-      --teal:        #2EB8A0;
-      --blue:        #3B82F6;
-      --text-dark:   #1A1A2E;
-      --text-sec:    #6B7280;
-      --divider:     #E5E7EB;
-      --bg:          #F9FAFB;
-      --surface:     #FFFFFF;
-      --peach-light: #FFF0EB;
-      --teal-bg:     rgba(46,184,160,0.08);
-      --blue-bg:     #EFF6FF;
+      --huddl-blue:        hsl(215,86%,57%);
+      --huddl-blue-soft:   hsl(217,100%,97%);
+      --huddl-orange:      hsl(21,100%,68%);
+      --huddl-orange-soft: hsl(22,100%,93%);
+      --huddl-yellow-soft: hsl(45,100%,93%);
+      --huddl-sage:        hsl(152,45%,55%);
+      --huddl-sage-soft:   hsl(152,50%,93%);
+      --huddl-cream:       hsl(0,0%,98%);
+      --huddl-text:        hsl(222,9%,28%);
+      --huddl-text-light:  hsl(0,0%,42%);
+      --border:            hsl(220,13%,91%);
+      --bg:                #ffffff;
+      --radius:            1.25rem;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: Inter, system-ui, -apple-system, sans-serif;
       background: var(--bg);
-      color: var(--text-dark);
-      line-height: 1.7;
+      color: var(--huddl-text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
 
-    /* ── Top bar ── */
-    .topbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--divider);
-      padding: 14px 24px;
+    /* ── NAV (matches live site exactly) ── */
+    nav.site-nav {
+      width: 100%;
+      padding: 20px 40px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 24px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 50;
+      border-bottom: 1px solid hsl(220,13%,91%,0.4);
     }
-    .topbar-logo {
-      width: 36px; height: 36px;
-      background: var(--primary);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 18px; letter-spacing: -1px;
+    .nav-logo img { height: 36px; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 36px;
     }
-    .topbar-title { font-weight: 700; font-size: 17px; color: var(--text-dark); }
-    .topbar-sub   { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
-    .topbar-links { margin-left: auto; display: flex; gap: 16px; }
-    .topbar-links a {
-      font-size: 13px; font-weight: 500;
-      color: var(--primary); text-decoration: none;
-      padding: 6px 14px; border-radius: 20px;
-      border: 1.5px solid var(--primary);
-      transition: background .15s, color .15s;
+    .nav-links a {
+      color: var(--huddl-text);
+      font-weight: 500;
+      font-size: 15px;
+      transition: color .15s;
     }
-    .topbar-links a:hover { background: var(--primary); color: #fff; }
-    .topbar-links a.active { background: var(--primary); color: #fff; }
+    .nav-links a:hover { color: var(--huddl-blue); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--huddl-text);
+      color: #fff !important;
+      border-radius: 9999px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .nav-cta:hover { background: var(--huddl-blue); color: #fff !important; }
+    @media (max-width: 768px) {
+      nav.site-nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+    }
 
-    /* ── Layout ── */
-    .layout { display: flex; max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; gap: 32px; }
+    /* ── PAGE HEADER ── */
+    .page-header {
+      padding: 64px 40px 48px;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .page-eyebrow {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--huddl-blue);
+    }
+    .page-title {
+      margin-top: 12px;
+      font-size: clamp(36px, 5vw, 48px);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--huddl-text);
+      letter-spacing: -.01em;
+    }
+    .page-meta {
+      margin-top: 8px;
+      font-size: 14px;
+      color: var(--huddl-text-light);
+    }
+    .page-intro {
+      margin-top: 24px;
+      font-size: 18px;
+      color: var(--huddl-text-light);
+      line-height: 1.7;
+      max-width: 680px;
+    }
 
-    /* ── Sidebar TOC ── */
+    /* ── LAYOUT ── */
+    .layout {
+      display: flex;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 40px 80px;
+      gap: 48px;
+      align-items: flex-start;
+    }
+
+    /* ── SIDEBAR TOC ── */
     .sidebar {
-      width: 220px; flex-shrink: 0;
-      position: sticky; top: 74px;
+      width: 200px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 88px;
       align-self: flex-start;
-      max-height: calc(100vh - 100px);
+      max-height: calc(100vh - 110px);
       overflow-y: auto;
     }
     .toc-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 1px;
-      color: var(--text-sec); text-transform: uppercase; margin-bottom: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--huddl-text-light);
+      margin-bottom: 12px;
     }
-    .toc-item {
-      display: block; padding: 5px 10px;
-      font-size: 12px; color: var(--text-sec);
-      text-decoration: none; border-radius: 6px;
-      border-left: 2px solid transparent;
-      transition: color .15s, border-color .15s, background .15s;
+    .toc-link {
+      display: block;
+      padding: 5px 10px;
+      font-size: 13px;
+      color: var(--huddl-text-light);
+      border-radius: 8px;
       margin-bottom: 2px;
+      transition: background .12s, color .12s;
+      line-height: 1.4;
     }
-    .toc-item:hover { color: var(--primary); background: var(--peach-light); border-left-color: var(--primary); }
+    .toc-link:hover { background: var(--huddl-orange-soft); color: var(--huddl-text); }
+    .toc-link.voice { color: var(--huddl-sage); font-weight: 600; }
+    .toc-link.voice:hover { background: var(--huddl-sage-soft); color: var(--huddl-text); }
+    @media (max-width: 900px) { .sidebar { display: none; } }
 
-    /* ── Main content ── */
-    .main { flex: 1; min-width: 0; }
+    /* ── MAIN CONTENT ── */
+    main.legal-content { flex: 1; min-width: 0; padding-top: 4px; }
 
-    /* Badges */
-    .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
-    .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    /* ── VOICE BADGE ── */
+    .voice-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--huddl-sage-soft);
+      border: 1px solid hsl(152,45%,55%,0.3);
+      border-radius: 9999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(152,45%,30%);
+      margin-bottom: 24px;
     }
-    .badge-green  { background: rgba(46,184,160,.12); color: #1a8a76; border: 1px solid rgba(46,184,160,.3); }
-    .badge-orange { background: var(--peach-light);   color: var(--primary-dk); border: 1px solid rgba(232,116,74,.3); }
-    .badge-blue   { background: var(--blue-bg);       color: #1d4ed8; border: 1px solid rgba(59,130,246,.3); }
+    .gdpr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--huddl-blue-soft);
+      border: 1px solid hsl(215,86%,57%,0.25);
+      border-radius: 9999px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(215,86%,35%);
+      margin-bottom: 10px;
+      margin-right: 8px;
+    }
+    .badges { margin-bottom: 36px; }
 
-    /* Version card */
-    .version-card {
-      background: var(--peach-light);
-      border: 1.5px solid rgba(232,116,74,.25);
-      border-radius: 14px;
-      padding: 16px 20px;
-      display: flex; align-items: center; gap: 14px;
-      margin-bottom: 20px;
+    /* ── SECTION ── */
+    .section { margin-bottom: 48px; scroll-margin-top: 100px; }
+    .section-divider { height: 1px; background: var(--border); margin: 40px 0; }
+    .section h2 {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--huddl-text);
+      margin-bottom: 16px;
+      scroll-margin-top: 100px;
     }
-    .version-icon { font-size: 22px; }
-    .version-card h4 { font-size: 13px; font-weight: 700; color: var(--primary-dk); }
-    .version-card p  { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
-
-    /* GDPR banner */
-    .gdpr-banner {
-      background: var(--teal-bg);
-      border: 1.5px solid rgba(46,184,160,.25);
-      border-radius: 14px;
-      padding: 16px 20px;
-      display: flex; align-items: flex-start; gap: 14px;
-      margin-bottom: 28px;
-    }
-    .gdpr-banner svg { flex-shrink: 0; margin-top: 2px; }
-    .gdpr-banner strong { display: block; font-size: 14px; color: var(--teal); margin-bottom: 4px; }
-    .gdpr-banner p { font-size: 12px; color: var(--text-sec); line-height: 1.5; }
-
-    /* Intro card */
-    .intro-card {
-      background: var(--bg);
-      border: 1px solid var(--divider);
-      border-radius: 14px;
-      padding: 18px 20px;
-      margin-bottom: 32px;
-    }
-    .intro-card h3 { font-size: 15px; font-weight: 700; color: var(--text-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
-    .intro-card p  { font-size: 13px; color: var(--text-sec); line-height: 1.6; margin-bottom: 8px; }
-
-    /* Section */
-    .section { margin-bottom: 0; scroll-margin-top: 90px; }
-    .section-header {
-      font-size: 16px; font-weight: 700; color: var(--text-dark);
-      margin-bottom: 14px;
-      display: flex; align-items: center; gap: 10px;
-    }
-    .section-num {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; border-radius: 8px;
-      background: var(--peach-light); color: var(--primary);
-      font-size: 12px; font-weight: 800; flex-shrink: 0;
-    }
+    .section h2.voice-h2 { color: hsl(152,45%,35%); }
     .section-body {
-      font-size: 13px; color: var(--text-sec); line-height: 1.7;
-      white-space: pre-wrap; word-break: break-word;
+      font-size: 15px;
+      color: var(--huddl-text-light);
+      white-space: pre-wrap;
+      line-height: 1.8;
     }
-    .section-body strong { color: var(--text-dark); font-weight: 600; }
-    .divider { border: none; border-top: 1px solid var(--divider); margin: 28px 0; }
+    .section-body strong { color: var(--huddl-text); font-weight: 600; }
 
-    /* Voice section special highlight */
-    .section-voice .section-num { background: rgba(46,184,160,.15); color: var(--teal); }
-    .section-voice .section-header { color: var(--teal); }
+    /* ── VOICE HIGHLIGHT BOX ── */
+    .voice-box {
+      background: var(--huddl-sage-soft);
+      border: 1.5px solid hsl(152,45%,55%,0.3);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .voice-box-icon { font-size: 26px; line-height: 1; margin-top: 2px; }
+    .voice-box-title { font-size: 15px; font-weight: 700; color: hsl(152,45%,28%); margin-bottom: 6px; }
+    .voice-box-body { font-size: 13px; color: hsl(152,45%,30%); line-height: 1.6; }
+    .voice-box-body a { color: hsl(152,45%,28%); font-weight: 600; text-decoration: underline; }
 
-    /* Rights summary card */
-    .rights-card {
-      background: var(--peach-light);
-      border: 1.5px solid rgba(232,116,74,.2);
-      border-radius: 14px;
-      padding: 20px;
-      margin-top: 8px;
+    /* ── INFO CARD ── */
+    .info-card {
+      background: var(--huddl-cream);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 48px;
+      font-size: 14px;
+      color: var(--huddl-text-light);
+      line-height: 1.6;
     }
-    .rights-card h3 {
-      font-size: 14px; font-weight: 700; color: var(--primary-dk);
-      display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
-    }
-    .rights-item {
-      font-size: 13px; font-weight: 500; color: var(--text-dark);
-      padding: 4px 0; display: flex; align-items: flex-start; gap: 8px;
-    }
-    .rights-item::before { content: "✓"; color: var(--primary); font-weight: 700; flex-shrink: 0; }
-    .rights-contact {
-      margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(232,116,74,.2);
-      font-size: 12px; color: var(--text-sec); line-height: 1.6; font-style: italic;
-    }
-    .rights-contact strong { color: var(--text-dark); font-style: normal; }
+    .info-card a { color: var(--huddl-blue); font-weight: 600; }
+    .info-card a:hover { text-decoration: underline; }
 
-    /* Footer */
-    footer {
-      background: var(--surface);
-      border-top: 1px solid var(--divider);
-      padding: 28px 24px;
-      text-align: center;
-      font-size: 12px; color: var(--text-sec);
+    /* ── FOOTER (matches live site exactly) ── */
+    footer.site-footer {
+      background: var(--huddl-text);
+      color: #fff;
+      padding: 80px 40px 40px;
     }
-    footer a { color: var(--primary); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
-
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .topbar-links a:not(.active) { display: none; }
-      .badge-row { gap: 6px; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr 1fr;
+      gap: 40px;
+    }
+    .footer-logo { height: 36px; filter: brightness(0) invert(1); }
+    .footer-tagline {
+      margin-top: 20px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.6;
+      max-width: 260px;
+    }
+    .footer-socials { margin-top: 24px; display: flex; gap: 12px; }
+    .footer-social {
+      width: 40px; height: 40px;
+      border-radius: 9999px;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .footer-social:hover { background: var(--huddl-orange); }
+    .footer-social svg { width: 16px; height: 16px; fill: #fff; }
+    .footer-col-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--huddl-orange);
+    }
+    .footer-col-links {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+    }
+    .footer-col-links a { transition: color .15s; }
+    .footer-col-links a:hover { color: #fff; }
+    .footer-col-links a.active-page { color: #fff; font-weight: 600; }
+    .footer-address {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.5;
+    }
+    .footer-address svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; fill: var(--huddl-orange); }
+    .footer-email {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      transition: color .15s;
+      margin-top: 14px;
+    }
+    .footer-email:hover { color: #fff; }
+    .footer-email svg { width: 16px; height: 16px; fill: var(--huddl-orange); }
+    .footer-bottom {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      flex-wrap: wrap;
+    }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .layout { padding: 0 24px 64px; }
+      .page-header { padding: 48px 24px 36px; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+      nav.site-nav { padding: 16px 20px; }
+      .page-header { padding: 36px 20px 28px; }
+      .layout { padding: 0 20px 56px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Top navigation bar -->
-<header class="topbar">
-  <div class="topbar-logo">H</div>
-  <div>
-    <div class="topbar-title">Huddl</div>
-    <div class="topbar-sub">by Cruzen Ltd</div>
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav class="site-nav" aria-label="Site navigation">
+  <a href="/" class="nav-logo" aria-label="huddl home">
+    <img src="/images/logo.svg" alt="huddl" />
+  </a>
+  <div class="nav-links">
+    <a href="/#how-it-helps">How it helps</a>
+    <a href="/#trust">Built for trust</a>
+    <a href="/#community">Parents say</a>
+    <a href="/#waitlist" class="nav-cta">Join your community</a>
   </div>
-  <nav class="topbar-links">
-    <a href="privacy-policy.html" class="active">Privacy Policy</a>
-    <a href="terms-of-service.html">Terms of Service</a>
-    <a href="index.html">App</a>
-  </nav>
-</header>
+</nav>
 
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
+<div class="page-header">
+  <span class="page-eyebrow">Legal</span>
+  <h1 class="page-title">Privacy Policy</h1>
+  <p class="page-meta">Last updated: May 2026 &nbsp;·&nbsp; Version 2.1 &nbsp;·&nbsp; Cruzen Ltd</p>
+  <p class="page-intro">This Privacy Policy explains how Cruzen Ltd collects, uses, and protects your personal data when you use the huddl app and website. It is compliant with the UK GDPR, EU GDPR, and the Data Protection Act 2018.</p>
+</div>
+
+<!-- ═══════════════════════ LAYOUT ═══════════════════════ -->
 <div class="layout">
 
-  <!-- Sidebar table of contents -->
-  <aside class="sidebar">
+  <!-- Sidebar TOC -->
+  <aside class="sidebar" aria-label="Table of contents">
     <div class="toc-label">Contents</div>
-    <a class="toc-item" href="#s1">1. Information We Collect</a>
-    <a class="toc-item" href="#s2">2. How We Use Your Info</a>
-    <a class="toc-item" href="#s3">3. Legal Basis (GDPR)</a>
-    <a class="toc-item" href="#s4">4. Data Sharing</a>
-    <a class="toc-item" href="#s5">5. International Transfers</a>
-    <a class="toc-item" href="#s6">6. Data Retention</a>
-    <a class="toc-item" href="#s7">7. Your Rights</a>
-    <a class="toc-item" href="#s8">8. Security</a>
-    <a class="toc-item" href="#s9">9. Children's Privacy</a>
-    <a class="toc-item" href="#s10">10. Cookies &amp; Analytics</a>
-    <a class="toc-item" href="#s11">11. AI &amp; Automation</a>
-    <a class="toc-item" href="#s12">12. Marketing</a>
-    <a class="toc-item" href="#s13">13. Policy Changes</a>
-    <a class="toc-item" href="#s14">14. Contact &amp; DPO</a>
-    <a class="toc-item" href="#s15">15. Legal Disclosures</a>
-    <a class="toc-item" href="#s16">16. Voice Messages 🎙️</a>
+    <a class="toc-link" href="#s1">1. Information We Collect</a>
+    <a class="toc-link" href="#s2">2. How We Use Your Information</a>
+    <a class="toc-link" href="#s3">3. Legal Basis (GDPR)</a>
+    <a class="toc-link" href="#s4">4. Data Sharing &amp; Disclosure</a>
+    <a class="toc-link" href="#s5">5. Data Retention</a>
+    <a class="toc-link" href="#s6">6. Your Rights</a>
+    <a class="toc-link" href="#s7">7. Cookies &amp; Tracking</a>
+    <a class="toc-link" href="#s8">8. Third-Party Services</a>
+    <a class="toc-link" href="#s9">9. Children's Privacy</a>
+    <a class="toc-link" href="#s10">10. International Transfers</a>
+    <a class="toc-link" href="#s11">11. Security</a>
+    <a class="toc-link" href="#s12">12. AI &amp; Automated Decisions</a>
+    <a class="toc-link" href="#s13">13. Marketing</a>
+    <a class="toc-link" href="#s14">14. Third-Party Links</a>
+    <a class="toc-link" href="#s15">15. Policy Changes</a>
+    <a class="toc-link voice" href="#s16">16. Voice Messages 🎙️</a>
+    <a class="toc-link" href="#s17">17. Contact &amp; DPO</a>
   </aside>
 
-  <!-- Main -->
-  <main class="main">
+  <!-- Main content -->
+  <main class="legal-content" id="main-content">
 
-    <div class="badge-row">
-      <span class="badge badge-green">✓ UK GDPR Compliant</span>
-      <span class="badge badge-green">✓ EU GDPR Compliant</span>
-      <span class="badge badge-blue">✓ CCPA Compliant</span>
-      <span class="badge badge-orange">Version 2.1 — May 2026</span>
+    <div class="badges">
+      <span class="gdpr-badge">🔒 UK GDPR Compliant</span>
+      <span class="gdpr-badge">📱 RECORD_AUDIO Disclosed</span>
+      <span class="voice-badge">🎙️ Voice Consent — Section 16</span>
     </div>
 
-    <div class="version-card">
-      <div class="version-icon">🔄</div>
-      <div>
-        <h4>Last Updated: May 2026</h4>
-        <p>Version 2.1 — Voice Message &amp; Microphone Data Added</p>
-      </div>
-    </div>
-
-    <div class="gdpr-banner">
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#2EB8A0" opacity=".15"/><path d="M9 12l2 2 4-4" stroke="#2EB8A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="#2EB8A0" stroke-width="1.5"/></svg>
-      <div>
-        <strong>Fully GDPR &amp; CCPA Compliant</strong>
-        <p>This Privacy Policy complies with UK GDPR, EU GDPR, Data Protection Act 2018, CCPA, and international data protection standards. Your privacy rights are fully protected.</p>
-      </div>
-    </div>
-
-    <div class="intro-card">
-      <h3>🔒 Privacy Policy</h3>
-      <p>Huddl ("we", "us", "our"), operated by <strong>Cruzen Ltd</strong>, is committed to protecting your privacy and personal data. This Privacy Policy explains in detail how we collect, use, share, protect, and retain your information when you use our Service.</p>
-      <p>By using Huddl, you acknowledge that you have read, understood, and agree to the data practices described in this Privacy Policy.</p>
-    </div>
-
-    <!-- Section 1 -->
-    <div class="section" id="s1">
-      <div class="section-header"><span class="section-num">1</span> Information We Collect</div>
-      <div class="section-body">We collect various types of information to provide and improve our Service:
-
-<strong>a) Information You Provide Directly:</strong>
+    <!-- S1 -->
+    <section class="section" id="s1">
+      <h2>1. Information We Collect</h2>
+      <div class="section-body"><strong>a) Information You Provide Directly:</strong>
 
 <strong>Account Registration:</strong>
 • Full name
 • Email address
 • Phone number (for authentication and account recovery)
 • Password (encrypted and securely stored)
-• Date of birth (for age verification - must be 18+)
+• Date of birth (for age verification — must be 18+)
 • Postcode/location (for borough-based community matching)
 • Profile photo (optional)
 • Bio and profile information
@@ -295,23 +417,18 @@
 <strong>Content You Create:</strong>
 • Posts, comments, and messages in groups and direct messages
 • Photos, videos, and other media you upload
-• Voice messages (short audio recordings sent in group chats and DMs — see Section 16)
 • Marketplace listings (items for sale, descriptions, prices, photos)
 • Event and meetup creations (titles, descriptions, locations, dates)
 • Reviews and ratings of other users or listings
 • Saved messages and bookmarks
 • Group creations and memberships
+• <strong>Voice messages</strong> — short audio recordings you choose to record and send (requires microphone permission and explicit consent; see Section 16)
 
 <strong>Payment Information:</strong>
 • Payment card details (processed and stored by Stripe; we do NOT store full card numbers)
 • Billing address
 • Transaction history
 • Subscription status and payment history
-
-<strong>Communications:</strong>
-• Support requests and correspondence
-• Feedback and survey responses
-• In-app communications and messages
 
 <strong>b) Information Collected Automatically:</strong>
 
@@ -330,7 +447,7 @@
 • Actions taken (clicks, taps, scrolls)
 • Search queries and filters applied
 • AI feature interactions
-• Marketplace browsing behavior
+• Marketplace browsing behaviour
 • Events attended or created
 • Groups joined or created
 • Content views and engagement metrics
@@ -353,63 +470,57 @@
 • Analytics and performance cookies
 • Advertising identifiers
 • Usage tracking pixels</div>
-    </div>
-    <hr class="divider"/>
+    </section>
+    <div class="section-divider"></div>
 
-    <!-- Section 2 -->
-    <div class="section" id="s2">
-      <div class="section-header"><span class="section-num">2</span> How We Use Your Information</div>
-      <div class="section-body">We use collected information for the following purposes:
-
-<strong>a) Service Provision and Account Management:</strong>
+    <!-- S2 -->
+    <section class="section" id="s2">
+      <h2>2. How We Use Your Information</h2>
+      <div class="section-body"><strong>a) Service Provision and Account Management:</strong>
 • Create and manage your account
 • Authenticate your identity and secure your account
 • Process registrations and login requests
 • Provide core Service features and functionality
-• Enable communication between users (messaging, groups)
+• Enable communication between users (messaging, groups, voice messages)
 • Connect you with local parents in your borough
 • Match you with relevant groups, events, and content
 • Process and display marketplace listings
-• Coordinate event attendance and organization
+• Coordinate event attendance and organisation
 
-<strong>b) Personalization and Recommendations:</strong>
+<strong>b) Personalisation and Recommendations:</strong>
 • AI-powered user matching and recommendations
-• Personalized group suggestions based on your parenting stage
-• Customized event recommendations based on location and interests
-• Marketplace item recommendations using AI
-• Tailored local event and meetup recommendations
+• Personalised group suggestions based on your parenting stage
+• Customised event recommendations based on location and interests
 • Borough-specific content filtering
-• Customized in-app experiences
 
 <strong>c) Payment Processing and Subscriptions:</strong>
 • Process subscription payments and upgrades
 • Manage billing and invoicing
 • Detect and prevent payment fraud
-• Provide payment-related customer support
 • Issue refunds where applicable (as per our Terms)
 
 <strong>d) Safety, Security, and Compliance:</strong>
 • Verify user eligibility (age 18+)
 • Detect and prevent fraud, spam, and abuse
-• Monitor for prohibited content and behavior
+• Monitor for prohibited content and behaviour
 • Enforce our Terms of Service and Community Guidelines
-• Protect against security threats and unauthorized access
-• Investigate violations and take appropriate action
 • Respond to legal requests and comply with legal obligations
 
 <strong>e) Communications:</strong>
 • Send transactional emails (account verification, password resets, receipts)
 • Notify you of new messages, comments, and activity
-• Provide customer support and respond to inquiries
+• Send updates about events you're attending or groups you've joined
+• Provide customer support and respond to enquiries
 • Send marketing communications (only with your consent; you may opt out)
 
 <strong>f) Analytics, Research, and Improvement:</strong>
-• Analyze usage patterns and user behavior
+• Analyse usage patterns and user behaviour
 • Measure effectiveness of features and content
 • Conduct A/B testing and experiments
 • Identify bugs, errors, and performance issues
 • Develop new features and services
-• Create aggregated, anonymized statistics and reports
+• Create aggregated, anonymised statistics and reports
+• Train and improve AI models and algorithms
 
 <strong>g) AI and Machine Learning:</strong>
 • Train AI models using your content and usage data
@@ -421,346 +532,494 @@
 • Exercise or defend legal rights and claims
 • Facilitate business transactions (mergers, acquisitions, asset sales)
 • Maintain business records and documentation</div>
-    </div>
-    <hr class="divider"/>
+    </section>
+    <div class="section-divider"></div>
 
-    <!-- Section 3 -->
-    <div class="section" id="s3">
-      <div class="section-header"><span class="section-num">3</span> Legal Basis for Processing (GDPR Compliance)</div>
+    <!-- S3 -->
+    <section class="section" id="s3">
+      <h2>3. Legal Basis for Processing (GDPR Compliance)</h2>
       <div class="section-body">Under the UK GDPR, EU GDPR, and Data Protection Act 2018, we process your personal data based on the following legal grounds:
 
-<strong>a) Contractual Necessity (Article 6(1)(b)):</strong>
-Processing necessary to perform our contract with you — account creation, Service features, payments, communications. Without this processing, we cannot provide the Service.
+<strong>a) Contractual Necessity (Article 6(1)(b) GDPR):</strong>
+Processing is necessary to perform our contract with you (Terms of Service):
+• Account creation and authentication
+• Providing Service features and functionality
+• Processing payments and subscriptions
+• Delivering content and communications
+• Enabling user interactions
 
-<strong>b) Legitimate Interests (Article 6(1)(f)):</strong>
+Without this processing, we cannot provide the Service to you.
+
+<strong>b) Legitimate Interests (Article 6(1)(f) GDPR):</strong>
+Processing is necessary for our legitimate business interests, which are not overridden by your rights and freedoms:
 • Improving and developing the Service
-• Personalizing user experience
+• Personalising user experience
+• Conducting analytics and research
 • Fraud prevention and security
+• Network and information security
+• Business administration and record-keeping
 • Marketing to existing users about similar services
+
 You have the right to object to processing based on legitimate interests.
 
-<strong>c) Legal Obligation (Article 6(1)(c)):</strong>
+<strong>c) Legal Obligation (Article 6(1)(c) GDPR):</strong>
+Processing is necessary to comply with legal obligations:
 • Responding to law enforcement requests
 • Complying with court orders and legal processes
 • Meeting tax and accounting requirements
+• Fulfilling regulatory obligations
 
-<strong>d) Consent (Article 6(1)(a)):</strong>
+<strong>d) Consent (Article 6(1)(a) GDPR):</strong>
 We obtain your explicit consent for:
 • Precise GPS location tracking
-• Marketing communications
+• Marketing communications (newsletters, promotional emails)
 • Non-essential cookies and tracking
-• Voice message recording and microphone access (see Section 16)
-You may withdraw consent at any time via in-app settings or by emailing privacy@huddl.app.
+• Sharing data with specific third parties beyond what is necessary for the Service
+• <strong>Voice message recording and microphone access</strong> (see Section 16)
+• Processing special categories of data (if applicable)
 
-<strong>e) Vital Interests (Article 6(1)(d)):</strong>
-In rare cases — emergency situations or child safety concerns requiring immediate action.
+You may withdraw consent at any time via your account settings or by contacting privacy@huddl.app. Withdrawal does not affect the lawfulness of processing carried out before withdrawal (UK GDPR Article 7(3)).</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>f) Special Categories:</strong>
-We do NOT intentionally collect special categories of personal data (health data, racial origin, political opinions, etc.).</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S4 -->
+    <section class="section" id="s4">
+      <h2>4. Data Sharing and Disclosure</h2>
+      <div class="section-body">We do not sell your personal data. We may share your data in the following circumstances:
 
-    <!-- Section 4 -->
-    <div class="section" id="s4">
-      <div class="section-header"><span class="section-num">4</span> Data Sharing, Disclosure, and Third-Party Access</div>
-      <div class="section-body"><strong>a) Visible to Other Users:</strong>
-• Name and profile photo • Bio and parenting stage • Approximate location (borough/postcode area only) • Groups you have joined • Events you are attending • Marketplace listings • Public posts and comments
+<strong>a) Service Providers:</strong>
+We share data with trusted third-party service providers who assist us in operating the Service, including:
+• Firebase (Google) — database, authentication, cloud storage, analytics
+• Stripe — payment processing
+• Google Maps — location services
+• Customer support tools
+• Email and notification delivery services
+• Analytics and performance monitoring tools
+• AI and machine learning service providers
 
-<strong>Private — NOT shared with other users:</strong>
-• Email address • Phone number • Precise GPS location • Payment information • Private messages • Voice message recordings (only visible to conversation participants)
+All service providers are contractually obligated to protect your data and use it only for specified purposes.
 
-<strong>b) Service Providers and Processors:</strong>
-• Stripe — Payment processing
-• Google Firebase / Google Cloud — Data hosting, authentication, push notifications, voice message storage
-• Analytics Providers — Usage analytics, crash reporting
-• Customer Support Tools — Support ticket management
-• Email Service Providers — Transactional and marketing emails
+<strong>b) Other Users:</strong>
+• Your profile information, posts, and messages are visible to other users according to your privacy settings
+• Your marketplace listings are visible to other users
+• Your event creations are visible to participants
+• <strong>Voice messages you send are visible to all participants in the conversation</strong>
 
-<strong>c) Legal Obligations and Safety:</strong>
-We may disclose data when required by law — court orders, law enforcement, child safety emergencies, fraud prevention, or to enforce our Terms of Service.
+<strong>c) Legal Requirements:</strong>
+We may disclose your data when required by law, court order, or legal process, including:
+• Responding to subpoenas, warrants, or other legal requests
+• Complying with regulatory investigations
+• Enforcing our Terms of Service
+• Protecting our rights, property, or safety, or that of our users or the public
+• Preventing fraud or other illegal activity
 
 <strong>d) Business Transfers:</strong>
-In a merger, acquisition or asset sale, your data may be transferred with prior notice.
+In the event of a merger, acquisition, bankruptcy, or sale of assets, your data may be transferred to the acquiring entity. We will notify you of any such transfer.
 
-<strong>e) Aggregated and Anonymized Data:</strong>
-We may share anonymized data that does not identify you personally for research or analytics purposes.
+<strong>e) With Your Consent:</strong>
+We may share your data with third parties when you have given your explicit consent to do so.
 
-<strong>f) We do NOT sell personal data.</strong></div>
-    </div>
-    <hr class="divider"/>
+<strong>f) Aggregated and Anonymised Data:</strong>
+We may share aggregated, anonymised data that cannot reasonably be used to identify you with third parties for research, analytics, or other purposes.</div>
+    </section>
+    <div class="section-divider"></div>
 
-    <!-- Section 5 -->
-    <div class="section" id="s5">
-      <div class="section-header"><span class="section-num">5</span> International Data Transfers</div>
-      <div class="section-body">Your data is primarily stored and processed in the UK, EEA, and United States (via Google Cloud and Firebase). Transfers outside the UK/EEA are protected by Standard Contractual Clauses (SCCs), adequacy decisions, or other lawful mechanisms under GDPR. Contact privacy@huddl.app for details on specific safeguards.</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S5 -->
+    <section class="section" id="s5">
+      <h2>5. Data Retention</h2>
+      <div class="section-body">We retain your personal data only for as long as necessary for the purposes described in this Policy, and as required by law:
 
-    <!-- Section 6 -->
-    <div class="section" id="s6">
-      <div class="section-header"><span class="section-num">6</span> Data Retention and Deletion</div>
-      <div class="section-body"><strong>Active accounts:</strong> Data retained while your account is active.
+<strong>Account Data:</strong>
+• Retained for the duration of your account and for up to 3 years after deletion for legal and compliance purposes
 
-<strong>Account deletion:</strong> Most personal data deleted within 30 days; up to 90 days for account recovery/dispute resolution.
+<strong>Content and Communications:</strong>
+• Posts, messages, and other content retained while your account is active
+• May be retained for up to 12 months after account deletion for legal and safety purposes
 
-<strong>Retained after deletion:</strong>
-• Financial transaction records — 7 years (tax law)
-• Legal/compliance records — as required by law
-• Anonymized/aggregated data — indefinitely
-• Fraud prevention records — indefinitely (where account was terminated for abuse)
+<strong>Voice Messages:</strong>
+• Retained for the duration of the conversation or until your account is deleted
+• On account deletion, voice messages stored under your user ID are permanently erased from Firebase Storage
+• See Section 16 for full details
 
-<strong>Voice messages:</strong> Retained for the life of the conversation or until account deletion. All voice data in Firebase Storage is permanently deleted on account deletion.
+<strong>Payment Data:</strong>
+• Retained for up to 7 years for financial and tax compliance
 
-<strong>Your right to erasure:</strong> Email privacy@huddl.app or use Profile → Privacy &amp; Security → Delete Account.</div>
-    </div>
-    <hr class="divider"/>
+<strong>Usage and Analytics Data:</strong>
+• Aggregated analytics data may be retained indefinitely in anonymised form
+• Individual usage logs retained for up to 24 months
 
-    <!-- Section 7 -->
-    <div class="section" id="s7">
-      <div class="section-header"><span class="section-num">7</span> Your Rights Under Data Protection Laws</div>
-      <div class="section-body"><strong>a) Right to Access (Article 15):</strong> Request a copy of all personal data we hold — in-app: Profile → Privacy &amp; Security → Download My Data, or email privacy@huddl.app.
+<strong>Legal Hold:</strong>
+• Data subject to legal proceedings or investigations may be retained longer as required
 
-<strong>b) Right to Rectification (Article 16):</strong> Correct inaccurate or incomplete data in-app or via privacy@huddl.app.
+When data is no longer needed, we securely delete or anonymise it.</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>c) Right to Erasure (Article 17 / CCPA):</strong> Request deletion of your personal data. Some data retained for legal obligations.
+    <!-- S6 -->
+    <section class="section" id="s6">
+      <h2>6. Your Rights Under GDPR</h2>
+      <div class="section-body">Under the UK GDPR and EU GDPR, you have the following rights:
 
-<strong>d) Right to Restrict Processing (Article 18):</strong> Request limitation of processing in certain circumstances.
+<strong>a) Right of Access (Article 15):</strong>
+You have the right to request a copy of the personal data we hold about you, including the purposes of processing, categories of data, and recipients. Exercise this right via Profile → Privacy &amp; Security → View My Data, or by emailing privacy@huddl.app.
 
-<strong>e) Right to Data Portability (Article 20):</strong> Receive your data in a portable JSON/CSV format.
+<strong>b) Right to Rectification (Article 16):</strong>
+You have the right to request correction of inaccurate or incomplete personal data.
 
-<strong>f) Right to Object (Article 21):</strong> Object to legitimate-interest processing, profiling, or direct marketing (we will stop immediately).
+<strong>c) Right to Erasure ("Right to be Forgotten") (Article 17):</strong>
+You have the right to request deletion of your personal data where:
+• The data is no longer necessary for the purposes for which it was collected
+• You withdraw consent and no other legal basis applies
+• You object to processing and no overriding legitimate grounds exist
+• The data has been unlawfully processed
 
-<strong>g) Right to Withdraw Consent (Article 7(3)):</strong> Withdraw at any time via in-app settings or privacy@huddl.app. Withdrawal does not affect prior lawful processing.
+<strong>d) Right to Restriction of Processing (Article 18):</strong>
+You have the right to request that we restrict processing of your personal data in certain circumstances.
 
-<strong>h) Right to Lodge a Complaint (Article 77):</strong> File a complaint with the ICO — https://ico.org.uk | 0303 123 1113 | casework@ico.org.uk.
+<strong>e) Right to Data Portability (Article 20):</strong>
+You have the right to receive your personal data in a structured, commonly used, machine-readable format, and to transmit it to another controller.
 
-<strong>i) CCPA (California) Rights:</strong> Right to know, delete, opt out of sale (we do NOT sell personal information), and non-discrimination.
+<strong>f) Right to Object (Article 21):</strong>
+You have the right to object to processing based on legitimate interests or for direct marketing purposes.
 
-<strong>Response time:</strong> Within 30 days, extendable by 60 days for complex requests. All rights requests are free.</div>
-    </div>
-    <hr class="divider"/>
+<strong>g) Rights Related to Automated Decision-Making (Article 22):</strong>
+You have the right not to be subject to solely automated decisions that significantly affect you.
 
-    <!-- Section 8 -->
-    <div class="section" id="s8">
-      <div class="section-header"><span class="section-num">8</span> Data Security and Protection Measures</div>
-      <div class="section-body"><strong>Technical measures:</strong> TLS/SSL encryption in transit, AES-256 at rest, secure Firebase Auth, regular security audits, intrusion detection, secure API endpoints.
+<strong>h) Right to Withdraw Consent (Article 7(3)):</strong>
+Where processing is based on consent, you may withdraw consent at any time. Withdrawal does not affect the lawfulness of processing carried out before withdrawal.
 
-<strong>Organizational measures:</strong> Role-based access controls, employee security training, confidentiality agreements, incident response procedures, data minimization and privacy by design.
+<strong>Exercising Your Rights:</strong>
+• In-app: Profile → Privacy &amp; Security → View My Data / Delete Account
+• Email: privacy@huddl.app
+• Response time: Within 30 days of receipt of a valid request
+• Identity verification may be required
 
-<strong>Payment security:</strong> PCI DSS Level 1 compliant via Stripe. We do NOT store full card numbers or CVV codes.
+<strong>Right to Lodge a Complaint:</strong>
+You have the right to lodge a complaint with the UK Information Commissioner's Office (ICO) at ico.org.uk or by calling 0303 123 1113 if you believe your data protection rights have been violated.</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>Voice message security:</strong> TLS 1.2+ in transit; Firebase Storage ACLs restrict access to authenticated conversation participants only; local temporary files stored in OS-sandboxed temp directory.
+    <!-- S7 -->
+    <section class="section" id="s7">
+      <h2>7. Cookies and Tracking Technologies</h2>
+      <div class="section-body">We use cookies and similar tracking technologies to operate and improve the Service:
 
-<strong>Data breach notification:</strong> ICO notified within 72 hours where required; affected users notified promptly for high-risk breaches.
+<strong>Essential Cookies:</strong>
+Required for the Service to function. Cannot be disabled. Include session authentication and security cookies.
 
-<strong>Important:</strong> No system is 100% secure. You transmit data at your own risk and are responsible for maintaining the security of your account credentials.</div>
-    </div>
-    <hr class="divider"/>
+<strong>Analytics Cookies:</strong>
+Help us understand how users interact with the Service. Used with your consent.
 
-    <!-- Section 9 -->
-    <div class="section" id="s9">
-      <div class="section-header"><span class="section-num">9</span> Children's Privacy and Child Safety</div>
-      <div class="section-body">The Service is ONLY for users aged 18 and older. We do NOT knowingly collect personal data from individuals under 18. If we discover a user is under 18, their account will be immediately terminated and data deleted.
+<strong>Performance Cookies:</strong>
+Help us identify and fix performance issues. Used with your consent.
 
-You must NOT share publicly: children's full names, specific birthdates, home addresses, school names, precise locations, or photos that could identify or locate children.
+<strong>Marketing Cookies:</strong>
+Used to deliver relevant content and track marketing effectiveness. Used with your consent.
 
-Child safety concerns: Report to safety@huddl.app immediately. We cooperate fully with law enforcement in child safety investigations.
+You can manage cookie preferences via the "Manage cookies" link in the website footer or via your browser settings. See our separate Cookie Policy at huddlapp.co.uk/cookies for full details.</div>
+    </section>
+    <div class="section-divider"></div>
 
-COPPA: We do not knowingly collect data from children under 13. Contact privacy@huddl.app if you believe we have inadvertently collected such data.</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S8 -->
+    <section class="section" id="s8">
+      <h2>8. Third-Party Services</h2>
+      <div class="section-body">Our Service integrates with the following third-party services:
 
-    <!-- Section 10 -->
-    <div class="section" id="s10">
-      <div class="section-header"><span class="section-num">10</span> Cookies, Tracking Technologies, and Analytics</div>
-      <div class="section-body"><strong>Essential cookies:</strong> Session management, security, fraud prevention, load balancing — cannot be disabled.
+<strong>Firebase (Google LLC):</strong>
+• Database (Firestore), authentication, cloud storage, and analytics
+• Privacy Policy: firebase.google.com/support/privacy
+• Data processed: Account data, content, usage data, voice message files
 
-<strong>Analytics cookies:</strong> Usage analytics (Firebase Analytics), crash reporting (Crashlytics), A/B testing.
+<strong>Stripe Inc.:</strong>
+• Payment processing and subscription management
+• Privacy Policy: stripe.com/privacy
+• Data processed: Payment card data, billing information, transaction history
 
-<strong>Advertising identifiers:</strong> IDFA (iOS), AAID (Android) — reset via device settings.
+<strong>Google Maps Platform:</strong>
+• Location services, maps, and place search
+• Privacy Policy: policies.google.com/privacy
+• Data processed: Location data, search queries
 
-<strong>Cookie management:</strong> Profile → Privacy &amp; Security → Cookie Settings. Disabling non-essential cookies may affect Service functionality.
+Each third-party service provider has its own privacy policy and data processing terms. We have Data Processing Agreements in place with all processors handling personal data on our behalf.</div>
+    </section>
+    <div class="section-divider"></div>
 
-We currently do not respond to browser Do Not Track (DNT) signals.</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S9 -->
+    <section class="section" id="s9">
+      <h2>9. Children's Privacy</h2>
+      <div class="section-body">huddl is intended exclusively for users aged 18 and over. We do not knowingly collect personal data from children under 18.
 
-    <!-- Section 11 -->
-    <div class="section" id="s11">
-      <div class="section-header"><span class="section-num">11</span> AI, Machine Learning, and Automated Decision-Making</div>
-      <div class="section-body">We use AI and machine learning for: user matching and recommendations, group/event suggestions, marketplace recommendations, content moderation, spam detection, and search ranking.
+• We do not knowingly register users under 18
+• If we discover that a user is under 18, we will immediately terminate their account and delete their data
+• Do NOT share the personal information of minors (full names, addresses, schools, or photos that identify them) through the Service
+• You must obtain consent before posting photos or information about other people's children
+• Report any suspected under-age usage to privacy@huddl.app
+• We may report suspected child abuse or exploitation to the relevant authorities
 
-AI models are trained using your profile, interactions, content, search queries, and location data. By using AI-powered features, you consent to your data being used to train AI models.
+If you believe we have inadvertently collected data from a child under 18, please contact us immediately at privacy@huddl.app.</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>Right to object to automated decisions (Article 22):</strong> AI features provide recommendations only — they do not make decisions with legal effects. Human review is available for AI-generated content moderation decisions.
+    <!-- S10 -->
+    <section class="section" id="s10">
+      <h2>10. International Data Transfers</h2>
+      <div class="section-body">Cruzen Ltd is based in the United Kingdom. Your data may be transferred to and processed in countries outside the UK and EEA, including the United States, where our service providers (including Google/Firebase and Stripe) operate.
 
-AI may produce inaccurate or biased results. We are not liable for harm from AI errors or limitations.</div>
-    </div>
-    <hr class="divider"/>
+Where we transfer data outside the UK/EEA, we ensure appropriate safeguards are in place:
+• UK International Data Transfer Agreements (UK IDTAs)
+• EU Standard Contractual Clauses (SCCs) where applicable
+• Adequacy decisions recognised by the UK ICO
+• Binding Corporate Rules (BCRs) of our service providers
 
-    <!-- Section 12 -->
-    <div class="section" id="s12">
-      <div class="section-header"><span class="section-num">12</span> Marketing Communications and Opt-Out</div>
-      <div class="section-body"><strong>Transactional communications (cannot opt out):</strong> Account verification, password resets, payment receipts, security alerts, legal notices.
+You can request information about the specific safeguards applicable to your data by contacting privacy@huddl.app.</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>Promotional communications (can opt out):</strong> Marketing emails, newsletters, event recommendations, surveys.
+    <!-- S11 -->
+    <section class="section" id="s11">
+      <h2>11. Security</h2>
+      <div class="section-body">We implement appropriate technical and organisational security measures to protect your personal data against unauthorised access, disclosure, alteration, or destruction:
 
-<strong>How to opt out:</strong>
+• Encryption of data in transit using TLS 1.2 or higher
+• Encryption of data at rest using AES-256 or equivalent
+• Firebase Security Rules controlling data access
+• Access controls and authentication requirements for staff
+• Regular security assessments and penetration testing
+• Incident response procedures
+• Employee training on data protection
+
+Voice message files are additionally protected by:
+• Firebase Storage Access Control Lists (ACLs)
+• Operating system sandbox isolation
+• Automatic deletion of local temporary files after upload
+
+<strong>No system is completely secure.</strong> We cannot guarantee absolute security. In the event of a data breach affecting your rights and freedoms, we will notify you and the ICO as required by law (within 72 hours of becoming aware).</div>
+    </section>
+    <div class="section-divider"></div>
+
+    <!-- S12 -->
+    <section class="section" id="s12">
+      <h2>12. AI Features and Automated Decision-Making</h2>
+      <div class="section-body">Our Service uses AI and automated processing for:
+• User matching and recommendations
+• Content recommendations (groups, events, marketplace items)
+• Automated content moderation
+• Predictive suggestions and insights
+
+<strong>Your data and AI training:</strong>
+Your content and usage data may be used to train and improve AI models. By using the Service, you consent to this use.
+
+<strong>Automated decisions:</strong>
+Where automated processing produces decisions that significantly affect you, you have the right to request human review, contest the decision, and obtain an explanation of the decision. Contact privacy@huddl.app to exercise this right.
+
+<strong>AI content disclaimer:</strong>
+AI-generated content and recommendations are provided "as is" without warranty of accuracy. Always apply your own judgement to AI-generated outputs.</div>
+    </section>
+    <div class="section-divider"></div>
+
+    <!-- S13 -->
+    <section class="section" id="s13">
+      <h2>13. Marketing Communications</h2>
+      <div class="section-body">We may send you marketing communications about huddl products, features, and updates where you have consented or where we have a legitimate interest as an existing customer.
+
+<strong>Opting out:</strong>
 • Click "Unsubscribe" in any marketing email
-• Profile → Settings → Notifications → Marketing Preferences
-• Email privacy@huddl.app with subject "Unsubscribe"
+• Adjust notification preferences in Profile → Settings → Notifications
+• Email privacy@huddl.app to opt out of all marketing
 
-We do NOT share your email with third parties for their direct marketing without your explicit consent.</div>
-    </div>
-    <hr class="divider"/>
+We do not share your contact details with third parties for their own marketing purposes.</div>
+    </section>
+    <div class="section-divider"></div>
 
-    <!-- Section 13 -->
-    <div class="section" id="s13">
-      <div class="section-header"><span class="section-num">13</span> Changes to This Privacy Policy</div>
-      <div class="section-body">We may modify this Privacy Policy at any time. Material changes will be notified via email or prominent in-app notice, with the effective date clearly indicated. Continued use after changes constitutes acceptance of the updated policy. If you disagree with changes, you must stop using the Service and delete your account.</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S14 -->
+    <section class="section" id="s14">
+      <h2>14. Third-Party Links</h2>
+      <div class="section-body">Our Service may contain links to external websites and services. We are not responsible for the privacy practices or content of those external sites. We encourage you to review the privacy policies of any third-party sites you visit.
 
-    <!-- Section 14 -->
-    <div class="section" id="s14">
-      <div class="section-header"><span class="section-num">14</span> Contact Information and Data Protection Officer</div>
-      <div class="section-body"><strong>Email Contacts:</strong>
-• General Privacy Inquiries: <a href="mailto:privacy@huddl.app" style="color:var(--primary)">privacy@huddl.app</a>
-• Data Protection Officer: <a href="mailto:dpo@huddl.app" style="color:var(--primary)">dpo@huddl.app</a>
-• Security Concerns: <a href="mailto:security@huddl.app" style="color:var(--primary)">security@huddl.app</a>
-• Child Safety Reports: <a href="mailto:safety@huddl.app" style="color:var(--primary)">safety@huddl.app</a>
-• General Support: <a href="mailto:support@huddl.app" style="color:var(--primary)">support@huddl.app</a>
+This Policy applies only to information collected by huddl and Cruzen Ltd.</div>
+    </section>
+    <div class="section-divider"></div>
 
-<strong>Postal Address:</strong>
-Cruzen Ltd, Data Protection / Privacy Team
-[Company Registered Address], United Kingdom
+    <!-- S15 -->
+    <section class="section" id="s15">
+      <h2>15. Changes to This Policy</h2>
+      <div class="section-body">We may update this Privacy Policy from time to time. When we make material changes, we will:
+• Update the "Last updated" date at the top of this page
+• Notify you via email or in-app notification where required by law
+• Obtain fresh consent where a change affects consent-based processing
 
-<strong>UK Supervisory Authority:</strong>
-Information Commissioner's Office (ICO)
-Website: <a href="https://ico.org.uk" target="_blank" style="color:var(--primary)">https://ico.org.uk</a>
-Telephone: 0303 123 1113
-Email: casework@ico.org.uk
+Your continued use of the Service after changes are posted constitutes your acceptance of the updated Policy. If you do not agree, you must stop using the Service and delete your account.</div>
+    </section>
+    <div class="section-divider"></div>
 
-Response time: within 30 days (extendable by 60 days for complex requests).</div>
-    </div>
-    <hr class="divider"/>
+    <!-- S16 — VOICE MESSAGES (highlighted) -->
+    <section class="section" id="s16">
+      <h2 class="voice-h2">16. Voice Messages &amp; Microphone Access 🎙️</h2>
 
-    <!-- Section 15 -->
-    <div class="section" id="s15">
-      <div class="section-header"><span class="section-num">15</span> Additional Legal Disclosures</div>
-      <div class="section-body"><strong>Data Controller:</strong> Cruzen Ltd is the data controller responsible for your personal data under UK GDPR and EU GDPR.
+      <div class="voice-box">
+        <div class="voice-box-icon">🎙️</div>
+        <div>
+          <div class="voice-box-title">Opt-in feature — explicit consent required (UK GDPR Art. 6(1)(a))</div>
+          <div class="voice-box-body">Voice messages are <strong>disabled by default</strong>. You must explicitly enable this feature in <strong>Profile → Privacy &amp; Security → Voice Messages</strong> before you can record or send audio. You may withdraw consent at any time by toggling the feature off. See also: <a href="/terms-of-service.html#s18">Terms of Service §18</a>.</div>
+        </div>
+      </div>
 
-<strong>No Sale of Personal Data:</strong> We do NOT sell, rent, or trade personal data to third parties.
-
-<strong>Cross-Border Transfers:</strong> Protected by Standard Contractual Clauses. Primary storage: UK, EEA, United States.
-
-<strong>Privacy by Design:</strong> Data minimization, purpose limitation, storage limitation — implemented by default.
-
-<strong>Data Breach Response:</strong> 72-hour notification to ICO; user notification for high-risk breaches.
-
-<strong>Governing Law:</strong> Laws of England and Wales. Disputes subject to exclusive jurisdiction of English courts.
-
-<strong>Language:</strong> This Privacy Policy is drafted in English; English version prevails in any conflict.</div>
-    </div>
-    <hr class="divider"/>
-
-    <!-- Section 16 — Voice Messages (highlighted) -->
-    <div class="section section-voice" id="s16">
-      <div class="section-header"><span class="section-num">16</span> 🎙️ Voice Messages &amp; Microphone Access</div>
       <div class="section-body"><strong>a) Overview:</strong>
-Huddl provides a voice message feature allowing you to record and send short audio messages within group chats and direct messages. This section explains specifically how we handle microphone access and voice message data.
+The voice message feature allows you to record and send short audio messages within group chats and direct messages on the huddl platform. This feature requires access to your device microphone and your explicit consent before use.
 
-<strong>b) Microphone Permission:</strong>
-• We request access to your device microphone <em>solely</em> to enable voice message recording
-• android.permission.RECORD_AUDIO (Android) and NSMicrophoneUsageDescription (iOS) permissions are used exclusively for this feature
-• Microphone access is active <em>only</em> during the brief period you are actively recording
-• We do NOT listen to, record, or access your microphone at any other time
-• You may deny or revoke microphone permission at any time in device settings — this disables voice message recording only
+<strong>b) Microphone Permission Scope:</strong>
+Microphone access is used <strong>exclusively</strong> for recording voice messages within the huddl app. It is not used for any background recording, passive listening, keyword detection, or any purpose other than the recording you actively initiate. The specific Android permission used is <strong>android.permission.RECORD_AUDIO</strong>. On iOS, the NSMicrophoneUsageDescription permission is used.
 
 <strong>c) Data Collected:</strong>
-• Audio recordings — temporary M4A/AAC files (mobile) or WebM (web) created during recording
-• Recording metadata — duration (seconds) and timestamp
-• Conversation context — the group or DM the voice message was sent in
-• Sender identity — your user ID is associated with each voice message
+When you use voice messages, we collect:
+• The audio recording itself (M4A/AAC format on mobile, WebM on web browsers)
+• Metadata: conversation ID, sender user ID, timestamp, file size
+• Temporary local file path (deleted immediately after upload)
 
-<strong>d) How Voice Message Data Is Processed:</strong>
-• A short-lived audio file is created in your device's temporary directory
-• Upon sending, the file is uploaded to Firebase Cloud Storage (path: voice_notes/{conversationId}/{userId}_{timestamp}.m4a)
-• Transmission occurs over an encrypted HTTPS connection
-• The temporary local file is deleted immediately after successful upload
-• Stored voice messages are retrieved via secure Firebase download URLs for playback
+<strong>d) Processing Pipeline:</strong>
+1. You tap Record — audio is captured by your device microphone
+2. Audio is encoded locally (AAC-LC, 64 kbps, 16 kHz, mono)
+3. On mobile: written to device temporary directory as a .m4a file
+4. On web: created as a .webm blob URL in memory
+5. On sending: uploaded to Firebase Cloud Storage at path <code>voice_notes/{conversationId}/{userId}_{timestamp}.{ext}</code>
+6. Local temporary file is immediately deleted after successful upload
+7. Recipients receive a download URL to stream/play the message
+8. No speech-to-text transcription is performed
 
-<strong>e) Legal Basis (UK GDPR Article 6):</strong>
-• <strong>Consent (Article 6(1)(a)):</strong> Voice message recording is based on your freely given, specific, informed, and unambiguous consent — granted when you explicitly enable voice messages in Profile → Privacy &amp; Security → Voice Messages. You may withdraw consent at any time.
-• <strong>Contract performance (Article 6(1)(b)):</strong> Transmission and storage of sent voice messages is necessary to deliver the messaging service you have contracted for.
+<strong>e) Legal Basis:</strong>
+• <strong>UK GDPR Article 6(1)(a) — Explicit Consent</strong>: Recording and uploading voice messages
+• <strong>UK GDPR Article 6(1)(b) — Contractual Necessity</strong>: Delivering voice messages to intended recipients within the Service
 
-<strong>f) Your Consent Controls:</strong>
-• Voice messages are <strong>disabled by default</strong> — you must actively enable them in Profile → Privacy &amp; Security → Voice Messages
-• Withdraw consent at any time by toggling the setting off — this prevents future recordings
-• Previously sent voice messages received by others are not automatically deleted; email privacy@huddl.app to request deletion of prior messages
+<strong>f) Consent Controls:</strong>
+• <strong>Enable</strong>: Profile → Privacy &amp; Security → Voice Messages (toggle on) → confirm consent dialog
+• <strong>Disable / Withdraw</strong>: Same screen (toggle off) → confirm withdrawal dialog
+• Default state: <strong>Disabled</strong> — no microphone access is requested until you actively enable the feature
 
-<strong>g) Data Retention:</strong>
-• Voice messages are retained for the life of the conversation, or until account deletion
-• All voice data in Firebase Storage is permanently deleted when you delete your Huddl account
-• Temporary local recording files are deleted immediately after upload or cancellation
+<strong>g) Retention and Deletion:</strong>
+• Voice messages are retained for the duration of the conversation or until your account is deleted
+• On account deletion, all voice messages stored under your user ID are permanently erased from Firebase Cloud Storage
+• Temporary local files are deleted immediately after upload and are never retained on device
+• To request early deletion of previously sent voice messages, contact privacy@huddl.app
 
 <strong>h) Data Sharing:</strong>
-• Voice messages are visible to all participants of the conversation they were sent in
-• Firebase Storage (Google LLC) processes audio files as our data processor under GDPR-compliant Standard Contractual Clauses. See <a href="https://policies.google.com/privacy" target="_blank" style="color:var(--teal)">Google's Privacy Policy</a>
-• Voice messages are NOT shared with other third parties, used for advertising, or used to train AI models
+Voice message audio files are stored in Firebase Cloud Storage (Google LLC). No other third parties receive access to your voice message data. Firebase is bound by a Data Processing Agreement and processes data in accordance with Google's privacy commitments.
 
 <strong>i) Children and Sensitive Data:</strong>
-Huddl is restricted to users aged 18+. Voice messages are never collected from minors. Audio recordings are not special category data under UK GDPR Article 9, but we apply equivalent care.
+Voice messages must not contain personal data of children (including names, schools, addresses, or identifying information). Do not send voice messages referencing or identifying specific children without appropriate consent. Voice messages are not classified as a special category of data under GDPR Article 9 unless you choose to include such information.
 
 <strong>j) Your Rights Regarding Voice Messages:</strong>
-• <strong>Access (Article 15):</strong> Request a list of voice messages associated with your account
-• <strong>Erasure (Article 17):</strong> Contact privacy@huddl.app to request deletion of specific voice messages
-• <strong>Withdraw consent (Article 7(3)):</strong> Toggle off in Profile → Privacy &amp; Security at any time; withdrawal does not affect prior lawful processing
-• <strong>Object (Article 21):</strong> Disable the feature and contact dpo@huddl.app
+• <strong>Access (Art. 15)</strong>: Request a record of your voice message metadata via privacy@huddl.app
+• <strong>Erasure (Art. 17)</strong>: Request deletion of previously sent voice messages via privacy@huddl.app
+• <strong>Withdrawal of Consent (Art. 7(3))</strong>: Disable the feature at any time in Profile → Privacy &amp; Security → Voice Messages. Withdrawal prevents future recordings but does not automatically delete messages already delivered to other participants, as those form part of a shared conversation. Withdrawal is without prejudice to the lawfulness of processing carried out before withdrawal
+• <strong>Objection (Art. 21)</strong>: Contact privacy@huddl.app if you wish to object to any aspect of voice message data processing
 
 <strong>k) Security Measures:</strong>
-• All audio data in transit encrypted with TLS 1.2+
-• Firebase Storage ACLs restrict access to authenticated conversation participants only
-• Local temporary files stored in OS-sandboxed temporary directory, inaccessible to other apps
+• All audio data is encrypted in transit using TLS 1.2 or higher
+• Audio files at rest in Firebase Storage are encrypted using AES-256
+• Firebase Storage Access Control Lists (ACLs) restrict access to authorised parties only
+• Local temporary files are stored in the OS-sandboxed temporary directory and deleted immediately after upload
+• No audio content is retained on device after sending
 
-<strong>l) Contact:</strong>
-Questions about voice message data processing: <a href="mailto:dpo@huddl.app" style="color:var(--teal)">dpo@huddl.app</a></div>
-    </div>
-    <hr class="divider"/>
+<strong>l) Data Protection Officer / Contact:</strong>
+For any queries specific to voice message data processing, contact:
+Email: privacy@huddl.app
+Subject line: "Voice Message Data — [your query]"
+Cruzen Ltd, 167-169 Great Portland Street, London W1W 5PF, UK</div>
+    </section>
+    <div class="section-divider"></div>
 
-    <!-- Rights summary card -->
-    <div class="rights-card">
-      <h3>🛡️ Your Data Protection Rights Summary</h3>
-      <div class="rights-item">Access your data anytime (download full copy)</div>
-      <div class="rights-item">Correct inaccurate or incomplete data</div>
-      <div class="rights-item">Delete your account and data</div>
-      <div class="rights-item">Export your data in portable format</div>
-      <div class="rights-item">Restrict or object to certain processing</div>
-      <div class="rights-item">Opt out of marketing communications</div>
-      <div class="rights-item">Withdraw consent for consent-based processing (incl. voice messages)</div>
-      <div class="rights-item">Lodge a complaint with the ICO or your local data protection authority</div>
-      <div class="rights-contact">
-        <strong>Exercise your rights:</strong><br/>
-        In-App: Profile → Privacy &amp; Security → Data Rights<br/>
-        Email: <a href="mailto:privacy@huddl.app">privacy@huddl.app</a><br/>
-        Response within 30 days. We take your privacy seriously and are committed to full transparency.
-      </div>
+    <!-- S17 -->
+    <section class="section" id="s17">
+      <h2>17. Contact and Data Protection Officer</h2>
+      <div class="section-body">Cruzen Ltd is the data controller for your personal data.
+
+<strong>Cruzen Ltd</strong>
+167-169 Great Portland Street
+London W1W 5PF
+United Kingdom
+Company No. 16694711
+ICO Registration No. ZC130210
+
+<strong>Privacy enquiries:</strong> privacy@huddl.app
+<strong>General contact:</strong> contact@cruzenltd.com
+<strong>Legal matters:</strong> legal@huddl.app
+
+We aim to respond to all data protection requests within 30 days. If you are not satisfied with our response, you have the right to lodge a complaint with the Information Commissioner's Office (ICO) at ico.org.uk or by calling 0303 123 1113.</div>
+    </section>
+
+    <!-- Info card -->
+    <div class="info-card">
+      Questions about this policy? Email <a href="mailto:privacy@huddl.app">privacy@huddl.app</a>. huddl is operated by Cruzen Ltd, 167-169 Great Portland Street, London W1W 5PF, UK. ICO Registration No. ZC130210.
     </div>
 
   </main>
 </div>
 
-<footer>
-  <p>© 2026 Cruzen Ltd — All rights reserved</p>
-  <p style="margin-top:8px;">
-    <a href="privacy-policy.html">Privacy Policy</a> &nbsp;·&nbsp;
-    <a href="terms-of-service.html">Terms of Service</a> &nbsp;·&nbsp;
-    <a href="mailto:privacy@huddl.app">privacy@huddl.app</a> &nbsp;·&nbsp;
-    <a href="mailto:dpo@huddl.app">dpo@huddl.app</a>
-  </p>
-  <p style="margin-top:6px; font-size:11px; color:#9CA3AF;">
-    Governed by the laws of England and Wales &nbsp;·&nbsp; ICO registered &nbsp;·&nbsp; UK GDPR compliant
-  </p>
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="site-footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Col 1: Brand -->
+      <div>
+        <img class="footer-logo" src="/images/logo.svg" alt="huddl" />
+        <p class="footer-tagline">A trusted local community for parents. Built by parents, for parents — starting in Cambridge.</p>
+        <div class="footer-socials">
+          <a class="footer-social" href="https://www.facebook.com/share/1DnUYKdfNt/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.instagram.com/huddl_app" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" style="fill:#1a2033"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" style="fill:none;stroke:#1a2033;stroke-width:2"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Col 2: Explore -->
+      <div>
+        <div class="footer-col-title">Explore</div>
+        <nav class="footer-col-links">
+          <a href="/about">About huddl</a>
+          <a href="/safety">Safety &amp; trust</a>
+          <a href="/cambridge">huddl Cambridge</a>
+          <a href="/blog">Blog</a>
+          <a href="/glossary">Parent glossary</a>
+        </nav>
+      </div>
+
+      <!-- Col 3: Legal -->
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <nav class="footer-col-links">
+          <a href="/terms">Terms &amp; Conditions</a>
+          <a href="/acceptable-use">Acceptable Use Policy</a>
+          <a href="/cookies">Cookie Policy</a>
+          <a href="/privacy-policy.html" class="active-page">Privacy</a>
+          <a href="/privacy-rights">Your data rights</a>
+        </nav>
+      </div>
+
+      <!-- Col 4: Contact -->
+      <div>
+        <div class="footer-col-title">Get in touch</div>
+        <div style="margin-top:20px;">
+          <div class="footer-address">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3" style="fill:#1a2033"/></svg>
+            <span>167-169 Great Portland Street,<br>London W1W 5PF, England</span>
+          </div>
+          <a class="footer-email" href="mailto:contact@cruzenltd.com">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6" style="fill:none;stroke:#1a2033;stroke-width:2"/></svg>
+            contact@cruzenltd.com
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Cruzen Ltd (Company No. 16694711). ICO Registration No. ZC130210. Registered in England &amp; Wales. All rights reserved.</span>
+      <span>Cambridge, UK</span>
+    </div>
+  </div>
 </footer>
 
 </body>

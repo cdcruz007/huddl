@@ -3,302 +3,367 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Terms of Service — Huddl</title>
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/favicon.png" />
+  <title>Terms of Service — huddl</title>
+  <meta name="description" content="huddl Terms of Service. Read the legal agreement between you and Cruzen Ltd governing your use of the huddl app and platform." />
+  <link rel="canonical" href="https://www.huddlapp.co.uk/terms-of-service.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --primary:     #E8744A;
-      --primary-dk:  #C45A2E;
-      --teal:        #2EB8A0;
-      --blue:        #3B82F6;
-      --text-dark:   #1A1A2E;
-      --text-sec:    #6B7280;
-      --divider:     #E5E7EB;
-      --bg:          #F9FAFB;
-      --surface:     #FFFFFF;
-      --peach-light: #FFF0EB;
-      --teal-bg:     rgba(46,184,160,0.08);
-      --blue-bg:     #EFF6FF;
+      --huddl-blue:        hsl(215,86%,57%);
+      --huddl-blue-soft:   hsl(217,100%,97%);
+      --huddl-orange:      hsl(21,100%,68%);
+      --huddl-orange-soft: hsl(22,100%,93%);
+      --huddl-yellow-soft: hsl(45,100%,93%);
+      --huddl-sage:        hsl(152,45%,55%);
+      --huddl-sage-soft:   hsl(152,50%,93%);
+      --huddl-cream:       hsl(0,0%,98%);
+      --huddl-text:        hsl(222,9%,28%);
+      --huddl-text-light:  hsl(0,0%,42%);
+      --border:            hsl(220,13%,91%);
+      --bg:                #ffffff;
+      --radius:            1.25rem;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: Inter, system-ui, -apple-system, sans-serif;
       background: var(--bg);
-      color: var(--text-dark);
-      line-height: 1.7;
+      color: var(--huddl-text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
 
-    /* ── Top bar ── */
-    .topbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--divider);
-      padding: 14px 24px;
+    /* ── NAV ── */
+    nav.site-nav {
+      width: 100%;
+      padding: 20px 40px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      justify-content: space-between;
+      gap: 24px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 50;
+      border-bottom: 1px solid hsl(220,13%,91%,0.4);
     }
-    .topbar-logo {
-      width: 36px; height: 36px;
-      background: var(--primary);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-weight: 800; font-size: 18px; letter-spacing: -1px;
+    .nav-logo img { height: 36px; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
+    .nav-links a {
+      color: var(--huddl-text);
+      font-weight: 500;
+      font-size: 15px;
+      transition: color .15s;
     }
-    .topbar-title { font-weight: 700; font-size: 17px; color: var(--text-dark); }
-    .topbar-sub   { font-size: 12px; color: var(--text-sec); margin-top: 1px; }
-    .topbar-links { margin-left: auto; display: flex; gap: 16px; }
-    .topbar-links a {
-      font-size: 13px; font-weight: 500;
-      color: var(--primary); text-decoration: none;
-      padding: 6px 14px; border-radius: 20px;
-      border: 1.5px solid var(--primary);
-      transition: background .15s, color .15s;
+    .nav-links a:hover { color: var(--huddl-blue); }
+    .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      background: var(--huddl-text);
+      color: #fff !important;
+      border-radius: 9999px;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
     }
-    .topbar-links a:hover { background: var(--primary); color: #fff; }
-    .topbar-links a.active { background: var(--primary); color: #fff; }
+    .nav-cta:hover { background: var(--huddl-blue); color: #fff !important; }
+    @media (max-width: 768px) {
+      nav.site-nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+    }
 
-    /* ── Layout ── */
-    .layout { display: flex; max-width: 1100px; margin: 0 auto; padding: 32px 20px 64px; gap: 32px; }
+    /* ── PAGE HEADER ── */
+    .page-header { padding: 64px 40px 48px; max-width: 860px; margin: 0 auto; }
+    .page-eyebrow {
+      font-size: 13px; font-weight: 600;
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--huddl-blue);
+    }
+    .page-title {
+      margin-top: 12px;
+      font-size: clamp(36px, 5vw, 48px);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--huddl-text);
+      letter-spacing: -.01em;
+    }
+    .page-meta { margin-top: 8px; font-size: 14px; color: var(--huddl-text-light); }
 
-    /* ── Sidebar TOC ── */
+    /* Warning box */
+    .warning-box {
+      margin-top: 24px;
+      background: hsl(45,100%,93%);
+      border: 1.5px solid hsl(43,100%,66%,0.4);
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      max-width: 720px;
+    }
+    .warning-box-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
+    .warning-box-body { font-size: 14px; color: hsl(30,60%,30%); line-height: 1.6; font-weight: 500; }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: flex;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 40px 80px;
+      gap: 48px;
+      align-items: flex-start;
+    }
+
+    /* ── SIDEBAR ── */
     .sidebar {
-      width: 220px; flex-shrink: 0;
-      position: sticky; top: 74px;
+      width: 200px; flex-shrink: 0;
+      position: sticky; top: 88px;
       align-self: flex-start;
-      max-height: calc(100vh - 100px);
+      max-height: calc(100vh - 110px);
       overflow-y: auto;
     }
     .toc-label {
-      font-size: 10px; font-weight: 700; letter-spacing: 1px;
-      color: var(--text-sec); text-transform: uppercase; margin-bottom: 10px;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--huddl-text-light); margin-bottom: 12px;
     }
-    .toc-item {
+    .toc-link {
       display: block; padding: 5px 10px;
-      font-size: 12px; color: var(--text-sec);
-      text-decoration: none; border-radius: 6px;
+      font-size: 13px; color: var(--huddl-text-light);
+      border-radius: 8px; margin-bottom: 2px;
       transition: background .12s, color .12s;
-      margin-bottom: 2px;
+      line-height: 1.4;
     }
-    .toc-item:hover { background: var(--peach-light); color: var(--primary); }
-    .toc-item.voice { color: var(--teal); font-weight: 600; }
-    .toc-item.voice:hover { background: var(--teal-bg); }
+    .toc-link:hover { background: var(--huddl-orange-soft); color: var(--huddl-text); }
+    .toc-link.voice { color: var(--huddl-sage); font-weight: 600; }
+    .toc-link.voice:hover { background: var(--huddl-sage-soft); color: var(--huddl-text); }
+    @media (max-width: 900px) { .sidebar { display: none; } }
 
-    /* ── Main content ── */
-    .main { flex: 1; min-width: 0; }
+    /* ── MAIN ── */
+    main.legal-content { flex: 1; min-width: 0; padding-top: 4px; }
 
-    /* ── Version card ── */
-    .version-card {
-      background: var(--peach-light);
-      border: 1.5px solid rgba(232,116,74,0.25);
-      border-radius: 12px;
-      padding: 14px 18px;
-      display: flex; align-items: flex-start; gap: 12px;
-      margin-bottom: 20px;
-    }
-    .version-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
-    .version-title { font-weight: 700; font-size: 14px; color: var(--primary-dk); }
-    .version-sub   { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
-
-    /* ── Warning banner ── */
-    .warning-banner {
-      background: #FFFBEB;
-      border: 1.5px solid #F59E0B;
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin-bottom: 28px;
-      display: flex; gap: 12px;
-    }
-    .warning-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
-    .warning-text { font-size: 13px; color: #78350F; line-height: 1.6; font-weight: 500; }
-
-    /* ── Badges ── */
-    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+    /* Badges */
+    .badges { margin-bottom: 36px; display: flex; flex-wrap: wrap; gap: 8px; }
     .badge {
       display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 20px;
-      font-size: 11px; font-weight: 600; letter-spacing: .3px;
+      border-radius: 9999px; padding: 5px 14px;
+      font-size: 12px; font-weight: 600;
     }
-    .badge-orange { background: var(--peach-light); color: var(--primary-dk); border: 1px solid rgba(232,116,74,.3); }
-    .badge-teal   { background: var(--teal-bg);     color: #147360;          border: 1px solid rgba(46,184,160,.3); }
-    .badge-blue   { background: var(--blue-bg);      color: #1D4ED8;          border: 1px solid rgba(59,130,246,.3); }
+    .badge-blue   { background: var(--huddl-blue-soft); border: 1px solid hsl(215,86%,57%,0.25); color: hsl(215,86%,35%); }
+    .badge-orange { background: var(--huddl-orange-soft); border: 1px solid hsl(21,100%,68%,0.3); color: hsl(21,60%,35%); }
+    .badge-sage   { background: var(--huddl-sage-soft); border: 1px solid hsl(152,45%,55%,0.3); color: hsl(152,45%,28%); }
 
-    /* ── Section ── */
-    .section { margin-bottom: 36px; }
-    .section-divider { height: 1px; background: var(--divider); margin: 28px 0; }
+    /* ── SECTION ── */
+    .section { margin-bottom: 48px; scroll-margin-top: 100px; }
+    .section-divider { height: 1px; background: var(--border); margin: 40px 0; }
     .section h2 {
-      font-size: 17px; font-weight: 700; color: var(--text-dark);
-      margin-bottom: 14px;
-      scroll-margin-top: 90px;
+      font-size: 22px; font-weight: 600;
+      color: var(--huddl-text); margin-bottom: 16px;
+      scroll-margin-top: 100px;
     }
-    .section h2.voice-heading { color: var(--teal); }
+    .section h2.voice-h2 { color: hsl(152,45%,32%); }
     .section-body {
-      font-size: 14px; color: var(--text-sec);
-      white-space: pre-wrap; line-height: 1.75;
+      font-size: 15px; color: var(--huddl-text-light);
+      white-space: pre-wrap; line-height: 1.8;
     }
-    .section-body strong { color: var(--text-dark); font-weight: 600; }
+    .section-body strong { color: var(--huddl-text); font-weight: 600; }
+    .section-body a { color: var(--huddl-blue); font-weight: 600; }
+    .section-body a:hover { text-decoration: underline; }
 
-    /* ── Voice highlight box ── */
+    /* ── VOICE BOX ── */
     .voice-box {
-      background: var(--teal-bg);
-      border: 1.5px solid rgba(46,184,160,0.3);
-      border-radius: 12px;
-      padding: 16px 18px;
-      margin-bottom: 12px;
-      display: flex; gap: 12px; align-items: flex-start;
+      background: var(--huddl-sage-soft);
+      border: 1.5px solid hsl(152,45%,55%,0.3);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      display: flex; gap: 14px; align-items: flex-start;
     }
-    .voice-box-icon { font-size: 24px; line-height: 1; }
-    .voice-box-content { flex: 1; }
-    .voice-box-title { font-weight: 700; font-size: 14px; color: #147360; margin-bottom: 6px; }
-    .voice-box-body  { font-size: 13px; color: #1A6B5E; line-height: 1.6; }
+    .voice-box-icon { font-size: 26px; line-height: 1; margin-top: 2px; }
+    .voice-box-title { font-size: 15px; font-weight: 700; color: hsl(152,45%,28%); margin-bottom: 6px; }
+    .voice-box-body { font-size: 13px; color: hsl(152,45%,30%); line-height: 1.6; }
+    .voice-box-body a { color: hsl(152,45%,28%); font-weight: 600; text-decoration: underline; }
 
-    /* ── Acceptance card ── */
+    /* ── ACCEPTANCE CARD ── */
     .acceptance-card {
-      background: var(--peach-light);
-      border: 1.5px solid rgba(232,116,74,0.25);
-      border-radius: 14px;
-      padding: 22px 24px;
+      background: var(--huddl-cream);
+      border-radius: 20px;
+      padding: 28px;
       margin-top: 12px;
     }
     .acceptance-card h3 {
-      font-size: 15px; font-weight: 700;
-      color: var(--primary-dk); margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
+      font-size: 16px; font-weight: 700;
+      color: var(--huddl-text); margin-bottom: 16px;
     }
-    .acceptance-list { list-style: none; }
+    .acceptance-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     .acceptance-list li {
-      padding: 5px 0;
-      font-size: 13px; font-weight: 500; color: var(--text-dark);
-      display: flex; align-items: flex-start; gap: 8px;
+      font-size: 14px; font-weight: 500;
+      color: var(--huddl-text);
+      display: flex; align-items: flex-start; gap: 10px;
     }
-    .acceptance-list li::before { content: '✓'; color: var(--primary); font-weight: 700; flex-shrink: 0; }
+    .acceptance-list li::before {
+      content: '✓';
+      color: var(--huddl-blue);
+      font-weight: 700; flex-shrink: 0;
+    }
     .acceptance-note {
-      margin-top: 14px;
-      font-size: 12px; color: var(--text-sec); font-style: italic;
+      margin-top: 16px;
+      font-size: 13px; color: var(--huddl-text-light);
+      font-style: italic; line-height: 1.5;
     }
 
-    /* ── Contact strip ── */
-    .contact-strip {
-      background: var(--surface);
-      border: 1px solid var(--divider);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-top: 28px;
-      display: flex; flex-wrap: wrap; gap: 20px; align-items: center;
+    /* ── INFO CARD ── */
+    .info-card {
+      background: var(--huddl-cream);
+      border-radius: 20px;
+      padding: 24px;
+      margin-top: 48px;
+      font-size: 14px;
+      color: var(--huddl-text-light);
+      line-height: 1.6;
     }
-    .contact-strip h4 { font-size: 14px; font-weight: 700; color: var(--text-dark); width: 100%; margin-bottom: 4px; }
-    .contact-item     { font-size: 13px; color: var(--text-sec); }
-    .contact-item a   { color: var(--primary); text-decoration: none; font-weight: 600; }
-    .contact-item a:hover { text-decoration: underline; }
+    .info-card a { color: var(--huddl-blue); font-weight: 600; }
+    .info-card a:hover { text-decoration: underline; }
 
-    /* ── Footer ── */
-    .footer {
-      text-align: center; padding: 28px 20px;
-      font-size: 12px; color: var(--text-sec);
-      border-top: 1px solid var(--divider);
+    /* ── FOOTER ── */
+    footer.site-footer { background: var(--huddl-text); color: #fff; padding: 80px 40px 40px; }
+    .footer-inner { max-width: 1200px; margin: 0 auto; }
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr 1fr 1fr;
+      gap: 40px;
     }
-    .footer a { color: var(--primary); text-decoration: none; font-weight: 500; }
-    .footer a:hover { text-decoration: underline; }
-
-    /* ── Responsive ── */
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .topbar-links a:not(.active) { display: none; }
-      .topbar-links { gap: 8px; }
+    .footer-logo { height: 36px; filter: brightness(0) invert(1); }
+    .footer-tagline { margin-top: 20px; font-size: 14px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 260px; }
+    .footer-socials { margin-top: 24px; display: flex; gap: 12px; }
+    .footer-social {
+      width: 40px; height: 40px; border-radius: 9999px;
+      background: rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    .footer-social:hover { background: var(--huddl-orange); }
+    .footer-social svg { width: 16px; height: 16px; fill: #fff; }
+    .footer-col-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--huddl-orange); }
+    .footer-col-links { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; font-size: 14px; color: rgba(255,255,255,0.75); }
+    .footer-col-links a { transition: color .15s; }
+    .footer-col-links a:hover { color: #fff; }
+    .footer-col-links a.active-page { color: #fff; font-weight: 600; }
+    .footer-address { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.5; }
+    .footer-address svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; fill: var(--huddl-orange); }
+    .footer-email { display: flex; align-items: center; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.75); transition: color .15s; margin-top: 14px; }
+    .footer-email:hover { color: #fff; }
+    .footer-email svg { width: 16px; height: 16px; fill: var(--huddl-orange); }
+    .footer-bottom {
+      margin-top: 56px; padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; font-size: 12px; color: rgba(255,255,255,0.5); flex-wrap: wrap;
+    }
+    @media (max-width: 900px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; }
+      .layout { padding: 0 24px 64px; }
+      .page-header { padding: 48px 24px 36px; }
+    }
+    @media (max-width: 600px) {
+      .footer-grid { grid-template-columns: 1fr; }
+      nav.site-nav { padding: 16px 20px; }
+      .page-header { padding: 36px 20px 28px; }
+      .layout { padding: 0 20px 56px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════════ TOP BAR -->
-<header class="topbar">
-  <div class="topbar-logo">H</div>
-  <div>
-    <div class="topbar-title">Huddl</div>
-    <div class="topbar-sub">Community for Parents</div>
+<!-- ═══════════════════════ NAV ═══════════════════════ -->
+<nav class="site-nav" aria-label="Site navigation">
+  <a href="/" class="nav-logo" aria-label="huddl home">
+    <img src="/images/logo.svg" alt="huddl" />
+  </a>
+  <div class="nav-links">
+    <a href="/#how-it-helps">How it helps</a>
+    <a href="/#trust">Built for trust</a>
+    <a href="/#community">Parents say</a>
+    <a href="/#waitlist" class="nav-cta">Join your community</a>
   </div>
-  <nav class="topbar-links">
-    <a href="privacy-policy.html">Privacy Policy</a>
-    <a href="terms-of-service.html" class="active">Terms of Service</a>
-  </nav>
-</header>
+</nav>
 
-<!-- ═══════════════════════════════════════════════════════ LAYOUT -->
+<!-- ═══════════════════════ PAGE HEADER ═══════════════════════ -->
+<div class="page-header">
+  <span class="page-eyebrow">Legal</span>
+  <h1 class="page-title">Terms of Service</h1>
+  <p class="page-meta">Last updated: May 2026 &nbsp;·&nbsp; Version 2.1 &nbsp;·&nbsp; Governing law: England &amp; Wales</p>
+  <div class="warning-box">
+    <div class="warning-box-icon">⚠️</div>
+    <div class="warning-box-body"><strong>Please read these Terms carefully.</strong> By accessing, downloading, installing, or using huddl you acknowledge that you have read, understood, and agree to be legally bound by these Terms. These Terms include comprehensive limitations of liability, disclaimers of warranties, indemnification obligations, and dispute-resolution provisions that materially affect your legal rights.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ LAYOUT ═══════════════════════ -->
 <div class="layout">
 
-  <!-- ── Sidebar TOC ── -->
-  <aside class="sidebar">
+  <!-- Sidebar TOC -->
+  <aside class="sidebar" aria-label="Table of contents">
     <div class="toc-label">Contents</div>
-    <a class="toc-item" href="#s1">1. Acceptance of Terms</a>
-    <a class="toc-item" href="#s2">2. Description of Service</a>
-    <a class="toc-item" href="#s3">3. User Eligibility</a>
-    <a class="toc-item" href="#s4">4. User Responsibilities</a>
-    <a class="toc-item" href="#s5">5. Limitation of Liability</a>
-    <a class="toc-item" href="#s6">6. Indemnification</a>
-    <a class="toc-item" href="#s7">7. Payment Terms</a>
-    <a class="toc-item" href="#s8">8. Privacy &amp; Data</a>
-    <a class="toc-item" href="#s9">9. Termination</a>
-    <a class="toc-item" href="#s10">10. Intellectual Property</a>
-    <a class="toc-item" href="#s11">11. Dispute Resolution</a>
-    <a class="toc-item" href="#s12">12. AI Features</a>
-    <a class="toc-item" href="#s13">13. Marketplace</a>
-    <a class="toc-item" href="#s14">14. Events &amp; Meetups</a>
-    <a class="toc-item" href="#s15">15. Third-Party Services</a>
-    <a class="toc-item" href="#s16">16. Modifications</a>
-    <a class="toc-item" href="#s17">17. Miscellaneous</a>
-    <a class="toc-item voice" href="#s18">18. Voice Messages &#127908;</a>
+    <a class="toc-link" href="#s1">1. Acceptance</a>
+    <a class="toc-link" href="#s2">2. Description of Service</a>
+    <a class="toc-link" href="#s3">3. Eligibility</a>
+    <a class="toc-link" href="#s4">4. User Conduct</a>
+    <a class="toc-link" href="#s5">5. Limitation of Liability</a>
+    <a class="toc-link" href="#s6">6. Indemnification</a>
+    <a class="toc-link" href="#s7">7. Payment Terms</a>
+    <a class="toc-link" href="#s8">8. Privacy &amp; Data</a>
+    <a class="toc-link" href="#s9">9. Termination</a>
+    <a class="toc-link" href="#s10">10. Intellectual Property</a>
+    <a class="toc-link" href="#s11">11. Dispute Resolution</a>
+    <a class="toc-link" href="#s12">12. AI Features</a>
+    <a class="toc-link" href="#s13">13. Marketplace</a>
+    <a class="toc-link" href="#s14">14. Events &amp; Meetups</a>
+    <a class="toc-link" href="#s15">15. Third-Party Services</a>
+    <a class="toc-link" href="#s16">16. Modifications</a>
+    <a class="toc-link" href="#s17">17. Miscellaneous</a>
+    <a class="toc-link voice" href="#s18">18. Voice Messages 🎙️</a>
   </aside>
 
-  <!-- ── Main ── -->
-  <main class="main">
+  <!-- Main content -->
+  <main class="legal-content" id="main-content">
 
-    <!-- Version card -->
-    <div class="version-card">
-      <div class="version-icon">📋</div>
-      <div>
-        <div class="version-title">Terms of Service — Version 2.1</div>
-        <div class="version-sub">Last updated: May 2026 &nbsp;·&nbsp; Governing law: England &amp; Wales &nbsp;·&nbsp; Operator: Cruzen Ltd</div>
-      </div>
-    </div>
-
-    <!-- Warning banner -->
-    <div class="warning-banner">
-      <div class="warning-icon">⚠️</div>
-      <div class="warning-text">
-        <strong>PLEASE READ THESE TERMS CAREFULLY.</strong> By accessing, downloading, installing, or using Huddl you acknowledge that you have read, understood, and agree to be legally bound by these Terms. These Terms include comprehensive limitations of liability, disclaimers of warranties, indemnification obligations, and dispute-resolution provisions that materially affect your legal rights. <strong>If you do not agree, you must not use the Service.</strong>
-      </div>
-    </div>
-
-    <!-- Compliance badges -->
     <div class="badges">
-      <span class="badge badge-orange">🏛️ England &amp; Wales Law</span>
-      <span class="badge badge-teal">🔒 UK GDPR Compliant</span>
-      <span class="badge badge-blue">📱 RECORD_AUDIO Disclosed</span>
-      <span class="badge badge-orange">🛡️ COPPA Aware</span>
-      <span class="badge badge-teal">🎙️ Voice Consent Required</span>
+      <span class="badge badge-blue">🏛️ England &amp; Wales Law</span>
+      <span class="badge badge-blue">🔒 UK GDPR Compliant</span>
+      <span class="badge badge-orange">📱 RECORD_AUDIO Disclosed</span>
+      <span class="badge badge-sage">🎙️ Voice Consent Required — §18</span>
     </div>
 
-    <!-- ─── SECTION 1 ─── -->
-    <div class="section" id="s1">
+    <!-- S1 -->
+    <section class="section" id="s1">
       <h2>1. Acceptance of Terms</h2>
-      <div class="section-body">By accessing, downloading, installing, or using the Huddl mobile application and all related services (<strong>"Service"</strong>, <strong>"App"</strong>, <strong>"Platform"</strong>), you unconditionally agree to be bound by these Terms of Service (<strong>"Terms"</strong>, <strong>"Agreement"</strong>). If you do not agree to these Terms in their entirety, you must immediately cease all use of the Service and uninstall the application.
+      <div class="section-body">By accessing, downloading, installing, or using the huddl mobile application and all related services (<strong>"Service"</strong>, <strong>"App"</strong>, <strong>"Platform"</strong>), you unconditionally agree to be bound by these Terms of Service (<strong>"Terms"</strong>, <strong>"Agreement"</strong>). If you do not agree to these Terms in their entirety, you must immediately cease all use of the Service and uninstall the application.
 
-These Terms constitute a legally binding agreement between you (<strong>"User"</strong>, <strong>"you"</strong>, <strong>"your"</strong>) and Cruzen Ltd (<strong>"Company"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, <strong>"our"</strong>), a company registered in England and Wales. Your continued use of the Service, even after modifications to these Terms, constitutes your complete acceptance and agreement to comply with all provisions herein.
+These Terms constitute a legally binding agreement between you (<strong>"User"</strong>, <strong>"you"</strong>, <strong>"your"</strong>) and Cruzen Ltd (<strong>"Company"</strong>, <strong>"we"</strong>, <strong>"us"</strong>, <strong>"our"</strong>), a company registered in England and Wales (Company No. 16694711). Your continued use of the Service, even after modifications to these Terms, constitutes your complete acceptance and agreement to comply with all provisions herein.
 
-By using this Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy, which is incorporated herein by reference.</div>
-    </div>
+By using this Service, you acknowledge that you have read, understood, and agree to be bound by these Terms and our <a href="/privacy-policy.html">Privacy Policy</a>, which is incorporated herein by reference.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 2 ─── -->
-    <div class="section" id="s2">
+    <!-- S2 -->
+    <section class="section" id="s2">
       <h2>2. Description of Service</h2>
       <div class="section-body">Huddl is a community-based platform that provides various features including but not limited to:
 • Social networking for parents and families
 • Local community groups and connections (borough-specific)
 • Direct messaging and group communications
 • <strong>Voice messages</strong> (short audio recordings sent within group chats and direct messages — requires microphone permission and explicit user consent; see Section 18)
-• Event organization and meetup coordination
+• Event organisation and meetup coordination
 • Marketplace for buying and selling children's items
 • AI-powered recommendations and matching
 • Subscription management and premium features
@@ -308,11 +373,11 @@ By using this Service, you acknowledge that you have read, understood, and agree
 <strong>THE SERVICE IS PROVIDED STRICTLY "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, OR AVAILABILITY.</strong>
 
 We reserve the absolute right to modify, suspend, restrict, or discontinue any aspect, feature, or functionality of the Service at any time, with or without notice, for any reason or no reason, without liability to you or any third party.</div>
-    </div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 3 ─── -->
-    <div class="section" id="s3">
+    <!-- S3 -->
+    <section class="section" id="s3">
       <h2>3. User Eligibility and Account Security</h2>
       <div class="section-body">You represent and warrant that you:
 • Are at least 18 years of age
@@ -322,16 +387,16 @@ We reserve the absolute right to modify, suspend, restrict, or discontinue any a
 • Will maintain the accuracy of such information
 • Will not create multiple accounts or allow others to use your account
 • Will maintain the security and confidentiality of your login credentials
-• Will immediately notify us of any unauthorized use of your account
+• Will immediately notify us of any unauthorised use of your account
 
-<strong>Account Security:</strong> You are solely and exclusively responsible for all activities conducted through your account, regardless of whether such activities were authorized by you. We are not liable for any loss or damage arising from unauthorized account access due to your failure to maintain account security.
+<strong>Account Security:</strong> You are solely and exclusively responsible for all activities conducted through your account, regardless of whether such activities were authorised by you. We are not liable for any loss or damage arising from unauthorised account access due to your failure to maintain account security.
 
 Users who provide false information, violate eligibility requirements, or breach account security obligations will have their accounts immediately terminated without refund or recourse.</div>
-    </div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 4 ─── -->
-    <div class="section" id="s4">
+    <!-- S4 -->
+    <section class="section" id="s4">
       <h2>4. User Responsibilities, Conduct, and Prohibited Activities</h2>
       <div class="section-body"><strong>a) General Conduct Requirements:</strong>
 You agree to:
@@ -355,9 +420,9 @@ You must NOT:
 • Violate any applicable privacy laws or regulations
 • <strong>Record voice messages without having provided explicit consent via the in-app consent toggle (Profile → Privacy &amp; Security → Voice Messages)</strong>
 • Send voice messages containing unlawful, abusive, harassing, threatening, or otherwise prohibited content
-• Attempt to intercept, copy, or re-distribute voice messages sent by other users outside the Huddl platform
+• Attempt to intercept, copy, or re-distribute voice messages sent by other users outside the huddl platform
 • Use the voice message feature to circumvent content moderation (e.g. conveying through audio what would be prohibited in text)
-• Attempt to gain unauthorized access to the Service or other users' accounts
+• Attempt to gain unauthorised access to the Service or other users' accounts
 • Use automated systems, scripts, bots, or web scrapers to access the Service
 • Reverse engineer, decompile, or attempt to extract source code
 • Introduce viruses, malware, or harmful code
@@ -370,9 +435,9 @@ You must NOT:
 
 <strong>c) Content Ownership and Licensing:</strong>
 • You retain ownership of content you create
-• You grant Cruzen Ltd a worldwide, non-exclusive, royalty-free, perpetual, irrevocable, transferable, sublicensable license to use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, perform, and display your content in any media formats and channels
-• You represent and warrant that you have all necessary rights to grant this license
-• You must not post copyrighted material without proper authorization
+• You grant Cruzen Ltd a worldwide, non-exclusive, royalty-free, perpetual, irrevocable, transferable, sublicensable licence to use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, perform, and display your content in any media formats and channels
+• You represent and warrant that you have all necessary rights to grant this licence
+• You must not post copyrighted material without proper authorisation
 • You waive all moral rights in your content to the maximum extent permitted by law
 
 <strong>d) Consequences of Violation:</strong>
@@ -383,11 +448,11 @@ Violation of these terms may result in:
 • Reporting to relevant authorities for illegal activity
 • Legal action including claims for damages
 • Permanent ban from creating new accounts</div>
-    </div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 5 ─── -->
-    <div class="section" id="s5">
+    <!-- S5 -->
+    <section class="section" id="s5">
       <h2>5. Comprehensive Limitation of Liability</h2>
       <div class="section-body"><strong>TO THE MAXIMUM EXTENT PERMITTED UNDER APPLICABLE LAW:</strong>
 
@@ -403,12 +468,10 @@ CRUZEN LTD, ITS PARENT COMPANIES, SUBSIDIARIES, AFFILIATES, DIRECTORS, OFFICERS,
 • Bodily injury or death arising from use of the Service
 • Defamation, libel, or slander arising from user-generated content
 • Financial losses from marketplace transactions
-• Losses arising from unauthorized account access
-• Damages resulting from reliance on information obtained through the Service
+• Losses arising from unauthorised account access
 • Service interruptions, errors, bugs, or technical failures
 • Security breaches, data breaches, or hacking incidents
 • Third-party actions, services, content, or links
-• Decisions or actions taken based on Service content
 • Loss of use, data, or other intangibles
 • Any matter beyond our reasonable control
 
@@ -418,7 +481,6 @@ THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY
 • Warranties that the Service will be uninterrupted, error-free, secure, or virus-free
 • Warranties regarding accuracy, reliability, or completeness of content
 • Warranties that defects will be corrected
-• Warranties regarding results from Service use
 
 <strong>c) USER INTERACTIONS AND SAFETY:</strong>
 • You acknowledge and accept that you use the Service entirely at your own risk
@@ -426,53 +488,20 @@ THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT ANY WARRANTIES OF ANY
 • We do NOT verify user identities, backgrounds, or credentials
 • We do NOT guarantee the accuracy of user-provided information
 • You are solely responsible for verifying information and identities
-• You must exercise appropriate caution when meeting other users
 • Always meet in public places and inform others of your whereabouts
-• We are NOT liable for harm arising from interactions between users
-• Report suspicious behavior, but understand we cannot guarantee timely response or action
 
-<strong>d) AI AND ALGORITHMIC RECOMMENDATIONS:</strong>
-• AI-generated content, recommendations, and matches are provided without warranty
-• We are NOT liable for inaccurate, inappropriate, or harmful AI outputs
-• AI features are experimental and may produce unexpected results
-• You must independently verify all AI-generated information
-
-<strong>e) MARKETPLACE AND TRANSACTIONS:</strong>
-• We are NOT a party to transactions between users
-• We do NOT verify item condition, authenticity, or legality
-• We are NOT liable for fraud, disputes, or transaction failures
-• Users bear all risks of marketplace transactions
-• We do NOT provide buyer or seller protections
-
-<strong>f) THIRD-PARTY CONTENT AND SERVICES:</strong>
-• We are NOT responsible for third-party websites linked from the app
-• We do NOT endorse or guarantee third-party products or services
-• You access third-party services at your own risk
-
-<strong>g) MAXIMUM LIABILITY CAP:</strong>
+<strong>d) MAXIMUM LIABILITY CAP:</strong>
 TO THE EXTENT LIABILITY CANNOT BE EXCLUDED BY LAW, OUR TOTAL AGGREGATE LIABILITY FOR ALL CLAIMS ARISING FROM OR RELATED TO THE SERVICE SHALL NOT EXCEED THE LESSER OF:
 (i) The total amount you paid to Cruzen Ltd for the Service in the 12 months immediately preceding the claim; OR
 (ii) £100 (one hundred British pounds sterling)
 
-<strong>h) EXCLUSIONS AND LIMITATIONS APPLY TO ALL CLAIMS:</strong>
-These limitations apply regardless of:
-• The legal theory of liability (contract, tort, negligence, strict liability, or otherwise)
-• Whether we were advised of the possibility of such damages
-• Whether the limited remedy fails of its essential purpose
-• Any failure of any agreed or other remedy
-
-<strong>i) ACKNOWLEDGMENT:</strong>
-BY USING THIS SERVICE, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT:
-• You have carefully read and understood this limitation of liability
-• You voluntarily and knowingly assume all risks associated with using the Service
-• These limitations are reasonable and fair given the free or low-cost nature of the Service
-• You waive any rights you may have to bring claims against Company Parties
-• This section shall survive termination of your account and these Terms</div>
-    </div>
+<strong>e) ACKNOWLEDGMENT:</strong>
+BY USING THIS SERVICE, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT YOU HAVE CAREFULLY READ AND UNDERSTOOD THIS LIMITATION OF LIABILITY AND VOLUNTARILY ASSUME ALL RISKS ASSOCIATED WITH USING THE SERVICE.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 6 ─── -->
-    <div class="section" id="s6">
+    <!-- S6 -->
+    <section class="section" id="s6">
       <h2>6. Comprehensive Indemnification</h2>
       <div class="section-body">You agree to indemnify, defend, and hold harmless Cruzen Ltd and all Company Parties from and against any and all claims, damages, obligations, losses, liabilities, costs, debts, expenses (including but not limited to attorney's fees and legal costs), fines, penalties, and judgments arising from or related to:
 
@@ -482,115 +511,85 @@ BY USING THIS SERVICE, YOU EXPRESSLY ACKNOWLEDGE AND AGREE THAT:
 • Any content you create, post, transmit, or make available through the Service
 • Your conduct or interactions with other users, whether online or offline
 • Any transaction or dispute in the marketplace
-• Any event or meetup you organize or attend
+• Any event or meetup you organise or attend
 • Any claim that your content caused damage to a third party
 • Your failure to maintain account security
 • Any negligent or wrongful conduct by you or anyone using your account
-• Any misrepresentation made by you
 • Any harm to minors arising from your actions
-• Any defamatory, libelous, or slanderous statements you make
-• Your use of AI features or reliance on AI recommendations
 
-This indemnification obligation is unlimited in amount and duration, and survives termination of your account, termination of these Terms, and discontinuation of the Service. You agree to cooperate fully in the defense of any claim. We reserve the right to assume exclusive defense and control of any matter subject to indemnification, in which case you agree to cooperate with our defense of such claim.</div>
-    </div>
+This indemnification obligation is unlimited in amount and duration, and survives termination of your account and discontinuation of the Service.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 7 ─── -->
-    <div class="section" id="s7">
+    <!-- S7 -->
+    <section class="section" id="s7">
       <h2>7. Payment Terms and Subscription Management</h2>
       <div class="section-body"><strong>a) Subscription Tiers:</strong>
 • Welcome Tier (Free): Basic access with limited features
 • Neighbour Tier (Paid): Full community access with AI tools
 • Circle Tier (Paid): Unlimited access with exclusive AI features
 
-Exact pricing, features, and limitations are displayed in-app and may be modified at our discretion.
-
 <strong>b) Payment Processing:</strong>
 • All payments are processed securely through Stripe or other third-party payment processors
-• You authorize us to charge your payment method for all fees
+• You authorise us to charge your payment method for all fees
 • All prices are in British Pounds Sterling (GBP) and include applicable VAT where required
 • Prices may change at any time; changes apply to subsequent billing periods
 
 <strong>c) Auto-Renewal and Billing:</strong>
 • Subscriptions automatically renew at the end of each billing period unless cancelled
 • Monthly subscriptions renew every 30 days; annual subscriptions renew every 365 days
-• You will be charged the then-current subscription price upon renewal
 • You are responsible for all charges until cancellation takes effect
 
 <strong>d) Cancellation and Refunds:</strong>
 • You may cancel your subscription at any time via Profile → Settings → Subscription Management
 • Cancellation takes effect at the end of the current billing period
-• NO REFUNDS OR CREDITS will be provided for:
-  — Partial subscription periods
-  — Unused time on subscriptions
-  — Account termination for Terms violations
-  — Dissatisfaction with the Service
-  — Service changes or discontinuation
-  — Any other reason
+• <strong>NO REFUNDS OR CREDITS</strong> will be provided for partial subscription periods, unused time, account termination for Terms violations, dissatisfaction with the Service, or any other reason
 • All sales are final and non-refundable
-• You remain liable for all charges incurred prior to cancellation
 
 <strong>e) Failed Payments:</strong>
 • If payment fails, we may suspend or terminate your account
 • You remain liable for all outstanding amounts plus collection costs
-• We may use debt collection services for unpaid amounts
 
 <strong>f) In-App Purchases:</strong>
-• Purchases made through app stores (Apple App Store, Google Play Store) are subject to the respective store's terms and refund policies
-• We have no control over app store billing or refunds
-• Contact the respective app store for billing disputes
+Purchases made through app stores (Apple App Store, Google Play Store) are subject to the respective store's terms and refund policies. Contact the respective app store for billing disputes.
 
 <strong>g) Taxes:</strong>
-• You are responsible for all applicable taxes, duties, and assessments
-• If we are required to collect or pay taxes, they will be added to your subscription fee</div>
-    </div>
+You are responsible for all applicable taxes, duties, and assessments.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 8 ─── -->
-    <div class="section" id="s8">
+    <!-- S8 -->
+    <section class="section" id="s8">
       <h2>8. Privacy, Data Protection, and Security</h2>
       <div class="section-body"><strong>a) Privacy Policy:</strong>
-• Our Privacy Policy is incorporated into these Terms by reference
-• By using the Service, you consent to all data practices described in our Privacy Policy
-• You acknowledge that we collect, process, and share data as described
-• Read our full <a href="privacy-policy.html" style="color:var(--primary);font-weight:600;">Privacy Policy</a> for detailed information
+Our <a href="/privacy-policy.html">Privacy Policy</a> is incorporated into these Terms by reference. By using the Service, you consent to all data practices described in our Privacy Policy.
 
-<strong>b) Data Collection and Use:</strong>
-• We collect personal information, location data, usage data, and content you create
-• We use data to provide, improve, and secure the Service
-• We may share data with service providers, law enforcement, or as required by law
-• You grant us broad rights to use and share your data as described in the Privacy Policy
-
-<strong>c) GDPR and Data Protection Compliance:</strong>
+<strong>b) GDPR and Data Protection Compliance:</strong>
 • We comply with UK GDPR, EU GDPR, and Data Protection Act 2018
 • You have rights to access, rectify, erase, and port your data
 • Exercise rights via privacy@huddl.app or in-app settings
 • We respond to valid requests within 30 days
 
-<strong>d) No Guarantee of Security:</strong>
+<strong>c) No Guarantee of Security:</strong>
 • While we implement security measures, we CANNOT GUARANTEE absolute security
 • You acknowledge that no system is completely secure
-• We are NOT LIABLE for security breaches, unauthorized access, or data loss
+• We are NOT LIABLE for security breaches, unauthorised access, or data loss
 • You use the Service at your own risk regarding data security
 
-<strong>e) Communications Monitoring:</strong>
-• We reserve the right to monitor, record, and review all communications on the Service
-• This includes messages, posts, and other content
-• Monitoring may be used for safety, compliance, and quality purposes
+<strong>d) Communications Monitoring:</strong>
+• We reserve the right to monitor, record, and review all communications on the Service for safety, compliance, and quality purposes
 • You consent to such monitoring by using the Service
 
-<strong>f) Child Safety and COPPA Compliance:</strong>
+<strong>e) Child Safety and COPPA Compliance:</strong>
 • The Service is NOT intended for children under 18
 • We do NOT knowingly collect data from children under 18
-• Do NOT share personal information of minors (full names, addresses, schools, photos that identify them)
-• You must obtain consent before posting photos or information about other people's children
-• Report any child safety concerns immediately
-• We may report suspected child abuse to authorities</div>
-    </div>
+• Do NOT share personal information of minors
+• Report any child safety concerns immediately</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 9 ─── -->
-    <div class="section" id="s9">
+    <!-- S9 -->
+    <section class="section" id="s9">
       <h2>9. Termination Rights and Effects</h2>
       <div class="section-body"><strong>a) Termination by You:</strong>
 • You may delete your account at any time via Profile → Settings → Delete Account
@@ -599,330 +598,180 @@ Exact pricing, features, and limitations are displayed in-app and may be modifie
 • No refunds will be provided upon voluntary termination
 
 <strong>b) Termination by Us:</strong>
-We reserve the right to suspend, restrict, or permanently terminate your account immediately, without prior notice, without refund, and without liability, if:
-• You breach any provision of these Terms
-• You violate our Community Guidelines or policies
-• You engage in fraudulent, illegal, or harmful activity
-• You pose a safety or security risk to other users
-• You fail to pay subscription fees
-• We suspect unauthorized account access
-• We are required to do so by law or court order
-• We decide to discontinue the Service
-• For any reason or no reason at our sole discretion
+We reserve the right to suspend, restrict, or permanently terminate your account immediately, without prior notice, without refund, and without liability, if you breach any provision of these Terms, engage in fraudulent or illegal activity, pose a safety or security risk, fail to pay subscription fees, or for any reason at our sole discretion.
 
 <strong>c) Effects of Termination:</strong>
-Upon termination, immediately and automatically:
-• Your right to access and use the Service ceases permanently
-• Your account and all associated data may be deleted
-• All subscriptions and purchases are forfeited without refund
-• All content you created may be removed (subject to our license rights)
-• You must immediately cease all use of the Service and uninstall the application
-• You remain liable for all obligations incurred prior to termination
+Upon termination, your right to access and use the Service ceases permanently, your account and all associated data may be deleted, all subscriptions and purchases are forfeited without refund, and you must immediately uninstall the application.
 
 <strong>d) Survival of Terms:</strong>
-The following provisions survive termination:
-• Limitation of Liability
-• Indemnification
-• Intellectual Property Rights
-• Dispute Resolution
-• Governing Law
-• Any other provisions that by their nature should survive
-
-<strong>e) No Obligation to Retain Data:</strong>
-• We have NO OBLIGATION to retain, provide, or restore your data after termination
-• Back up any important data before account deletion
-• We may delete all data immediately upon termination or retain it as described in our Privacy Policy</div>
-    </div>
+Limitation of Liability, Indemnification, Intellectual Property Rights, Dispute Resolution, Governing Law, and any other provisions that by their nature should survive, survive termination.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 10 ─── -->
-    <div class="section" id="s10">
+    <!-- S10 -->
+    <section class="section" id="s10">
       <h2>10. Intellectual Property Rights</h2>
       <div class="section-body"><strong>a) Company Intellectual Property:</strong>
-All content, features, functionality, software, code, designs, graphics, logos, trademarks, service marks, and other materials provided as part of the Service (excluding user-generated content) are owned exclusively by Cruzen Ltd or our licensors and are protected by:
-• Copyright laws (UK, EU, US, and international)
-• Trademark laws
-• Patent laws
-• Trade secret laws
-• Other intellectual property rights and laws
+All content, features, functionality, software, code, designs, graphics, logos, trademarks, and other materials provided as part of the Service (excluding user-generated content) are owned exclusively by Cruzen Ltd or our licensors and are protected by copyright, trademark, patent, trade secret, and other intellectual property laws.
 
-You are granted only a limited, non-exclusive, non-transferable, revocable license to access and use the Service for personal, non-commercial purposes, strictly in accordance with these Terms. You have NO OTHER RIGHTS in the Service or Company intellectual property.
+You are granted only a limited, non-exclusive, non-transferable, revocable licence to access and use the Service for personal, non-commercial purposes, strictly in accordance with these Terms.
 
 <strong>b) Restrictions on Use:</strong>
-You must NOT:
-• Copy, modify, reproduce, or create derivative works of the Service
-• Distribute, sell, lease, license, or sublicense the Service
-• Reverse engineer, decompile, disassemble, or attempt to extract source code
-• Remove, alter, or obscure any copyright, trademark, or proprietary notices
-• Use the Service or Company intellectual property for commercial purposes
-• Frame, mirror, or inline link to the Service without written permission
-• Use automated tools to access, scrape, or index the Service
-• Build a competitive product or service
-• Access the Service to build a similar or competing service
+You must NOT copy, modify, reproduce, reverse engineer, decompile, remove copyright notices, use the Service for commercial purposes, frame or mirror the Service without written permission, or use automated tools to access, scrape, or index the Service.
 
-<strong>c) User-Generated Content License:</strong>
-By posting, uploading, or submitting content to the Service, you grant Cruzen Ltd and our affiliates:
-• A worldwide, non-exclusive, royalty-free, fully paid, transferable, sublicensable, perpetual, irrevocable license
-• To use, reproduce, modify, adapt, publish, translate, create derivative works from, distribute, publicly perform, publicly display, and incorporate your content into other works in any format or medium now known or later developed
-• This license survives termination of your account
+<strong>c) User-Generated Content Licence:</strong>
+By posting content to the Service, you grant Cruzen Ltd a worldwide, non-exclusive, royalty-free, fully paid, transferable, sublicensable, perpetual, irrevocable licence to use, reproduce, modify, adapt, publish, translate, distribute, and display your content in any format or medium. This licence survives termination of your account.
 
 <strong>d) Trademark Notice:</strong>
-"Huddl" and associated logos are trademarks or registered trademarks of Cruzen Ltd. Unauthorized use is strictly prohibited and may result in legal action.
+"huddl" and associated logos are trademarks or registered trademarks of Cruzen Ltd. Unauthorised use is strictly prohibited.
 
-<strong>e) DMCA and Copyright Infringement:</strong>
-• We respect intellectual property rights
-• Report copyright infringement to legal@huddl.app
-• We will respond to valid DMCA notices
-• Repeat infringers will have accounts terminated
-• False DMCA claims may result in liability under applicable law</div>
-    </div>
+<strong>e) Copyright Infringement:</strong>
+Report copyright infringement to legal@huddl.app. We will respond to valid DMCA notices. Repeat infringers will have accounts terminated.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 11 ─── -->
-    <div class="section" id="s11">
+    <!-- S11 -->
+    <section class="section" id="s11">
       <h2>11. Dispute Resolution, Governing Law, and Jurisdiction</h2>
       <div class="section-body"><strong>a) Governing Law:</strong>
-These Terms and any disputes arising from or relating to the Service shall be governed by and construed in accordance with the laws of England and Wales, without regard to conflict of law principles. The United Nations Convention on Contracts for the International Sale of Goods does not apply.
+These Terms and any disputes arising from or relating to the Service shall be governed by and construed in accordance with the laws of England and Wales, without regard to conflict of law principles.
 
 <strong>b) Exclusive Jurisdiction:</strong>
-You irrevocably agree that the courts of England and Wales shall have exclusive jurisdiction to settle any dispute or claim arising out of or in connection with these Terms, the Service, or your use thereof. You waive any objection to venue or jurisdiction in these courts.
+You irrevocably agree that the courts of England and Wales shall have exclusive jurisdiction to settle any dispute or claim arising out of or in connection with these Terms, the Service, or your use thereof.
 
 <strong>c) Mandatory Informal Dispute Resolution:</strong>
-Before initiating any legal proceedings, you agree to first attempt to resolve the dispute informally by contacting legal@huddl.app with:
-• A detailed description of the dispute
-• Your account information
-• The resolution you seek
-• Supporting documentation
-
-We will attempt good faith resolution for 60 days. Only after this period may you initiate formal proceedings.
+Before initiating any legal proceedings, you agree to first contact legal@huddl.app with a detailed description of the dispute, your account information, and the resolution you seek. We will attempt good faith resolution for 60 days.
 
 <strong>d) Class Action and Jury Trial Waiver:</strong>
-TO THE MAXIMUM EXTENT PERMITTED BY LAW, YOU AGREE THAT:
-• All disputes must be brought individually, not as a class action, collective action, or representative proceeding
-• You waive any right to participate in a class action or class-wide arbitration
-• You waive any right to a jury trial
-• You may only seek individualized relief
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, ALL DISPUTES MUST BE BROUGHT INDIVIDUALLY. You waive any right to participate in a class action, collective action, or representative proceeding.
 
 <strong>e) Limitation on Time to Bring Claims:</strong>
-Any claim or cause of action arising from or related to the Service or these Terms must be filed within ONE (1) YEAR after the claim arose. After this period, such claims are permanently barred.
+Any claim arising from or related to the Service or these Terms must be filed within ONE (1) YEAR after the claim arose. After this period, such claims are permanently barred.
 
 <strong>f) Legal Fees:</strong>
-If we prevail in any legal proceeding related to these Terms, you agree to reimburse us for all legal fees, costs, and expenses incurred, including attorney's fees.
-
-<strong>g) Equitable Relief:</strong>
-You acknowledge that breach of these Terms may cause irreparable harm to Cruzen Ltd for which monetary damages would be inadequate. Therefore, we are entitled to seek equitable relief, including injunctive relief, without the need to post bond, in addition to all other remedies available at law or in equity.</div>
-    </div>
+If we prevail in any legal proceeding related to these Terms, you agree to reimburse us for all legal fees, costs, and expenses incurred.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 12 ─── -->
-    <div class="section" id="s12">
+    <!-- S12 -->
+    <section class="section" id="s12">
       <h2>12. AI Features and Algorithmic Content</h2>
       <div class="section-body"><strong>a) AI-Powered Features:</strong>
-The Service includes AI-powered features such as:
-• Matchmaking and user recommendations
-• Content recommendations (groups, events, marketplace items)
-• Event and listing generation
-• Offer and deal personalization
-• Automated moderation and content filtering
-• Predictive suggestions and insights
+The Service includes AI-powered features such as matchmaking and user recommendations, content recommendations, event and listing generation, automated moderation, and predictive suggestions and insights.
 
 <strong>b) No Warranty for AI Accuracy:</strong>
-• AI-generated content and recommendations are provided "as is" without warranty of accuracy, reliability, or completeness
-• AI features may produce unexpected, inappropriate, or incorrect results
-• We are NOT LIABLE for any reliance on AI-generated content
-• You must independently verify all AI recommendations and outputs
-• AI models are constantly evolving and results may change
+AI-generated content and recommendations are provided "as is" without warranty of accuracy, reliability, or completeness. AI features may produce unexpected, inappropriate, or incorrect results. We are NOT LIABLE for any reliance on AI-generated content. You must independently verify all AI recommendations and outputs.
 
 <strong>c) Data Used for AI Training:</strong>
-• Your content and usage data may be used to train and improve AI models
-• By using the Service, you consent to this use
-• You cannot opt out of AI data usage while using AI features
+Your content and usage data may be used to train and improve AI models. By using the Service, you consent to this use.
 
 <strong>d) No Human Review Guarantee:</strong>
-• AI moderation is automated; human review is not guaranteed
-• We may not detect all prohibited content
-• We are NOT LIABLE for harm from content that AI moderation fails to detect</div>
-    </div>
+AI moderation is automated; human review is not guaranteed. We may not detect all prohibited content. We are NOT LIABLE for harm from content that AI moderation fails to detect.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 13 ─── -->
-    <div class="section" id="s13">
+    <!-- S13 -->
+    <section class="section" id="s13">
       <h2>13. Marketplace Terms and Transactions</h2>
       <div class="section-body"><strong>a) Marketplace Function:</strong>
-• The marketplace allows users to list, buy, and sell children's items
-• Cruzen Ltd is NOT a party to transactions; we merely provide the platform
-• We do NOT verify sellers, buyers, items, or information
-• We do NOT handle payments for marketplace transactions
+The marketplace allows users to list, buy, and sell children's items. Cruzen Ltd is NOT a party to transactions; we merely provide the platform. We do NOT verify sellers, buyers, items, or information, and we do NOT handle payments for marketplace transactions.
 
 <strong>b) User Responsibilities:</strong>
-• Sellers are solely responsible for item descriptions, condition, legality, and delivery
-• Buyers are solely responsible for verifying items, meeting sellers, and payment
-• You must comply with all applicable laws regarding sales and taxes
+Sellers are solely responsible for item descriptions, condition, legality, and delivery. Buyers are solely responsible for verifying items, meeting sellers, and payment.
 
 <strong>c) Prohibited Items:</strong>
-You must NOT list:
-• Illegal items or items that violate laws
-• Stolen or counterfeit goods
-• Items that infringe intellectual property rights
-• Unsafe or recalled products
-• Weapons, drugs, or controlled substances
+You must NOT list illegal items, stolen or counterfeit goods, items that infringe intellectual property rights, unsafe or recalled products, weapons, drugs, or controlled substances.
 
 <strong>d) No Liability for Transactions:</strong>
-• We are NOT LIABLE for fraud, disputes, non-delivery, item condition, or any transaction issues
-• We do NOT provide buyer or seller protections
-• We do NOT mediate disputes between users
-• We do NOT offer refunds or compensation for marketplace transactions
-• All marketplace transactions are conducted AT YOUR OWN RISK
+We are NOT LIABLE for fraud, disputes, non-delivery, item condition, or any transaction issues. All marketplace transactions are conducted AT YOUR OWN RISK.
 
 <strong>e) Safety Recommendations:</strong>
-• Meet in public places
-• Inspect items before payment
-• Use secure payment methods
-• Report suspicious activity</div>
-    </div>
+Meet in public places · Inspect items before payment · Use secure payment methods · Report suspicious activity.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 14 ─── -->
-    <div class="section" id="s14">
+    <!-- S14 -->
+    <section class="section" id="s14">
       <h2>14. Events, Meetups, and In-Person Interactions</h2>
-      <div class="section-body"><strong>a) Event Organization:</strong>
-• Users may create and organize events and meetups
-• Event organizers are solely responsible for event planning, safety, and execution
-• We are NOT responsible for events organized through the Service
+      <div class="section-body"><strong>a) Event Organisation:</strong>
+Users may create and organise events and meetups. Event organisers are solely responsible for event planning, safety, and execution. We are NOT responsible for events organised through the Service.
 
-<strong>b) Event Attendance:</strong>
-• Attendees participate in events at their own risk
-• Verify event details and organizer information independently
-• Use caution when attending events with strangers
+<strong>b) No Liability for Events:</strong>
+We are NOT LIABLE for any harm, injury, loss, or damage occurring at events, including personal injury, property damage, emotional distress, or financial loss. We do NOT verify event organisers, venues, or activities and do NOT provide insurance for events.
 
-<strong>c) No Liability for Events:</strong>
-• We are NOT LIABLE for any harm, injury, loss, or damage occurring at events
-• This includes but is not limited to personal injury, property damage, emotional distress, or financial loss
-• We do NOT verify event organizers, venues, or activities
-• We do NOT provide insurance for events
-
-<strong>d) Assumption of Risk:</strong>
-• By attending events, you voluntarily assume all risks
-• You waive all claims against Cruzen Ltd related to event attendance
-• Event organizers and attendees are responsible for their own conduct and safety</div>
-    </div>
+<strong>c) Assumption of Risk:</strong>
+By attending events, you voluntarily assume all risks. You waive all claims against Cruzen Ltd related to event attendance.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 15 ─── -->
-    <div class="section" id="s15">
+    <!-- S15 -->
+    <section class="section" id="s15">
       <h2>15. Third-Party Services, Offers, and Links</h2>
       <div class="section-body"><strong>a) Third-Party Integrations:</strong>
-The Service may integrate with third-party services including:
-• Stripe (payment processing)
-• Firebase (data hosting and authentication)
-• Google Maps (location services)
-• Other service providers
+The Service integrates with Stripe (payment processing), Firebase (data hosting and authentication), Google Maps (location services), and other service providers.
 
 <strong>b) External Links:</strong>
-• The Service may contain links to external websites
-• We do NOT control or endorse linked websites
-• We are NOT LIABLE for content, products, or services on external sites
-• Access external links at your own risk
+The Service may contain links to external websites. We do NOT control or endorse linked websites. We are NOT LIABLE for content, products, or services on external sites. Access external links at your own risk.
 
-<strong>d) Service Provider Liability:</strong>
-• We are NOT LIABLE for actions, errors, or failures of third-party service providers
-• You acknowledge that third-party services may have their own terms and privacy policies
-• Disputes with third parties must be resolved directly with them</div>
-    </div>
+<strong>c) Service Provider Liability:</strong>
+We are NOT LIABLE for actions, errors, or failures of third-party service providers. Disputes with third parties must be resolved directly with them.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 16 ─── -->
-    <div class="section" id="s16">
+    <!-- S16 -->
+    <section class="section" id="s16">
       <h2>16. Modifications to Terms and Service</h2>
       <div class="section-body"><strong>a) Right to Modify Terms:</strong>
-We reserve the right to modify, amend, or update these Terms at any time, for any reason or no reason, at our sole discretion, with or without notice. Changes may include:
-• Adding new restrictions or obligations
-• Removing features or rights
-• Changing liability provisions
-• Modifying pricing or subscription terms
-• Any other modifications whatsoever
+We reserve the right to modify, amend, or update these Terms at any time, for any reason or no reason, at our sole discretion, with or without notice.
 
 <strong>b) Notification of Changes:</strong>
-• We may notify you of changes via email, in-app notification, or by posting updated Terms
-• However, we have NO OBLIGATION to provide notice
-• It is your responsibility to regularly review these Terms
+We may notify you of changes via email, in-app notification, or by posting updated Terms. However, we have NO OBLIGATION to provide notice. It is your responsibility to regularly review these Terms.
 
 <strong>c) Effective Date of Changes:</strong>
-• Changes become effective immediately upon posting or at the date specified
-• Continued use of the Service after changes constitutes your acceptance
-• If you do not agree to changes, you must immediately stop using the Service and delete your account
+Changes become effective immediately upon posting or at the date specified. Continued use of the Service after changes constitutes your acceptance.
 
-<strong>d) No Refunds for Changes:</strong>
-• No refunds will be provided if you disagree with Terms changes
-• Paid subscriptions remain non-refundable regardless of modifications
-
-<strong>e) Service Modifications:</strong>
-We may at any time:
-• Add, modify, or remove features
-• Change pricing or subscription terms
-• Restrict access to certain features or users
-• Discontinue the Service entirely
-• Without notice, liability, or refund obligation</div>
-    </div>
+<strong>d) Service Modifications:</strong>
+We may at any time add, modify, or remove features; change pricing or subscription terms; restrict access; or discontinue the Service entirely — without notice, liability, or refund obligation.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 17 ─── -->
-    <div class="section" id="s17">
+    <!-- S17 -->
+    <section class="section" id="s17">
       <h2>17. Miscellaneous Legal Provisions</h2>
       <div class="section-body"><strong>a) Entire Agreement:</strong>
-These Terms, together with our Privacy Policy and any other legal notices or policies published by us, constitute the entire agreement between you and Cruzen Ltd regarding the Service and supersede all prior or contemporaneous communications, agreements, and understandings, whether written or oral.
+These Terms, together with our Privacy Policy and any other legal notices or policies published by us, constitute the entire agreement between you and Cruzen Ltd regarding the Service.
 
 <strong>b) Severability:</strong>
-If any provision of these Terms is found to be invalid, illegal, or unenforceable by a court of competent jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable. If modification is not possible, the provision shall be severed, and the remaining provisions shall remain in full force and effect.
+If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions shall remain in full force and effect.
 
 <strong>c) No Waiver:</strong>
-Our failure to enforce any right or provision of these Terms shall not constitute a waiver of such right or provision. Any waiver must be in writing and signed by an authorized representative of Cruzen Ltd. No waiver of any term shall be deemed a further or continuing waiver of such term or any other term.
+Our failure to enforce any right or provision of these Terms shall not constitute a waiver of such right or provision.
 
 <strong>d) Assignment:</strong>
-You may NOT assign, transfer, or delegate these Terms or your rights hereunder without our prior written consent. We may freely assign or transfer these Terms and all rights hereunder to any third party without your consent or notice. Any attempted assignment by you in violation of this provision is void.
+You may NOT assign, transfer, or delegate these Terms or your rights hereunder without our prior written consent. We may freely assign these Terms to any third party.
 
 <strong>e) Force Majeure:</strong>
-We are NOT LIABLE for any failure or delay in performance due to causes beyond our reasonable control, including but not limited to acts of God, war, terrorism, riots, embargoes, acts of civil or military authorities, fire, floods, accidents, pandemics, strikes, shortages of transportation, fuel, energy, labor, or materials, or failures of telecommunications or internet infrastructure.
+We are NOT LIABLE for any failure or delay in performance due to causes beyond our reasonable control, including acts of God, war, terrorism, pandemics, or failures of telecommunications or internet infrastructure.
 
-<strong>f) Relationship of Parties:</strong>
-Nothing in these Terms creates any partnership, joint venture, agency, franchise, employment, or fiduciary relationship between you and Cruzen Ltd. You have no authority to bind Cruzen Ltd in any manner.
+<strong>f) Contact Information for Legal Matters:</strong>
+Cruzen Ltd · Legal Department
+167-169 Great Portland Street, London W1W 5PF
+Email: <a href="mailto:legal@huddl.app">legal@huddl.app</a> · Support: <a href="mailto:support@huddl.app">support@huddl.app</a>
 
-<strong>g) Third-Party Beneficiaries:</strong>
-These Terms do not confer any third-party beneficiary rights. No third party may enforce any provision of these Terms.
-
-<strong>h) Headings:</strong>
-Section headings are for convenience only and shall not affect the interpretation of these Terms.
-
-<strong>i) Language:</strong>
-These Terms are drafted in English. Any translation is provided for convenience only. In the event of conflict between English and translated versions, the English version prevails.
-
-<strong>j) Independent Investigation:</strong>
-You acknowledge that you have independently evaluated the desirability of using the Service and are not relying on any representation, warranty, or statement other than as expressly set forth in these Terms.
-
-<strong>k) Contact Information for Legal Matters:</strong>
-Cruzen Ltd
-Legal Department
-Email: <a href="mailto:legal@huddl.app" style="color:var(--primary);font-weight:600;">legal@huddl.app</a>
-Support: <a href="mailto:support@huddl.app" style="color:var(--primary);font-weight:600;">support@huddl.app</a>
-
-For legal notices, service of process, or formal communications, contact legal@huddl.app.
-
-<strong>l) Acknowledgment of Understanding:</strong>
-BY USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ THESE TERMS IN THEIR ENTIRETY, UNDERSTAND THEM, AND AGREE TO BE BOUND BY THEM. YOU FURTHER ACKNOWLEDGE THAT THESE TERMS CONSTITUTE A BINDING LEGAL AGREEMENT BETWEEN YOU AND CRUZEN LTD.
-
-If you do not agree to these Terms, do not use the Service.</div>
-    </div>
+<strong>g) Acknowledgment of Understanding:</strong>
+BY USING THE SERVICE, YOU ACKNOWLEDGE THAT YOU HAVE READ THESE TERMS IN THEIR ENTIRETY, UNDERSTAND THEM, AND AGREE TO BE BOUND BY THEM AS A LEGALLY BINDING AGREEMENT BETWEEN YOU AND CRUZEN LTD.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── SECTION 18 — VOICE MESSAGES ─── -->
-    <div class="section" id="s18">
-      <h2 class="voice-heading">18. Voice Messages — Specific Terms 🎙️</h2>
+    <!-- S18 — VOICE MESSAGES -->
+    <section class="section" id="s18">
+      <h2 class="voice-h2">18. Voice Messages — Specific Terms 🎙️</h2>
 
       <div class="voice-box">
         <div class="voice-box-icon">🎙️</div>
-        <div class="voice-box-content">
-          <div class="voice-box-title">Opt-In Feature — Explicit Consent Required</div>
-          <div class="voice-box-body">Voice messages are <strong>disabled by default</strong>. You must explicitly enable this feature in <strong>Profile → Privacy &amp; Security → Voice Messages</strong> before you can record or send audio. This consent can be withdrawn at any time. Legal basis: <strong>UK GDPR Article 6(1)(a)</strong> — Explicit Consent. See also: <a href="privacy-policy.html#s16" style="color:var(--teal);font-weight:600;">Privacy Policy §16</a>.</div>
+        <div>
+          <div class="voice-box-title">Opt-in only — explicit consent required before use</div>
+          <div class="voice-box-body">Voice messages are <strong>disabled by default</strong>. You must explicitly enable this feature in <strong>Profile → Privacy &amp; Security → Voice Messages</strong>. Enabling the feature constitutes your informed consent to the microphone access and data processing described in <a href="/privacy-policy.html#s16">Privacy Policy §16</a>. Legal basis: <strong>UK GDPR Article 6(1)(a) — Explicit Consent</strong>.</div>
         </div>
       </div>
 
@@ -930,10 +779,10 @@ If you do not agree to these Terms, do not use the Service.</div>
 The voice message feature is disabled by default. You must explicitly enable it in Profile → Privacy &amp; Security → Voice Messages before you can record or send audio messages. Enabling the feature constitutes your informed consent to the microphone access and data processing described in Section 16 of our Privacy Policy.
 
 <strong>b) How Voice Messages Work:</strong>
-• You may record short audio messages and send them within group chats and direct messages on the Huddl platform
-• Recording uses your device microphone (Android permission: <strong>RECORD_AUDIO</strong>; iOS permission: NSMicrophoneUsageDescription)
-• Audio is encoded in <strong>M4A/AAC format</strong> (mobile) or <strong>WebM</strong> (web) at 64 kbps / 16 kHz mono
-• Upon sending, the audio file is uploaded to Firebase Cloud Storage and the temporary local file is deleted
+• You may record short audio messages and send them within group chats and direct messages on the huddl platform
+• Recording uses your device microphone (Android permission: <strong>android.permission.RECORD_AUDIO</strong>; iOS permission: NSMicrophoneUsageDescription)
+• Audio is encoded in M4A/AAC format (mobile) or WebM (web browsers) at 64 kbps / 16 kHz mono
+• Upon sending, the audio file is uploaded to Firebase Cloud Storage and the temporary local file is deleted immediately
 • Sent voice messages are visible to all participants in the conversation they were sent in
 
 <strong>c) Your Responsibilities When Using Voice Messages:</strong>
@@ -954,13 +803,11 @@ The voice message feature is disabled by default. You must explicitly enable it 
 
 <strong>e) Data Retention and Deletion:</strong>
 • Voice messages are retained for the duration of the conversation or until your account is deleted
-• On account deletion, all voice messages stored under your user ID are permanently erased from Firebase Storage
-• See <a href="privacy-policy.html#s16" style="color:var(--teal);font-weight:600;">Privacy Policy Section 16</a> for full details on voice message data handling
+• On account deletion, all voice messages stored under your user ID are permanently erased from Firebase Cloud Storage
+• See <a href="/privacy-policy.html#s16">Privacy Policy Section 16</a> for full details on voice message data handling
 
 <strong>f) No Recording Guarantee:</strong>
-• Cruzen Ltd does not guarantee the delivery, quality, or availability of voice messages
-• Voice messages may be unavailable due to network conditions, device limitations, or Service maintenance
-• We are not liable for voice messages that fail to deliver, are corrupted, or are lost
+Cruzen Ltd does not guarantee the delivery, quality, or availability of voice messages. Voice messages may be unavailable due to network conditions, device limitations, or Service maintenance. We are not liable for voice messages that fail to deliver, are corrupted, or are lost.
 
 <strong>g) Platform-Specific Notes:</strong>
 • On web browsers, voice messages use the WebM format and are subject to browser codec availability
@@ -968,16 +815,15 @@ The voice message feature is disabled by default. You must explicitly enable it 
 • Voice message recording is not available on platforms where microphone access is restricted by the operating system or device policy
 
 <strong>h) Modification or Removal:</strong>
-• We reserve the right to modify, restrict, or remove the voice message feature at any time, with reasonable notice where practicable
-• Material changes to voice message data processing will be notified in accordance with our Privacy Policy update procedure</div>
-    </div>
+We reserve the right to modify, restrict, or remove the voice message feature at any time, with reasonable notice where practicable. Material changes to voice message data processing will be notified in accordance with our Privacy Policy update procedure.</div>
+    </section>
     <div class="section-divider"></div>
 
-    <!-- ─── Acceptance card ─── -->
+    <!-- Acceptance card -->
     <div class="acceptance-card">
-      <h3>⚠️ By using Huddl, you agree to all of the following:</h3>
+      <h3>By using huddl, you agree to all of the following:</h3>
       <ul class="acceptance-list">
-        <li>ALL comprehensive limitations of liability set out above</li>
+        <li>All comprehensive limitations of liability set out above</li>
         <li>Complete disclaimer of all warranties</li>
         <li>Full indemnification of Cruzen Ltd</li>
         <li>Strict no-refund policy on all subscriptions and purchases</li>
@@ -989,29 +835,79 @@ The voice message feature is disabled by default. You must explicitly enable it 
       <p class="acceptance-note">These Terms provide maximum legal protection to Cruzen Ltd. You use the Service entirely at your own risk.</p>
     </div>
 
-    <!-- ─── Contact strip ─── -->
-    <div class="contact-strip">
-      <h4>Contact Cruzen Ltd</h4>
-      <div class="contact-item">⚖️ Legal: <a href="mailto:legal@huddl.app">legal@huddl.app</a></div>
-      <div class="contact-item">🔒 Privacy / GDPR: <a href="mailto:privacy@huddl.app">privacy@huddl.app</a></div>
-      <div class="contact-item">💬 Support: <a href="mailto:support@huddl.app">support@huddl.app</a></div>
-      <div class="contact-item">📋 Privacy Policy: <a href="privacy-policy.html">huddl.app/privacy-policy</a></div>
+    <!-- Info card -->
+    <div class="info-card">
+      Questions about these Terms? Email <a href="mailto:legal@huddl.app">legal@huddl.app</a>. huddl is operated by Cruzen Ltd, 167-169 Great Portland Street, London W1W 5PF, UK. Company No. 16694711 · ICO Registration No. ZC130210.
     </div>
 
   </main>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════ FOOTER -->
-<footer class="footer">
-  <p>
-    &copy; 2026 Cruzen Ltd · Registered in England &amp; Wales ·
-    <a href="privacy-policy.html">Privacy Policy</a> ·
-    <a href="terms-of-service.html">Terms of Service</a> ·
-    <a href="mailto:legal@huddl.app">legal@huddl.app</a>
-  </p>
-  <p style="margin-top:6px; color:#9CA3AF; font-size:11px;">
-    Version 2.1 · Last updated May 2026 · Governing law: England &amp; Wales · UK GDPR compliant · RECORD_AUDIO permission disclosed
-  </p>
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="site-footer" aria-label="Site footer">
+  <div class="footer-inner">
+    <div class="footer-grid">
+
+      <!-- Col 1: Brand -->
+      <div>
+        <img class="footer-logo" src="/images/logo.svg" alt="huddl" />
+        <p class="footer-tagline">A trusted local community for parents. Built by parents, for parents — starting in Cambridge.</p>
+        <div class="footer-socials">
+          <a class="footer-social" href="https://www.facebook.com/share/1DnUYKdfNt/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a class="footer-social" href="https://www.instagram.com/huddl_app" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" style="fill:#1a2033"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" style="fill:none;stroke:#1a2033;stroke-width:2"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Col 2: Explore -->
+      <div>
+        <div class="footer-col-title">Explore</div>
+        <nav class="footer-col-links">
+          <a href="/about">About huddl</a>
+          <a href="/safety">Safety &amp; trust</a>
+          <a href="/cambridge">huddl Cambridge</a>
+          <a href="/blog">Blog</a>
+          <a href="/glossary">Parent glossary</a>
+        </nav>
+      </div>
+
+      <!-- Col 3: Legal -->
+      <div>
+        <div class="footer-col-title">Legal</div>
+        <nav class="footer-col-links">
+          <a href="/terms-of-service.html" class="active-page">Terms &amp; Conditions</a>
+          <a href="/acceptable-use">Acceptable Use Policy</a>
+          <a href="/cookies">Cookie Policy</a>
+          <a href="/privacy-policy.html">Privacy</a>
+          <a href="/privacy-rights">Your data rights</a>
+        </nav>
+      </div>
+
+      <!-- Col 4: Contact -->
+      <div>
+        <div class="footer-col-title">Get in touch</div>
+        <div style="margin-top:20px;">
+          <div class="footer-address">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3" style="fill:#1a2033"/></svg>
+            <span>167-169 Great Portland Street,<br>London W1W 5PF, England</span>
+          </div>
+          <a class="footer-email" href="mailto:contact@cruzenltd.com">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6" style="fill:none;stroke:#1a2033;stroke-width:2"/></svg>
+            contact@cruzenltd.com
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Cruzen Ltd (Company No. 16694711). ICO Registration No. ZC130210. Registered in England &amp; Wales. All rights reserved.</span>
+      <span>Cambridge, UK</span>
+    </div>
+  </div>
 </footer>
 
 </body>
