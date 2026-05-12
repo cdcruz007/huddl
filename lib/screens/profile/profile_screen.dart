@@ -33,6 +33,7 @@ import '../../services/photo_upload_service.dart';
 import '../../services/push_notification_service.dart';
 import '../../services/user_privacy_prefs_service.dart';
 import '../../services/biometric_auth_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -822,12 +823,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.description_outlined,
                       title: 'Terms of Service',
-                      onTap: () => Navigator.pushNamed(context, '/terms'),
+                      onTap: () => launchUrl(
+                        Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/terms-of-service.html'),
+                        mode: LaunchMode.externalApplication,
+                      ),
                     ),
                     _MenuItem(
                       icon: Icons.privacy_tip_outlined,
                       title: 'Privacy Policy',
-                      onTap: () => Navigator.pushNamed(context, '/privacy'),
+                      onTap: () => launchUrl(
+                        Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/privacy-policy.html'),
+                        mode: LaunchMode.externalApplication,
+                      ),
                     ),
                   ],
                 ),
@@ -2760,7 +2767,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: GestureDetector(
                 onTap: () {
                   Navigator.pop(c);
-                  Navigator.pushNamed(context, '/privacy');
+                  launchUrl(
+                    Uri.parse('https://cdcruz007.github.io/huddl/docs/legal/privacy-policy.html#s16'),
+                    mode: LaunchMode.externalApplication,
+                  );
                 },
                 child: Text(
                   'Read full voice message data policy (Privacy Policy \u00a7 16) \u2192',
