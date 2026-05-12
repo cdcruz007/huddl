@@ -261,30 +261,50 @@ class VoiceMessageService {
   // ── Playback API ──────────────────────────────────────────────────────────
 
   /// Play a voice note from [url]. If the same URL is already playing, pause it.
+  ///
+  /// Android note: audioplayers 6.x defaults to LOW_LATENCY mode which does
+  /// not support HTTP streaming. We must set PlayerMode.mediaPlayer first so
+  /// Android MediaPlayer is used instead of SoundPool.
   Future<void> togglePlayback(String url) async {
-    if (_playingUrl == url && _isPlaying) {
-      await _player.pause();
-      _isPlaying = false;
-      _playingUrlController.add(url); // notify listeners (still "active" but paused)
-      return;
-    }
+    try {
+      if (_playingUrl == url && _isPlaying) {
+        await _player.pause();
+        _isPlaying = false;
+        _playingUrlController.add(url);
+        return;
+      }
 
-    if (_playingUrl == url && !_isPlaying) {
-      await _player.resume();
+      if (_playingUrl == url && !_isPlaying) {
+        await _player.resume();
+        _isPlaying = true;
+        _playingUrlController.add(url);
+        return;
+      }
+
+      // Different URL — stop current and play new
+      await _player.stop();
+      _playingUrl = url;
+      _isPlaying = false;
+      _playingUrlController.add(url);
+
+      // Android: must use mediaPlayer mode to stream remote HTTPS URLs.
+      // Low-latency (SoundPool) mode doesn't support network sources.
+      if (!kIsWeb) {
+        await _player.setPlayerMode(PlayerMode.mediaPlayer);
+      }
+
+      await _player.play(UrlSource(url));
       _isPlaying = true;
       _playingUrlController.add(url);
-      return;
+    } catch (e) {
+      // Reset state so the bubble doesn't get stuck on a broken play icon
+      _isPlaying = false;
+      _playingUrl = null;
+      _playingUrlController.add(null);
+      if (kDebugMode) debugPrint('[VoiceMessageService] playback error for $url: $e');
+      // Re-throw so the UI can show a snackbar
+      rethrow;
     }
-
-    // Different URL – stop current and play new
-    await _player.stop();
-    _playingUrl = url;
-    _isPlaying = false;
-    _playingUrlController.add(url);
-
-    await _player.play(UrlSource(url));
-    _isPlaying = true;
-    _playingUrlController.add(url);
   }
 
   /// Stop any current playback.
