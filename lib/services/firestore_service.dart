@@ -282,6 +282,11 @@ class FirestoreService {
     String? audioUrl,
     int? audioDuration,
     String? type,
+    // Image / location fields
+    String? imageUrl,
+    double? latitude,
+    double? longitude,
+    String? locationLabel,
   }) async {
     final uid = _uid;
     if (uid == null) return;
@@ -306,6 +311,11 @@ class FirestoreService {
       'type': type ?? 'text',
       'audioUrl': audioUrl,
       'audioDuration': audioDuration,
+      // Image / location — null fields are omitted so Firestore docs stay lean
+      if (imageUrl != null) 'imageUrl': imageUrl,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (locationLabel != null) 'locationLabel': locationLabel,
     };
 
     final ref = await _db.collection('group_messages').add(msgData);

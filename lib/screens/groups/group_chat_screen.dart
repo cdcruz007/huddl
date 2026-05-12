@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -38,6 +39,7 @@ import '../../widgets/event_invite_card.dart';
 import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
 import '../../services/huddl_notification_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -287,6 +289,57 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         } else {
           ts = DateTime.now();
         }
+
+        final msgType = m['type'] as String? ?? 'text';
+
+        // ── Image message from another device ──────────────────────────────
+        if (msgType == 'image') {
+          final imageUrl = m['imageUrl'] as String? ?? '';
+          if (imageUrl.isNotEmpty &&
+              !_imageMessages.any((img) => img.imageUrl == imageUrl)) {
+            _imageMessages.add(_GroupImageMessage(
+              imageUrl: imageUrl,
+              isMe: false,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+            ));
+            added = true;
+          }
+          continue;
+        }
+
+        // ── Location pin from another device ───────────────────────────────
+        if (msgType == 'location') {
+          final lat = (m['latitude'] as num?)?.toDouble();
+          final lng = (m['longitude'] as num?)?.toDouble();
+          final locLabel = m['locationLabel'] as String? ?? 'Location';
+          // Deduplicate by approximate lat/lng match
+          final alreadyHave = _imageMessages.any((img) =>
+              img.isLocationPin &&
+              img.latitude == lat &&
+              img.longitude == lng &&
+              img.senderId == senderId);
+          if (!alreadyHave) {
+            _imageMessages.add(_GroupImageMessage(
+              imageUrl: 'location_pin',
+              isMe: false,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+              isLocationPin: true,
+              latitude: lat,
+              longitude: lng,
+              locationLabel: locLabel,
+            ));
+            added = true;
+          }
+          continue;
+        }
+
+        // ── Text / voice_note (existing path) ──────────────────────────────
         final chatMsg = ChatMessage(
           id: id,
           senderId: senderId,
@@ -295,7 +348,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           message: m['message'] as String? ?? '',
           timestamp: ts,
           isMe: false,
-          isVoiceNote: (m['type'] as String? ?? 'text') == 'voice_note',
+          isVoiceNote: msgType == 'voice_note',
           audioUrl: m['audioUrl'] as String?,
           audioDuration: m['audioDuration'] as int?,
         );
@@ -3872,6 +3925,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _addImageMessage(MediaAttachment att) async {
     final userName = _onboardingService.name ?? 'You';
     final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
+    // Optimistic local add — visible immediately to sender
     setState(() {
       _imageMessages.add(_GroupImageMessage(
         imageUrl: url,
@@ -3886,6 +3940,39 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _persistUserMediaMessages();
     _fireMessageSentNotifier();
     _scrollToEnd();
+
+    // Upload to Firebase Storage and write to Firestore so other devices see the photo
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final storageRef = FirebaseStorage.instance
+          .ref('group_images/${widget.groupId}/${uid}_$ts.jpg');
+
+      TaskSnapshot snap;
+      if (att.bytes != null) {
+        snap = await storageRef.putData(
+          att.bytes!,
+          SettableMetadata(contentType: 'image/jpeg'),
+        );
+      } else if (att.filePath != null && !kIsWeb) {
+        // Native platforms — upload from file path
+        snap = await storageRef.putFile(File(att.filePath!));
+      } else {
+        // No uploadable data — skip Firestore write
+        return;
+      }
+
+      final downloadUrl = await snap.ref.getDownloadURL();
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '📷 Photo',
+        type: 'image',
+        imageUrl: downloadUrl,
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Image upload/Firestore error: $e');
+      // Sender already sees the image locally — non-fatal, no UI disruption needed
+    }
   }
 
   Future<void> _handleDocumentPick() async {
@@ -3970,6 +4057,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _persistUserMediaMessages();
     _fireMessageSentNotifier();
     _scrollToEnd();
+
+    // Write to Firestore so other devices see the location pin
+    try {
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '📍 Location',
+        type: 'location',
+        latitude: lat,
+        longitude: lng,
+        locationLabel: label,
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Location Firestore write error: $e');
+    }
   }
 
   void _handleContactShare() async {
