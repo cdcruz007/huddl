@@ -159,12 +159,23 @@ class DefaultGroupService {
     }
   }
 
-  /// Get or create a default group
-  Group getOrCreateDefaultGroup({
+  /// Get or create a default group.
+  ///
+  /// Lookup order:
+  ///   1. Local in-memory cache (_defaultGroups) — fastest, same-session hit.
+  ///   2. Firestore — cross-device source of truth.  If a doc with the same
+  ///      deterministic group ID already exists (created by another user on
+  ///      another device), we reconstruct the Group from Firestore data,
+  ///      populate the local cache, and return it.  This prevents duplicate
+  ///      groups being created when two users with matching onboarding criteria
+  ///      complete onboarding on different devices.
+  ///   3. Create new — only reached when neither cache nor Firestore has a
+  ///      record for this group ID.
+  Future<Group> getOrCreateDefaultGroup({
     required String parentCategory,
     required String borough,
     String? childYearOfBirth,
-  }) {
+  }) async {
     final groupName = generateGroupName(
       parentCategory: parentCategory,
       borough: borough,
@@ -173,13 +184,62 @@ class DefaultGroupService {
     
     final groupId = _generateGroupId(groupName);
 
-    // Check if group already exists
+    // ── 1. Local cache hit ────────────────────────────────────────────────
     if (_defaultGroups.containsKey(groupId)) {
-      _log('✓ Group already exists: $groupName (${_defaultGroups[groupId]!.memberCount} members)');
+      _log('✓ Group already exists locally: $groupName (${_defaultGroups[groupId]!.memberCount} members)');
       return _defaultGroups[groupId]!;
     }
 
-    // Create new group with 0 members (users will be added via joinGroup)
+    // ── 2. Firestore lookup — check if another device already created it ──
+    try {
+      final db = FirebaseFirestore.instance;
+      final snap = await db.collection('groups').doc(groupId).get();
+
+      if (snap.exists) {
+        final data = snap.data()!;
+        _log('🔥 Found existing group in Firestore: $groupName '
+            '(${data['memberCount'] ?? 0} members) — reusing it');
+
+        // Ensure the imageUrl is a local asset path (migrate if needed)
+        final rawImage = (data['imageUrl'] as String?) ?? '';
+        final imageUrl = rawImage.startsWith('assets/')
+            ? rawImage
+            : _migrateImageUrl(groupName, rawImage);
+
+        final firestoreGroup = Group(
+          id: groupId,
+          name: groupName,
+          description: (data['description'] as String?) ??
+              _generateGroupDescription(parentCategory, borough, childYearOfBirth),
+          imageUrl: imageUrl,
+          memberCount: (data['memberCount'] as num?)?.toInt() ?? 0,
+          category: (data['category'] as String?) ?? 'Default Community',
+          isJoined: false, // joinGroup() will set this when the user is added
+          isImageLocked: true,
+          lastMessage: data['lastMessage'] as String?,
+          lastSenderName: data['lastSenderName'] as String?,
+          lastMessageTime: data['lastMessageTime'] != null
+              ? (data['lastMessageTime'] as Timestamp).toDate()
+              : null,
+          unreadCount: 0,
+        );
+
+        // Populate local cache + persist so subsequent calls hit the cache
+        _defaultGroups[groupId] = firestoreGroup;
+        await _saveToStorage();
+        return firestoreGroup;
+      } else {
+        _log('🔍 No Firestore doc for group ID "$groupId" — will create new group');
+      }
+    } catch (e) {
+      // Non-fatal: if Firestore is unreachable we fall through and create
+      // the group locally.  The next successful sync will reconcile state.
+      _log('⚠️  Firestore lookup failed for "$groupName": $e — proceeding with local creation');
+    }
+
+    // ── 3. Create new group ───────────────────────────────────────────────
+    // Only reached when neither local cache nor Firestore has this group.
+    //
     // Use _getNextBoroughImage so each new group in the same borough gets
     // the next sequential photo from the pool — guaranteed unique image.
     //
@@ -495,7 +555,7 @@ class DefaultGroupService {
 
     // ── Create / join one group per spec ──────────────────────────────
     for (final spec in groupSpecs) {
-      final group = getOrCreateDefaultGroup(
+      final group = await getOrCreateDefaultGroup(
         parentCategory: spec.category,
         borough: borough,
         childYearOfBirth: spec.year,
