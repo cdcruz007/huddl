@@ -24,8 +24,8 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
-  static const String _groupsKey = 'default_groups_v4';
-  static const String _membershipsKey = 'user_memberships_v4';
+  static const String _groupsKey = 'default_groups_v5';
+  static const String _membershipsKey = 'user_memberships_v5';
   
   bool _isInitialized = false;
 
@@ -673,6 +673,14 @@ class DefaultGroupService {
   /// Upsert a default group into Firestore and add [firebaseUid] to memberIds.
   /// Called fire-and-forget from joinGroup — errors are swallowed so they
   /// never block the local in-memory flow.
+  ///
+  /// Key invariants:
+  ///   • memberCount is ALWAYS derived from memberIds.length — never blindly
+  ///     incremented.  This prevents phantom inflation when joinGroup() is
+  ///     called multiple times for the same user (e.g. on every app relaunch).
+  ///   • When the doc already exists we NEVER overwrite imageUrl, name,
+  ///     description, createdAt or creatorId — those are set by the first
+  ///     device and must stay canonical so every device shows the same group.
   void _syncGroupMembershipToFirestore(Group group, String firebaseUid) {
     final db = FirebaseFirestore.instance;
     final ref = db.collection('groups').doc(group.id);
@@ -680,14 +688,29 @@ class DefaultGroupService {
     db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (snap.exists) {
-        // Group already in Firestore — just add this UID to memberIds
+        final data = snap.data() ?? {};
+
+        // ── Check if this UID is already a member ──────────────────────
+        final existingIds = List<String>.from(data['memberIds'] as List? ?? []);
+        if (existingIds.contains(firebaseUid)) {
+          // Already a member — nothing to change, skip the write entirely.
+          _log('Firestore sync: $firebaseUid already in ${group.id}, no-op');
+          return;
+        }
+
+        // ── New member joining an existing group ───────────────────────
+        // Add UID and derive the new count from the real array length.
+        // Do NOT touch imageUrl/name/description/createdAt — those belong
+        // to the first device that created the group.
+        final newCount = existingIds.length + 1;
         tx.update(ref, {
           'memberIds': FieldValue.arrayUnion([firebaseUid]),
-          'memberCount': FieldValue.increment(1),
+          'memberCount': newCount,
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        _log('Firestore sync: added $firebaseUid to ${group.id} (memberCount → $newCount)');
       } else {
-        // Create the group document in Firestore for the first time
+        // ── First device — create the canonical group document ─────────
         tx.set(ref, {
           'id': group.id,
           'name': group.name,
@@ -711,6 +734,7 @@ class DefaultGroupService {
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        _log('Firestore sync: created ${group.id} with $firebaseUid as first member');
       }
     }).catchError((e) {
       if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
