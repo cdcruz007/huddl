@@ -101,9 +101,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Huddl may save edited profile or group photos to your photo library.</string>
 
-	<!-- Microphone — required by image_picker when recording video clips -->
+	<!-- Microphone — required for voice messages and video recording -->
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Huddl requests microphone access to allow video recording when sharing content in groups.</string>
+	<string>Huddl uses the microphone to record voice messages in chats and videos when sharing content in groups.</string>
 
 	<!-- Face ID — used by local_auth for biometric login lock -->
 	<key>NSFaceIDUsageDescription</key>
@@ -118,6 +118,7 @@
 	     which powers group and DM notifications -->
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>audio</string>
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
