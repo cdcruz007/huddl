@@ -283,7 +283,11 @@ class EmojiReactionDisplay extends StatelessWidget {
     if (reactions.isEmpty) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      padding: EdgeInsets.only(
+        top: 2,
+        left: isMe ? 60 : 40,
+        right: isMe ? 0 : 60,
+      ),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Wrap(

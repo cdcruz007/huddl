@@ -151,6 +151,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Emoji reactions: messageId → { emoji → count }
   final Map<String, Map<String, int>> _reactions = {};
 
+  /// Tracks the current user's own reaction per message (messageId → emoji).
+  /// Used by _toggleReaction to remove only this user's previous emoji
+  /// without clearing other users' reactions from the local map.
+  final Map<String, String> _myReactions = {};
+
   /// Thread replies: rootMessageId → list of thread replies
   final Map<String, List<ThreadReply>> _threadReplies = {};
 
@@ -293,6 +298,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               _reactions.remove(id);
               added = true;
             }
+          }
+        }
+
+        // ── Always merge reactionUsers → _myReactions for this device ────
+        // This keeps _toggleReaction's per-user replace logic accurate even
+        // after the app restarts or the stream delivers an updated snapshot.
+        final incomingRxnUsers = m['reactionUsers'];
+        if (incomingRxnUsers is Map) {
+          final myUid = currentUid ?? '';
+          final myEmoji = incomingRxnUsers[myUid] as String?;
+          if (myEmoji != null && myEmoji.isNotEmpty) {
+            _myReactions[id] = myEmoji;
+          } else {
+            _myReactions.remove(id);
           }
         }
 
@@ -572,6 +591,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             if (count > 0) rxnMap[k as String] = count;
           });
           if (rxnMap.isNotEmpty) _reactions[id] = rxnMap;
+        }
+
+        // ── reactionUsers → seed _myReactions on history load ─────────────
+        // Restores which emoji this user previously reacted with so that
+        // _toggleReaction's replace logic works correctly on first interaction.
+        final rxnUsersRaw = m['reactionUsers'];
+        if (rxnUsersRaw is Map) {
+          final myEmoji = rxnUsersRaw[currentUid] as String?;
+          if (myEmoji != null && myEmoji.isNotEmpty) {
+            _myReactions[id] = myEmoji;
+          }
         }
 
         // ── Image history (cross-device) ───────────────────────────────────
@@ -1067,24 +1097,49 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   void _toggleReaction(String messageId, String emoji) {
     bool adding = false;
+    final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+    // Capture the previous emoji for this user BEFORE setState so we can
+    // issue a Firestore remove for it outside the setState block.
+    final previousEmoji = _myReactions[messageId];
+
     setState(() {
-      final msgReactions = _reactions[messageId] ?? {};
-      final current = msgReactions[emoji] ?? 0;
-      if (current > 0) {
-        // Same emoji tapped again - remove it
-        msgReactions.remove(emoji);
+      // Work on a mutable copy so we never accidentally clear other users'
+      // reactions that are already in the map.
+      final msgReactions = Map<String, int>.from(_reactions[messageId] ?? {});
+
+      if (previousEmoji == emoji) {
+        // ── Same emoji tapped again → remove this user's reaction ─────────
+        final newCount = (msgReactions[emoji] ?? 1) - 1;
+        if (newCount <= 0) {
+          msgReactions.remove(emoji);
+        } else {
+          msgReactions[emoji] = newCount;
+        }
+        _myReactions.remove(messageId);
         adding = false;
       } else {
-        // New emoji - clear all previous reactions (replace behavior) and set new one
-        msgReactions.clear();
-        msgReactions[emoji] = 1;
+        // ── New or different emoji ────────────────────────────────────────
+        // Step 1: decrement (and remove if zero) the user's previous emoji
+        // from the local count — but leave all other users' emojis intact.
+        if (previousEmoji != null) {
+          final prevCount = (msgReactions[previousEmoji] ?? 1) - 1;
+          if (prevCount <= 0) {
+            msgReactions.remove(previousEmoji);
+          } else {
+            msgReactions[previousEmoji] = prevCount;
+          }
+        }
+
+        // Step 2: increment the new emoji count.
+        msgReactions[emoji] = (msgReactions[emoji] ?? 0) + 1;
+        _myReactions[messageId] = emoji;
         adding = true;
 
-        // ── Notify the message author (fire-and-forget) ─────────────────
+        // ── Notify the message author (fire-and-forget) ───────────────────
         final msg = _messages.where((m) => m.id == messageId).isNotEmpty
             ? _messages.firstWhere((m) => m.id == messageId)
             : null;
-        final myUid = FirebaseAuth.instance.currentUser?.uid ?? '';
         if (msg != null &&
             msg.senderId.isNotEmpty &&
             msg.senderId != 'system' &&
@@ -1105,14 +1160,26 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           });
         }
       }
+
       if (msgReactions.isEmpty) {
         _reactions.remove(messageId);
       } else {
         _reactions[messageId] = msgReactions;
       }
     });
+
     _persistReactions();
-    // ── Persist to Firestore so other devices see this reaction ─────────
+
+    // ── Remove the old emoji from Firestore (if replacing) ───────────────
+    if (previousEmoji != null && previousEmoji != emoji) {
+      FirestoreService().updateMessageReaction(
+        messageId: messageId,
+        emoji: previousEmoji,
+        adding: false,
+      );
+    }
+
+    // ── Add/remove the tapped emoji in Firestore ──────────────────────────
     FirestoreService().updateMessageReaction(
       messageId: messageId,
       emoji: emoji,
@@ -5104,15 +5171,6 @@ class _ChatBubble extends StatelessWidget {
                           ],
                         ),
                       ),
-                      // Emoji reactions row — lives inside the Flexible so it
-                      // is naturally bounded by the bubble's horizontal extent
-                      // and never bleeds outside the bubble column.
-                      if (reactions.isNotEmpty)
-                        EmojiReactionDisplay(
-                          reactions: reactions,
-                          isMe: isMe,
-                          onTapReaction: onTapReaction,
-                        ),
                     ],
                   ),
                 ),
@@ -5120,6 +5178,15 @@ class _ChatBubble extends StatelessWidget {
             ),
           ),
         ),
+        // Emoji reactions row — sits in the outer Column, outside the
+        // avatar Row, so it aligns flush with the bubble and is not
+        // pushed down by the Row's crossAxisAlignment layout.
+        if (reactions.isNotEmpty)
+          EmojiReactionDisplay(
+            reactions: reactions,
+            isMe: isMe,
+            onTapReaction: onTapReaction,
+          ),
       ],
     );
   }
