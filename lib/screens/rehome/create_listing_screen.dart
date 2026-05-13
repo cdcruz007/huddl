@@ -6,7 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
 import '../../theme/huddl_colors.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/rehome_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../../services/subscription_service.dart';
@@ -302,8 +304,34 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         Navigator.pop(context, updated);
       }
     } else {
+      // Resolve the real Firebase Auth UID — fall back to a timestamp id
+      // only if somehow called before sign-in (should never happen in prod).
+      final uid = FirebaseAuth.instance.currentUser?.uid
+          ?? 'user_${DateTime.now().millisecondsSinceEpoch}';
+
+      // ── Write to Firestore first to get a canonical document ID ──────────
+      String firestoreId;
+      try {
+        firestoreId = await FirestoreService().createListing({
+          'title': _titleController.text.trim(),
+          'description': _descriptionController.text.trim(),
+          'ageStage': _selectedAge!.label,
+          'category': _selectedCategory!.label,
+          'condition': _selectedCondition!.label,
+          'price': price,
+          'imageUrls': images,
+          'sellerLocation': locationStr,
+          'borough': borough ?? '',
+        });
+      } catch (e) {
+        // Network unavailable — fall back to a local id so the seller still
+        // sees their item immediately.  It will sync on next Firestore load.
+        if (kDebugMode) debugPrint('[CreateListing] Firestore write failed: $e');
+        firestoreId = 'local_${DateTime.now().millisecondsSinceEpoch}';
+      }
+
       final newItem = RehomeItem(
-        id: 'user_${DateTime.now().millisecondsSinceEpoch}',
+        id: firestoreId,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         ageStage: _selectedAge!,
@@ -312,10 +340,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         price: price,
         imageUrls: images,
         sellerName: sellerName,
-        sellerId: 'current_user',
+        sellerId: uid,          // ← real Firebase Auth UID
         sellerLocation: locationStr,
         listedAt: DateTime.now(),
-        borough: borough, // HYPERLOCAL: tag with user's borough
+        borough: borough,       // HYPERLOCAL: tag with user's borough
       );
       RehomeService().addListing(newItem);
       setState(() => _isCreating = false);

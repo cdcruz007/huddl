@@ -27,6 +27,10 @@ abstract class HuddlIllustration {
   static const marketplace =
       'assets/images/illustrations/not_available_illustration.png';
 
+  /// Person with orange handbag next to a storefront phone — marketplace empty/no items
+  static const marketplaceEmpty =
+      'assets/images/illustrations/marketplace_handbag_illustration.png';
+
   /// Single dancing person — bookmarks / saved messages
   static const saved =
       'assets/images/illustrations/Group_3603.png';

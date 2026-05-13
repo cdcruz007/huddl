@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/rehome_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
@@ -77,7 +78,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   bool _openingChat = false;
 
   RehomeItem get item => widget.item;
-  bool get _isOwnItem => item.sellerId == 'current_user';
+  // Compare against the real Firebase Auth UID so items created by the
+  // current user are correctly identified as "own" on any device.
+  bool get _isOwnItem {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return false;
+    return item.sellerId == uid;
+  }
 
   @override
   void initState() {
@@ -274,12 +281,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               final buyerName =
                   onboarding.name?.isNotEmpty == true ? onboarding.name! : 'You';
 
+              // Resolve real Firebase Auth UID for the buyer
+              final buyerUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
               final offer = RehomeOffer(
                 id: 'off_${DateTime.now().millisecondsSinceEpoch}',
                 itemId: item.id,
                 itemTitle: item.title,
                 buyerName: buyerName,
-                buyerId: 'current_user',
+                buyerId: buyerUid,   // ← real Firebase Auth UID
                 amount: item.isFree ? 0.0 : amount,
                 createdAt: DateTime.now(),
                 responseMessage:

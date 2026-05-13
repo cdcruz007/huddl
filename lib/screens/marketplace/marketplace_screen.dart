@@ -562,12 +562,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   /// Load all active marketplace listings from Firestore and populate the
   /// in-memory RehomeService so they survive screen rebuilds.
+  /// Also restores the current user's saved-item state and seller offers.
   Future<void> _loadListingsFromFirestore() async {
     if (_isLoadingItems) return;
     setState(() => _isLoadingItems = true);
     try {
-      final docs = await FirestoreService().getMarketplaceListings();
       final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      // ── 1. Listings ────────────────────────────────────────────────────────
+      final docs = await FirestoreService().getMarketplaceListings();
       for (final d in docs) {
         final item = RehomeItem.fromFirestore(d);
         if (item.id.isEmpty) continue;
@@ -577,6 +580,50 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         // Track own listings
         if (uid != null && item.sellerId == uid) {
           _service.addMyListing(item);
+        }
+      }
+
+      // ── 2. Saved / favourites — restore heart state cross-device ──────────
+      if (uid != null) {
+        try {
+          final savedIds = await FirestoreService().loadMySavedListingIds();
+          for (final id in savedIds) {
+            // Use setSaved (no Firestore write-back) to avoid ping-pong
+            _service.setSaved(id, saved: true);
+          }
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Marketplace] loadSaved error: $e');
+        }
+      }
+
+      // ── 3. Seller offers — load pending offers for this user's listings ───
+      if (uid != null) {
+        try {
+          final offerMaps = await FirestoreService().getOffersForMyListings();
+          for (final m in offerMaps) {
+            final offerId = m['id'] as String? ?? '';
+            if (offerId.isEmpty) continue;
+            // Avoid duplicates
+            if (_service.offers.any((o) => o.id == offerId)) continue;
+            final offer = RehomeOffer(
+              id: offerId,
+              itemId: m['itemId'] as String? ?? '',
+              itemTitle: m['itemTitle'] as String? ?? '',
+              buyerName: m['buyerName'] as String? ?? '',
+              buyerId: m['buyerId'] as String? ?? '',
+              amount: (m['amount'] as num?)?.toDouble() ?? 0.0,
+              createdAt: m['createdAt'] != null
+                  ? DateTime.tryParse(m['createdAt'].toString()) ??
+                      DateTime.now()
+                  : DateTime.now(),
+              status: m['status'] as String? ?? 'pending',
+              responseMessage: m['responseMessage'] as String?,
+            );
+            // Silently insert without triggering another Firestore write
+            _service.loadOffer(offer);
+          }
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Marketplace] loadOffers error: $e');
         }
       }
     } catch (e) {
@@ -1686,7 +1733,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: items.isEmpty
               ? _buildEmptyState(
                   hc: hc,
-                  illustration: HuddlIllustration.marketplace,
+                  illustration: HuddlIllustration.marketplaceEmpty,
                   title: 'No items found',
                   subtitle: _hasActiveFilters
                       ? 'Try adjusting your filters to see more results.'
@@ -1831,7 +1878,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 padding: const EdgeInsets.only(top: 32),
                 child: _buildEmptyState(
                   hc: hc,
-                  illustration: HuddlIllustration.marketplace,
+                  illustration: HuddlIllustration.marketplaceEmpty,
                   title: 'No listings yet',
                   subtitle: 'Tap above to snap a photo and list your first item.',
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/huddl_colors.dart';
 import 'borough_scope_guard.dart';
+import 'firestore_service.dart';
 import 'huddl_notification_service.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -486,7 +487,36 @@ class RehomeService extends ChangeNotifier {
     if (idx >= 0) {
       _items[idx].isSaved = !_items[idx].isSaved;
       notifyListeners();
+      // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+      FirestoreService().toggleSavedItem(id).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] toggleSaved FS error: $e');
+        return false;
+      });
     }
+  }
+
+  /// Silently mark an item as saved without triggering a Firestore write.
+  /// Used when restoring saved state from Firestore on app launch so we
+  /// don't immediately toggle the state back off.
+  void setSaved(String id, {required bool saved}) {
+    final idx = _items.indexWhere((i) => i.id == id);
+    if (idx >= 0 && _items[idx].isSaved != saved) {
+      _items[idx].isSaved = saved;
+      notifyListeners();
+    }
+  }
+
+  /// Silently insert an offer loaded from Firestore without triggering
+  /// another Firestore write (avoids the double-write ping-pong).
+  void loadOffer(RehomeOffer offer) {
+    if (_offers.any((o) => o.id == offer.id)) return;
+    _offers.insert(0, offer);
+    // Keep offerCount in sync on the matching item
+    final idx = _items.indexWhere((i) => i.id == offer.itemId);
+    if (idx >= 0) _items[idx].offerCount++;
+    final myIdx = _myListings.indexWhere((i) => i.id == offer.itemId);
+    if (myIdx >= 0) _myListings[myIdx].offerCount++;
+    notifyListeners();
   }
 
   /// Add a new listing. Auto-tags with user's borough if not set.
@@ -539,6 +569,10 @@ class RehomeService extends ChangeNotifier {
     if (myIdx >= 0) {
       _myListings[myIdx].isSold = true;
     }
+    // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+    FirestoreService().markListingSold(id).catchError((e) {
+      if (kDebugMode) debugPrint('[RehomeService] markSold FS error: $e');
+    });
 
     // ── Notify seller + saved users (fire-and-forget) ─────────────────────
     final item = getItemById(id);
@@ -590,6 +624,10 @@ class RehomeService extends ChangeNotifier {
     if (myIdx >= 0) {
       _myListings[myIdx].isSold = false;
     }
+    // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+    FirestoreService().relistListing(id).catchError((e) {
+      if (kDebugMode) debugPrint('[RehomeService] relistItem FS error: $e');
+    });
 
     // ── Notify saved users this item is available again (fire-and-forget) ──
     final item = getItemById(id);
@@ -615,6 +653,10 @@ class RehomeService extends ChangeNotifier {
     _items.removeWhere((i) => i.id == id);
     _myListings.removeWhere((i) => i.id == id);
     notifyListeners();
+    // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+    FirestoreService().deleteListing(id).catchError((e) {
+      if (kDebugMode) debugPrint('[RehomeService] deleteListing FS error: $e');
+    });
   }
 
   void updateListing(RehomeItem updated) {
@@ -623,6 +665,18 @@ class RehomeService extends ChangeNotifier {
     final myIdx = _myListings.indexWhere((i) => i.id == updated.id);
     if (myIdx >= 0) _myListings[myIdx] = updated;
     notifyListeners();
+    // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+    FirestoreService().updateListing(updated.id, {
+      'title': updated.title,
+      'description': updated.description,
+      'price': updated.price,
+      'ageStage': updated.ageStage.label,
+      'category': updated.category.label,
+      'condition': updated.condition.label,
+      'imageUrls': updated.imageUrls,
+    }).catchError((e) {
+      if (kDebugMode) debugPrint('[RehomeService] updateListing FS error: $e');
+    });
   }
 
   /// Called when a buyer submits an offer from the Item Detail screen.
@@ -636,6 +690,18 @@ class RehomeService extends ChangeNotifier {
     final myIdx = _myListings.indexWhere((i) => i.id == offer.itemId);
     if (myIdx >= 0) _myListings[myIdx].offerCount++;
     notifyListeners();
+    // ── Persist to Firestore (fire-and-forget) ──────────────────────────
+    FirestoreService().submitOffer(
+      listingId: offer.itemId,
+      offerId: offer.id,
+      itemTitle: offer.itemTitle,
+      buyerId: offer.buyerId,
+      buyerName: offer.buyerName,
+      amount: offer.amount,
+      note: offer.responseMessage,
+    ).catchError((e) {
+      if (kDebugMode) debugPrint('[RehomeService] addOffer FS error: $e');
+    });
 
     // ── Notify seller of new offer (fire-and-forget) ─────────────────────
     final item = getItemById(offer.itemId);
@@ -667,9 +733,17 @@ class RehomeService extends ChangeNotifier {
         _offers[idx].responseMessage = message.trim();
       }
       notifyListeners();
-
-      // ── Notify buyer their offer was accepted (fire-and-forget) ──────────
+      // ── Persist to Firestore + notify buyer (fire-and-forget) ──────────
       final offer = _offers[idx];
+      FirestoreService().updateOfferStatus(
+        offer.itemId,
+        offerId,
+        status: 'accepted',
+        responseMessage: message,
+      ).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] acceptOffer FS error: $e');
+        return;
+      });
       final item = getItemById(offer.itemId);
       if (item != null && offer.buyerId.isNotEmpty) {
         final me = FirebaseAuth.instance.currentUser;
@@ -713,9 +787,17 @@ class RehomeService extends ChangeNotifier {
         _offers[idx].responseMessage = message.trim();
       }
       notifyListeners();
-
-      // ── Notify buyer their offer was declined (fire-and-forget) ──────────
+      // ── Persist to Firestore + notify buyer (fire-and-forget) ──────────
       final offer = _offers[idx];
+      FirestoreService().updateOfferStatus(
+        offer.itemId,
+        offerId,
+        status: 'declined',
+        responseMessage: message,
+      ).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] declineOffer FS error: $e');
+        return;
+      });
       final item = getItemById(offer.itemId);
       if (item != null && offer.buyerId.isNotEmpty) {
         HuddlNotificationService().offerDeclined(

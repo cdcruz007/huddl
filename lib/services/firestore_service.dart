@@ -762,6 +762,219 @@ class FirestoreService {
     });
   }
 
+  /// Update mutable fields on a listing (title, description, price, condition,
+  /// category, ageStage, imageUrls).  Sets updatedAt to server timestamp.
+  Future<void> updateListing(
+      String listingId, Map<String, dynamic> fields) async {
+    fields['updatedAt'] = FieldValue.serverTimestamp();
+    await _db.collection('marketplace').doc(listingId).update(fields);
+  }
+
+  /// Mark a listing as sold.
+  Future<void> markListingSold(String listingId) async {
+    await _db.collection('marketplace').doc(listingId).update({
+      'status': 'sold',
+      'soldAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Relist a previously sold listing (set status back to active).
+  Future<void> relistListing(String listingId) async {
+    await _db.collection('marketplace').doc(listingId).update({
+      'status': 'active',
+      'soldAt': FieldValue.delete(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Hard-delete a listing document.
+  Future<void> deleteListing(String listingId) async {
+    await _db.collection('marketplace').doc(listingId).delete();
+  }
+
+  // ── Saved / favourites ──────────────────────────────────────────────────
+
+  /// Toggle saved state for a listing.  Uses a `saved_items` subcollection
+  /// on the user doc so it's per-user and doesn't pollute the listing doc.
+  /// Returns the new isSaved state (true = saved, false = removed).
+  Future<bool> toggleSavedItem(String listingId) async {
+    final uid = _uid;
+    if (uid == null) return false;
+    final ref = _db
+        .collection('users')
+        .doc(uid)
+        .collection('saved_items')
+        .doc(listingId);
+    final snap = await ref.get();
+    if (snap.exists) {
+      await ref.delete();
+      // Decrement listing's favouriteCount (best-effort, ignore errors)
+      _db.collection('marketplace').doc(listingId).update({
+        'favouriteCount': FieldValue.increment(-1),
+      }).catchError((_) {});
+      return false;
+    } else {
+      await ref.set({
+        'listingId': listingId,
+        'savedAt': FieldValue.serverTimestamp(),
+      });
+      _db.collection('marketplace').doc(listingId).update({
+        'favouriteCount': FieldValue.increment(1),
+      }).catchError((_) {});
+      return true;
+    }
+  }
+
+  /// Load the set of listing IDs saved by the current user.
+  Future<Set<String>> loadMySavedListingIds() async {
+    final uid = _uid;
+    if (uid == null) return {};
+    final snap = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('saved_items')
+        .get();
+    return snap.docs.map((d) => d.id).toSet();
+  }
+
+  // ── Offers ──────────────────────────────────────────────────────────────
+
+  /// Write a new offer to `marketplace/{listingId}/offers/{offerId}`.
+  /// Also increments `offerCount` on the listing document.
+  Future<void> submitOffer({
+    required String listingId,
+    required String offerId,
+    required String itemTitle,
+    required String buyerId,
+    required String buyerName,
+    required double amount,
+    String? note,
+  }) async {
+    final batch = _db.batch();
+
+    final offerRef = _db
+        .collection('marketplace')
+        .doc(listingId)
+        .collection('offers')
+        .doc(offerId);
+    batch.set(offerRef, {
+      'id': offerId,
+      'itemId': listingId,
+      'itemTitle': itemTitle,
+      'buyerId': buyerId,
+      'buyerName': buyerName,
+      'amount': amount,
+      'status': 'pending',
+      'note': note ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    final listingRef = _db.collection('marketplace').doc(listingId);
+    batch.update(listingRef, {
+      'offerCount': FieldValue.increment(1),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await batch.commit();
+  }
+
+  /// Load all offers on a specific listing (seller view).
+  Future<List<Map<String, dynamic>>> getOffersForListing(
+      String listingId) async {
+    final snap = await _db
+        .collection('marketplace')
+        .doc(listingId)
+        .collection('offers')
+        .get();
+    return snap.docs.map((d) {
+      final data = d.data();
+      data['id'] = d.id;
+      if (data['createdAt'] is Timestamp) {
+        data['createdAt'] =
+            (data['createdAt'] as Timestamp).toDate().toIso8601String();
+      }
+      return data;
+    }).toList();
+  }
+
+  /// Load all offers made by the current user across all listings (buyer view).
+  Future<List<Map<String, dynamic>>> getMyOffers() async {
+    final uid = _uid;
+    if (uid == null) return [];
+    final snap = await _db
+        .collectionGroup('offers')
+        .where('buyerId', isEqualTo: uid)
+        .get();
+    return snap.docs.map((d) {
+      final data = d.data();
+      data['id'] = d.id;
+      if (data['createdAt'] is Timestamp) {
+        data['createdAt'] =
+            (data['createdAt'] as Timestamp).toDate().toIso8601String();
+      }
+      return data;
+    }).toList();
+  }
+
+  /// Update the status of an offer (accepted / declined) and optionally
+  /// record the seller's response message.
+  Future<void> updateOfferStatus(
+    String listingId,
+    String offerId, {
+    required String status, // 'accepted' | 'declined'
+    String? responseMessage,
+  }) async {
+    await _db
+        .collection('marketplace')
+        .doc(listingId)
+        .collection('offers')
+        .doc(offerId)
+        .update({
+      'status': status,
+      if (responseMessage != null && responseMessage.isNotEmpty)
+        'responseMessage': responseMessage,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Load all offers for every listing owned by the current user (sell tab).
+  Future<List<Map<String, dynamic>>> getOffersForMyListings() async {
+    final uid = _uid;
+    if (uid == null) return [];
+    // Fetch own listing IDs first
+    final listingSnap = await _db
+        .collection('marketplace')
+        .where('sellerId', isEqualTo: uid)
+        .get();
+    final ids = listingSnap.docs.map((d) => d.id).toList();
+    if (ids.isEmpty) return [];
+
+    // Fetch offers for each listing (batched in groups of 10 for Firestore `in` limit)
+    final offers = <Map<String, dynamic>>[];
+    for (var i = 0; i < ids.length; i += 10) {
+      final chunk = ids.sublist(i, i + 10 < ids.length ? i + 10 : ids.length);
+      for (final listingId in chunk) {
+        final snap = await _db
+            .collection('marketplace')
+            .doc(listingId)
+            .collection('offers')
+            .get();
+        for (final d in snap.docs) {
+          final data = d.data();
+          data['id'] = d.id;
+          if (data['createdAt'] is Timestamp) {
+            data['createdAt'] =
+                (data['createdAt'] as Timestamp).toDate().toIso8601String();
+          }
+          offers.add(data);
+        }
+      }
+    }
+    return offers;
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // NOTIFICATIONS
   // ═════════════════════════════════════════════════════════════════════════
