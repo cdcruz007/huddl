@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -8,6 +8,7 @@ import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/rehome_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/huddl_notification_service.dart';
@@ -90,6 +91,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   void initState() {
     super.initState();
     _service.addListener(_refresh);
+    // Increment view count in Firestore (fire-and-forget, only for other users' items)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isOwnItem && item.id.isNotEmpty && !item.id.startsWith('local_')) {
+        FirestoreService().incrementListingViews(item.id).catchError((Object e) {
+          if (kDebugMode) debugPrint('[ItemDetail] viewCount increment error: $e');
+          return;
+        });
+      }
+    });
   }
 
   void _refresh() {

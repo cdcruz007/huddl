@@ -975,6 +975,22 @@ class FirestoreService {
     return offers;
   }
 
+  /// Returns the list of user IDs who have saved [listingId].
+  ///
+  /// Uses a collectionGroup query across all `users/{uid}/saved_items`
+  /// subcollections filtered by `listingId`.  The parent document ID of each
+  /// result is the user UID.
+  Future<List<String>> getSavedByUserIds(String listingId) async {
+    final snap = await _db
+        .collectionGroup('saved_items')
+        .where('listingId', isEqualTo: listingId)
+        .get();
+    return snap.docs
+        .map((d) => d.reference.parent.parent?.id ?? '')
+        .where((uid) => uid.isNotEmpty)
+        .toList();
+  }
+
   // ═════════════════════════════════════════════════════════════════════════
   // NOTIFICATIONS
   // ═════════════════════════════════════════════════════════════════════════

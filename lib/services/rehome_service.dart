@@ -597,20 +597,27 @@ class RehomeService extends ChangeNotifier {
           if (kDebugMode) debugPrint('[RehomeService] itemSold notif error: $e');
         });
       }
-      // Notify users who saved this item
-      final savedIds = savedByUserIds(id)
-          .where((uid) => uid != myId && uid != item.sellerId)
-          .toList();
-      for (final uid in savedIds) {
-        HuddlNotificationService().savedItemSold(
-          savedByUserId: uid,
-          itemTitle: item.title,
-          itemId: item.id,
-          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
-        ).catchError((e) {
-          if (kDebugMode) debugPrint('[RehomeService] savedItemSold notif error: $e');
-        });
-      }
+      // Prefetch saved-by cache, then notify those users once data is ready
+      FirestoreService().getSavedByUserIds(id).then((freshIds) {
+        _savedByCache[id] = freshIds;
+        final savedIds = freshIds
+            .where((uid) => uid != myId && uid != item.sellerId)
+            .toList();
+        for (final uid in savedIds) {
+          HuddlNotificationService().savedItemSold(
+            savedByUserId: uid,
+            itemTitle: item.title,
+            itemId: item.id,
+            itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+          ).catchError((Object e) {
+            if (kDebugMode) debugPrint('[RehomeService] savedItemSold notif error: $e');
+            return;
+          });
+        }
+      }).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] markSold savedByUserIds error: $e');
+        return;
+      });
     }
   }
 
@@ -633,19 +640,27 @@ class RehomeService extends ChangeNotifier {
     final item = getItemById(id);
     if (item != null) {
       final myId = FirebaseAuth.instance.currentUser?.uid ?? '';
-      final savedIds = savedByUserIds(id)
-          .where((uid) => uid != myId && uid != item.sellerId)
-          .toList();
-      for (final uid in savedIds) {
-        HuddlNotificationService().itemRelisted(
-          savedByUserId: uid,
-          itemTitle: item.title,
-          itemId: item.id,
-          itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
-        ).catchError((e) {
-          if (kDebugMode) debugPrint('[RehomeService] itemRelisted notif error: $e');
-        });
-      }
+      // Prefetch saved-by cache, then notify those users once data is ready
+      FirestoreService().getSavedByUserIds(id).then((freshIds) {
+        _savedByCache[id] = freshIds;
+        final savedIds = freshIds
+            .where((uid) => uid != myId && uid != item.sellerId)
+            .toList();
+        for (final uid in savedIds) {
+          HuddlNotificationService().itemRelisted(
+            savedByUserId: uid,
+            itemTitle: item.title,
+            itemId: item.id,
+            itemImageUrl: item.imageUrls.isNotEmpty ? item.imageUrls.first : null,
+          ).catchError((Object e) {
+            if (kDebugMode) debugPrint('[RehomeService] itemRelisted notif error: $e');
+            return;
+          });
+        }
+      }).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] relistItem savedByUserIds error: $e');
+        return;
+      });
     }
   }
 
@@ -821,6 +836,16 @@ class RehomeService extends ChangeNotifier {
       _offers[idx].status = 'pending';
       _offers[idx].responseMessage = null;
       notifyListeners();
+      // ── Persist undo to Firestore (fire-and-forget) ──────────────────────
+      final offer = _offers[idx];
+      FirestoreService().updateOfferStatus(
+        offer.itemId,
+        offerId,
+        status: 'pending',
+      ).catchError((Object e) {
+        if (kDebugMode) debugPrint('[RehomeService] restoreOffer FS error: $e');
+        return;
+      });
     }
   }
 
@@ -833,14 +858,26 @@ class RehomeService extends ChangeNotifier {
   }
 
   /// Returns user IDs of everyone who has saved a given item.
-  /// Currently returns saved buyers from local offers list where isSaved is true.
-  /// In a full Firestore implementation this would query a savedBy subcollection.
+  /// Queries the real Firestore `saved_items` subcollections via a collectionGroup
+  /// query and caches the result in [_savedByCache] keyed by itemId.
+  ///
+  /// Callers that need the list synchronously (e.g. notification dispatch) should
+  /// call [prefetchSavedByUserIds] first; this getter then returns the cached value.
   List<String> savedByUserIds(String itemId) {
-    return _offers
-        .where((o) => o.itemId == itemId && o.buyerId.isNotEmpty)
-        .map((o) => o.buyerId)
-        .toSet()
-        .toList();
+    return _savedByCache[itemId] ?? [];
+  }
+
+  /// In-memory cache: itemId → list of uids that saved it.
+  final Map<String, List<String>> _savedByCache = {};
+
+  /// Fire-and-forget: fetch userIds who saved [itemId] from Firestore and
+  /// cache them so [savedByUserIds] returns up-to-date results.
+  void prefetchSavedByUserIds(String itemId) {
+    FirestoreService().getSavedByUserIds(itemId).then((ids) {
+      _savedByCache[itemId] = ids;
+    }).catchError((Object e) {
+      if (kDebugMode) debugPrint('[RehomeService] savedByUserIds error: $e');
+    });
   }
 
 

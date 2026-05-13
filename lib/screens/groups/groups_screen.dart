@@ -5166,7 +5166,7 @@ class _SavedTabState extends State<_SavedTab> {
       return HuddlEmptyState(
         illustration: HuddlIllustration.saved,
         title: 'No saved items yet',
-        subtitle: 'Bookmark events to save them here,\nor long-press a message to save it.',
+        subtitle: 'Long-press any message or thread to save it here.\nSearch by topic, keyword or sender name.',
       );
     }
 
@@ -5194,7 +5194,7 @@ class _SavedTabState extends State<_SavedTab> {
                     onChanged: (v) => setState(() => _searchQuery = v.trim()),
                     style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'Search saved messages\u2026',
+                      hintText: 'Search messages, threads, topics\u2026',
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,

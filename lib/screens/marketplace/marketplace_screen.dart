@@ -626,6 +626,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           if (kDebugMode) debugPrint('[Marketplace] loadOffers error: $e');
         }
       }
+
+      // ── 4. Prefetch saved-by cache for seller's own listings ─────────────
+      // Ensures savedByUserIds() has fresh data when markSold / relistItem
+      // fire notifications during this session.
+      if (uid != null) {
+        final myListingIds = _service.myListings.map((i) => i.id).toList();
+        for (final listingId in myListingIds) {
+          _service.prefetchSavedByUserIds(listingId);
+        }
+      }
     } catch (e) {
       if (kDebugMode) debugPrint('[Marketplace] loadFromFirestore error: $e');
     } finally {
@@ -2376,23 +2386,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
                               if (isAccept) {
                                 _ai.recordOfferAccept();
+                                // acceptOffer() handles Firestore write +
+                                // HuddlNotification in one place — no duplicate here.
                                 _service.acceptOffer(offer.id, message: msg);
-                                // Notify buyer via Firestore + FCM
+                                // BackendApiService = FCM push (separate channel)
                                 final offerItem = _service.getItemById(offer.itemId);
-                                final me = _service.myListings.isNotEmpty
-                                    ? _service.myListings.first.sellerName
-                                    : 'Seller';
-                                HuddlNotificationService().offerAccepted(
-                                  buyerId: offer.buyerId,
-                                  sellerName: me,
-                                  itemTitle: offer.itemTitle,
-                                  itemId: offer.itemId,
-                                  sellerId: offerItem?.sellerId ?? '',
-                                  offerAmount: offer.amountDisplay,
-                                  responseMessage: msg,
-                                  itemImageUrl: offerItem?.imageUrls.isNotEmpty == true
-                                      ? offerItem!.imageUrls.first : null,
-                                );
+                                final me = offerItem?.sellerName
+                                    ?? (_service.myListings.isNotEmpty
+                                        ? _service.myListings.first.sellerName
+                                        : 'Seller');
                                 BackendApiService().notifyOfferResponse(
                                   buyerId: offer.buyerId,
                                   sellerName: me,
@@ -2433,21 +2435,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                                 }
                               } else {
                                 _ai.recordOfferDecline();
+                                // declineOffer() handles Firestore write +
+                                // HuddlNotification in one place — no duplicate here.
                                 _service.declineOffer(offer.id, message: msg);
-                                // Notify buyer via Firestore + FCM
+                                // BackendApiService = FCM push (separate channel)
                                 final offerItem = _service.getItemById(offer.itemId);
-                                final me = _service.myListings.isNotEmpty
-                                    ? _service.myListings.first.sellerName
-                                    : 'Seller';
-                                HuddlNotificationService().offerDeclined(
-                                  buyerId: offer.buyerId,
-                                  sellerName: me,
-                                  itemTitle: offer.itemTitle,
-                                  itemId: offer.itemId,
-                                  responseMessage: msg,
-                                  itemImageUrl: offerItem?.imageUrls.isNotEmpty == true
-                                      ? offerItem!.imageUrls.first : null,
-                                );
+                                final me = offerItem?.sellerName
+                                    ?? (_service.myListings.isNotEmpty
+                                        ? _service.myListings.first.sellerName
+                                        : 'Seller');
                                 BackendApiService().notifyOfferResponse(
                                   buyerId: offer.buyerId,
                                   sellerName: me,
