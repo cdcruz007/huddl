@@ -447,6 +447,53 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         } else {
           ts = DateTime.now();
         }
+        final msgType = m['type'] as String? ?? 'text';
+
+        // ── Image history (cross-device) ───────────────────────────────────
+        if (msgType == 'image') {
+          final imageUrl = m['imageUrl'] as String? ?? '';
+          if (imageUrl.isNotEmpty &&
+              !_imageMessages.any((img) => img.imageUrl == imageUrl)) {
+            _imageMessages.add(_GroupImageMessage(
+              imageUrl: imageUrl,
+              isMe: isMe,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+            ));
+          }
+          continue;
+        }
+
+        // ── Location history (cross-device) ───────────────────────────────
+        if (msgType == 'location') {
+          final lat = (m['latitude'] as num?)?.toDouble();
+          final lng = (m['longitude'] as num?)?.toDouble();
+          final locLabel = m['locationLabel'] as String? ?? 'Location';
+          final alreadyHave = _imageMessages.any((img) =>
+              img.isLocationPin &&
+              img.latitude == lat &&
+              img.longitude == lng &&
+              img.senderId == senderId);
+          if (!alreadyHave) {
+            _imageMessages.add(_GroupImageMessage(
+              imageUrl: 'location_pin',
+              isMe: isMe,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+              isLocationPin: true,
+              latitude: lat,
+              longitude: lng,
+              locationLabel: locLabel,
+            ));
+          }
+          continue;
+        }
+
+        // ── Text / voice_note history ──────────────────────────────────────
         if (!_messages.any((e) => e.id == id)) {
           _messages.add(ChatMessage(
             id: id,
@@ -456,6 +503,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             message: m['message'] as String? ?? '',
             timestamp: ts,
             isMe: isMe,
+            isVoiceNote: msgType == 'voice_note',
+            audioUrl: m['audioUrl'] as String?,
+            audioDuration: m['audioDuration'] as int?,
           ));
         }
       }

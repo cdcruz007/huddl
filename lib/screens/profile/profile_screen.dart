@@ -2408,10 +2408,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 value: _biometricEnabled,
-                activeThumbColor: HuddlColors.primary,
-                activeTrackColor: HuddlColors.primary.withValues(alpha: 0.4),
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: Colors.grey.shade300,
+                thumbColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+                  return Colors.white;
+                }),
+                trackColor: WidgetStateProperty.resolveWith((states) {
+                  if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
+                  return Colors.grey.shade300;
+                }),
                 onChanged: (v) async {
                   if (v) {
                     // User wants to enable — run a biometric test first
@@ -2608,10 +2612,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 style: GoogleFonts.poppins(fontSize: 12, color: ctx.hc.textTertiary),
               ),
               value: _voiceConsent,
-              activeThumbColor: HuddlColors.primary,
-              activeTrackColor: HuddlColors.primary.withValues(alpha: 0.4),
-              inactiveThumbColor: Colors.white,
-              inactiveTrackColor: Colors.grey.shade300,
+              thumbColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+                return Colors.white;
+              }),
+              trackColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
+                return Colors.grey.shade300;
+              }),
               onChanged: (v) async {
                 if (v) {
                   // Show explicit GDPR consent dialog before enabling
@@ -4970,8 +4978,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
       value: value,
       onChanged: onChanged,
-      activeThumbColor: HuddlColors.primary,
-      activeTrackColor: HuddlColors.primary.withValues(alpha: 0.4),
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+        return Colors.white;
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
+        return Colors.grey.shade300;
+      }),
     );
   }
 
