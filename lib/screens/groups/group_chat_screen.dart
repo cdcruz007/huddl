@@ -4231,11 +4231,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _addImageMessage(MediaAttachment att) async {
     final userName = _onboardingService.name ?? 'You';
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
-    final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    // Use a stable placeholder key so we can patch it with the real https URL
+    // after upload.  The key must never match a real Firebase Storage URL so
+    // the deduplication guard in the Firestore stream doesn't eat the update.
+    final optimisticKey = 'local_pending_${currentUid}_$ts';
+
     // Optimistic local add — visible immediately to sender
     setState(() {
       _imageMessages.add(_GroupImageMessage(
-        imageUrl: url,
+        imageUrl: optimisticKey,
         isMe: true,
         timestamp: DateTime.now(),
         senderName: userName,
@@ -4250,10 +4255,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     // Upload to Firebase Storage and write to Firestore so other devices see the photo
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
-      final ts = DateTime.now().millisecondsSinceEpoch;
       final storageRef = FirebaseStorage.instance
-          .ref('group_images/${widget.groupId}/${uid}_$ts.jpg');
+          .ref('group_images/${widget.groupId}/${currentUid}_$ts.jpg');
 
       TaskSnapshot snap;
       if (att.bytes != null) {
@@ -4270,6 +4273,38 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
 
       final downloadUrl = await snap.ref.getDownloadURL();
+
+      // ── Patch the optimistic entry with the real https URL ───────────────
+      // This ensures:
+      //   (a) The sender's image widget switches from bytes→url rendering,
+      //       consistent with what other devices receive.
+      //   (b) The Firestore stream deduplication (imageUrl match) works on
+      //       restart — the stored URL now equals what Firestore has.
+      if (mounted) {
+        setState(() {
+          final idx = _imageMessages
+              .indexWhere((m) => m.imageUrl == optimisticKey);
+          if (idx >= 0) {
+            final old = _imageMessages[idx];
+            _imageMessages[idx] = _GroupImageMessage(
+              imageUrl: downloadUrl,
+              isMe: old.isMe,
+              timestamp: old.timestamp,
+              senderName: old.senderName,
+              senderAvatar: old.senderAvatar,
+              senderId: old.senderId,
+              bytes: old.bytes, // keep bytes so image stays sharp locally
+            );
+          }
+        });
+        // Re-persist with the real URL so BrowserStorage cache is consistent
+        await _persistUserMediaMessages();
+      }
+
+      // Register the real Firestore URL as a known ID so the stream listener
+      // doesn't add it again as a duplicate when the echo comes back.
+      _firestoreMsgIds.add('img_$downloadUrl');
+
       await FirestoreService().sendGroupMessage(
         groupId: widget.groupId,
         message: '📷 Photo',
@@ -5038,6 +5073,15 @@ class _ChatBubble extends StatelessWidget {
                           ],
                         ),
                       ),
+                      // Emoji reactions row — lives inside the Flexible so it
+                      // is naturally bounded by the bubble's horizontal extent
+                      // and never bleeds outside the bubble column.
+                      if (reactions.isNotEmpty)
+                        EmojiReactionDisplay(
+                          reactions: reactions,
+                          isMe: isMe,
+                          onTapReaction: onTapReaction,
+                        ),
                     ],
                   ),
                 ),
@@ -5045,13 +5089,6 @@ class _ChatBubble extends StatelessWidget {
             ),
           ),
         ),
-        // Emoji reactions row
-        if (reactions.isNotEmpty)
-          EmojiReactionDisplay(
-            reactions: reactions,
-            isMe: isMe,
-            onTapReaction: onTapReaction,
-          ),
       ],
     );
   }

@@ -2453,9 +2453,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (!confirmed) {
                       if (ctx.mounted) {
                         ScaffoldMessenger.of(ctx).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text(
-                              'Biometric verification failed — not enabled.',
+                              'Couldn\'t verify $_biometricLabel — please try again or use your PIN.',
                             ),
                           ),
                         );
