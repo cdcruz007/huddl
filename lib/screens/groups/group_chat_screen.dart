@@ -271,7 +271,32 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       for (final m in messages) {
         final id = m['id'] as String? ?? '';
         if (id.isEmpty) continue;
-        // Skip messages we already have (own sent messages or previously loaded)
+
+        // ── Always merge reactions — even for already-seen message IDs ────
+        // Reaction updates arrive as full doc snapshots; the ID will already
+        // be in _firestoreMsgIds but the reactions field may have changed.
+        final incomingRxn = m['reactions'];
+        if (incomingRxn is Map && incomingRxn.isNotEmpty) {
+          final rxnMap = <String, int>{};
+          incomingRxn.forEach((k, v) {
+            final count = (v as num?)?.toInt() ?? 0;
+            if (count > 0) rxnMap[k as String] = count;
+          });
+          if (rxnMap.isNotEmpty) {
+            final current = _reactions[id];
+            if (current == null || !_mapsEqual(current, rxnMap)) {
+              _reactions[id] = rxnMap;
+              added = true; // trigger setState so UI refreshes
+            }
+          } else {
+            if (_reactions.containsKey(id)) {
+              _reactions.remove(id);
+              added = true;
+            }
+          }
+        }
+
+        // Skip new-message processing for IDs we already have
         if (_firestoreMsgIds.contains(id)) continue;
         final senderId = m['senderId'] as String? ?? '';
         // Skip our own messages — already shown optimistically in _sendMessage()
@@ -507,6 +532,17 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             audioUrl: m['audioUrl'] as String?,
             audioDuration: m['audioDuration'] as int?,
           ));
+        }
+
+        // ── Apply reactions from Firestore doc (history load) ─────────────
+        final rxnRaw = m['reactions'];
+        if (rxnRaw is Map && rxnRaw.isNotEmpty) {
+          final rxnMap = <String, int>{};
+          rxnRaw.forEach((k, v) {
+            final count = (v as num?)?.toInt() ?? 0;
+            if (count > 0) rxnMap[k as String] = count;
+          });
+          if (rxnMap.isNotEmpty) _reactions[id] = rxnMap;
         }
       }
     } catch (e) {
@@ -813,6 +849,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   // ── Emoji reactions ────────────────────────────────────────────────────
+
+  /// Shallow equality check for reaction maps — avoids unnecessary setState.
+  bool _mapsEqual(Map<String, int> a, Map<String, int> b) {
+    if (a.length != b.length) return false;
+    for (final k in a.keys) {
+      if (a[k] != b[k]) return false;
+    }
+    return true;
+  }
+
   Future<void> _showEmojiPicker(String messageId) async {
     final emoji = await showEmojiReactionPicker(context);
     if (emoji != null && mounted) {
@@ -821,16 +867,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   void _toggleReaction(String messageId, String emoji) {
+    bool adding = false;
     setState(() {
       final msgReactions = _reactions[messageId] ?? {};
       final current = msgReactions[emoji] ?? 0;
       if (current > 0) {
         // Same emoji tapped again - remove it
         msgReactions.remove(emoji);
+        adding = false;
       } else {
         // New emoji - clear all previous reactions (replace behavior) and set new one
         msgReactions.clear();
         msgReactions[emoji] = 1;
+        adding = true;
 
         // ── Notify the message author (fire-and-forget) ─────────────────
         final msg = _messages.where((m) => m.id == messageId).isNotEmpty
@@ -864,6 +913,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
     });
     _persistReactions();
+    // ── Persist to Firestore so other devices see this reaction ─────────
+    FirestoreService().updateMessageReaction(
+      messageId: messageId,
+      emoji: emoji,
+      adding: adding,
+    );
   }
 
   void _openThread(ChatMessage msg) {

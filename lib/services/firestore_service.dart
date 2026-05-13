@@ -914,6 +914,36 @@ class FirestoreService {
     return feed;
   }
 
+  // ── Emoji reactions (cross-device) ───────────────────────────────────────
+
+  /// Write a user's reaction onto the message doc.
+  /// reactions field: { "emoji": count, ... }  — stored on group_messages doc.
+  /// [reactorUid] is stored so we can track per-user reactions.
+  Future<void> updateMessageReaction({
+    required String messageId,
+    required String emoji,
+    required bool adding, // true = add, false = remove
+  }) async {
+    final uid = _uid;
+    if (uid == null) return;
+    try {
+      final ref = _db.collection('group_messages').doc(messageId);
+      if (adding) {
+        await ref.update({
+          'reactions.$emoji': FieldValue.increment(1),
+          'reactionUsers.$uid': emoji, // tracks which emoji this user picked
+        });
+      } else {
+        await ref.update({
+          'reactions.$emoji': FieldValue.increment(-1),
+          'reactionUsers.$uid': FieldValue.delete(),
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] updateMessageReaction error: $e');
+    }
+  }
+
   // ── RSVP persistence (survives reinstall / cross-device) ─────────────────
 
   /// Write or remove a user's RSVP for a meetup.
