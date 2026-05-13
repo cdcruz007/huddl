@@ -117,9 +117,8 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
 
               const SizedBox(height: 56),
 
-              // ── Biometric icon ─────────────────────────────────────────
-              _BiometricIcon(
-                isFaceId: _isFaceId,
+              // ── Welcome illustration ───────────────────────────────────
+              _WelcomeIllustration(
                 isAnimating: _isAuthenticating,
                 hasFailed: _hasFailed,
               ),
@@ -226,23 +225,21 @@ class _BiometricLockScreenState extends State<BiometricLockScreen>
   }
 }
 
-// ── Animated biometric icon widget ───────────────────────────────────────────
-class _BiometricIcon extends StatefulWidget {
-  final bool isFaceId;
+// ── Huddl welcome illustration with pulse animation ──────────────────────────
+class _WelcomeIllustration extends StatefulWidget {
   final bool isAnimating;
   final bool hasFailed;
 
-  const _BiometricIcon({
-    required this.isFaceId,
+  const _WelcomeIllustration({
     required this.isAnimating,
     required this.hasFailed,
   });
 
   @override
-  State<_BiometricIcon> createState() => _BiometricIconState();
+  State<_WelcomeIllustration> createState() => _WelcomeIllustrationState();
 }
 
-class _BiometricIconState extends State<_BiometricIcon>
+class _WelcomeIllustrationState extends State<_WelcomeIllustration>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseCtrl;
   late Animation<double> _pulse;
@@ -252,9 +249,9 @@ class _BiometricIconState extends State<_BiometricIcon>
     super.initState();
     _pulseCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
-    _pulse = Tween<double>(begin: 0.92, end: 1.0).animate(
+    _pulse = Tween<double>(begin: 0.94, end: 1.0).animate(
       CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
     );
   }
@@ -267,33 +264,24 @@ class _BiometricIconState extends State<_BiometricIcon>
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.hasFailed
-        ? HuddlColors.error
-        : HuddlColors.primary;
-
     return AnimatedBuilder(
       animation: _pulse,
       builder: (_, child) => Transform.scale(
         scale: widget.isAnimating ? _pulse.value : 1.0,
         child: child,
       ),
-      child: Container(
-        width: 96,
-        height: 96,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color.withValues(alpha: 0.10),
-          border: Border.all(
-            color: color.withValues(alpha: widget.isAnimating ? 0.5 : 0.25),
-            width: 2,
-          ),
-        ),
-        child: Icon(
-          widget.isFaceId
-              ? Icons.face_retouching_natural_rounded
-              : Icons.fingerprint_rounded,
-          size: 52,
-          color: color,
+      child: ColorFiltered(
+        // Tint the illustration red on auth failure for clear visual feedback
+        colorFilter: widget.hasFailed
+            ? ColorFilter.mode(
+                HuddlColors.error.withValues(alpha: 0.15),
+                BlendMode.srcATop,
+              )
+            : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+        child: Image.asset(
+          'assets/images/illustrations/onboarding_welcome_illustration.png',
+          height: 180,
+          fit: BoxFit.contain,
         ),
       ),
     );
