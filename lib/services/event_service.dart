@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/group.dart';
 import 'ai_event_discovery_service.dart';
 import 'browser_storage.dart';
+import 'firestore_service.dart';
 import 'onboarding_data_service.dart';
 import 'saved_message_service.dart';
 
@@ -170,15 +172,45 @@ class EventService extends ChangeNotifier {
 
   /// Toggle going status for an event.
   /// Returns true if the user is now going (just registered).
+  /// Also writes the RSVP to Firestore so it survives reinstall / shows on
+  /// other devices (same pattern as MeetupService.toggleGoing).
   bool toggleGoing(String eventId) {
-    if (_goingEventIds.contains(eventId)) {
+    final wasGoing = _goingEventIds.contains(eventId);
+    if (wasGoing) {
       _goingEventIds.remove(eventId);
-      notifyListeners();
-      return false;
     } else {
       _goingEventIds.add(eventId);
-      notifyListeners();
-      return true;
+    }
+    notifyListeners();
+    // Persist to Firestore so RSVP survives reinstall and shows cross-device.
+    // Re-uses the same user_rsvps collection/format as MeetupService so a
+    // single loadMyRsvpIds() call covers both.  Fire-and-forget — any error
+    // is logged but never shown to the user.
+    FirestoreService().saveRsvp(eventId, going: !wasGoing).catchError((e) {
+      if (kDebugMode) debugPrint('[EventService] toggleGoing Firestore error: $e');
+    });
+    return !wasGoing;
+  }
+
+  /// Fetch this user's event RSVP state from Firestore and restore
+  /// _goingEventIds.  Call once after the events list is loaded.
+  Future<void> syncRsvpsFromFirestore() async {
+    try {
+      final goingIds = await FirestoreService().loadMyRsvpIds();
+      if (goingIds.isEmpty) return;
+      bool changed = false;
+      for (final id in goingIds) {
+        // loadMyRsvpIds returns ALL rsvp docs — meetup IDs and event IDs.
+        // Only apply IDs that match an actual event in our list.
+        final exists = _events.any((e) => e.id == id);
+        if (exists && !_goingEventIds.contains(id)) {
+          _goingEventIds.add(id);
+          changed = true;
+        }
+      }
+      if (changed) notifyListeners();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[EventService] syncRsvpsFromFirestore error: $e');
     }
   }
 

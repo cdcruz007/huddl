@@ -333,15 +333,21 @@ class _MessagesTabState extends State<_MessagesTab> {
     _refreshLastMessageForGroup(sentGroupId);
   }
 
-  /// Reads the latest message from storage for [groupId] and updates
-  /// the corresponding [_GroupItem] so the list re-sorts correctly.
+  /// Reads the latest message for [groupId] and updates the corresponding
+  /// [_GroupItem] so the list re-sorts correctly.
+  ///
+  /// Strategy (newest wins across all sources):
+  ///   1. BrowserStorage — local sent messages (text, cards, media)
+  ///   2. Firestore group doc — authoritative lastMessage / lastMessageTime
+  ///      written by sendGroupMessage() for ALL message types from ALL devices.
+  ///      This covers messages sent by other users that never touch local storage.
   Future<void> _refreshLastMessageForGroup(String groupId) async {
     try {
       DateTime? latestTime;
       String? latestText;
       String? latestSender;
 
-      // ── 1. User-typed text messages ───────────────────────────────
+      // ── 1. User-typed text messages (BrowserStorage) ──────────────
       final textKey = 'gc_user_texts_$groupId';
       final textRaw = await BrowserStorage.getString(textKey);
       if (textRaw != null) {
@@ -357,7 +363,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         }
       }
 
-      // ── 2. Forwarded / card messages ─────────────────────────────
+      // ── 2. Forwarded / card messages (BrowserStorage) ─────────────
       final fwdKey = 'group_messages_$groupId';
       final fwdRaw = await BrowserStorage.getString(fwdKey);
       if (fwdRaw != null) {
@@ -369,7 +375,6 @@ class _MessagesTabState extends State<_MessagesTab> {
             latestTime = ts;
             final isMe = (m['senderId'] as String? ?? '') == 'current_user';
             latestSender = isMe ? 'You' : (m['senderName'] as String? ?? '');
-            // Show a friendly label for card types
             if (m['isMeetupCard'] == true) {
               latestText = '📅 Shared a meetup';
             } else if (m['isGroupCard'] == true) {
@@ -385,7 +390,7 @@ class _MessagesTabState extends State<_MessagesTab> {
         }
       }
 
-      // ── 3. Media messages (images, documents, location pins) ──────
+      // ── 3. Media messages — images, documents, location pins ───────
       final mediaRaw =
           await BrowserStorage.getString('gc_user_media_$groupId');
       if (mediaRaw != null) {
@@ -410,17 +415,39 @@ class _MessagesTabState extends State<_MessagesTab> {
         }
       }
 
+      // ── 4. Firestore group doc — authoritative cross-device source ──
+      // sendGroupMessage() always writes lastMessage + lastMessageTime to the
+      // group doc for every message type (text, image, location, voice, doc,
+      // contact, poll).  This covers messages from OTHER devices that never
+      // appear in BrowserStorage, and ensures the sort order is correct even
+      // after a reinstall.
+      try {
+        final group = await FirestoreService()
+            .getGroup(groupId)
+            .timeout(const Duration(seconds: 5));
+        if (group != null && group.lastMessageTime != null) {
+          final fsTime = group.lastMessageTime!;
+          if (latestTime == null || fsTime.isAfter(latestTime)) {
+            latestTime  = fsTime;
+            latestText  = group.lastMessage;
+            latestSender = group.lastSenderName;
+          }
+        }
+      } catch (_) {
+        // Network unavailable — fall through with whatever BrowserStorage gave us
+      }
+
       if (latestTime == null || !mounted) return;
 
-      final finalText = latestText;
+      final finalText   = latestText;
       final finalSender = latestSender;
-      final finalTime = latestTime;
+      final finalTime   = latestTime;
 
       setState(() {
         final idx = _allGroups.indexWhere((g) => g.id == groupId);
         if (idx >= 0 &&
-            (finalTime.isAfter(
-                _allGroups[idx].lastMessageTime ?? DateTime(2000)))) {
+            finalTime.isAfter(
+                _allGroups[idx].lastMessageTime ?? DateTime(2000))) {
           _allGroups[idx] = _allGroups[idx].copyWith(
             lastMessage: finalSender != null && finalText != null
                 ? '$finalSender: $finalText'
@@ -428,7 +455,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             lastSenderName: finalSender,
             lastMessageTime: finalTime,
           );
-          _applyFilter(); // re-sort
+          _applyFilter(); // re-sort: newest message → top of list
         }
       });
     } catch (_) {}
