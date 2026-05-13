@@ -845,6 +845,35 @@ class DefaultGroupService {
 
     await _saveToStorage();
     _log('User $userId left group: ${group?.name ?? groupId}');
+
+    // ── Sync leave to Firestore (fire-and-forget) ──────────────────────────
+    // Remove the real Firebase UID from memberIds and re-derive memberCount
+    // from the actual array length so counts never drift upward over time.
+    final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+    if (firebaseUid != null) {
+      final db = FirebaseFirestore.instance;
+      final ref = db.collection('groups').doc(groupId);
+      db.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        if (!snap.exists) return;
+        final data = snap.data() ?? {};
+        final existingIds = List<String>.from(data['memberIds'] as List? ?? []);
+        if (!existingIds.contains(firebaseUid)) return; // already gone
+        final newIds = existingIds..remove(firebaseUid);
+        tx.update(ref, {
+          'memberIds': FieldValue.arrayRemove([firebaseUid]),
+          'memberCount': newIds.length, // derived, never blind decrement
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        _log('Firestore sync: removed $firebaseUid from $groupId '
+            '(memberCount → ${newIds.length})');
+      }).catchError((Object e) {
+        if (kDebugMode) {
+          debugPrint('[DefaultGroupService] leaveGroup Firestore error: $e');
+        }
+      });
+    }
+
     return true;
   }
 

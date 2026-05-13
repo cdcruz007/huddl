@@ -3952,7 +3952,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       id: 'poll_${DateTime.now().millisecondsSinceEpoch}',
       data: result,
       creatorName: userName,
-      creatorId: 'current_user',
+      creatorId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
       createdAt: DateTime.now(),
       isPinned: false,
     );
@@ -4230,6 +4230,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   Future<void> _addImageMessage(MediaAttachment att) async {
     final userName = _onboardingService.name ?? 'You';
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final url = att.filePath ?? 'local_image_${DateTime.now().millisecondsSinceEpoch}';
     // Optimistic local add — visible immediately to sender
     setState(() {
@@ -4239,7 +4240,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         timestamp: DateTime.now(),
         senderName: userName,
         senderAvatar: '#FF975C',
-        senderId: 'current_user',
+        senderId: currentUid,
         bytes: att.bytes,
       ));
     });
@@ -4285,6 +4286,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final attachment = await _mediaService.pickDocument();
     if (attachment == null || !mounted) return;
     final userName = _onboardingService.name ?? 'You';
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final docName = attachment.fileName ?? 'Document';
     final ts = DateTime.now();
     setState(() {
@@ -4296,7 +4298,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         timestamp: ts,
         senderName: userName,
         senderAvatar: '#FF975C',
-        senderId: 'current_user',
+        senderId: currentUid,
       ));
     });
     await _persistUserMediaMessages();
@@ -4391,13 +4393,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final msg = _GroupImageMessage(
       imageUrl: 'location_pin',
       isMe: true,
       timestamp: DateTime.now(),
       senderName: userName,
       senderAvatar: '#FF975C',
-      senderId: 'current_user',
+      senderId: currentUid,
       isLocationPin: true,
       latitude: lat,
       longitude: lng,
@@ -4473,11 +4476,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (result != null && mounted) {
       final contactName  = result['name']  ?? 'Unknown';
       final contactPhone = result['phone'] ?? '';
+      final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
       // Optimistic local add
       setState(() {
         _messages.add(ChatMessage(
           id: 'gm_contact_${DateTime.now().millisecondsSinceEpoch}',
-          senderId: 'current_user',
+          senderId: currentUid,
           senderName: userName,
           senderAvatar: '#FF975C',
           message: '\u{1F464} Contact: $contactName - $contactPhone',
@@ -4521,7 +4525,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _persistUserTextMessages() async {
     try {
       final userMsgs = _messages
-          .where((m) => m.isMe && m.senderId == 'current_user')
+          .where((m) => m.isMe)
           .map((m) => {
                 'id': m.id,
                 'senderId': m.senderId,
@@ -4539,7 +4543,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _persistUserMediaMessages() async {
     try {
       final imgs = _imageMessages
-          .where((m) => m.isMe && m.senderId == 'current_user')
+          .where((m) => m.isMe)
           .map((m) => {
                 'imageUrl': m.imageUrl,
                 // Persist bytes as base64 so the image survives navigation/reload
@@ -4553,7 +4557,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               })
           .toList();
       final docs = _documentMessages
-          .where((m) => m.isMe && m.senderId == 'current_user')
+          .where((m) => m.isMe)
           .map((m) => {
                 'fileName': m.fileName,
                 'fileSize': m.fileSize,
@@ -4745,7 +4749,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           final meetupData = data['meetupData'] as Map<String, dynamic>?;
           _messages.add(ChatMessage(
             id: msgId,
-            senderId: 'current_user',
+            senderId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
             senderName: data['organiser'] as String? ?? 'You',
             senderAvatar: '#FF975C',
             message: data['meetupTitle'] as String? ?? 'Meetup',
