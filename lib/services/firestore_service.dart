@@ -913,4 +913,41 @@ class FirestoreService {
 
     return feed;
   }
+
+  // ── RSVP persistence (survives reinstall / cross-device) ─────────────────
+
+  /// Write or remove a user's RSVP for a meetup.
+  /// Collection: user_rsvps/{uid}/meetups/{meetupId}
+  Future<void> saveRsvp(String meetupId, {required bool going}) async {
+    final uid = _uid;
+    if (uid == null) return;
+    final ref = _db
+        .collection('user_rsvps')
+        .doc(uid)
+        .collection('meetups')
+        .doc(meetupId);
+    if (going) {
+      await ref.set({'meetupId': meetupId, 'going': true, 'updatedAt': FieldValue.serverTimestamp()});
+    } else {
+      await ref.delete();
+    }
+  }
+
+  /// Return the set of meetup IDs this user has RSVP'd "going" to.
+  Future<Set<String>> loadMyRsvpIds() async {
+    final uid = _uid;
+    if (uid == null) return {};
+    try {
+      final snap = await _db
+          .collection('user_rsvps')
+          .doc(uid)
+          .collection('meetups')
+          .where('going', isEqualTo: true)
+          .get();
+      return snap.docs.map((d) => d.id).toSet();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] loadMyRsvpIds error: $e');
+      return {};
+    }
+  }
 }

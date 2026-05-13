@@ -3,6 +3,7 @@ import 'dart:ui' show Color;
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import 'borough_scope_guard.dart';
+import 'firestore_service.dart';
 
 /// Privacy level for a meetup
 enum MeetupPrivacy { public, group, private_ }
@@ -351,6 +352,32 @@ class MeetupService extends ChangeNotifier {
     );
     notifyListeners();
     _persistUserMeetups();
+    // Persist RSVP to Firestore so it survives reinstall / shows on other devices
+    FirestoreService().saveRsvp(meetupId, going: !wasGoing);
+  }
+
+  /// Fetch this user's RSVP state from Firestore and apply it to the local
+  /// meetup list. Call this once after loading meetups so that reinstalls
+  /// and other devices see the correct "I'm Going" state.
+  Future<void> syncRsvpsFromFirestore() async {
+    try {
+      final goingIds = await FirestoreService().loadMyRsvpIds();
+      if (goingIds.isEmpty) return;
+      bool changed = false;
+      for (int i = 0; i < _meetups.length; i++) {
+        final m = _meetups[i];
+        if (goingIds.contains(m.id) && !m.isGoing) {
+          _meetups[i] = m.copyWith(isGoing: true);
+          changed = true;
+        }
+      }
+      if (changed) {
+        notifyListeners();
+        _persistUserMeetups();
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[MeetupService] syncRsvpsFromFirestore error: $e');
+    }
   }
 
   /// Delete / cancel a meetup (organiser only).

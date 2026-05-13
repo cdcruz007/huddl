@@ -1640,6 +1640,8 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
       if (!mounted) return;
       _meetupService.addListener(_refresh);
       _eventService.addListener(_refresh);
+      // Restore RSVP state from Firestore so "I'm Going" survives reinstall
+      _meetupService.syncRsvpsFromFirestore();
     });
   }
 
