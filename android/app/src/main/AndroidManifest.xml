@@ -13,6 +13,13 @@
          notification permission prompt. Without this the system blocks the
          requestPermission() call and no push notifications are delivered. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- USE_BIOMETRIC: Required by local_auth on Android API 28+ for fingerprint/face/iris
+         authentication. Without this permission, authenticate() returns false silently on
+         all Android devices. iOS does not require a manifest declaration. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+    <!-- USE_FINGERPRINT: Required for backward compatibility with Android API < 28.
+         local_auth falls back to this permission on older devices. -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
     <!-- RECORD_AUDIO: Required for voice message recording -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- READ/WRITE external storage for saving voice recordings (API < 29) -->
