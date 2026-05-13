@@ -364,6 +364,92 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           continue;
         }
 
+        // ── Document from another device ───────────────────────────────────
+        if (msgType == 'document') {
+          final docName = m['documentName'] as String? ?? 'Document';
+          final docSize = (m['documentSize'] as num?)?.toInt();
+          final docUrl  = m['documentUrl'] as String? ?? '';
+          final alreadyHave = _documentMessages.any((d) =>
+              d.senderId == senderId && d.fileName == docName);
+          if (!alreadyHave) {
+            _documentMessages.add(_GroupDocumentMessage(
+              fileName: docName,
+              fileSize: docSize,
+              fileUrl: docUrl,
+              isMe: false,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+            ));
+            added = true;
+          }
+          continue;
+        }
+
+        // ── Contact from another device ───────────────────────────────────
+        if (msgType == 'contact') {
+          final contactMsg = '\u{1F464} Contact: '
+              '${m['contactName'] as String? ?? 'Unknown'} - '
+              '${m['contactPhone'] as String? ?? ''}';
+          if (!_messages.any((e) => e.id == id)) {
+            _messages.add(ChatMessage(
+              id: id,
+              senderId: senderId,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              message: contactMsg,
+              timestamp: ts,
+              isMe: false,
+            ));
+            added = true;
+          }
+          continue;
+        }
+
+        // ── Poll from another device ─────────────────────────────────────
+        if (msgType == 'poll') {
+          final pollQuestion = m['pollQuestion'] as String? ?? '';
+          final pollAnnounceId = 'fs_poll_$id';
+          if (pollQuestion.isNotEmpty &&
+              !_messages.any((e) => e.id == pollAnnounceId)) {
+            _messages.add(ChatMessage(
+              id: pollAnnounceId,
+              senderId: senderId,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              message: '\u{1F4CA} Poll: "$pollQuestion"',
+              timestamp: ts,
+              isMe: false,
+              isSystem: true,
+            ));
+            added = true;
+          }
+          // Restore the ActivePoll locally if not already present
+          final rawOptions = m['pollOptions'];
+          if (rawOptions is List && !_polls.any((p) => p.id == 'fs_$id')) {
+            final pollData = PollData(
+              question: pollQuestion,
+              options: rawOptions.map((e) => e as String).toList(),
+              allowMultiple: m['pollAllowMultiple'] as bool? ?? false,
+              isCalendarMode: m['pollIsCalendarMode'] as bool? ?? false,
+              expiresAt: m['pollExpiresAt'] != null
+                  ? DateTime.tryParse(m['pollExpiresAt'] as String)
+                  : null,
+            );
+            final remotePoll = ActivePoll(
+              id: 'fs_$id',
+              data: pollData,
+              creatorName: m['senderName'] as String? ?? 'Member',
+              creatorId: senderId,
+              createdAt: ts,
+              isPinned: false,
+            );
+            unawaited(_pollService.addPoll(widget.groupId, remotePoll));
+          }
+          continue;
+        }
+
         // ── Text / voice_note (existing path) ──────────────────────────────
         final chatMsg = ChatMessage(
           id: id,
@@ -514,6 +600,88 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               longitude: lng,
               locationLabel: locLabel,
             ));
+          }
+          continue;
+        }
+
+        // ── Document history (cross-device) ───────────────────────────────
+        if (msgType == 'document') {
+          final docName = m['documentName'] as String? ?? 'Document';
+          final docSize = (m['documentSize'] as num?)?.toInt();
+          final docUrl  = m['documentUrl'] as String? ?? '';
+          if (!_documentMessages.any((d) =>
+              d.senderId == senderId && d.fileName == docName)) {
+            _documentMessages.add(_GroupDocumentMessage(
+              fileName: docName,
+              fileSize: docSize,
+              fileUrl: docUrl,
+              isMe: isMe,
+              timestamp: ts,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              senderId: senderId,
+            ));
+          }
+          continue;
+        }
+
+        // ── Contact history (cross-device) ────────────────────────────────
+        if (msgType == 'contact') {
+          final contactMsg = '\u{1F464} Contact: '
+              '${m['contactName'] as String? ?? 'Unknown'} - '
+              '${m['contactPhone'] as String? ?? ''}';
+          if (!_messages.any((e) => e.id == id)) {
+            _messages.add(ChatMessage(
+              id: id,
+              senderId: senderId,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              message: contactMsg,
+              timestamp: ts,
+              isMe: isMe,
+            ));
+          }
+          continue;
+        }
+
+        // ── Poll history (cross-device) ───────────────────────────────────
+        if (msgType == 'poll') {
+          final pollQuestion = m['pollQuestion'] as String? ?? '';
+          final pollAnnounceId = 'fs_poll_$id';
+          if (pollQuestion.isNotEmpty &&
+              !_messages.any((e) => e.id == pollAnnounceId)) {
+            _messages.add(ChatMessage(
+              id: pollAnnounceId,
+              senderId: senderId,
+              senderName: m['senderName'] as String? ?? 'Member',
+              senderAvatar: m['senderAvatar'] as String? ?? '',
+              message: '\u{1F4CA} Poll: "$pollQuestion"',
+              timestamp: ts,
+              isMe: isMe,
+              isSystem: true,
+            ));
+          }
+          // Restore the ActivePoll locally if not already present
+          final rawOptions = m['pollOptions'];
+          if (rawOptions is List && !_polls.any((p) => p.id == 'fs_$id')) {
+            final pollData = PollData(
+              question: pollQuestion,
+              options: rawOptions.map((e) => e as String).toList(),
+              allowMultiple: m['pollAllowMultiple'] as bool? ?? false,
+              isCalendarMode: m['pollIsCalendarMode'] as bool? ?? false,
+              expiresAt: m['pollExpiresAt'] != null
+                  ? DateTime.tryParse(m['pollExpiresAt'] as String)
+                  : null,
+            );
+            final remotePoll = ActivePoll(
+              id: 'fs_$id',
+              data: pollData,
+              creatorName: m['senderName'] as String? ?? 'Member',
+              creatorId: senderId,
+              createdAt: ts,
+              isPinned: false,
+            );
+            unawaited(_pollService.addPoll(widget.groupId, remotePoll));
           }
           continue;
         }
@@ -3790,6 +3958,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ));
     });
 
+    // ── Write to Firestore so other devices see and can vote on the poll ──
+    try {
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '\u{1F4CA} Poll: "${result.question}"',
+        type: 'poll',
+        pollQuestion: result.question,
+        pollOptions: result.options,
+        pollAllowMultiple: result.allowMultiple,
+        pollIsCalendarMode: result.isCalendarMode,
+        pollExpiresAt: result.expiresAt?.toIso8601String(),
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Poll Firestore write error: $e');
+    }
+
     // Scroll to bottom
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -4084,12 +4268,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final attachment = await _mediaService.pickDocument();
     if (attachment == null || !mounted) return;
     final userName = _onboardingService.name ?? 'You';
+    final docName = attachment.fileName ?? 'Document';
+    final ts = DateTime.now();
     setState(() {
       _documentMessages.add(_GroupDocumentMessage(
-        fileName: attachment.fileName ?? 'Unknown file',
+        fileName: docName,
         fileSize: attachment.fileSize,
+        fileUrl: '',          // will be updated after upload
         isMe: true,
-        timestamp: DateTime.now(),
+        timestamp: ts,
         senderName: userName,
         senderAvatar: '#FF975C',
         senderId: 'current_user',
@@ -4098,6 +4285,49 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await _persistUserMediaMessages();
     _fireMessageSentNotifier();
     _scrollToEnd();
+
+    // ── Upload to Firebase Storage and write to Firestore ───────────────
+    // Other devices will see the document via the stream / history load.
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid ?? 'unknown';
+      final epoch = ts.millisecondsSinceEpoch;
+      final ext = docName.contains('.') ? docName.split('.').last : 'bin';
+      final storageRef = FirebaseStorage.instance
+          .ref('group_documents/${widget.groupId}/${uid}_$epoch.$ext');
+
+      TaskSnapshot snap;
+      if (attachment.bytes != null) {
+        snap = await storageRef.putData(
+          attachment.bytes!,
+          SettableMetadata(contentType: attachment.mimeType ?? 'application/octet-stream'),
+        );
+      } else if (attachment.filePath != null && !kIsWeb) {
+        snap = await storageRef.putFile(File(attachment.filePath!));
+      } else {
+        // No uploadable data — write metadata-only to Firestore so others
+        // at least see the document name in the chat.
+        await FirestoreService().sendGroupMessage(
+          groupId: widget.groupId,
+          message: '\u{1F4CE} $docName',
+          type: 'document',
+          documentName: docName,
+          documentSize: attachment.fileSize,
+        );
+        return;
+      }
+
+      final downloadUrl = await snap.ref.getDownloadURL();
+      await FirestoreService().sendGroupMessage(
+        groupId: widget.groupId,
+        message: '\u{1F4CE} $docName',
+        type: 'document',
+        documentUrl: downloadUrl,
+        documentName: docName,
+        documentSize: attachment.fileSize,
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Document upload/Firestore error: $e');
+    }
   }
 
   Future<void> _handleLocationShare() async {
@@ -4224,14 +4454,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       },
     );
     if (result != null && mounted) {
-      // Add as a text message with contact info
+      final contactName  = result['name']  ?? 'Unknown';
+      final contactPhone = result['phone'] ?? '';
+      // Optimistic local add
       setState(() {
         _messages.add(ChatMessage(
           id: 'gm_contact_${DateTime.now().millisecondsSinceEpoch}',
           senderId: 'current_user',
           senderName: userName,
           senderAvatar: '#FF975C',
-          message: '\u{1F464} Contact: ${result['name']} - ${result['phone']}',
+          message: '\u{1F464} Contact: $contactName - $contactPhone',
           timestamp: DateTime.now(),
           isMe: true,
         ));
@@ -4239,6 +4471,19 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       await _persistUserTextMessages();
       _fireMessageSentNotifier();
       _scrollToEnd();
+
+      // ── Write to Firestore so all other devices see the contact card ──
+      try {
+        await FirestoreService().sendGroupMessage(
+          groupId: widget.groupId,
+          message: '\u{1F464} Contact: $contactName',
+          type: 'contact',
+          contactName: contactName,
+          contactPhone: contactPhone,
+        );
+      } catch (e) {
+        if (kDebugMode) debugPrint('[GroupChat] Contact Firestore write error: $e');
+      }
     }
   }
 
@@ -4295,6 +4540,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           .map((m) => {
                 'fileName': m.fileName,
                 'fileSize': m.fileSize,
+                'fileUrl': m.fileUrl,
                 'isMe': true,
                 'timestamp': m.timestamp.toIso8601String(),
                 'senderName': m.senderName,
@@ -4370,6 +4616,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           _documentMessages.add(_GroupDocumentMessage(
             fileName: m['fileName'] as String,
             fileSize: m['fileSize'] as int?,
+            fileUrl: m['fileUrl'] as String? ?? '',
             isMe: true,
             timestamp: DateTime.parse(m['timestamp'] as String),
             senderName: m['senderName'] as String,
@@ -5346,6 +5593,7 @@ class _GroupImageMessage {
 class _GroupDocumentMessage {
   final String fileName;
   final int? fileSize;
+  final String fileUrl;   // Firebase Storage download URL (empty for legacy local-only docs)
   final bool isMe;
   final DateTime timestamp;
   final String senderName;
@@ -5355,6 +5603,7 @@ class _GroupDocumentMessage {
   const _GroupDocumentMessage({
     required this.fileName,
     this.fileSize,
+    this.fileUrl = '',
     required this.isMe,
     required this.timestamp,
     required this.senderName,

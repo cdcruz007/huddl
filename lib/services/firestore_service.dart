@@ -287,6 +287,19 @@ class FirestoreService {
     double? latitude,
     double? longitude,
     String? locationLabel,
+    // Contact fields
+    String? contactName,
+    String? contactPhone,
+    // Document fields
+    String? documentUrl,
+    String? documentName,
+    int? documentSize,
+    // Poll fields
+    String? pollQuestion,
+    List<String>? pollOptions,
+    bool? pollAllowMultiple,
+    String? pollExpiresAt,
+    bool? pollIsCalendarMode,
   }) async {
     final uid = _uid;
     if (uid == null) return;
@@ -311,11 +324,24 @@ class FirestoreService {
       'type': type ?? 'text',
       'audioUrl': audioUrl,
       'audioDuration': audioDuration,
-      // Image / location — null fields are omitted so Firestore docs stay lean
+      // Image / location — null fields omitted so Firestore docs stay lean
       if (imageUrl != null) 'imageUrl': imageUrl,
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (locationLabel != null) 'locationLabel': locationLabel,
+      // Contact
+      if (contactName != null) 'contactName': contactName,
+      if (contactPhone != null) 'contactPhone': contactPhone,
+      // Document
+      if (documentUrl != null) 'documentUrl': documentUrl,
+      if (documentName != null) 'documentName': documentName,
+      if (documentSize != null) 'documentSize': documentSize,
+      // Poll
+      if (pollQuestion != null) 'pollQuestion': pollQuestion,
+      if (pollOptions != null) 'pollOptions': pollOptions,
+      if (pollAllowMultiple != null) 'pollAllowMultiple': pollAllowMultiple,
+      if (pollExpiresAt != null) 'pollExpiresAt': pollExpiresAt,
+      if (pollIsCalendarMode != null) 'pollIsCalendarMode': pollIsCalendarMode,
     };
 
     final ref = await _db.collection('group_messages').add(msgData);
