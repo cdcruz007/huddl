@@ -274,7 +274,11 @@ class FirestoreService {
   }
 
   /// Send a message to a group.
-  Future<void> sendGroupMessage({
+  /// Send a message to a group and return the real Firestore document ID.
+  /// Callers MUST use the returned ID to key the local optimistic message so
+  /// that emoji reactions (which write to group_messages/{docId}) work correctly
+  /// on the sender's own device.
+  Future<String> sendGroupMessage({
     required String groupId,
     required String message,
     String? replyToText,
@@ -302,7 +306,7 @@ class FirestoreService {
     bool? pollIsCalendarMode,
   }) async {
     final uid = _uid;
-    if (uid == null) return;
+    if (uid == null) return '';
     final profile = await getCurrentUserProfile();
     final senderName = _resolveDisplayName(profile);
 
@@ -410,6 +414,8 @@ class FirestoreService {
     } catch (e) {
       if (kDebugMode) debugPrint('[FirestoreService] push notify error: $e');
     }
+
+    return ref.id;
   }
 
   // ═════════════════════════════════════════════════════════════════════════
@@ -1181,13 +1187,29 @@ class FirestoreService {
   }) async {
     final uid = _uid;
     if (uid == null) return;
+    // Guard: local optimistic IDs (msg_*, vm_*, local_pending_*, gm_contact_*,
+    // sys_*, fs_poll_*, poll_*) are never real Firestore doc IDs — writing to
+    // them would silently create phantom documents or throw.  Reactions on
+    // messages whose ID hasn't been reconciled yet are skipped; the sender will
+    // need to re-tap once the message has a real Firestore ID.
+    final localPrefixes = [
+      'msg_', 'vm_', 'local_pending_', 'gm_contact_',
+      'sys_', 'fs_poll_', 'poll_',
+    ];
+    if (localPrefixes.any((p) => messageId.startsWith(p))) {
+      if (kDebugMode) {
+        debugPrint('[FirestoreService] updateMessageReaction: skipped local id $messageId');
+      }
+      return;
+    }
     try {
       final ref = _db.collection('group_messages').doc(messageId);
       if (adding) {
-        await ref.update({
-          'reactions.$emoji': FieldValue.increment(1),
-          'reactionUsers.$uid': emoji, // tracks which emoji this user picked
-        });
+        // set(merge:true) never throws on a missing doc (belt-and-suspenders).
+        await ref.set({
+          'reactions': {emoji: FieldValue.increment(1)},
+          'reactionUsers': {uid: emoji},
+        }, SetOptions(merge: true));
       } else {
         await ref.update({
           'reactions.$emoji': FieldValue.increment(-1),

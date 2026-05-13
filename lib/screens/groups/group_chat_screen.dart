@@ -560,6 +560,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
         final msgType = m['type'] as String? ?? 'text';
 
+        // ── Reactions — merged FIRST, before any type-specific continue ────
+        // Previously this block lived after image/location/document/contact/
+        // poll branches which all `continue` before reaching it, so reactions
+        // on those message types were silently dropped on history load.
+        final rxnRaw = m['reactions'];
+        if (rxnRaw is Map && rxnRaw.isNotEmpty) {
+          final rxnMap = <String, int>{};
+          rxnRaw.forEach((k, v) {
+            final count = (v as num?)?.toInt() ?? 0;
+            if (count > 0) rxnMap[k as String] = count;
+          });
+          if (rxnMap.isNotEmpty) _reactions[id] = rxnMap;
+        }
+
         // ── Image history (cross-device) ───────────────────────────────────
         if (msgType == 'image') {
           final imageUrl = m['imageUrl'] as String? ?? '';
@@ -700,17 +714,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             audioUrl: m['audioUrl'] as String?,
             audioDuration: m['audioDuration'] as int?,
           ));
-        }
-
-        // ── Apply reactions from Firestore doc (history load) ─────────────
-        final rxnRaw = m['reactions'];
-        if (rxnRaw is Map && rxnRaw.isNotEmpty) {
-          final rxnMap = <String, int>{};
-          rxnRaw.forEach((k, v) {
-            final count = (v as num?)?.toInt() ?? 0;
-            if (count > 0) rxnMap[k as String] = count;
-          });
-          if (rxnMap.isNotEmpty) _reactions[id] = rxnMap;
         }
       }
     } catch (e) {
@@ -903,12 +906,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    final msgId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+    final optimisticId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
 
     setState(() {
       _messages.add(ChatMessage(
-        id: msgId,
+        id: optimisticId,
         senderId: currentUid,
         senderName: _onboardingService.name ?? 'You',
         senderAvatar: _myPhotoUrl,
@@ -916,31 +919,59 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         timestamp: DateTime.now(),
         isMe: true,
       ));
-      _messageStatuses[msgId] = MessageStatus.sending;
+      _messageStatuses[optimisticId] = MessageStatus.sending;
     });
     // Track optimistic id so stream doesn't add it again
-    _firestoreMsgIds.add(msgId);
+    _firestoreMsgIds.add(optimisticId);
 
     _messageController.clear();
     _fireMessageSentNotifier();
 
     // ── Write to Firestore for real cross-device delivery ───────────────
     try {
-      await FirestoreService().sendGroupMessage(
+      final firestoreId = await FirestoreService().sendGroupMessage(
         groupId: widget.groupId,
         message: text,
       );
-      if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.sent);
+      // ── Patch local message to use the real Firestore doc ID ──────────
+      // This is critical: emoji reactions write to group_messages/{firestoreId}.
+      // If msg.id stays as the optimistic 'msg_...' key the reaction Firestore
+      // write targets a non-existent document and the reaction never persists.
+      if (mounted) {
+        setState(() {
+          final idx = _messages.indexWhere((m) => m.id == optimisticId);
+          if (idx >= 0) {
+            final old = _messages[idx];
+            _messages[idx] = ChatMessage(
+              id: firestoreId,
+              senderId: old.senderId,
+              senderName: old.senderName,
+              senderAvatar: old.senderAvatar,
+              message: old.message,
+              timestamp: old.timestamp,
+              isMe: old.isMe,
+              replyToText: old.replyToText,
+              replyToSender: old.replyToSender,
+            );
+          }
+          // Re-key status and firestoreMsgIds to real doc ID
+          final status = _messageStatuses.remove(optimisticId);
+          if (status != null) _messageStatuses[firestoreId] = status;
+          _firestoreMsgIds.remove(optimisticId);
+          _firestoreMsgIds.add(firestoreId);
+          _messageStatuses[firestoreId] = MessageStatus.sent;
+        });
+      }
       // Persist locally too so message survives navigation
       await _persistUserTextMessages();
       // Mark delivered after Firestore write confirmed
       Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.delivered);
+        if (mounted) setState(() => _messageStatuses[firestoreId] = MessageStatus.delivered);
       });
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Firestore send error: $e');
-      // Still show as sent locally even if Firestore fails
-      if (mounted) setState(() => _messageStatuses[msgId] = MessageStatus.sent);
+      // Still show as sent locally even if Firestore fails (optimistic ID kept)
+      if (mounted) setState(() => _messageStatuses[optimisticId] = MessageStatus.sent);
       await _persistUserTextMessages();
     }
 
