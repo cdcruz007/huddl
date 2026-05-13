@@ -4310,14 +4310,16 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             if (groups.isEmpty)
               SliverToBoxAdapter(
                 child: HuddlEmptyState(
-                  illustration: HuddlIllustration.community,
-                  illustrationHeight: 180,
+                  illustration: hasActiveFilters
+                      ? HuddlIllustration.community
+                      : HuddlIllustration.groupsEmpty,
+                  illustrationHeight: hasActiveFilters ? 180 : 220,
                   title: hasActiveFilters
                       ? 'No groups match your search'
-                      : 'No groups in your area yet',
+                      : 'No groups in your borough yet',
                   subtitle: hasActiveFilters
                       ? 'Try adjusting your filters or search terms.'
-                      : 'Be the first to create a group\nfor parents in your borough!',
+                      : 'Why not create one? Parents nearby would love to discuss topics like Travelling with Kids, Breastfeeding, Healthy Meals and so much more.',
                   actionLabel: hasActiveFilters ? 'Clear filters' : null,
                   onAction: hasActiveFilters
                       ? () {

@@ -31,6 +31,10 @@ abstract class HuddlIllustration {
   static const marketplaceEmpty =
       'assets/images/illustrations/marketplace_handbag_illustration.png';
 
+  /// Four people high-fiving / greeting — groups empty / no groups in borough yet
+  static const groupsEmpty =
+      'assets/images/illustrations/groups_empty_illustration.png';
+
   /// Single dancing person — bookmarks / saved messages
   static const saved =
       'assets/images/illustrations/Group_3603.png';
