@@ -216,41 +216,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final defaultGroups = await _groupService.getUserGroups('current_user');
 
-      final discoveredJson =
-          await BrowserStorage.getString('user_created_groups_v1');
+      // ── Always query Firestore for the full membership list ─────────────
+      // Previously Firestore was only queried when the local cache was empty,
+      // so groups joined on other devices / sessions were never shown.
+      // Firestore is now the authoritative source on every profile open;
+      // the local BrowserStorage cache is used only as an instant-display
+      // fallback while the network call is in flight (not implemented here —
+      // we await the Firestore call so the list is always fresh).
       List<Group> discovered = [];
-      if (discoveredJson != null) {
-        final List<dynamic> decoded = json.decode(discoveredJson);
-        discovered = decoded
-            .map((e) => Group.fromJson(e as Map<String, dynamic>))
+      try {
+        final defaultGroupIds = defaultGroups.map((g) => g.id).toSet();
+        final firestoreGroups = await FirestoreService()
+            .getMyGroups()
+            .timeout(const Duration(seconds: 6));
+        // Exclude groups already covered by DefaultGroupService so we don't
+        // show duplicates in the horizontal card list.
+        discovered = firestoreGroups
+            .where((g) => !defaultGroupIds.contains(g.id))
             .toList();
-      }
-
-      // ── Firestore fallback: restore user-created groups after reinstall ──
-      // BrowserStorage is wiped on reinstall; Firestore is the durable source.
-      // Query all groups where the user is a member, then exclude any IDs
-      // already covered by DefaultGroupService (defaultGroups) so we only
-      // add groups that belong in _discoveredGroups.
-      if (discovered.isEmpty) {
-        try {
-          final defaultGroupIds = defaultGroups.map((g) => g.id).toSet();
-          final firestoreGroups = await FirestoreService()
-              .getMyGroups()
-              .timeout(const Duration(seconds: 6));
-          // Only keep groups not already in _userGroups (DefaultGroupService)
-          final restored = firestoreGroups
-              .where((g) => !defaultGroupIds.contains(g.id))
-              .toList();
-          if (restored.isNotEmpty) {
-            discovered = restored;
-            // Re-persist locally so the next cold start skips this query
-            await BrowserStorage.setString(
-              'user_created_groups_v1',
-              json.encode(restored.map((g) => g.toJson()).toList()),
-            );
-          }
-        } catch (_) {
-          // Network unavailable — leave discovered empty; will retry next open
+        // Refresh local cache so it matches current Firestore state.
+        await BrowserStorage.setString(
+          'user_created_groups_v1',
+          json.encode(discovered.map((g) => g.toJson()).toList()),
+        );
+      } catch (_) {
+        // Network unavailable — fall back to last-known local cache.
+        final discoveredJson =
+            await BrowserStorage.getString('user_created_groups_v1');
+        if (discoveredJson != null) {
+          try {
+            final List<dynamic> decoded = json.decode(discoveredJson);
+            discovered = decoded
+                .map((e) => Group.fromJson(e as Map<String, dynamic>))
+                .toList();
+          } catch (_) {}
         }
       }
 
