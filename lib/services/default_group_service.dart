@@ -133,7 +133,49 @@ class DefaultGroupService {
         });
         _log('✓ Loaded memberships for ${_userGroupMemberships.length} users');
       }
-      
+
+      // ── Firestore fallback: restore memberships after reinstall ──────────
+      // If local storage is empty (fresh install / reinstall wipes BrowserStorage),
+      // query Firestore for groups this user is a member of and rebuild local state.
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid != null && !_userGroupMemberships.containsKey(uid)) {
+        _log('📡 Local memberships empty — restoring from Firestore for $uid');
+        try {
+          final snap = await FirebaseFirestore.instance
+              .collection('groups')
+              .where('memberIds', arrayContains: uid)
+              .get();
+          if (snap.docs.isNotEmpty) {
+            final groupIds = <String>[];
+            for (final doc in snap.docs) {
+              final data = doc.data();
+              final groupId = doc.id;
+              // Rebuild local group object from Firestore doc
+              final group = Group(
+                id: groupId,
+                name: data['name'] as String? ?? '',
+                description: data['description'] as String? ?? '',
+                imageUrl: data['imageUrl'] as String? ?? '',
+                memberCount: (data['memberCount'] as num?)?.toInt() ?? 1,
+                category: data['category'] as String? ?? 'Community',
+                lastMessage: data['lastMessage'] as String?,
+                lastSenderName: data['lastSenderName'] as String?,
+                isImageLocked: true,
+                creatorId: data['creatorId'] as String?,
+                creatorName: data['creatorName'] as String?,
+              );
+              _defaultGroups[groupId] = group;
+              groupIds.add(groupId);
+            }
+            _userGroupMemberships[uid] = groupIds;
+            _log('✓ Restored ${groupIds.length} groups from Firestore for $uid');
+            await _saveToStorage(); // persist so next cold start uses local cache
+          }
+        } catch (e) {
+          _log('⚠️ Firestore membership restore error: $e');
+        }
+      }
+
       _isInitialized = true;
     } catch (e) {
       _log('❌ Error loading persisted data: $e');
