@@ -28,6 +28,7 @@ import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
 import '../../services/firebase_auth_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/huddl_user_service.dart';
 import '../../services/photo_upload_service.dart';
 import '../../services/push_notification_service.dart';
@@ -223,6 +224,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
         discovered = decoded
             .map((e) => Group.fromJson(e as Map<String, dynamic>))
             .toList();
+      }
+
+      // ── Firestore fallback: restore user-created groups after reinstall ──
+      // BrowserStorage is wiped on reinstall; Firestore is the durable source.
+      // Query all groups where the user is a member, then exclude any IDs
+      // already covered by DefaultGroupService (defaultGroups) so we only
+      // add groups that belong in _discoveredGroups.
+      if (discovered.isEmpty) {
+        try {
+          final defaultGroupIds = defaultGroups.map((g) => g.id).toSet();
+          final firestoreGroups = await FirestoreService()
+              .getMyGroups()
+              .timeout(const Duration(seconds: 6));
+          // Only keep groups not already in _userGroups (DefaultGroupService)
+          final restored = firestoreGroups
+              .where((g) => !defaultGroupIds.contains(g.id))
+              .toList();
+          if (restored.isNotEmpty) {
+            discovered = restored;
+            // Re-persist locally so the next cold start skips this query
+            await BrowserStorage.setString(
+              'user_created_groups_v1',
+              json.encode(restored.map((g) => g.toJson()).toList()),
+            );
+          }
+        } catch (_) {
+          // Network unavailable — leave discovered empty; will retry next open
+        }
       }
 
       // Load events the user is registered for

@@ -14,6 +14,7 @@ import '../../services/postcode_service.dart';
 import '../../services/invitation_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
+import '../../services/firestore_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import '../../widgets/borough_badge.dart';
@@ -764,7 +765,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         privacy = GroupPrivacy.private_;
       }
 
-      final newGroup = Group(
+      var newGroup = Group(
         id: 'user_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -788,6 +789,44 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         lastMessageTime: DateTime.now(),
       );
 
+      // ── Write to Firestore so the group survives reinstall ────────────
+      // createGroup() assigns creatorId = real UID and memberIds = [uid],
+      // returns the canonical Firestore doc ID.
+      String persistedId = newGroup.id;
+      try {
+        final firestoreId = await FirestoreService().createGroup({
+          'name': newGroup.name,
+          'description': newGroup.description,
+          'imageUrl': newGroup.imageUrl,
+          'memberCount': newGroup.memberCount,
+          'category': newGroup.category,
+          'isImageLocked': newGroup.isImageLocked,
+          'targetAudience': newGroup.targetAudience,
+          'privacy': newGroup.privacy == GroupPrivacy.private_
+              ? 'private'
+              : newGroup.privacy == GroupPrivacy.group
+                  ? 'group'
+                  : 'public',
+          'parentGroupId': newGroup.parentGroupId,
+          'parentGroupName': newGroup.parentGroupName,
+          'creatorName': creatorName,
+          'creatorBorough': creatorBorough,
+          'invitedMemberIds': newGroup.invitedMemberIds,
+          'lastMessage': newGroup.lastMessage ?? '$creatorName created this group',
+          'lastSenderName': 'System',
+          'lastMessageTime': newGroup.lastMessageTime?.toIso8601String(),
+        });
+        persistedId = firestoreId;
+      } catch (e) {
+        if (kDebugMode) debugPrint('⚠️ create_group: Firestore write failed, using local ID: $e');
+      }
+
+      // ── Promote to real Firestore doc ID if we got one ─────────────────
+      if (persistedId != newGroup.id) {
+        newGroup = newGroup.copyWith(id: persistedId);
+      }
+
+      // ── Write to BrowserStorage (local cache / offline fallback) ─────────
       final existingJson = await BrowserStorage.getString(_userGroupsKey);
       List<dynamic> groups = [];
       if (existingJson != null) {
