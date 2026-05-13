@@ -3017,6 +3017,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   fileSize: docMsg.fileSize,
                                   isMe: docMsg.isMe,
                                   timestamp: docMsg.timestamp,
+                                  onTap: docMsg.fileUrl.isNotEmpty
+                                      ? () async {
+                                          final uri = Uri.parse(docMsg.fileUrl);
+                                          if (await canLaunchUrl(uri)) {
+                                            await launchUrl(
+                                              uri,
+                                              mode: LaunchMode.externalApplication,
+                                            );
+                                          } else if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Could not open document'),
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      : null,
                                   onForward: () {
                                     showForwardSheet(
                                       context: context,
