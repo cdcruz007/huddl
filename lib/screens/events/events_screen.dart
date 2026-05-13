@@ -3065,8 +3065,6 @@ class _EventListCard extends StatefulWidget {
 }
 
 class _EventListCardState extends State<_EventListCard> {
-  final EventService _eventService = EventService();
-
   Map<String, dynamic> get event => widget.event;
 
   List<Widget> _buildMatchReasonChips() {
@@ -3121,8 +3119,6 @@ class _EventListCardState extends State<_EventListCard> {
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
     final String borough = event['borough'] as String? ?? '';
-    final bool isBookmarked = eventId.isNotEmpty && _eventService.isBookmarked(eventId);
-
     return Semantics(
       label: 'Event: ${event['title']}, ${event['date']} ${event['time']}, ${event['location']}${isFree ? ", Free" : ", ${event['price']}"}',
       button: true,
@@ -3181,7 +3177,7 @@ class _EventListCardState extends State<_EventListCard> {
                 ),
               ),
             ),
-            // ── Info row (price, attendees, bookmark) ─────────────────
+            // ── Info row (price, attendees) ───────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
               child: Row(
@@ -3220,37 +3216,7 @@ class _EventListCardState extends State<_EventListCard> {
                       color: context.hc.textTertiary,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Bookmark
-                  Semantics(
-                    label: isBookmarked ? 'Remove bookmark' : 'Bookmark event',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: () async {
-                        if (eventId.isNotEmpty) {
-                          HapticFeedback.lightImpact();
-                          await _eventService.toggleBookmark(eventId);
-                          if (context.mounted) {
-                            setState(() {});
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isBookmarked ? 'Bookmark removed' : 'Event bookmarked! Find it in the Saved tab.'),
-                                backgroundColor: isBookmarked ? HuddlColors.textSecondary : HuddlColors.teal,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: Icon(
-                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                        size: 20,
-                        color: isBookmarked ? HuddlColors.accentAmber : context.hc.textTertiary,
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ),
