@@ -4587,13 +4587,33 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
-  'disc_travel_tribe': {'icon': Icons.flight_takeoff, 'color': HuddlColors.teal},
-  'disc_first_time_mums': {'icon': Icons.child_friendly, 'color': HuddlColors.primary},
-  'disc_dads_connect': {'icon': Icons.man, 'color': HuddlColors.blue},
-  'disc_baby_sleep': {'icon': Icons.bedtime, 'color': HuddlColors.yellowMedium},
-  'disc_healthy_meals': {'icon': Icons.restaurant, 'color': HuddlColors.accentAmber},
-  'disc_postnatal_fitness': {'icon': Icons.fitness_center, 'color': HuddlColors.accentCoral},
-  'disc_working_parents': {'icon': Icons.work_outline, 'color': HuddlColors.yellowDark},
+  // ── Cross-borough groups ─────────────────────────────────────────────────
+  'disc_travel_tribe':            {'icon': Icons.flight_takeoff,    'color': HuddlColors.teal},
+  'disc_first_time_mums':         {'icon': Icons.child_friendly,    'color': HuddlColors.primary},
+  'disc_dads_connect':            {'icon': Icons.man,               'color': HuddlColors.blue},
+  'disc_baby_sleep_support':      {'icon': Icons.bedtime,           'color': HuddlColors.yellowMedium},
+  'disc_healthy_meals':           {'icon': Icons.restaurant,        'color': HuddlColors.accentAmber},
+  'disc_postnatal_fitness':       {'icon': Icons.fitness_center,    'color': HuddlColors.accentCoral},
+  'disc_working_parents_career':  {'icon': Icons.work_outline,      'color': HuddlColors.yellowDark},
+  // ── Cambridge borough groups ─────────────────────────────────────────────
+  'disc_cambridge_international_parents': {'icon': Icons.public,              'color': HuddlColors.blue},
+  'disc_cambridge_buggy_runners':         {'icon': Icons.directions_run,      'color': HuddlColors.accentCoral},
+  'disc_cambridge_allergies':             {'icon': Icons.health_and_safety,   'color': HuddlColors.error},
+  'disc_cambridge_multilingual':          {'icon': Icons.translate,           'color': HuddlColors.teal},
+  'disc_cambridge_eco_parenting':         {'icon': Icons.eco,                 'color': HuddlColors.teal},
+  'disc_cambridge_family_travel':         {'icon': Icons.flight_takeoff,      'color': HuddlColors.blue},
+  'disc_cambridge_spanish_parents':       {'icon': Icons.language,            'color': HuddlColors.accentAmber},
+  'disc_cambridge_defreville_lammas':     {'icon': Icons.location_on,         'color': HuddlColors.primary},
+  'disc_cambridge_german_parents':        {'icon': Icons.language,            'color': HuddlColors.yellowDark},
+  'disc_cambridge_family_cycling':        {'icon': Icons.directions_bike,     'color': HuddlColors.teal},
+  'disc_cambridge_montessori':            {'icon': Icons.school,              'color': HuddlColors.accentAmber},
+  'disc_cambridge_nct_mums':              {'icon': Icons.favorite,            'color': HuddlColors.primary},
+  'disc_cambridge_dutch_parents':         {'icon': Icons.language,            'color': HuddlColors.blue},
+  'disc_cambridge_italian_parents':       {'icon': Icons.language,            'color': HuddlColors.accentCoral},
+  'disc_cambridge_scandinavian_parents':  {'icon': Icons.language,            'color': HuddlColors.teal},
+  'disc_cambridge_weaning_first_foods':   {'icon': Icons.child_care,          'color': HuddlColors.accentAmber},
+  'disc_cambridge_weaning_recipes':       {'icon': Icons.soup_kitchen,        'color': HuddlColors.accentCoral},
+  'disc_cambridge_working_mums':          {'icon': Icons.work_outline,        'color': HuddlColors.primaryDark},
 };
 
 class _DiscoverGroupCard extends StatelessWidget {

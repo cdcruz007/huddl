@@ -1625,23 +1625,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
-  /// Dump raw storage for this conversation — debug only
-  Future<String> _dumpStorage() async {
-    try {
-      final convId = _conversationId ?? 'dm_${widget.recipientId}';
-      final msgs = await _dmService.getMessages(convId);
-      if (msgs.isEmpty) return 'convId=$convId\nNO MSGS LOADED (${msgs.length})';
-      final snap = msgs.map((m) =>
-        'id=${m.id.substring(m.id.length > 10 ? m.id.length - 6 : 0)} '
-        'grp=${m.groupData != null ? 'YES(${m.groupData!.keys.length}k)' : 'NO'} '
-        'meet=${m.meetupData != null ? 'YES' : 'NO'} '
-        'item=${m.itemData != null ? 'YES' : 'NO'}'
-      ).join('\n');
-      return 'convId=$convId  msgs=${msgs.length}\n$snap';
-    } catch (e) {
-      return 'ERROR: $e';
-    }
-  }
+
 
   void _confirmDeleteConversation() {
     showDialog(
