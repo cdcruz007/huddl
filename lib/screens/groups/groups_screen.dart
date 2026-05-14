@@ -3445,19 +3445,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isImageLocked: false,
       creatorBorough: 'Cambridge',
     ),
-    _GroupItem(
-      id: 'disc_cambridge_defreville_lammas',
-      name: 'De Freville & Lammas Land Parents',
-      description:
-          'A local group for parents in the De Freville and Lammas Land areas of Cambridge. Meet nearby families, share local recommendations and organise get-togethers.',
-      imageUrl:
-          'https://images.pexels.com/photos/3807571/pexels-photo-3807571.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 0,
-      category: 'LOCAL',
-      isDefault: false,
-      isImageLocked: false,
-      creatorBorough: 'Cambridge',
-    ),
+
     _GroupItem(
       id: 'disc_cambridge_german_parents',
       name: 'German-Speaking Parents',
@@ -4831,7 +4819,7 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_cambridge_eco_parenting':         {'icon': Icons.eco,                 'color': HuddlColors.teal},
   'disc_cambridge_family_travel':         {'icon': Icons.flight_takeoff,      'color': HuddlColors.blue},
   'disc_cambridge_spanish_parents':       {'icon': Icons.language,            'color': HuddlColors.accentAmber},
-  'disc_cambridge_defreville_lammas':     {'icon': Icons.location_on,         'color': HuddlColors.primary},
+
   'disc_cambridge_german_parents':        {'icon': Icons.language,            'color': HuddlColors.yellowDark},
   'disc_cambridge_family_cycling':        {'icon': Icons.directions_bike,     'color': HuddlColors.teal},
   'disc_cambridge_montessori':            {'icon': Icons.school,              'color': HuddlColors.accentAmber},
