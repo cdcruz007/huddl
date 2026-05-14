@@ -30,6 +30,7 @@ import '../screens/groups/new_dm_screen.dart';
 import '../screens/groups/saved_messages_for_group_screen.dart';
 import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
+import '../screens/insights/insights_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
@@ -307,6 +308,9 @@ class AppRouter {
 
       case '/admin':
         return SlidePageRoute(page: const AdminDashboardScreen());
+
+      case '/insights':
+        return SlidePageRoute(page: const InsightsScreen());
 
       default:
         return MaterialPageRoute(

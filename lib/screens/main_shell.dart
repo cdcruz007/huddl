@@ -11,6 +11,7 @@ import 'groups/groups_screen.dart';
 import 'events/events_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
+import 'insights/insights_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
@@ -310,6 +311,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       case 2: return const EventsScreen();
       case 3: return const MarketplaceScreen();
       case 4: return const ProfileScreen();
+      case 5: return const InsightsScreen();
       default: return const SizedBox.shrink();
     }
   }
@@ -319,7 +321,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     return Scaffold(
       extendBody: true,
       body: Stack(
-        children: List.generate(5, (index) {
+        children: List.generate(6, (index) {
           return Offstage(
             offstage: _currentIndex != index,
             child: _buildScreen(index),
@@ -388,6 +390,13 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
                     label: 'Profile',
                     isActive: _currentIndex == 4,
                     onTap: () => _switchTab(4),
+                  ),
+                  _NavItem(
+                    icon: Icons.auto_awesome_outlined,
+                    activeIcon: Icons.auto_awesome,
+                    label: 'Insights',
+                    isActive: _currentIndex == 5,
+                    onTap: () => _switchTab(5),
                   ),
                 ],
               ),
