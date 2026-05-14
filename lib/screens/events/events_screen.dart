@@ -17,6 +17,7 @@ import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
 import '../../widgets/huddl_widgets.dart' show HuddlBottomSheetHandle;
 import '../../services/borough_scope_guard.dart';
@@ -523,7 +524,8 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   Future<void> _loadUserContext() async {
     final groupService = DefaultGroupService();
     await groupService.initialize();
-    final defaultGroups = await groupService.getUserGroups('current_user');
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final defaultGroups = await groupService.getUserGroups(uid);
     List<Group> discovered = [];
     try {
       final discoveredJson =
@@ -584,11 +586,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       case MeetupPrivacy.public:
         return true;
       case MeetupPrivacy.group:
-        if (m.organiserId == 'current_user') return true;
+        if (m.organiserId == (FirebaseAuth.instance.currentUser?.uid ?? 'current_user')) return true;
         if (m.groupId == null) return false;
         return _joinedGroupIds.contains(m.groupId);
       case MeetupPrivacy.private_:
-        return m.invitedMemberIds.contains('current_user') || m.organiserId == 'current_user';
+        final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+        return m.invitedMemberIds.contains(myUid) || m.organiserId == myUid;
     }
   }
 
@@ -2958,7 +2961,7 @@ class _MeetupCard extends StatelessWidget {
                       ),
                       // Share button -- public: anyone can share; group/private: only creator
                       if (meetup.privacy == MeetupPrivacy.public ||
-                          meetup.organiserId == 'current_user')
+                          meetup.organiserId == (FirebaseAuth.instance.currentUser?.uid ?? 'current_user'))
                         Semantics(
                           label: 'Share meetup',
                           button: true,
@@ -3690,7 +3693,8 @@ _CatStyle _meetupCategoryStyle(String category) {
 /// For known community members: show their Pexels photo.
 Widget _buildOrganiserAvatar(String name, String organiserId, double size, Color accentColor) {
   // Current user: use local asset avatar
-  if (organiserId == 'current_user' || MemberPhotoService.isCurrentUser(name)) {
+  final currentUid = FirebaseAuth.instance.currentUser?.uid;
+  if (organiserId == (currentUid ?? 'current_user') || organiserId == 'current_user' || MemberPhotoService.isCurrentUser(name)) {
     final photoUrl = MemberPhotoService.getPhotoByName(name);
     if (photoUrl != null && photoUrl.isNotEmpty) {
       if (photoUrl.startsWith('data:')) {

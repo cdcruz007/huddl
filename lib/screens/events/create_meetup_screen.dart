@@ -17,6 +17,7 @@ import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -173,7 +174,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   Future<void> _loadUserGroups() async {
     await _groupService.initialize();
-    final defaultGroups = await _groupService.getUserGroups('current_user');
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final defaultGroups = await _groupService.getUserGroups(uid);
     List<Group> discovered = [];
     try {
       final discoveredJson =
@@ -441,7 +443,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           DateTime(date.year, date.month, date.day, st.hour, st.minute),
       location: _locationCtrl.text.trim(),
       organiserName: organiserName,
-      organiserId: 'current_user',
+      organiserId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
       attendeeCount: 1,
       maxAttendees: _maxAttendees,
       isGoing: true,

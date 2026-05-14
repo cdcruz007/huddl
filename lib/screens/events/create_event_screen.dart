@@ -13,6 +13,7 @@ import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/subscription_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/upgrade_prompt.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -131,7 +132,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Future<void> _loadUserGroups() async {
     await _groupService.initialize();
-    final defaultGroups = await _groupService.getUserGroups('current_user');
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final defaultGroups = await _groupService.getUserGroups(uid);
     List<Group> discovered = [];
     try {
       final discoveredJson =

@@ -7,6 +7,7 @@ import '../../theme/huddl_colors.dart';
 import '../../services/invitation_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/browser_storage.dart';
 import '../../models/direct_message.dart';
 import 'dm_chat_screen.dart' show getProfilePhotoForMember;
@@ -235,11 +236,12 @@ class _ForwardSheetState extends State<_ForwardSheet>
 
     // Also include default groups the user is in
     try {
-      final membershipsRaw = await BrowserStorage.getString('user_memberships_v4');
+      final membershipsRaw = await BrowserStorage.getString('user_memberships_v5');
       if (membershipsRaw != null) {
         final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
-        final groupIds = (membershipsMap['current_user'] as List<dynamic>?)?.cast<String>() ?? [];
-        final groupsRaw = await BrowserStorage.getString('default_groups_v4');
+        final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+        final groupIds = (membershipsMap[uid] as List<dynamic>?)?.cast<String>() ?? [];
+        final groupsRaw = await BrowserStorage.getString('default_groups_v5');
         if (groupsRaw != null && groupIds.isNotEmpty) {
           final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
           for (final entry in groupsMap.entries) {

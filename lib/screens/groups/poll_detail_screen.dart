@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -46,14 +47,15 @@ class ActivePoll {
     required this.id,
     required this.data,
     required this.creatorName,
-    this.creatorId = 'current_user',
+    String? creatorId,
     required this.createdAt,
     List<PollVote>? votes,
     Set<int>? myVotes,
     this.isPinned = false, // NOT pinned by default — creator opts in
     this.isDeleted = false,
-  })  : votes = votes ?? [],
-        myVotes = myVotes ?? {};
+  }) : creatorId = creatorId ?? FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
+       votes = votes ?? [],
+       myVotes = myVotes ?? {};
 
   bool get isExpired =>
       data.expiresAt != null && DateTime.now().isAfter(data.expiresAt!);
@@ -63,7 +65,10 @@ class ActivePoll {
 
   int get totalVotes => votes.length;
 
-  bool get isCreatedByMe => creatorId == 'current_user';
+  bool get isCreatedByMe {
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    return myUid != null ? creatorId == myUid : creatorId == 'current_user';
+  }
 
   /// Whether the current user has already voted on this poll
   bool get hasVoted => myVotes.isNotEmpty;
@@ -84,7 +89,7 @@ class ActivePoll {
         id: j['id'] as String,
         data: PollData.fromJson(j['data'] as Map<String, dynamic>),
         creatorName: j['creatorName'] as String? ?? 'Unknown',
-        creatorId: j['creatorId'] as String? ?? 'current_user',
+        creatorId: j['creatorId'] as String?,
         createdAt: DateTime.parse(j['createdAt'] as String),
         votes: (j['votes'] as List<dynamic>?)
                 ?.map((v) => PollVote.fromJson(v as Map<String, dynamic>))

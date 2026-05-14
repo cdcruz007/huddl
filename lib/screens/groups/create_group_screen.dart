@@ -17,6 +17,7 @@ import '../../services/default_group_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -74,7 +75,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Future<void> _loadUserGroups() async {
     await _groupService.initialize();
-    final defaultGroups = await _groupService.getUserGroups('current_user');
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final defaultGroups = await _groupService.getUserGroups(uid);
     List<Group> discovered = [];
     try {
       final discoveredJson =
@@ -780,7 +782,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         privacy: privacy,
         parentGroupId: _privacy == 'group' ? _selectedParentGroupId : null,
         parentGroupName: _privacy == 'group' ? _selectedParentGroupName : null,
-        creatorId: 'current_user',
+        creatorId: FirebaseAuth.instance.currentUser?.uid ?? 'current_user',
         creatorName: creatorName,
         creatorBorough: creatorBorough,
         invitedMemberIds: _privacy == 'private' ? _selectedMemberIds.toList() : [],

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
@@ -67,25 +68,26 @@ class _GroupPollsScreenState extends State<GroupPollsScreen>
       final poll = _allPolls[idx];
       if (poll.isExpired) return;
 
+      final myUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
       if (poll.data.allowMultiple) {
         if (poll.myVotes.contains(optionIndex)) {
           poll.myVotes.remove(optionIndex);
           poll.votes.removeWhere((v) =>
-              v.memberId == 'current_user' && v.optionIndex == optionIndex);
+              v.memberId == myUid && v.optionIndex == optionIndex);
         } else {
           poll.myVotes.add(optionIndex);
           poll.votes.add(PollVote(
-            memberId: 'current_user',
+            memberId: myUid,
             memberName: 'You',
             optionIndex: optionIndex,
           ));
         }
       } else {
         poll.myVotes.clear();
-        poll.votes.removeWhere((v) => v.memberId == 'current_user');
+        poll.votes.removeWhere((v) => v.memberId == myUid);
         poll.myVotes.add(optionIndex);
         poll.votes.add(PollVote(
-          memberId: 'current_user',
+          memberId: myUid,
           memberName: 'You',
           optionIndex: optionIndex,
         ));

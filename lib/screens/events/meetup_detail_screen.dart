@@ -10,6 +10,7 @@ import '../../services/browser_storage.dart';
 import '../../services/dm_service.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../groups/dm_chat_screen.dart';
 
 
@@ -159,7 +160,12 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     );
   }
 
-  bool get _isOrganiser => _meetup.organiserId == 'current_user';
+  bool get _isOrganiser {
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    return myUid != null
+        ? _meetup.organiserId == myUid
+        : _meetup.organiserId == 'current_user';
+  }
 
   /// Show the more options bottom sheet (organiser controls)
   void _showMoreOptions() {
@@ -1016,7 +1022,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   /// For the current user, show their onboarding photo or local asset avatar.
   Widget _buildAttendeePhoto(String name, double size) {
     // Current user: use onboarding photo or local asset fallback
-    if (MemberPhotoService.isCurrentUser(name) || _meetup.organiserId == 'current_user' && name == _meetup.organiserName) {
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    final isMeetupOrganiser = myUid != null
+        ? (_meetup.organiserId == myUid && name == _meetup.organiserName)
+        : (_meetup.organiserId == 'current_user' && name == _meetup.organiserName);
+    if (MemberPhotoService.isCurrentUser(name) || isMeetupOrganiser) {
       final photoUrl = MemberPhotoService.getPhotoByName(name);
       if (photoUrl != null && photoUrl.isNotEmpty) {
         // User has an actual profile photo (e.g. data: URI or network URL)

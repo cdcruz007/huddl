@@ -373,7 +373,10 @@ class _MessagesTabState extends State<_MessagesTab> {
           final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
           if (ts != null && (latestTime == null || ts.isAfter(latestTime))) {
             latestTime = ts;
-            final isMe = (m['senderId'] as String? ?? '') == 'current_user';
+            final myUidFwd = FirebaseAuth.instance.currentUser?.uid;
+            final isMe = myUidFwd != null
+                ? (m['senderId'] as String? ?? '') == myUidFwd
+                : (m['senderId'] as String? ?? '') == 'current_user';
             latestSender = isMe ? 'You' : (m['senderName'] as String? ?? '');
             if (m['isMeetupCard'] == true) {
               latestText = '📅 Shared a meetup';
@@ -743,8 +746,10 @@ class _MessagesTabState extends State<_MessagesTab> {
             if (ts != null &&
                 (latestTime == null || ts.isAfter(latestTime))) {
               latestTime = ts;
-              final isMe =
-                  (m['senderId'] as String? ?? '') == 'current_user';
+              final myUidFwd2 = FirebaseAuth.instance.currentUser?.uid;
+              final isMe = myUidFwd2 != null
+                  ? (m['senderId'] as String? ?? '') == myUidFwd2
+                  : (m['senderId'] as String? ?? '') == 'current_user';
               latestSender =
                   isMe ? 'You' : (m['senderName'] as String? ?? '');
               if (m['isMeetupCard'] == true) {
