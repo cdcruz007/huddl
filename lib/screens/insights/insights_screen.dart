@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_knowledge_base_service.dart';
 import '../../services/ai_knowledge_flywheel_service.dart';
 import '../../theme/huddl_colors.dart';
+import 'send_hub_screen.dart';
 
 // =============================================================================
 // INSIGHTS SCREEN — HUDDL WISDOM
@@ -406,23 +407,38 @@ class _CommunityTab extends StatelessWidget {
         }
 
         if (articles.isEmpty) {
-          return _EmptyState(
-            icon: Icons.auto_awesome_outlined,
-            title: searchQuery.isNotEmpty
-                ? 'No results for "$searchQuery"'
-                : 'No community wisdom yet',
-            subtitle: searchQuery.isNotEmpty
-                ? 'Try a different search term or category.'
-                : 'When parents share helpful insights in group chats, '
-                    'they\'ll appear here as Huddl Wisdom articles.',
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _SendHeroCard(),
+                ),
+              ),
+              SliverFillRemaining(
+                child: _EmptyState(
+                  icon: Icons.auto_awesome_outlined,
+                  title: searchQuery.isNotEmpty
+                      ? 'No results for "$searchQuery"'
+                      : 'No community wisdom yet',
+                  subtitle: searchQuery.isNotEmpty
+                      ? 'Try a different search term or category.'
+                      : 'When parents share helpful insights in group chats, '
+                          'they\'ll appear here as Huddl Wisdom articles.',
+                ),
+              ),
+            ],
           );
         }
 
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-          itemCount: articles.length,
+          itemCount: articles.length + 1,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) => _WisdomCard(article: articles[i]),
+          itemBuilder: (context, i) {
+            if (i == 0) return _SendHeroCard();
+            return _WisdomCard(article: articles[i - 1]);
+          },
         );
       },
     );
@@ -475,6 +491,143 @@ class _ExpertTab extends StatelessWidget {
       itemCount: articles.length,
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, i) => _ExpertCard(article: articles[i]),
+    );
+  }
+}
+
+// ─── SEND Hero Card ───────────────────────────────────────────────────────────
+
+class _SendHeroCard extends StatelessWidget {
+  const _SendHeroCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SendHubScreen()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF5B5EA6), Color(0xFF9B2335)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF5B5EA6).withValues(alpha: 0.30),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.diversity_3,
+                        color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SEND Navigator',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.1,
+                          ),
+                        ),
+                        Text(
+                          'AI-assisted EHCP & complex needs support',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.80),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded,
+                      color: Colors.white, size: 14),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Feature pills
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: const [
+                  _HeroPill(label: 'EHCP Navigator', icon: Icons.map_outlined),
+                  _HeroPill(label: 'AI Advisor', icon: Icons.smart_toy_outlined),
+                  _HeroPill(label: 'Deadline Tracker', icon: Icons.calendar_today_outlined),
+                  _HeroPill(label: 'Anonymous Q&A', icon: Icons.visibility_off_outlined),
+                  _HeroPill(label: 'Support Directory', icon: Icons.volunteer_activism_outlined),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Navigate the UK SEND system with step-by-step guidance, '
+                'your legal rights at every stage, and AI support grounded '
+                'in IPSEA, Contact, and the SEND Code of Practice 2015.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.85),
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroPill extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  const _HeroPill({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
