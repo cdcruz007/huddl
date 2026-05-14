@@ -30,7 +30,10 @@ import '../../theme/huddl_colors.dart';
 // =============================================================================
 
 class SendHubScreen extends StatefulWidget {
-  const SendHubScreen({super.key});
+  /// When [embedded] is true the back button in the header is hidden.
+  /// Used when rendering inside InsightsScreen's SEND tab.
+  final bool embedded;
+  const SendHubScreen({super.key, this.embedded = false});
 
   @override
   State<SendHubScreen> createState() => _SendHubScreenState();
@@ -61,7 +64,10 @@ class _SendHubScreenState extends State<SendHubScreen>
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────────
-            _SendHeader(tabController: _tabController),
+            _SendHeader(
+              tabController: _tabController,
+              showBack: !widget.embedded,
+            ),
             // ── Tab content ──────────────────────────────────────────────────
             Expanded(
               child: TabBarView(
@@ -87,7 +93,8 @@ class _SendHubScreenState extends State<SendHubScreen>
 
 class _SendHeader extends StatelessWidget {
   final TabController tabController;
-  const _SendHeader({required this.tabController});
+  final bool showBack;
+  const _SendHeader({required this.tabController, this.showBack = true});
 
   @override
   Widget build(BuildContext context) {
@@ -101,13 +108,15 @@ class _SendHeader extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                const SizedBox(width: 10),
+                if (showBack) ...[  
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 10),
+                ],
                 // SEND badge
                 Container(
                   padding:

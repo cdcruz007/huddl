@@ -18,7 +18,6 @@ import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
-import '../widgets/speed_dial_fab.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -288,7 +287,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   /// Switch to a specific tab by index.
-  /// 0=Home, 1=Connect, 2=Discover, 3=Services, 4=Market, 5=Profile, 6=Insights
+  /// 0=Home, 1=Connect, 2=Discover, 3=Services, 4=Market, 5=Insights, 6=Profile
   void switchTab(int index) => _switchTab(index);
 
   void _switchTab(int index) {
@@ -313,8 +312,8 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       case 2: return const EventsScreen();
       case 3: return const ServicesScreen();
       case 4: return const MarketplaceScreen();
-      case 5: return const ProfileScreen();
-      case 6: return const InsightsScreen();
+      case 5: return const InsightsScreen();
+      case 6: return const ProfileScreen();
       default: return const SizedBox.shrink();
     }
   }
@@ -331,25 +330,6 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           );
         }),
       ),
-      floatingActionButton: SpeedDialFab(
-        onServicesPressed: () {
-          HapticFeedback.mediumImpact();
-          _switchTab(3);
-        },
-        onInsightsPressed: () {
-          HapticFeedback.selectionClick();
-          _switchTab(6);
-        },
-        onAiPressed: () {
-          HapticFeedback.selectionClick();
-          Navigator.of(context).pushNamed('/copilot');
-        },
-        onSendPressed: () {
-          HapticFeedback.selectionClick();
-          Navigator.of(context).pushNamed('/send');
-        },
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -414,16 +394,16 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
                     onTap: () => _switchTab(4),
                   ),
                   _NavItem(
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    label: 'Profile',
+                    icon: Icons.lightbulb_outline,
+                    activeIcon: Icons.lightbulb,
+                    label: 'Insights',
                     isActive: _currentIndex == 5,
                     onTap: () => _switchTab(5),
                   ),
                   _NavItem(
-                    icon: Icons.auto_awesome_outlined,
-                    activeIcon: Icons.auto_awesome,
-                    label: 'Insights',
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person,
+                    label: 'Profile',
                     isActive: _currentIndex == 6,
                     onTap: () => _switchTab(6),
                   ),

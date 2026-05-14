@@ -7,16 +7,17 @@ import '../../theme/huddl_colors.dart';
 import 'send_hub_screen.dart';
 
 // =============================================================================
-// INSIGHTS SCREEN — HUDDL WISDOM
+// INSIGHTS SCREEN
 //
-// The Huddl Wisdom feed: a unified, searchable knowledge base combining:
+// The Insights feed: a unified, searchable knowledge base combining:
 //   1. Curated expert articles (from AiKnowledgeBaseService — NHS, NCT, etc.)
-//   2. Community wisdom articles (from AiKnowledgeFlywheelService — Firestore)
+//   2. Community insights articles (from AiKnowledgeFlywheelService — Firestore)
+//   3. SEND Navigator — full SendHubScreen embedded as tab 3
 //
 // Navigation:
-//   Top tabs: "Community" | "Expert Guides"
-//   Category chip row (scrollable)
-//   Search bar
+//   Top tabs: "Community" | "Expert Guides" | "SEND"
+//   Category chip row (scrollable — hidden on SEND tab)
+//   Search bar (hidden on SEND tab)
 //   Article cards with contributor credit
 //
 // Moderator view (debug builds or isAdmin):
@@ -41,7 +42,7 @@ class _InsightsScreenState extends State<InsightsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _searchController.addListener(() {
       if (mounted) {
         setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
@@ -58,38 +59,46 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Header(tabController: _tabController),
-            _SearchBar(controller: _searchController),
-            _CategoryChips(
-              selected: _selectedCategory,
-              onSelected: (cat) =>
-                  setState(() => _selectedCategory = cat),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _CommunityTab(
-                    searchQuery: _searchQuery,
-                    selectedCategory: _selectedCategory,
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) {
+        final isSendTab = _tabController.index == 2;
+        return Scaffold(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          body: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _Header(tabController: _tabController),
+                if (!isSendTab) _SearchBar(controller: _searchController),
+                if (!isSendTab)
+                  _CategoryChips(
+                    selected: _selectedCategory,
+                    onSelected: (cat) =>
+                        setState(() => _selectedCategory = cat),
                   ),
-                  _ExpertTab(
-                    searchQuery: _searchQuery,
-                    selectedCategory: _selectedCategory,
+                if (!isSendTab) const SizedBox(height: 4),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _CommunityTab(
+                        searchQuery: _searchQuery,
+                        selectedCategory: _selectedCategory,
+                      ),
+                      _ExpertTab(
+                        searchQuery: _searchQuery,
+                        selectedCategory: _selectedCategory,
+                      ),
+                      const _SendTab(),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -122,14 +131,14 @@ class _Header extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
+                child: const Icon(Icons.lightbulb, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Huddl Wisdom',
+                    'Insights',
                     style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -141,6 +150,7 @@ class _Header extends StatelessWidget {
                   ),
                   Text(
                     'Knowledge from your community',
+
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
@@ -187,6 +197,7 @@ class _Header extends StatelessWidget {
               tabs: const [
                 Tab(text: 'Community'),
                 Tab(text: 'Expert Guides'),
+                Tab(text: 'SEND'),
               ],
             ),
           ),
@@ -212,7 +223,7 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         style: GoogleFonts.poppins(fontSize: 14),
         decoration: InputDecoration(
-          hintText: 'Search Huddl Wisdom…',
+          hintText: 'Search Insights…',
           hintStyle: GoogleFonts.poppins(
             fontSize: 14,
             color: HuddlColors.textHint,
@@ -363,6 +374,49 @@ class _Chip extends StatelessWidget {
   }
 }
 
+// ─── SEND tab ─────────────────────────────────────────────────────────────────
+// Embeds SendHubScreen directly inside the InsightsScreen TabBarView.
+// We wrap it in a Navigator so the SEND hub's internal push routes (if any)
+// are scoped to this tab and do not pop the whole app.  The back button in
+// the SEND header is hidden via `automaticallyImplyLeading: false` on its
+// AppBar — but SendHubScreen uses a plain IconButton back, so we use
+// MediaQuery padding override to give it a clean embedded context.
+
+class _SendTab extends StatefulWidget {
+  const _SendTab();
+
+  @override
+  State<_SendTab> createState() => _SendTabState();
+}
+
+class _SendTabState extends State<_SendTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;  // preserve chat state across tab switches
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    // Wrap in a local Navigator so SEND's internal push routes stay scoped.
+    return Navigator(
+      onGenerateRoute: (_) => MaterialPageRoute(
+        builder: (_) => const _EmbeddedSendHubScreen(),
+      ),
+    );
+  }
+}
+
+/// SendHubScreen with the header back-button hidden — it is embedded in a tab
+/// so the user switches tabs rather than pressing back.
+class _EmbeddedSendHubScreen extends StatelessWidget {
+  const _EmbeddedSendHubScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SendHubScreen(embedded: true);
+  }
+}
+
 // ─── Community tab ────────────────────────────────────────────────────────────
 
 class _CommunityTab extends StatelessWidget {
@@ -424,7 +478,7 @@ class _CommunityTab extends StatelessWidget {
                   subtitle: searchQuery.isNotEmpty
                       ? 'Try a different search term or category.'
                       : 'When parents share helpful insights in group chats, '
-                          'they\'ll appear here as Huddl Wisdom articles.',
+                          'they\'ll appear here as Insights articles.',
                 ),
               ),
             ],
@@ -684,7 +738,7 @@ class _WisdomCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    'Huddl Wisdom',
+                    'Insights',
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -1030,11 +1084,11 @@ class _WisdomArticleScreenState extends State<_WisdomArticleScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.auto_awesome,
+                      const Icon(Icons.lightbulb,
                           size: 12, color: HuddlColors.primary),
                       const SizedBox(width: 4),
                       Text(
-                        'Huddl Wisdom',
+                        'Insights',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
