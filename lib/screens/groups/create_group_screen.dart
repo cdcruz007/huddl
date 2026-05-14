@@ -731,7 +731,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         }
       }
 
-      final defaultRaw = await BrowserStorage.getString('default_groups_v5');
+      final defaultRaw = await BrowserStorage.getString('default_groups_v6');
       if (defaultRaw != null) {
         final defaultGroups = json.decode(defaultRaw) as List<dynamic>;
         final hasDupe = defaultGroups.any((g) {

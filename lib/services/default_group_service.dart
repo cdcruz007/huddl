@@ -24,9 +24,9 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
-  // v5: bumped to trigger _migrateImageUrl on all cached groups → unique images
-  static const String _groupsKey = 'default_groups_v5';
-  static const String _membershipsKey = 'user_memberships_v5';
+  // v6: bumped to trigger _migrateImageUrl with per-borough local asset pools
+  static const String _groupsKey = 'default_groups_v6';
+  static const String _membershipsKey = 'user_memberships_v6';
   
   bool _isInitialized = false;
 
@@ -36,8 +36,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v4: reset counters to align with new 9-slot unique pool
-  static const String _countersKey = 'borough_image_counters_v4';
+  // v5: reset counters to align with per-borough image pools
+  static const String _countersKey = 'borough_image_counters_v5';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -256,18 +256,12 @@ class DefaultGroupService {
 
   // ── Borough image pools — LOCAL ASSET PATHS (bundled with app, no CORS) ───────
   //
-  // All images stored in assets/images/groups/ and served from the same origin.
+  // Cambridge cluster uses landmark images in assets/images/groups/.
+  // All other boroughs use dedicated local photos in assets/images/groups/boroughs/.
+  // Each pool entry is a distinct local landmark image for that specific place.
   // No external requests, no CORS issues, guaranteed to display on Flutter Web.
   //
-  // A = King's College Chapel           cambridge_kings_college.jpg
-  // B = Punting on River Cam            cambridge_punting.jpg
-  // C = Trinity College                 cambridge_trinity.jpg
-  // D = The Backs / King's from river   cambridge_the_backs.jpg
-  // E = Ely Cathedral                   east_cambs_ely_cathedral.jpg
-  // F = South Cambs village             south_cambs_village.jpg
-  // G = Boats on River Cam              cambridge_river_boats.jpg
-  // H = Cambridge Market Square         cambridge_market_square.jpg
-  // I = Fitzwilliam Museum / city view  cambridge_fitzwilliam.jpg
+  // Cambridge constants (A–I) — kept for Cambridge cluster + _migrateImageUrl
   static const _imgA = 'assets/images/groups/cambridge_kings_college.jpg';    // King's College Chapel
   static const _imgB = 'assets/images/groups/cambridge_punting.jpg';          // Punting on River Cam
   static const _imgC = 'assets/images/groups/cambridge_trinity.jpg';          // Trinity College
@@ -279,91 +273,266 @@ class DefaultGroupService {
   static const _imgI = 'assets/images/groups/cambridge_fitzwilliam.jpg';      // Fitzwilliam Museum / city view
 
   static const Map<String, List<String>> _boroughImagePools = {
-    // ── Cambridge cluster ───────────────────────────────────────────────────────
-    // 9 fully unique images — every new group slot gets a different Cambridge
-    // landmark. NO image repeats within this pool.
-    // Slot order: 2026→2025→2024→2023→2022→2021→2020→2019→Expecting/Aspiring
+    // ── Cambridge cluster — existing dedicated landmark assets ──────────────
+    // 9 fully unique images; slot order: newest year → oldest → Expecting/Aspiring
     'cambridge':           [_imgD, _imgC, _imgB, _imgG, _imgA, _imgH, _imgI, _imgF, _imgE],
-    //                      2026   2025   2024   2023   2022   2021   2020   2019  Expect/Asp
     'east cambridgeshire': [_imgE, _imgD, _imgB, _imgC, _imgA, _imgG],
     'south cambridgeshire':[_imgF, _imgD, _imgA, _imgC, _imgB, _imgG],
 
-    // ── All other boroughs — rotate through Cambridge landmarks ───────────
-    'barnet':              [_imgA, _imgB, _imgC],
-    'birmingham':          [_imgB, _imgC, _imgD, _imgA],
-    'brent':               [_imgC, _imgD, _imgA],
-    'bristol':             [_imgD, _imgA, _imgB, _imgC],
-    'bromley':             [_imgA, _imgC, _imgB],
-    'camden':              [_imgB, _imgD, _imgA, _imgC],
-    'city of london':      [_imgC, _imgA, _imgD, _imgB],
-    'croydon':             [_imgD, _imgC, _imgA],
-    'ealing':              [_imgA, _imgD, _imgB],
-    'enfield':             [_imgB, _imgA, _imgC],
-    'greenwich':           [_imgC, _imgB, _imgD, _imgA],
-    'hackney':             [_imgD, _imgA, _imgC, _imgB],
-    'hammersmith and fulham': [_imgA, _imgC, _imgB],
-    'haringey':            [_imgB, _imgD, _imgA],
-    'hounslow':            [_imgC, _imgA, _imgD],
-    'islington':           [_imgD, _imgB, _imgC],
-    'kensington and chelsea': [_imgA, _imgC, _imgD, _imgB],
-    'lambeth':             [_imgB, _imgA, _imgD, _imgC],
-    'leeds':               [_imgC, _imgD, _imgA, _imgB],
-    'lewisham':            [_imgD, _imgC, _imgB],
-    'manchester':          [_imgA, _imgB, _imgC, _imgD],
-    'merton':              [_imgB, _imgC, _imgA],
-    'newham':              [_imgC, _imgA, _imgD],
-    'redbridge':           [_imgD, _imgB, _imgA],
-    'richmond':            [_imgA, _imgD, _imgC, _imgB],
-    'salford':             [_imgB, _imgC, _imgA],
-    'southwark':           [_imgC, _imgB, _imgD, _imgA],
-    'tower hamlets':       [_imgD, _imgA, _imgC, _imgB],
-    'trafford':            [_imgA, _imgC, _imgB],
-    'waltham forest':      [_imgB, _imgD, _imgA],
-    'wandsworth':          [_imgC, _imgA, _imgD, _imgB],
-    'westminster':         [_imgD, _imgC, _imgA, _imgB, _imgG],
+    // ── All other boroughs — dedicated local landmark images ─────────────────
+    // Each entry is a UNIQUE photo of that specific borough.
+    // Paths: assets/images/groups/boroughs/{borough}_{n}.jpg
+
+    'barnet': [
+      'assets/images/groups/boroughs/barnet_1.jpg',
+      'assets/images/groups/boroughs/barnet_2.jpg',
+      'assets/images/groups/boroughs/barnet_3.jpg',
+      'assets/images/groups/boroughs/barnet_4.jpg',
+    ],
+    'birmingham': [
+      'assets/images/groups/boroughs/birmingham_1.jpg',
+      'assets/images/groups/boroughs/birmingham_2.jpg',
+      'assets/images/groups/boroughs/birmingham_3.jpg',
+      'assets/images/groups/boroughs/birmingham_4.jpg',
+      'assets/images/groups/boroughs/birmingham_5.jpg',
+    ],
+    'brent': [
+      'assets/images/groups/boroughs/brent_1.jpg',
+      'assets/images/groups/boroughs/brent_2.jpg',
+      'assets/images/groups/boroughs/brent_3.jpg',
+      'assets/images/groups/boroughs/brent_4.jpg',
+    ],
+    'bristol': [
+      'assets/images/groups/boroughs/bristol_1.jpg',
+      'assets/images/groups/boroughs/bristol_2.jpg',
+      'assets/images/groups/boroughs/bristol_3.jpg',
+      'assets/images/groups/boroughs/bristol_4.jpg',
+    ],
+    'bromley': [
+      'assets/images/groups/boroughs/bromley_1.jpg',
+      'assets/images/groups/boroughs/bromley_2.jpg',
+      'assets/images/groups/boroughs/bromley_3.jpg',
+      'assets/images/groups/boroughs/bromley_4.jpg',
+    ],
+    'camden': [
+      'assets/images/groups/boroughs/camden_1.jpg',
+      'assets/images/groups/boroughs/camden_2.jpg',
+      'assets/images/groups/boroughs/camden_3.jpg',
+      'assets/images/groups/boroughs/camden_4.jpg',
+    ],
+    'city of london': [
+      'assets/images/groups/boroughs/city_of_london_1.jpg',
+      'assets/images/groups/boroughs/city_of_london_2.jpg',
+      'assets/images/groups/boroughs/city_of_london_3.jpg',
+      'assets/images/groups/boroughs/city_of_london_4.jpg',
+      'assets/images/groups/boroughs/city_of_london_5.jpg',
+    ],
+    'croydon': [
+      'assets/images/groups/boroughs/croydon_1.jpg',
+      'assets/images/groups/boroughs/croydon_2.jpg',
+      'assets/images/groups/boroughs/croydon_3.jpg',
+      'assets/images/groups/boroughs/croydon_4.jpg',
+    ],
+    'ealing': [
+      'assets/images/groups/boroughs/ealing_1.jpg',
+      'assets/images/groups/boroughs/ealing_2.jpg',
+      'assets/images/groups/boroughs/ealing_3.jpg',
+      'assets/images/groups/boroughs/ealing_4.jpg',
+    ],
+    'enfield': [
+      'assets/images/groups/boroughs/enfield_1.jpg',
+      'assets/images/groups/boroughs/enfield_2.jpg',
+      'assets/images/groups/boroughs/enfield_3.jpg',
+    ],
+    'greenwich': [
+      'assets/images/groups/boroughs/greenwich_1.jpg',
+      'assets/images/groups/boroughs/greenwich_2.jpg',
+      'assets/images/groups/boroughs/greenwich_3.jpg',
+      'assets/images/groups/boroughs/greenwich_4.jpg',
+    ],
+    'hackney': [
+      'assets/images/groups/boroughs/hackney_1.jpg',
+      'assets/images/groups/boroughs/hackney_2.jpg',
+      'assets/images/groups/boroughs/hackney_3.jpg',
+      'assets/images/groups/boroughs/hackney_4.jpg',
+      'assets/images/groups/boroughs/hackney_5.jpg',
+    ],
+    'hammersmith and fulham': [
+      'assets/images/groups/boroughs/hammersmith_1.jpg',
+      'assets/images/groups/boroughs/hammersmith_2.jpg',
+      'assets/images/groups/boroughs/hammersmith_3.jpg',
+      'assets/images/groups/boroughs/hammersmith_4.jpg',
+    ],
+    'haringey': [
+      'assets/images/groups/boroughs/haringey_1.jpg',
+      'assets/images/groups/boroughs/haringey_2.jpg',
+      'assets/images/groups/boroughs/haringey_3.jpg',
+      'assets/images/groups/boroughs/haringey_4.jpg',
+    ],
+    'hounslow': [
+      'assets/images/groups/boroughs/hounslow_1.jpg',
+      'assets/images/groups/boroughs/hounslow_2.jpg',
+      'assets/images/groups/boroughs/hounslow_3.jpg',
+      'assets/images/groups/boroughs/hounslow_4.jpg',
+    ],
+    'islington': [
+      'assets/images/groups/boroughs/islington_1.jpg',
+      'assets/images/groups/boroughs/islington_2.jpg',
+      'assets/images/groups/boroughs/islington_3.jpg',
+      'assets/images/groups/boroughs/islington_4.jpg',
+    ],
+    'kensington and chelsea': [
+      'assets/images/groups/boroughs/kensington_1.jpg',
+      'assets/images/groups/boroughs/kensington_2.jpg',
+      'assets/images/groups/boroughs/kensington_3.jpg',
+      'assets/images/groups/boroughs/kensington_4.jpg',
+      'assets/images/groups/boroughs/kensington_5.jpg',
+    ],
+    'lambeth': [
+      'assets/images/groups/boroughs/lambeth_1.jpg',
+      'assets/images/groups/boroughs/lambeth_2.jpg',
+      'assets/images/groups/boroughs/lambeth_3.jpg',
+      'assets/images/groups/boroughs/lambeth_4.jpg',
+    ],
+    'leeds': [
+      'assets/images/groups/boroughs/leeds_1.jpg',
+      'assets/images/groups/boroughs/leeds_2.jpg',
+      'assets/images/groups/boroughs/leeds_3.jpg',
+      'assets/images/groups/boroughs/leeds_4.jpg',
+      'assets/images/groups/boroughs/leeds_5.jpg',
+    ],
+    'lewisham': [
+      'assets/images/groups/boroughs/lewisham_1.jpg',
+      'assets/images/groups/boroughs/lewisham_2.jpg',
+      'assets/images/groups/boroughs/lewisham_3.jpg',
+    ],
+    'manchester': [
+      'assets/images/groups/boroughs/manchester_1.jpg',
+      'assets/images/groups/boroughs/manchester_2.jpg',
+      'assets/images/groups/boroughs/manchester_3.jpg',
+      'assets/images/groups/boroughs/manchester_4.jpg',
+      'assets/images/groups/boroughs/manchester_5.jpg',
+    ],
+    'merton': [
+      'assets/images/groups/boroughs/merton_1.jpg',
+      'assets/images/groups/boroughs/merton_2.jpg',
+      'assets/images/groups/boroughs/merton_3.jpg',
+      'assets/images/groups/boroughs/merton_4.jpg',
+    ],
+    'newham': [
+      'assets/images/groups/boroughs/newham_1.jpg',
+      'assets/images/groups/boroughs/newham_2.jpg',
+      'assets/images/groups/boroughs/newham_3.jpg',
+      'assets/images/groups/boroughs/newham_4.jpg',
+    ],
+    'redbridge': [
+      'assets/images/groups/boroughs/redbridge_1.jpg',
+      'assets/images/groups/boroughs/redbridge_2.jpg',
+      'assets/images/groups/boroughs/redbridge_3.jpg',
+      'assets/images/groups/boroughs/redbridge_4.jpg',
+    ],
+    'richmond': [
+      'assets/images/groups/boroughs/richmond_1.jpg',
+      'assets/images/groups/boroughs/richmond_2.jpg',
+      'assets/images/groups/boroughs/richmond_3.jpg',
+      'assets/images/groups/boroughs/richmond_4.jpg',
+    ],
+    'salford': [
+      'assets/images/groups/boroughs/salford_1.jpg',
+      'assets/images/groups/boroughs/salford_2.jpg',
+      'assets/images/groups/boroughs/salford_3.jpg',
+    ],
+    'southwark': [
+      'assets/images/groups/boroughs/southwark_1.jpg',
+      'assets/images/groups/boroughs/southwark_2.jpg',
+      'assets/images/groups/boroughs/southwark_3.jpg',
+      'assets/images/groups/boroughs/southwark_4.jpg',
+    ],
+    'tower hamlets': [
+      'assets/images/groups/boroughs/tower_hamlets_1.jpg',
+      'assets/images/groups/boroughs/tower_hamlets_2.jpg',
+      'assets/images/groups/boroughs/tower_hamlets_3.jpg',
+      'assets/images/groups/boroughs/tower_hamlets_4.jpg',
+    ],
+    'trafford': [
+      'assets/images/groups/boroughs/trafford_1.jpg',
+      'assets/images/groups/boroughs/trafford_2.jpg',
+      'assets/images/groups/boroughs/trafford_3.jpg',
+      'assets/images/groups/boroughs/trafford_4.jpg',
+    ],
+    'waltham forest': [
+      'assets/images/groups/boroughs/waltham_forest_1.jpg',
+      'assets/images/groups/boroughs/waltham_forest_2.jpg',
+      'assets/images/groups/boroughs/waltham_forest_3.jpg',
+      'assets/images/groups/boroughs/waltham_forest_4.jpg',
+    ],
+    'wandsworth': [
+      'assets/images/groups/boroughs/wandsworth_1.jpg',
+      'assets/images/groups/boroughs/wandsworth_2.jpg',
+      'assets/images/groups/boroughs/wandsworth_3.jpg',
+      'assets/images/groups/boroughs/wandsworth_4.jpg',
+    ],
+    'westminster': [
+      'assets/images/groups/boroughs/westminster_1.jpg',
+      'assets/images/groups/boroughs/westminster_2.jpg',
+      'assets/images/groups/boroughs/westminster_3.jpg',
+      'assets/images/groups/boroughs/westminster_4.jpg',
+      'assets/images/groups/boroughs/westminster_5.jpg',
+    ],
   };
 
   /// Migrate an old external image URL to the correct local asset path.
-  /// YEAR is checked FIRST so "2017 Cambridge Expecting Parents" maps to the
-  /// year-specific image, not the generic category image.
   ///
-  /// Every year-range AND every category maps to a DISTINCT image (A–I).
-  /// No two groups will ever receive the same asset from this method:
-  ///
-  ///   A = King's College Chapel    → 2022, 2018
-  ///   B = Punting on River Cam     → 2024, 2023
-  ///   C = Trinity College          → 2025, 2030+
-  ///   D = The Backs                → 2026, 2027, 2028, 2029
-  ///   E = Ely Cathedral            → 2013, 2012, 2011, 2010 (oldest)
-  ///   F = South Cambs village      → 2019, 2017, 2016, 2015, 2014
-  ///   G = Boats on River Cam       → 2023 (see B), alt: 2021, 2020
-  ///   H = Cambridge Market Square  → Aspiring Parents (unique to aspiring)
-  ///   I = Fitzwilliam Museum       → Expecting Parents (unique to expecting)
+  /// Priority order:
+  ///   1. Non-Cambridge borough name match → first image from that borough's pool
+  ///   2. East / South Cambridgeshire overrides
+  ///   3. Cambridge year checks (A–I constants)
+  ///   4. Cambridge category fallback
+  ///   5. Absolute default (King's College Chapel)
   static String _migrateImageUrl(String groupName, String oldUrl) {
     final n = groupName.toLowerCase();
-    // ── Borough overrides (highest priority) ─────────────────────────────
+
+    // ── 1. Non-Cambridge borough detection (longest match wins) ──────────
+    // Check each borough pool key; return the first image in that pool.
+    // We iterate longest-key-first so 'kensington and chelsea' beats 'kensington'.
+    final sortedKeys = _boroughImagePools.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+    for (final key in sortedKeys) {
+      // Skip the Cambridge cluster — handled below with year-specific logic
+      if (key == 'cambridge' ||
+          key == 'east cambridgeshire' ||
+          key == 'south cambridgeshire') { continue; }
+      if (n.contains(key)) {
+        return _boroughImagePools[key]!.first;
+      }
+    }
+
+    // ── 2. Cambridge sub-region overrides ────────────────────────────────
     if (n.contains('east cambridgeshire') || n.contains('ely')) return _imgE;
     if (n.contains('south cambridgeshire')) return _imgF;
-    // ── Year checks — take priority over all category words ───────────────
+
+    // ── 3. Cambridge year checks (unique image per year range) ───────────
     if (n.contains('2030') || n.contains('2029') ||
-        n.contains('2028') || n.contains('2027') || n.contains('2026')) { return _imgD; } // The Backs
-    if (n.contains('2025'))                                              return _imgC; // Trinity College
-    if (n.contains('2024'))                                              return _imgB; // Punting
-    if (n.contains('2023'))                                              return _imgG; // Boats on River Cam
-    if (n.contains('2022'))                                              return _imgA; // King's College Chapel
-    if (n.contains('2021'))                                              return _imgH; // Cambridge Market Square
-    if (n.contains('2020'))                                              return _imgI; // Fitzwilliam Museum
+        n.contains('2028') || n.contains('2027') || n.contains('2026')) { return _imgD; }
+    if (n.contains('2025')) return _imgC;
+    if (n.contains('2024')) return _imgB;
+    if (n.contains('2023')) return _imgG;
+    if (n.contains('2022')) return _imgA;
+    if (n.contains('2021')) return _imgH;
+    if (n.contains('2020')) return _imgI;
     if (n.contains('2019') || n.contains('2018') ||
         n.contains('2017') || n.contains('2016') ||
-        n.contains('2015') || n.contains('2014'))                        { return _imgF; } // South Cambs village
+        n.contains('2015') || n.contains('2014')) { return _imgF; }
     if (n.contains('2013') || n.contains('2012') ||
-        n.contains('2011') || n.contains('2010'))                        { return _imgE; } // Ely Cathedral
-    // ── Category fallback (only when no year in name) ─────────────────────
-    if (n.contains('aspiring'))  return _imgH; // Cambridge Market Square  ← unique to Aspiring
-    if (n.contains('expecting')) return _imgI; // Fitzwilliam Museum       ← unique to Expecting
-    // ── General Cambridge fallback ───────────────────────────────────────
-    if (n.contains('cambridge')) return _imgB; // Punting
-    return _imgA; // King's College Chapel as absolute default
+        n.contains('2011') || n.contains('2010')) { return _imgE; }
+
+    // ── 4. Cambridge category fallback ───────────────────────────────────
+    if (n.contains('aspiring'))  return _imgH;
+    if (n.contains('expecting')) return _imgI;
+    if (n.contains('cambridge')) return _imgB;
+
+    // ── 5. Absolute default ──────────────────────────────────────────────
+    return _imgA;
   }
 
   /// Resolve the borough pool key for [borough] / [groupName] text.

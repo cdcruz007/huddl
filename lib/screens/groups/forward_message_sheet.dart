@@ -235,11 +235,11 @@ class _ForwardSheetState extends State<_ForwardSheet>
 
     // Also include default groups the user is in
     try {
-      final membershipsRaw = await BrowserStorage.getString('user_memberships_v5');
+      final membershipsRaw = await BrowserStorage.getString('user_memberships_v6');
       if (membershipsRaw != null) {
         final Map<String, dynamic> membershipsMap = json.decode(membershipsRaw);
         final groupIds = (membershipsMap['current_user'] as List<dynamic>?)?.cast<String>() ?? [];
-        final groupsRaw = await BrowserStorage.getString('default_groups_v5');
+        final groupsRaw = await BrowserStorage.getString('default_groups_v6');
         if (groupsRaw != null && groupIds.isNotEmpty) {
           final Map<String, dynamic> groupsMap = json.decode(groupsRaw);
           for (final entry in groupsMap.entries) {
