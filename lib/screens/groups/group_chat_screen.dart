@@ -42,6 +42,7 @@ import '../../widgets/voice_message_bubble.dart';
 import '../../services/voice_message_service.dart';
 import '../../services/huddl_notification_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 const Color _kMyBubble = HuddlColors.peachLight;
@@ -488,7 +489,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           isMe: false,
           isVoiceNote: msgType == 'voice_note',
           audioUrl: m['audioUrl'] as String?,
-          audioDuration: m['audioDuration'] as int?,
+          audioDuration: (m['audioDuration'] as num?)?.toInt(),
         );
         // Only add if not already present by id
         if (!_messages.any((existing) => existing.id == id)) {
@@ -750,7 +751,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
             isMe: isMe,
             isVoiceNote: msgType == 'voice_note',
             audioUrl: m['audioUrl'] as String?,
-            audioDuration: m['audioDuration'] as int?,
+            audioDuration: (m['audioDuration'] as num?)?.toInt(),
           ));
         }
       }
@@ -6213,10 +6214,22 @@ class _GroupImageBubble extends StatelessWidget {
                               )
                             : (imageUrl.startsWith('http://') ||
                                     imageUrl.startsWith('https://'))
-                                ? Image.network(
-                                    imageUrl,
+                                ? CachedNetworkImage(
+                                    imageUrl: imageUrl,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => _brokenImage(),
+                                    width: 240,
+                                    height: 240,
+                                    placeholder: (_, __) => Container(
+                                      width: 240,
+                                      height: 240,
+                                      color: Colors.grey.shade200,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (_, __, ___) => _brokenImage(),
                                   )
                                 : _brokenImage(),
                       ),

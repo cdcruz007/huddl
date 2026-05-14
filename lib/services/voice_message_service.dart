@@ -289,8 +289,30 @@ class VoiceMessageService {
 
       // Android: must use mediaPlayer mode to stream remote HTTPS URLs.
       // Low-latency (SoundPool) mode doesn't support network sources.
+      // iOS: re-apply audio context before each play to ensure AVAudioSession
+      // is active — the session can be deactivated by other audio (calls,
+      // other apps) and must be re-acquired before playback resumes.
       if (!kIsWeb) {
         await _player.setPlayerMode(PlayerMode.mediaPlayer);
+        try {
+          await _player.setAudioContext(
+            AudioContext(
+              iOS: AudioContextIOS(
+                category: AVAudioSessionCategory.playback,
+                options: const {},
+              ),
+              android: AudioContextAndroid(
+                isSpeakerphoneOn: true,
+                stayAwake: false,
+                contentType: AndroidContentType.music,
+                usageType: AndroidUsageType.media,
+                audioFocus: AndroidAudioFocus.gain,
+              ),
+            ),
+          );
+        } catch (_) {
+          // Non-fatal — proceed with playback even if context reset fails
+        }
       }
 
       await _player.play(UrlSource(url));
