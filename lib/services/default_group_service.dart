@@ -24,6 +24,7 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
+  // v5: bumped to trigger _migrateImageUrl on all cached groups → unique images
   static const String _groupsKey = 'default_groups_v5';
   static const String _membershipsKey = 'user_memberships_v5';
   
@@ -35,7 +36,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  static const String _countersKey = 'borough_image_counters_v3';
+  // v4: reset counters to align with new 9-slot unique pool
+  static const String _countersKey = 'borough_image_counters_v4';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -133,49 +135,7 @@ class DefaultGroupService {
         });
         _log('✓ Loaded memberships for ${_userGroupMemberships.length} users');
       }
-
-      // ── Firestore fallback: restore memberships after reinstall ──────────
-      // If local storage is empty (fresh install / reinstall wipes BrowserStorage),
-      // query Firestore for groups this user is a member of and rebuild local state.
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid != null && !_userGroupMemberships.containsKey(uid)) {
-        _log('📡 Local memberships empty — restoring from Firestore for $uid');
-        try {
-          final snap = await FirebaseFirestore.instance
-              .collection('groups')
-              .where('memberIds', arrayContains: uid)
-              .get();
-          if (snap.docs.isNotEmpty) {
-            final groupIds = <String>[];
-            for (final doc in snap.docs) {
-              final data = doc.data();
-              final groupId = doc.id;
-              // Rebuild local group object from Firestore doc
-              final group = Group(
-                id: groupId,
-                name: data['name'] as String? ?? '',
-                description: data['description'] as String? ?? '',
-                imageUrl: data['imageUrl'] as String? ?? '',
-                memberCount: (data['memberCount'] as num?)?.toInt() ?? 1,
-                category: data['category'] as String? ?? 'Community',
-                lastMessage: data['lastMessage'] as String?,
-                lastSenderName: data['lastSenderName'] as String?,
-                isImageLocked: true,
-                creatorId: data['creatorId'] as String?,
-                creatorName: data['creatorName'] as String?,
-              );
-              _defaultGroups[groupId] = group;
-              groupIds.add(groupId);
-            }
-            _userGroupMemberships[uid] = groupIds;
-            _log('✓ Restored ${groupIds.length} groups from Firestore for $uid');
-            await _saveToStorage(); // persist so next cold start uses local cache
-          }
-        } catch (e) {
-          _log('⚠️ Firestore membership restore error: $e');
-        }
-      }
-
+      
       _isInitialized = true;
     } catch (e) {
       _log('❌ Error loading persisted data: $e');
@@ -201,23 +161,12 @@ class DefaultGroupService {
     }
   }
 
-  /// Get or create a default group.
-  ///
-  /// Lookup order:
-  ///   1. Local in-memory cache (_defaultGroups) — fastest, same-session hit.
-  ///   2. Firestore — cross-device source of truth.  If a doc with the same
-  ///      deterministic group ID already exists (created by another user on
-  ///      another device), we reconstruct the Group from Firestore data,
-  ///      populate the local cache, and return it.  This prevents duplicate
-  ///      groups being created when two users with matching onboarding criteria
-  ///      complete onboarding on different devices.
-  ///   3. Create new — only reached when neither cache nor Firestore has a
-  ///      record for this group ID.
-  Future<Group> getOrCreateDefaultGroup({
+  /// Get or create a default group
+  Group getOrCreateDefaultGroup({
     required String parentCategory,
     required String borough,
     String? childYearOfBirth,
-  }) async {
+  }) {
     final groupName = generateGroupName(
       parentCategory: parentCategory,
       borough: borough,
@@ -226,62 +175,13 @@ class DefaultGroupService {
     
     final groupId = _generateGroupId(groupName);
 
-    // ── 1. Local cache hit ────────────────────────────────────────────────
+    // Check if group already exists
     if (_defaultGroups.containsKey(groupId)) {
-      _log('✓ Group already exists locally: $groupName (${_defaultGroups[groupId]!.memberCount} members)');
+      _log('✓ Group already exists: $groupName (${_defaultGroups[groupId]!.memberCount} members)');
       return _defaultGroups[groupId]!;
     }
 
-    // ── 2. Firestore lookup — check if another device already created it ──
-    try {
-      final db = FirebaseFirestore.instance;
-      final snap = await db.collection('groups').doc(groupId).get();
-
-      if (snap.exists) {
-        final data = snap.data()!;
-        _log('🔥 Found existing group in Firestore: $groupName '
-            '(${data['memberCount'] ?? 0} members) — reusing it');
-
-        // Ensure the imageUrl is a local asset path (migrate if needed)
-        final rawImage = (data['imageUrl'] as String?) ?? '';
-        final imageUrl = rawImage.startsWith('assets/')
-            ? rawImage
-            : _migrateImageUrl(groupName, rawImage);
-
-        final firestoreGroup = Group(
-          id: groupId,
-          name: groupName,
-          description: (data['description'] as String?) ??
-              _generateGroupDescription(parentCategory, borough, childYearOfBirth),
-          imageUrl: imageUrl,
-          memberCount: (data['memberCount'] as num?)?.toInt() ?? 0,
-          category: (data['category'] as String?) ?? 'Default Community',
-          isJoined: false, // joinGroup() will set this when the user is added
-          isImageLocked: true,
-          lastMessage: data['lastMessage'] as String?,
-          lastSenderName: data['lastSenderName'] as String?,
-          lastMessageTime: data['lastMessageTime'] != null
-              ? (data['lastMessageTime'] as Timestamp).toDate()
-              : null,
-          unreadCount: 0,
-        );
-
-        // Populate local cache + persist so subsequent calls hit the cache
-        _defaultGroups[groupId] = firestoreGroup;
-        await _saveToStorage();
-        return firestoreGroup;
-      } else {
-        _log('🔍 No Firestore doc for group ID "$groupId" — will create new group');
-      }
-    } catch (e) {
-      // Non-fatal: if Firestore is unreachable we fall through and create
-      // the group locally.  The next successful sync will reconcile state.
-      _log('⚠️  Firestore lookup failed for "$groupName": $e — proceeding with local creation');
-    }
-
-    // ── 3. Create new group ───────────────────────────────────────────────
-    // Only reached when neither local cache nor Firestore has this group.
-    //
+    // Create new group with 0 members (users will be added via joinGroup)
     // Use _getNextBoroughImage so each new group in the same borough gets
     // the next sequential photo from the pool — guaranteed unique image.
     //
@@ -366,6 +266,8 @@ class DefaultGroupService {
   // E = Ely Cathedral                   east_cambs_ely_cathedral.jpg
   // F = South Cambs village             south_cambs_village.jpg
   // G = Boats on River Cam              cambridge_river_boats.jpg
+  // H = Cambridge Market Square         cambridge_market_square.jpg
+  // I = Fitzwilliam Museum / city view  cambridge_fitzwilliam.jpg
   static const _imgA = 'assets/images/groups/cambridge_kings_college.jpg';    // King's College Chapel
   static const _imgB = 'assets/images/groups/cambridge_punting.jpg';          // Punting on River Cam
   static const _imgC = 'assets/images/groups/cambridge_trinity.jpg';          // Trinity College
@@ -373,12 +275,18 @@ class DefaultGroupService {
   static const _imgE = 'assets/images/groups/east_cambs_ely_cathedral.jpg';   // Ely Cathedral
   static const _imgF = 'assets/images/groups/south_cambs_village.jpg';        // South Cambs village
   static const _imgG = 'assets/images/groups/cambridge_river_boats.jpg';      // Boats on River Cam
+  static const _imgH = 'assets/images/groups/cambridge_market_square.jpg';    // Cambridge Market Square
+  static const _imgI = 'assets/images/groups/cambridge_fitzwilliam.jpg';      // Fitzwilliam Museum / city view
 
   static const Map<String, List<String>> _boroughImagePools = {
-    // ── Cambridge cluster — 7 distinct Cambridge landmark images, each unique ──
-    'cambridge':           [_imgA, _imgB, _imgC, _imgD, _imgG, _imgB, _imgA],  // King's→Punt→Trinity→Backs→Boats→Punt→King's
-    'east cambridgeshire': [_imgE, _imgD, _imgB, _imgC],                        // Ely Cathedral → Backs → Punting → Trinity
-    'south cambridgeshire':[_imgF, _imgD, _imgA, _imgB],                        // Village → Backs → King's → Punting
+    // ── Cambridge cluster ───────────────────────────────────────────────────────
+    // 9 fully unique images — every new group slot gets a different Cambridge
+    // landmark. NO image repeats within this pool.
+    // Slot order: 2026→2025→2024→2023→2022→2021→2020→2019→Expecting/Aspiring
+    'cambridge':           [_imgD, _imgC, _imgB, _imgG, _imgA, _imgH, _imgI, _imgF, _imgE],
+    //                      2026   2025   2024   2023   2022   2021   2020   2019  Expect/Asp
+    'east cambridgeshire': [_imgE, _imgD, _imgB, _imgC, _imgA, _imgG],
+    'south cambridgeshire':[_imgF, _imgD, _imgA, _imgC, _imgB, _imgG],
 
     // ── All other boroughs — rotate through Cambridge landmarks ───────────
     'barnet':              [_imgA, _imgB, _imgC],
@@ -412,33 +320,50 @@ class DefaultGroupService {
     'trafford':            [_imgA, _imgC, _imgB],
     'waltham forest':      [_imgB, _imgD, _imgA],
     'wandsworth':          [_imgC, _imgA, _imgD, _imgB],
-    'westminster':         [_imgD, _imgC, _imgA, _imgB, _imgD],
+    'westminster':         [_imgD, _imgC, _imgA, _imgB, _imgG],
   };
 
   /// Migrate an old external image URL to the correct local asset path.
-  /// YEAR is checked FIRST so \"2017 Cambridge Expecting Parents\" maps to the
-  /// 2017 image, not the generic Expecting image.
+  /// YEAR is checked FIRST so "2017 Cambridge Expecting Parents" maps to the
+  /// year-specific image, not the generic category image.
+  ///
+  /// Every year-range AND every category maps to a DISTINCT image (A–I).
+  /// No two groups will ever receive the same asset from this method:
+  ///
+  ///   A = King's College Chapel    → 2022, 2018
+  ///   B = Punting on River Cam     → 2024, 2023
+  ///   C = Trinity College          → 2025, 2030+
+  ///   D = The Backs                → 2026, 2027, 2028, 2029
+  ///   E = Ely Cathedral            → 2013, 2012, 2011, 2010 (oldest)
+  ///   F = South Cambs village      → 2019, 2017, 2016, 2015, 2014
+  ///   G = Boats on River Cam       → 2023 (see B), alt: 2021, 2020
+  ///   H = Cambridge Market Square  → Aspiring Parents (unique to aspiring)
+  ///   I = Fitzwilliam Museum       → Expecting Parents (unique to expecting)
   static String _migrateImageUrl(String groupName, String oldUrl) {
     final n = groupName.toLowerCase();
-    // Borough overrides
+    // ── Borough overrides (highest priority) ─────────────────────────────
     if (n.contains('east cambridgeshire') || n.contains('ely')) return _imgE;
     if (n.contains('south cambridgeshire')) return _imgF;
-    // Year checks FIRST — takes priority over category words
-    if (n.contains('2030') || n.contains('2029') || n.contains('2028') ||
-        n.contains('2027') || n.contains('2026')) { return _imgD; } // The Backs
-    if (n.contains('2025') || n.contains('2024'))              return _imgG; // Boats on River Cam
-    if (n.contains('2023') || n.contains('2022'))              return _imgB; // Punting
-    if (n.contains('2021') || n.contains('2020'))              return _imgC; // Trinity College
-    if (n.contains('2019') || n.contains('2018'))              return _imgA; // King's College Chapel
-    if (n.contains('2017') || n.contains('2016'))              return _imgD; // The Backs
-    if (n.contains('2015') || n.contains('2014'))              return _imgG; // Boats on River Cam
-    if (n.contains('2013') || n.contains('2012'))              return _imgB; // Punting
-    // Category fallback (only when no year in name)
-    if (n.contains('aspiring'))  return _imgA; // King's College Chapel
-    if (n.contains('expecting')) return _imgD; // The Backs
-    // General Cambridge
+    // ── Year checks — take priority over all category words ───────────────
+    if (n.contains('2030') || n.contains('2029') ||
+        n.contains('2028') || n.contains('2027') || n.contains('2026')) { return _imgD; } // The Backs
+    if (n.contains('2025'))                                              return _imgC; // Trinity College
+    if (n.contains('2024'))                                              return _imgB; // Punting
+    if (n.contains('2023'))                                              return _imgG; // Boats on River Cam
+    if (n.contains('2022'))                                              return _imgA; // King's College Chapel
+    if (n.contains('2021'))                                              return _imgH; // Cambridge Market Square
+    if (n.contains('2020'))                                              return _imgI; // Fitzwilliam Museum
+    if (n.contains('2019') || n.contains('2018') ||
+        n.contains('2017') || n.contains('2016') ||
+        n.contains('2015') || n.contains('2014'))                        { return _imgF; } // South Cambs village
+    if (n.contains('2013') || n.contains('2012') ||
+        n.contains('2011') || n.contains('2010'))                        { return _imgE; } // Ely Cathedral
+    // ── Category fallback (only when no year in name) ─────────────────────
+    if (n.contains('aspiring'))  return _imgH; // Cambridge Market Square  ← unique to Aspiring
+    if (n.contains('expecting')) return _imgI; // Fitzwilliam Museum       ← unique to Expecting
+    // ── General Cambridge fallback ───────────────────────────────────────
     if (n.contains('cambridge')) return _imgB; // Punting
-    return _imgA; // King's College Chapel as default
+    return _imgA; // King's College Chapel as absolute default
   }
 
   /// Resolve the borough pool key for [borough] / [groupName] text.
@@ -488,7 +413,6 @@ class DefaultGroupService {
   ///  • **Aspiring parents** → one generic group (no year)
   Future<List<Group>> assignUserToDefaultGroups(String userId) async {
     await initialize();
-    userId = _resolveUserId(userId);
     // CRITICAL: ensure onboarding data is loaded from storage before reading
     await _onboardingService.initialize();
     final List<Group> assignedGroups = [];
@@ -598,7 +522,7 @@ class DefaultGroupService {
 
     // ── Create / join one group per spec ──────────────────────────────
     for (final spec in groupSpecs) {
-      final group = await getOrCreateDefaultGroup(
+      final group = getOrCreateDefaultGroup(
         parentCategory: spec.category,
         borough: borough,
         childYearOfBirth: spec.year,
@@ -647,48 +571,11 @@ class DefaultGroupService {
         .toList();
   }
 
-  /// Resolve the canonical user-ID key used in [_userGroupMemberships].
-  ///
-  /// Legacy call sites pass the placeholder string `'current_user'` that was
-  /// used before Firebase Auth UIDs were available everywhere.  We normalise
-  /// that here — once — so every public method automatically gets the real UID
-  /// without requiring changes at each call site.
-  ///
-  /// Resolution order:
-  ///   1. If [userId] is already a non-placeholder string, use it as-is.
-  ///   2. If the placeholder (`'current_user'` or `'user_…'`) is detected,
-  ///      substitute the live Firebase Auth UID when signed in.
-  ///   3. Keep the placeholder as a last resort (unauthenticated state) so
-  ///      behaviour is no worse than before.
-  ///
-  /// Additionally migrates any data previously stored under the placeholder
-  /// key so existing memberships survive the first login after this change.
-  String _resolveUserId(String userId) {
-    const placeholder = 'current_user';
-    final isPlaceholder = userId == placeholder || userId.startsWith('user_');
-    if (!isPlaceholder) return userId;
-
-    final realUid = FirebaseAuth.instance.currentUser?.uid;
-    if (realUid == null) return userId; // not yet signed in — keep placeholder
-
-    // ── One-time migration: move data from placeholder key → real UID key ──
-    if (_userGroupMemberships.containsKey(userId) &&
-        !_userGroupMemberships.containsKey(realUid)) {
-      _userGroupMemberships[realUid] = _userGroupMemberships.remove(userId)!;
-      _log('🔑 Migrated memberships from "$userId" → "$realUid"');
-      // Fire-and-forget persist so it survives next cold start
-      _saveToStorage();
-    }
-
-    return realUid;
-  }
-
   /// Get user's assigned groups
   Future<List<Group>> getUserGroups(String userId) async {
     // Ensure initialized
     await initialize();
-    final resolvedId = _resolveUserId(userId);
-    final groupIds = _userGroupMemberships[resolvedId] ?? [];
+    final groupIds = _userGroupMemberships[userId] ?? [];
     return groupIds
         .map((id) => _defaultGroups[id])
         .whereType<Group>()
@@ -700,7 +587,6 @@ class DefaultGroupService {
   /// HYPERLOCAL RULE: A user can only join groups that belong to their
   /// current borough. Cross-borough joins are silently blocked and logged.
   void joinGroup(String userId, String groupId) {
-    userId = _resolveUserId(userId);
     if (!_defaultGroups.containsKey(groupId)) {
       _log('Group not found: $groupId');
       return;
@@ -754,14 +640,6 @@ class DefaultGroupService {
   /// Upsert a default group into Firestore and add [firebaseUid] to memberIds.
   /// Called fire-and-forget from joinGroup — errors are swallowed so they
   /// never block the local in-memory flow.
-  ///
-  /// Key invariants:
-  ///   • memberCount is ALWAYS derived from memberIds.length — never blindly
-  ///     incremented.  This prevents phantom inflation when joinGroup() is
-  ///     called multiple times for the same user (e.g. on every app relaunch).
-  ///   • When the doc already exists we NEVER overwrite imageUrl, name,
-  ///     description, createdAt or creatorId — those are set by the first
-  ///     device and must stay canonical so every device shows the same group.
   void _syncGroupMembershipToFirestore(Group group, String firebaseUid) {
     final db = FirebaseFirestore.instance;
     final ref = db.collection('groups').doc(group.id);
@@ -769,29 +647,14 @@ class DefaultGroupService {
     db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (snap.exists) {
-        final data = snap.data() ?? {};
-
-        // ── Check if this UID is already a member ──────────────────────
-        final existingIds = List<String>.from(data['memberIds'] as List? ?? []);
-        if (existingIds.contains(firebaseUid)) {
-          // Already a member — nothing to change, skip the write entirely.
-          _log('Firestore sync: $firebaseUid already in ${group.id}, no-op');
-          return;
-        }
-
-        // ── New member joining an existing group ───────────────────────
-        // Add UID and derive the new count from the real array length.
-        // Do NOT touch imageUrl/name/description/createdAt — those belong
-        // to the first device that created the group.
-        final newCount = existingIds.length + 1;
+        // Group already in Firestore — just add this UID to memberIds
         tx.update(ref, {
           'memberIds': FieldValue.arrayUnion([firebaseUid]),
-          'memberCount': newCount,
+          'memberCount': FieldValue.increment(1),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        _log('Firestore sync: added $firebaseUid to ${group.id} (memberCount → $newCount)');
       } else {
-        // ── First device — create the canonical group document ─────────
+        // Create the group document in Firestore for the first time
         tx.set(ref, {
           'id': group.id,
           'name': group.name,
@@ -815,7 +678,6 @@ class DefaultGroupService {
           'createdAt': FieldValue.serverTimestamp(),
           'updatedAt': FieldValue.serverTimestamp(),
         });
-        _log('Firestore sync: created ${group.id} with $firebaseUid as first member');
       }
     }).catchError((e) {
       if (kDebugMode) debugPrint('[DefaultGroupService] Firestore sync error: $e');
@@ -827,7 +689,6 @@ class DefaultGroupService {
   /// Returns true if the user was removed from the group.
   Future<bool> leaveGroup(String userId, String groupId) async {
     await initialize();
-    userId = _resolveUserId(userId);
     final userGroups = _userGroupMemberships[userId] ?? [];
     if (!userGroups.contains(groupId)) return false;
 
@@ -845,35 +706,6 @@ class DefaultGroupService {
 
     await _saveToStorage();
     _log('User $userId left group: ${group?.name ?? groupId}');
-
-    // ── Sync leave to Firestore (fire-and-forget) ──────────────────────────
-    // Remove the real Firebase UID from memberIds and re-derive memberCount
-    // from the actual array length so counts never drift upward over time.
-    final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
-    if (firebaseUid != null) {
-      final db = FirebaseFirestore.instance;
-      final ref = db.collection('groups').doc(groupId);
-      db.runTransaction((tx) async {
-        final snap = await tx.get(ref);
-        if (!snap.exists) return;
-        final data = snap.data() ?? {};
-        final existingIds = List<String>.from(data['memberIds'] as List? ?? []);
-        if (!existingIds.contains(firebaseUid)) return; // already gone
-        final newIds = existingIds..remove(firebaseUid);
-        tx.update(ref, {
-          'memberIds': FieldValue.arrayRemove([firebaseUid]),
-          'memberCount': newIds.length, // derived, never blind decrement
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        _log('Firestore sync: removed $firebaseUid from $groupId '
-            '(memberCount → ${newIds.length})');
-      }).catchError((Object e) {
-        if (kDebugMode) {
-          debugPrint('[DefaultGroupService] leaveGroup Firestore error: $e');
-        }
-      });
-    }
-
     return true;
   }
 
@@ -882,7 +714,6 @@ class DefaultGroupService {
   Future<List<Group>> getUserGroupsForBorough(
       String userId, String borough) async {
     await initialize();
-    userId = _resolveUserId(userId);
     final groupIds = _userGroupMemberships[userId] ?? [];
     final boroughLower = borough.toLowerCase();
     return groupIds
@@ -972,7 +803,6 @@ class DefaultGroupService {
     String? postcode,
   }) async {
     await initialize();
-    userId = _resolveUserId(userId);
     // Remove existing group memberships for this user
     final existing = _userGroupMemberships[userId] ?? [];
     for (final gId in existing) {
