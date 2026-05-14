@@ -3590,6 +3590,98 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       targetAudience: ['Mums'],
       creatorBorough: 'Cambridge',
     ),
+    _GroupItem(
+      id: 'disc_cambridge_family_tech_ai',
+      name: 'Cambridge Family Tech & AI Parents',
+      description:
+          'For Cambridge parents curious about technology and AI in family life — from screen time and educational apps to coding for kids and navigating the digital world together.',
+      imageUrl:
+          'https://images.pexels.com/photos/3861958/pexels-photo-3861958.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'TECHNOLOGY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_tennis_families',
+      name: 'Cambridge Tennis Families',
+      description:
+          'Connect with Cambridge families who love tennis. Share club recommendations, junior coaching tips, social hits and family-friendly courts across the city.',
+      imageUrl:
+          'https://images.pexels.com/photos/1103844/pexels-photo-1103844.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'SPORT',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_weekend_adventures',
+      name: 'Cambridge Weekend Adventures',
+      description:
+          'Discover and share the best weekend activities for Cambridge families — days out, nature walks, local events, seasonal trips and hidden gems around the city and beyond.',
+      imageUrl:
+          'https://images.pexels.com/photos/1741231/pexels-photo-1741231.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'ACTIVITIES',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_international_families',
+      name: 'International Families in Cambridge',
+      description:
+          'A welcoming community for international families living in Cambridge. Share tips on settling in, schooling, visas, cultural events and making Cambridge feel like home.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_fathers_coffee',
+      name: 'Cambridge Fathers Coffee Group',
+      description:
+          'A relaxed space for Cambridge dads to meet up, grab a coffee and chat about family life. Whether you\'re a new dad or a seasoned one, all are welcome.',
+      imageUrl:
+          'https://images.pexels.com/photos/1648387/pexels-photo-1648387.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'SOCIAL',
+      isDefault: false,
+      isImageLocked: false,
+      targetAudience: ['Dads'],
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_relocation_families',
+      name: 'Cambridge Relocation Families',
+      description:
+          'Just moved to Cambridge or planning to? Connect with other families who\'ve made the move — get advice on neighbourhoods, schools, childcare and settling in.',
+      imageUrl:
+          'https://images.pexels.com/photos/1308881/pexels-photo-1308881.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_school_advice',
+      name: 'Cambridge School Advice Network',
+      description:
+          'Navigate Cambridge\'s schools together — from choosing a primary or secondary to admissions, catchment areas, SEND support, tutoring and secondary transition tips.',
+      imageUrl:
+          'https://images.pexels.com/photos/289737/pexels-photo-289737.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'EDUCATION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
   ];
 
   /// Check if the current user can open/join a group.
@@ -4616,9 +4708,16 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_cambridge_dutch_parents':         {'icon': Icons.language,            'color': HuddlColors.blue},
   'disc_cambridge_italian_parents':       {'icon': Icons.language,            'color': HuddlColors.accentCoral},
   'disc_cambridge_scandinavian_parents':  {'icon': Icons.language,            'color': HuddlColors.teal},
-  'disc_cambridge_weaning_first_foods':   {'icon': Icons.child_care,          'color': HuddlColors.accentAmber},
-  'disc_cambridge_weaning_recipes':       {'icon': Icons.soup_kitchen,        'color': HuddlColors.accentCoral},
-  'disc_cambridge_working_mums':          {'icon': Icons.work_outline,        'color': HuddlColors.primaryDark},
+  'disc_cambridge_weaning_first_foods':       {'icon': Icons.child_care,          'color': HuddlColors.accentAmber},
+  'disc_cambridge_weaning_recipes':           {'icon': Icons.soup_kitchen,        'color': HuddlColors.accentCoral},
+  'disc_cambridge_working_mums':              {'icon': Icons.work_outline,        'color': HuddlColors.primaryDark},
+  'disc_cambridge_family_tech_ai':            {'icon': Icons.computer,            'color': HuddlColors.blue},
+  'disc_cambridge_tennis_families':           {'icon': Icons.sports_tennis,       'color': HuddlColors.teal},
+  'disc_cambridge_weekend_adventures':        {'icon': Icons.explore,             'color': HuddlColors.accentAmber},
+  'disc_cambridge_international_families':    {'icon': Icons.public,              'color': HuddlColors.primary},
+  'disc_cambridge_fathers_coffee':            {'icon': Icons.coffee,              'color': HuddlColors.accentAmber},
+  'disc_cambridge_relocation_families':       {'icon': Icons.moving,              'color': HuddlColors.teal},
+  'disc_cambridge_school_advice':             {'icon': Icons.school,              'color': HuddlColors.primaryDark},
 };
 
 class _DiscoverGroupCard extends StatelessWidget {
