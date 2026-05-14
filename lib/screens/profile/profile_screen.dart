@@ -824,6 +824,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       subtitle: 'Tell us what you think',
                       onTap: _openFeedbackScreen,
                     ),
+                    if (kDebugMode)
+                      _MenuItem(
+                        icon: Icons.admin_panel_settings_outlined,
+                        title: 'Admin Dashboard',
+                        subtitle: 'Review reported content',
+                        onTap: () => Navigator.pushNamed(context, '/admin'),
+                      ),
                     _MenuItem(
                       icon: Icons.help_outline,
                       title: 'Help & Support',
