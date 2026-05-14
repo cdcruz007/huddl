@@ -971,10 +971,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       // Remove the optimistic message we added above
       if (mounted) {
         setState(() {
-          _messages.removeWhere((m) => m.id == msgId);
-          _messageStatuses.remove(msgId);
+          _messages.removeWhere((m) => m.id == optimisticId);
+          _messageStatuses.remove(optimisticId);
         });
-        _firestoreMsgIds.remove(msgId);
+        _firestoreMsgIds.remove(optimisticId);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(
