@@ -3259,6 +3259,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   ];
 
   final List<_GroupItem> _allDiscoverGroups = [
+    // ── Groups visible to all boroughs ────────────────────────────────────
     _GroupItem(
       id: 'disc_travel_tribe',
       name: 'Travel Tribe',
@@ -3266,11 +3267,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           'Share travel advice and real experiences with other parents — from kid-friendly destinations and flight survival tips to honest hotel reviews and packing hacks.',
       imageUrl:
           'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 1893,
+      memberCount: 0,
       category: 'TRAVEL',
       isDefault: false,
       isImageLocked: false,
-      // No targetAudience → visible to everyone
     ),
     _GroupItem(
       id: 'disc_first_time_mums',
@@ -3279,7 +3279,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           'A supportive community for first-time mothers navigating the joys and challenges of new parenthood.',
       imageUrl:
           'https://images.pexels.com/photos/3242264/pexels-photo-3242264.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 1247,
+      memberCount: 0,
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
@@ -3292,24 +3292,23 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           'A space for dads to share experiences, ask questions, and support each other.',
       imageUrl:
           'https://images.pexels.com/photos/1648387/pexels-photo-1648387.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 834,
+      memberCount: 0,
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Dads'],
     ),
     _GroupItem(
-      id: 'disc_baby_sleep',
-      name: 'Baby Sleep Solutions',
+      id: 'disc_baby_sleep_support',
+      name: 'Baby Sleep Support',
       description:
-          'Tips, advice and support for getting your baby to sleep through the night.',
+          'Tips, advice and support for getting your baby to sleep. Share what has worked for you and get help from parents who have been through it.',
       imageUrl:
           'https://images.pexels.com/photos/971435/pexels-photo-971435.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 2156,
+      memberCount: 0,
       category: 'SLEEP',
       isDefault: false,
       isImageLocked: false,
-      targetAudience: ['Parents expecting a baby'],
     ),
     _GroupItem(
       id: 'disc_healthy_meals',
@@ -3318,11 +3317,10 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           'Share recipes, meal plans and ideas for nutritious family-friendly meals.',
       imageUrl:
           'https://images.pexels.com/photos/5082869/pexels-photo-5082869.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 1589,
+      memberCount: 0,
       category: 'FOOD & NUTRITION',
       isDefault: false,
       isImageLocked: false,
-      // No targetAudience → visible to everyone
     ),
     _GroupItem(
       id: 'disc_postnatal_fitness',
@@ -3331,24 +3329,261 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           'Safely rebuild your strength and fitness after pregnancy with expert advice and community support.',
       imageUrl:
           'https://images.pexels.com/photos/3094222/pexels-photo-3094222.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 967,
+      memberCount: 0,
       category: 'FITNESS',
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
     ),
     _GroupItem(
-      id: 'disc_working_parents',
-      name: 'Working Parents Network',
+      id: 'disc_working_parents_career',
+      name: 'Working Parents & Career',
       description:
-          'Balancing work and family life. Share tips on flexible working, childcare and career progression.',
+          'Balancing work and family life. Share tips on flexible working, childcare, career progression and returning to work after parental leave.',
       imageUrl:
           'https://images.pexels.com/photos/6957653/pexels-photo-6957653.jpeg?auto=compress&cs=tinysrgb&w=600',
-      memberCount: 743,
+      memberCount: 0,
       category: 'WORK-LIFE',
       isDefault: false,
       isImageLocked: false,
-      // No targetAudience → visible to everyone
+    ),
+
+    // ── Cambridge borough groups ───────────────────────────────────────────
+    _GroupItem(
+      id: 'disc_cambridge_international_parents',
+      name: 'International Parents Cambridge',
+      description:
+          'A welcoming space for parents who have moved to Cambridge from abroad. Share tips on settling in, schooling, local services and making connections in the city.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_buggy_runners',
+      name: 'Buggy Runners & Active Parents',
+      description:
+          'Get moving with your little one! A group for parents who run, walk or jog with buggies around Cambridge parks and paths. All paces welcome.',
+      imageUrl:
+          'https://images.pexels.com/photos/3933261/pexels-photo-3933261.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'FITNESS',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_allergies',
+      name: 'Allergies & Dietary Needs',
+      description:
+          'Support and advice for Cambridge families managing food allergies, intolerances and dietary requirements. Share safe recipes, restaurant tips and product recommendations.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807398/pexels-photo-3807398.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'HEALTH',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_multilingual',
+      name: 'Multilingual Families',
+      description:
+          'Raising children with more than one language in Cambridge. Share resources, tips and experiences on bilingual and multilingual parenting.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807397/pexels-photo-3807397.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'PARENTING',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_eco_parenting',
+      name: 'Eco Parenting & Cloth Nappies',
+      description:
+          'For Cambridge parents making sustainable choices — from cloth nappies and reusable products to reducing waste and eco-friendly family living.',
+      imageUrl:
+          'https://images.pexels.com/photos/3662630/pexels-photo-3662630.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'LIFESTYLE',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_family_travel',
+      name: 'Family Travel',
+      description:
+          'Cambridge families sharing travel inspiration, tips and honest reviews — day trips, UK breaks and holidays abroad with children of all ages.',
+      imageUrl:
+          'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'TRAVEL',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_spanish_parents',
+      name: 'Spanish-Speaking Parents',
+      description:
+          'Un espacio para familias hispanohablantes en Cambridge. Comparte experiencias, recursos y conecta con otras familias que hablan español.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807541/pexels-photo-3807541.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_defreville_lammas',
+      name: 'De Freville & Lammas Land Parents',
+      description:
+          'A local group for parents in the De Freville and Lammas Land areas of Cambridge. Meet nearby families, share local recommendations and organise get-togethers.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807571/pexels-photo-3807571.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'LOCAL',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_german_parents',
+      name: 'German-Speaking Parents',
+      description:
+          'Eine Gruppe für deutschsprachige Eltern in Cambridge. Tauscht Erfahrungen aus, findet Gleichgesinnte und bleibt mit der deutschen Gemeinschaft verbunden.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807621/pexels-photo-3807621.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_family_cycling',
+      name: 'Family Cycling',
+      description:
+          'Exploring Cambridge by bike with children. Share routes, cargo bike tips, cycle safety advice and family-friendly cycling events around the city.',
+      imageUrl:
+          'https://images.pexels.com/photos/3933261/pexels-photo-3933261.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'FITNESS',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_montessori',
+      name: 'Montessori Parenting',
+      description:
+          'A community for Cambridge parents interested in Montessori principles at home and school. Share activities, resources and experiences raising independent, curious children.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'EDUCATION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_nct_mums',
+      name: 'NCT Mums Network',
+      description:
+          'Connecting Cambridge mums through NCT. Whether you met at antenatal classes or just want to expand your local mum network, this is your space.',
+      imageUrl:
+          'https://images.pexels.com/photos/3242264/pexels-photo-3242264.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'PARENTING',
+      isDefault: false,
+      isImageLocked: false,
+      targetAudience: ['Mums'],
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_dutch_parents',
+      name: 'Dutch-Speaking Parents',
+      description:
+          'Een groep voor Nederlandstalige ouders in Cambridge. Deel ervaringen, vind gelijkgestemde families en houd contact met de Nederlandse gemeenschap.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807397/pexels-photo-3807397.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_italian_parents',
+      name: 'Italian-Speaking Parents',
+      description:
+          'Uno spazio per le famiglie italofone di Cambridge. Condividete esperienze, risorse e restate connessi con la comunità italiana.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807398/pexels-photo-3807398.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_scandinavian_parents',
+      name: 'Scandinavian Parents',
+      description:
+          'A group for Swedish, Norwegian, Danish and Finnish parents living in Cambridge. Share experiences of raising children between cultures and find your local community.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807541/pexels-photo-3807541.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_weaning_first_foods',
+      name: 'Weaning & First Foods',
+      description:
+          'Starting solids? This group is for Cambridge parents navigating weaning — from purees and baby-led weaning to allergen introduction and fussy eaters.',
+      imageUrl:
+          'https://images.pexels.com/photos/5082869/pexels-photo-5082869.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'FOOD & NUTRITION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_weaning_recipes',
+      name: 'Weaning Recipes & Food Ideas',
+      description:
+          'Share your favourite weaning recipes, meal ideas and food inspiration for babies and toddlers. From first tastes to family meals everyone can enjoy.',
+      imageUrl:
+          'https://images.pexels.com/photos/5082869/pexels-photo-5082869.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'FOOD & NUTRITION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_working_mums',
+      name: 'Working Mums',
+      description:
+          'A supportive space for Cambridge mums managing career and family. Share advice on childcare, flexible working, maternity rights and returning to work.',
+      imageUrl:
+          'https://images.pexels.com/photos/6957653/pexels-photo-6957653.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'WORK-LIFE',
+      isDefault: false,
+      isImageLocked: false,
+      targetAudience: ['Mums'],
+      creatorBorough: 'Cambridge',
     ),
   ];
 
