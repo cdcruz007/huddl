@@ -12,6 +12,7 @@ import 'events/events_screen.dart';
 import 'marketplace/marketplace_screen.dart';
 import 'profile/profile_screen.dart';
 import 'insights/insights_screen.dart';
+import 'services/services_screen.dart';
 import '../services/tutorial_service.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
@@ -287,11 +288,11 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   /// Switch to a specific tab by index.
-  /// 0=Home, 1=Connect, 2=Discover, 3=Market, 4=Profile
+  /// 0=Home, 1=Connect, 2=Discover, 3=Services, 4=Market, 5=Profile, 6=Insights
   void switchTab(int index) => _switchTab(index);
 
   void _switchTab(int index) {
-    if (index < 0 || index >= 6) return;
+    if (index < 0 || index >= 7) return;
     if (!mounted) return;
     setState(() {
       _activatedTabs.add(index);
@@ -310,9 +311,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       case 0: return const HomeScreen();
       case 1: return const GroupsScreen();
       case 2: return const EventsScreen();
-      case 3: return const MarketplaceScreen();
-      case 4: return const ProfileScreen();
-      case 5: return const InsightsScreen();
+      case 3: return const ServicesScreen();
+      case 4: return const MarketplaceScreen();
+      case 5: return const ProfileScreen();
+      case 6: return const InsightsScreen();
       default: return const SizedBox.shrink();
     }
   }
@@ -322,7 +324,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     return Scaffold(
       extendBody: true,
       body: Stack(
-        children: List.generate(6, (index) {
+        children: List.generate(7, (index) {
           return Offstage(
             offstage: _currentIndex != index,
             child: _buildScreen(index),
@@ -332,11 +334,11 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
       floatingActionButton: SpeedDialFab(
         onServicesPressed: () {
           HapticFeedback.mediumImpact();
-          Navigator.of(context).pushNamed('/services');
+          _switchTab(3);
         },
         onInsightsPressed: () {
           HapticFeedback.selectionClick();
-          _switchTab(5);
+          _switchTab(6);
         },
         onAiPressed: () {
           HapticFeedback.selectionClick();
@@ -398,25 +400,32 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
                     onTap: () => _switchTab(2),
                   ),
                   _NavItem(
+                    icon: Icons.handshake_outlined,
+                    activeIcon: Icons.handshake,
+                    label: 'Services',
+                    isActive: _currentIndex == 3,
+                    onTap: () => _switchTab(3),
+                  ),
+                  _NavItem(
                     icon: Icons.storefront_outlined,
                     activeIcon: Icons.storefront,
                     label: 'Market',
-                    isActive: _currentIndex == 3,
-                    onTap: () => _switchTab(3),
+                    isActive: _currentIndex == 4,
+                    onTap: () => _switchTab(4),
                   ),
                   _NavItem(
                     icon: Icons.person_outline,
                     activeIcon: Icons.person,
                     label: 'Profile',
-                    isActive: _currentIndex == 4,
-                    onTap: () => _switchTab(4),
+                    isActive: _currentIndex == 5,
+                    onTap: () => _switchTab(5),
                   ),
                   _NavItem(
                     icon: Icons.auto_awesome_outlined,
                     activeIcon: Icons.auto_awesome,
                     label: 'Insights',
-                    isActive: _currentIndex == 5,
-                    onTap: () => _switchTab(5),
+                    isActive: _currentIndex == 6,
+                    onTap: () => _switchTab(6),
                   ),
                 ],
               ),
