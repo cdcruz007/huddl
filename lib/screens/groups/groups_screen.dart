@@ -3682,6 +3682,137 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isImageLocked: false,
       creatorBorough: 'Cambridge',
     ),
+    _GroupItem(
+      id: 'disc_cambridge_mums_coffee',
+      name: 'Cambridge Mums Coffee Group',
+      description:
+          'A friendly space for Cambridge mums to meet for coffee, chat and connection. Whether you\'re on maternity leave or juggling school runs, come and find your people.',
+      imageUrl:
+          'https://images.pexels.com/photos/3184428/pexels-photo-3184428.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'SOCIAL',
+      isDefault: false,
+      isImageLocked: false,
+      targetAudience: ['Mums'],
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_playdates_0_5',
+      name: 'Cambridge Playdates 0–5',
+      description:
+          'Organise and find playdates for babies and toddlers across Cambridge. Share playdate spots, soft play recommendations and meet other parents with little ones the same age.',
+      imageUrl:
+          'https://images.pexels.com/photos/3662630/pexels-photo-3662630.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'ACTIVITIES',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_new_to_town',
+      name: 'Cambridge New to Town Parents',
+      description:
+          'New to Cambridge? This group is for parents who have recently arrived and want to meet others, find out what\'s on and get recommendations for family life in the city.',
+      imageUrl:
+          'https://images.pexels.com/photos/1308881/pexels-photo-1308881.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_european_families',
+      name: 'Cambridge European Families',
+      description:
+          'A community for European families living in Cambridge — share cultural events, language tips, European schooling experiences and connect with others from across the continent.',
+      imageUrl:
+          'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'COMMUNITY',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_school_admissions',
+      name: 'Cambridge School Admissions Support',
+      description:
+          'Everything you need to know about school admissions in Cambridge — deadlines, catchment maps, appeals, oversubscription criteria and first-hand experiences from local parents.',
+      imageUrl:
+          'https://images.pexels.com/photos/289737/pexels-photo-289737.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'EDUCATION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_healthy_lunchbox',
+      name: 'Healthy Lunchbox Ideas Cambridge',
+      description:
+          'Struggling with packed lunches? Share healthy, school-approved lunchbox ideas and recipes with other Cambridge parents. Nut-free, fussy-eater friendly and budget-conscious suggestions welcome.',
+      imageUrl:
+          'https://images.pexels.com/photos/5082869/pexels-photo-5082869.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'FOOD & NUTRITION',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_family_travel_swaps',
+      name: 'Cambridge Family Travel Swaps',
+      description:
+          'Share honest family travel reviews, swap holiday tips and recommend child-friendly destinations. From UK staycations to European getaways — real advice from Cambridge parents.',
+      imageUrl:
+          'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'TRAVEL',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_birthday_party_ideas',
+      name: 'Cambridge Birthday Party Ideas',
+      description:
+          'Planning a children\'s birthday party in Cambridge? Get inspiration, venue recommendations, entertainer reviews and creative theme ideas from parents who\'ve been there.',
+      imageUrl:
+          'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'ACTIVITIES',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_babysitter_recs',
+      name: 'Cambridge Babysitter Recommendations',
+      description:
+          'Find trusted babysitters and childminders in Cambridge through word-of-mouth recommendations from local parents. Share experiences, ask for availability and build a reliable network.',
+      imageUrl:
+          'https://images.pexels.com/photos/3662630/pexels-photo-3662630.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'CHILDCARE',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
+    _GroupItem(
+      id: 'disc_cambridge_parents_marketplace',
+      name: 'Cambridge Parents Marketplace',
+      description:
+          'Buy, sell and swap pre-loved children\'s items with Cambridge parents — clothes, toys, books, equipment and more. A sustainable way to save money and reduce waste as your children grow.',
+      imageUrl:
+          'https://images.pexels.com/photos/5632399/pexels-photo-5632399.jpeg?auto=compress&cs=tinysrgb&w=600',
+      memberCount: 0,
+      category: 'MARKETPLACE',
+      isDefault: false,
+      isImageLocked: false,
+      creatorBorough: 'Cambridge',
+    ),
   ];
 
   /// Check if the current user can open/join a group.
@@ -4718,6 +4849,16 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_cambridge_fathers_coffee':            {'icon': Icons.coffee,              'color': HuddlColors.accentAmber},
   'disc_cambridge_relocation_families':       {'icon': Icons.moving,              'color': HuddlColors.teal},
   'disc_cambridge_school_advice':             {'icon': Icons.school,              'color': HuddlColors.primaryDark},
+  'disc_cambridge_mums_coffee':               {'icon': Icons.coffee,              'color': HuddlColors.primary},
+  'disc_cambridge_playdates_0_5':             {'icon': Icons.child_friendly,      'color': HuddlColors.accentCoral},
+  'disc_cambridge_new_to_town':               {'icon': Icons.location_city,       'color': HuddlColors.teal},
+  'disc_cambridge_european_families':         {'icon': Icons.public,              'color': HuddlColors.blue},
+  'disc_cambridge_school_admissions':         {'icon': Icons.assignment,          'color': HuddlColors.primaryDark},
+  'disc_cambridge_healthy_lunchbox':          {'icon': Icons.lunch_dining,        'color': HuddlColors.accentAmber},
+  'disc_cambridge_family_travel_swaps':       {'icon': Icons.luggage,             'color': HuddlColors.teal},
+  'disc_cambridge_birthday_party_ideas':      {'icon': Icons.celebration,         'color': HuddlColors.accentCoral},
+  'disc_cambridge_babysitter_recs':           {'icon': Icons.supervised_user_circle, 'color': HuddlColors.primary},
+  'disc_cambridge_parents_marketplace':       {'icon': Icons.storefront,          'color': HuddlColors.accentAmber},
 };
 
 class _DiscoverGroupCard extends StatelessWidget {
