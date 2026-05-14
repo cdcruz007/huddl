@@ -231,8 +231,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .timeout(const Duration(seconds: 6));
         // Exclude groups already covered by DefaultGroupService so we don't
         // show duplicates in the horizontal card list.
+        // ALSO exclude default onboarding groups that may have leaked into
+        // Firestore without isImageLocked=true (e.g. created on another device
+        // before the field existed, or synced before DefaultGroupService was
+        // initialised). A group is considered a default group when:
+        //   (a) its ID is in the local DefaultGroupService set, OR
+        //   (b) isImageLocked is true on the Firestore document, OR
+        //   (c) its name matches the year-based pattern "YYYY <Borough> Parents"
+        //       which is exclusively used by DefaultGroupService.
+        final yearGroupPattern = RegExp(r'^\d{4}\s+\S');
         discovered = firestoreGroups
             .where((g) => !defaultGroupIds.contains(g.id))
+            .where((g) => !g.isImageLocked)
+            .where((g) => !yearGroupPattern.hasMatch(g.name))
             .toList();
         // Refresh local cache so it matches current Firestore state.
         await BrowserStorage.setString(

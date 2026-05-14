@@ -329,8 +329,15 @@ class _HomeScreenState extends State<HomeScreen>
       final raw = await BrowserStorage.getString('user_created_groups_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
+        final yearGroupPattern = RegExp(r'^\d{4}\s+\S');
         for (final j in decoded) {
           final g = Group.fromJson(j as Map<String, dynamic>);
+          // Defence-in-depth: skip default onboarding groups even if they
+          // reached this key (isImageLocked may be false if the Firestore
+          // document was created before the field was added, or if the
+          // profile screen wrote them before the year-name guard was in place).
+          if (g.isImageLocked) continue;
+          if (yearGroupPattern.hasMatch(g.name)) continue;
           if (!g.isPrivate) {
             if (g.creatorBorough == null ||
                 g.creatorBorough!.isEmpty ||
