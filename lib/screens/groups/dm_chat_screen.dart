@@ -16,6 +16,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
+import '../../services/report_service.dart';
 import 'forward_message_sheet.dart';
 import '../../widgets/attach_bottom_sheet.dart';
 import '../../widgets/document_bubble.dart';
@@ -842,6 +843,9 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   onUnsend: msg.isMe ? () => _showUnsendDialog(msg) : null,
                                   onResend: msg.isMe && msg.status == MessageStatus.error
                                       ? () => _resendMessage(msg)
+                                      : null,
+                                  onReportUser: !msg.isMe
+                                      ? () => _showReportMessageDialog(msg.id, widget.recipientId)
                                       : null,
                                   onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
                                 ),
@@ -1771,6 +1775,134 @@ class _DMChatScreenState extends State<DMChatScreen> {
     );
   }
 
+  // ── Report message dialog ─────────────────────────────────────────
+  void _showReportMessageDialog(String messageId, String? targetUserId) {
+    final reportService = ReportService();
+    ReportType? selectedType;
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.error.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Report message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Why are you reporting this message from ${widget.recipientName}?',
+                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                RadioGroup<ReportType>(
+                  groupValue: selectedType,
+                  onChanged: (v) => setDialogState(() => selectedType = v),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: ReportType.values.map((type) => InkWell(
+                      onTap: () => setDialogState(() => selectedType = type),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Radio<ReportType>(
+                              value: type,
+                              activeColor: HuddlColors.primary,
+                            ),
+                            Text(type.label,
+                                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary)),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(c),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: HuddlColors.primary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text('Cancel',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: selectedType == null
+                            ? null
+                            : () async {
+                                Navigator.pop(c);
+                                final ok = await reportService.submitReport(
+                                  contentId: messageId,
+                                  targetUserId: targetUserId ?? '',
+                                  type: selectedType!,
+                                  context: ReportContext.dmMessage,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(ok
+                                          ? 'Report submitted. Thank you.'
+                                          : 'Could not submit report. Please try again.'),
+                                      backgroundColor: ok ? HuddlColors.primary : HuddlColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.error,
+                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                        child: Text('Report',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Saved messages for this DM ───────────────────────────────────
   void _showSavedMessagesForDM() {
     final saved = _savedMessageService.getSavedForDM(widget.recipientId);
@@ -2216,6 +2348,7 @@ class _DMBubble extends StatelessWidget {
   final VoidCallback? onUnsend;
   final VoidCallback? onAvatarTap;
   final VoidCallback? onResend;
+  final VoidCallback? onReportUser;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
   /// Pre-resolved sender photo URL — forwarded to _RecipientAvatar so the
@@ -2237,6 +2370,7 @@ class _DMBubble extends StatelessWidget {
     this.onUnsend,
     this.onAvatarTap,
     this.onResend,
+    this.onReportUser,
     this.reactions = const {},
     this.onTapReaction,
     this.senderAvatarUrl,
@@ -2514,6 +2648,17 @@ class _DMBubble extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(c);
                     onUnsend?.call();
+                  },
+                ),
+              if (onReportUser != null)
+                ListTile(
+                  leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                  title: Text('Report message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onReportUser?.call();
                   },
                 ),
               const SizedBox(height: 8),

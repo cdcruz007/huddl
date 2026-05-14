@@ -13,6 +13,7 @@ import '../../services/dm_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/backend_api_service.dart';
+import '../../services/report_service.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
@@ -77,6 +78,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   int _currentImage = 0;
   bool _showFullDescription = false;
   bool _openingChat = false;
+  final _reportService = ReportService();
 
   RehomeItem get item => widget.item;
   // Compare against the real Firebase Auth UID so items created by the
@@ -519,6 +521,154 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
   }
 
+  // == REPORT LISTING ========================================================
+
+  void _showReportListingSheet() {
+    HapticFeedback.mediumImpact();
+    ReportType? selectedType;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                    20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const HuddlBottomSheetHandle(),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.error.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.flag_outlined,
+                              size: 22, color: HuddlColors.error),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Report listing',
+                          style: _adaptiveText(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Why are you reporting "${item.title}"?',
+                      style: _adaptiveText(
+                        fontSize: 13,
+                        color: context.hc.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    RadioGroup<ReportType>(
+                      groupValue: selectedType,
+                      onChanged: (v) => setSheetState(() => selectedType = v),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: ReportType.values.map((type) => InkWell(
+                          onTap: () => setSheetState(() => selectedType = type),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              children: [
+                                Radio<ReportType>(
+                                  value: type,
+                                  activeColor: HuddlColors.primary,
+                                ),
+                                Text(type.label,
+                                    style: _adaptiveText(
+                                        fontSize: 14,
+                                        color: context.hc.textPrimary)),
+                              ],
+                            ),
+                          ),
+                        )).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: selectedType == null
+                            ? null
+                            : () async {
+                                Navigator.pop(ctx);
+                                final ok =
+                                    await _reportService.submitReport(
+                                  contentId: item.id,
+                                  targetUserId: item.sellerId,
+                                  type: selectedType!,
+                                  context: ReportContext.listing,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    SnackBar(
+                                      content: Text(ok
+                                          ? 'Report submitted. Thank you.'
+                                          : 'Could not submit report. Please try again.'),
+                                      backgroundColor: ok
+                                          ? HuddlColors.teal
+                                          : HuddlColors.error,
+                                      behavior:
+                                          SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.error,
+                          disabledBackgroundColor:
+                              HuddlColors.error.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(26)),
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          minimumSize: const Size(0, 48),
+                        ),
+                        child: Text(
+                          'Submit report',
+                          style: _adaptiveText(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   // == BUILD =================================================================
 
   @override
@@ -596,6 +746,21 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         ? HuddlColors.error
                         : hc.textPrimary,
                   ),
+                ),
+              ),
+            ),
+          if (!_isOwnItem)
+            Semantics(
+              label: 'Report this listing',
+              button: true,
+              child: InkWell(
+                onTap: _showReportListingSheet,
+                borderRadius: BorderRadius.circular(24),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Icon(Icons.flag_outlined,
+                      size: 22, color: hc.textTertiary),
                 ),
               ),
             ),

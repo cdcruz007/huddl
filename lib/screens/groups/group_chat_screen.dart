@@ -15,6 +15,7 @@ import '../../services/onboarding_data_service.dart';
 import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
+import '../../services/report_service.dart';
 import '../../services/browser_storage.dart';
 import '../../services/default_group_service.dart';
 import '../../services/poll_service.dart';
@@ -321,6 +322,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         // Skip our own messages — already shown optimistically in _sendMessage()
         if (senderId == currentUid) {
           _firestoreMsgIds.add(id); // track so we don't add again
+          continue;
+        }
+        // Skip messages from blocked users — server-side complement to the
+        // UI-level hide already applied in the ListView builder.
+        if (senderId.isNotEmpty && _blockService.isUserBlocked(senderId)) {
+          _firestoreMsgIds.add(id); // still track so we don't add later
           continue;
         }
         _firestoreMsgIds.add(id);
@@ -2172,6 +2179,135 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // ── Report message dialog ──────────────────────────────────────────────
+  void _showReportMessageDialog(String messageId, String targetUserId, String senderName) {
+    final reportService = ReportService();
+    ReportType? selectedType;
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.error.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Report message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Why are you reporting this message from $senderName?',
+                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                RadioGroup<ReportType>(
+                  groupValue: selectedType,
+                  onChanged: (v) => setDialogState(() => selectedType = v),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: ReportType.values.map((type) => InkWell(
+                      onTap: () => setDialogState(() => selectedType = type),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Radio<ReportType>(
+                              value: type,
+                              activeColor: HuddlColors.primary,
+                            ),
+                            Text(type.label,
+                                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary)),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(c),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: HuddlColors.primary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text('Cancel',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: selectedType == null
+                            ? null
+                            : () async {
+                                Navigator.pop(c);
+                                final ok = await reportService.submitReport(
+                                  contentId: messageId,
+                                  targetUserId: targetUserId,
+                                  type: selectedType!,
+                                  context: ReportContext.groupMessage,
+                                  groupId: widget.groupId,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(ok
+                                          ? 'Report submitted. Thank you.'
+                                          : 'Could not submit report. Please try again.'),
+                                      backgroundColor: ok ? HuddlColors.primary : HuddlColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.error,
+                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                        child: Text('Report',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ── Add Member sheet (private group admin only) ────────────────────────
   void _showAddMemberSheet() {
     // Show real borough members from Firestore (excluding existing members).
@@ -3340,6 +3476,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       ? () => _showBlockMemberDialog(msg.senderId, msg.senderName)
                                       : null,
                                   isBlockedUser: !msg.isMe && _blockService.isUserBlocked(msg.senderId),
+                                  onReportUser: (!msg.isMe && msg.senderId != 'system')
+                                      ? () => _showReportMessageDialog(msg.id, msg.senderId, msg.senderName)
+                                      : null,
                                 ),
                               // ── Thread reply count badge ────────────────
                               if (_threadReplies.containsKey(msg.id) && _threadReplies[msg.id]!.isNotEmpty)
@@ -5023,6 +5162,7 @@ class _ChatBubble extends StatelessWidget {
   final VoidCallback? onSaveThread;
   final VoidCallback? onBlockUser;
   final bool isBlockedUser;
+  final VoidCallback? onReportUser;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
 
@@ -5043,6 +5183,7 @@ class _ChatBubble extends StatelessWidget {
     this.onSaveThread,
     this.onBlockUser,
     this.isBlockedUser = false,
+    this.onReportUser,
     this.reactions = const {},
     this.onTapReaction,
   });
@@ -5352,6 +5493,19 @@ class _ChatBubble extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(c);
                     onBlockUser?.call();
+                  },
+                ),
+              if (onReportUser != null)
+                ListTile(
+                  leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                  title: Text(
+                    'Report message',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                  ),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onReportUser?.call();
                   },
                 ),
               const SizedBox(height: 8),
