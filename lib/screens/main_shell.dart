@@ -17,6 +17,7 @@ import '../services/firebase_auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../services/voice_message_service.dart';
 import '../widgets/tutorial/tutorial_overlay.dart';
+import '../widgets/speed_dial_fab.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -290,7 +291,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void switchTab(int index) => _switchTab(index);
 
   void _switchTab(int index) {
-    if (index < 0 || index >= 5) return;
+    if (index < 0 || index >= 6) return;
     if (!mounted) return;
     setState(() {
       _activatedTabs.add(index);
@@ -328,6 +329,25 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           );
         }),
       ),
+      floatingActionButton: SpeedDialFab(
+        onServicesPressed: () {
+          HapticFeedback.mediumImpact();
+          Navigator.of(context).pushNamed('/services');
+        },
+        onInsightsPressed: () {
+          HapticFeedback.selectionClick();
+          _switchTab(5);
+        },
+        onAiPressed: () {
+          HapticFeedback.selectionClick();
+          Navigator.of(context).pushNamed('/copilot');
+        },
+        onSendPressed: () {
+          HapticFeedback.selectionClick();
+          Navigator.of(context).pushNamed('/send');
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

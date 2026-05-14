@@ -32,6 +32,7 @@ import '../screens/legal/terms_of_service_screen.dart';
 import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/insights/insights_screen.dart';
 import '../screens/insights/send_hub_screen.dart';
+import '../screens/services/services_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
@@ -315,6 +316,12 @@ class AppRouter {
 
       case '/send':
         return SlidePageRoute(page: const SendHubScreen());
+
+      case '/services':
+        return SlidePageRoute(
+          page: const ServicesScreen(),
+          direction: SlideDirection.up,
+        );
 
       default:
         return MaterialPageRoute(
