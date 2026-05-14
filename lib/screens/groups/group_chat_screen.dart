@@ -16,6 +16,7 @@ import '../../services/saved_message_service.dart';
 import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
 import '../../services/report_service.dart';
+import '../../services/message_safety_service.dart';
 import '../../services/browser_storage.dart';
 import '../../services/default_group_service.dart';
 import '../../services/poll_service.dart';
@@ -963,6 +964,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     _messageController.clear();
     _fireMessageSentNotifier();
+
+    // ── AI safety pre-filter (best-effort, safe-by-default on error) ────
+    final safetyResult = await MessageSafetyService().classify(text);
+    if (safetyResult == MessageSafetyResult.hold) {
+      // Remove the optimistic message we added above
+      if (mounted) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == msgId);
+          _messageStatuses.remove(msgId);
+        });
+        _firestoreMsgIds.remove(msgId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Your message could not be sent — it may violate our community guidelines.',
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+      return;
+    }
 
     // ── Write to Firestore for real cross-device delivery ───────────────
     try {
@@ -2173,6 +2199,140 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Report User dialog (profile-level, from message long-press) ──────────
+  void _showReportUserDialog(String targetUserId, String targetName) {
+    final reportService = ReportService();
+    ReportType? selectedType;
+    showDialog(
+      context: context,
+      builder: (c) => StatefulBuilder(
+        builder: (c, setDialogState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.error.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.flag_outlined, size: 22, color: HuddlColors.error),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Report $targetName',
+                        style: GoogleFonts.poppins(
+                            fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Why are you reporting this user?',
+                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                RadioGroup<ReportType>(
+                  groupValue: selectedType,
+                  onChanged: (v) => setDialogState(() => selectedType = v),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: ReportType.values.map((type) => InkWell(
+                      onTap: () => setDialogState(() => selectedType = type),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 2),
+                        child: Row(
+                          children: [
+                            Radio<ReportType>(
+                              value: type,
+                              activeColor: HuddlColors.primary,
+                            ),
+                            Expanded(
+                              child: Text(type.label,
+                                  style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )).toList(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(c),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: HuddlColors.primary),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text('Cancel',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: selectedType == null
+                            ? null
+                            : () async {
+                                Navigator.pop(c);
+                                final ok = await reportService.submitReport(
+                                  contentId: targetUserId,
+                                  targetUserId: targetUserId,
+                                  type: selectedType!,
+                                  context: ReportContext.userProfile,
+                                  groupId: widget.groupId,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(ok
+                                          ? 'Report submitted. Thank you.'
+                                          : 'Could not submit report. Please try again.'),
+                                      backgroundColor: ok ? HuddlColors.primary : HuddlColors.error,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.error,
+                          disabledBackgroundColor: HuddlColors.error.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                        child: Text('Report',
+                            style: GoogleFonts.poppins(
+                                fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -3478,6 +3638,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   isBlockedUser: !msg.isMe && _blockService.isUserBlocked(msg.senderId),
                                   onReportUser: (!msg.isMe && msg.senderId != 'system')
                                       ? () => _showReportMessageDialog(msg.id, msg.senderId, msg.senderName)
+                                      : null,
+                                  onReportSender: (!msg.isMe && msg.senderId != 'system')
+                                      ? () => _showReportUserDialog(msg.senderId, msg.senderName)
                                       : null,
                                 ),
                               // ── Thread reply count badge ────────────────
@@ -5163,6 +5326,7 @@ class _ChatBubble extends StatelessWidget {
   final VoidCallback? onBlockUser;
   final bool isBlockedUser;
   final VoidCallback? onReportUser;
+  final VoidCallback? onReportSender;
   final Map<String, int> reactions;
   final void Function(String emoji)? onTapReaction;
 
@@ -5184,6 +5348,7 @@ class _ChatBubble extends StatelessWidget {
     this.onBlockUser,
     this.isBlockedUser = false,
     this.onReportUser,
+    this.onReportSender,
     this.reactions = const {},
     this.onTapReaction,
   });
@@ -5506,6 +5671,19 @@ class _ChatBubble extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(c);
                     onReportUser?.call();
+                  },
+                ),
+              if (onReportSender != null)
+                ListTile(
+                  leading: const Icon(Icons.person_off_outlined, color: HuddlColors.error),
+                  title: Text(
+                    'Report ${message.senderName}',
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                  ),
+                  onTap: () {
+                    Navigator.pop(c);
+                    onReportSender?.call();
                   },
                 ),
               const SizedBox(height: 8),

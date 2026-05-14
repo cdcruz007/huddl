@@ -44,7 +44,7 @@ class _NameInputScreenState extends State<NameInputScreen> {
     svc.setName(name);
     svc.setEmail(email);
 
-    Navigator.pushNamed(context, '/parent_type');
+    Navigator.pushNamed(context, '/consent');
   }
 
   @override

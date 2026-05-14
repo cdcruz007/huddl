@@ -10,39 +10,43 @@ enum ReportType {
   inappropriateContent,
   misinformation,
   scam,
+  childSafetyConcern,
   other,
 }
 
 extension ReportTypeLabel on ReportType {
   String get label => switch (this) {
-        ReportType.spam              => 'Spam',
-        ReportType.harassment        => 'Harassment or bullying',
-        ReportType.hateSpeech        => 'Hate speech',
+        ReportType.spam                 => 'Spam',
+        ReportType.harassment           => 'Harassment or bullying',
+        ReportType.hateSpeech           => 'Hate speech',
         ReportType.inappropriateContent => 'Inappropriate content',
-        ReportType.misinformation    => 'Misinformation',
-        ReportType.scam              => 'Scam or fraud',
-        ReportType.other             => 'Other',
+        ReportType.misinformation       => 'Misinformation',
+        ReportType.scam                 => 'Scam or fraud',
+        ReportType.childSafetyConcern   => 'Child safety concern',
+        ReportType.other                => 'Other',
       };
 
   String get firestoreValue => switch (this) {
-        ReportType.spam              => 'spam',
-        ReportType.harassment        => 'harassment',
-        ReportType.hateSpeech        => 'hate_speech',
+        ReportType.spam                 => 'spam',
+        ReportType.harassment           => 'harassment',
+        ReportType.hateSpeech           => 'hate_speech',
         ReportType.inappropriateContent => 'inappropriate_content',
-        ReportType.misinformation    => 'misinformation',
-        ReportType.scam              => 'scam',
-        ReportType.other             => 'other',
+        ReportType.misinformation       => 'misinformation',
+        ReportType.scam                 => 'scam',
+        ReportType.childSafetyConcern   => 'child_safety_concern',
+        ReportType.other                => 'other',
       };
 }
 
 /// Context in which the report was filed.
-enum ReportContext { groupMessage, dmMessage, listing }
+enum ReportContext { groupMessage, dmMessage, listing, userProfile }
 
 extension ReportContextValue on ReportContext {
   String get firestoreValue => switch (this) {
         ReportContext.groupMessage => 'group_message',
         ReportContext.dmMessage    => 'dm_message',
         ReportContext.listing      => 'listing',
+        ReportContext.userProfile  => 'user_profile',
       };
 }
 

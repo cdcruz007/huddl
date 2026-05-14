@@ -3,6 +3,7 @@ import '../screens/onboarding/splash_screen.dart';
 import '../screens/onboarding/not_available_screen.dart';
 import '../screens/onboarding/onboarding_carousel_screen.dart';
 import '../screens/onboarding/name_input_screen.dart';
+import '../screens/onboarding/data_consent_screen.dart';
 import '../screens/onboarding/parent_type_screen.dart';
 import '../screens/onboarding/stage_of_life_screen.dart';
 import '../screens/onboarding/postcode_screen.dart';
@@ -28,6 +29,7 @@ import '../screens/groups/dm_chat_screen.dart';
 import '../screens/groups/new_dm_screen.dart';
 import '../screens/groups/saved_messages_for_group_screen.dart';
 import '../screens/legal/terms_of_service_screen.dart';
+import '../screens/admin/admin_dashboard_screen.dart';
 import '../screens/legal/privacy_policy_detail_screen.dart';
 import '../screens/marketplace/item_detail_screen.dart';
 import '../screens/rehome/create_listing_screen.dart';
@@ -59,6 +61,9 @@ class AppRouter {
 
       case '/name_input':
         return SlidePageRoute(page: const NameInputScreen());
+
+      case '/consent':
+        return SlidePageRoute(page: const DataConsentScreen());
 
       case '/parent_type':
         return SlidePageRoute(page: const ParentTypeScreen());
@@ -299,6 +304,9 @@ class AppRouter {
 
       case '/backup_restore':
         return SlidePageRoute(page: const BackupRestoreScreen());
+
+      case '/admin':
+        return SlidePageRoute(page: const AdminDashboardScreen());
 
       default:
         return MaterialPageRoute(
