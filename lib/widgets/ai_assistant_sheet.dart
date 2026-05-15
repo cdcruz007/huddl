@@ -277,7 +277,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     child: Container(
                       width: 36, height: 36,
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
+                        color: HuddlColors.primary,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.arrow_upward, size: 18, color: Colors.white),

@@ -358,7 +358,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
               width: 44,
               height: 44,
               decoration: const BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
+                color: HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.send, color: Colors.white, size: 18),

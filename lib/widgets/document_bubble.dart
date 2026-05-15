@@ -38,7 +38,7 @@ class DocumentBubble extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isMe
-              ? HuddlColors.peachLight
+              ? HuddlColors.primary.withValues(alpha: 0.10)
               : HuddlColors.white,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),

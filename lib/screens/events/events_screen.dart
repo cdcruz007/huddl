@@ -3362,9 +3362,7 @@ class _EventListCardState extends State<_EventListCard> {
                         Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                            ),
+                            color: HuddlColors.blue,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(Icons.language, size: 10, color: Colors.white),

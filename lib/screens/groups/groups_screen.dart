@@ -5179,8 +5179,9 @@ class _DiscoverGroupCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isJoined
                                 ? context.hc.scaffold
-                                : (!canAccess ? HuddlColors.textHint.withValues(alpha: 0.15) : null),
-                            gradient: (isJoined || !canAccess) ? null : HuddlColors.primaryGradient,
+                                : (!canAccess
+                                    ? HuddlColors.textHint.withValues(alpha: 0.15)
+                                    : HuddlColors.primary),
                             borderRadius: BorderRadius.circular(20),
                             border: (isJoined || !canAccess)
                                 ? Border.all(color: context.hc.divider)

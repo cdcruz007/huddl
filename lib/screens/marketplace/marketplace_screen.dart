@@ -1945,7 +1945,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    gradient: HuddlColors.primaryGradient,
+                    color: HuddlColors.primary,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),

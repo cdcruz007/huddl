@@ -439,7 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
+                        color: HuddlColors.primary,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text('Upgrade',
@@ -524,41 +524,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [HuddlColors.primaryDark, HuddlColors.primary],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Icon(Icons.person_rounded,
-                                    color: Colors.white, size: 18),
-                              ),
-                              const SizedBox(width: 10),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('My Profile',
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w700,
-                                          color: context.hc.textPrimary)),
-                                  Text(
-                                    'Your Huddl story',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: context.hc.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                          Text(
+                            'My Profile',
+                            style: GoogleFonts.poppins(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.textPrimary,
+                            ),
                           ),
                           IconButton(
                             icon: Icon(Icons.settings_outlined,

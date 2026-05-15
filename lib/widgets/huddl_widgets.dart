@@ -296,10 +296,7 @@ class HuddlPrimaryButton extends StatelessWidget {
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
-        gradient: onPressed != null
-            ? HuddlColors.primaryGradient
-            : const LinearGradient(
-                colors: [HuddlColors.gray300, HuddlColors.gray300]),
+        color: onPressed != null ? HuddlColors.primary : HuddlColors.gray300,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Material(
@@ -452,7 +449,7 @@ class HuddlAvatar extends StatelessWidget {
         border: hasBorder
             ? Border.all(color: HuddlColors.primary, width: 2)
             : null,
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
       ),
       child: ClipOval(
         child: imageUrl != null
@@ -687,7 +684,7 @@ class HuddlImageCard extends StatelessWidget {
                 imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   child: const Center(
                     child: Icon(Icons.image, color: HuddlColors.primary, size: 32),
                   ),

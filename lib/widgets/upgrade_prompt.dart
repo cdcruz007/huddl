@@ -145,12 +145,17 @@ class _UpgradePromptSheet extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
-                    ),
+                    color: HuddlColors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                         color: HuddlColors.primary.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -308,7 +313,7 @@ class UpgradeBanner extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          gradient: HuddlColors.primaryGradient,
+          color: HuddlColors.primary,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(

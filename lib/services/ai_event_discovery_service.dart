@@ -560,7 +560,7 @@ class AiEventDiscoveryService {
         targetStages: ['newborn', 'toddler', 'school-age'],
         ageRange: const AgeRange(0, -1),
         isFree: true,
-        color: HuddlColors.yellowDark,
+        color: HuddlColors.accentAmber,
         icon: Icons.forest,
         organiserTemplate: '{borough} Rangers',
         imageUrl: 'https://images.pexels.com/photos/1001914/pexels-photo-1001914.jpeg?auto=compress&cs=tinysrgb&w=600',

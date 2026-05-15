@@ -338,7 +338,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            gradient: HuddlColors.primaryGradient,
+                            color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.arrow_upward,

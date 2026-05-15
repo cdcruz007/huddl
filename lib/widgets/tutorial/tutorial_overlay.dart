@@ -329,7 +329,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      gradient: HuddlColors.primaryGradient,
+                      color: HuddlColors.primary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -456,7 +456,7 @@ class _TutorialOverlayState extends State<TutorialOverlay>
                       padding:
                           EdgeInsets.symmetric(horizontal: isLast ? 20 : 16),
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.primaryGradient,
+                        color: HuddlColors.primary,
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
