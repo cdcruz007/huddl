@@ -107,9 +107,10 @@ class AiEventDiscoveryService {
   Future<void> initialize() async {
     if (_isInitialised) return;
     await _onboarding.initialize();
-    _userBorough =
-        _postcodeService.getBoroughFromPostcode(_onboarding.postcode) ??
-            'Cambridge';
+    // 3-tier borough resolution: persisted API result → sync cache → prefix map
+    _userBorough = (_onboarding.borough?.isNotEmpty == true)
+        ? _onboarding.borough!
+        : (_postcodeService.getBoroughFromPostcode(_onboarding.postcode) ?? '');
     final lastRun = await BrowserStorage.getString('ai_discovery_last_run');
     if (lastRun != null) {
       _lastDiscoveryRun = DateTime.tryParse(lastRun);
@@ -245,12 +246,13 @@ class AiEventDiscoveryService {
     return results;
   }
 
-  static const _discoverBoroughs = [
-    'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge',
-    'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge',
-    'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge',
-    'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge', 'Cambridge',
-  ];
+  // Borough used for event discovery — resolved at runtime from _userBorough
+  // (set during initialize()). Kept as a list so the loop index modulo
+  // works unchanged; all entries are the user's actual borough.
+  List<String> get _discoverBoroughs {
+    final b = _userBorough.isNotEmpty ? _userBorough : 'Unknown';
+    return List.filled(20, b);
+  }
 
   Future<List<Event>> _generateDiscoveredEvents() async {
     final now = DateTime.now();

@@ -142,7 +142,7 @@ class CommunityFeedService {
 
   /// Upcoming events for the borough (hard-coded but borough-aware).
   List<UpcomingEvent> get upcomingEvents {
-    final borough = _userBorough ?? 'Cambridge';
+    final borough = (_userBorough?.isNotEmpty == true) ? _userBorough! : '';
     return _buildUpcomingEvents(borough);
   }
 
@@ -161,9 +161,11 @@ class CommunityFeedService {
   }
 
   void _resolveBorough() {
-    // Primary: use BoroughScopeGuard (single source of truth)
+    // 3-tier: BoroughScopeGuard → persisted API result → sync cache
     _userBorough = _guard.currentBorough;
-    // Fallback: resolve from postcode directly
+    if (_userBorough == null || _userBorough!.isEmpty) {
+      _userBorough = _onboarding.borough;
+    }
     if (_userBorough == null || _userBorough!.isEmpty) {
       final pc = _onboarding.postcode;
       if (pc != null) {

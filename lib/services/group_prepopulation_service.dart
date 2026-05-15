@@ -70,13 +70,14 @@ class GroupPrepopulationService {
     _isInitialized = true;
   }
 
-  /// Get the user's current borough.
+  /// Get the user's current borough — 3-tier: persisted API result → sync cache → prefix map.
   String _getUserBorough() {
+    if (_onboarding.borough?.isNotEmpty == true) return _onboarding.borough!;
     final pc = _onboarding.postcode;
     if (pc != null) {
-      return _postcode.getBoroughFromPostcode(pc) ?? 'Cambridge';
+      return _postcode.getBoroughFromPostcode(pc) ?? '';
     }
-    return 'Cambridge';
+    return '';
   }
 
   /// Generate prepopulated groups for a specific borough using community

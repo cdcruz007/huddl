@@ -78,9 +78,10 @@ class AiEventRecommenderService with BoroughAiContext {
 
   void _buildUserContext() {
     // Borough
-    final postcode = _onboarding.postcode;
-    _userBorough =
-        _postcodeService.getBoroughFromPostcode(postcode) ?? 'Cambridge';
+    // 3-tier: persisted API result → sync cache → prefix map
+    _userBorough = (_onboarding.borough?.isNotEmpty == true)
+        ? _onboarding.borough!
+        : (_postcodeService.getBoroughFromPostcode(_onboarding.postcode) ?? '');
 
     // Child ages in months
     _childAgesMonths = [];

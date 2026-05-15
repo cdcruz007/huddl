@@ -751,11 +751,13 @@ Please suggest 5 diverse meetups: 1) playdate, 2) coffee morning, 3) outdoor act
 
   // ── Helpers ────────────────────────────────────────────────────────────
   String _getUserBorough() {
+    // 3-tier: persisted API result → sync cache → prefix map
+    if (_onboarding.borough?.isNotEmpty == true) return _onboarding.borough!;
     final pc = _onboarding.postcode;
     if (pc != null) {
-      return _postcode.getBoroughFromPostcode(pc) ?? 'Cambridge';
+      return _postcode.getBoroughFromPostcode(pc) ?? '';
     }
-    return 'Cambridge';
+    return '';
   }
 
   int _parseChildAgeMonths(String birthday) {
