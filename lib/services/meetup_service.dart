@@ -346,9 +346,9 @@ class MeetupService extends ChangeNotifier {
     _meetups[index] = m.copyWith(
       isGoing: !wasGoing,
       attendeeCount: wasGoing ? m.attendeeCount - 1 : m.attendeeCount + 1,
-      attendeeNames: wasGoing
-          ? (List<String>.from(m.attendeeNames)..remove('You'))
-          : [...m.attendeeNames, 'You'],
+      // attendeeNames is no longer used for fake/pre-filled names —
+      // the real list comes from Firestore rsvpMeetup() writes.
+      attendeeNames: const [],
     );
     notifyListeners();
     _persistUserMeetups();

@@ -169,7 +169,7 @@ class GroupPrepopulationService {
         name: pg.generatedName,
         description: pg.description,
         imageUrl: groupImages[rng.nextInt(groupImages.length)],
-        memberCount: 5 + rng.nextInt(45),
+        memberCount: 0, // real count loaded from Firestore via FirestoreService.getMyGroups()
         category: pg.category,
         isJoined: false,
         targetAudience: [pg.audience],

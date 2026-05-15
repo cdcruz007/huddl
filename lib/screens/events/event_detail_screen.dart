@@ -1117,15 +1117,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     );
   }
 
-  // ── Attendees section with profile photos ─────────────────────────────
+  // ── Attendees section ─────────────────────────────────────────────────
   Widget _buildAttendeesSection(Map<String, dynamic> e, Color color) {
     final int attendeeCount = e['attendees'] as int? ?? 0;
-    // Generate sample attendee names for the event
-    final attendeeNames = <String>[
-      'Sarah Mitchell', 'Emma Collins', 'James Whitfield',
-      'Lucy Brennan', 'Oliver Chen', 'Priya Sharma',
-      'Kate Nguyen', 'Fatima Hassan', 'Liam O\'Brien', 'Sophie Andrews',
-    ];
 
     return Container(
       color: context.hc.surface,
@@ -1145,91 +1139,67 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 ),
               ),
               Text(
-                '$attendeeCount people',
+                attendeeCount == 0
+                    ? 'Be the first!'
+                    : '$attendeeCount ${attendeeCount == 1 ? 'person' : 'people'}',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
-                  color: context.hc.textTertiary,
+                  color: attendeeCount == 0 ? color : context.hc.textTertiary,
+                  fontWeight: attendeeCount == 0 ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Stacked avatar row
-          SizedBox(
-            height: 44,
-            child: Row(
-              children: [
-                ...attendeeNames.take(6).toList().asMap().entries.map((entry) {
-                  return Align(
-                    widthFactor: entry.key == 0 ? 1.0 : 0.65,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: context.hc.surface, width: 2),
-                      ),
-                      child: MemberAvatar(
-                        name: entry.value,
-                        size: 36,
-                      ),
-                    ),
-                  );
-                }),
-                if (attendeeCount > 6)
-                  Align(
-                    widthFactor: 0.65,
-                    child: Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: color.withValues(alpha: 0.15),
-                        border: Border.all(color: context.hc.surface, width: 2),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '+${attendeeCount - 6}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          ),
-                        ),
-                      ),
+          if (attendeeCount == 0) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.group_outlined, color: color.withValues(alpha: 0.5), size: 32),
+                  const SizedBox(height: 8),
+                  Text(
+                    'No one has RSVP\'d yet.\nBe the first to go!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: context.hc.textTertiary,
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          // Named attendee chips
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: attendeeNames.take(8).map((name) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    MemberAvatar(name: name, size: 22),
-                    const SizedBox(width: 6),
-                    Text(
-                      name.split(' ').first,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textPrimary,
-                      ),
+          ] else ...[
+            const SizedBox(height: 12),
+            // Count badge — real attendee count from Firestore, no fake names
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.people_outline, color: color, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    '$attendeeCount ${attendeeCount == 1 ? 'parent' : 'parents'} going',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: color,
                     ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

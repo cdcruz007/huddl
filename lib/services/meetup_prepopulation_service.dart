@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'ai_api_helper.dart';
 import 'ai_knowledge_base_service.dart';
@@ -102,8 +101,6 @@ class MeetupPrepopulationService {
       }
     }
 
-    final rng = Random(targetBorough.hashCode + now.day);
-
     for (int i = 0; i < templates.length; i++) {
       final template = templates[i];
       final nextDate = _nextOccurrence(now, template.dayOfWeek);
@@ -127,9 +124,9 @@ class MeetupPrepopulationService {
         location: '$venue, $targetBorough',
         organiserName: _sourceOrgName(template.source),
         organiserId: 'system_${template.source}',
-        attendeeCount: 3 + rng.nextInt(12),
+        attendeeCount: 0,
         isGoing: false,
-        attendeeNames: _generateAttendeeNames(rng, 3 + rng.nextInt(5)),
+        attendeeNames: const [],
         isFree: template.isFree,
         borough: targetBorough,
         privacy: MeetupPrivacy.public,
@@ -402,14 +399,7 @@ class MeetupPrepopulationService {
     }
   }
 
-  List<String> _generateAttendeeNames(Random rng, int count) {
-    const names = [
-      'Sophie', 'Emma', 'Kate', 'Lucy', 'Anna', 'Sarah', 'James',
-      'Mark', 'Tom', 'David', 'Olivia', 'Charlotte', 'Amelia', 'Dan',
-    ];
-    final shuffled = List<String>.from(names)..shuffle(rng);
-    return shuffled.take(count).toList();
-  }
+  // _generateAttendeeNames removed — no fake attendee names in production.
 
   void _log(String message) {
     if (kDebugMode) {

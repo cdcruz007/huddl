@@ -7,11 +7,11 @@ import '../../widgets/huddl_widgets.dart';
 import '../../services/meetup_service.dart';
 import '../../services/member_photo_service.dart';
 import '../../services/browser_storage.dart';
-import '../../services/dm_service.dart';
+
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../groups/dm_chat_screen.dart';
+
 
 
 class MeetupDetailScreen extends StatefulWidget {
@@ -323,61 +323,98 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                 const SizedBox(height: 12),
                 const Divider(height: 1),
+                // Attendee list — only real RSVP'd users from Firestore.
+                // No fake or pre-populated names are shown.
                 Expanded(
-                  child: ListView.builder(
-                    controller: scrollCtrl,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _meetup.attendeeNames.length,
-                    itemBuilder: (_, i) {
-                      final name = _meetup.attendeeNames[i];
-                      final isOrganiser = i == 0;
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        leading: _buildAttendeePhoto(name, 40),
-                        title: Row(
-                          children: [
-                            Flexible(
-                              child: Text(name, style: GoogleFonts.poppins(
-                                fontSize: 15, fontWeight: FontWeight.w500,
-                                color: context.hc.textPrimary)),
-                            ),
-                            if (isOrganiser) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(8),
+                  child: _meetup.attendeeCount == 0
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.group_outlined,
+                                  size: 48,
+                                  color: HuddlColors.primary.withValues(alpha: 0.3)),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No attendees yet',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: context.hc.textSecondary,
                                 ),
-                                child: Text('Organiser', style: GoogleFonts.poppins(
-                                  fontSize: 10, fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary)),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Be the first to RSVP!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: context.hc.textTertiary,
+                                ),
                               ),
                             ],
+                          ),
+                        )
+                      : ListView(
+                          controller: scrollCtrl,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          children: [
+                            // Organiser row (always shown when count > 0)
+                            ListTile(
+                              contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                              leading: _buildAttendeePhoto(_meetup.organiserName, 40),
+                              title: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      _meetup.organiserName,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: context.hc.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      'Organiser',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              subtitle: Text(
+                                'Host',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: context.hc.textTertiary,
+                                ),
+                              ),
+                            ),
+                            // Remaining count shown as a summary row
+                            if (_meetup.attendeeCount > 1)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                child: Text(
+                                  '+ ${_meetup.attendeeCount - 1} other ${(_meetup.attendeeCount - 1) == 1 ? 'parent' : 'parents'} going',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    color: HuddlColors.primary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
-                        subtitle: Text(
-                          isOrganiser ? 'Host' : 'Going',
-                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
-                        ),
-                        trailing: !isOrganiser
-                            ? IconButton(
-                                icon: const Icon(Icons.chat_bubble_outline, size: 20, color: HuddlColors.primary),
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  Navigator.push(context, MaterialPageRoute(
-                                    builder: (_) => DMChatScreen(
-                                      recipientId: 'mem_${name.toLowerCase().replaceAll(' ', '_')}',
-                                      recipientName: name,
-                                      recipientAvatarColor: '#FF975C',
-                                    ),
-                                  ));
-                                },
-                              )
-                            : null,
-                      );
-                    },
-                  ),
                 ),
               ],
             );
@@ -448,22 +485,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       }),
     );
 
-    // Also send a DM to each attendee (except the organiser)
-    final dmService = DMService();
-    await dmService.initialize();
-    for (final name in cancelled.attendeeNames) {
-      if (name == cancelled.organiserName) continue; // Skip self
-      final recipientId = 'mem_${name.toLowerCase().replaceAll(' ', '_')}';
-      final conv = await dmService.getOrCreateConversation(
-        recipientId: recipientId,
-        recipientName: name,
-      );
-      await dmService.sendMessage(
-        conversationId: conv.id,
-        message: cancellationMsg,
-        senderName: cancelled.organiserName,
-      );
-    }
+    // Real RSVP'd attendees would be notified via Firestore/FCM here.
+    // attendeeNames is no longer populated with fake data — notifications
+    // are handled server-side when real users RSVP via rsvpMeetup().
 
     // Remove the meetup group chat from Messages
     try {
@@ -918,25 +942,52 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _meetup.attendeeNames
-                            .take(8)
-                            .map((name) =>
-                                _AttendeeChipWithPhoto(name: name))
-                            .toList(),
-                      ),
-                      if (_meetup.attendeeCount > 8)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            '+${_meetup.attendeeCount - 8} more',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: HuddlColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
+                      if (_meetup.attendeeCount == 0)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(Icons.group_outlined,
+                                  color: HuddlColors.primary.withValues(alpha: 0.4), size: 28),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No one has RSVP\'d yet.\nBe the first to go!',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  color: context.hc.textTertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.people_outline,
+                                  color: HuddlColors.primary, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_meetup.attendeeCount} ${_meetup.attendeeCount == 1 ? 'parent' : 'parents'} going',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -1156,58 +1207,6 @@ class _DetailRow extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ── Attendee chip with profile photo ──────────────────────────────────────
-
-class _AttendeeChipWithPhoto extends StatelessWidget {
-  final String name;
-
-  const _AttendeeChipWithPhoto({required this.name});
-
-  @override
-  Widget build(BuildContext context) {
-    final photoUrl = MemberPhotoService.getPhotoByName(name);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.hc.surfaceAlt,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (photoUrl != null)
-            Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(shape: BoxShape.circle),
-              clipBehavior: Clip.antiAlias,
-              child: Image.network(
-                photoUrl,
-                fit: BoxFit.cover,
-                width: 24,
-                height: 24,
-                errorBuilder: (_, __, ___) =>
-                    MemberAvatar(name: name, size: 24),
-              ),
-            )
-          else
-            MemberAvatar(name: name, size: 24),
-          const SizedBox(width: 6),
-          Text(
-            name,
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -54,8 +54,6 @@ class _EventTemplate {
   final String organiserTemplate;
   final String imageUrl;
   final EventSource source;
-  final int attendeesMin;
-  final int attendeesMax;
   final String locationSuffix;
   final String descriptionHint; // Used as a prompt hint for AI generation
 
@@ -73,8 +71,6 @@ class _EventTemplate {
     required this.organiserTemplate,
     required this.imageUrl,
     required this.source,
-    this.attendeesMin = 8,
-    this.attendeesMax = 60,
     required this.locationSuffix,
     required this.descriptionHint,
   });
@@ -288,8 +284,7 @@ class AiEventDiscoveryService {
       final endHour = hour + 1 + _rng.nextInt(2);
       final startStr = _formatTime(hour, minute);
       final endStr = _formatTime(endHour, minute);
-      final attendees =
-          t.attendeesMin + _rng.nextInt(t.attendeesMax - t.attendeesMin + 1);
+      const attendees = 0; // real RSVP count from Firestore — not fabricated
 
       final location = t.isOnline
           ? 'Online (${t.locationSuffix})'
@@ -326,8 +321,8 @@ class AiEventDiscoveryService {
         targetStages: t.targetStages,
         category: t.category,
         isWeekend: isWeekend,
-        capacityLeft: t.isFree ? -1 : (5 + _rng.nextInt(20)),
-        partnerRating: 3.5 + (_rng.nextDouble() * 1.5),
+        capacityLeft: -1, // capacity shown only when confirmed by organiser
+        partnerRating: 0, // rating shown only when real reviews exist
         isAiDiscovered: true,
         aiSource: t.source,
       ));
@@ -359,7 +354,6 @@ class AiEventDiscoveryService {
         organiserTemplate: '{borough} Libraries',
         imageUrl: 'https://images.pexels.com/photos/1741230/pexels-photo-1741230.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Council Website', icon: Icons.account_balance),
-        attendeesMin: 15, attendeesMax: 40,
         locationSuffix: 'Central Library',
         descriptionHint: 'Free weekly rhyme time session for babies and toddlers at {borough} Central Library. Join friendly librarians for 30 minutes of songs, nursery rhymes and stories. A lovely way to introduce your little one to reading and meet local parents. No booking required, just drop in! Suitable from birth to 4 years.',
       ),
@@ -375,7 +369,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Water Babies {borough}',
         imageUrl: 'https://images.pexels.com/photos/1556691/pexels-photo-1556691.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Eventbrite', icon: Icons.confirmation_number),
-        attendeesMin: 8, attendeesMax: 16,
         locationSuffix: 'Leisure Centre',
         descriptionHint: 'Gentle water confidence sessions for babies aged 3-18 months with qualified swim instructors. Small class sizes, warm pool at 32\u00B0C. Changing facilities and parking available.',
       ),
@@ -391,7 +384,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Little Messy Ones',
         imageUrl: 'https://images.pexels.com/photos/3662667/pexels-photo-3662667.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Facebook Events', icon: Icons.facebook),
-        attendeesMin: 12, attendeesMax: 30,
         locationSuffix: 'Community Hall',
         descriptionHint: 'Let little ones explore textures, colours and sensory play. Paint, playdough, sand, water and more! All non-toxic materials. Parent supervision required. Tea and coffee for grown-ups.',
       ),
@@ -407,7 +399,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Bloom Yoga {borough}',
         imageUrl: 'https://images.pexels.com/photos/3822864/pexels-photo-3822864.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'ClassPass', icon: Icons.fitness_center),
-        attendeesMin: 8, attendeesMax: 15,
         locationSuffix: 'Wellness Studio',
         descriptionHint: 'Nurturing yoga class for new mums and babies (6 weeks to crawling). Rebuild core strength, ease tension, restore pelvic floor function. Suitable for complete beginners. Babies welcome to feed, sleep or play.',
       ),
@@ -423,7 +414,6 @@ class AiEventDiscoveryService {
         organiserTemplate: '{borough} Children\'s Centre',
         imageUrl: 'https://images.pexels.com/photos/3661452/pexels-photo-3661452.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Council Website', icon: Icons.account_balance),
-        attendeesMin: 20, attendeesMax: 50,
         locationSuffix: 'Children\'s Centre',
         descriptionHint: 'Free drop-in stay-and-play with qualified early years staff. Arts, crafts, imaginative play, construction, sensory exploration and outdoor play. Health visitors on selected dates. Refreshments provided.',
       ),
@@ -439,7 +429,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Buggy Fit {borough}',
         imageUrl: 'https://images.pexels.com/photos/3764011/pexels-photo-3764011.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Meetup.com', icon: Icons.groups),
-        attendeesMin: 10, attendeesMax: 25,
         locationSuffix: 'Victoria Park',
         descriptionHint: 'Get fit with your baby! Certified personal trainer leads 45-minute outdoor workout with buggies. Cardio, strength and stretching for all fitness levels. Rain or shine!',
       ),
@@ -455,7 +444,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Nurture & Grow',
         imageUrl: 'https://images.pexels.com/photos/3875089/pexels-photo-3875089.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Eventbrite', icon: Icons.confirmation_number),
-        attendeesMin: 6, attendeesMax: 12,
         locationSuffix: 'Health Centre',
         descriptionHint: 'Learn gentle massage techniques to soothe your baby. 5-week course covering full body massage, colic relief, and bedtime relaxation strokes. Certified IAIM instructor. Organic massage oil provided. For babies 4 weeks to pre-crawling.',
       ),
@@ -471,7 +459,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'NCT {borough}',
         imageUrl: 'https://images.pexels.com/photos/6140676/pexels-photo-6140676.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'NCT Website', icon: Icons.child_friendly),
-        attendeesMin: 50, attendeesMax: 200,
         locationSuffix: 'Town Hall',
         descriptionHint: 'Huge selection of quality preloved baby and children\u2019s clothes, toys, equipment, buggies and maternity wear. Cash and card accepted. Early bird entry at 9:30am. All proceeds support local NCT activities.',
       ),
@@ -487,7 +474,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'DadPad {borough}',
         imageUrl: 'https://images.pexels.com/photos/3817495/pexels-photo-3817495.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Facebook Events', icon: Icons.facebook),
-        attendeesMin: 8, attendeesMax: 20,
         locationSuffix: 'Community Cafe',
         descriptionHint: 'Relaxed Saturday morning meet-up exclusively for dads and their children. Free bacon rolls, coffee and chat while kids play in a safe environment. No agenda, no pressure \u2014 just dads supporting dads.',
       ),
@@ -503,7 +489,6 @@ class AiEventDiscoveryService {
         organiserTemplate: '{borough} Health Visiting Team',
         imageUrl: 'https://images.pexels.com/photos/3845456/pexels-photo-3845456.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'NHS Website', icon: Icons.local_hospital),
-        attendeesMin: 6, attendeesMax: 18,
         locationSuffix: 'Health Visitor Clinic',
         descriptionHint: 'Free, friendly breastfeeding support with trained counsellors and peer supporters. Weigh your baby, chat with other mums, and enjoy a hot drink. No appointment needed.',
       ),
@@ -519,7 +504,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Jump & Tumble {borough}',
         imageUrl: 'https://images.pexels.com/photos/296301/pexels-photo-296301.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Google Maps', icon: Icons.map),
-        attendeesMin: 20, attendeesMax: 40,
         locationSuffix: 'Play Zone',
         descriptionHint: 'Exclusive under-5s soft play session every weekday morning. Climb, slide, bounce and explore in a padded environment. Free drink for each child. Cafe serves coffee and snacks for parents. Socks required.',
       ),
@@ -535,7 +519,6 @@ class AiEventDiscoveryService {
         organiserTemplate: '{borough} Maternity Services',
         imageUrl: 'https://images.pexels.com/photos/3985170/pexels-photo-3985170.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'NHS Website', icon: Icons.local_hospital),
-        attendeesMin: 12, attendeesMax: 24,
         locationSuffix: 'Hospital Maternity Unit',
         descriptionHint: 'Comprehensive NHS antenatal education covering labour preparation, pain management, breathing techniques, birth partner support, breastfeeding basics and newborn care. Led by experienced midwives. Open to all from 28 weeks. Partners welcome.',
       ),
@@ -551,7 +534,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Jo Jingles {borough}',
         imageUrl: 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Jo Jingles', icon: Icons.music_note),
-        attendeesMin: 10, attendeesMax: 20,
         locationSuffix: 'Church Hall',
         descriptionHint: 'Award-winning music, singing and movement classes for babies and young children. Themed sessions with action songs, instruments, puppets and parachute games. Developed by music education specialists. Fun, energetic and interactive!',
       ),
@@ -567,7 +549,6 @@ class AiEventDiscoveryService {
         organiserTemplate: '{borough} Rangers',
         imageUrl: 'https://images.pexels.com/photos/1001914/pexels-photo-1001914.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Council Website', icon: Icons.account_balance),
-        attendeesMin: 12, attendeesMax: 35,
         locationSuffix: 'Country Park',
         descriptionHint: 'Family nature walk through local park and woodland. Bug hunting, leaf collecting, bird spotting. Buggy-friendly main paths. Dogs on leads welcome. Free hot chocolate at the end!',
       ),
@@ -584,7 +565,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'First Bites Nutrition',
         imageUrl: 'https://images.pexels.com/photos/3662846/pexels-photo-3662846.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Eventbrite', icon: Icons.confirmation_number),
-        attendeesMin: 30, attendeesMax: 120,
         locationSuffix: 'Zoom',
         descriptionHint: 'Everything about introducing solid foods using baby-led weaning. Safe finger foods, choking vs gagging, allergies, nutrition and meal planning. Presented by a registered paediatric dietitian with Q&A. Recording included.',
       ),
@@ -600,7 +580,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Little Angel Theatre',
         imageUrl: 'https://images.pexels.com/photos/3933250/pexels-photo-3933250.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Timeout', icon: Icons.newspaper),
-        attendeesMin: 20, attendeesMax: 50,
         locationSuffix: 'Arts Centre',
         descriptionHint: 'Enchanting puppet theatre for little ones. 40-minute show with hand-crafted puppets, gentle music and interactive story. Relaxed seating \u2014 babies can wriggle, feed and make noise! Meet the puppets afterwards.',
       ),
@@ -618,7 +597,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Adoption UK',
         imageUrl: 'https://images.pexels.com/photos/1683975/pexels-photo-1683975.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Adoption UK', icon: Icons.favorite_border),
-        attendeesMin: 15, attendeesMax: 60,
         locationSuffix: 'Country Park',
         descriptionHint: 'Join Adoption UK\u2019s family walk for adopted and care-experienced families. A friendly, inclusive event with refreshments. Chat with other adoptive parents while children play. All welcome \u2014 no registration needed.',
       ),
@@ -634,7 +612,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Gingerbread',
         imageUrl: 'https://images.pexels.com/photos/7234213/pexels-photo-7234213.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Gingerbread', icon: Icons.volunteer_activism),
-        attendeesMin: 30, attendeesMax: 120,
         locationSuffix: 'Arts Centre',
         descriptionHint: 'Laugh out loud with fellow single parents at Gingerbread\u2019s fundraiser comedy night. Local and national comedians. Proceeds support Gingerbread\u2019s helpline reaching ~800,000 single parents annually.',
       ),
@@ -650,7 +627,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Home for Good',
         imageUrl: 'https://images.pexels.com/photos/3807517/pexels-photo-3807517.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Home for Good', icon: Icons.home_outlined),
-        attendeesMin: 10, attendeesMax: 40,
         locationSuffix: 'Community Centre',
         descriptionHint: 'Considering fostering or adoption? Home for Good hosts this free information evening to answer your questions. Hear from experienced foster carers. Every 15 minutes a child enters care in the UK \u2014 you could make the difference.',
       ),
@@ -666,7 +642,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Care for the Family',
         imageUrl: 'https://images.pexels.com/photos/5063096/pexels-photo-5063096.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Care for the Family', icon: Icons.groups),
-        attendeesMin: 40, attendeesMax: 200,
         locationSuffix: 'Conference Venue',
         descriptionHint: 'Navigating the tween and teen years? Care for the Family\u2019s touring event offers practical wisdom, laughter, and encouragement. Keynote speakers, panel Q&A, and free resource pack. For parents of 8\u201318-year-olds.',
       ),
@@ -682,7 +657,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Family Fund',
         imageUrl: 'https://images.pexels.com/photos/8613312/pexels-photo-8613312.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Family Fund', icon: Icons.favorite),
-        attendeesMin: 20, attendeesMax: 80,
         locationSuffix: 'Hotel Conference Room',
         descriptionHint: 'Free face-to-face support day for families raising disabled or seriously ill children. Meet Family Fund advisers, learn about grants, connect with other families. Accessible venue with sensory-friendly quiet room.',
       ),
@@ -700,7 +674,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Parentkind',
         imageUrl: 'https://images.pexels.com/photos/8500365/pexels-photo-8500365.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Parentkind', icon: Icons.how_to_vote),
-        attendeesMin: 20, attendeesMax: 80,
         locationSuffix: 'Primary School',
         descriptionHint: 'Free parent engagement workshop by Parentkind, backed by the National Parent Survey 2025 (5,866 parents, 134k+ insights). Learn how to support your child\u2019s learning and engage with school. Be School Ready guide included.',
       ),
@@ -716,7 +689,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Sibs',
         imageUrl: 'https://images.pexels.com/photos/8612990/pexels-photo-8612990.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Sibs', icon: Icons.people_outline),
-        attendeesMin: 10, attendeesMax: 30,
         locationSuffix: 'Youth Centre',
         descriptionHint: 'Activity day for young siblings (7\u201317) who have a brother or sister with a disability, SEN, or long-term condition. Arts, crafts, games \u2014 a chance to meet others who understand. Run by Sibs, the UK\u2019s only charity for siblings.',
       ),
@@ -733,7 +705,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Coram Family Lives',
         imageUrl: 'https://images.pexels.com/photos/4145354/pexels-photo-4145354.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Coram Family Lives', icon: Icons.support),
-        attendeesMin: 20, attendeesMax: 100,
         locationSuffix: 'Online',
         descriptionHint: 'Free online parenting course from Coram Family Lives. Work at your own pace with techniques from experienced parenting professionals. Covers behaviour, communication, boundaries \u2014 from early years through teens. Certificate on completion.',
       ),
@@ -749,7 +720,6 @@ class AiEventDiscoveryService {
         organiserTemplate: 'Barnardo\u2019s',
         imageUrl: 'https://images.pexels.com/photos/8613165/pexels-photo-8613165.jpeg?auto=compress&cs=tinysrgb&w=600',
         source: const EventSource(name: 'Barnardo\u2019s', icon: Icons.security),
-        attendeesMin: 15, attendeesMax: 50,
         locationSuffix: 'Community Centre',
         descriptionHint: 'Free child safety workshop by Barnardo\u2019s. Practical advice on preventing home accidents, staying safe outdoors, online safety, addressing bullying and cyber-bullying. Interactive sessions with take-home resource pack.',
       ),
