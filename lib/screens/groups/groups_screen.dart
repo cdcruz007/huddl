@@ -3265,7 +3265,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A supportive community for first-time mothers navigating the joys and challenges of new parenthood.',
       imageUrl:
-          'https://images.pexels.com/photos/3242264/pexels-photo-3242264.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=800&q=80',
       memberCount: 1247,
       category: 'PARENTING',
       isDefault: false,
@@ -3278,7 +3278,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A space for dads to share experiences, ask questions, and support each other through every stage of fatherhood.',
       imageUrl:
-          'https://images.pexels.com/photos/1648387/pexels-photo-1648387.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1531983412531-1f49a365ffed?w=800&q=80',
       memberCount: 834,
       category: 'PARENTING',
       isDefault: false,
@@ -3291,7 +3291,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'From the first scan to those precious early weeks — share your pregnancy and newborn journey with parents at the same stage.',
       imageUrl:
-          'https://images.pexels.com/photos/3807571/pexels-photo-3807571.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1544126592-807ade215a0b?w=800&q=80',
       memberCount: 1105,
       category: 'PREGNANCY',
       isDefault: false,
@@ -3304,7 +3304,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Antenatal advice, birth preparation, hospital bag checklists, and real talk from Cambridge parents who\'ve been there.',
       imageUrl:
-          'https://images.pexels.com/photos/3807614/pexels-photo-3807614.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=800&q=80',
       memberCount: 892,
       category: 'PREGNANCY',
       isDefault: false,
@@ -3317,7 +3317,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'For parents of babies 0–3 months. Sleepless nights, feeding worries, and all the tiny milestones worth celebrating together.',
       imageUrl:
-          'https://images.pexels.com/photos/3827054/pexels-photo-3827054.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=800&q=80',
       memberCount: 763,
       category: 'PARENTING',
       isDefault: false,
@@ -3329,7 +3329,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A warm, judgement-free space for solo parents to share advice, find playdates and support each other in Cambridge.',
       imageUrl:
-          'https://images.pexels.com/photos/4473494/pexels-photo-4473494.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1476703993599-0035a21b17a9?w=800&q=80',
       memberCount: 541,
       category: 'PARENTING',
       isDefault: false,
@@ -3341,7 +3341,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A welcoming community for LGBTQ+ parents and families in Cambridge to connect, share and support each other.',
       imageUrl:
-          'https://images.pexels.com/photos/8535214/pexels-photo-8535214.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&q=80',
       memberCount: 318,
       category: 'PARENTING',
       isDefault: false,
@@ -3353,7 +3353,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Support and community for adoptive and foster families in Cambridge — navigating paperwork, bonding and everything in between.',
       imageUrl:
-          'https://images.pexels.com/photos/8535218/pexels-photo-8535218.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1604079628040-94301bb21b91?w=800&q=80',
       memberCount: 224,
       category: 'PARENTING',
       isDefault: false,
@@ -3367,7 +3367,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Een groep voor Nederlandstalige ouders in Cambridge — deel tips, organiseer speelafspraken en voel je thuis.',
       imageUrl:
-          'https://images.pexels.com/photos/5772206/pexels-photo-5772206.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1468421870903-4df1664ac249?w=800&q=80',
       memberCount: 187,
       category: 'LANGUAGE & CULTURE',
       isDefault: false,
@@ -3379,7 +3379,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Eine Gemeinschaft für deutschsprachige Eltern in Cambridge — Tipps, Spielgruppen und ein Stück Heimat.',
       imageUrl:
-          'https://images.pexels.com/photos/2255441/pexels-photo-2255441.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=800&q=80',
       memberCount: 203,
       category: 'LANGUAGE & CULTURE',
       isDefault: false,
@@ -3393,7 +3393,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Tips, routines and real-parent advice for getting your baby to sleep. From newborn schedules to sleep training methods — we\'ve tried it all.',
       imageUrl:
-          'https://images.pexels.com/photos/971435/pexels-photo-971435.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1515488042361-ee00e0ddd4e4?w=800&q=80',
       memberCount: 2156,
       category: 'SLEEP',
       isDefault: false,
@@ -3405,7 +3405,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A safe, supportive space for breastfeeding questions, latch issues, supply worries, and celebrating every milestone along the way.',
       imageUrl:
-          'https://images.pexels.com/photos/4473602/pexels-photo-4473602.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1492725764893-90b379c2b6e7?w=800&q=80',
       memberCount: 1382,
       category: 'FEEDING',
       isDefault: false,
@@ -3418,7 +3418,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Everything you need for starting solids — BLW vs purée, first food ideas, allergies, gagging vs choking, and recipe inspiration for tiny eaters.',
       imageUrl:
-          'https://images.pexels.com/photos/4397308/pexels-photo-4397308.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80',
       memberCount: 1674,
       category: 'FEEDING',
       isDefault: false,
@@ -3430,7 +3430,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Beyond weaning — navigating fussy eaters, packed lunches, school meals, healthy snacks and raising children with a positive relationship with food.',
       imageUrl:
-          'https://images.pexels.com/photos/6627861/pexels-photo-6627861.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1466637574441-749b8f19452f?w=800&q=80',
       memberCount: 897,
       category: 'FOOD & NUTRITION',
       isDefault: false,
@@ -3442,7 +3442,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Share recipes, meal plans and ideas for nutritious, family-friendly meals that even the pickiest toddler might actually eat.',
       imageUrl:
-          'https://images.pexels.com/photos/5082869/pexels-photo-5082869.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&q=80',
       memberCount: 1589,
       category: 'FOOD & NUTRITION',
       isDefault: false,
@@ -3454,7 +3454,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Support for families managing food allergies, intolerances and special dietary requirements — from diagnosis to navigating school and social situations.',
       imageUrl:
-          'https://images.pexels.com/photos/4033148/pexels-photo-4033148.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=800&q=80',
       memberCount: 614,
       category: 'FOOD & NUTRITION',
       isDefault: false,
@@ -3468,7 +3468,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Explore the Montessori philosophy at home — practical activities, prepared environment ideas, and how to follow your child\'s natural curiosity.',
       imageUrl:
-          'https://images.pexels.com/photos/8613089/pexels-photo-8613089.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80',
       memberCount: 743,
       category: 'EDUCATION',
       isDefault: false,
@@ -3480,7 +3480,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Mud kitchens, bug hunts, den building and risky play — celebrating outdoor, nature-based learning for Cambridge children.',
       imageUrl:
-          'https://images.pexels.com/photos/8613318/pexels-photo-8613318.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1472162072942-cd5147eb3902?w=800&q=80',
       memberCount: 562,
       category: 'EDUCATION',
       isDefault: false,
@@ -3492,7 +3492,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A community for home educating families in Cambridge — curriculum ideas, group learning days, local resources and legal guidance.',
       imageUrl:
-          'https://images.pexels.com/photos/3806933/pexels-photo-3806933.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80',
       memberCount: 389,
       category: 'EDUCATION',
       isDefault: false,
@@ -3504,7 +3504,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Reduce frustration and boost communication with baby signing. Share signs, videos, progress and resources for signing with babies and toddlers.',
       imageUrl:
-          'https://images.pexels.com/photos/5059354/pexels-photo-5059354.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1565043666747-69f6646db940?w=800&q=80',
       memberCount: 418,
       category: 'EDUCATION',
       isDefault: false,
@@ -3518,7 +3518,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'DIY sensory activities, play ideas and inspiration for stimulating your baby\'s development through sight, touch, sound and movement.',
       imageUrl:
-          'https://images.pexels.com/photos/3662574/pexels-photo-3662574.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1596461404969-9ae70f2830c1?w=800&q=80',
       memberCount: 976,
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
@@ -3530,7 +3530,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'What\'s on for toddlers in Cambridge? Share the best classes, playgroups, soft plays and activity ideas for 1–4 year olds.',
       imageUrl:
-          'https://images.pexels.com/photos/4473389/pexels-photo-4473389.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1543248939-ff40856f65d4?w=800&q=80',
       memberCount: 1843,
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
@@ -3542,7 +3542,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Rate, review and discover the best playgrounds, parks and outdoor spaces in Cambridge for children of all ages.',
       imageUrl:
-          'https://images.pexels.com/photos/4055269/pexels-photo-4055269.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1575783970733-1aaedde1db74?w=800&q=80',
       memberCount: 1267,
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
@@ -3556,7 +3556,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Running with your buggy, pram workouts, buggy bootcamp and staying active as a parent in Cambridge. All abilities welcome.',
       imageUrl:
-          'https://images.pexels.com/photos/7163394/pexels-photo-7163394.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=800&q=80',
       memberCount: 634,
       category: 'FITNESS',
       isDefault: false,
@@ -3568,7 +3568,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Safely rebuild your strength and fitness after pregnancy with expert advice, community support and local class recommendations.',
       imageUrl:
-          'https://images.pexels.com/photos/3094222/pexels-photo-3094222.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=800&q=80',
       memberCount: 967,
       category: 'FITNESS',
       isDefault: false,
@@ -3581,7 +3581,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Gentle yoga and pilates for new mums — pelvic floor recovery, stress relief, and finding calm in the chaos of early parenthood.',
       imageUrl:
-          'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
       memberCount: 712,
       category: 'FITNESS',
       isDefault: false,
@@ -3594,7 +3594,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Outdoor group fitness sessions designed for parents — bring your buggy and join the workout. Fun, sociable and effective.',
       imageUrl:
-          'https://images.pexels.com/photos/7163599/pexels-photo-7163599.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=800&q=80',
       memberCount: 489,
       category: 'FITNESS',
       isDefault: false,
@@ -3606,7 +3606,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Connect with tennis-playing families in Cambridge — junior coaching recommendations, club memberships, social matches and family tennis events.',
       imageUrl:
-          'https://images.pexels.com/photos/8224537/pexels-photo-8224537.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80',
       memberCount: 356,
       category: 'SPORT',
       isDefault: false,
@@ -3618,7 +3618,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Football, swimming, gymnastics, cricket and more — a hub for sports-mad families in Cambridge to share clubs, fixtures and encourage young athletes.',
       imageUrl:
-          'https://images.pexels.com/photos/3894145/pexels-photo-3894145.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&q=80',
       memberCount: 921,
       category: 'SPORT',
       isDefault: false,
@@ -3632,7 +3632,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'A kind, non-judgemental space to talk about parental anxiety, postnatal depression, burnout and looking after yourself so you can look after others.',
       imageUrl:
-          'https://images.pexels.com/photos/3279903/pexels-photo-3279903.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800&q=80',
       memberCount: 874,
       category: 'WELLBEING',
       isDefault: false,
@@ -3644,7 +3644,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Connect with other NCT Cambridge parents — whether you\'re in a group now or looking to stay in touch after classes have ended.',
       imageUrl:
-          'https://images.pexels.com/photos/3280213/pexels-photo-3280213.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1491013516836-7db643ee125a?w=800&q=80',
       memberCount: 1521,
       category: 'PARENTING',
       isDefault: false,
@@ -3657,7 +3657,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Support, resources and community for families of children with additional needs, disabilities and SEND in Cambridge.',
       imageUrl:
-          'https://images.pexels.com/photos/6551168/pexels-photo-6551168.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1509909756405-be0199881695?w=800&q=80',
       memberCount: 467,
       category: 'WELLBEING',
       isDefault: false,
@@ -3669,7 +3669,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Twins, triplets and beyond! Share the beautiful chaos of raising multiples — double the love, double the advice.',
       imageUrl:
-          'https://images.pexels.com/photos/3807539/pexels-photo-3807539.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1519340241574-2cec6aef0c01?w=800&q=80',
       memberCount: 298,
       category: 'PARENTING',
       isDefault: false,
@@ -3681,7 +3681,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Dedicated groups, classes and meetups for dads and their babies in Cambridge. No mums required — just dads doing the dad thing.',
       imageUrl:
-          'https://images.pexels.com/photos/3994840/pexels-photo-3994840.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1474524955719-b9f87c50ce47?w=800&q=80',
       memberCount: 412,
       category: 'PARENTING',
       isDefault: false,
@@ -3696,7 +3696,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Find nanny share partners, recommend trusted childminders, and navigate the Cambridge childcare landscape together.',
       imageUrl:
-          'https://images.pexels.com/photos/1556706/pexels-photo-1556706.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=800&q=80',
       memberCount: 687,
       category: 'CHILDCARE',
       isDefault: false,
@@ -3708,7 +3708,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Returning to work after maternity leave? Share childcare solutions, flexible working wins, imposter syndrome and the juggle of career + family.',
       imageUrl:
-          'https://images.pexels.com/photos/4473624/pexels-photo-4473624.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80',
       memberCount: 834,
       category: 'WORK-LIFE',
       isDefault: false,
@@ -3721,7 +3721,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Balancing work and family life. Share tips on flexible working, childcare and career progression as a Cambridge parent.',
       imageUrl:
-          'https://images.pexels.com/photos/6957653/pexels-photo-6957653.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80',
       memberCount: 743,
       category: 'WORK-LIFE',
       isDefault: false,
@@ -3733,7 +3733,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Discuss sleep consultant experiences, sleep training methods (CIO, Ferber, gentle), and share what actually worked for your family.',
       imageUrl:
-          'https://images.pexels.com/photos/4016578/pexels-photo-4016578.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1512069772995-ec65ed45afd6?w=800&q=80',
       memberCount: 543,
       category: 'SLEEP',
       isDefault: false,
@@ -3747,7 +3747,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Cloth nappies, plastic-free toys, sustainable baby products and raising children with a love of the natural world.',
       imageUrl:
-          'https://images.pexels.com/photos/3182829/pexels-photo-3182829.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80',
       memberCount: 521,
       category: 'LIFESTYLE',
       isDefault: false,
@@ -3759,7 +3759,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       description:
           'Share travel advice and real experiences — from kid-friendly destinations and flight survival tips to honest hotel reviews and packing hacks with babies and toddlers.',
       imageUrl:
-          'https://images.pexels.com/photos/3278215/pexels-photo-3278215.jpeg?auto=compress&cs=tinysrgb&w=600',
+          'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=800&q=80',
       memberCount: 1893,
       category: 'TRAVEL',
       isDefault: false,
@@ -5360,6 +5360,7 @@ Shared from Huddl 🚀
       return CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
+        alignment: Alignment.topCenter,
         placeholder: (_, __) => placeholder(),
         errorWidget: (_, __, ___) => fallback(),
       );
