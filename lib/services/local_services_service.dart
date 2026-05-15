@@ -393,9 +393,15 @@ class LocalServicesService {
   // ── Borough helper ─────────────────────────────────────────────────────────
 
   String get _userBorough {
+    // Prefer the borough that was directly resolved from the full postcode
+    // via postcodes.io at onboarding / profile-edit time and persisted.
+    final stored = OnboardingDataService().borough;
+    if (stored != null && stored.isNotEmpty) return stored;
+
+    // Fallback: sync cache-read from PostcodeService (populated if
+    // lookupBoroughAsync has run this session) or outward-code prefix map.
     final postcode = OnboardingDataService().postcode;
-    return PostcodeService().getBoroughFromPostcode(postcode) ??
-        'Cambridge';
+    return PostcodeService().getBoroughFromPostcode(postcode) ?? 'Cambridge';
   }
 
   String get _firstName {

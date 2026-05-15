@@ -42,8 +42,19 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
 
     setState(() => _isChecking = true);
 
-    // ── Cambridge-only launch gate (authoritative postcodes.io lookup) ─
-    final isCambridge = await postcodeService.isCambridgePostcodeAsync(postcode);
+    // ── Authoritative full-postcode lookup via postcodes.io ───────────
+    // lookupBoroughAsync resolves the admin_district from the FULL postcode
+    // (e.g. "CB1 2AB" → "Cambridge", "N1 9GU" → "Islington") and caches
+    // the result in PostcodeService._cache.  We also persist it directly
+    // to OnboardingDataService so it survives app restarts without needing
+    // another API call.
+    final borough = await postcodeService.lookupBoroughAsync(postcode);
+    if (!mounted) return;
+
+    // Cambridge-only launch gate
+    final isCambridge = borough != null
+        ? PostcodeService.isCambridgeBoroughStatic(borough)
+        : await postcodeService.isCambridgePostcodeAsync(postcode);
     if (!mounted) return;
     setState(() => _isChecking = false);
 
@@ -55,6 +66,9 @@ class _PostcodeScreenState extends State<PostcodeScreen> {
 
     final service = OnboardingDataService();
     service.setPostcode(postcode);
+    // Persist the API-resolved borough so all downstream services (directory,
+    // groups, events) use the correct admin district without further API calls.
+    if (borough != null) service.setBorough(borough);
     if (mounted) Navigator.pushNamed(context, '/phone_number');
   }
 

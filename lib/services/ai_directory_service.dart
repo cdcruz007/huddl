@@ -43,9 +43,15 @@ class AiDirectoryService {
   static const String _nextCatKey   = 'ai_directory_next_category_v1';
   static const String _aiCreatorUid = 'huddl_ai';
 
-  /// Resolves the user's borough from their onboarding postcode.
-  /// Falls back to 'Cambridge' if postcode is unavailable or unrecognised.
+  /// Resolves the user's borough, in priority order:
+  ///   1. OnboardingDataService.borough — set at onboarding from full postcode
+  ///      via postcodes.io; persisted across app restarts.
+  ///   2. PostcodeService cache — populated if lookupBoroughAsync ran this session.
+  ///   3. Outward-code prefix fallback (e.g. CB1 → Cambridge) — last resort only.
   String get _userBorough {
+    final stored = OnboardingDataService().borough;
+    if (stored != null && stored.isNotEmpty) return stored;
+
     final postcode = OnboardingDataService().postcode;
     return PostcodeService().getBoroughFromPostcode(postcode) ?? 'Cambridge';
   }

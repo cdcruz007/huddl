@@ -1629,7 +1629,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   return;
                 }
 
-                // Borough was already resolved and cached by isCambridgePostcodeAsync above.
+                // Borough was already resolved and cached by isCambridgePostcodeAsync above;
+                // retrieve it from cache first to avoid a duplicate API call, then persist
+                // it to OnboardingDataService so all downstream services use the exact
+                // admin_district from postcodes.io rather than an outward-code prefix guess.
                 final newBorough =
                     _postcodeService.getBoroughFromPostcode(newPc) ?? await _postcodeService.lookupBoroughAsync(newPc) ?? 'Unknown';
 
@@ -1641,6 +1644,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _onboarding.setPreviousBorough(_borough);
                 }
                 _onboarding.setPostcode(newPc);
+                if (newBorough != 'Unknown') _onboarding.setBorough(newBorough);
 
                 // Cascade borough update through all services
                 await BoroughMigrationService().migrate(

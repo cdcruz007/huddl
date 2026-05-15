@@ -783,6 +783,32 @@ class FirebaseAuthService {
         onboarding.setPostcode(firestorePostcode);
       }
 
+      // ── Restore borough from Firestore and seed PostcodeService cache ──
+      // The borough stored in Firestore was resolved from the full postcode
+      // via postcodes.io at onboarding / profile-edit time.  Restore it to
+      // OnboardingDataService and seed PostcodeService._cache so that every
+      // sync getBoroughFromPostcode() call in the app sees the correct value
+      // immediately on cold start, without a further network request.
+      final firestoreBorough = (data['borough'] as String?) ?? '';
+      if (firestoreBorough.isNotEmpty) {
+        if (onboarding.borough == null || onboarding.borough!.isEmpty) {
+          onboarding.setBorough(firestoreBorough);
+        }
+        // Seed PostcodeService in-memory cache regardless of whether we just
+        // set it, so getBoroughFromPostcode() works for all sync callers.
+        final postcodeToSeed = firestorePostcode.isNotEmpty
+            ? firestorePostcode
+            : (onboarding.postcode ?? '');
+        PostcodeService().seedCache(postcodeToSeed, firestoreBorough);
+      } else if (onboarding.borough != null && onboarding.borough!.isNotEmpty) {
+        // Borough not in Firestore yet (existing account pre-dating this field)
+        // but we have it locally — seed the cache at minimum.
+        final postcodeToSeed = firestorePostcode.isNotEmpty
+            ? firestorePostcode
+            : (onboarding.postcode ?? '');
+        PostcodeService().seedCache(postcodeToSeed, onboarding.borough!);
+      }
+
       final firestoreParentType = (data['parentType'] as String?) ?? '';
       if (firestoreParentType.isNotEmpty && onboarding.parentType == null) {
         onboarding.setParentType(firestoreParentType);
@@ -897,8 +923,16 @@ class FirebaseAuthService {
     await onboarding.initialize(forceReload: true);
 
     // Resolve borough via postcodes.io so the exact admin district is used.
+    // Prefer the borough already stored from onboarding (set in postcode_screen);
+    // fall back to a fresh API call only if it's missing (e.g. legacy path).
     final postcode = onboarding.postcode ?? '';
-    final borough = await PostcodeService().lookupBoroughAsync(postcode) ?? '';
+    final borough = onboarding.borough?.isNotEmpty == true
+        ? onboarding.borough!
+        : await PostcodeService().lookupBoroughAsync(postcode) ?? '';
+    // Persist the borough if it wasn't already stored
+    if (borough.isNotEmpty && (onboarding.borough == null || onboarding.borough!.isEmpty)) {
+      onboarding.setBorough(borough);
+    }
 
     final name = onboarding.name ?? '';
     final parts = name.trim().split(' ');

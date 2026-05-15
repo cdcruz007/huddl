@@ -325,6 +325,20 @@ class PostcodeService {
     _cacheLoaded = true;
   }
 
+  /// Synchronously seed the in-memory cache with a known postcode→borough
+  /// mapping.  Call this at startup (after loading OnboardingDataService) so
+  /// that all sync [getBoroughFromPostcode] callers see the correct borough
+  /// immediately, without waiting for a network request.
+  ///
+  /// Does NOT write to BrowserStorage — the borough is already persisted
+  /// in OnboardingDataService and PostcodeService's own cache key.
+  void seedCache(String postcode, String borough) {
+    if (postcode.isEmpty || borough.isEmpty) return;
+    final clean = _clean(postcode);
+    _cache[clean] = borough;
+    _log('Cache seeded: $clean → $borough');
+  }
+
   Future<void> _writeToCache(String cleanPostcode, String borough) async {
     _cache[cleanPostcode] = borough;
     try {
@@ -354,6 +368,12 @@ class PostcodeService {
 
   /// Returns true if [borough] is a Cambridge-area local authority name
   /// as returned by postcodes.io.
+  ///
+  /// Public static variant — use this when you already have the borough
+  /// string (e.g. from [lookupBoroughAsync]) to avoid a redundant API call.
+  static bool isCambridgeBoroughStatic(String borough) =>
+      _isCambridgeBorough(borough);
+
   static bool _isCambridgeBorough(String borough) {
     final lower = borough.toLowerCase();
     return lower == 'cambridge' ||

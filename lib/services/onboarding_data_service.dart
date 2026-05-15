@@ -17,6 +17,7 @@ class OnboardingDataService {
   String? _parentType; // 'mum' or 'dad'
   List<String> _stagesOfLife = [];
   String? _postcode;
+  String? _borough;     // Resolved via postcodes.io — the authoritative admin district
   String? _dueDate;
   List<Map<String, String>> _children = []; // List of children with name and birthday
   String? _phoneNumber;
@@ -38,6 +39,10 @@ class OnboardingDataService {
   String? get parentType => _parentType;
   List<String> get stagesOfLife => _stagesOfLife;
   String? get postcode => _postcode;
+  /// The borough (admin district) resolved from [postcode] via postcodes.io.
+  /// Null until [setBorough] has been called (i.e. until onboarding completes
+  /// or the profile is loaded from Firestore).
+  String? get borough => _borough;
   String? get dueDate => _dueDate;
   List<Map<String, String>> get children => _children;
   String? get childName => _children.isNotEmpty ? _children.first['name'] : null;
@@ -94,6 +99,15 @@ class OnboardingDataService {
     }
     _postcode = postcode;
     _log('Postcode set: $postcode');
+    _saveToStorage();
+  }
+
+  /// Persist the borough resolved from the full postcode via postcodes.io.
+  /// Must be called immediately after [lookupBoroughAsync] returns a value
+  /// so that [borough] survives app restarts without a fresh API call.
+  void setBorough(String borough) {
+    _borough = borough;
+    _log('Borough set: $borough');
     _saveToStorage();
   }
 
@@ -227,7 +241,8 @@ class OnboardingDataService {
     _parentType = null;
     _stagesOfLife = [];
     _postcode = null;
-    _dueDate = null;
+    _borough  = null;
+    _dueDate  = null;
     _children = [];
     _phoneNumber = null;
     _countryCode = null;
@@ -282,6 +297,7 @@ class OnboardingDataService {
         _parentType = data['parent_type'] as String?;
         _stagesOfLife = List<String>.from(data['stages_of_life'] ?? []);
         _postcode = data['postcode'] as String?;
+        _borough  = data['borough']  as String?;
         // Sanitize legacy full-date values (e.g. '2027-01-01' → '2027')
         String? rawDue = data['due_date'] as String?;
         if (rawDue != null && rawDue.contains('-')) rawDue = rawDue.substring(0, 4);
@@ -329,6 +345,7 @@ class OnboardingDataService {
         'parent_type': _parentType,
         'stages_of_life': _stagesOfLife,
         'postcode': _postcode,
+        'borough':  _borough,
         'due_date': _dueDate,
         'children': _children,
         'phone_number': _phoneNumber,

@@ -135,9 +135,16 @@ class HuddlUserService {
 
     // ── Local data is populated — safe to push ────────────────────────────────
     final postcode = _onboarding.postcode ?? '';
-    // Use the async lookup so the borough is resolved via postcodes.io
-    // rather than the outward-code fallback map.
-    final borough = await _postcodeService.lookupBoroughAsync(postcode) ?? '';
+    // Prefer the borough already stored from onboarding (set in postcode_screen
+    // via postcodes.io full-postcode lookup); fall back to a fresh API call only
+    // if the stored value is missing (e.g. existing accounts pre-dating this field).
+    final borough = _onboarding.borough?.isNotEmpty == true
+        ? _onboarding.borough!
+        : await _postcodeService.lookupBoroughAsync(postcode) ?? '';
+    // Persist back if we had to do a fresh lookup
+    if (borough.isNotEmpty && (_onboarding.borough == null || _onboarding.borough!.isEmpty)) {
+      _onboarding.setBorough(borough);
+    }
 
     final name = _onboarding.name ?? '';
     final parts = name.trim().split(' ');
