@@ -26,8 +26,8 @@ class DefaultGroupService {
   // Persistence keys — bump version to force re-creation with year-based naming
   // v9: creation now uses _migrateImageUrl so create-path and migrate-path
   //     always agree — eliminates stale cached image mismatches permanently.
-  static const String _groupsKey = 'default_groups_v9';
-  static const String _membershipsKey = 'user_memberships_v9';
+  static const String _groupsKey = 'default_groups_v10';
+  static const String _membershipsKey = 'user_memberships_v10';
   
   bool _isInitialized = false;
 
@@ -37,8 +37,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v8: reset to align with v9 group re-creation
-  static const String _countersKey = 'borough_image_counters_v8';
+  // v9: reset to align with v10 group re-creation
+  static const String _countersKey = 'borough_image_counters_v9';
 
   /// Generate group name based on criteria
   String generateGroupName({
