@@ -2289,8 +2289,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           color: context.hc.textTertiary)),
                 ),
                 ...threads.take(10).map((t) => ListTile(
-                      leading: const Icon(Icons.topic,
-                          color: HuddlColors.blue, size: 20),
+                      leading: Icon(Icons.topic,
+                          color: context.hc.textSecondary, size: 20),
                       title: Text(t.topicName,
                           style: GoogleFonts.poppins(
                               fontSize: 13,

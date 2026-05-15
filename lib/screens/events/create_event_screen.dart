@@ -434,7 +434,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
     final id = 'ev_${DateTime.now().millisecondsSinceEpoch}';
 
     // Map category to color/icon for Event model
-    Color catColor = HuddlColors.blue;
+    Color catColor = HuddlColors.primary;
     IconData catIcon = Icons.event;
     for (final cat in _categories) {
       if (cat['label'] == _category) {
@@ -443,7 +443,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       }
     }
     if (_category == 'Workshop') catColor = HuddlColors.primaryDark;
-    if (_category == 'Class') catColor = HuddlColors.blue;
+    if (_category == 'Class') catColor = HuddlColors.primary;
     if (_category == 'Play') catColor = HuddlColors.primary;
     if (_category == 'Health') catColor = HuddlColors.error;
     if (_category == 'Community') catColor = HuddlColors.lightBlue;
@@ -535,8 +535,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   color: HuddlColors.gray100,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.chevron_left,
-                    size: 26, color: HuddlColors.blue),
+                child: Icon(Icons.chevron_left,
+                    size: 26, color: context.hc.textPrimary),
               ),
             ),
           ),
@@ -563,8 +563,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     color: HuddlColors.gray100,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.more_horiz,
-                      size: 22, color: HuddlColors.blue),
+                  child: Icon(Icons.more_horiz,
+                      size: 22, color: context.hc.textPrimary),
                 ),
               ),
             ),
@@ -1000,8 +1000,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         width: double.infinity,
         height: 240,
         margin: EdgeInsets.zero,
-        decoration: const BoxDecoration(
-          color: HuddlColors.blue,
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.08),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1011,7 +1011,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               height: 52,
               decoration: BoxDecoration(
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: HuddlColors.primary.withValues(alpha: 0.4),
                     width: 2),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1020,7 +1020,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 children: [
                   Icon(Icons.image_outlined,
                       size: 28,
-                      color: Colors.white.withValues(alpha: 0.8)),
+                      color: HuddlColors.primary.withValues(alpha: 0.7)),
                   Positioned(
                     bottom: 4,
                     right: 4,
@@ -1028,11 +1028,11 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: HuddlColors.primary,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.add,
-                          size: 12, color: HuddlColors.blue),
+                      child: const Icon(Icons.add,
+                          size: 12, color: Colors.white),
                     ),
                   ),
                 ],
@@ -1043,7 +1043,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                 style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white)),
+                    color: HuddlColors.primary)),
           ],
         ),
       ),
@@ -1052,10 +1052,10 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.blue,
-      child: const Center(
+      color: HuddlColors.primary.withValues(alpha: 0.08),
+      child: Center(
         child:
-            Icon(Icons.image_outlined, size: 48, color: Colors.white),
+            Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary.withValues(alpha: 0.5)),
       ),
     );
   }
@@ -1196,7 +1196,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? HuddlColors.blue : HuddlColors.gray300,
+            color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
             width: isSelected ? 1.8 : 1.2,
           ),
         ),
@@ -1205,14 +1205,14 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           children: [
             Icon(icon,
                 size: 16,
-                color: isSelected ? HuddlColors.blue : context.hc.textTertiary),
+                color: isSelected ? HuddlColors.primary : context.hc.textTertiary),
             const SizedBox(width: 6),
             Text(
               label,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? HuddlColors.blue : HuddlColors.textSecondary,
+                color: isSelected ? HuddlColors.primary : HuddlColors.textSecondary,
               ),
             ),
           ],
