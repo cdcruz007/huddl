@@ -24,9 +24,10 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
-  // v8: on-load per-year image correction — fixes stale cached wrong images
-  static const String _groupsKey = 'default_groups_v8';
-  static const String _membershipsKey = 'user_memberships_v8';
+  // v9: creation now uses _migrateImageUrl so create-path and migrate-path
+  //     always agree — eliminates stale cached image mismatches permanently.
+  static const String _groupsKey = 'default_groups_v9';
+  static const String _membershipsKey = 'user_memberships_v9';
   
   bool _isInitialized = false;
 
@@ -36,8 +37,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v7: reset counters to align with v8 per-year image correction
-  static const String _countersKey = 'borough_image_counters_v7';
+  // v8: reset to align with v9 group re-creation
+  static const String _countersKey = 'borough_image_counters_v8';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -198,11 +199,24 @@ class DefaultGroupService {
     // from the moment the user first sees the group.
     final welcomeMsg = _generateWelcomeMessage(parentCategory, borough, childYearOfBirth);
 
+    // Use _migrateImageUrl so the creation path and the on-load migration path
+    // always agree on which image each group gets.  For Cambridge year-groups
+    // this returns the deterministic per-year asset; for other boroughs it
+    // returns the first image in that borough's pool (sequential counter is
+    // only a fallback for non-Cambridge boroughs that need variety across
+    // multiple groups in the same borough — handled separately below).
+    final isCambridgeGroup = groupName.toLowerCase().contains('cambridge') ||
+        groupName.toLowerCase().contains('east cambridgeshire') ||
+        groupName.toLowerCase().contains('south cambridgeshire');
+    final imageUrl = isCambridgeGroup
+        ? _migrateImageUrl(groupName, '')
+        : _getNextBoroughImage(parentCategory, borough, groupName);
+
     final newGroup = Group(
       id: groupId,
       name: groupName,
       description: _generateGroupDescription(parentCategory, borough, childYearOfBirth),
-      imageUrl: _getNextBoroughImage(parentCategory, borough, groupName),
+      imageUrl: imageUrl,
       memberCount: 0, // Start with 0 members
       category: 'Default Community',
       isJoined: false, // Will be set to true when user joins
