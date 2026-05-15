@@ -23,9 +23,10 @@ import '../../widgets/huddl_widgets.dart' show HuddlBottomSheetHandle;
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../groups/forward_message_sheet.dart';
+import '../services/services_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DISCOVER SCREEN — main entry with 3 tabs: Meetups · Events · Groups
+// DISCOVER SCREEN — main entry with 4 tabs: Groups · Meetups · Events · Services
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class EventsScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _EventsScreenState extends State<EventsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(() {
       // Only update the selected tab when the animation has settled,
       // so the FAB never shows/hides based on a mid-swipe index.
@@ -304,6 +305,7 @@ class _EventsScreenState extends State<EventsScreen>
                       Tab(text: 'Groups'),
                       Tab(text: 'Meetups'),
                       Tab(text: 'Events'),
+                      Tab(text: 'Services'),
                     ],
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: context.hc.textTertiary,
@@ -326,20 +328,22 @@ class _EventsScreenState extends State<EventsScreen>
             // ── Borough scope context bar ───────────────────────
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
-              child: _selectedTab == 2
-                  ? const BoroughHeader(
-                      key: ValueKey('uk-wide'),
-                      feature: HuddlFeature.events,
-                    )
-                  : _selectedTab == 1
+              child: _selectedTab == 3
+                  ? const SizedBox.shrink(key: ValueKey('services-no-borough'))
+                  : _selectedTab == 2
                       ? const BoroughHeader(
-                          key: ValueKey('meetups-borough'),
-                          feature: HuddlFeature.meetups,
+                          key: ValueKey('uk-wide'),
+                          feature: HuddlFeature.events,
                         )
-                      : const BoroughHeader(
-                          key: ValueKey('groups-borough'),
-                          feature: HuddlFeature.groups,
-                        ),
+                      : _selectedTab == 1
+                          ? const BoroughHeader(
+                              key: ValueKey('meetups-borough'),
+                              feature: HuddlFeature.meetups,
+                            )
+                          : const BoroughHeader(
+                              key: ValueKey('groups-borough'),
+                              feature: HuddlFeature.groups,
+                            ),
             ),
             // ── Tab content ─────────────────────────────────────────
             Expanded(
@@ -354,6 +358,7 @@ class _EventsScreenState extends State<EventsScreen>
                   _EventsTab(
                     eventService: _eventService,
                   ),
+                  const ServicesScreen(),
                 ],
               ),
             ),
@@ -417,7 +422,7 @@ class _EventsScreenState extends State<EventsScreen>
               ),
             ),
           ),
-        // _selectedTab == 2 (Events) → no FAB rendered at all
+        // _selectedTab == 2 (Events) or 3 (Services) → no FAB rendered at all
           ],
         ),
       ),
