@@ -26,8 +26,8 @@ class DefaultGroupService {
   // Persistence keys — bump version to force re-creation with year-based naming
   // v9: creation now uses _migrateImageUrl so create-path and migrate-path
   //     always agree — eliminates stale cached image mismatches permanently.
-  static const String _groupsKey = 'default_groups_v10';
-  static const String _membershipsKey = 'user_memberships_v10';
+  static const String _groupsKey = 'default_groups_v11';
+  static const String _membershipsKey = 'user_memberships_v11';
   
   bool _isInitialized = false;
 
@@ -37,8 +37,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v9: reset to align with v10 group re-creation
-  static const String _countersKey = 'borough_image_counters_v9';
+  // v10: reset to align with v11 group re-creation (sequential Cambridge images)
+  static const String _countersKey = 'borough_image_counters_v10';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -112,21 +112,15 @@ class DefaultGroupService {
             needsResave = true;
             _log('🔧 Enforced isImageLocked for group: ${g.name}');
           }
-          // ── Image migration: replace any old external URL with a local asset
+          // ── Image migration: replace any old external URL with a local asset.
+          // Only re-assigns if the stored URL is still an external http/https URL.
+          // Groups already storing a local assets/ path keep their image — this
+          // preserves the sequential uniqueness assigned at creation time.
           if (!g.imageUrl.startsWith('assets/')) {
             final migratedUrl = _migrateImageUrl(g.name, g.imageUrl);
             g = g.copyWith(imageUrl: migratedUrl, isImageLocked: true);
             needsResave = true;
             _log('🔄 Migrated image URL for group: ${g.name} → $migratedUrl');
-          }
-          // ── Per-year correction: ensure every Cambridge year group has the
-          // exact image defined in _cambridgeYearImages, fixing stale cached
-          // assignments from older buggy versions.
-          final correctUrl = _migrateImageUrl(g.name, g.imageUrl);
-          if (correctUrl != g.imageUrl) {
-            g = g.copyWith(imageUrl: correctUrl, isImageLocked: true);
-            needsResave = true;
-            _log('🔧 Corrected image for "${g.name}": ${g.imageUrl} → $correctUrl');
           }
           _defaultGroups[key] = g;
         });
@@ -199,18 +193,13 @@ class DefaultGroupService {
     // from the moment the user first sees the group.
     final welcomeMsg = _generateWelcomeMessage(parentCategory, borough, childYearOfBirth);
 
-    // Use _migrateImageUrl so the creation path and the on-load migration path
-    // always agree on which image each group gets.  For Cambridge year-groups
-    // this returns the deterministic per-year asset; for other boroughs it
-    // returns the first image in that borough's pool (sequential counter is
-    // only a fallback for non-Cambridge boroughs that need variety across
-    // multiple groups in the same borough — handled separately below).
-    final isCambridgeGroup = groupName.toLowerCase().contains('cambridge') ||
-        groupName.toLowerCase().contains('east cambridgeshire') ||
-        groupName.toLowerCase().contains('south cambridgeshire');
-    final imageUrl = isCambridgeGroup
-        ? _migrateImageUrl(groupName, '')
-        : _getNextBoroughImage(parentCategory, borough, groupName);
+    // Use _getNextBoroughImage for ALL borough groups — Cambridge included.
+    // This uses the sequential per-pool counter so each new group the user
+    // receives gets the NEXT image in the pool, guaranteeing that no two
+    // groups visible to a single user ever share the same photo.
+    // (Year-based lookup was removed because a user with children across
+    // multiple birth years would inevitably hit the 9-year repeat cycle.)
+    final imageUrl = _getNextBoroughImage(parentCategory, borough, groupName);
 
     final newGroup = Group(
       id: groupId,
