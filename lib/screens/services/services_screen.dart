@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/local_services_service.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 
 // =============================================================================
 // SERVICES SCREEN — HUDDL TRUSTED LOCAL DIRECTORY
@@ -1224,56 +1225,16 @@ class _EmptyDirectory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: HuddlColors.blueBackground,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Center(
-                child: Text('🏠', style: TextStyle(fontSize: 32)),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              hasFilter
-                  ? 'No listings match your filter'
-                  : 'No listings in your area yet',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: hc.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              hasFilter
-                  ? 'Try a different category or search term'
-                  : 'Be the first to add a trusted local pro.\nPaste a WhatsApp recommendation or add manually.',
-              style: GoogleFonts.poppins(
-                  fontSize: 13, color: hc.textSecondary),
-              textAlign: TextAlign.center,
-            ),
-            if (hasFilter) ...[
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: onClear,
-                child: Text('Clear filters',
-                    style: GoogleFonts.poppins(color: HuddlColors.teal)),
-              ),
-            ],
-          ],
-        ),
-      ),
+    return HuddlEmptyState(
+      illustration: HuddlIllustration.community,
+      title: hasFilter
+          ? 'No listings match your filter'
+          : 'No listings in your area yet',
+      subtitle: hasFilter
+          ? 'Try a different category or search term'
+          : 'Be the first to add a trusted local pro.\nPaste a WhatsApp recommendation or add manually.',
+      actionLabel: hasFilter ? 'Clear filters' : null,
+      onAction: hasFilter ? onClear : null,
     );
   }
 }
@@ -1409,7 +1370,7 @@ class _AddServiceTabState extends State<_AddServiceTab> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.aiBlue,
+                      backgroundColor: HuddlColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
@@ -1946,7 +1907,6 @@ class _MyListingsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
     return StreamBuilder<List<ServiceListing>>(
       stream: service.myListingsStream(),
       builder: (context, snap) {
@@ -1956,33 +1916,11 @@ class _MyListingsTab extends StatelessWidget {
         }
         final listings = snap.data ?? [];
         if (listings.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('📋',
-                      style: TextStyle(fontSize: 48)),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No listings yet',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Listings you add to the directory will appear here.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: hc.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+          return const HuddlEmptyState(
+            illustration: HuddlIllustration.marketplace,
+            title: 'No listings yet',
+            subtitle:
+                'Listings you add to the directory will appear here.',
           );
         }
         return ListView.separated(
