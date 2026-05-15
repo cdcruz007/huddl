@@ -207,11 +207,11 @@ class _EventsScreenState extends State<EventsScreen>
                           width: 44,
                           height: 44,
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue.withValues(alpha: 0.1),
+                            color: HuddlColors.teal.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.event,
-                              color: HuddlColors.blue, size: 22),
+                              color: HuddlColors.teal, size: 22),
                         ),
                         title: Text(
                           event.title,
@@ -1817,7 +1817,7 @@ class _EventsTabState extends State<_EventsTab> {
               'Found $count new events near you',
               style: GoogleFonts.poppins(fontSize: 13),
             ),
-            backgroundColor: HuddlColors.blue,
+            backgroundColor: HuddlColors.teal,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             duration: const Duration(seconds: 2),
@@ -2122,13 +2122,13 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(
                   width: 14, height: 14,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2, color: HuddlColors.blue),
+                    strokeWidth: 2, color: HuddlColors.teal),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Finding events for you\u2026',
                   style: GoogleFonts.poppins(
-                    fontSize: 12, color: HuddlColors.blue, fontWeight: FontWeight.w500),
+                    fontSize: 12, color: HuddlColors.teal, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -2454,7 +2454,7 @@ class _EventsTabState extends State<_EventsTab> {
       ));
     }
 
-    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, HuddlColors.blue);
+    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, HuddlColors.teal);
     if (p.containsKey('formatFilter')) addChip(p['formatFilter'] as String, HuddlColors.teal);
     if (p.containsKey('timeFilter')) addChip(p['timeFilter'] as String, HuddlColors.primaryDark);
     if (p.containsKey('category')) addChip(p['category'] as String, HuddlColors.accentAmber);
@@ -2529,10 +2529,10 @@ class _RecommendedCarousel extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: HuddlColors.blue.withValues(alpha: 0.12),
+                color: HuddlColors.teal.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.event, size: 16, color: HuddlColors.blue),
+              child: const Icon(Icons.event, size: 16, color: HuddlColors.teal),
             ),
             const SizedBox(width: 8),
             Text(
@@ -2652,7 +2652,7 @@ class _RecommendedCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: event.isFree ? HuddlColors.blue : HuddlColors.primary,
+                            color: event.isFree ? HuddlColors.teal : HuddlColors.primary,
                           ),
                         ),
                       ],
@@ -2667,10 +2667,10 @@ class _RecommendedCard extends StatelessWidget {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: HuddlColors.blue.withValues(alpha: 0.08),
+                              color: HuddlColors.teal.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
-                                color: HuddlColors.blue.withValues(alpha: 0.2),
+                                color: HuddlColors.teal.withValues(alpha: 0.2),
                               ),
                             ),
                             child: Row(
@@ -2687,7 +2687,7 @@ class _RecommendedCard extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 9,
                                       fontWeight: FontWeight.w500,
-                                      color: HuddlColors.blue,
+                                      color: HuddlColors.teal,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -2867,7 +2867,7 @@ class _MeetupCard extends StatelessWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
+                      color: meetup.isFree ? HuddlColors.teal : HuddlColors.accentAmber,
                     ),
                   ),
                   const Spacer(),
@@ -3093,10 +3093,10 @@ class _EventListCardState extends State<_EventListCard> {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: HuddlColors.blue.withValues(alpha: 0.08),
+                color: HuddlColors.teal.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: HuddlColors.blue.withValues(alpha: 0.2),
+                  color: HuddlColors.teal.withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -3109,7 +3109,7 @@ class _EventListCardState extends State<_EventListCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 10,
                       fontWeight: FontWeight.w500,
-                      color: HuddlColors.blue,
+                      color: HuddlColors.teal,
                     ),
                   ),
                 ],
@@ -3200,19 +3200,19 @@ class _EventListCardState extends State<_EventListCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isFree ? HuddlColors.blue : eventColor,
+                      color: isFree ? HuddlColors.teal : eventColor,
                     ),
                   ),
                   if (isOnline) ...[
                     const SizedBox(width: 8),
-                    Icon(Icons.videocam_outlined, size: 13, color: HuddlColors.blue),
+                    Icon(Icons.videocam_outlined, size: 13, color: HuddlColors.teal),
                     const SizedBox(width: 3),
                     Text(
                       'Online',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                       ),
                     ),
                   ],
@@ -3304,21 +3304,21 @@ class _EventListCardState extends State<_EventListCard> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue.withValues(alpha: 0.08),
+                            color: HuddlColors.teal.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: HuddlColors.blue.withValues(alpha: 0.2)),
+                            border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.location_on, size: 11, color: HuddlColors.blue),
+                              const Icon(Icons.location_on, size: 11, color: HuddlColors.teal),
                               const SizedBox(width: 3),
                               Text(
                                 borough,
                                 style: GoogleFonts.poppins(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w500,
-                                  color: HuddlColors.blue,
+                                  color: HuddlColors.teal,
                                 ),
                               ),
                             ],
@@ -3451,10 +3451,10 @@ class _AiFeedbackRowState extends State<_AiFeedbackRow> {
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: HuddlColors.blue.withValues(alpha: 0.08),
+            color: HuddlColors.teal.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(5),
           ),
-          child: const Icon(Icons.insights, size: 10, color: HuddlColors.blue),
+          child: const Icon(Icons.insights, size: 10, color: HuddlColors.teal),
         ),
         const SizedBox(width: 5),
         Text(
