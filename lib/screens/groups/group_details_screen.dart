@@ -424,7 +424,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
@@ -1332,7 +1332,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
                       child: Text('Cancel',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),

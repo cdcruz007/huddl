@@ -1556,7 +1556,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                   '${summary.unreadCount} unread in ${summary.groupName}',
                   style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: HuddlColors.blue,
+                    color: context.hc.textPrimary,
                   ),
                 ),
                 Text(
@@ -2881,7 +2881,7 @@ class _DMMessageRow extends StatelessWidget {
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontStyle: FontStyle.italic,
-                                      color: HuddlColors.blue,
+                                      color: HuddlColors.teal,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   )

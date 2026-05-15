@@ -2158,13 +2158,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(c),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: HuddlColors.primary),
+                        side: BorderSide(color: context.hc.divider),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       child: Text('Cancel',
                           style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                              fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -2283,13 +2283,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(c),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.primary),
+                          side: BorderSide(color: context.hc.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
                             style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2412,13 +2412,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(c),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: HuddlColors.primary),
+                          side: BorderSide(color: context.hc.divider),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         child: Text('Cancel',
                             style: GoogleFonts.poppins(
-                                fontSize: 14, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                                fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -2841,7 +2841,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
+                          color: context.hc.textSecondary,
                         ),
                       ),
                     ),
