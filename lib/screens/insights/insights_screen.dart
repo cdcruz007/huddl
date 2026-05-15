@@ -112,96 +112,54 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+    return Container(
+      color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Title row ──────────────────────────────────────────
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Brand logo mark
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.primary, HuddlColors.accentAmber],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
+              Text(
+                'Insights',
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: isDark
+                      ? HuddlColors.darkTextPrimary
+                      : HuddlColors.textPrimary,
                 ),
-                child: const Icon(Icons.lightbulb, color: Colors.white, size: 18),
               ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Insights',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textPrimary,
-                      height: 1.1,
-                    ),
-                  ),
-                  Text(
-                    'Knowledge from your community',
-
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w400,
-                      color: HuddlColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
               // Pending review badge — debug only
-              if (kDebugMode)
-                _PendingReviewBadge(),
+              if (kDebugMode) _PendingReviewBadge(),
             ],
           ),
-          const SizedBox(height: 14),
-          // Tab bar
-          Container(
-            height: 36,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? HuddlColors.darkSurface
-                  : HuddlColors.gray100,
-              borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 4),
+          // ── Tab bar — same style as Discover (underline) ───────
+          TabBar(
+            controller: tabController,
+            tabs: const [
+              Tab(text: 'Community'),
+              Tab(text: 'Expert Guides'),
+              Tab(text: 'SEND'),
+            ],
+            labelColor: HuddlColors.primary,
+            unselectedLabelColor: HuddlColors.textTertiary,
+            labelStyle: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
-            child: TabBar(
-              controller: tabController,
-              indicator: BoxDecoration(
-                color: HuddlColors.primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-              labelColor: Colors.white,
-              unselectedLabelColor: HuddlColors.textSecondary,
-              padding: const EdgeInsets.all(3),
-              tabs: const [
-                Tab(text: 'Community'),
-                Tab(text: 'Expert Guides'),
-                Tab(text: 'SEND'),
-              ],
+            unselectedLabelStyle: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
             ),
+            indicatorColor: HuddlColors.primary,
+            indicatorWeight: 3,
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
           ),
-          const SizedBox(height: 12),
         ],
       ),
     );
@@ -375,12 +333,8 @@ class _Chip extends StatelessWidget {
 }
 
 // ─── SEND tab ─────────────────────────────────────────────────────────────────
-// Embeds SendHubScreen directly inside the InsightsScreen TabBarView.
-// We wrap it in a Navigator so the SEND hub's internal push routes (if any)
-// are scoped to this tab and do not pop the whole app.  The back button in
-// the SEND header is hidden via `automaticallyImplyLeading: false` on its
-// AppBar — but SendHubScreen uses a plain IconButton back, so we use
-// MediaQuery padding override to give it a clean embedded context.
+// Shows the SEND Navigator hero card at the top, then embeds SendHubScreen
+// below it.  Wrapped in a local Navigator so internal push routes stay scoped.
 
 class _SendTab extends StatefulWidget {
   const _SendTab();
@@ -392,16 +346,27 @@ class _SendTab extends StatefulWidget {
 class _SendTabState extends State<_SendTab>
     with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true;  // preserve chat state across tab switches
+  bool get wantKeepAlive => true; // preserve chat state across tab switches
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    // Wrap in a local Navigator so SEND's internal push routes stay scoped.
-    return Navigator(
-      onGenerateRoute: (_) => MaterialPageRoute(
-        builder: (_) => const _EmbeddedSendHubScreen(),
-      ),
+    return Column(
+      children: [
+        // ── SEND Navigator hero card ─────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: _SendHeroCard(),
+        ),
+        // ── Embedded SendHubScreen ───────────────────────────────
+        Expanded(
+          child: Navigator(
+            onGenerateRoute: (_) => MaterialPageRoute(
+              builder: (_) => const _EmbeddedSendHubScreen(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -461,38 +426,23 @@ class _CommunityTab extends StatelessWidget {
         }
 
         if (articles.isEmpty) {
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _SendHeroCard(),
-                ),
-              ),
-              SliverFillRemaining(
-                child: _EmptyState(
-                  icon: Icons.auto_awesome_outlined,
-                  title: searchQuery.isNotEmpty
-                      ? 'No results for "$searchQuery"'
-                      : 'No community wisdom yet',
-                  subtitle: searchQuery.isNotEmpty
-                      ? 'Try a different search term or category.'
-                      : 'When parents share helpful insights in group chats, '
-                          'they\'ll appear here as Insights articles.',
-                ),
-              ),
-            ],
+          return _EmptyState(
+            icon: Icons.auto_awesome_outlined,
+            title: searchQuery.isNotEmpty
+                ? 'No results for "$searchQuery"'
+                : 'No community wisdom yet',
+            subtitle: searchQuery.isNotEmpty
+                ? 'Try a different search term or category.'
+                : 'When parents share helpful insights in group chats, '
+                    'they\'ll appear here as Insights articles.',
           );
         }
 
         return ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-          itemCount: articles.length + 1,
+          itemCount: articles.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) {
-            if (i == 0) return _SendHeroCard();
-            return _WisdomCard(article: articles[i - 1]);
-          },
+          itemBuilder: (context, i) => _WisdomCard(article: articles[i]),
         );
       },
     );
@@ -550,104 +500,100 @@ class _ExpertTab extends StatelessWidget {
 }
 
 // ─── SEND Hero Card ───────────────────────────────────────────────────────────
+// Huddl brand colours: primary orange gradient — no purple.
 
 class _SendHeroCard extends StatelessWidget {
   const _SendHeroCard();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SendHubScreen()),
-      ),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF5B5EA6), Color(0xFF9B2335)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [HuddlColors.primaryDark, HuddlColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: HuddlColors.primary.withValues(alpha: 0.30),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF5B5EA6).withValues(alpha: 0.30),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top row
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.diversity_3,
+                      color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SEND Navigator',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          height: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'AI-assisted EHCP & complex needs support',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.88),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    color: Colors.white, size: 14),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Feature pills
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: const [
+                _HeroPill(label: 'EHCP Navigator', icon: Icons.map_outlined),
+                _HeroPill(label: 'AI Advisor', icon: Icons.smart_toy_outlined),
+                _HeroPill(label: 'Deadline Tracker', icon: Icons.calendar_today_outlined),
+                _HeroPill(label: 'Anonymous Q&A', icon: Icons.visibility_off_outlined),
+                _HeroPill(label: 'Support Directory', icon: Icons.volunteer_activism_outlined),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Navigate the UK SEND system with step-by-step guidance, '
+              'your legal rights at every stage, and AI support grounded '
+              'in IPSEA, Contact, and the SEND Code of Practice 2015.',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.white.withValues(alpha: 0.88),
+                height: 1.5,
+              ),
             ),
           ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top row
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.diversity_3,
-                        color: Colors.white, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'SEND Navigator',
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            height: 1.1,
-                          ),
-                        ),
-                        Text(
-                          'AI-assisted EHCP & complex needs support',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.white.withValues(alpha: 0.80),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.arrow_forward_ios_rounded,
-                      color: Colors.white, size: 14),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Feature pills
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: const [
-                  _HeroPill(label: 'EHCP Navigator', icon: Icons.map_outlined),
-                  _HeroPill(label: 'AI Advisor', icon: Icons.smart_toy_outlined),
-                  _HeroPill(label: 'Deadline Tracker', icon: Icons.calendar_today_outlined),
-                  _HeroPill(label: 'Anonymous Q&A', icon: Icons.visibility_off_outlined),
-                  _HeroPill(label: 'Support Directory', icon: Icons.volunteer_activism_outlined),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Navigate the UK SEND system with step-by-step guidance, '
-                'your legal rights at every stage, and AI support grounded '
-                'in IPSEA, Contact, and the SEND Code of Practice 2015.',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
