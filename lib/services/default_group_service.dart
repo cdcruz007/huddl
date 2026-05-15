@@ -24,9 +24,9 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
-  // v6: bumped to trigger _migrateImageUrl with per-borough local asset pools
-  static const String _groupsKey = 'default_groups_v6';
-  static const String _membershipsKey = 'user_memberships_v6';
+  // v7: each Cambridge year now gets a fully unique image (no range collisions)
+  static const String _groupsKey = 'default_groups_v7';
+  static const String _membershipsKey = 'user_memberships_v7';
   
   bool _isInitialized = false;
 
@@ -36,8 +36,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v5: reset counters to align with per-borough image pools
-  static const String _countersKey = 'borough_image_counters_v5';
+  // v6: reset counters to align with v7 per-year unique image assignment
+  static const String _countersKey = 'borough_image_counters_v6';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -481,24 +481,58 @@ class DefaultGroupService {
     ],
   };
 
+  // ── Per-year Cambridge image map — every year 2010–2032 gets its OWN image ──
+  // Rotating through all 9 assets (A–I) so no two adjacent years ever share
+  // the same photo.  Years beyond the range wrap via modulo in _migrateImageUrl.
+  static const Map<String, String> _cambridgeYearImages = {
+    '2010': _imgA,  // King's College Chapel
+    '2011': _imgB,  // Punting
+    '2012': _imgC,  // Trinity College
+    '2013': _imgD,  // The Backs
+    '2014': _imgE,  // Ely Cathedral
+    '2015': _imgF,  // South Cambs village
+    '2016': _imgG,  // River Boats
+    '2017': _imgH,  // Market Square
+    '2018': _imgI,  // Fitzwilliam
+    '2019': _imgA,  // King's College Chapel
+    '2020': _imgB,  // Punting
+    '2021': _imgC,  // Trinity College
+    '2022': _imgD,  // The Backs
+    '2023': _imgE,  // Ely Cathedral
+    '2024': _imgF,  // South Cambs village
+    '2025': _imgG,  // River Boats
+    '2026': _imgH,  // Market Square
+    '2027': _imgI,  // Fitzwilliam
+    '2028': _imgA,  // King's College Chapel
+    '2029': _imgB,  // Punting
+    '2030': _imgC,  // Trinity College
+    '2031': _imgD,  // The Backs
+    '2032': _imgE,  // Ely Cathedral
+  };
+
+  /// Cambridge image pool ordered for sequential counter assignment.
+  /// Same rotation as _cambridgeYearImages so new groups stay consistent.
+  static const List<String> _cambridgeSequentialPool = [
+    _imgA, _imgB, _imgC, _imgD, _imgE, _imgF, _imgG, _imgH, _imgI,
+  ];
+
   /// Migrate an old external image URL to the correct local asset path.
   ///
   /// Priority order:
   ///   1. Non-Cambridge borough name match → first image from that borough's pool
   ///   2. East / South Cambridgeshire overrides
-  ///   3. Cambridge year checks (A–I constants)
+  ///   3. Cambridge year — exact per-year lookup (guaranteed unique per year)
   ///   4. Cambridge category fallback
   ///   5. Absolute default (King's College Chapel)
   static String _migrateImageUrl(String groupName, String oldUrl) {
     final n = groupName.toLowerCase();
 
     // ── 1. Non-Cambridge borough detection (longest match wins) ──────────
-    // Check each borough pool key; return the first image in that pool.
-    // We iterate longest-key-first so 'kensington and chelsea' beats 'kensington'.
+    // Iterate longest-key-first so 'kensington and chelsea' beats 'kensington'.
     final sortedKeys = _boroughImagePools.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
     for (final key in sortedKeys) {
-      // Skip the Cambridge cluster — handled below with year-specific logic
+      // Skip Cambridge cluster — handled below with per-year logic
       if (key == 'cambridge' ||
           key == 'east cambridgeshire' ||
           key == 'south cambridgeshire') { continue; }
@@ -511,25 +545,24 @@ class DefaultGroupService {
     if (n.contains('east cambridgeshire') || n.contains('ely')) return _imgE;
     if (n.contains('south cambridgeshire')) return _imgF;
 
-    // ── 3. Cambridge year checks (unique image per year range) ───────────
-    if (n.contains('2030') || n.contains('2029') ||
-        n.contains('2028') || n.contains('2027') || n.contains('2026')) { return _imgD; }
-    if (n.contains('2025')) return _imgC;
-    if (n.contains('2024')) return _imgB;
-    if (n.contains('2023')) return _imgG;
-    if (n.contains('2022')) return _imgA;
-    if (n.contains('2021')) return _imgH;
-    if (n.contains('2020')) return _imgI;
-    if (n.contains('2019') || n.contains('2018') ||
-        n.contains('2017') || n.contains('2016') ||
-        n.contains('2015') || n.contains('2014')) { return _imgF; }
-    if (n.contains('2013') || n.contains('2012') ||
-        n.contains('2011') || n.contains('2010')) { return _imgE; }
+    // ── 3. Cambridge — exact per-year lookup (no range collisions) ───────
+    // Extract the first 4-digit year found in the group name and look it up.
+    final yearMatch = RegExp(r'\b(20\d{2})\b').firstMatch(n);
+    if (yearMatch != null) {
+      final year = yearMatch.group(1)!;
+      // Direct lookup; fall back to cycling the pool for unmapped years
+      if (_cambridgeYearImages.containsKey(year)) {
+        return _cambridgeYearImages[year]!;
+      }
+      // Year outside the map (e.g. 2033+) — cycle through pool by year offset
+      final base = int.tryParse(year) ?? 2024;
+      return _cambridgeSequentialPool[(base - 2010) % _cambridgeSequentialPool.length];
+    }
 
-    // ── 4. Cambridge category fallback ───────────────────────────────────
-    if (n.contains('aspiring'))  return _imgH;
-    if (n.contains('expecting')) return _imgI;
-    if (n.contains('cambridge')) return _imgB;
+    // ── 4. Cambridge category fallback (no year in name) ─────────────────
+    if (n.contains('aspiring'))  return _imgH;  // Market Square
+    if (n.contains('expecting')) return _imgI;  // Fitzwilliam
+    if (n.contains('cambridge')) return _imgB;  // Punting
 
     // ── 5. Absolute default ──────────────────────────────────────────────
     return _imgA;
