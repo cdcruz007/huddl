@@ -27,6 +27,16 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
     <!-- CAMERA: Required for taking photos and videos in chat -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- READ_MEDIA_IMAGES / READ_MEDIA_VIDEO: Required on Android 13+ (API 33+) for gallery
+         access. READ_EXTERNAL_STORAGE is ignored on API 33+; these granular permissions
+         replace it. image_picker and file_picker both require these on modern Android. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <!-- READ_MEDIA_VISUAL_USER_SELECTED: Android 14+ partial photo library access.
+         Allows users to grant access to a subset of photos rather than all of them. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED"/>
+    <!-- READ_CONTACTS: Required for the Contact sharing feature in chat -->
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <!-- LOCATION: Required for sharing location in chat messages -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -63,6 +73,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- FileProvider: Required by image_picker on Android 7+ (API 24+) to share
+             camera-captured image URIs via content:// scheme. Without this, taking
+             a photo crashes with FileUriExposedException on Android 7+. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.flutter.image_provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"/>
+        </provider>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

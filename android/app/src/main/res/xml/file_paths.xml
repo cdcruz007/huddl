@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider paths for image_picker camera capture.
+  image_picker writes temp camera images to the app's external cache directory.
+  This declaration grants the content:// URI permission so Android 7+ (API 24+)
+  can pass the file to the camera app without FileUriExposedException.
+-->
+<paths>
+    <external-path name="external_files" path="."/>
+    <external-cache-path name="external_cache" path="."/>
+    <cache-path name="cache" path="."/>
+    <files-path name="files" path="."/>
+</paths>

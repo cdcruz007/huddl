@@ -2457,48 +2457,127 @@ class _DMChatScreenState extends State<DMChatScreen> {
 
   void _handleContactShare() async {
     if (!mounted) return;
-    // Show a contact picker dialog
-    final members = [
-      {'name': 'Emma Wilson', 'phone': '+44 7700 900001'},
-      {'name': 'Sophie Brown', 'phone': '+44 7700 900002'},
-      {'name': 'James Taylor', 'phone': '+44 7700 900003'},
-      {'name': 'Olivia Davis', 'phone': '+44 7700 900004'},
-      {'name': 'Luke Harris', 'phone': '+44 7700 900005'},
-      {'name': 'Anna Clark', 'phone': '+44 7700 900006'},
-      {'name': 'Kate Miller', 'phone': '+44 7700 900007'},
-    ];
+
+    // ── Request READ_CONTACTS permission (native only) ─────────────────────
+    if (!kIsWeb) {
+      final status = await Permission.contacts.request();
+      if (!status.isGranted) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              status.isPermanentlyDenied
+                  ? 'Contacts permission permanently denied. Enable it in Settings.'
+                  : 'Contacts permission is needed to share a contact.',
+            ),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: status.isPermanentlyDenied
+                ? SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  )
+                : null,
+          ),
+        );
+        return;
+      }
+    }
+
+    // ── Manual contact entry bottom sheet ──────────────────────────────────
+    final nameCtrl  = TextEditingController();
+    final phoneCtrl = TextEditingController();
     final result = await showModalBottomSheet<Map<String, String>>(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
-        return Container(
-          decoration: BoxDecoration(
-            color: context.hc.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 12),
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: context.hc.divider, borderRadius: BorderRadius.circular(2))),
-              const SizedBox(height: 16),
-              Text('Share Contact', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
-              const SizedBox(height: 8),
-              ...members.map((m) => ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.1),
-                  child: Text(m['name']![0], style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            decoration: BoxDecoration(
+              color: ctx.hc.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: ctx.hc.divider, borderRadius: BorderRadius.circular(2)),
+                  ),
                 ),
-                title: Text(m['name']!, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                subtitle: Text(m['phone']!, style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
-                onTap: () => Navigator.pop(ctx, m),
-              )),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    'Share Contact',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: ctx.hc.textPrimary),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text('Name', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ctx.hc.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: nameCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: InputDecoration(
+                    hintText: 'Contact name',
+                    hintStyle: GoogleFonts.poppins(color: HuddlColors.textHint),
+                    filled: true,
+                    fillColor: ctx.hc.inputBg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  style: GoogleFonts.poppins(fontSize: 15),
+                ),
+                const SizedBox(height: 14),
+                Text('Phone number', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: ctx.hc.textSecondary)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: phoneCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: '+44 7700 900000',
+                    hintStyle: GoogleFonts.poppins(color: HuddlColors.textHint),
+                    filled: true,
+                    fillColor: ctx.hc.inputBg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  style: GoogleFonts.poppins(fontSize: 15),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      final n = nameCtrl.text.trim();
+                      if (n.isEmpty) return;
+                      Navigator.pop(ctx, {'name': n, 'phone': phoneCtrl.text.trim()});
+                    },
+                    child: Text('Share', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
     );
+    nameCtrl.dispose();
+    phoneCtrl.dispose();
+
     if (result != null && mounted) {
       await _sendRichMessage(
         type: MessageType.contact,
