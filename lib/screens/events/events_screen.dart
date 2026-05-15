@@ -3123,14 +3123,19 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Always use brand primary for consistency across all event cards
-    const Color eventColor = HuddlColors.primary;
+    // Event card uses teal for subtle borders/shadows; type chips use
+    // semantic blue (#3580F0) for "Event" badge and amber for "New" badge.
+    const Color eventBorderColor = HuddlColors.teal;
+    const Color eventTypeBlue = Color(0xFF3580F0);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
     final String organiser = event['organiser'] as String? ?? '';
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
     final String borough = event['borough'] as String? ?? '';
+    // "New" badge: events with fewer than 10 attendees are considered newly listed
+    final int attendees = event['attendees'] as int? ?? 0;
+    final bool isNew = attendees < 10;
     return Semantics(
       label: 'Event: ${event['title']}, ${event['date']} ${event['time']}, ${event['location']}${isFree ? ", Free" : ", ${event['price']}"}',
       button: true,
@@ -3155,14 +3160,14 @@ class _EventListCardState extends State<_EventListCard> {
           color: context.hc.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: eventColor.withValues(alpha: 0.15),
+            color: eventBorderColor.withValues(alpha: 0.15),
             width: 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: eventColor.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              color: eventBorderColor.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -3170,23 +3175,70 @@ class _EventListCardState extends State<_EventListCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Clean cover image (no overlay tags) ──────────────────
+            // ── Cover image with "New" badge overlay ─────────────────
             ClipRRect(
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(16),
                 topRight: Radius.circular(16),
               ),
-              child: SizedBox(
-                height: 150,
-                width: double.infinity,
-                child: Hero(
-                  tag: 'event_cover_$eventId',
-                  child: _buildCoverImage(
-                    imageUrl: imageUrl,
-                    fallbackIcon: event['icon'] as IconData,
-                    fallbackColor: eventColor,
+              child: Stack(
+                children: [
+                  SizedBox(
+                    height: 150,
+                    width: double.infinity,
+                    child: Hero(
+                      tag: 'event_cover_$eventId',
+                      child: _buildCoverImage(
+                        imageUrl: imageUrl,
+                        fallbackIcon: event['icon'] as IconData,
+                        fallbackColor: eventTypeBlue,
+                      ),
+                    ),
                   ),
-                ),
+                  // ── Type chips overlaid on the image top-left ──────
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Row(
+                      children: [
+                        if (isNew)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'New',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        if (isNew) const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: eventTypeBlue,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            'Event',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
             // ── Info row (price, attendees) ───────────────────────────
@@ -3200,7 +3252,7 @@ class _EventListCardState extends State<_EventListCard> {
                     style: GoogleFonts.poppins(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isFree ? HuddlColors.teal : eventColor,
+                      color: isFree ? HuddlColors.teal : eventTypeBlue,
                     ),
                   ),
                   if (isOnline) ...[
@@ -3253,7 +3305,7 @@ class _EventListCardState extends State<_EventListCard> {
                   Row(
                     children: [
                       Icon(Icons.calendar_today_outlined,
-                          size: 13, color: eventColor),
+                          size: 13, color: eventTypeBlue),
                       const SizedBox(width: 5),
                       Text(
                         event['date'] as String,
@@ -3265,7 +3317,7 @@ class _EventListCardState extends State<_EventListCard> {
                       ),
                       const SizedBox(width: 10),
                       Icon(Icons.access_time,
-                          size: 13, color: eventColor),
+                          size: 13, color: eventTypeBlue),
                       const SizedBox(width: 4),
                       Text(
                         event['time'] as String,
@@ -3281,7 +3333,7 @@ class _EventListCardState extends State<_EventListCard> {
                   Row(
                     children: [
                       Icon(isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
-                          size: 13, color: eventColor),
+                          size: 13, color: eventTypeBlue),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
@@ -3335,8 +3387,8 @@ class _EventListCardState extends State<_EventListCard> {
                       children: [
                         CircleAvatar(
                           radius: 11,
-                          backgroundColor: eventColor.withValues(alpha: 0.15),
-                          child: Icon(Icons.business, size: 12, color: eventColor),
+                          backgroundColor: eventTypeBlue.withValues(alpha: 0.15),
+                          child: Icon(Icons.business, size: 12, color: eventTypeBlue),
                         ),
                         const SizedBox(width: 6),
                         Expanded(

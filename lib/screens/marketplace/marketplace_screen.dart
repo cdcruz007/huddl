@@ -19,6 +19,11 @@ import '../../widgets/common/huddl_empty_state.dart';
 
 
 
+// Marketplace price colour — semantic blue preserved from original design
+// HuddlColors.blue is remapped to teal globally; we need the actual blue
+// for price text, SOLD badges, and offer buttons in marketplace screens.
+const Color _kMarketBlue = Color(0xFF3580F0);
+
 // =============================================================================
 // PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
 // =============================================================================
@@ -2559,7 +2564,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                             style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
                           Text(item.priceDisplay,
-                            style: _adaptiveText(fontSize: 13, color: HuddlColors.primary, fontWeight: FontWeight.w500)),
+                            style: _adaptiveText(fontSize: 13, color: _kMarketBlue, fontWeight: FontWeight.w500)),
                         ],
                       ),
                     ),
@@ -3185,8 +3190,8 @@ class _ProductCardState extends State<_ProductCard>
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: item.isFree
-                                ? HuddlColors.primary
-                                : HuddlColors.primary,
+                                ? HuddlColors.teal
+                                : _kMarketBlue,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -3455,8 +3460,8 @@ class _SellListingTileState extends State<_SellListingTile>
                                     color: widget.isSold
                                         ? hc.textTertiary
                                         : item.isFree
-                                            ? HuddlColors.primary
-                                            : HuddlColors.primary,
+                                            ? HuddlColors.teal
+                                            : _kMarketBlue,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
