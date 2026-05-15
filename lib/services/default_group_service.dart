@@ -24,9 +24,9 @@ class DefaultGroupService {
   final Map<String, List<String>> _userGroupMemberships = {};
   
   // Persistence keys — bump version to force re-creation with year-based naming
-  // v7: each Cambridge year now gets a fully unique image (no range collisions)
-  static const String _groupsKey = 'default_groups_v7';
-  static const String _membershipsKey = 'user_memberships_v7';
+  // v8: on-load per-year image correction — fixes stale cached wrong images
+  static const String _groupsKey = 'default_groups_v8';
+  static const String _membershipsKey = 'user_memberships_v8';
   
   bool _isInitialized = false;
 
@@ -36,8 +36,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v6: reset counters to align with v7 per-year unique image assignment
-  static const String _countersKey = 'borough_image_counters_v6';
+  // v7: reset counters to align with v8 per-year image correction
+  static const String _countersKey = 'borough_image_counters_v7';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -117,6 +117,15 @@ class DefaultGroupService {
             g = g.copyWith(imageUrl: migratedUrl, isImageLocked: true);
             needsResave = true;
             _log('🔄 Migrated image URL for group: ${g.name} → $migratedUrl');
+          }
+          // ── Per-year correction: ensure every Cambridge year group has the
+          // exact image defined in _cambridgeYearImages, fixing stale cached
+          // assignments from older buggy versions.
+          final correctUrl = _migrateImageUrl(g.name, g.imageUrl);
+          if (correctUrl != g.imageUrl) {
+            g = g.copyWith(imageUrl: correctUrl, isImageLocked: true);
+            needsResave = true;
+            _log('🔧 Corrected image for "${g.name}": ${g.imageUrl} → $correctUrl');
           }
           _defaultGroups[key] = g;
         });
