@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../services/onboarding_data_service.dart';
@@ -1949,8 +1950,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _showSheet(
       title: 'My Groups ($_totalGroupCount)',
       builder: (c) => all.isEmpty
-          ? _emptyState(Icons.people_outline, 'No groups yet',
-              'Join groups from the Discover tab.')
+          ? HuddlEmptyState(
+              illustration: HuddlIllustration.groupsEmpty,
+              title: 'No groups yet',
+              subtitle: 'Join groups from the Discover tab.',
+            )
           : ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -2080,8 +2084,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _showSheet(
       title: 'My Meetups ($totalCount)',
       builder: (c) => totalCount == 0
-          ? _emptyState(Icons.event_outlined, 'No meetups yet',
-              'Meetups you create or attend will appear here.')
+          ? HuddlEmptyState(
+              illustration: HuddlIllustration.events,
+              title: 'No meetups yet',
+              subtitle: 'Meetups you create or attend will appear here.',
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -2203,8 +2210,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (c) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _emptyState(Icons.storefront_outlined, 'No listings yet',
-              'Items you list on Market will appear here.'),
+          const HuddlEmptyState(
+              illustration: HuddlIllustration.marketplaceEmpty,
+              title: 'No listings yet',
+              subtitle: 'Items you list on Market will appear here.',
+            ),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -2254,8 +2264,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final msgs = svc.savedMessages;
           final threads = svc.savedThreads;
           if (msgs.isEmpty && threads.isEmpty) {
-            return _emptyState(Icons.bookmark_border, 'No saved items',
-                'Long-press a message to save it, or save reply threads from groups.');
+            return const HuddlEmptyState(
+                illustration: HuddlIllustration.saved,
+                title: 'No saved items',
+                subtitle: 'Long-press a message to save it, or save reply threads from groups.',
+              );
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2973,8 +2986,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (ctx, setLocal) {
           final blocked = _blockService.blockedUserIds;
           if (blocked.isEmpty) {
-            return _emptyState(Icons.block, 'No blocked users',
-                'Users you block from groups or DMs will appear here.');
+            return const HuddlEmptyState(
+                illustration: HuddlIllustration.marketplace,
+                title: 'No blocked users',
+                subtitle: 'Users you block from groups or DMs will appear here.',
+              );
           }
           return Column(
             mainAxisSize: MainAxisSize.min,
@@ -5085,38 +5101,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _emptyState(IconData icon, String title, String subtitle) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: HuddlColors.peachLight,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(icon, size: 32, color: HuddlColors.primary),
-          ),
-          const SizedBox(height: 16),
-          Text(title,
-              style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary)),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(subtitle,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: context.hc.textTertiary),
-                textAlign: TextAlign.center),
-          ),
-        ],
-      ),
-    );
-  }
+  // _emptyState removed — all empty states now use HuddlEmptyState with
+  // the appropriate HuddlIllustration brand asset.
 
   Widget _circleIcon(IconData icon) {
     return Container(

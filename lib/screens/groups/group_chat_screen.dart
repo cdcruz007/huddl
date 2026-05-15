@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/common/huddl_empty_state.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
 import '../main_shell.dart';
@@ -5212,36 +5213,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Widget _emptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: HuddlColors.peachLight,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child:
-                const Icon(Icons.chat_bubble_outline, size: 36, color: HuddlColors.primary),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No messages yet',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Say hello to the group!',
-            style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-          ),
-        ],
-      ),
+    return HuddlEmptyState(
+      illustration: HuddlIllustration.chat,
+      illustrationHeight: 180,
+      title: 'No messages yet',
+      subtitle: 'Say hello and start the conversation!',
     );
   }
 
