@@ -1322,13 +1322,24 @@ class _ForwardContactTile extends StatelessWidget {
       final gUrl = target.groupImageUrl ?? '';
       Widget groupImage;
       if (gUrl.startsWith('http')) {
-        groupImage = Image.network(gUrl, fit: BoxFit.cover, width: size, height: size,
-            errorBuilder: (_, __, ___) => const Icon(Icons.people, size: 22, color: HuddlColors.primary));
+        groupImage = Image.network(
+          gUrl,
+          fit: BoxFit.cover,
+          width: size,
+          height: size,
+          errorBuilder: (_, __, ___) => _groupInitialsWidget(target.id, target.name, size),
+        );
       } else if (gUrl.startsWith('assets/')) {
-        groupImage = Image.asset(gUrl, fit: BoxFit.cover, width: size, height: size,
-            errorBuilder: (_, __, ___) => const Icon(Icons.people, size: 22, color: HuddlColors.primary));
+        groupImage = Image.asset(
+          gUrl,
+          fit: BoxFit.cover,
+          width: size,
+          height: size,
+          errorBuilder: (_, __, ___) => _groupInitialsWidget(target.id, target.name, size),
+        );
       } else {
-        groupImage = const Icon(Icons.people, size: 22, color: HuddlColors.primary);
+        // No image URL — show unique initials avatar
+        groupImage = _groupInitialsWidget(target.id, target.name, size);
       }
       return Container(
         width: size,
@@ -1378,6 +1389,55 @@ class _ForwardContactTile extends StatelessWidget {
                 ),
               ),
             ),
+    );
+  }
+
+  /// Unique initials avatar for groups that have no image stored in Firestore.
+  /// Uses the same deterministic color + initials logic as the main groups screen.
+  Widget _groupInitialsWidget(String id, String name, double size) {
+    const List<Color> palette = [
+      Color(0xFFE57373), Color(0xFFFF8A65), Color(0xFFFFB74D), Color(0xFFFFD54F),
+      Color(0xFFA5D6A7), Color(0xFF4DB6AC), Color(0xFF4FC3F7), Color(0xFF7986CB),
+      Color(0xFFBA68C8), Color(0xFFF06292), Color(0xFF90A4AE), Color(0xFF80CBC4),
+      Color(0xFFCE93D8), Color(0xFF80DEEA), Color(0xFFFFCC02), Color(0xFF66BB6A),
+    ];
+    final seed = id.isNotEmpty ? id : name;
+    int hash = 0;
+    for (final c in seed.codeUnits) {
+      hash = (hash * 31 + c) & 0x7FFFFFFF;
+    }
+    final bgColor = palette[hash % palette.length];
+
+    // Build initials — up to 2 chars from significant words
+    String initials;
+    if (name.isEmpty) {
+      initials = '?';
+    } else {
+      final words = name.trim().split(RegExp(r'\s+')).where((w) => w.length > 1).toList();
+      if (words.isEmpty) {
+        initials = name[0].toUpperCase();
+      } else if (words.length == 1) {
+        initials = words[0].substring(0, words[0].length.clamp(1, 2)).toUpperCase();
+      } else {
+        initials = '${words[0][0]}${words[1][0]}'.toUpperCase();
+      }
+    }
+
+    return Container(
+      width: size,
+      height: size,
+      color: bgColor,
+      child: Center(
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+            fontSize: size * (initials.length > 1 ? 0.30 : 0.38),
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
     );
   }
 

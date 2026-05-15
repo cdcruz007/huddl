@@ -1983,7 +1983,10 @@ class _MessagesTabState extends State<_MessagesTab> {
                     children: [
                       if (first.isGroup)
                         _GroupAvatar(
-                            imageUrl: first.imageUrl, size: 28)
+                            imageUrl: first.imageUrl,
+                            groupName: first.conversationName,
+                            groupId: first.targetId,
+                            size: 28)
                       else
                         CircleAvatar(
                           radius: 14,
@@ -2413,6 +2416,8 @@ class _GroupMessageRow extends StatelessWidget {
                 // ── Group avatar (scenic image or fallback) ──────────
                 _GroupAvatar(
                   imageUrl: group.imageUrl,
+                  groupName: group.name,
+                  groupId: group.id,
                   size: 54,
                   isOnline: hasUnread,
                 ),
@@ -3001,13 +3006,65 @@ class _MessageListItem {
 // GROUP AVATAR — scenic image with online dot ─────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/// Palette of distinct background colors used for initials-based avatars.
+/// Chosen to be visually distinct from each other and readable against white text.
+const List<Color> _kAvatarPalette = [
+  Color(0xFFE57373), // red
+  Color(0xFFFF8A65), // deep orange
+  Color(0xFFFFB74D), // orange
+  Color(0xFFFFD54F), // amber
+  Color(0xFFA5D6A7), // green
+  Color(0xFF4DB6AC), // teal
+  Color(0xFF4FC3F7), // light blue
+  Color(0xFF7986CB), // indigo
+  Color(0xFFBA68C8), // purple
+  Color(0xFFF06292), // pink
+  Color(0xFF90A4AE), // blue grey
+  Color(0xFF80CBC4), // teal light
+  Color(0xFFCE93D8), // purple light
+  Color(0xFF80DEEA), // cyan
+  Color(0xFFFFCC02), // yellow
+  Color(0xFF66BB6A), // green darker
+];
+
+/// Pick a deterministic color from the palette using the group id or name.
+Color _avatarColorForGroup(String seed) {
+  if (seed.isEmpty) return _kAvatarPalette[0];
+  int hash = 0;
+  for (final c in seed.codeUnits) {
+    hash = (hash * 31 + c) & 0x7FFFFFFF;
+  }
+  return _kAvatarPalette[hash % _kAvatarPalette.length];
+}
+
+/// Extract up to 2 initials from a group name for the fallback avatar.
+/// e.g. "Cambridge Parents 2024" → "CP"
+/// e.g. "Dads Connect" → "DC"
+/// e.g. "SEN Support" → "SS"
+String _initialsForGroup(String name) {
+  if (name.isEmpty) return '?';
+  final words = name.trim().split(RegExp(r'\s+'));
+  if (words.length == 1) {
+    return words[0].substring(0, words[0].length.clamp(1, 2)).toUpperCase();
+  }
+  // Take first letter of first two significant words (skip short words like "the", "a")
+  final significant = words.where((w) => w.length > 1).toList();
+  if (significant.isEmpty) return words[0][0].toUpperCase();
+  if (significant.length == 1) return significant[0].substring(0, significant[0].length.clamp(1, 2)).toUpperCase();
+  return '${significant[0][0]}${significant[1][0]}'.toUpperCase();
+}
+
 class _GroupAvatar extends StatelessWidget {
   final String imageUrl;
+  final String groupName;
+  final String groupId;
   final double size;
   final bool isOnline;
 
   const _GroupAvatar({
     required this.imageUrl,
+    this.groupName = '',
+    this.groupId = '',
     this.size = 54,
     this.isOnline = false,
   });
@@ -3054,7 +3111,7 @@ class _GroupAvatar extends StatelessWidget {
         fit: BoxFit.cover,
         width: size,
         height: size,
-        errorBuilder: (_, __, ___) => _fallbackIcon(),
+        errorBuilder: (_, __, ___) => _initialsAvatar(),
       );
     } else if (imageUrl.startsWith('http')) {
       return Image.network(
@@ -3062,7 +3119,7 @@ class _GroupAvatar extends StatelessWidget {
         fit: BoxFit.cover,
         width: size,
         height: size,
-        errorBuilder: (_, __, ___) => _fallbackIcon(),
+        errorBuilder: (_, __, ___) => _initialsAvatar(),
       );
     } else if (imageUrl.startsWith('data:')) {
       try {
@@ -3074,24 +3131,38 @@ class _GroupAvatar extends StatelessWidget {
             fit: BoxFit.cover,
             width: size,
             height: size,
-            errorBuilder: (_, __, ___) => _fallbackIcon(),
+            errorBuilder: (_, __, ___) => _initialsAvatar(),
           );
         }
       } catch (_) {
         // fall through
       }
     }
-    return _fallbackIcon();
+    // No valid image URL — show unique initials avatar
+    return _initialsAvatar();
   }
 
-  Widget _fallbackIcon() {
+  /// Generates a unique, deterministic initials-based avatar so every group
+  /// looks distinct even when no imageUrl is stored in Firestore.
+  Widget _initialsAvatar() {
+    final seed = groupId.isNotEmpty ? groupId : groupName;
+    final bgColor = _avatarColorForGroup(seed);
+    final initials = _initialsForGroup(groupName);
+    final fontSize = size * (initials.length > 1 ? 0.30 : 0.38);
+
     return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
+      width: size,
+      height: size,
+      color: bgColor,
       child: Center(
-        child: Icon(
-          Icons.people,
-          size: size * 0.45,
-          color: HuddlColors.primary,
+        child: Text(
+          initials,
+          style: GoogleFonts.poppins(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            letterSpacing: 0.5,
+          ),
         ),
       ),
     );
