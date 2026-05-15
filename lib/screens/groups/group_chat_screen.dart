@@ -44,6 +44,8 @@ import '../../services/voice_message_service.dart';
 import '../../services/huddl_notification_service.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 // My-bubble: very soft brand orange tint (non-const — uses runtime withValues)
@@ -4791,13 +4793,48 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (!mounted) return;
     final userName = _onboardingService.name ?? 'You';
 
-    // Show a "getting location…" snackbar while we wait
+    // ── 1. Permission check (native only; web uses browser prompt via geolocator) ──
+    if (!kIsWeb) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              permission == LocationPermission.deniedForever
+                  ? 'Location permission permanently denied. Enable it in Settings.'
+                  : 'Location permission denied.',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: permission == LocationPermission.deniedForever
+                ? SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  )
+                : null,
+          ),
+        );
+        return;
+      }
+    }
+
+    // ── 2. Show "getting location…" progress snackbar ──────────────────────
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             const SizedBox(
-              width: 16, height: 16,
+              width: 16,
+              height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             const SizedBox(width: 12),
@@ -4806,31 +4843,45 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         ),
         backgroundColor: HuddlColors.primary,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 8),
+        duration: const Duration(seconds: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
 
-    double lat = 52.2053; // Cambridge fallback
-    double lng = 0.1218;
-    String label = 'My location';
+    // ── 3. Obtain real GPS position ─────────────────────────────────────────
+    double? lat;
+    double? lng;
+    const String label = 'My location';
 
-    // Geolocation: web uses browser API via JS interop,
-    // iOS/Android uses the Cambridge fallback (location_picker can be
-    // added later via the geolocator package for native GPS support).
-    if (kIsWeb) {
-      try {
-        // Web-only: use dart:html / js_interop at runtime via eval workaround
-        // We keep this block web-guarded so it compiles on all platforms.
-        await Future.delayed(const Duration(seconds: 1)); // placeholder
-      } catch (_) {
-        // Keep Cambridge fallback
-      }
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
+      );
+      lat = position.latitude;
+      lng = position.longitude;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[GroupChat] Geolocation error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not get your location. Please try again.',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
     }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
+    // ── 4. Add to local UI state ────────────────────────────────────────────
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
     final msg = _GroupImageMessage(
       imageUrl: 'location_pin',
@@ -4851,7 +4902,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _fireMessageSentNotifier();
     _scrollToEnd();
 
-    // Write to Firestore so other devices see the location pin
+    // ── 5. Write to Firestore so other devices see the location pin ─────────
     try {
       await FirestoreService().sendGroupMessage(
         groupId: widget.groupId,

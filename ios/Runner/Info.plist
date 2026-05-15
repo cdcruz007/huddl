@@ -105,6 +105,10 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Huddl uses the microphone to record voice messages in chats and videos when sharing content in groups.</string>
 
+	<!-- Location — used for sharing current location in chat messages -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Huddl uses your location to share it with other group members in chat.</string>
+
 	<!-- Face ID — used by local_auth for biometric login lock -->
 	<key>NSFaceIDUsageDescription</key>
 	<string>Huddl uses Face ID to protect your account with biometric login.</string>

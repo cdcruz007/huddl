@@ -49,6 +49,12 @@ dependencies:
   audioplayers: 6.1.0              # Audio playback for voice message bubbles
   path_provider: ^2.1.4            # Temp directory for voice recordings
 
+  # Location — real GPS on Android/iOS; browser Geolocation API on Web
+  geolocator: ^12.0.0              # Cross-platform GPS (Android/iOS/Web) — v12 compatible with firebase_auth_web
+
+  # Runtime permissions — Android/iOS (no-op on Web)
+  permission_handler: ^11.4.0      # Camera, location, contacts, microphone
+
   # dependency_overrides: force web sub-packages to versions that accept
   # firebase_core 3.1.0. These are the platform-web implementations bundled
   # inside firebase_auth and firebase_messaging — they are not used on iOS/Android

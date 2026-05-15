@@ -25,6 +25,11 @@
     <!-- READ/WRITE external storage for saving voice recordings (API < 29) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+    <!-- CAMERA: Required for taking photos and videos in chat -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- LOCATION: Required for sharing location in chat messages -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
         android:label="Huddl"

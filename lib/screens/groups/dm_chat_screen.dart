@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:io' show File;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/direct_message.dart';
 import '../main_shell.dart';
@@ -2243,25 +2247,109 @@ class _DMChatScreenState extends State<DMChatScreen> {
     }
   }
 
+  // ── Upload helper: bytes or file path → Firebase Storage URL ───────────
+  Future<String?> _uploadMediaToStorage({
+    required Uint8List? bytes,
+    required String? filePath,
+    required String mimeType,
+    required String folder,
+  }) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
+    final ts  = DateTime.now().millisecondsSinceEpoch;
+    final ext = mimeType.contains('/') ? mimeType.split('/').last : 'bin';
+    final ref = FirebaseStorage.instance.ref('$folder/${uid}_$ts.$ext');
+    try {
+      TaskSnapshot snap;
+      if (bytes != null) {
+        snap = await ref.putData(bytes, SettableMetadata(contentType: mimeType));
+      } else if (filePath != null && !kIsWeb) {
+        snap = await ref.putFile(File(filePath));
+      } else {
+        return null;
+      }
+      return await snap.ref.getDownloadURL();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[DMChat] Storage upload error: $e');
+      return null;
+    }
+  }
+
   Future<void> _handleCameraCapture() async {
+    if (!kIsWeb) {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Camera permission required to take photos'),
+              backgroundColor: HuddlColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+        }
+        return;
+      }
+    }
     final attachment = await _mediaService.takePhoto();
     if (attachment == null || !mounted) return;
-    await _sendRichMessage(type: MessageType.image, imageUrl: attachment.filePath ?? 'camera_photo_${DateTime.now().millisecondsSinceEpoch}');
+    // Upload to Firebase Storage so the URL is accessible on all devices
+    final downloadUrl = await _uploadMediaToStorage(
+      bytes: attachment.bytes,
+      filePath: attachment.filePath,
+      mimeType: attachment.mimeType ?? 'image/jpeg',
+      folder: 'dm_images',
+    );
+    if (!mounted) return;
+    if (downloadUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to upload photo. Please try again.')),
+      );
+      return;
+    }
+    await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
   }
 
   Future<void> _handleGalleryPick() async {
+    if (!kIsWeb) {
+      final status = await Permission.photos.request();
+      if (!status.isGranted) {
+        // On Android 13+ photos permission may map to READ_MEDIA_IMAGES —
+        // fall back gracefully if the picker itself grants access.
+        if (kDebugMode) debugPrint('[DMChat] Photos permission: $status — continuing anyway (picker may still work)');
+      }
+    }
     final attachments = await _mediaService.pickMultipleImages();
     if (attachments.isEmpty || !mounted) return;
     for (final att in attachments) {
-      await _sendRichMessage(type: MessageType.image, imageUrl: att.filePath ?? 'gallery_photo_${DateTime.now().millisecondsSinceEpoch}');
+      final downloadUrl = await _uploadMediaToStorage(
+        bytes: att.bytes,
+        filePath: att.filePath,
+        mimeType: att.mimeType ?? 'image/jpeg',
+        folder: 'dm_images',
+      );
+      if (downloadUrl == null) continue; // skip if upload failed
+      if (!mounted) return;
+      await _sendRichMessage(type: MessageType.image, imageUrl: downloadUrl);
     }
   }
 
   Future<void> _handleDocumentPick() async {
     final attachment = await _mediaService.pickDocument();
     if (attachment == null || !mounted) return;
+    // Upload document to Firebase Storage for cross-device access
+    String? downloadUrl;
+    if (attachment.bytes != null || (attachment.filePath != null && !kIsWeb)) {
+      downloadUrl = await _uploadMediaToStorage(
+        bytes: attachment.bytes,
+        filePath: attachment.filePath,
+        mimeType: attachment.mimeType ?? 'application/octet-stream',
+        folder: 'dm_documents',
+      );
+    }
     await _sendRichMessage(
       type: MessageType.document,
+      documentUrl: downloadUrl,
       documentName: attachment.fileName ?? 'Unknown file',
       documentSize: attachment.fileSize,
     );
@@ -2270,13 +2358,48 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Future<void> _handleLocationShare() async {
     if (!mounted) return;
 
-    // Show a "getting location…" snackbar while we wait
+    // ── 1. Permission check (native only; web uses browser prompt via geolocator) ──
+    if (!kIsWeb) {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              permission == LocationPermission.deniedForever
+                  ? 'Location permission permanently denied. Enable it in Settings.'
+                  : 'Location permission denied.',
+              style: GoogleFonts.poppins(fontSize: 13),
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: permission == LocationPermission.deniedForever
+                ? SnackBarAction(
+                    label: 'Settings',
+                    textColor: Colors.white,
+                    onPressed: () => openAppSettings(),
+                  )
+                : null,
+          ),
+        );
+        return;
+      }
+    }
+
+    // ── 2. Show "getting location…" progress snackbar ──────────────────────
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             const SizedBox(
-              width: 16, height: 16,
+              width: 16,
+              height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             const SizedBox(width: 12),
@@ -2285,28 +2408,45 @@ class _DMChatScreenState extends State<DMChatScreen> {
         ),
         backgroundColor: HuddlColors.primaryDark,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 8),
+        duration: const Duration(seconds: 15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
 
-    double lat = 52.2053;
-    double lng = 0.1218;
+    // ── 3. Obtain real GPS position ─────────────────────────────────────────
+    double? lat;
+    double? lng;
     String label = 'My location';
 
-    if (kIsWeb) {
-      try {
-        // Web geolocation placeholder – native GPS via geolocator
-        // package can be added in a future sprint for iOS/Android.
-        await Future.delayed(const Duration(seconds: 1));
-      } catch (_) {
-        // Keep Cambridge fallback
-      }
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
+      );
+      lat = position.latitude;
+      lng = position.longitude;
+    } catch (e) {
+      if (kDebugMode) debugPrint('[DMChat] Geolocation error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not get your location. Please try again.',
+            style: GoogleFonts.poppins(fontSize: 13),
+          ),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+      return;
     }
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
+    // ── 4. Send location message ────────────────────────────────────────────
     await _sendRichMessage(
       type: MessageType.location,
       latitude: lat,
@@ -2372,6 +2512,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   Future<void> _sendRichMessage({
     required MessageType type,
     String? imageUrl,
+    String? documentUrl,
     String? documentName,
     int? documentSize,
     double? latitude,
@@ -2405,7 +2546,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
         conversationId: _conversationId!,
         message: displayMsg,
         type: typeStr,
-        imageUrl: imageUrl,
+        imageUrl: imageUrl ?? documentUrl, // imageUrl doubles as download URL for docs
         documentName: documentName,
         documentSize: documentSize,
         latitude: latitude,
