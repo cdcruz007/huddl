@@ -49,7 +49,10 @@ import 'postcode_service.dart';
 //     — createdAt, updatedAt
 //     — createdByUid (parent who first added them)
 //     — tags: List<String>
-//     — borough: String  ← primary scope field
+//     — borough: String          ← primary scope field
+//     — listingSource: String    ← 'ai_discovered' | 'parent_added'
+//     — aiRating: double?        ← star rating from AI web search (≥4.5 only)
+//     — aiDiscoveredAt: Timestamp?
 //   local_services/{listingId}/endorsements/{uid}
 //     — uid, firstName, borough, quote, createdAt
 //
@@ -206,6 +209,17 @@ class ServiceListing {
   // Whether the current user has already endorsed this listing
   final bool hasEndorsed;
 
+  // ── Source provenance ────────────────────────────────────────────────────
+  /// 'ai_discovered' — found by Huddl AI web search (≥4.5★)
+  /// 'parent_added'  — submitted by a community parent via Add / AI tab
+  final String listingSource;
+
+  /// Star rating as reported by AI web search (null for parent-added)
+  final double? aiRating;
+
+  /// When the AI discovery job last found/updated this listing
+  final DateTime? aiDiscoveredAt;
+
   const ServiceListing({
     required this.id,
     required this.name,
@@ -226,6 +240,9 @@ class ServiceListing {
     required this.updatedAt,
     this.recentEndorsements = const [],
     this.hasEndorsed = false,
+    this.listingSource = 'parent_added',
+    this.aiRating,
+    this.aiDiscoveredAt,
   });
 
   ServiceListing copyWith({
@@ -248,6 +265,9 @@ class ServiceListing {
     DateTime? updatedAt,
     List<ServiceEndorsement>? recentEndorsements,
     bool? hasEndorsed,
+    String? listingSource,
+    double? aiRating,
+    DateTime? aiDiscoveredAt,
   }) => ServiceListing(
         id:                  id                  ?? this.id,
         name:                name                ?? this.name,
@@ -268,6 +288,9 @@ class ServiceListing {
         updatedAt:           updatedAt           ?? this.updatedAt,
         recentEndorsements:  recentEndorsements  ?? this.recentEndorsements,
         hasEndorsed:         hasEndorsed         ?? this.hasEndorsed,
+        listingSource:       listingSource       ?? this.listingSource,
+        aiRating:            aiRating            ?? this.aiRating,
+        aiDiscoveredAt:      aiDiscoveredAt      ?? this.aiDiscoveredAt,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -287,6 +310,9 @@ class ServiceListing {
         'viewCount':         viewCount,
         'createdAt':         Timestamp.fromDate(createdAt),
         'updatedAt':         Timestamp.fromDate(updatedAt),
+        'listingSource':     listingSource,
+        if (aiRating != null)       'aiRating':       aiRating,
+        if (aiDiscoveredAt != null) 'aiDiscoveredAt': Timestamp.fromDate(aiDiscoveredAt!),
       };
 
   factory ServiceListing.fromFirestore(
@@ -317,6 +343,11 @@ class ServiceListing {
       viewCount:        d['viewCount']        as int?  ?? 0,
       createdAt: ts is Timestamp ? ts.toDate() : DateTime.now(),
       updatedAt: uts is Timestamp ? uts.toDate() : DateTime.now(),
+      listingSource:  d['listingSource'] as String? ?? 'parent_added',
+      aiRating:       (d['aiRating'] as num?)?.toDouble(),
+      aiDiscoveredAt: d['aiDiscoveredAt'] is Timestamp
+          ? (d['aiDiscoveredAt'] as Timestamp).toDate()
+          : null,
     );
   }
 }

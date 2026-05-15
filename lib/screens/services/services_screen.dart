@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/local_services_service.dart';
+import '../../services/ai_directory_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 
@@ -147,12 +148,61 @@ class _DirectoryTabState extends State<_DirectoryTab>
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
 
+  // ── AI discovery state ──────────────────────────────────────────────────
+  bool _aiRefreshing = false;
+  String? _aiLastUpdated;   // human-readable "Updated today" / "Updated 2h ago"
+
   @override
   void initState() {
     super.initState();
     _searchCtrl.addListener(() {
       if (mounted) {
         setState(() => _searchQuery = _searchCtrl.text.trim().toLowerCase());
+      }
+    });
+    // Trigger AI daily refresh asynchronously — non-blocking
+    _triggerAiRefreshIfDue();
+  }
+
+  Future<void> _triggerAiRefreshIfDue() async {
+    try {
+      final triggered = await AiDirectoryService().runIfDue();
+      if (triggered && mounted) {
+        setState(() => _aiLastUpdated = 'Updated just now');
+      } else {
+        _updateLastRefreshLabel();
+      }
+    } catch (_) {
+      // Silent — discovery errors should never crash the UI
+    }
+  }
+
+  Future<void> _forceAiRefresh() async {
+    if (_aiRefreshing) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _aiRefreshing = true);
+    try {
+      await AiDirectoryService().forceRun();
+      if (mounted) setState(() => _aiLastUpdated = 'Updated just now');
+    } catch (_) {
+      // Silent
+    } finally {
+      if (mounted) setState(() => _aiRefreshing = false);
+    }
+  }
+
+  Future<void> _updateLastRefreshLabel() async {
+    final hours = await AiDirectoryService().hoursUntilNextRun();
+    if (!mounted) return;
+    setState(() {
+      if (hours == 0) {
+        _aiLastUpdated = 'Updating soon…';
+      } else if (hours < 2) {
+        _aiLastUpdated = 'Updated 1h ago';
+      } else if (hours < 23) {
+        _aiLastUpdated = 'Updated ${24 - hours}h ago';
+      } else {
+        _aiLastUpdated = 'Updated today';
       }
     });
   }
@@ -187,6 +237,12 @@ class _DirectoryTabState extends State<_DirectoryTab>
 
     return Column(
       children: [
+        // ── AI discovery banner ─────────────────────────────────────────────
+        _AiRefreshBanner(
+          isRefreshing: _aiRefreshing,
+          lastUpdated:  _aiLastUpdated,
+          onRefresh:    _forceAiRefresh,
+        ),
         // ── Search bar ──────────────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -624,10 +680,172 @@ class _ListingCardState extends State<_ListingCard> {
                   ),
                 ),
               ],
+              // ── Provenance + AI rating footer ─────────────────────────
+              const SizedBox(height: 10),
+              _ProvenanceBadge(listing: listing),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── AI refresh banner ─────────────────────────────────────────────────────
+
+class _AiRefreshBanner extends StatelessWidget {
+  final bool isRefreshing;
+  final String? lastUpdated;
+  final VoidCallback onRefresh;
+
+  const _AiRefreshBanner({
+    required this.isRefreshing,
+    required this.lastUpdated,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: HuddlColors.blueBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: HuddlColors.teal.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          // AI icon
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: HuddlColors.teal.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(
+              child: Text('🤖', style: TextStyle(fontSize: 16)),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Label
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'AI Discovered listings',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.teal,
+                  ),
+                ),
+                if (lastUpdated != null)
+                  Text(
+                    lastUpdated!,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: hc.textTertiary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // Refresh button
+          GestureDetector(
+            onTap: isRefreshing ? null : onRefresh,
+            child: AnimatedRotation(
+              turns: isRefreshing ? 1 : 0,
+              duration: const Duration(seconds: 1),
+              child: Icon(
+                Icons.refresh_rounded,
+                size: 20,
+                color: isRefreshing
+                    ? hc.textTertiary
+                    : HuddlColors.teal,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Provenance badge ──────────────────────────────────────────────────────
+
+class _ProvenanceBadge extends StatelessWidget {
+  final ServiceListing listing;
+  const _ProvenanceBadge({required this.listing});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAi = listing.listingSource == 'ai_discovered';
+    final rating = listing.aiRating;
+
+    return Row(
+      children: [
+        // Source chip
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: isAi
+                ? HuddlColors.teal.withValues(alpha: 0.10)
+                : HuddlColors.primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isAi
+                  ? HuddlColors.teal.withValues(alpha: 0.35)
+                  : HuddlColors.primary.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                isAi ? '🤖' : '👨‍👩‍👧',
+                style: const TextStyle(fontSize: 10),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                isAi ? 'AI Discovered' : 'Parent Added',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isAi ? HuddlColors.teal : HuddlColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // AI star rating (only for ai_discovered)
+        if (isAi && rating != null) ...[
+          const SizedBox(width: 8),
+          Icon(Icons.star_rounded,
+              size: 13, color: HuddlColors.accentAmber),
+          const SizedBox(width: 2),
+          Text(
+            rating.toStringAsFixed(1),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.accentAmber,
+            ),
+          ),
+          Text(
+            '/5',
+            style: GoogleFonts.poppins(
+              fontSize: 10,
+              color: context.hc.textTertiary,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
