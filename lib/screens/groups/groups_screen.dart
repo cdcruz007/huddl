@@ -143,7 +143,7 @@ class _GroupsScreenState extends State<GroupsScreen>
                     controller: _tabController,
                     tabs: const [
                       Tab(text: 'Messages'),
-                      Tab(text: "I'm Going"),
+                      Tab(text: 'Attending'),
                       Tab(text: 'Saved'),
                     ],
                     labelColor: HuddlColors.primary,
