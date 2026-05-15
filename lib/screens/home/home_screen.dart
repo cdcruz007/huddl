@@ -1139,7 +1139,7 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         ShaderMask(
                           shaderCallback: (bounds) =>
-                              HuddlColors.aiGradient.createShader(bounds),
+                              HuddlColors.yellowGradient.createShader(bounds),
                           child: const Icon(Icons.lightbulb_outline,
                               size: 14, color: HuddlColors.white),
                         ),
@@ -1267,7 +1267,7 @@ class _HomeScreenState extends State<HomeScreen>
         gradient: LinearGradient(
           colors: isDark
               ? [HuddlColors.darkSurface, HuddlColors.darkSurfaceVariant]
-              : [HuddlColors.peachLight, HuddlColors.peachVeryLight],
+              : [HuddlColors.yellowSoft, HuddlColors.yellowBackground],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1537,10 +1537,10 @@ class _HomeScreenState extends State<HomeScreen>
     // Card colours
     final gradientColors = isDark
         ? [HuddlColors.darkSurfaceVariant, HuddlColors.darkSurface]
-        : [HuddlColors.blueBackground, HuddlColors.white];
+        : [HuddlColors.yellowBackground, HuddlColors.white];
     final borderColor = isDark
         ? HuddlColors.darkDivider
-        : HuddlColors.blue.withValues(alpha: 0.15);
+        : HuddlColors.accentAmber.withValues(alpha: 0.35);
     final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
     final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
     final labelColor = isDark ? HuddlColors.primary.withValues(alpha: 0.85) : HuddlColors.primary;
@@ -2080,7 +2080,7 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: HuddlColors.blueBackground,
+                              color: HuddlColors.yellowBackground,
                               borderRadius:
                                   BorderRadius.circular(4),
                             ),
@@ -2089,13 +2089,13 @@ class _HomeScreenState extends State<HomeScreen>
                               children: [
                                 const Icon(Icons.lightbulb_outline,
                                     size: 8,
-                                    color: HuddlColors.blue),
+                                    color: HuddlColors.accentAmber),
                                 const SizedBox(width: 3),
                                 Text(
                                   item.reason,
                                   style: GoogleFonts.poppins(
                                     fontSize: 9,
-                                    color: HuddlColors.blue,
+                                    color: HuddlColors.yellowDark,
                                   ),
                                 ),
                               ],
@@ -2503,11 +2503,11 @@ class _HomeScreenState extends State<HomeScreen>
   Color _feedIconColor(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case FeedItemType.newGroup:
         return HuddlColors.primary;
       case FeedItemType.newEvent:
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.yellowDark;
       case FeedItemType.milestone:
@@ -2522,7 +2522,7 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newGroup:
         return HuddlColors.peachLight;
       case FeedItemType.newEvent:
-        return HuddlColors.blueBackground;
+        return HuddlColors.successBg;
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.yellowBackground;
       case FeedItemType.milestone:

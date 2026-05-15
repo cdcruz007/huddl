@@ -1269,7 +1269,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 height: 36,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF2E8B57), Color(0xFF4CAF82)],
+                    colors: [HuddlColors.yellowDark, HuddlColors.accentAmber],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1316,7 +1316,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Tab(text: 'Sell'),
               Tab(text: 'Saved'),
             ],
-            labelColor: HuddlColors.primary,
+            labelColor: HuddlColors.yellowDark,
             unselectedLabelColor: hc.textTertiary,
             labelStyle: _adaptiveText(
               fontSize: 15,
@@ -1326,7 +1326,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
-            indicatorColor: HuddlColors.primary,
+            indicatorColor: HuddlColors.yellow,
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: hc.divider,
