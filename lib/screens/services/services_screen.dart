@@ -109,7 +109,7 @@ class _ServicesHeader extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+                    colors: [Color(0xFF0D8C78), HuddlColors.teal],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),

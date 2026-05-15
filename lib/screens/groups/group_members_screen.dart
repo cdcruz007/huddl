@@ -140,10 +140,10 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
     const colors = [
       HuddlColors.primary,
       HuddlColors.teal,
-      Color(0xFF7C5CBF),
-      Color(0xFFE8843B),
-      Color(0xFF3B82F6),
-      Color(0xFF10B981),
+      HuddlColors.primaryDark,
+      HuddlColors.accentAmber,
+      HuddlColors.yellow,
+      HuddlColors.accentCoral,
     ];
     return colors[uid.hashCode.abs() % colors.length];
   }

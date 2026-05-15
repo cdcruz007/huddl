@@ -99,15 +99,17 @@ class HuddlColors {
 
   // Secondary / Accent
   static const Color teal = Color(0xFF199A85);
-  static const Color blue = Color(0xFF3580F0);
-  static const Color lightBlue = Color(0xFF5B9DFF);
-  static const Color paleBlue = Color(0xFF82B4FF);
-  static const Color blueBackground = Color(0xFFEDF4FF);
+  // ── Blue tokens remapped to brand palette (orange/teal) ──────────────────
+  // These names are preserved for API stability; values now use brand colours.
+  static const Color blue = Color(0xFF199A85);          // → brand teal
+  static const Color lightBlue = Color(0xFFE8935E);     // → primaryDark orange
+  static const Color paleBlue = Color(0xFFFFCBA0);      // → primaryLight orange
+  static const Color blueBackground = Color(0xFFFFF3ED); // → peachLight
 
   // Category accent palette (non-status, for tags / badges / avatars)
   static const Color accentAmber = Color(0xFFF3C54F);       // yellow family – warm gold (style-guide primary yellow)
   static const Color accentCoral = Color(0xFFF69F72);       // orange-pink family
-  static const Color accentSky   = Color(0xFF78B0FF);       // blue gradient end
+  static const Color accentSky   = Color(0xFFFFCBA0);       // → primaryLight (was blue)
   static const Color accentSlate = Color(0xFF7C7C7C);       // neutral secondary text
 
   // Yellow / Amber family (from style guide — #FFF3C54F)
@@ -188,38 +190,38 @@ class HuddlColors {
   static const Color gray800 = Color(0xFF2D2D2D);
   static const Color gray900 = Color(0xFF1A1A1A);
 
-  // Subscription / Premium
-  static const Color premiumPurpleBg = Color(0xFFF5F0FF);
-  static const Color premiumPurpleLight = Color(0xFFFAF5FF);
-  static const Color premiumPurpleMid = Color(0xFFEDE5FF);
-  static const Color premiumBlue = Color(0xFF3B82F6);
-  static const Color coralSoft = Color(0xFFFF6B6B);
+  // Subscription / Premium — remapped to brand palette
+  static const Color premiumPurpleBg = Color(0xFFFFF3ED);    // → peachLight
+  static const Color premiumPurpleLight = Color(0xFFFFF8F0); // → peachVeryLight
+  static const Color premiumPurpleMid = Color(0xFFFFEDD6);   // → warm peach mid
+  static const Color premiumBlue = Color(0xFFE8935E);        // → primaryDark orange
+  static const Color coralSoft = Color(0xFFE8935E);          // → primaryDark orange
   static const Color peachBg = Color(0xFFFFF0E6);
   static const Color disabledBorder = Color(0xFFE9E9EA);
 
-  // Category dynamic colours (marketplace / offers)
-  static const Color categoryBaby = Color(0xFFFF6B9D);
-  static const Color categorySport = Color(0xFF10B981);
-  static const Color categoryTech = Color(0xFF6366F1);
-  static const Color actionSkip = Color(0xFFEF4444);
-  static const Color actionGreen = Color(0xFF34C759);
-  static const Color pinkSoft = Color(0xFFFF69B4);
-  static const Color amberWarm = Color(0xFFE8A838);
-  static const Color purpleAccent = Color(0xFFA16AE9);
+  // Category dynamic colours — remapped to brand palette
+  static const Color categoryBaby = Color(0xFFFCA878);  // → primary orange
+  static const Color categorySport = Color(0xFF199A85); // → teal (already brand)
+  static const Color categoryTech = Color(0xFF199A85);  // → teal
+  static const Color actionSkip = Color(0xFFE53935);    // keep red — swipe-delete semantic
+  static const Color actionGreen = Color(0xFF199A85);   // → teal (success green)
+  static const Color pinkSoft = Color(0xFFFCA878);      // → primary orange
+  static const Color amberWarm = Color(0xFFE8A838);     // keep — is brand amber/yellow
+  static const Color purpleAccent = Color(0xFF199A85);  // → teal
   static const Color checkoutSuccessBg = Color(0xFFE6F5F3);
   static const Color checkoutSuccessBgLight = Color(0xFFF0FAF8);
 
-  // Attachment sheet colours
-  static const Color attachPhoto = Color(0xFFFF5C6A);
-  static const Color attachPhotoBg = Color(0xFFFFE8EA);
-  static const Color attachFile = Color(0xFF7C4DFF);
-  static const Color attachFileBg = Color(0xFFF0EAFF);
-  static const Color attachLocation = Color(0xFF2979FF);
-  static const Color attachLocationBg = Color(0xFFE3F0FF);
-  static const Color attachContact = Color(0xFF00C853);
-  static const Color attachContactBg = Color(0xFFE0F8EA);
-  static const Color attachPoll = Color(0xFFFF9100);
-  static const Color attachPollBg = Color(0xFFFFF3E0);
+  // Attachment sheet colours — remapped to brand palette
+  static const Color attachPhoto = Color(0xFFE8935E);       // → primaryDark orange
+  static const Color attachPhotoBg = Color(0xFFFFF3ED);     // → peachLight
+  static const Color attachFile = Color(0xFF199A85);        // → teal
+  static const Color attachFileBg = Color(0xFFE6F5F3);      // → teal bg (successBg)
+  static const Color attachLocation = Color(0xFF199A85);    // → teal
+  static const Color attachLocationBg = Color(0xFFE6F5F3);  // → teal bg
+  static const Color attachContact = Color(0xFF199A85);     // → teal
+  static const Color attachContactBg = Color(0xFFE6F5F3);   // → teal bg
+  static const Color attachPoll = Color(0xFFF3C54F);        // → brand yellow/amber
+  static const Color attachPollBg = Color(0xFFFFF7C9);      // → yellowLight
 
   // Gradient helpers
   static const Color coralGradientEnd = Color(0xFFFCA878);
@@ -240,14 +242,14 @@ class HuddlColors {
     colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0), Color(0xFFFFFFFF)],
   );
 
-  // AI feature gradient
+  // AI feature gradient — remapped to brand orange
   static const LinearGradient aiGradient = LinearGradient(
-    colors: [Color(0xFF3580F0), Color(0xFF5B9DFF)],
+    colors: [Color(0xFFE8935E), Color(0xFFFCA878)],  // primaryDark → primary
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  static const Color aiBlue = Color(0xFF3580F0);
-  static const Color aiBlueLight = Color(0xFF5B9DFF);
+  static const Color aiBlue = Color(0xFF199A85);      // → brand teal
+  static const Color aiBlueLight = Color(0xFFE8935E); // → primaryDark orange
 
   // ── Shimmer / Skeleton loading ─────────────────────────────────────────
   static const Color shimmerBase = Color(0xFFE0E0E0);
