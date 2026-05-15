@@ -107,9 +107,9 @@ class _ServicesHeader extends StatelessWidget {
           const SizedBox(height: 12),
           TabBar(
             controller: tabController,
-            labelColor: HuddlColors.teal,
+            labelColor: HuddlColors.primary,
             unselectedLabelColor: hc.textTertiary,
-            indicatorColor: HuddlColors.teal,
+            indicatorColor: HuddlColors.primary,
             indicatorWeight: 2.5,
             labelStyle: GoogleFonts.poppins(
                 fontSize: 14, fontWeight: FontWeight.w600),
@@ -257,7 +257,7 @@ class _DirectoryTabState extends State<_DirectoryTab>
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Center(
                     child: CircularProgressIndicator(
-                        color: HuddlColors.teal));
+                        color: HuddlColors.primary));
               }
               if (snap.hasError) {
                 return Center(
@@ -333,10 +333,10 @@ class _CategoryChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? HuddlColors.teal : hc.inputBg,
+          color: selected ? HuddlColors.primary : hc.inputBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? HuddlColors.teal : hc.divider,
+            color: selected ? HuddlColors.primary : hc.divider,
           ),
         ),
         child: Row(
@@ -463,7 +463,7 @@ class _ListingCardState extends State<_ListingCard> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.teal,
+              backgroundColor: HuddlColors.primary,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -655,12 +655,12 @@ class _EndorseButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: hasEndorsed
-              ? HuddlColors.teal.withValues(alpha: 0.12)
+              ? HuddlColors.primary.withValues(alpha: 0.12)
               : context.hc.inputBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                hasEndorsed ? HuddlColors.teal : context.hc.divider,
+                hasEndorsed ? HuddlColors.primary : context.hc.divider,
           ),
         ),
         child: loading
@@ -668,7 +668,7 @@ class _EndorseButton extends StatelessWidget {
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: HuddlColors.teal))
+                    strokeWidth: 2, color: HuddlColors.primary))
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -678,7 +678,7 @@ class _EndorseButton extends StatelessWidget {
                         : Icons.thumb_up_outlined,
                     size: 14,
                     color: hasEndorsed
-                        ? HuddlColors.teal
+                        ? HuddlColors.primary
                         : context.hc.textTertiary,
                   ),
                   const SizedBox(width: 4),
@@ -688,7 +688,7 @@ class _EndorseButton extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: hasEndorsed
-                          ? HuddlColors.teal
+                          ? HuddlColors.primary
                           : context.hc.textTertiary,
                     ),
                   ),
@@ -1675,7 +1675,7 @@ class _ExtractedRecommendationCardState
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.teal,
+                backgroundColor: HuddlColors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -1952,7 +1952,7 @@ class _MyListingsTab extends StatelessWidget {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(color: HuddlColors.teal));
+              child: CircularProgressIndicator(color: HuddlColors.primary));
         }
         final listings = snap.data ?? [];
         if (listings.isEmpty) {
