@@ -109,8 +109,8 @@ class HuddlColors {
   // ── Splash / illustration blue — actual blue from Huddl style guide ────────
   // Cornflower blue used for the bouncing bubble blobs on the splash screen.
   // Distinct from the orange/yellow/teal family so the splash reads as colourful.
-  static const Color splashBlue     = Color(0xFF7EB8F7); // mid cornflower blue
-  static const Color splashBluePale = Color(0xFFB8D9FB); // pale cornflower (lighter bubble)
+  static const Color splashBlue     = Color(0xFF5BA4F5); // vivid cornflower blue — saturated for contrast
+  static const Color splashBluePale = Color(0xFF9DC8FA); // medium-pale cornflower (lighter bubble)
 
   // Category accent palette (non-status, for tags / badges / avatars)
   static const Color accentAmber = Color(0xFFF3C54F);       // yellow family – warm gold (style-guide primary yellow)

@@ -323,19 +323,21 @@ class _HomeScreenState extends State<HomeScreen>
         'feed_preferences_v1', json.encode(_feedPrefs));
   }
 
-  /// Returns true when [g] is a default onboarding group that should never
-  /// appear in the home feed's "suggested groups" section.
-  ///
-  /// Checks four independent signals so that groups created before
-  /// `isImageLocked` existed (or synced without the field) are still excluded:
-  ///   1. isImageLocked == true
-  ///   2. Name starts with a 4-digit year  (e.g. "2024 Cambridge Parents")
-  ///   3. Name contains onboarding keywords (Aspiring / Expecting / SEN / etc.)
-  ///   4. Category is "Default Community" (written by DefaultGroupService)
+  /// Returns true when [g] should be hidden from the home feed's suggested
+  /// groups section.  Excludes:
+  ///   1. isImageLocked == true (all default borough groups)
+  ///   2. ID pattern meetup_group_* or event_group_* (auto-created chats)
+  ///   3. Name starts with a 4-digit year (e.g. "2024 Cambridge Parents")
+  ///   4. Category is "Default Community", "MEETUP" or "EVENT"
+  ///   5. Name contains any onboarding keyword (aspiring / expecting / SEN…)
+  ///   6. Privacy is private (these are invite-only chats, not suggestions)
   static bool _isDefaultOnboardingGroup(Group g) {
     if (g.isImageLocked) return true;
+    if (g.id.startsWith('meetup_group_') || g.id.startsWith('event_group_')) return true;
     if (RegExp(r'^\d{4}\s+\S').hasMatch(g.name)) return true;
     if (g.category == 'Default Community') return true;
+    if (g.category == 'MEETUP' || g.category == 'EVENT') return true;
+    if (g.isPrivate) return true;
     final lower = g.name.toLowerCase();
     const onboardingKeywords = [
       'aspiring parents',
@@ -345,6 +347,10 @@ class _HomeScreenState extends State<HomeScreen>
       'dads connect',
       'toddler adventures',
       'new parents',
+      'parents group',
+      'mums group',
+      'dads group',
+      'parenting group',
     ];
     for (final kw in onboardingKeywords) {
       if (lower.contains(kw)) return true;
@@ -355,12 +361,14 @@ class _HomeScreenState extends State<HomeScreen>
   Future<List<Group>> _loadNewPublicGroups(String borough) async {
     final List<Group> result = [];
     try {
-      final raw = await BrowserStorage.getString('user_created_groups_v1');
+      // v2 key: clears any stale default/onboarding groups that were
+      // incorrectly written to the old key by earlier app versions.
+      final raw = await BrowserStorage.getString('user_created_groups_v2');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
         for (final j in decoded) {
           final g = Group.fromJson(j as Map<String, dynamic>);
-          // Multi-signal defence-in-depth: skip any default onboarding group
+          // Multi-signal defence-in-depth: skip any default/system group
           // regardless of whether isImageLocked was written correctly.
           if (_isDefaultOnboardingGroup(g)) continue;
           if (!g.isPrivate) {

@@ -54,9 +54,11 @@ const _kBlobs = [
   // Top-left: large blush — always on screen, bounces slightly inward
   _BlobDef(startX: -0.15, startY: -0.10, endX: 0.02, endY: 0.05,
            radiusFrac: 0.32, color: _kPrimaryLighter, opacity: 0.90, phaseOffset: 0.00),
-  // Top-right: medium BLUE — fully on screen, cornflower blue blob
-  _BlobDef(startX: 0.72,  startY: -0.05, endX: 0.78, endY: 0.08,
-           radiusFrac: 0.24, color: _kBlue,           opacity: 0.85, phaseOffset: 0.15),
+  // Top-right: large BLUE — anchored fully on screen at all times
+  // startX/endX keep the circle centre within [0.55, 0.75] so at least
+  // 50 % of the blob is always visible regardless of animation phase.
+  _BlobDef(startX: 0.65,  startY: 0.02,  endX: 0.78, endY: 0.10,
+           radiusFrac: 0.26, color: _kBlue,           opacity: 1.00, phaseOffset: 0.15),
   // Top-center-right: small yellow — dips down toward centre
   _BlobDef(startX: 0.82,  startY: -0.07, endX: 0.75, endY: 0.08,
            radiusFrac: 0.13, color: _kYellow,         opacity: 0.75, phaseOffset: 0.30),
@@ -66,9 +68,9 @@ const _kBlobs = [
   // Bottom-left: medium orange — bounces toward lower-centre
   _BlobDef(startX: -0.12, startY: 0.90,  endX: 0.03, endY: 0.80,
            radiusFrac: 0.26, color: _kPrimary,        opacity: 0.55, phaseOffset: 0.10),
-  // Bottom-right: large BLUE — fully on screen, cornflower blue
-  _BlobDef(startX: 0.70,  startY: 0.82,  endX: 0.80, endY: 0.90,
-           radiusFrac: 0.28, color: _kBlue,           opacity: 0.80, phaseOffset: 0.25),
+  // Bottom-right: large BLUE — anchored fully on screen at all times
+  _BlobDef(startX: 0.68,  startY: 0.82,  endX: 0.78, endY: 0.92,
+           radiusFrac: 0.30, color: _kBlue,           opacity: 1.00, phaseOffset: 0.25),
   // Bottom-center: yellow dot — rises toward centre
   _BlobDef(startX: 0.38,  startY: 1.06,  endX: 0.40, endY: 0.90,
            radiusFrac: 0.14, color: _kYellow,         opacity: 0.65, phaseOffset: 0.40),
@@ -78,9 +80,9 @@ const _kBlobs = [
   // Mid-left: tiny blush — moves right toward centre
   _BlobDef(startX: -0.05, startY: 0.50,  endX: 0.06, endY: 0.50,
            radiusFrac: 0.09, color: _kPrimaryLighter, opacity: 0.65, phaseOffset: 0.20),
-  // Mid-right: small pale BLUE dot — fully on screen, moves slightly left
-  _BlobDef(startX: 0.88,  startY: 0.55,  endX: 0.82, endY: 0.58,
-           radiusFrac: 0.10, color: _kBluePale,       opacity: 0.80, phaseOffset: 0.35),
+  // Mid-right: medium pale BLUE dot — fully on screen, moves slightly left
+  _BlobDef(startX: 0.84,  startY: 0.48,  endX: 0.80, endY: 0.52,
+           radiusFrac: 0.12, color: _kBluePale,       opacity: 1.00, phaseOffset: 0.35),
 ];
 
 // ── Main screen ──────────────────────────────────────────────────────────────

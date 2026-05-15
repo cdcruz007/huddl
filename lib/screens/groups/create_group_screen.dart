@@ -837,6 +837,23 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       groups.add(newGroup.toJson());
       await BrowserStorage.setString(_userGroupsKey, json.encode(groups));
 
+      // ── Also write public groups to the v2 key (home-feed discovery) ─────
+      // Private/group-privacy groups are invite-only so they don't appear in
+      // the home feed's suggested groups section.
+      if (_privacy == 'public') {
+        const homeFeedKey = 'user_created_groups_v2';
+        final feedJson = await BrowserStorage.getString(homeFeedKey);
+        List<dynamic> feedGroups = [];
+        if (feedJson != null) {
+          feedGroups = json.decode(feedJson) as List<dynamic>;
+        }
+        // Avoid duplicates
+        feedGroups.removeWhere(
+            (g) => (g as Map<String, dynamic>)['id'] == newGroup.id);
+        feedGroups.add(newGroup.toJson());
+        await BrowserStorage.setString(homeFeedKey, json.encode(feedGroups));
+      }
+
       final invService = InvitationService();
       await invService.initialize();
       await invService.addSystemMessage(
