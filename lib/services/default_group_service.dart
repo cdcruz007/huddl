@@ -872,10 +872,14 @@ class DefaultGroupService {
     db.runTransaction((tx) async {
       final snap = await tx.get(ref);
       if (snap.exists) {
-        // Group already in Firestore — just add this UID to memberIds
+        // Group already in Firestore — add this UID to memberIds AND
+        // ensure isImageLocked=true is stamped (may be missing on older docs
+        // created before the field existed, causing them to leak into the
+        // home feed's public-group suggestions).
         tx.update(ref, {
           'memberIds': FieldValue.arrayUnion([firebaseUid]),
           'memberCount': FieldValue.increment(1),
+          'isImageLocked': true,
           'updatedAt': FieldValue.serverTimestamp(),
         });
       } else {

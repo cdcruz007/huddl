@@ -239,12 +239,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         //   (a) its ID is in the local DefaultGroupService set, OR
         //   (b) isImageLocked is true on the Firestore document, OR
         //   (c) its name matches the year-based pattern "YYYY <Borough> Parents"
-        //       which is exclusively used by DefaultGroupService.
+        //       which is exclusively used by DefaultGroupService, OR
+        //   (d) its name contains onboarding keywords (aspiring/expecting/SEN)
+        //       — defence-in-depth for docs created before isImageLocked existed.
+        //   (e) its category is "Default Community" (written by DefaultGroupService).
         final yearGroupPattern = RegExp(r'^\d{4}\s+\S');
+        const onboardingKeywords = [
+          'aspiring parents', 'expecting parents', 'sen parents',
+          'sen support', 'dads connect', 'toddler adventures', 'new parents',
+        ];
         discovered = firestoreGroups
             .where((g) => !defaultGroupIds.contains(g.id))
             .where((g) => !g.isImageLocked)
             .where((g) => !yearGroupPattern.hasMatch(g.name))
+            .where((g) => g.category != 'Default Community')
+            .where((g) {
+              final lower = g.name.toLowerCase();
+              return !onboardingKeywords.any((kw) => lower.contains(kw));
+            })
             .toList();
         // Refresh local cache so it matches current Firestore state.
         await BrowserStorage.setString(

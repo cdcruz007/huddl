@@ -323,21 +323,46 @@ class _HomeScreenState extends State<HomeScreen>
         'feed_preferences_v1', json.encode(_feedPrefs));
   }
 
+  /// Returns true when [g] is a default onboarding group that should never
+  /// appear in the home feed's "suggested groups" section.
+  ///
+  /// Checks four independent signals so that groups created before
+  /// `isImageLocked` existed (or synced without the field) are still excluded:
+  ///   1. isImageLocked == true
+  ///   2. Name starts with a 4-digit year  (e.g. "2024 Cambridge Parents")
+  ///   3. Name contains onboarding keywords (Aspiring / Expecting / SEN / etc.)
+  ///   4. Category is "Default Community" (written by DefaultGroupService)
+  static bool _isDefaultOnboardingGroup(Group g) {
+    if (g.isImageLocked) return true;
+    if (RegExp(r'^\d{4}\s+\S').hasMatch(g.name)) return true;
+    if (g.category == 'Default Community') return true;
+    final lower = g.name.toLowerCase();
+    const onboardingKeywords = [
+      'aspiring parents',
+      'expecting parents',
+      'sen parents',
+      'sen support',
+      'dads connect',
+      'toddler adventures',
+      'new parents',
+    ];
+    for (final kw in onboardingKeywords) {
+      if (lower.contains(kw)) return true;
+    }
+    return false;
+  }
+
   Future<List<Group>> _loadNewPublicGroups(String borough) async {
     final List<Group> result = [];
     try {
       final raw = await BrowserStorage.getString('user_created_groups_v1');
       if (raw != null) {
         final List<dynamic> decoded = json.decode(raw);
-        final yearGroupPattern = RegExp(r'^\d{4}\s+\S');
         for (final j in decoded) {
           final g = Group.fromJson(j as Map<String, dynamic>);
-          // Defence-in-depth: skip default onboarding groups even if they
-          // reached this key (isImageLocked may be false if the Firestore
-          // document was created before the field was added, or if the
-          // profile screen wrote them before the year-name guard was in place).
-          if (g.isImageLocked) continue;
-          if (yearGroupPattern.hasMatch(g.name)) continue;
+          // Multi-signal defence-in-depth: skip any default onboarding group
+          // regardless of whether isImageLocked was written correctly.
+          if (_isDefaultOnboardingGroup(g)) continue;
           if (!g.isPrivate) {
             if (g.creatorBorough == null ||
                 g.creatorBorough!.isEmpty ||
@@ -457,11 +482,12 @@ class _HomeScreenState extends State<HomeScreen>
     }
 
     // 5. New groups (max 2, adaptive)
-    // FILTER: exclude default onboarding groups (isImageLocked) — these are
-    // auto-created during the onboarding journey and can't be joined by
-    // members who don't share the same onboarding path.
+    // FILTER: exclude ALL default onboarding groups using multi-signal check.
+    // isImageLocked alone is insufficient for docs created before the field
+    // existed — _isDefaultOnboardingGroup() adds name-pattern and category
+    // guards as defence-in-depth.
     final userCreatedGroups = _newPublicGroups
-        .where((g) => !g.isImageLocked)
+        .where((g) => !_isDefaultOnboardingGroup(g))
         .toList();
     if (userCreatedGroups.isNotEmpty) {
       for (var i = 0; i < userCreatedGroups.length && i < (_groupTaps > 2 ? 3 : 2); i++) {
