@@ -1264,14 +1264,20 @@ class _HomeScreenState extends State<HomeScreen>
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [HuddlColors.darkSurface, HuddlColors.darkSurfaceVariant]
-              : [HuddlColors.yellowSoft, HuddlColors.yellowBackground],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
+        border: isDark
+            ? Border.all(color: HuddlColors.darkDivider, width: 0.5)
+            : null,
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1535,12 +1541,9 @@ class _HomeScreenState extends State<HomeScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Card colours
-    final gradientColors = isDark
-        ? [HuddlColors.darkSurfaceVariant, HuddlColors.darkSurface]
-        : [HuddlColors.yellowBackground, HuddlColors.white];
     final borderColor = isDark
         ? HuddlColors.darkDivider
-        : HuddlColors.accentAmber.withValues(alpha: 0.35);
+        : HuddlColors.gray200;
     final titleColor = isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark;
     final subtitleColor = isDark ? HuddlColors.darkTextSecondary : HuddlColors.textSecondary;
     final labelColor = isDark ? HuddlColors.primary.withValues(alpha: 0.85) : HuddlColors.primary;
@@ -1553,13 +1556,16 @@ class _HomeScreenState extends State<HomeScreen>
         margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: gradientColors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: borderColor),
+          boxShadow: isDark ? null : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -2043,7 +2049,7 @@ class _HomeScreenState extends State<HomeScreen>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
-                                color: HuddlColors.peachLight,
+                                color: HuddlColors.primary.withValues(alpha: 0.08),
                                 borderRadius:
                                     BorderRadius.circular(5),
                               ),
@@ -2080,7 +2086,7 @@ class _HomeScreenState extends State<HomeScreen>
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
-                              color: HuddlColors.yellowBackground,
+                              color: HuddlColors.primary.withValues(alpha: 0.08),
                               borderRadius:
                                   BorderRadius.circular(4),
                             ),
@@ -2089,13 +2095,13 @@ class _HomeScreenState extends State<HomeScreen>
                               children: [
                                 const Icon(Icons.lightbulb_outline,
                                     size: 8,
-                                    color: HuddlColors.accentAmber),
+                                    color: HuddlColors.primary),
                                 const SizedBox(width: 3),
                                 Text(
                                   item.reason,
                                   style: GoogleFonts.poppins(
                                     fontSize: 9,
-                                    color: HuddlColors.yellowDark,
+                                    color: HuddlColors.accentAmber,
                                   ),
                                 ),
                               ],
@@ -2509,7 +2515,7 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newEvent:
         return HuddlColors.teal;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowDark;
+        return HuddlColors.accentAmber;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
     }
@@ -2518,15 +2524,15 @@ class _HomeScreenState extends State<HomeScreen>
   Color _feedIconBg(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.successBg;
+        return HuddlColors.primary.withValues(alpha: 0.08);
       case FeedItemType.newGroup:
-        return HuddlColors.peachLight;
+        return HuddlColors.primary.withValues(alpha: 0.08);
       case FeedItemType.newEvent:
-        return HuddlColors.successBg;
+        return HuddlColors.blue.withValues(alpha: 0.08);
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowBackground;
+        return HuddlColors.teal.withValues(alpha: 0.08);
       case FeedItemType.milestone:
-        return HuddlColors.yellowSoft;
+        return HuddlColors.primary.withValues(alpha: 0.08);
     }
   }
 
@@ -2629,7 +2635,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _groupImageFallback() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child: Icon(Icons.people, size: 22, color: HuddlColors.primary),
       ),
@@ -2709,7 +2715,7 @@ class _HomeScreenState extends State<HomeScreen>
           height: size,
           fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.peachLight,
+            color: HuddlColors.primary.withValues(alpha: 0.08),
             child: Center(
               child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary),
             ),
@@ -3879,7 +3885,7 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
     return Material(
       color: isRead
           ? context.hc.surface
-          : HuddlColors.peachLight.withValues(alpha: 0.25),
+          : HuddlColors.primary.withValues(alpha: 0.04),
       child: InkWell(
         onTap: () => _onTap(n),
         child: Padding(
@@ -4370,7 +4376,7 @@ class _SharePostSheetState extends State<_SharePostSheet>
     return Container(
       width: 44,
       height: 44,
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Icon(Icons.people,
           size: 22, color: HuddlColors.primary),
     );
@@ -4596,7 +4602,7 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newEvent:
         return HuddlColors.blue;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowDark;
+        return HuddlColors.accentAmber;
       case FeedItemType.milestone:
         return HuddlColors.accentAmber;
     }
@@ -4607,13 +4613,13 @@ class _ActivityDetailSheet extends StatelessWidget {
       case FeedItemType.newParent:
         return HuddlColors.successBg;
       case FeedItemType.newGroup:
-        return HuddlColors.peachLight;
+        return HuddlColors.primary.withValues(alpha: 0.08);
       case FeedItemType.newEvent:
         return HuddlColors.blueBackground;
       case FeedItemType.newMarketplaceItem:
-        return HuddlColors.yellowBackground;
+        return HuddlColors.primary.withValues(alpha: 0.06);
       case FeedItemType.milestone:
-        return HuddlColors.yellowSoft;
+        return HuddlColors.primary.withValues(alpha: 0.08);
     }
   }
 

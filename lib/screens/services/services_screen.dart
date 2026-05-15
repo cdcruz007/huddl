@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/local_services_service.dart';
-import '../../services/onboarding_data_service.dart';
-import '../../services/postcode_service.dart';
 import '../../theme/huddl_colors.dart';
 
 // =============================================================================
@@ -90,10 +88,7 @@ class _ServicesHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hc     = context.hc;
-    final borough = PostcodeService()
-            .getBoroughFromPostcode(OnboardingDataService().postcode) ??
-        'your area';
+    final hc = context.hc;
 
     return Container(
       color: hc.surface,
@@ -101,47 +96,13 @@ class _ServicesHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              // Icon badge
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.teal, HuddlColors.teal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.storefront_rounded,
-                    color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Local Services',
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: hc.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      'Trusted by $borough parents',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: hc.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          Text(
+            'Local Services',
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: hc.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           TabBar(

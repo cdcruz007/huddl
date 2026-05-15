@@ -1263,44 +1263,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.yellowDark, HuddlColors.accentAmber],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              Semantics(
+                header: true,
+                child: Text(
+                  'Market',
+                  style: _adaptiveText(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: hc.textPrimary,
                   ),
-                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.storefront_rounded,
-                    color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      'Market',
-                      style: _adaptiveText(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: hc.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Buy, sell and share locally',
-                    style: _adaptiveText(
-                      fontSize: 12,
-                      color: hc.textSecondary,
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -1316,7 +1290,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               Tab(text: 'Sell'),
               Tab(text: 'Saved'),
             ],
-            labelColor: HuddlColors.yellowDark,
+            labelColor: HuddlColors.primary,
             unselectedLabelColor: hc.textTertiary,
             labelStyle: _adaptiveText(
               fontSize: 15,
@@ -2570,7 +2544,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                           item.imageUrls.first,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
                             child: Icon(item.category.icon, size: 22, color: HuddlColors.primary),
                           ),
                         ),
@@ -2794,7 +2768,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Icon(
@@ -2963,7 +2937,7 @@ class _FilterChip extends StatelessWidget {
 
 Widget _buildItemImage(String url, RehomeItem item) {
   final fallback = Container(
-    color: HuddlColors.peachLight,
+    color: HuddlColors.primary.withValues(alpha: 0.08),
     child: Center(
       child: Icon(item.category.icon,
           size: 44, color: item.category.color.withValues(alpha: 0.5)),
@@ -4070,7 +4044,7 @@ class _CategoryFilterSheet extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.grid_view,

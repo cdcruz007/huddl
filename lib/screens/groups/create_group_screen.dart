@@ -151,8 +151,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.primary),
               ),
@@ -167,8 +167,8 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.primary),
               ),
@@ -350,7 +350,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             padding: const EdgeInsets.only(
                                 left: 12, top: 4, bottom: 4, right: 4),
                             decoration: BoxDecoration(
-                              color: HuddlColors.peachLight,
+                              color: HuddlColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                   color: HuddlColors.primary
@@ -599,7 +599,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   ),
                   deleteIcon: const Icon(Icons.close, size: 16),
                   onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
-                  backgroundColor: HuddlColors.peachLight,
+                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
@@ -1207,9 +1207,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         height: 200,
         margin: EdgeInsets.zero,
         decoration: BoxDecoration(
-          color: _showImageError
-              ? HuddlColors.peachLight
-              : HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           border: _showImageError
               ? Border.all(color: HuddlColors.error, width: 2)
               : null,
@@ -1276,7 +1274,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child:
             Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
@@ -1350,7 +1348,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1405,7 +1403,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(

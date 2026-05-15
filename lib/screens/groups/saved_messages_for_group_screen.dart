@@ -115,7 +115,7 @@ class _SavedMessagesForGroupScreenState
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.bookmark_outline,

@@ -31,7 +31,8 @@ import '../../services/voice_message_service.dart';
 import '../../services/firestore_service.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-const Color _kMyBubble = HuddlColors.peachLight;
+// My-bubble: very soft brand orange tint (non-const — uses runtime withValues)
+final Color _kMyBubble = HuddlColors.primary.withValues(alpha: 0.10);
 
 /// Maps borough member IDs to realistic profile photo URLs
 const Map<String, String> _kMemberProfilePhotos = {
@@ -567,7 +568,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: HuddlColors.peachLight,
+              color: HuddlColors.primary.withValues(alpha: 0.08),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -1417,7 +1418,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         width: 44,
                         height: 44,
                         decoration: const BoxDecoration(
-                          gradient: HuddlColors.primaryGradient,
+                          color: HuddlColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
@@ -1464,7 +1465,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                           width: 44,
                           height: 44,
                           decoration: const BoxDecoration(
-                            gradient: HuddlColors.primaryGradient,
+                            color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.mic, size: 22, color: HuddlColors.white),
@@ -2143,7 +2144,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                         Container(
                           width: 72, height: 72,
                           decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.bookmark_outline, size: 36, color: HuddlColors.primary),
@@ -2594,7 +2595,7 @@ class _DMBubble extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: isHighlighted
-                          ? HuddlColors.yellowBackground
+                          ? HuddlColors.primary.withValues(alpha: 0.12)
                           : isMe
                               ? _kMyBubble
                               : HuddlColors.white,
@@ -2872,7 +2873,7 @@ class _DMBubble extends StatelessWidget {
           // Received bubbles: bold text with subtle yellow background
           backgroundColor: isMe
               ? HuddlColors.primaryDark   // deeper coral for sent bubbles
-              : HuddlColors.yellowSoft,   // light yellow for received bubbles
+              : HuddlColors.primary.withValues(alpha: 0.15), // soft brand tint for received bubbles
           fontWeight: FontWeight.w700,
           color: isMe ? Colors.white : HuddlColors.textDark,
         ),
@@ -3520,7 +3521,7 @@ class _LocationBubble extends StatelessWidget {
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 240),
                 decoration: BoxDecoration(
-                  color: isMe ? HuddlColors.peachLight : HuddlColors.white,
+                  color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -3675,7 +3676,7 @@ class _ContactBubble extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 260),
           decoration: BoxDecoration(
-            color: isMe ? HuddlColors.peachLight : HuddlColors.white,
+            color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),

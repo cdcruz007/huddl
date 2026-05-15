@@ -405,7 +405,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: HuddlColors.peachVeryLight,
+            color: context.hc.scaffold,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(

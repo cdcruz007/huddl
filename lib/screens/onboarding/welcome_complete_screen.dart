@@ -121,7 +121,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.peachLight,
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: HuddlColors.primary.withValues(alpha: 0.2),
@@ -187,7 +187,7 @@ class WelcomeCompleteScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                   decoration: BoxDecoration(
-                    color: HuddlColors.peachLight,
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: HuddlColors.primary.withValues(alpha: 0.2),

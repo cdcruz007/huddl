@@ -19,7 +19,7 @@ import '../../services/onboarding_data_service.dart';
 const _kPrimaryLighter = HuddlColors.primaryLight;  // soft blush — mapped to token
 const _kPrimaryLight = HuddlColors.primaryLight;
 const _kPrimary = HuddlColors.primary;
-const _kPrimaryPale = HuddlColors.peachVeryLight;
+const _kPrimaryPale = HuddlColors.primaryLight;
 const _kYellow = HuddlColors.yellow;
 const _kBlueLight = HuddlColors.lightBlue;
 

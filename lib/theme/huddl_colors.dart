@@ -316,8 +316,8 @@ class HuddlContextColors {
   bool get _isDark => Theme.of(_ctx).brightness == Brightness.dark;
 
   // Surfaces
-  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : HuddlColors.background;
-  Color get surface    => _isDark ? HuddlColors.darkSurface         : HuddlColors.white;
+  Color get scaffold   => _isDark ? HuddlColors.darkBackground     : HuddlColors.background;  // #F6F6F6 light grey
+  Color get surface    => _isDark ? HuddlColors.darkSurface         : HuddlColors.white;       // pure white cards
   Color get surfaceAlt => _isDark ? HuddlColors.darkSurfaceVariant  : HuddlColors.background;
   Color get inputBg    => _isDark ? HuddlColors.darkInputBg         : HuddlColors.inputBg;
   Color get divider    => _isDark ? HuddlColors.darkDivider         : HuddlColors.divider;

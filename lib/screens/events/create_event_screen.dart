@@ -321,8 +321,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight,
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.primary),
@@ -338,8 +338,8 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight,
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.primary),
@@ -1322,7 +1322,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1377,7 +1377,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(

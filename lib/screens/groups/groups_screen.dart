@@ -122,40 +122,13 @@ class _GroupsScreenState extends State<GroupsScreen>
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [HuddlColors.teal, HuddlColors.teal],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
+                      Text(
+                        'Groups',
+                        style: _adaptiveText(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary,
                         ),
-                        child: const Icon(Icons.people_alt_rounded,
-                            color: Colors.white, size: 18),
-                      ),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Connect',
-                            style: _adaptiveText(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: context.hc.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'Your village starts here',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textSecondary,
-                            ),
-                          ),
-                        ],
                       ),
                       const SizedBox(width: 8),
                       const BoroughScopeChip(
@@ -1551,16 +1524,16 @@ class _MessagesTabState extends State<_MessagesTab> {
       margin: const EdgeInsets.fromLTRB(16, 6, 16, 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            HuddlColors.blue.withValues(alpha: 0.06),
-            HuddlColors.lightBlue.withValues(alpha: 0.04),
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        color: HuddlColors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.lightBlue.withValues(alpha: 0.12)),
+        border: Border.all(color: HuddlColors.gray200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -1608,7 +1581,7 @@ class _MessagesTabState extends State<_MessagesTab> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [HuddlColors.blue, HuddlColors.lightBlue]),
+                color: HuddlColors.primary,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text('View', style: GoogleFonts.poppins(
@@ -1869,7 +1842,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.search_off,
@@ -2044,7 +2017,7 @@ class _MessagesTabState extends State<_MessagesTab> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: HuddlColors.peachLight,
+                          color: HuddlColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -2425,7 +2398,7 @@ class _GroupMessageRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
-        color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
+        color: isPinned ? HuddlColors.white : HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         elevation: 1,
         shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -2617,7 +2590,7 @@ class _InvitationCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 clipBehavior: Clip.antiAlias,
@@ -2830,7 +2803,7 @@ class _DMMessageRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
-        color: isPinned ? HuddlColors.peachVeryLight : HuddlColors.white,
+        color: isPinned ? HuddlColors.white : HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         elevation: 1,
         shadowColor: Colors.black.withValues(alpha: 0.08),
@@ -3048,7 +3021,7 @@ class _GroupAvatar extends StatelessWidget {
           height: size,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: HuddlColors.peachLight,
+            color: HuddlColors.primary.withValues(alpha: 0.08),
           ),
           clipBehavior: Clip.antiAlias,
           child: _buildImage(),
@@ -3113,7 +3086,7 @@ class _GroupAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: Center(
         child: Icon(
           Icons.people,
@@ -4191,7 +4164,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         margin: const EdgeInsets.only(bottom: 6),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? HuddlColors.peachLight
+                              ? HuddlColors.primary.withValues(alpha: 0.08)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
@@ -4776,7 +4749,7 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.blue},
   // Language & Culture
   'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.teal},
-  'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.yellowDark},
+  'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.accentAmber},
   // Sleep & Feeding
   'disc_baby_sleep':          {'icon': Icons.bedtime,              'color': HuddlColors.yellowMedium},
   'disc_breastfeeding':       {'icon': Icons.child_care,           'color': HuddlColors.primary},
@@ -4787,7 +4760,7 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   // Education & Learning
   'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.teal},
   'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.teal},
-  'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.yellowDark},
+  'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.accentAmber},
   'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.blue},
   // Activities & Play
   'disc_baby_sensory':        {'icon': Icons.toys,                 'color': HuddlColors.primary},
@@ -4808,8 +4781,8 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.blue},
   // Childcare & Practicalities
   'disc_nanny_share':         {'icon': Icons.home,                 'color': HuddlColors.yellowMedium},
-  'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.yellowDark},
-  'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.yellowDark},
+  'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.accentAmber},
+  'disc_working_parents':     {'icon': Icons.work_outline,         'color': HuddlColors.accentAmber},
   'disc_child_sleep_consultants':{'icon': Icons.nightlight,        'color': HuddlColors.yellowMedium},
   // Lifestyle
   'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.teal},
@@ -5936,7 +5909,7 @@ class _SavedMessageCard extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                          color: HuddlColors.peachLight,
+                          color: HuddlColors.primary.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Center(
@@ -6457,7 +6430,7 @@ class _SavedEventCard extends StatelessWidget {
 
   Widget _fallbackIcon(BuildContext context) {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child: Icon(Icons.event, size: 28, color: HuddlColors.primary),
       ),

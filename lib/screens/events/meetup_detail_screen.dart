@@ -202,7 +202,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   leading: Container(
                     width: 40, height: 40,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.share_outlined, color: HuddlColors.primary, size: 20),
@@ -244,7 +244,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     leading: Container(
                       width: 40, height: 40,
                       decoration: BoxDecoration(
-                        color: HuddlColors.peachLight,
+                        color: HuddlColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.people_outline, color: HuddlColors.primary, size: 20),
@@ -1095,7 +1095,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
           MemberPhotoService.currentUserAvatarAsset,
           width: size, height: size, fit: BoxFit.cover,
           errorBuilder: (_, __, ___) => Container(
-            color: HuddlColors.peachLight,
+            color: HuddlColors.primary.withValues(alpha: 0.08),
             child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
           ),
         ),

@@ -870,7 +870,7 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),
@@ -1012,7 +1012,7 @@ For any questions about voice message data processing, contact our Data Protecti
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.peachVeryLight,
+        color: HuddlColors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.2)),
       ),

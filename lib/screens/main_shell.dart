@@ -319,7 +319,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: Stack(
         children: List.generate(6, (index) {
           return Offstage(
@@ -328,78 +328,75 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
           );
         }),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Container(
-            height: 70,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: HuddlColors.gray900.withValues(alpha: 0.10),
-                  blurRadius: 24,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 4),
+      // ── Flat bottom nav — matches Huddl design guide screenshots ──
+      // White bar, thin top divider, brand orange for active state,
+      // grey for inactive. No floating pill, no heavy shadow.
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: HuddlColors.white,
+          border: Border(
+            top: BorderSide(
+              color: HuddlColors.gray200,
+              width: 0.5,
+            ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _NavItem(
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home_rounded,
+                  label: 'My Huddl',
+                  isActive: _currentIndex == 0,
+                  onTap: () => _switchTab(0),
                 ),
-                BoxShadow(
-                  color: HuddlColors.gray900.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                  offset: const Offset(0, 1),
+                _NavItem(
+                  icon: Icons.people_outline,
+                  activeIcon: Icons.people_rounded,
+                  label: 'Groups',
+                  isActive: _currentIndex == 1,
+                  onTap: () => _switchTab(1),
+                ),
+                _NavItem(
+                  icon: Icons.calendar_today_outlined,
+                  activeIcon: Icons.calendar_today_rounded,
+                  label: 'Events',
+                  isActive: _currentIndex == 2,
+                  onTap: () => _switchTab(2),
+                ),
+                _NavItem(
+                  icon: Icons.storefront_outlined,
+                  activeIcon: Icons.storefront_rounded,
+                  label: 'Market',
+                  isActive: _currentIndex == 3,
+                  onTap: () => _switchTab(3),
+                ),
+                _NavItem(
+                  icon: Icons.lightbulb_outline,
+                  activeIcon: Icons.lightbulb_rounded,
+                  label: 'Insights',
+                  isActive: _currentIndex == 4,
+                  onTap: () => _switchTab(4),
+                ),
+                _NavItem(
+                  icon: Icons.person_outline,
+                  activeIcon: Icons.person_rounded,
+                  label: 'Profile',
+                  isActive: _currentIndex == 5,
+                  onTap: () => _switchTab(5),
                 ),
               ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _NavItem(
-                    icon: Icons.home_outlined,
-                    activeIcon: Icons.home,
-                    label: 'Home',
-                    isActive: _currentIndex == 0,
-                    onTap: () => _switchTab(0),
-                  ),
-                  _NavItem(
-                    icon: Icons.people_outline,
-                    activeIcon: Icons.people,
-                    label: 'Connect',
-                    isActive: _currentIndex == 1,
-                    onTap: () => _switchTab(1),
-                  ),
-                  _NavItem(
-                    icon: Icons.explore_outlined,
-                    activeIcon: Icons.explore,
-                    label: 'Discover',
-                    isActive: _currentIndex == 2,
-                    onTap: () => _switchTab(2),
-                  ),
-                  _NavItem(
-                    icon: Icons.storefront_outlined,
-                    activeIcon: Icons.storefront,
-                    label: 'Market',
-                    isActive: _currentIndex == 3,
-                    onTap: () => _switchTab(3),
-                  ),
-                  _NavItem(
-                    icon: Icons.lightbulb_outline,
-                    activeIcon: Icons.lightbulb,
-                    label: 'Insights',
-                    isActive: _currentIndex == 4,
-                    onTap: () => _switchTab(4),
-                  ),
-                  _NavItem(
-                    icon: Icons.person_outline,
-                    activeIcon: Icons.person,
-                    label: 'Profile',
-                    isActive: _currentIndex == 5,
-                    onTap: () => _switchTab(5),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
@@ -425,22 +422,15 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Use Semantics(identifier:) so Flutter maps it to Android resource-id,
-    // and excludeSemantics:true so only ONE accessibility node is emitted for
-    // the entire item. That single node is class=android.widget.Button
-    // (because InkWell is the clickable widget) and carries both the label and
-    // the stable resource-id — satisfying the Robo BySelector for both DESC and RES.
+    final activeColor = HuddlColors.primary;         // brand orange
+    final inactiveColor = HuddlColors.gray500;       // #949494
+    final currentColor = isActive ? activeColor : inactiveColor;
+
     return Semantics(
       identifier: 'nav_${label.toLowerCase()}',
       button: true,
       label: label,
       selected: isActive,
-      // excludeSemantics prevents the outer Semantics wrapper from creating a
-      // *separate* View node above the InkWell. Without this, Android sees two
-      // nodes: a non-clickable android.view.View (with contentDescription) wrapping
-      // a clickable android.widget.Button (without contentDescription). UiAutomator2's
-      // BySelector [CLASS=Button, DESC=Discover] can never match because no single node
-      // has both attributes. excludeSemantics merges them into the InkWell node.
       excludeSemantics: false,
       child: MergeSemantics(
         child: Material(
@@ -450,12 +440,11 @@ class _NavItem extends StatelessWidget {
               HapticFeedback.selectionClick();
               onTap();
             },
-            customBorder: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            splashColor: HuddlColors.primary.withValues(alpha: 0.08),
+            highlightColor: Colors.transparent,
             child: SizedBox(
-              width: 56,
-              height: 56,
+              width: 58,
+              height: 60,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -463,23 +452,18 @@ class _NavItem extends StatelessWidget {
                   Icon(
                     isActive ? activeIcon : icon,
                     size: 22,
-                    color: isActive
-                        ? HuddlColors.primary
-                        : (Theme.of(context).textTheme.bodySmall?.color ??
-                            HuddlColors.textHint),
+                    color: currentColor,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     label,
                     style: GoogleFonts.poppins(
-                      fontSize: 9,
+                      fontSize: 10,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: isActive
-                          ? HuddlColors.primary
-                          : (Theme.of(context).textTheme.bodySmall?.color ??
-                              HuddlColors.textHint),
+                      color: currentColor,
                     ),
                     overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),

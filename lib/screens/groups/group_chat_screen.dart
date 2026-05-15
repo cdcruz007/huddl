@@ -46,7 +46,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
-const Color _kMyBubble = HuddlColors.peachLight;
+// My-bubble: very soft brand orange tint (non-const — uses runtime withValues)
+final Color _kMyBubble = HuddlColors.primary.withValues(alpha: 0.10);
 
 class GroupChatScreen extends StatefulWidget {
   /// Fires the groupId string whenever the current user sends any message
@@ -1582,7 +1583,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           margin: const EdgeInsets.only(left: 16, bottom: 8),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: reply.isMe ? HuddlColors.peachLight : HuddlColors.white,
+                            color: reply.isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -3096,7 +3097,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   )
                                 : CircleAvatar(
                                     radius: 22,
-                                    backgroundColor: HuddlColors.peachLight,
+                                    backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                                     child: Text(
                                       member.name.isNotEmpty ? member.name[0] : '?',
                                       style: GoogleFonts.poppins(
@@ -3283,7 +3284,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           // Search results indicator
           if (_isSearching && _searchQuery.isNotEmpty)
             Container(
-              color: HuddlColors.peachLight,
+              color: HuddlColors.primary.withValues(alpha: 0.08),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -4103,7 +4104,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.3),
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
       ),
       clipBehavior: Clip.antiAlias,
       child: url.startsWith('assets/')
@@ -4222,7 +4223,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         width: 40,
                         height: 40,
                         decoration: const BoxDecoration(
-                          gradient: HuddlColors.primaryGradient,
+                          color: HuddlColors.primary,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.send, size: 18, color: HuddlColors.white),
@@ -4268,7 +4269,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           width: 42,
                           height: 42,
                           decoration: const BoxDecoration(
-                            gradient: HuddlColors.primaryGradient,
+                            color: HuddlColors.primary,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(Icons.mic, size: 22, color: HuddlColors.white),
@@ -5397,7 +5398,7 @@ class _ChatBubble extends StatelessWidget {
                             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
                           color: isHighlighted
-                              ? HuddlColors.yellowBackground
+                              ? HuddlColors.primary.withValues(alpha: 0.12)
                               : isMe
                                   ? _kMyBubble
                                   : HuddlColors.white,
@@ -5697,7 +5698,7 @@ class _ChatBubble extends StatelessWidget {
           // Received bubbles: bold text with subtle background
           backgroundColor: isMe
               ? HuddlColors.primaryDark   // deeper coral for sent bubbles
-              : HuddlColors.yellowSoft,   // light yellow for received bubbles
+              : HuddlColors.primary.withValues(alpha: 0.15), // soft brand tint for received bubbles
           fontWeight: FontWeight.w700,
           color: isMe ? Colors.white : HuddlColors.textDark,
         ),
@@ -6372,7 +6373,7 @@ class _GroupLocationBubble extends StatelessWidget {
                 Container(
                   constraints: const BoxConstraints(maxWidth: 240),
                   decoration: BoxDecoration(
-                    color: isMe ? HuddlColors.peachLight : HuddlColors.white,
+                    color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(16),
                       topRight: const Radius.circular(16),
@@ -6527,7 +6528,7 @@ class _GroupAttachSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _gAttachIcon(context, Icons.camera_alt_rounded, 'Camera',
-                      HuddlColors.primaryDark, HuddlColors.peachLight, 'camera'),
+                      HuddlColors.primaryDark, HuddlColors.primary.withValues(alpha: 0.08), 'camera'),
                   _gAttachIcon(context, Icons.photo_library_rounded, 'Gallery',
                       HuddlColors.blue, HuddlColors.blueBackground, 'gallery'),
                   _gAttachIcon(context, Icons.insert_drive_file_rounded, 'Document',
@@ -6542,9 +6543,9 @@ class _GroupAttachSheet extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   _gAttachIcon(context, Icons.location_on_rounded, 'Location',
-                      HuddlColors.accentAmber, HuddlColors.yellowBackground, 'location'),
+                      HuddlColors.accentAmber, HuddlColors.primary.withValues(alpha: 0.08), 'location'),
                   _gAttachIcon(context, Icons.person_rounded, 'Contact',
-                      HuddlColors.primary, HuddlColors.peachLight, 'contact'),
+                      HuddlColors.primary, HuddlColors.primary.withValues(alpha: 0.08), 'contact'),
                   _gAttachIcon(context, Icons.poll_rounded, 'Poll',
                       HuddlColors.paleBlue, HuddlColors.blueBackground, 'poll'),
                 ],

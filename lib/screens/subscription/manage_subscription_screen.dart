@@ -235,7 +235,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: HuddlColors.peachVeryLight,
+                color: HuddlColors.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -460,12 +460,17 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [HuddlColors.peachBg, HuddlColors.peachVeryLight],
-                    ),
+                    color: HuddlColors.white,
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                         color: HuddlColors.primary.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [

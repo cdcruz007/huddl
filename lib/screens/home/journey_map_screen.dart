@@ -99,15 +99,15 @@ class _JourneyMapScreenState extends State<JourneyMapScreen> {
                 margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      HuddlColors.peachLight,
-                      HuddlColors.peachVeryLight,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: HuddlColors.white,
                   borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -333,7 +333,7 @@ class _StageCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: HuddlColors.primary,
                       border: Border.all(
-                          color: HuddlColors.peachLight, width: 2),
+                          color: HuddlColors.primary.withValues(alpha: 0.25), width: 2),
                     ),
                   ),
                   if (!isLast)

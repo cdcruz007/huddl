@@ -303,7 +303,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: HuddlColors.peachLight,
+              color: HuddlColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(

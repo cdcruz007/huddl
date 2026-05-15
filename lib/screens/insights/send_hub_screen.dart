@@ -141,11 +141,7 @@ class _SendHeader extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_kSendIndigo, _kSendCrimson],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: _kSendIndigo,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.diversity_3,
@@ -193,11 +189,7 @@ class _SendHeader extends StatelessWidget {
               child: TabBar(
                 controller: tabController,
                 indicator: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [_kSendIndigo, _kSendCrimson],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: _kSendIndigo,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,

@@ -649,9 +649,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                  ),
+                  color: HuddlColors.blue,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
@@ -883,9 +881,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                  ),
+                  color: HuddlColors.blue,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
@@ -916,9 +912,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                  ),
+                  color: HuddlColors.blue,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -988,9 +982,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                  ),
+                  color: HuddlColors.blue,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
@@ -1071,9 +1063,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [HuddlColors.blue, HuddlColors.lightBlue],
-                        ),
+                        color: HuddlColors.blue,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(

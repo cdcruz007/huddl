@@ -960,7 +960,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildDetailImage(String url) {
     final fallback = Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: Center(
         child: Icon(item.category.icon,
             size: 56, color: HuddlColors.primary.withValues(alpha: 0.6)),
@@ -1171,7 +1171,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: HuddlColors.peachLight.withValues(alpha: 0.5),
+          color: HuddlColors.primary.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

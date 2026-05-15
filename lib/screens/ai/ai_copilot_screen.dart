@@ -625,12 +625,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                gradient: _isTyping
-                    ? LinearGradient(colors: [
-                        HuddlColors.gray300,
-                        HuddlColors.gray300,
-                      ])
-                    : HuddlColors.aiGradient,
+                color: _isTyping ? HuddlColors.gray300 : HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
               child:

@@ -255,7 +255,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: isMe ? HuddlColors.peachLight : HuddlColors.white,
+              color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(16),
                 topRight: const Radius.circular(16),
@@ -334,7 +334,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isMe ? HuddlColors.peachLight : HuddlColors.white,
+                  color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
                     topRight: const Radius.circular(16),
@@ -491,7 +491,7 @@ class _ThreadReplyScreenState extends State<ThreadReplyScreen> {
               width: 40,
               height: 40,
               decoration: const BoxDecoration(
-                gradient: HuddlColors.primaryGradient,
+                color: HuddlColors.primary,
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.send, size: 18, color: HuddlColors.white),

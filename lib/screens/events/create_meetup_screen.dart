@@ -1420,8 +1420,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         width: double.infinity,
         height: 240,
         margin: EdgeInsets.zero,
-        decoration: const BoxDecoration(
-          color: HuddlColors.peachLight,
+        decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.08),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1472,7 +1472,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   Widget _photoPlaceholder() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child:
             Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
@@ -1718,7 +1718,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         margin: const EdgeInsets.only(left: 32),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1773,7 +1773,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const Center(
@@ -1838,7 +1838,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   ),
                   deleteIcon: const Icon(Icons.close, size: 16),
                   onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
-                  backgroundColor: HuddlColors.peachLight,
+                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
@@ -2033,7 +2033,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                                   setSheetState(() => _selectedMemberIds.remove(id));
                                   setState(() {});
                                 },
-                                backgroundColor: HuddlColors.peachLight,
+                                backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                                 visualDensity: VisualDensity.compact,
                                 padding: EdgeInsets.zero,
                               ),

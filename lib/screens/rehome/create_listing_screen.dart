@@ -124,8 +124,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
                 child: const Icon(Icons.photo_library_outlined,
                     color: HuddlColors.primary),
               ),
@@ -142,8 +142,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
               leading: Container(
                 width: 44,
                 height: 44,
-                decoration: const BoxDecoration(
-                    color: HuddlColors.peachLight, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
                 child: const Icon(Icons.camera_alt_outlined,
                     color: HuddlColors.primary),
               ),
@@ -618,7 +618,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: HuddlColors.peachLight,
+                        color: HuddlColors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -851,8 +851,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           width: double.infinity,
           height: 200,
           margin: EdgeInsets.zero,
-          decoration: const BoxDecoration(
-            color: HuddlColors.peachLight,
+          decoration: BoxDecoration(
+            color: HuddlColors.primary.withValues(alpha: 0.08),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -1050,7 +1050,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
   Widget _imagePlaceholder() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: const Center(
         child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
       ),

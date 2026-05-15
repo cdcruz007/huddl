@@ -10,7 +10,7 @@ class HuddlTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      scaffoldBackgroundColor: HuddlColors.white,
+      scaffoldBackgroundColor: HuddlColors.background, // #F6F6F6 — matches screenshot
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
         secondary: HuddlColors.blue,

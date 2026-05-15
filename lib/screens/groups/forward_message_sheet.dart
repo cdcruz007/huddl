@@ -1061,7 +1061,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
                 errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   child: const Icon(Icons.image,
                       size: 24, color: HuddlColors.primary),
                 ),
@@ -1334,7 +1334,7 @@ class _ForwardContactTile extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
         ),
         clipBehavior: Clip.antiAlias,

@@ -459,17 +459,17 @@ class _AutoBackupStatusCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            HuddlColors.primary.withValues(alpha: 0.15),
-            HuddlColors.teal.withValues(alpha: 0.10),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: HuddlColors.primary.withValues(alpha: 0.25), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -883,7 +883,7 @@ class _TipsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: HuddlColors.yellowBackground,
+        color: HuddlColors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1),
@@ -894,13 +894,13 @@ class _TipsCard extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.lightbulb_outline,
-                  color: HuddlColors.yellowDark, size: 18),
+                  color: HuddlColors.accentAmber, size: 18),
               const SizedBox(width: 8),
               Text('Tips',
                   style: GoogleFonts.poppins(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.yellowDark)),
+                      color: HuddlColors.accentAmber)),
             ],
           ),
           const SizedBox(height: 10),
@@ -911,7 +911,7 @@ class _TipsCard extends StatelessWidget {
                 const Padding(
                   padding: EdgeInsets.only(top: 5),
                   child: Icon(Icons.circle,
-                      size: 5, color: HuddlColors.yellowDark),
+                      size: 5, color: HuddlColors.accentAmber),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

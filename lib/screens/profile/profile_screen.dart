@@ -387,15 +387,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isFree
-                    ? HuddlColors.peachVeryLight
-                    : accentColor.withValues(alpha: 0.06),
+                color: HuddlColors.white,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
                   color: isFree
-                      ? HuddlColors.primary.withValues(alpha: 0.2)
+                      ? HuddlColors.primary.withValues(alpha: 0.25)
                       : accentColor.withValues(alpha: 0.2),
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -654,8 +659,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 4),
                           decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: HuddlColors.primary.withValues(alpha: 0.2),
+                              width: 1,
+                            ),
                           ),
                           child: Text(_stageLabel,
                               style: GoogleFonts.poppins(
@@ -1041,7 +1050,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     color: parentTypeLocked
                         ? context.hc.scaffold
-                        : HuddlColors.peachVeryLight,
+                        : HuddlColors.primary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: context.hc.divider),
                   ),
@@ -1535,7 +1544,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: HuddlColors.peachLight,
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1724,7 +1733,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: HuddlColors.peachLight,
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -2031,7 +2040,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: size,
       height: size,
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: Icon(Icons.people, size: size * 0.5, color: HuddlColors.primary),
     );
   }
@@ -2124,7 +2133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text('${e.attendees}',
@@ -4183,7 +4192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: HuddlColors.peachLight,
+                      color: HuddlColors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Center(
@@ -4536,7 +4545,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         height: 88,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           border: Border.all(color: HuddlColors.primary, width: 2),
         ),
         child: const Center(
@@ -4589,7 +4598,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       height: 88,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         border: Border.all(color: HuddlColors.primary, width: 2),
       ),
       child: ClipOval(
@@ -4766,7 +4775,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: HuddlColors.peachLight,
+                                  color: HuddlColors.primary.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -5108,8 +5117,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       width: 44,
       height: 44,
-      decoration: const BoxDecoration(
-          color: HuddlColors.peachLight, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+          color: HuddlColors.primary.withValues(alpha: 0.08), shape: BoxShape.circle),
       child: Icon(icon, color: HuddlColors.primary),
     );
   }
@@ -5201,7 +5210,7 @@ class _GroupCard extends StatelessWidget {
   }
 
   Widget _imageFallback() => Container(
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         child: const Center(
             child: Icon(Icons.people, size: 28, color: HuddlColors.primary)));
 }
@@ -5241,13 +5250,18 @@ class _MenuSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(title,
-                style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: context.hc.textTertiary)),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+            child: Text(
+              title.toUpperCase(),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8,
+                color: context.hc.textTertiary,
+              ),
+            ),
           ),
+          const Divider(height: 1, indent: 0, endIndent: 0),
           ...items,
         ],
       ),
@@ -5275,12 +5289,12 @@ class _MenuItem extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: Container(
-        width: 40,
-        height: 40,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
             color: context.hc.scaffold,
-            borderRadius: BorderRadius.circular(10)),
-        child: Icon(icon, size: 20, color: context.hc.textPrimary),
+            borderRadius: BorderRadius.circular(9)),
+        child: Icon(icon, size: 18, color: context.hc.textSecondary),
       ),
       title: Text(title,
           style: GoogleFonts.poppins(
@@ -5310,17 +5324,18 @@ class _CountBadge extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-              color: HuddlColors.peachLight,
-              borderRadius: BorderRadius.circular(10)),
-          child: Text('$count',
-              style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: HuddlColors.primary)),
-        ),
+        if (count > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10)),
+            child: Text('$count',
+                style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary)),
+          ),
         const SizedBox(width: 4),
         Icon(Icons.chevron_right, color: context.hc.textTertiary),
       ],

@@ -800,7 +800,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           height: 48,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           decoration: BoxDecoration(
-                            color: HuddlColors.peachLight,
+                            color: HuddlColors.primary.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           alignment: Alignment.center,
@@ -1061,7 +1061,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
   Widget _heroFallback() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: CustomPaint(
         painter: _TwoPeoplePainter(),
         child: const SizedBox.expand(),

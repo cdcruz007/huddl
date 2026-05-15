@@ -180,7 +180,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
             children: [
               CircleAvatar(
                 radius: 28,
-                backgroundColor: HuddlColors.peachLight,
+                backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                 backgroundImage: parent.avatarUrl != null
                     ? CachedNetworkImageProvider(parent.avatarUrl!)
                     : null,
@@ -255,7 +255,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
           Container(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             decoration: BoxDecoration(
-              color: HuddlColors.peachVeryLight,
+              color: context.hc.scaffold,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Row(
@@ -373,7 +373,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                       padding: const EdgeInsets.only(right: 4),
                       child: CircleAvatar(
                         radius: 14,
-                        backgroundColor: HuddlColors.peachLight,
+                        backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                         backgroundImage: p.avatarUrl != null
                             ? CachedNetworkImageProvider(p.avatarUrl!)
                             : null,
@@ -385,7 +385,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                     if (suggestion.matchedParents.length > 4)
                       CircleAvatar(
                         radius: 14,
-                        backgroundColor: HuddlColors.peachLight,
+                        backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
                         child: Text(
                           '+${suggestion.matchedParents.length - 4}',
                           style: GoogleFonts.poppins(

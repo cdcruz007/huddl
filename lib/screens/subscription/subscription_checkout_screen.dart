@@ -914,13 +914,16 @@ class _OrderSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isInnerCircle
-              ? [HuddlColors.checkoutSuccessBg, HuddlColors.checkoutSuccessBgLight]
-              : [HuddlColors.peachBg, HuddlColors.peachVeryLight],
-        ),
+        color: HuddlColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -982,7 +985,7 @@ class _BillingOptionTile extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? HuddlColors.peachVeryLight : HuddlColors.white,
+          color: isSelected ? HuddlColors.primary.withValues(alpha: 0.06) : HuddlColors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? HuddlColors.primary : HuddlColors.gray200,

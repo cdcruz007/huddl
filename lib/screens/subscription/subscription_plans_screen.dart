@@ -582,7 +582,7 @@ class _GateBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)),
       ),
@@ -667,14 +667,14 @@ class _BillingToggle extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.yellowBackground,
+                    color: HuddlColors.accentAmber.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('Save 30%',
                       style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.yellowDark)),
+                          color: HuddlColors.accentAmber)),
                 ),
               ],
             ],
@@ -720,7 +720,7 @@ class _PlanCard extends StatelessWidget {
       bgColor = HuddlColors.premiumPurpleBg;
     } else if (isHighlighted && !isCurrentPlan) {
       borderColor = HuddlColors.primary;
-      bgColor = HuddlColors.peachVeryLight;
+      bgColor = HuddlColors.primary.withValues(alpha: 0.06);
     }
     if (isCurrentPlan) {
       borderColor = isPendingCancel ? HuddlColors.error : HuddlColors.teal;
@@ -872,7 +872,7 @@ class _PlanCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: HuddlColors.yellowBackground,
+                        color: HuddlColors.accentAmber.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -880,7 +880,7 @@ class _PlanCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.yellowDark),
+                            color: HuddlColors.accentAmber),
                       ),
                     ),
                   ],

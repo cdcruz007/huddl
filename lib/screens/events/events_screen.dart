@@ -273,40 +273,13 @@ class _EventsScreenState extends State<EventsScreen>
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [HuddlColors.teal, HuddlColors.teal],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(10),
+                          Text(
+                            'Events',
+                            style: GoogleFonts.poppins(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.textPrimary,
                             ),
-                            child: const Icon(Icons.explore_rounded,
-                                color: Colors.white, size: 18),
-                          ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Discover',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.hc.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                'Find your people nearby',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: context.hc.textSecondary,
-                                ),
-                              ),
-                            ],
                           ),
                         ],
                       ),
@@ -761,12 +734,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? HuddlColors.primary.withValues(alpha: 0.12)
-                                : hc.inputBg,
+                                ? HuddlColors.primary
+                                : HuddlColors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
-                                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                                  ? HuddlColors.primary
                                   : hc.divider,
                               width: 1.2,
                             ),
@@ -778,7 +751,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                       ? FontWeight.w600
                                       : FontWeight.w400,
                                   color: isSelected
-                                      ? HuddlColors.primary
+                                      ? HuddlColors.white
                                       : hc.textSecondary)),
                         ),
                       );
@@ -808,12 +781,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               horizontal: 14, vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? HuddlColors.primary.withValues(alpha: 0.12)
-                                : hc.inputBg,
+                                ? HuddlColors.primary
+                                : HuddlColors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: isSelected
-                                  ? HuddlColors.primary.withValues(alpha: 0.4)
+                                  ? HuddlColors.primary
                                   : hc.divider,
                               width: 1.2,
                             ),
@@ -825,7 +798,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                       ? FontWeight.w600
                                       : FontWeight.w400,
                                   color: isSelected
-                                      ? HuddlColors.primary
+                                      ? HuddlColors.white
                                       : hc.textSecondary)),
                         ),
                       );
@@ -1575,7 +1548,7 @@ class _ImGoingCard extends StatelessWidget {
 }
 
 /// 54px rounded-square avatar matching the Messages tab _GroupAvatar style
-/// exactly — same borderRadius, peachLight bg, fallback icon pattern.
+/// exactly — same borderRadius, primary-tint bg, fallback icon pattern.
 class _GoingAvatar extends StatelessWidget {
   final String imageUrl;
   final Color accentColor;
@@ -1596,7 +1569,7 @@ class _GoingAvatar extends StatelessWidget {
       height: 54,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        color: HuddlColors.peachLight,
+        color: HuddlColors.primary.withValues(alpha: 0.08),
       ),
       clipBehavior: Clip.antiAlias,
       child: _buildImage(),
@@ -1639,7 +1612,7 @@ class _GoingAvatar extends StatelessWidget {
 
   Widget _fallbackIcon() {
     return Container(
-      color: HuddlColors.peachLight,
+      color: HuddlColors.primary.withValues(alpha: 0.08),
       child: Center(
         child: Icon(
           isMeetup ? Icons.groups : Icons.event,
@@ -2259,12 +2232,12 @@ class _EventsTabState extends State<_EventsTab> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? HuddlColors.primary.withValues(alpha: 0.12)
-                      : hc.inputBg,
+                      ? HuddlColors.primary
+                      : HuddlColors.white,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? HuddlColors.primary.withValues(alpha: 0.45)
+                        ? HuddlColors.primary
                         : hc.divider,
                     width: 1.2,
                   ),
@@ -2274,7 +2247,7 @@ class _EventsTabState extends State<_EventsTab> {
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? HuddlColors.primary : hc.textSecondary,
+                    color: isSelected ? HuddlColors.white : hc.textSecondary,
                   ),
                 ),
               ),
@@ -3708,7 +3681,7 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Sport':
       return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
     case 'Walk':
-      return const _CatStyle(HuddlColors.yellowDark, Icons.directions_walk);
+      return const _CatStyle(HuddlColors.accentAmber, Icons.directions_walk);
     case 'Social':
       return const _CatStyle(HuddlColors.accentAmber, Icons.celebration);
     case 'Food':
@@ -3806,7 +3779,7 @@ Widget _currentUserAssetAvatar(double size) {
         MemberPhotoService.currentUserAvatarAsset,
         width: size, height: size, fit: BoxFit.cover,
         errorBuilder: (_, __, ___) => Container(
-          color: HuddlColors.peachLight,
+          color: HuddlColors.primary.withValues(alpha: 0.08),
           child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
         ),
       ),
