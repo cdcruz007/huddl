@@ -2921,146 +2921,167 @@ class _DMBubble extends StatelessWidget {
   }
 
   void _showMessageActions(BuildContext context) {
+    // Capture all callbacks and state values before entering the builder so
+    // the sheet's own context (c) is used for all theme lookups — the stale
+    // widget-build context must never be referenced inside the builder.
+    final capturedOnTapReaction = onTapReaction;
+    final capturedOnReact = onReact;
+    final capturedOnSave = onSave;
+    final capturedOnCopy = onCopy;
+    final capturedOnForward = onForward;
+    final capturedOnUnsend = onUnsend;
+    final capturedOnReportUser = onReportUser;
+    final capturedIsSaved = isSaved;
+    final capturedMessage = message;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: context.hc.surface,
+      // isScrollControlled: true lets the sheet grow beyond 50% screen height
+      // — without it, the list tiles are clipped on smaller phones.
+      isScrollControlled: true,
+      // useRootNavigator: true ensures the sheet is shown above any nested
+      // Navigator inside the chat ListView on Android.
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (c) {
+        final hc = c.hc;
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: context.hc.divider,
-                  borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: hc.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.chat_bubble_outline, size: 16, color: context.hc.textTertiary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        message.message,
-                        style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(height: 8),
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: hc.scaffold,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 16, color: hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          capturedMessage.message,
+                          style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              // Quick emoji row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ...kQuickEmojis.map((emoji) => GestureDetector(
-                      onTap: () {
-                        Navigator.pop(c);
-                        onTapReaction?.call(emoji);
-                      },
-                      child: Semantics(
-                        label: 'React with $emoji',
-                        button: true,
+                // Quick emoji row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ...kQuickEmojis.map((emoji) => GestureDetector(
+                        onTap: () {
+                          Navigator.pop(c);
+                          capturedOnTapReaction?.call(emoji);
+                        },
+                        child: Semantics(
+                          label: 'React with $emoji',
+                          button: true,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                          ),
+                        ),
+                      )),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(c);
+                          capturedOnReact?.call();
+                        },
                         child: Container(
                           width: 48,
                           height: 48,
                           alignment: Alignment.center,
-                          child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                          decoration: BoxDecoration(
+                            color: hc.scaffold,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.add, color: hc.textSecondary, size: 20),
                         ),
                       ),
-                    )),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(c);
-                        onReact?.call();
-                      },
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: context.hc.scaffold,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.add, color: context.hc.textSecondary, size: 20),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Divider(height: 1, color: context.hc.divider),
-              ListTile(
-                leading: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_outline,
-                  color: isSaved ? HuddlColors.primary : context.hc.textPrimary,
-                ),
-                title: Text(
-                  isSaved ? 'Unsave message' : 'Save message',
-                  style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(c);
-                  onSave?.call();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.copy_outlined, color: context.hc.textPrimary),
-                title: Text('Copy text',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onCopy?.call();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.forward_outlined, color: context.hc.textPrimary),
-                title: Text('Forward',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onForward?.call();
-                },
-              ),
-              if (onUnsend != null)
+                Divider(height: 1, color: hc.divider),
                 ListTile(
-                  leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
-                  title: Text('Unsend message',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  leading: Icon(
+                    capturedIsSaved ? Icons.bookmark : Icons.bookmark_outline,
+                    color: capturedIsSaved ? HuddlColors.primary : hc.textPrimary,
+                  ),
+                  title: Text(
+                    capturedIsSaved ? 'Unsave message' : 'Save message',
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
                   onTap: () {
                     Navigator.pop(c);
-                    onUnsend?.call();
+                    capturedOnSave?.call();
                   },
                 ),
-              if (onReportUser != null)
                 ListTile(
-                  leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
-                  title: Text('Report message',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  leading: Icon(Icons.copy_outlined, color: hc.textPrimary),
+                  title: Text('Copy text',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
                     Navigator.pop(c);
-                    onReportUser?.call();
+                    capturedOnCopy?.call();
                   },
                 ),
-              const SizedBox(height: 8),
-            ],
+                ListTile(
+                  leading: Icon(Icons.forward_outlined, color: hc.textPrimary),
+                  title: Text('Forward',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    capturedOnForward?.call();
+                  },
+                ),
+                if (capturedOnUnsend != null)
+                  ListTile(
+                    leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
+                    title: Text('Unsend message',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnUnsend.call();
+                    },
+                  ),
+                if (capturedOnReportUser != null)
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                    title: Text('Report message',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnReportUser.call();
+                    },
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },

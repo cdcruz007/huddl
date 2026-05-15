@@ -5651,196 +5651,223 @@ class _ChatBubble extends StatelessWidget {
   }
 
   void _showMessageActions(BuildContext context) {
+    // Capture callbacks & state before entering the builder so the
+    // bottom-sheet's own context (c) never needs the stale widget context.
+    final capturedOnTapReaction = onTapReaction;
+    final capturedOnReact = onReact;
+    final capturedOnSave = onSave;
+    final capturedOnCopy = onCopy;
+    final capturedOnReply = onReply;
+    final capturedOnForward = onForward;
+    final capturedOnUnsend = onUnsend;
+    final capturedOnSaveThread = onSaveThread;
+    final capturedOnBlockUser = onBlockUser;
+    final capturedOnReportUser = onReportUser;
+    final capturedOnReportSender = onReportSender;
+    final capturedIsSaved = isSaved;
+    final capturedIsBlockedUser = isBlockedUser;
+    final capturedMessage = message;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: context.hc.surface,
+      // isScrollControlled: true lets the sheet grow beyond 50% of screen
+      // height — essential on phones where 6+ list tiles would be clipped.
+      isScrollControlled: true,
+      // useRootNavigator: true ensures the sheet sits above any nested
+      // Navigator (e.g. the chat ListView's scroll context) on Android.
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (c) {
+        // Use c (the sheet's own context) for all theme lookups so we never
+        // hold a reference to the stale widget-build context.
+        final hc = c.hc;
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: context.hc.divider,
-                  borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: hc.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              // Message preview
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.hc.scaffold,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.chat_bubble_outline, size: 16, color: context.hc.textTertiary),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        message.message,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textSecondary,
+                const SizedBox(height: 8),
+                // Message preview
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: hc.scaffold,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.chat_bubble_outline, size: 16, color: hc.textTertiary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          capturedMessage.message,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: hc.textSecondary,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              // Quick emoji row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ...kQuickEmojis.map((emoji) => GestureDetector(
-                      onTap: () {
-                        Navigator.pop(c);
-                        onTapReaction?.call(emoji);
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                      ),
-                    )),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pop(c);
-                        onReact?.call();
-                      },
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: context.hc.scaffold,
-                          shape: BoxShape.circle,
+                // Quick emoji row
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ...kQuickEmojis.map((emoji) => GestureDetector(
+                        onTap: () {
+                          Navigator.pop(c);
+                          capturedOnTapReaction?.call(emoji);
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          child: Text(emoji, style: const TextStyle(fontSize: 24)),
                         ),
-                        child: Icon(Icons.add, color: context.hc.textSecondary, size: 20),
+                      )),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(c);
+                          capturedOnReact?.call();
+                        },
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: hc.scaffold,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.add, color: hc.textSecondary, size: 20),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Divider(height: 1, color: context.hc.divider),
-              ListTile(
-                leading: Icon(
-                  isSaved ? Icons.bookmark : (onSaveThread != null ? Icons.bookmark_add_outlined : Icons.bookmark_outline),
-                  color: isSaved ? HuddlColors.primary : context.hc.textPrimary,
-                ),
-                title: Text(
-                  isSaved ? 'Unsave message' : (onSaveThread != null ? 'Save message & thread' : 'Save message'),
-                  style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
-                ),
-                onTap: () {
-                  Navigator.pop(c);
-                  onSave?.call();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.copy_outlined, color: context.hc.textPrimary),
-                title: Text('Copy text',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onCopy?.call();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.forum_outlined, color: context.hc.textPrimary),
-                title: Text('Reply in thread',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onReply?.call();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.forward_outlined, color: context.hc.textPrimary),
-                title: Text('Forward',
-                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  onForward?.call();
-                },
-              ),
-              if (onUnsend != null)
+                Divider(height: 1, color: hc.divider),
                 ListTile(
-                  leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
-                  title: Text('Unsend message',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  leading: Icon(
+                    capturedIsSaved ? Icons.bookmark : (capturedOnSaveThread != null ? Icons.bookmark_add_outlined : Icons.bookmark_outline),
+                    color: capturedIsSaved ? HuddlColors.primary : hc.textPrimary,
+                  ),
+                  title: Text(
+                    capturedIsSaved ? 'Unsave message' : (capturedOnSaveThread != null ? 'Save message & thread' : 'Save message'),
+                    style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
                   onTap: () {
                     Navigator.pop(c);
-                    onUnsend?.call();
+                    capturedOnSave?.call();
                   },
                 ),
-              if (onSaveThread != null)
                 ListTile(
-                  leading: const Icon(Icons.topic_outlined, color: HuddlColors.teal),
-                  title: Text('Save reply thread',
+                  leading: Icon(Icons.copy_outlined, color: hc.textPrimary),
+                  title: Text('Copy text',
                       style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
                     Navigator.pop(c);
-                    onSaveThread?.call();
+                    capturedOnCopy?.call();
                   },
                 ),
-              if (onBlockUser != null)
                 ListTile(
-                  leading: Icon(
-                    isBlockedUser ? Icons.check_circle_outline : Icons.block,
-                    color: HuddlColors.error,
-                  ),
-                  title: Text(
-                    isBlockedUser ? 'Unblock ${message.senderName}' : 'Block ${message.senderName}',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
-                  ),
+                  leading: Icon(Icons.forum_outlined, color: hc.textPrimary),
+                  title: Text('Reply in thread',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
                     Navigator.pop(c);
-                    onBlockUser?.call();
+                    capturedOnReply?.call();
                   },
                 ),
-              if (onReportUser != null)
                 ListTile(
-                  leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
-                  title: Text(
-                    'Report message',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
-                  ),
+                  leading: Icon(Icons.forward_outlined, color: hc.textPrimary),
+                  title: Text('Forward',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
                     Navigator.pop(c);
-                    onReportUser?.call();
+                    capturedOnForward?.call();
                   },
                 ),
-              if (onReportSender != null)
-                ListTile(
-                  leading: const Icon(Icons.person_off_outlined, color: HuddlColors.error),
-                  title: Text(
-                    'Report ${message.senderName}',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                if (capturedOnUnsend != null)
+                  ListTile(
+                    leading: const Icon(Icons.delete_sweep_outlined, color: HuddlColors.error),
+                    title: Text('Unsend message',
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnUnsend.call();
+                    },
                   ),
-                  onTap: () {
-                    Navigator.pop(c);
-                    onReportSender?.call();
-                  },
-                ),
-              const SizedBox(height: 8),
-            ],
+                if (capturedOnSaveThread != null)
+                  ListTile(
+                    leading: const Icon(Icons.topic_outlined, color: HuddlColors.teal),
+                    title: Text('Save reply thread',
+                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnSaveThread.call();
+                    },
+                  ),
+                if (capturedOnBlockUser != null)
+                  ListTile(
+                    leading: Icon(
+                      capturedIsBlockedUser ? Icons.check_circle_outline : Icons.block,
+                      color: HuddlColors.error,
+                    ),
+                    title: Text(
+                      capturedIsBlockedUser ? 'Unblock ${capturedMessage.senderName}' : 'Block ${capturedMessage.senderName}',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                    ),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnBlockUser.call();
+                    },
+                  ),
+                if (capturedOnReportUser != null)
+                  ListTile(
+                    leading: const Icon(Icons.flag_outlined, color: HuddlColors.error),
+                    title: Text(
+                      'Report message',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                    ),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnReportUser.call();
+                    },
+                  ),
+                if (capturedOnReportSender != null)
+                  ListTile(
+                    leading: const Icon(Icons.person_off_outlined, color: HuddlColors.error),
+                    title: Text(
+                      'Report ${capturedMessage.senderName}',
+                      style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error),
+                    ),
+                    onTap: () {
+                      Navigator.pop(c);
+                      capturedOnReportSender.call();
+                    },
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
           ),
         );
       },
