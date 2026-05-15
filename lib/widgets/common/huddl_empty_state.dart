@@ -38,6 +38,11 @@ abstract class HuddlIllustration {
   /// Single dancing person — bookmarks / saved messages
   static const saved =
       'assets/images/illustrations/Group_3603.png';
+
+  /// Man with oversized key at padlock — biometric lock / security / auth
+  /// Source: Huddl uploaded illustration set #20
+  static const auth =
+      'https://www.genspark.ai/api/files/s/T21ihhOF';
 }
 
 /// A consistent, illustration-based empty state widget used across Huddl.
