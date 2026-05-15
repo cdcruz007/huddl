@@ -3463,11 +3463,11 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
         return HuddlColors.primary;
       case 'message_reaction':
       case 'post_liked':
-        return Colors.pinkAccent;
+        return HuddlColors.accentCoral;
       case 'group_invitation':
       case 'invitation_accepted':
       case 'group_member_joined':
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case 'post_commented':
       case 'comment_replied':
       case 'poll_created':
@@ -3476,20 +3476,20 @@ class _NotificationsSheetState extends State<_NotificationsSheet> {
       case 'meetup_reminder':
       case 'new_meetup_nearby':
       case 'event_update':
-        return Colors.teal;
+        return HuddlColors.teal;
       case 'offer_received':
       case 'offer_accepted':
-        return Colors.green;
+        return HuddlColors.success;
       case 'offer_declined':
       case 'item_sold':
       case 'saved_item_sold':
-        return Colors.orange;
+        return HuddlColors.primaryDark;
       case 'item_relisted':
-        return Colors.blueAccent;
+        return HuddlColors.accentAmber;
       case 'subscription_activated':
         return HuddlColors.accentAmber;
       case 'payment_failed':
-        return Colors.red;
+        return HuddlColors.error;
       default:
         return HuddlColors.primary;
     }

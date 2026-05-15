@@ -452,7 +452,7 @@ _EventCatStyle _getEventCatStyle(String category) {
     case 'community':
       return const _EventCatStyle(HuddlColors.blue, Icons.people_outlined);
     case 'health':
-      return const _EventCatStyle(Color(0xFF4CAF50), Icons.health_and_safety_outlined);
+      return const _EventCatStyle(HuddlColors.teal, Icons.health_and_safety_outlined);
     case 'play':
       return const _EventCatStyle(HuddlColors.accentAmber, Icons.child_care_outlined);
     case 'sport':
@@ -463,7 +463,7 @@ _EventCatStyle _getEventCatStyle(String category) {
       return const _EventCatStyle(HuddlColors.accentAmber, Icons.restaurant_outlined);
     case 'arts':
     case 'art':
-      return const _EventCatStyle(Color(0xFF9C27B0), Icons.palette_outlined);
+      return const _EventCatStyle(HuddlColors.accentCoral, Icons.palette_outlined);
     default:
       return const _EventCatStyle(HuddlColors.blue, Icons.event_outlined);
   }

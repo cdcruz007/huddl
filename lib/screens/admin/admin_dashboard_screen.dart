@@ -329,7 +329,7 @@ class _ReportCard extends StatelessWidget {
 
   Color _statusColor(String status) => switch (status) {
         'pending'   => HuddlColors.error,
-        'reviewed'  => const Color(0xFFFF9800),
+        'reviewed'  => HuddlColors.warning,
         'actioned'  => HuddlColors.primary,
         'dismissed' => HuddlColors.disabledText,
         _           => HuddlColors.disabledText,
@@ -458,7 +458,7 @@ class _ReportCard extends StatelessWidget {
                       child: _ActionButton(
                         label: 'Mark reviewed',
                         icon: Icons.visibility_outlined,
-                        color: const Color(0xFFFF9800),
+                        color: HuddlColors.warning,
                         onTap: () => onAction(reportId, 'reviewed'),
                       ),
                     ),

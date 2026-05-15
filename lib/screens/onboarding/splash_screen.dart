@@ -16,7 +16,7 @@ import '../../services/onboarding_data_service.dart';
 /// ──────────────────────────────────────────────────────────────────────────
 
 // ── Brand palette (mapped to HuddlColors) ──
-const _kPrimaryLighter = Color(0xFFFFCCBC);  // soft blush
+const _kPrimaryLighter = HuddlColors.primaryLight;  // soft blush — mapped to token
 const _kPrimaryLight = HuddlColors.primaryLight;
 const _kPrimary = HuddlColors.primary;
 const _kPrimaryPale = HuddlColors.peachVeryLight;

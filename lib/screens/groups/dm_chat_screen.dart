@@ -182,7 +182,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('You can only message parents in your area.'),
-              backgroundColor: Colors.red,
+              backgroundColor: HuddlColors.error,
             ),
           );
         }
@@ -2282,7 +2282,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
             Text('Getting your location…', style: GoogleFonts.poppins(fontSize: 13)),
           ],
         ),
-        backgroundColor: const Color(0xFFFF975C),
+        backgroundColor: HuddlColors.primaryDark,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -2871,8 +2871,8 @@ class _DMBubble extends StatelessWidget {
           // Sent (my) bubbles: deeper orange background highlight
           // Received bubbles: bold text with subtle yellow background
           backgroundColor: isMe
-              ? const Color(0xFFE8845A) // deeper coral for sent bubbles
-              : const Color(0xFFFFF176), // light yellow for received bubbles
+              ? HuddlColors.primaryDark   // deeper coral for sent bubbles
+              : HuddlColors.yellowSoft,   // light yellow for received bubbles
           fontWeight: FontWeight.w700,
           color: isMe ? Colors.white : HuddlColors.textDark,
         ),
@@ -3557,19 +3557,19 @@ class _LocationBubble extends StatelessWidget {
                               if (progress == null) return child;
                               return Container(
                                 height: 130,
-                                color: const Color(0xFFE8F4EA),
+                                color: HuddlColors.successBg,
                                 child: const Center(
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Color(0xFFFF975C),
+                                    color: HuddlColors.primaryDark,
                                   ),
                                 ),
                               );
                             },
                             errorBuilder: (_, __, ___) => Container(
                               height: 130,
-                              color: const Color(0xFFE8F4EA),
-                              child: const Icon(Icons.map_outlined, size: 40, color: Color(0xFFFF975C)),
+                              color: HuddlColors.successBg,
+                              child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primaryDark),
                             ),
                           ),
                           // Red pin overlay
@@ -3579,7 +3579,7 @@ class _LocationBubble extends StatelessWidget {
                               child: Icon(
                                 Icons.location_on,
                                 size: 36,
-                                color: Colors.red[700],
+                                color: HuddlColors.error,
                                 shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
                               ),
                             ),

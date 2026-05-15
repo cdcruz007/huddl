@@ -315,9 +315,9 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
               height: 40,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.red.withValues(alpha: 0.1),
+                color: HuddlColors.error.withValues(alpha: 0.1),
               ),
-              child: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
+              child: const Icon(Icons.delete_outline, color: HuddlColors.error, size: 20),
             ),
           ),
           const SizedBox(width: 12),
@@ -326,7 +326,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
             animation: _pulseCtrl,
             builder: (_, __) => Icon(
               Icons.mic,
-              color: Color.lerp(Colors.red, Colors.red.shade800, _pulseCtrl.value),
+              color: Color.lerp(HuddlColors.error, HuddlColors.errorSoft, _pulseCtrl.value),
               size: 20,
             ),
           ),
@@ -337,7 +337,7 @@ class _VoiceRecordingIndicatorState extends State<VoiceRecordingIndicator>
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.red,
+              color: HuddlColors.error,
             ),
           ),
           const SizedBox(width: 8),

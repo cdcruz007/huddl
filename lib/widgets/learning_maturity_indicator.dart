@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/ai_learning_engine_service.dart';
 import '../../services/daily_ai_refresh_service.dart';
+import '../../theme/huddl_colors.dart';
 
 // =============================================================================
 // LEARNING MATURITY UI INDICATOR  — PARENT CONCIERGE EDITION (Step 14)
@@ -70,7 +71,7 @@ class LearningMaturityIndicator extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress.clamp(0.0, 1.0),
                 backgroundColor:
-                    isDark ? Colors.white12 : Colors.grey.shade200,
+                    isDark ? HuddlColors.darkDivider : HuddlColors.gray200,
                 valueColor: AlwaysStoppedAnimation(_maturityColor(maturity)),
               ),
             ),
@@ -124,7 +125,7 @@ class LearningMaturityIndicator extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.grey.shade800,
+                        color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark,
                       ),
                     ),
                     if (showLabel)
@@ -133,8 +134,8 @@ class LearningMaturityIndicator extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: isDark
-                              ? Colors.white70
-                              : Colors.grey.shade600,
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.textSecondary,
                         ),
                       ),
                   ],
@@ -157,7 +158,7 @@ class LearningMaturityIndicator extends StatelessWidget {
               value: progress.clamp(0.0, 1.0),
               minHeight: 6,
               backgroundColor:
-                  isDark ? Colors.white12 : Colors.grey.shade200,
+                  isDark ? HuddlColors.darkDivider : HuddlColors.gray200,
               valueColor: AlwaysStoppedAnimation(_maturityColor(maturity)),
             ),
           ),
@@ -166,7 +167,7 @@ class LearningMaturityIndicator extends StatelessWidget {
             _maturityHint(maturity),
             style: GoogleFonts.poppins(
               fontSize: 10,
-              color: isDark ? Colors.white54 : Colors.grey.shade500,
+              color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary,
             ),
           ),
         ],
@@ -216,13 +217,13 @@ class LearningMaturityIndicator extends StatelessWidget {
   Color _maturityColor(LearningMaturity maturity) {
     switch (maturity) {
       case LearningMaturity.coldStart:
-        return Colors.teal;
+        return HuddlColors.teal;
       case LearningMaturity.warming:
-        return Colors.amber.shade700;
+        return HuddlColors.accentAmber;
       case LearningMaturity.personalised:
-        return Colors.green;
+        return HuddlColors.success;
       case LearningMaturity.mature:
-        return Colors.purple;
+        return HuddlColors.primaryDark;
     }
   }
 }
@@ -246,10 +247,10 @@ class DailyRefreshStatusWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.shade50,
+        color: isDark ? HuddlColors.darkSurface : HuddlColors.surfaceLight,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
+          color: isDark ? HuddlColors.darkDivider : HuddlColors.gray200,
         ),
       ),
       child: Row(
@@ -257,7 +258,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
           Icon(
             needsRefresh ? Icons.refresh : Icons.check_circle_outline,
             size: 20,
-            color: needsRefresh ? Colors.orange : Colors.green,
+            color: needsRefresh ? HuddlColors.warning : HuddlColors.success,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -269,7 +270,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.grey.shade800,
+                    color: isDark ? HuddlColors.darkTextPrimary : HuddlColors.textDark,
                   ),
                 ),
                 Text(
@@ -280,7 +281,7 @@ class DailyRefreshStatusWidget extends StatelessWidget {
                       : 'Not yet refreshed',
                   style: GoogleFonts.poppins(
                     fontSize: 10,
-                    color: isDark ? Colors.white54 : Colors.grey.shade500,
+                    color: isDark ? HuddlColors.darkTextTertiary : HuddlColors.textTertiary,
                   ),
                 ),
               ],

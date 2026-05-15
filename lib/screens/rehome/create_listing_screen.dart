@@ -229,7 +229,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     if (_pickedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: const Text('Please add at least one photo for your listing'),
-        backgroundColor: Colors.red,
+        backgroundColor: HuddlColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ));

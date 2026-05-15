@@ -5720,8 +5720,8 @@ class _ChatBubble extends StatelessWidget {
           // Sent (my) bubbles: deeper orange background highlight
           // Received bubbles: bold text with subtle background
           backgroundColor: isMe
-              ? const Color(0xFFE8845A) // deeper coral for sent bubbles
-              : const Color(0xFFFFF176), // light yellow for received bubbles
+              ? HuddlColors.primaryDark   // deeper coral for sent bubbles
+              : HuddlColors.yellowSoft,   // light yellow for received bubbles
           fontWeight: FontWeight.w700,
           color: isMe ? Colors.white : HuddlColors.textDark,
         ),
@@ -6222,7 +6222,7 @@ class _GroupImageBubble extends StatelessWidget {
                                     placeholder: (_, __) => Container(
                                       width: 240,
                                       height: 240,
-                                      color: Colors.grey.shade200,
+                                      color: HuddlColors.gray200,
                                       child: const Center(
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2,
@@ -6430,19 +6430,19 @@ class _GroupLocationBubble extends StatelessWidget {
                                 if (progress == null) return child;
                                 return Container(
                                   height: 130,
-                                  color: const Color(0xFFE8F4EA),
+                                  color: HuddlColors.successBg,
                                   child: Center(
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: HuddlColors.primary,
+                                      color: HuddlColors.primaryDark,
                                     ),
                                   ),
                                 );
                               },
                               errorBuilder: (_, __, ___) => Container(
                                 height: 130,
-                                color: const Color(0xFFE8F4EA),
-                                child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primary),
+                                color: HuddlColors.successBg,
+                                child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primaryDark),
                               ),
                             ),
                             // Red pin overlay centred on the map

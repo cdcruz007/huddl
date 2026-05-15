@@ -2487,11 +2487,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 value: _biometricEnabled,
                 thumbColor: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) return HuddlColors.primary;
-                  return Colors.white;
+                  return HuddlColors.white;
                 }),
                 trackColor: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
-                  return Colors.grey.shade300;
+                  return HuddlColors.gray300;
                 }),
                 onChanged: (v) async {
                   if (v) {
@@ -2691,11 +2691,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               value: _voiceConsent,
               thumbColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) return HuddlColors.primary;
-                return Colors.white;
+                return HuddlColors.white;
               }),
               trackColor: WidgetStateProperty.resolveWith((states) {
                 if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
-                return Colors.grey.shade300;
+                return HuddlColors.gray300;
               }),
               onChanged: (v) async {
                 if (v) {
@@ -5057,11 +5057,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onChanged: onChanged,
       thumbColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) return HuddlColors.primary;
-        return Colors.white;
+        return HuddlColors.white;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) return HuddlColors.primary.withValues(alpha: 0.4);
-        return Colors.grey.shade300;
+        return HuddlColors.gray300;
       }),
     );
   }

@@ -500,7 +500,7 @@ class _ForwardSheetState extends State<_ForwardSheet>
         SnackBar(
           content: Text('✅ Sent $cardType to ${target.name}'),
           duration: const Duration(seconds: 3),
-          backgroundColor: Colors.green,
+          backgroundColor: HuddlColors.success,
         ),
       );
     }

@@ -123,7 +123,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.15,
                 icon:       Icons.smart_toy_outlined,
                 label:      'AI Copilot',
-                color:      const Color(0xFF5C6BC0),
+                color:      HuddlColors.teal,
                 onPressed:  () => _onAction(widget.onAiPressed),
               ),
               const SizedBox(height: 14),
