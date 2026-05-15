@@ -518,11 +518,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('My Profile',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.hc.textPrimary)),
+                          Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [HuddlColors.primaryDark, HuddlColors.primary],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.person_rounded,
+                                    color: Colors.white, size: 18),
+                              ),
+                              const SizedBox(width: 10),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('My Profile',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w700,
+                                          color: context.hc.textPrimary)),
+                                  Text(
+                                    'Your Huddl story',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: context.hc.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                           IconButton(
                             icon: Icon(Icons.settings_outlined,
                                 color: context.hc.textPrimary),

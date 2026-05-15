@@ -122,23 +122,49 @@ class _GroupsScreenState extends State<GroupsScreen>
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'Connect',
-                        style: _adaptiveText(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0D8C78), HuddlColors.teal],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
                         ),
+                        child: const Icon(Icons.people_alt_rounded,
+                            color: Colors.white, size: 18),
+                      ),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Connect',
+                            style: _adaptiveText(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: context.hc.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Your village starts here',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              color: context.hc.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(width: 8),
                       const BoroughScopeChip(
                         feature: HuddlFeature.chat,
                       ),
                       const Spacer(),
-                      // ── Tab bar (inline, compact) ──────────────────
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   TabBar(
                     controller: _tabController,
                     tabs: const [

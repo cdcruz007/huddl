@@ -122,21 +122,54 @@ class _Header extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Insights',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: isDark
-                      ? HuddlColors.darkTextPrimary
-                      : HuddlColors.textPrimary,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [HuddlColors.primaryDark, HuddlColors.primary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.lightbulb_rounded,
+                        color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Insights',
+                        style: GoogleFonts.poppins(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? HuddlColors.darkTextPrimary
+                              : HuddlColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Knowledge from your community',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: isDark
+                              ? HuddlColors.darkTextSecondary
+                              : HuddlColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               // Pending review badge — debug only
               if (kDebugMode) _PendingReviewBadge(),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           // ── Tab bar — same style as Discover (underline) ───────
           TabBar(
             controller: tabController,

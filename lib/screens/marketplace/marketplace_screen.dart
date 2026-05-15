@@ -1262,16 +1262,47 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            header: true,
-            child: Text(
-              'Market',
-              style: _adaptiveText(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: hc.textPrimary,
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2E8B57), Color(0xFF4CAF82)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.storefront_rounded,
+                    color: Colors.white, size: 18),
               ),
-            ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      'Market',
+                      style: _adaptiveText(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: hc.textPrimary,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    'Buy, sell and share locally',
+                    style: _adaptiveText(
+                      fontSize: 12,
+                      color: hc.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           // Borough scope context for marketplace (Buy/Sell and Offers = borough-only)

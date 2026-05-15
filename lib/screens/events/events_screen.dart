@@ -271,13 +271,44 @@ class _EventsScreenState extends State<EventsScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        "Discover",
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF0D8C78), HuddlColors.teal],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.explore_rounded,
+                                color: Colors.white, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Discover',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.hc.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                'Find your people nearby',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: context.hc.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                       Row(
                         children: [
@@ -293,7 +324,7 @@ class _EventsScreenState extends State<EventsScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   // ── Tabs: Groups | Meetups | Events ──────────────
                   TabBar(
                     controller: _tabController,
