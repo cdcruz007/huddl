@@ -2528,7 +2528,7 @@ class _HomeScreenState extends State<HomeScreen>
       case FeedItemType.newGroup:
         return HuddlColors.primary.withValues(alpha: 0.08);
       case FeedItemType.newEvent:
-        return HuddlColors.blue.withValues(alpha: 0.08);
+        return HuddlColors.teal.withValues(alpha: 0.08);
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.teal.withValues(alpha: 0.08);
       case FeedItemType.milestone:
@@ -4596,11 +4596,11 @@ class _ActivityDetailSheet extends StatelessWidget {
   Color _colorForType(FeedItemType t) {
     switch (t) {
       case FeedItemType.newParent:
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case FeedItemType.newGroup:
         return HuddlColors.primary;
       case FeedItemType.newEvent:
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case FeedItemType.newMarketplaceItem:
         return HuddlColors.accentAmber;
       case FeedItemType.milestone:

@@ -865,7 +865,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         _DetailPill(
                           icon: Icons.location_on_outlined,
                           label: item.sellerLocation,
-                          color: HuddlColors.blue,
+                          color: HuddlColors.primary,
                         ),
                       ],
                     ),
@@ -1272,12 +1272,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 style: _adaptiveText(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: HuddlColors.blue,
+                  color: HuddlColors.primary,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: HuddlColors.blue,
-                side: const BorderSide(color: HuddlColors.blue, width: 1.5),
+                foregroundColor: HuddlColors.primary,
+                side: const BorderSide(color: HuddlColors.primary, width: 1.5),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
                 padding: const EdgeInsets.symmetric(vertical: 14),

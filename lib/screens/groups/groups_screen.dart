@@ -4740,13 +4740,13 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   // General / Popular
   'disc_first_time_mums':     {'icon': Icons.child_friendly,      'color': HuddlColors.primary},
-  'disc_dads_connect':        {'icon': Icons.man,                  'color': HuddlColors.blue},
+  'disc_dads_connect':        {'icon': Icons.man,                  'color': HuddlColors.teal},
   'disc_bump_to_baby':        {'icon': Icons.pregnant_woman,       'color': HuddlColors.primaryLight},
   'disc_pregnancy_antenatal': {'icon': Icons.favorite,             'color': HuddlColors.accentCoral},
   'disc_newborn_club':        {'icon': Icons.baby_changing_station,'color': HuddlColors.primary},
   'disc_single_parents':      {'icon': Icons.person,               'color': HuddlColors.teal},
   'disc_lgbtq_parents':       {'icon': Icons.diversity_3,          'color': HuddlColors.accentAmber},
-  'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.blue},
+  'disc_adoption_fostering':  {'icon': Icons.family_restroom,      'color': HuddlColors.teal},
   // Language & Culture
   'disc_dutch_parents':       {'icon': Icons.language,             'color': HuddlColors.teal},
   'disc_german_parents':      {'icon': Icons.language,             'color': HuddlColors.accentAmber},
@@ -4761,7 +4761,7 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_montessori_parenting':{'icon': Icons.school,               'color': HuddlColors.teal},
   'disc_forest_school':       {'icon': Icons.park,                 'color': HuddlColors.teal},
   'disc_home_education':      {'icon': Icons.home,                 'color': HuddlColors.accentAmber},
-  'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.blue},
+  'disc_baby_sign_language':  {'icon': Icons.sign_language,        'color': HuddlColors.teal},
   // Activities & Play
   'disc_baby_sensory':        {'icon': Icons.toys,                 'color': HuddlColors.primary},
   'disc_toddler_activities':  {'icon': Icons.directions_run,       'color': HuddlColors.accentCoral},
@@ -4772,13 +4772,13 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_postnatal_yoga':      {'icon': Icons.self_improvement,     'color': HuddlColors.primary},
   'disc_buggy_bootcamp':      {'icon': Icons.sports,               'color': HuddlColors.accentCoral},
   'disc_cambridge_tennis':    {'icon': Icons.sports_tennis,        'color': HuddlColors.teal},
-  'disc_cambridge_sports':    {'icon': Icons.sports_soccer,        'color': HuddlColors.blue},
+  'disc_cambridge_sports':    {'icon': Icons.sports_soccer,        'color': HuddlColors.teal},
   // Wellbeing & Support
   'disc_mental_health':       {'icon': Icons.spa,                  'color': HuddlColors.primaryLight},
   'disc_nct_cambridge':       {'icon': Icons.group,                'color': HuddlColors.primary},
-  'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.blue},
+  'disc_special_needs_send':  {'icon': Icons.accessibility_new,    'color': HuddlColors.teal},
   'disc_parents_multiples':   {'icon': Icons.people,               'color': HuddlColors.accentAmber},
-  'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.blue},
+  'disc_dad_baby':            {'icon': Icons.man,                  'color': HuddlColors.teal},
   // Childcare & Practicalities
   'disc_nanny_share':         {'icon': Icons.home,                 'color': HuddlColors.yellowMedium},
   'disc_back_to_work':        {'icon': Icons.work,                 'color': HuddlColors.accentAmber},
@@ -4828,7 +4828,7 @@ class _DiscoverGroupCard extends StatelessWidget {
   Color get _privacyTagColor {
     switch (group.privacy) {
       case GroupPrivacy.public:
-        return HuddlColors.blue;
+        return HuddlColors.teal;
       case GroupPrivacy.group:
         return HuddlColors.primaryDark;
       case GroupPrivacy.private_:
@@ -4913,7 +4913,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: HuddlColors.blue.withValues(alpha: 0.1),
+                        color: HuddlColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -4921,7 +4921,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.blue,
+                          color: HuddlColors.primary,
                         ),
                       ),
                     ),
@@ -6088,11 +6088,11 @@ class _SavedThreadCard extends StatelessWidget {
                   width: 28,
                   height: 28,
                   decoration: BoxDecoration(
-                    color: HuddlColors.blue.withValues(alpha: 0.15),
+                    color: HuddlColors.teal.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Center(
-                    child: Icon(Icons.topic, size: 14, color: HuddlColors.blue),
+                    child: Icon(Icons.topic, size: 14, color: HuddlColors.teal),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -6102,7 +6102,7 @@ class _SavedThreadCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.forum, size: 12, color: HuddlColors.blue),
+                          const Icon(Icons.forum, size: 12, color: HuddlColors.teal),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -6110,7 +6110,7 @@ class _SavedThreadCard extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
-                                color: HuddlColors.blue,
+                                color: HuddlColors.teal,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -6151,7 +6151,7 @@ class _SavedThreadCard extends StatelessWidget {
                 color: context.hc.scaffold,
                 borderRadius: BorderRadius.circular(12),
                 border: Border(
-                  left: BorderSide(color: HuddlColors.blue, width: 3),
+                  left: BorderSide(color: HuddlColors.teal, width: 3),
                 ),
               ),
               child: Column(
@@ -6193,14 +6193,14 @@ class _SavedThreadCard extends StatelessWidget {
                   if (savedThread.replies.isNotEmpty)
                   Row(
                     children: [
-                      Icon(Icons.reply, size: 14, color: HuddlColors.blue),
+                      Icon(Icons.reply, size: 14, color: HuddlColors.teal),
                       const SizedBox(width: 4),
                       Text(
                         '${savedThread.replies.length} ${savedThread.replies.length == 1 ? 'reply' : 'replies'}',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.blue,
+                          color: HuddlColors.teal,
                         ),
                       ),
                     ],

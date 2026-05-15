@@ -1344,7 +1344,7 @@ class _ImGoingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accentColor =
-        item.isMeetup ? HuddlColors.primary : HuddlColors.blue;
+        item.isMeetup ? HuddlColors.primary : HuddlColors.teal;
 
     // ── Messages-tab identical row card ──────────────────────────────
     return Dismissible(
@@ -3362,7 +3362,7 @@ class _EventListCardState extends State<_EventListCard> {
                         Container(
                           padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue,
+                            color: HuddlColors.teal,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Icon(Icons.language, size: 10, color: Colors.white),
@@ -3371,7 +3371,7 @@ class _EventListCardState extends State<_EventListCard> {
                         Icon(
                           event['aiSourceIcon'] as IconData? ?? Icons.language,
                           size: 12,
-                          color: HuddlColors.blue,
+                          color: HuddlColors.teal,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
@@ -3380,7 +3380,7 @@ class _EventListCardState extends State<_EventListCard> {
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.blue,
+                              color: HuddlColors.teal,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -3677,7 +3677,7 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Playdate':
       return const _CatStyle(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyle(HuddlColors.blue, Icons.sports_golf);
+      return const _CatStyle(HuddlColors.teal, Icons.sports_golf);
     case 'Walk':
       return const _CatStyle(HuddlColors.accentAmber, Icons.directions_walk);
     case 'Social':
@@ -3685,9 +3685,9 @@ _CatStyle _meetupCategoryStyle(String category) {
     case 'Food':
       return const _CatStyle(HuddlColors.accentAmber, Icons.restaurant);
     case 'Other':
-      return const _CatStyle(HuddlColors.blue, Icons.more_horiz);
+      return const _CatStyle(HuddlColors.teal, Icons.more_horiz);
     default:
-      return const _CatStyle(HuddlColors.blue, Icons.groups);
+      return const _CatStyle(HuddlColors.teal, Icons.groups);
   }
 }
 

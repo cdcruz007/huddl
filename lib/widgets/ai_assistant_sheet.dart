@@ -217,7 +217,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
                   color: _isListening
-                      ? HuddlColors.blue.withValues(alpha: 0.4)
+                      ? HuddlColors.teal.withValues(alpha: 0.4)
                       : Colors.transparent,
                 ),
               ),
@@ -233,7 +233,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                         hintText: _isListening ? 'Listening...' : 'Type a command or question...',
                         hintStyle: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: _isListening ? HuddlColors.blue : context.hc.textTertiary,
+                          color: _isListening ? HuddlColors.teal : context.hc.textTertiary,
                           fontStyle: _isListening ? FontStyle.italic : FontStyle.normal,
                         ),
                         border: InputBorder.none,
@@ -256,7 +256,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                             width: 36, height: 36,
                             decoration: BoxDecoration(
                               color: _isListening
-                                  ? HuddlColors.blue
+                                  ? HuddlColors.teal
                                   : HuddlColors.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
@@ -393,13 +393,13 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, size: 14, color: HuddlColors.blue),
+                  const Icon(Icons.info_outline, size: 14, color: HuddlColors.teal),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'AI suggestions improve as you use them. Tap \u{1F44D} or \u{1F44E} on any suggestion to help me learn.',
                       style: GoogleFonts.poppins(
-                        fontSize: 11, color: HuddlColors.blue, height: 1.3,
+                        fontSize: 11, color: HuddlColors.teal, height: 1.3,
                       ),
                     ),
                   ),

@@ -222,7 +222,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: isFree ? HuddlColors.blue : color,
+                            color: isFree ? HuddlColors.teal : color,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -239,7 +239,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
-                              color: HuddlColors.blue,
+                              color: HuddlColors.teal,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -395,7 +395,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: Icons.attach_money,
-                        iconColor: isFree ? HuddlColors.blue : color,
+                        iconColor: isFree ? HuddlColors.teal : color,
                         title: isFree ? 'Free' : (e['price'] as String? ?? ''),
                         subtitle: isFree
                             ? 'No cost to attend'
@@ -405,7 +405,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         const Divider(height: 24),
                         _DetailRow(
                           icon: Icons.map_outlined,
-                          iconColor: HuddlColors.blue,
+                          iconColor: context.hc.textSecondary,
                           title: e['borough'] as String? ?? '',
                           subtitle: 'Borough',
                         ),
@@ -480,24 +480,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(height: 12),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                         text: 'Professional facilitators',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                         text: 'All materials provided',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                         text: isOnline
                             ? 'Interactive online session'
                             : 'Safe, family-friendly venue',
                       ),
                       _ExpectItem(
                         icon: Icons.check_circle_outline,
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                         text: 'Certificate of attendance',
                       ),
                     ],
@@ -649,7 +649,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 14),
@@ -665,13 +665,13 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.08),
+                  color: HuddlColors.teal.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   summary.vibe,
                   style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.blue),
+                    fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.teal),
                 ),
               ),
             ],
@@ -709,7 +709,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 children: [
                   const Padding(
                     padding: EdgeInsets.only(top: 4),
-                    child: Icon(Icons.check_circle, size: 14, color: HuddlColors.blue),
+                    child: Icon(Icons.check_circle, size: 14, color: HuddlColors.teal),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -742,10 +742,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.08),
+                  color: HuddlColors.teal.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.rate_review, size: 14, color: HuddlColors.blue),
+                child: const Icon(Icons.rate_review, size: 14, color: HuddlColors.teal),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -881,7 +881,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
@@ -912,7 +912,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -937,7 +937,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: HuddlColors.blue.withValues(alpha: 0.08),
+                      color: HuddlColors.teal.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -982,7 +982,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.star_rounded, color: Colors.white, size: 18),
@@ -1017,10 +1017,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: HuddlColors.blue.withValues(alpha: 0.05),
+              color: HuddlColors.teal.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: HuddlColors.blue.withValues(alpha: 0.12),
+                color: HuddlColors.teal.withValues(alpha: 0.12),
               ),
             ),
             child: Column(
@@ -1032,10 +1032,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: HuddlColors.blue.withValues(alpha: 0.1),
+                        color: HuddlColors.teal.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(sourceIcon, size: 18, color: HuddlColors.blue),
+                      child: Icon(sourceIcon, size: 18, color: HuddlColors.teal),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1054,7 +1054,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: HuddlColors.blue,
+                              color: HuddlColors.teal,
                             ),
                           ),
                         ],
@@ -1063,7 +1063,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: HuddlColors.blue,
+                        color: HuddlColors.teal,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -1094,7 +1094,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, size: 16, color: HuddlColors.blue),
+                      const Icon(Icons.info_outline, size: 16, color: HuddlColors.teal),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(

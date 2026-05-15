@@ -13,7 +13,7 @@ class HuddlTheme {
       scaffoldBackgroundColor: HuddlColors.background, // #F6F6F6 — matches screenshot
       colorScheme: const ColorScheme.light(
         primary: HuddlColors.primary,
-        secondary: HuddlColors.blue,
+        secondary: HuddlColors.teal,
         surface: HuddlColors.white,
         error: HuddlColors.error,
         onPrimary: HuddlColors.white,
@@ -73,7 +73,7 @@ class HuddlTheme {
       scaffoldBackgroundColor: HuddlColors.darkBackground,
       colorScheme: const ColorScheme.dark(
         primary: HuddlColors.primary,
-        secondary: HuddlColors.blue,
+        secondary: HuddlColors.teal,
         surface: HuddlColors.darkSurface,
         error: HuddlColors.errorSoft,
         onPrimary: HuddlColors.white,

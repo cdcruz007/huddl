@@ -380,7 +380,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'DM Conversations',
                 used: _service.dmConversations,
                 limit: limits.maxDMConversations,
-                color: HuddlColors.blue,
+                color: HuddlColors.teal,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -388,7 +388,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                 label: 'Messages This Month',
                 used: _service.messagesThisMonth,
                 limit: limits.maxMessagesPerMonth,
-                color: HuddlColors.blue,
+                color: HuddlColors.teal,
               ),
               const SizedBox(height: 8),
               _UsageCard(
@@ -438,7 +438,7 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                   label: 'AI Listing Generations This Month',
                   used: _service.aiListingGenerationsThisMonth,
                   limit: limits.maxAiListingGenerationsPerMonth,
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                 ),
               ],
               if (limits.aiMeetupMatchmaker) ...[
@@ -679,7 +679,7 @@ class _PaymentInfoCard extends StatelessWidget {
                   : (defaultTargetPlatform == TargetPlatform.iOS
                       ? Icons.apple
                       : Icons.g_mobiledata),
-              color: HuddlColors.blue,
+              color: HuddlColors.teal,
               size: 20,
             ),
           ),
@@ -1041,7 +1041,7 @@ class _ManageScheduledBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCancellation = subscription.isPendingCancellation;
     final color =
-        isCancellation ? HuddlColors.error : HuddlColors.blue;
+        isCancellation ? HuddlColors.error : HuddlColors.teal;
 
     return Container(
       padding: const EdgeInsets.all(14),

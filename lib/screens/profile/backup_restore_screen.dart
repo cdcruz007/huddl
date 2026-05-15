@@ -343,7 +343,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           if (!kIsWeb) ...[
             _InfoCard(
               icon: Icons.cloud_outlined,
-              iconColor: HuddlColors.blue,
+              iconColor: HuddlColors.teal,
               title: Platform.isIOS
                   ? 'iCloud backup (iOS)'
                   : 'Google Drive backup (Android)',
@@ -365,7 +365,7 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen> {
           if (kIsWeb)
             _InfoCard(
               icon: Icons.info_outline,
-              iconColor: HuddlColors.blue,
+              iconColor: HuddlColors.teal,
               title: 'Web — manual backup only',
               body: 'Automatic backup is not available in the web version. '
                   'Use the manual export below to save your data.',

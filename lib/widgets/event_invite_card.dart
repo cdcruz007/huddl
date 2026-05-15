@@ -146,7 +146,7 @@ class EventInviteCard extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: isFree ? HuddlColors.blue : HuddlColors.accentAmber,
+                              color: isFree ? HuddlColors.teal : HuddlColors.accentAmber,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -450,13 +450,13 @@ _EventCatStyle _getEventCatStyle(String category) {
     case 'workshop':
       return const _EventCatStyle(HuddlColors.primaryDark, Icons.handyman_outlined);
     case 'community':
-      return const _EventCatStyle(HuddlColors.blue, Icons.people_outlined);
+      return const _EventCatStyle(HuddlColors.teal, Icons.people_outlined);
     case 'health':
       return const _EventCatStyle(HuddlColors.teal, Icons.health_and_safety_outlined);
     case 'play':
       return const _EventCatStyle(HuddlColors.accentAmber, Icons.child_care_outlined);
     case 'sport':
-      return const _EventCatStyle(HuddlColors.blue, Icons.sports_outlined);
+      return const _EventCatStyle(HuddlColors.teal, Icons.sports_outlined);
     case 'music':
       return const _EventCatStyle(HuddlColors.primaryDark, Icons.music_note_outlined);
     case 'food':
@@ -465,6 +465,6 @@ _EventCatStyle _getEventCatStyle(String category) {
     case 'art':
       return const _EventCatStyle(HuddlColors.accentCoral, Icons.palette_outlined);
     default:
-      return const _EventCatStyle(HuddlColors.blue, Icons.event_outlined);
+      return const _EventCatStyle(HuddlColors.teal, Icons.event_outlined);
   }
 }

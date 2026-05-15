@@ -253,7 +253,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: _isListening
-                        ? HuddlColors.blue.withValues(alpha: 0.4)
+                        ? HuddlColors.teal.withValues(alpha: 0.4)
                         : Colors.transparent,
                   ),
                 ),
@@ -275,7 +275,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                           hintStyle: GoogleFonts.poppins(
                             fontSize: 14,
                             color: _isListening
-                                ? HuddlColors.blue
+                                ? HuddlColors.teal
                                 : HuddlColors.textHint,
                             fontStyle: _isListening
                                 ? FontStyle.italic
@@ -309,7 +309,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                                 height: 36,
                                 decoration: BoxDecoration(
                                   color: _isListening
-                                      ? HuddlColors.blue
+                                      ? HuddlColors.teal
                                       : HuddlColors.primary
                                           .withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
@@ -528,14 +528,14 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
-                            size: 14, color: HuddlColors.blue),
+                            size: 14, color: HuddlColors.teal),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             widget.contextExplanation,
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: HuddlColors.blue,
+                              color: HuddlColors.teal,
                               height: 1.3,
                             ),
                           ),

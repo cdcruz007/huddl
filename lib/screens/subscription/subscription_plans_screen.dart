@@ -183,13 +183,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     child: Row(
                       children: [
                         const Icon(Icons.info_outline,
-                            color: HuddlColors.blue, size: 18),
+                            color: HuddlColors.teal, size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '${_service.daysUntilRenewal} days remaining in your current period.',
                             style: GoogleFonts.poppins(
-                                fontSize: 12, color: HuddlColors.blue),
+                                fontSize: 12, color: HuddlColors.teal),
                           ),
                         ),
                       ],
@@ -493,10 +493,10 @@ class _ScheduledChangeBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        isCancellation ? HuddlColors.error : HuddlColors.blue;
+        isCancellation ? HuddlColors.error : HuddlColors.teal;
     final bgColor = isCancellation
         ? HuddlColors.error.withValues(alpha: 0.06)
-        : HuddlColors.blue.withValues(alpha: 0.06);
+        : HuddlColors.teal.withValues(alpha: 0.06);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -716,7 +716,7 @@ class _PlanCard extends StatelessWidget {
     Color borderColor = HuddlColors.gray200;
     Color bgColor = HuddlColors.white;
     if (isScheduledTarget) {
-      borderColor = HuddlColors.blue;
+      borderColor = HuddlColors.teal;
       bgColor = HuddlColors.premiumPurpleBg;
     } else if (isHighlighted && !isCurrentPlan) {
       borderColor = HuddlColors.primary;
@@ -799,7 +799,7 @@ class _PlanCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: HuddlColors.blue,
+                                color: HuddlColors.teal,
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text('Scheduled',
@@ -968,20 +968,20 @@ class _PlanCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: HuddlColors.blue.withValues(alpha: 0.08),
+                  color: HuddlColors.teal.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     const Icon(Icons.schedule,
-                        color: HuddlColors.blue, size: 16),
+                        color: HuddlColors.teal, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         scheduledSummary ?? 'Scheduled for next billing cycle',
                         style: GoogleFonts.poppins(
                             fontSize: 11,
-                            color: HuddlColors.blue),
+                            color: HuddlColors.teal),
                       ),
                     ),
                   ],

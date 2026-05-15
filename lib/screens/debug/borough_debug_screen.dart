@@ -204,7 +204,7 @@ class _BoroughDebugScreenState extends State<BoroughDebugScreen> {
       final color = scope == FeatureScope.boroughOnly
           ? HuddlColors.teal
           : scope == FeatureScope.ukWide
-              ? HuddlColors.blue
+              ? HuddlColors.teal
               : HuddlColors.accentAmber;
       return _buildRow(f.name, scopeLabel, valueColor: color);
     }).toList();

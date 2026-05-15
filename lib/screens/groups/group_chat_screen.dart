@@ -1304,7 +1304,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.topic, color: HuddlColors.blue, size: 22),
+                    const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
                     const SizedBox(width: 8),
                     Text(
                       'Saved Threads',
@@ -1333,10 +1333,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         Container(
                           width: 72, height: 72,
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue.withValues(alpha: 0.1),
+                            color: HuddlColors.teal.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.topic_outlined, size: 36, color: HuddlColors.blue),
+                          child: const Icon(Icons.topic_outlined, size: 36, color: HuddlColors.teal),
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -1373,10 +1373,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         leading: Container(
                           width: 44, height: 44,
                           decoration: BoxDecoration(
-                            color: HuddlColors.blue.withValues(alpha: 0.1),
+                            color: HuddlColors.teal.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.topic, color: HuddlColors.blue, size: 22),
+                          child: const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
                         ),
                         title: Text(
                           thread.topicName,
@@ -1487,7 +1487,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   children: [
-                    const Icon(Icons.topic, color: HuddlColors.blue, size: 22),
+                    const Icon(Icons.topic, color: HuddlColors.teal, size: 22),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1603,7 +1603,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: reply.isMe ? HuddlColors.primary : HuddlColors.blue,
+                                      color: reply.isMe ? HuddlColors.primary : context.hc.textPrimary,
                                     ),
                                   ),
                                   const Spacer(),
@@ -1794,10 +1794,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: HuddlColors.blue.withValues(alpha: 0.1),
+                        color: HuddlColors.teal.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.blue),
+                      child: const Icon(Icons.topic_outlined, size: 32, color: HuddlColors.teal),
                     ),
                     const SizedBox(height: 18),
                     Text(
@@ -1855,7 +1855,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: HuddlColors.blue,
+                              color: HuddlColors.teal,
                             ),
                           ),
                         ],
@@ -1900,13 +1900,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: selected
-                                      ? HuddlColors.blue
-                                      : HuddlColors.blue.withValues(alpha: 0.1),
+                                      ? HuddlColors.teal
+                                      : HuddlColors.teal.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: selected
-                                        ? HuddlColors.blue
-                                        : HuddlColors.blue.withValues(alpha: 0.3),
+                                        ? HuddlColors.teal
+                                        : HuddlColors.teal.withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Text(
@@ -1916,7 +1916,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     fontWeight: FontWeight.w500,
                                     color: selected
                                         ? HuddlColors.white
-                                        : HuddlColors.blue,
+                                        : HuddlColors.teal,
                                   ),
                                 ),
                               ),
@@ -1950,7 +1950,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide(
-                            color: isExisting ? HuddlColors.blue : HuddlColors.primary,
+                            color: isExisting ? HuddlColors.teal : HuddlColors.primary,
                             width: 2,
                           ),
                         ),
@@ -1977,21 +1977,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: HuddlColors.blue.withValues(alpha: 0.08),
+                          color: HuddlColors.teal.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                              color: HuddlColors.blue.withValues(alpha: 0.3)),
+                              color: HuddlColors.teal.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
                             const Icon(Icons.merge_type_rounded,
-                                size: 16, color: HuddlColors.blue),
+                                size: 16, color: HuddlColors.teal),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'This thread will be added to the existing "${topicController.text.trim()}" topic',
                                 style: GoogleFonts.poppins(
-                                    fontSize: 12, color: HuddlColors.blue),
+                                    fontSize: 12, color: HuddlColors.teal),
                               ),
                             ),
                           ],
@@ -2028,7 +2028,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               unawaited(_saveThread(rootMsg, threadReplies, topic));
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: HuddlColors.blue,
+                              backgroundColor: HuddlColors.teal,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -2675,7 +2675,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.admin_panel_settings, size: 24, color: HuddlColors.blue),
+                  Icon(Icons.admin_panel_settings, size: 24, color: context.hc.textPrimary),
                   const SizedBox(width: 10),
                   Text('Add Admin', style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
                 ],
@@ -2723,7 +2723,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                           },
                           icon: const Icon(Icons.shield_outlined, size: 16, color: HuddlColors.white),
                           label: Text('Make Admin', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.white)),
-                          style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.blue, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 8),
+                          style: ElevatedButton.styleFrom(backgroundColor: HuddlColors.primary, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
                         ),
                       ),
@@ -4000,7 +4000,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               value: 'saved_threads',
               child: Row(
                 children: [
-                  const Icon(Icons.topic_outlined, size: 20, color: HuddlColors.blue),
+                  const Icon(Icons.topic_outlined, size: 20, color: HuddlColors.teal),
                   const SizedBox(width: 12),
                   Text(
                     'Saved threads',
@@ -4055,14 +4055,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 value: 'add_admin',
                 child: Row(
                   children: [
-                    const Icon(Icons.admin_panel_settings_outlined, size: 20, color: HuddlColors.blue),
+                    Icon(Icons.admin_panel_settings_outlined, size: 20, color: context.hc.textPrimary),
                     const SizedBox(width: 12),
                     Text(
                       'Add admin',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: HuddlColors.blue,
+                        color: context.hc.textPrimary,
                       ),
                     ),
                   ],
@@ -5614,7 +5614,7 @@ class _ChatBubble extends StatelessWidget {
                 ),
               if (onSaveThread != null)
                 ListTile(
-                  leading: const Icon(Icons.topic_outlined, color: HuddlColors.blue),
+                  leading: const Icon(Icons.topic_outlined, color: HuddlColors.teal),
                   title: Text('Save reply thread',
                       style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
@@ -5810,7 +5810,7 @@ class _GroupMessageStatusIcon extends StatelessWidget {
       case MessageStatus.delivered:
         return Icon(Icons.done_all, size: 14, color: context.hc.textTertiary);
       case MessageStatus.read:
-        return const Icon(Icons.done_all, size: 14, color: HuddlColors.blue);
+        return const Icon(Icons.done_all, size: 14, color: HuddlColors.teal);
       case MessageStatus.error:
         return const Icon(Icons.error_outline, size: 14, color: HuddlColors.error);
     }
@@ -6530,7 +6530,7 @@ class _GroupAttachSheet extends StatelessWidget {
                   _gAttachIcon(context, Icons.camera_alt_rounded, 'Camera',
                       HuddlColors.primaryDark, HuddlColors.primary.withValues(alpha: 0.08), 'camera'),
                   _gAttachIcon(context, Icons.photo_library_rounded, 'Gallery',
-                      HuddlColors.blue, HuddlColors.blueBackground, 'gallery'),
+                      HuddlColors.teal, HuddlColors.blueBackground, 'gallery'),
                   _gAttachIcon(context, Icons.insert_drive_file_rounded, 'Document',
                       HuddlColors.lightBlue, HuddlColors.blueBackground, 'document'),
                 ],

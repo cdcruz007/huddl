@@ -96,7 +96,7 @@ class _SpeedDialFabState extends State<SpeedDialFab>
                 delay:      0.0,
                 icon:       Icons.storefront_rounded,
                 label:      'Local Services',
-                color:      HuddlColors.blue,
+                color:      HuddlColors.teal,
                 onPressed:  () => _onAction(widget.onServicesPressed),
               ),
               const SizedBox(height: 10),

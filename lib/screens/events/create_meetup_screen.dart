@@ -1611,7 +1611,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }) {
     // Use amber accent for food/nutrition category per style guide
     final isYellowCategory = label == 'Food & nutrition';
-    final chipColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.blue;
+    final chipColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.teal;
 
     return GestureDetector(
       onTap: onTap,

@@ -65,25 +65,25 @@ class BoroughBadge extends StatelessWidget {
         padding: padding,
         decoration: BoxDecoration(
           color: isDark
-              ? HuddlColors.blue.withValues(alpha: 0.2)
-              : HuddlColors.blue.withValues(alpha: 0.1),
+              ? HuddlColors.teal.withValues(alpha: 0.2)
+              : HuddlColors.teal.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: HuddlColors.blue.withValues(alpha: 0.3),
+            color: HuddlColors.teal.withValues(alpha: 0.3),
             width: 0.5,
           ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.public, size: iconSize, color: HuddlColors.blue),
+            Icon(Icons.public, size: iconSize, color: HuddlColors.teal),
             const SizedBox(width: 3),
             Text(
               'UK-wide',
               style: GoogleFonts.poppins(
                 fontSize: fontSize,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.blue,
+                color: HuddlColors.teal,
               ),
             ),
           ],
@@ -155,7 +155,7 @@ class BoroughScopeChip extends StatelessWidget {
           context: context,
           icon: Icons.public,
           label: 'UK-wide',
-          color: HuddlColors.blue,
+          color: HuddlColors.teal,
           isDark: isDark,
         );
       case FeatureScope.boroughOnly:
@@ -244,7 +244,7 @@ class BoroughHeader extends StatelessWidget {
       case FeatureScope.ukWide:
         label = customLabel ?? 'Showing events across the UK';
         icon = Icons.public;
-        color = HuddlColors.blue;
+        color = HuddlColors.teal;
         break;
       case FeatureScope.boroughOnly:
         label = customLabel ??

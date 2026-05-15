@@ -220,7 +220,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       color: HuddlColors.blueBackground,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.copy_outlined, color: HuddlColors.blue, size: 20),
+                    child: const Icon(Icons.copy_outlined, color: HuddlColors.teal, size: 20),
                   ),
                   title: Text('Copy Link', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
@@ -603,7 +603,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 5),
                           decoration: BoxDecoration(
-                            color: _meetup.isFree ? HuddlColors.blue : HuddlColors.accentAmber,
+                            color: _meetup.isFree ? HuddlColors.teal : HuddlColors.accentAmber,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
@@ -709,7 +709,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       const Divider(height: 24),
                       _DetailRow(
                         icon: Icons.attach_money_outlined,
-                        iconColor: HuddlColors.blue,
+                        iconColor: HuddlColors.teal,
                         title: _meetup.isFree
                             ? 'Free'
                             : '\u00A3${_meetup.price?.toStringAsFixed(2) ?? 'TBC'}',
@@ -1227,7 +1227,7 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Playdate':
       return const _CatStyleInfo(HuddlColors.primary, Icons.child_care);
     case 'Sport':
-      return const _CatStyleInfo(HuddlColors.blue, Icons.sports_golf);
+      return const _CatStyleInfo(HuddlColors.teal, Icons.sports_golf);
     case 'Walk':
       return const _CatStyleInfo(HuddlColors.paleBlue, Icons.directions_walk);
     case 'Social':
@@ -1235,7 +1235,7 @@ _CatStyleInfo _getCatStyle(String category) {
     case 'Food':
       return const _CatStyleInfo(HuddlColors.accentAmber, Icons.restaurant);
     default:
-      return const _CatStyleInfo(HuddlColors.blue, Icons.groups);
+      return const _CatStyleInfo(HuddlColors.teal, Icons.groups);
   }
 }
 

@@ -3185,7 +3185,7 @@ class _ProductCardState extends State<_ProductCard>
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                             color: item.isFree
-                                ? HuddlColors.blue
+                                ? HuddlColors.primary
                                 : HuddlColors.primary,
                           ),
                         ),
@@ -3310,7 +3310,7 @@ class _SellListingTileState extends State<_SellListingTile>
     return switch (type) {
       'offers' => HuddlColors.primary,
       'price' => HuddlColors.warning,
-      'photos' => HuddlColors.blue,
+      'photos' => HuddlColors.primary,
       'relist' => HuddlColors.teal,
       _ => HuddlColors.textTertiary,
     };
@@ -3455,7 +3455,7 @@ class _SellListingTileState extends State<_SellListingTile>
                                     color: widget.isSold
                                         ? hc.textTertiary
                                         : item.isFree
-                                            ? HuddlColors.blue
+                                            ? HuddlColors.primary
                                             : HuddlColors.primary,
                                   ),
                                 ),

@@ -217,7 +217,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               Icons.location_on,
               'Local Services',
               'Nurseries, GPs, classes near you',
-              HuddlColors.blue,
+              HuddlColors.teal,
               query: 'Find nurseries near me'),
           _buildFeatureCard(
               Icons.storefront,

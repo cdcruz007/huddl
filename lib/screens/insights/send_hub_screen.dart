@@ -487,21 +487,21 @@ class _EhcpGuidancePanel extends StatelessWidget {
                   : _kSendInfoBg,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: HuddlColors.blue.withValues(alpha: 0.3),
+                color: HuddlColors.teal.withValues(alpha: 0.3),
               ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Icon(Icons.description_outlined,
-                    size: 16, color: HuddlColors.blue),
+                    size: 16, color: HuddlColors.teal),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     g.templateLetterHint!,
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: HuddlColors.blue,
+                      color: HuddlColors.teal,
                       height: 1.5,
                     ),
                   ),
@@ -637,7 +637,7 @@ class _ResourceCard extends StatelessWidget {
                 size: 14,
                 color: resource.isCharity
                     ? _kSendCrimson
-                    : HuddlColors.blue,
+                    : HuddlColors.teal,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -686,9 +686,9 @@ class _ResourceCard extends StatelessWidget {
             resource.url,
             style: GoogleFonts.poppins(
               fontSize: 11,
-              color: HuddlColors.blue,
+              color: HuddlColors.teal,
               decoration: TextDecoration.underline,
-              decorationColor: HuddlColors.blue,
+              decorationColor: HuddlColors.teal,
             ),
           ),
         ],
@@ -1936,7 +1936,7 @@ class _DirectoryCard extends StatelessWidget {
                   size: 18,
                   color: resource.isCharity
                       ? _kSendCrimson
-                      : HuddlColors.blue,
+                      : HuddlColors.teal,
                 ),
               ),
               const SizedBox(width: 10),
@@ -1962,7 +1962,7 @@ class _DirectoryCard extends StatelessWidget {
                         fontSize: 10,
                         color: resource.isCharity
                             ? _kSendCrimson
-                            : HuddlColors.blue,
+                            : HuddlColors.teal,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -2009,9 +2009,9 @@ class _DirectoryCard extends StatelessWidget {
                   resource.url,
                   style: GoogleFonts.poppins(
                     fontSize: 12,
-                    color: HuddlColors.blue,
+                    color: HuddlColors.teal,
                     decoration: TextDecoration.underline,
-                    decorationColor: HuddlColors.blue,
+                    decorationColor: HuddlColors.teal,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),

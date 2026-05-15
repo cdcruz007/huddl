@@ -107,9 +107,9 @@ class _ServicesHeader extends StatelessWidget {
           const SizedBox(height: 12),
           TabBar(
             controller: tabController,
-            labelColor: HuddlColors.blue,
+            labelColor: HuddlColors.teal,
             unselectedLabelColor: hc.textTertiary,
-            indicatorColor: HuddlColors.blue,
+            indicatorColor: HuddlColors.teal,
             indicatorWeight: 2.5,
             labelStyle: GoogleFonts.poppins(
                 fontSize: 14, fontWeight: FontWeight.w600),
@@ -257,7 +257,7 @@ class _DirectoryTabState extends State<_DirectoryTab>
               if (snap.connectionState == ConnectionState.waiting) {
                 return const Center(
                     child: CircularProgressIndicator(
-                        color: HuddlColors.blue));
+                        color: HuddlColors.teal));
               }
               if (snap.hasError) {
                 return Center(
@@ -333,10 +333,10 @@ class _CategoryChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? HuddlColors.blue : hc.inputBg,
+          color: selected ? HuddlColors.teal : hc.inputBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? HuddlColors.blue : hc.divider,
+            color: selected ? HuddlColors.teal : hc.divider,
           ),
         ),
         child: Row(
@@ -463,7 +463,7 @@ class _ListingCardState extends State<_ListingCard> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: HuddlColors.blue,
+              backgroundColor: HuddlColors.teal,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
             ),
@@ -604,7 +604,7 @@ class _ListingCardState extends State<_ListingCard> {
                     children: [
                       Icon(Icons.format_quote_rounded,
                           size: 14,
-                          color: HuddlColors.blue
+                          color: HuddlColors.teal
                               .withValues(alpha: 0.7)),
                       const SizedBox(width: 6),
                       Expanded(
@@ -655,12 +655,12 @@ class _EndorseButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: hasEndorsed
-              ? HuddlColors.blue.withValues(alpha: 0.12)
+              ? HuddlColors.teal.withValues(alpha: 0.12)
               : context.hc.inputBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                hasEndorsed ? HuddlColors.blue : context.hc.divider,
+                hasEndorsed ? HuddlColors.teal : context.hc.divider,
           ),
         ),
         child: loading
@@ -668,7 +668,7 @@ class _EndorseButton extends StatelessWidget {
                 width: 16,
                 height: 16,
                 child: CircularProgressIndicator(
-                    strokeWidth: 2, color: HuddlColors.blue))
+                    strokeWidth: 2, color: HuddlColors.teal))
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -678,7 +678,7 @@ class _EndorseButton extends StatelessWidget {
                         : Icons.thumb_up_outlined,
                     size: 14,
                     color: hasEndorsed
-                        ? HuddlColors.blue
+                        ? HuddlColors.teal
                         : context.hc.textTertiary,
                   ),
                   const SizedBox(width: 4),
@@ -688,7 +688,7 @@ class _EndorseButton extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: hasEndorsed
-                          ? HuddlColors.blue
+                          ? HuddlColors.teal
                           : context.hc.textTertiary,
                     ),
                   ),
@@ -736,7 +736,7 @@ class _VerifiedBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isVerified = tier == VerificationTier.verified;
     final color =
-        isVerified ? HuddlColors.blue : HuddlColors.teal;
+        isVerified ? HuddlColors.teal : HuddlColors.teal;
     return Container(
       margin: const EdgeInsets.only(left: 6),
       padding:
@@ -926,7 +926,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 _StatPill(
                   icon: Icons.thumb_up_rounded,
                   label: '${listing.endorsementCount} endorsements',
-                  color: HuddlColors.blue,
+                  color: HuddlColors.teal,
                 ),
                 const SizedBox(width: 8),
                 _StatPill(
@@ -959,7 +959,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               _ContactRow(
                 icon:  Icons.language_outlined,
                 label: listing.website!,
-                color: HuddlColors.blue,
+                color: HuddlColors.teal,
                 onTap: () {
                   HapticFeedback.selectionClick();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1026,7 +1026,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.blue.withValues(alpha: 0.12),
+                    color: HuddlColors.teal.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -1034,7 +1034,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: HuddlColors.blue,
+                      color: HuddlColors.teal,
                     ),
                   ),
                 ),
@@ -1046,7 +1046,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                     child: CircularProgressIndicator(
-                        color: HuddlColors.blue)),
+                        color: HuddlColors.teal)),
               )
             else if (_endorsements.isEmpty)
               Padding(
@@ -1095,7 +1095,7 @@ class _EndorsementTile extends StatelessWidget {
               CircleAvatar(
                 radius: 14,
                 backgroundColor:
-                    HuddlColors.blue.withValues(alpha: 0.15),
+                    HuddlColors.teal.withValues(alpha: 0.15),
                 child: Text(
                   endorsement.firstName.isNotEmpty
                       ? endorsement.firstName[0].toUpperCase()
@@ -1103,7 +1103,7 @@ class _EndorsementTile extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: HuddlColors.blue,
+                    color: HuddlColors.teal,
                   ),
                 ),
               ),
@@ -1268,7 +1268,7 @@ class _EmptyDirectory extends StatelessWidget {
               TextButton(
                 onPressed: onClear,
                 child: Text('Clear filters',
-                    style: GoogleFonts.poppins(color: HuddlColors.blue)),
+                    style: GoogleFonts.poppins(color: HuddlColors.teal)),
               ),
             ],
           ],
@@ -1675,7 +1675,7 @@ class _ExtractedRecommendationCardState
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.blue,
+                backgroundColor: HuddlColors.teal,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -1952,7 +1952,7 @@ class _MyListingsTab extends StatelessWidget {
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(
-              child: CircularProgressIndicator(color: HuddlColors.blue));
+              child: CircularProgressIndicator(color: HuddlColors.teal));
         }
         final listings = snap.data ?? [];
         if (listings.isEmpty) {
@@ -2091,7 +2091,7 @@ Color _categoryColor(ServiceCategory cat) => switch (cat) {
       ServiceCategory.babysitting    => HuddlColors.accentCoral,
       ServiceCategory.cleaning       => HuddlColors.teal,
       ServiceCategory.healthWellness => HuddlColors.success,
-      ServiceCategory.education      => HuddlColors.blue,
+      ServiceCategory.education      => HuddlColors.teal,
       ServiceCategory.fitness        => HuddlColors.categorySport,
       ServiceCategory.firstAid       => HuddlColors.error,
       ServiceCategory.doula          => HuddlColors.pinkSoft,
