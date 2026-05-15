@@ -667,14 +667,14 @@ class _BillingToggle extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: HuddlColors.teal.withValues(alpha: 0.12),
+                    color: HuddlColors.yellowBackground,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('Save 30%',
                       style: GoogleFonts.poppins(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: HuddlColors.teal)),
+                          color: HuddlColors.yellowDark)),
                 ),
               ],
             ],
@@ -872,7 +872,7 @@ class _PlanCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: HuddlColors.teal.withValues(alpha: 0.12),
+                        color: HuddlColors.yellowBackground,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -880,7 +880,7 @@ class _PlanCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: HuddlColors.teal),
+                            color: HuddlColors.yellowDark),
                       ),
                     ),
                   ],
