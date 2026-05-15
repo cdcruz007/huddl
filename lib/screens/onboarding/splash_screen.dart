@@ -16,12 +16,14 @@ import '../../services/onboarding_data_service.dart';
 /// ──────────────────────────────────────────────────────────────────────────
 
 // ── Brand palette (mapped to HuddlColors) ──
-const _kPrimaryLighter = HuddlColors.primaryLight;  // soft blush — mapped to token
-const _kPrimaryLight = HuddlColors.primaryLight;
-const _kPrimary = HuddlColors.primary;
-const _kPrimaryPale = HuddlColors.primaryLight;
-const _kYellow = HuddlColors.yellow;
-const _kBlueLight = HuddlColors.lightBlue;
+const _kPrimaryLighter = HuddlColors.primaryLight;   // soft blush
+const _kPrimaryLight   = HuddlColors.primaryLight;
+const _kPrimary        = HuddlColors.primary;
+const _kPrimaryPale    = HuddlColors.primaryLight;
+const _kYellow         = HuddlColors.yellow;
+// Real blue from Huddl style guide — cornflower blue, distinct from orange family
+const _kBlue           = HuddlColors.splashBlue;
+const _kBluePale       = HuddlColors.splashBluePale;
 
 // ── Blob definitions ─────────────────────────────────────────────────────
 // Each blob has a start position (edge) and an end position (closer to centre).
@@ -52,9 +54,9 @@ const _kBlobs = [
   // Top-left: large blush — bounces toward upper-centre
   _BlobDef(startX: -0.15, startY: -0.10, endX: 0.00, endY: 0.05,
            radiusFrac: 0.32, color: _kPrimaryLighter, opacity: 0.90, phaseOffset: 0.00),
-  // Top-right: medium blue — bounces toward upper-centre
+  // Top-right: medium BLUE — bounces toward upper-centre (style-guide blue)
   _BlobDef(startX: 1.10,  startY: 0.03,  endX: 0.85, endY: 0.12,
-           radiusFrac: 0.24, color: HuddlColors.lightBlue,           opacity: 0.55, phaseOffset: 0.15),
+           radiusFrac: 0.24, color: _kBlue,           opacity: 0.75, phaseOffset: 0.15),
   // Top-center-right: small yellow — dips down toward centre
   _BlobDef(startX: 0.82,  startY: -0.07, endX: 0.75, endY: 0.08,
            radiusFrac: 0.13, color: _kYellow,         opacity: 0.75, phaseOffset: 0.30),
@@ -63,10 +65,10 @@ const _kBlobs = [
            radiusFrac: 0.08, color: _kPrimaryPale,    opacity: 0.85, phaseOffset: 0.45),
   // Bottom-left: medium orange — bounces toward lower-centre
   _BlobDef(startX: -0.12, startY: 0.90,  endX: 0.03, endY: 0.80,
-           radiusFrac: 0.26, color: _kPrimary,        opacity: 0.45, phaseOffset: 0.10),
-  // Bottom-right: large light blue — bounces toward lower-centre
+           radiusFrac: 0.26, color: _kPrimary,        opacity: 0.55, phaseOffset: 0.10),
+  // Bottom-right: large BLUE — bounces toward lower-centre (style-guide blue)
   _BlobDef(startX: 1.08,  startY: 0.92,  endX: 0.88, endY: 0.82,
-           radiusFrac: 0.30, color: _kBlueLight,      opacity: 0.45, phaseOffset: 0.25),
+           radiusFrac: 0.30, color: _kBlue,           opacity: 0.65, phaseOffset: 0.25),
   // Bottom-center: yellow dot — rises toward centre
   _BlobDef(startX: 0.38,  startY: 1.06,  endX: 0.40, endY: 0.90,
            radiusFrac: 0.14, color: _kYellow,         opacity: 0.65, phaseOffset: 0.40),
@@ -76,9 +78,9 @@ const _kBlobs = [
   // Mid-left: tiny blush — moves right toward centre
   _BlobDef(startX: -0.05, startY: 0.50,  endX: 0.06, endY: 0.50,
            radiusFrac: 0.09, color: _kPrimaryLighter, opacity: 0.65, phaseOffset: 0.20),
-  // Mid-right: tiny blue — moves left toward centre
+  // Mid-right: small pale BLUE dot — moves left toward centre
   _BlobDef(startX: 1.03,  startY: 0.58,  endX: 0.92, endY: 0.56,
-           radiusFrac: 0.07, color: HuddlColors.lightBlue,           opacity: 0.40, phaseOffset: 0.35),
+           radiusFrac: 0.08, color: _kBluePale,       opacity: 0.70, phaseOffset: 0.35),
 ];
 
 // ── Main screen ──────────────────────────────────────────────────────────────
