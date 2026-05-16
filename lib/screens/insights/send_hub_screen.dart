@@ -8,22 +8,16 @@ import '../../theme/huddl_colors.dart';
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
 //
-// ── EHCP PIPELINE DESIGN COLOURS ─────────────────────────────────────────────
-// These two colours are domain-specific data-visualisation tokens for the
-// EHCP journey pipeline. They are intentionally NOT HuddlColors brand tokens —
-// the SEND navigator is a specialist tool with its own established visual
-// language (NHS/DfE-adjacent documentation palette).
-//
-//   _kSendIndigo   — primary pipeline accent (requesting, progress, info)
-//   _kSendCrimson  — escalation/appeal accent (urgency, legal challenge)
-//   _kSendInfoBg   — light info card background (template hints, guidance)
-//
-// Do NOT replace these with brand orange/teal — they carry specific meaning
-// in a legal/medical context and must remain visually distinct from brand UI.
+// ── DESIGN COLOURS ────────────────────────────────────────────────────────────
+// All accent colours now use the Huddl brand palette:
+//   _kSendAccent  — primary accent → HuddlColors.teal (0xFF199A85)
+//   _kSendCrimson — escalation/appeal accent (urgency, legal challenge)
+//   _kSendInfoBg  — light info card background
 // ─────────────────────────────────────────────────────────────────────────────
-const Color _kSendIndigo  = Color(0xFF5B5EA6);
+// _kSendAccent replaced with HuddlColors.teal throughout
+const Color _kSendAccent  = HuddlColors.teal; // brand teal — replaces indigo/purple
 const Color _kSendCrimson = Color(0xFF9B2335);
-const Color _kSendInfoBg  = Color(0xFFEFF6FF);
+const Color _kSendInfoBg  = Color(0xFFE6F5F3); // teal-tinted bg (was blue-tinted)
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
 //
@@ -141,7 +135,7 @@ class _SendHeader extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: _kSendIndigo,
+                    color: _kSendAccent,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.diversity_3,
@@ -189,7 +183,7 @@ class _SendHeader extends StatelessWidget {
               child: TabBar(
                 controller: tabController,
                 indicator: BoxDecoration(
-                  color: _kSendIndigo,
+                  color: _kSendAccent,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
@@ -322,7 +316,7 @@ class _StagePickerItem extends StatelessWidget {
 
   static const List<Color> _stageColors = [
     Color(0xFF7B68EE), // not started — medium slate blue
-    _kSendIndigo, // requesting — indigo
+    _kSendAccent, // requesting — indigo
     Color(0xFF3A7BD5), // awaiting — blue
     Color(0xFF00B4D8), // being assessed — sky
     Color(0xFF06D6A0), // draft received — teal
@@ -541,7 +535,7 @@ class _NumberedStep extends StatelessWidget {
             width: 22,
             height: 22,
             decoration: BoxDecoration(
-              color: _kSendIndigo.withValues(alpha: 0.12),
+              color: _kSendAccent.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -550,7 +544,7 @@ class _NumberedStep extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: _kSendIndigo,
+                  color: _kSendAccent,
                 ),
               ),
             ),
@@ -854,7 +848,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
                   emptySubtitle:
                       'Ask about your rights, next steps, timelines, school placements, '
                       'or tribunal appeals. Powered by Huddl\'s SEND AI.',
-                  accentColor: _kSendIndigo,
+                  accentColor: _kSendAccent,
                 ),
         ),
         // ── Input bar ─────────────────────────────────────────────────────
@@ -868,7 +862,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
               : 'Ask about EHCP, rights, schools, appeals…',
           accentColor: _anonymousMode
               ? _kSendCrimson
-              : _kSendIndigo,
+              : _kSendAccent,
           onSend: _anonymousMode ? _sendAnonMessage : _sendEhcpMessage,
         ),
       ],
@@ -899,7 +893,7 @@ class _AdvisorModeToggle extends StatelessWidget {
               label: 'EHCP Advisor',
               icon: Icons.school_outlined,
               isActive: !isAnon,
-              color: _kSendIndigo,
+              color: _kSendAccent,
               onTap: () => onChanged(false),
               isDark: isDark,
             ),
@@ -994,29 +988,29 @@ class _StageContextPill extends StatelessWidget {
           padding:
               const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: _kSendIndigo.withValues(alpha: 0.08),
+            color: _kSendAccent.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: _kSendIndigo.withValues(alpha: 0.3),
+              color: _kSendAccent.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(Icons.map_outlined,
-                  size: 12, color: _kSendIndigo),
+                  size: 12, color: _kSendAccent),
               const SizedBox(width: 5),
               Text(
                 'Stage: ${stage.displayTitle}',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: _kSendIndigo,
+                  color: _kSendAccent,
                 ),
               ),
               const SizedBox(width: 4),
               const Icon(Icons.edit_outlined,
-                  size: 11, color: _kSendIndigo),
+                  size: 11, color: _kSendAccent),
             ],
           ),
         ),
@@ -1511,7 +1505,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                 if (ctx.mounted) Navigator.pop(ctx);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kSendIndigo,
+                backgroundColor: _kSendAccent,
                 foregroundColor: Colors.white,
                 elevation: 0,
               ),
@@ -1563,7 +1557,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                   _showCompleted ? 'Hide done' : 'Show done',
                   style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: _kSendIndigo),
+                      color: _kSendAccent),
                 ),
               ),
               const SizedBox(width: 4),
@@ -1575,7 +1569,7 @@ class _DeadlinesTabState extends State<_DeadlinesTab> {
                         fontSize: 12,
                         fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kSendIndigo,
+                  backgroundColor: _kSendAccent,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(
@@ -1659,7 +1653,7 @@ class _DeadlineCard extends StatelessWidget {
     if (d.isCompleted) return HuddlColors.textHint;
     if (d.isOverdue) return HuddlColors.error;
     if (d.isUrgent) return HuddlColors.warning;
-    return _kSendIndigo;
+    return _kSendAccent;
   }
 
   static IconData _categoryIcon(DeadlineCategory c) => switch (c) {
@@ -1850,12 +1844,12 @@ class _SupportDirectoryTabState extends State<_SupportDirectoryTab> {
                       horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? _kSendIndigo
+                        ? _kSendAccent
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
-                          ? _kSendIndigo
+                          ? _kSendAccent
                           : HuddlColors.inputBorderLight,
                     ),
                   ),
@@ -2036,7 +2030,7 @@ class _SectionLabel extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       children: [
-        Icon(icon, size: 15, color: _kSendIndigo),
+        Icon(icon, size: 15, color: _kSendAccent),
         const SizedBox(width: 6),
         Expanded(
           child: Text(

@@ -511,118 +511,59 @@ class _SendHeroCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         color: HuddlColors.primary,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: HuddlColors.primary.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: HuddlColors.primary.withValues(alpha: 0.22),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
           children: [
-            // Top row
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.diversity_3,
-                      color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SEND Navigator',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'AI-assisted EHCP & complex needs support',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.88),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    color: Colors.white, size: 14),
-              ],
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: const Icon(Icons.diversity_3,
+                  color: Colors.white, size: 18),
             ),
-            const SizedBox(height: 12),
-            // Feature pills
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: const [
-                _HeroPill(label: 'EHCP Navigator', icon: Icons.map_outlined),
-                _HeroPill(label: 'AI Advisor', icon: Icons.smart_toy_outlined),
-                _HeroPill(label: 'Deadline Tracker', icon: Icons.calendar_today_outlined),
-                _HeroPill(label: 'Anonymous Q&A', icon: Icons.visibility_off_outlined),
-                _HeroPill(label: 'Support Directory', icon: Icons.volunteer_activism_outlined),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Navigate the UK SEND system with step-by-step guidance, '
-              'your legal rights at every stage, and AI support grounded '
-              'in IPSEA, Contact, and the SEND Code of Practice 2015.',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.88),
-                height: 1.5,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'SEND Navigator',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                  Text(
+                    'AI-assisted EHCP & complex needs support',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.88),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(width: 8),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: Colors.white, size: 14),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _HeroPill extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  const _HeroPill({required this.label, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: Colors.white),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }
