@@ -351,22 +351,13 @@ class _SendTabState extends State<_SendTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-      children: [
-        // ── SEND Navigator hero card ─────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: _SendHeroCard(),
-        ),
-        // ── Embedded SendHubScreen ───────────────────────────────
-        Expanded(
-          child: Navigator(
-            onGenerateRoute: (_) => MaterialPageRoute(
-              builder: (_) => const _EmbeddedSendHubScreen(),
-            ),
-          ),
-        ),
-      ],
+    // ── Embedded SendHubScreen only — no hero card banner above it.
+    // The user is already on the SEND tab, so a redundant title tile adds
+    // no value.  SendHubScreen itself carries the SEND Navigator header.
+    return Navigator(
+      onGenerateRoute: (_) => MaterialPageRoute(
+        builder: (_) => const _EmbeddedSendHubScreen(),
+      ),
     );
   }
 }
@@ -499,75 +490,7 @@ class _ExpertTab extends StatelessWidget {
   }
 }
 
-// ─── SEND Hero Card ───────────────────────────────────────────────────────────
-// Huddl brand colours: primary orange gradient — no purple.
-
-class _SendHeroCard extends StatelessWidget {
-  const _SendHeroCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: HuddlColors.primary,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: HuddlColors.primary.withValues(alpha: 0.22),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: const Icon(Icons.diversity_3,
-                  color: Colors.white, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'SEND Navigator',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    'AI-assisted EHCP & complex needs support',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: Colors.white.withValues(alpha: 0.88),
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward_ios_rounded,
-                color: Colors.white, size: 14),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// _SendHeroCard removed — redundant when user is already on the SEND tab.
 
 // ─── Community wisdom card ────────────────────────────────────────────────────
 

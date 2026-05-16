@@ -9,15 +9,16 @@ import '../../theme/huddl_colors.dart';
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
 //
 // ── DESIGN COLOURS ────────────────────────────────────────────────────────────
-// All accent colours now use the Huddl brand palette:
-//   _kSendAccent  — primary accent → HuddlColors.teal (0xFF199A85)
+// Tab bar: underline style using HuddlColors.primary (orange) — matches
+//   Discover (events_screen.dart) and Connect (groups_screen.dart) exactly.
+// Header badge: HuddlColors.primary — consistent brand primary.
+// Teal (HuddlColors.teal) is retained for secondary/informational surfaces
+//   (e.g. _kSendInfoBg card backgrounds, success indicators).
 //   _kSendCrimson — escalation/appeal accent (urgency, legal challenge)
-//   _kSendInfoBg  — light info card background
 // ─────────────────────────────────────────────────────────────────────────────
-// _kSendAccent replaced with HuddlColors.teal throughout
-const Color _kSendAccent  = HuddlColors.teal; // brand teal — replaces indigo/purple
+const Color _kSendAccent  = HuddlColors.primary; // orange — matches Discover & Connect tabs
 const Color _kSendCrimson = Color(0xFF9B2335);
-const Color _kSendInfoBg  = Color(0xFFE6F5F3); // teal-tinted bg (was blue-tinted)
+const Color _kSendInfoBg  = Color(0xFFFFF3EC); // light peach-tinted bg — matches primary brand
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
 //
@@ -171,38 +172,27 @@ class _SendHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Tab bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Container(
-              height: 36,
-              decoration: BoxDecoration(
-                color: isDark ? HuddlColors.darkSurface : HuddlColors.gray100,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: TabBar(
-                controller: tabController,
-                indicator: BoxDecoration(
-                  color: _kSendAccent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                labelStyle: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w600),
-                unselectedLabelStyle: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w400),
-                labelColor: Colors.white,
-                unselectedLabelColor: HuddlColors.textSecondary,
-                padding: const EdgeInsets.all(3),
-                tabs: const [
-                  Tab(text: 'EHCP'),
-                  Tab(text: 'AI Advisor'),
-                  Tab(text: 'Deadlines'),
-                  Tab(text: 'Support'),
-                ],
-              ),
-            ),
+          // Tab bar — underline style, matching Discover and Connect tabs
+          TabBar(
+            controller: tabController,
+            labelColor: HuddlColors.primary,
+            unselectedLabelColor: HuddlColors.textHint,
+            indicatorColor: HuddlColors.primary,
+            indicatorWeight: 2.5,
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: isDark ? HuddlColors.darkDivider : HuddlColors.divider,
+            labelStyle: GoogleFonts.poppins(
+                fontSize: 12, fontWeight: FontWeight.w600),
+            unselectedLabelStyle: GoogleFonts.poppins(
+                fontSize: 12, fontWeight: FontWeight.w400),
+            padding: EdgeInsets.zero,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+            tabs: const [
+              Tab(text: 'EHCP'),
+              Tab(text: 'AI Advisor'),
+              Tab(text: 'Deadlines'),
+              Tab(text: 'Support'),
+            ],
           ),
           const SizedBox(height: 8),
         ],
