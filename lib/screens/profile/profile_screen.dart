@@ -28,6 +28,8 @@ import '../../models/subscription.dart';
 import '../../utils/borough_migration_service.dart';
 import '../debug/borough_debug_screen.dart';
 import '../../services/gdpr_borough_data_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/firestore_service.dart';
 import '../../services/huddl_user_service.dart';
@@ -99,6 +101,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Voice message consent (GDPR — explicit opt-in, default: false)
   bool _voiceConsent = false;
 
+  // Admin flag — loaded from Firestore users/{uid}/roles.isAdmin
+  bool _isAdmin = false;
+
   // Biometric login
   final _biometricService = BiometricAuthService();
   bool _biometricEnabled   = false;
@@ -169,6 +174,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// Checks whether the signed-in user has the `roles.isAdmin == true` flag
+  /// set on their Firestore document.  Fails silently — never blocks the UI.
+  Future<void> _loadAdminRole() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 6));
+      final roles = doc.data()?['roles'] as Map<String, dynamic>?;
+      final isAdmin = roles?['isAdmin'] == true;
+      if (mounted && isAdmin != _isAdmin) {
+        setState(() => _isAdmin = isAdmin);
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Profile] admin role check failed: $e');
+    }
+  }
+
   Future<void> _saveSetting(String key, bool value) async {
     // Persist to storage AND update the shared singleton so other screens
     // can immediately read the new value without reloading.
@@ -190,6 +216,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfileData() async {
     setState(() => _isLoading = true);
+
+    // ── Admin role check (non-blocking — runs alongside main load) ──────────
+    // Reads users/{uid}/roles.isAdmin from Firestore.
+    // Fails silently so a Firestore error never blocks the profile from loading.
+    _loadAdminRole();
+
     try {
       // Force-reload from storage on every profile load so we always
       // pick up values written by syncCurrentUserProfile / restoreProfile
@@ -860,11 +892,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       subtitle: 'Tell us what you think',
                       onTap: _openFeedbackScreen,
                     ),
-                    if (kDebugMode)
+                    if (_isAdmin)
                       _MenuItem(
-                        icon: Icons.admin_panel_settings_outlined,
+                        icon: Icons.shield_outlined,
                         title: 'Admin Dashboard',
-                        subtitle: 'Review reported content',
+                        subtitle: 'Review user reports',
                         onTap: () => Navigator.pushNamed(context, '/admin'),
                       ),
                     _MenuItem(

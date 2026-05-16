@@ -23,11 +23,20 @@ import '../../theme/huddl_colors.dart';
 // Firestore:  reports/{reportId}
 //   status values:  'pending' | 'reviewed' | 'actioned' | 'dismissed'
 //
-// Security note: The Firestore security rule for `reports/` currently denies
-// client-side reads (allow read: if false). To use this screen you must either:
-//   (a) update Firestore rules to  `allow read: if request.auth.uid == <adminUid>;`
-//   (b) use the Firebase Console or a server-side Admin SDK script for review.
-//   See docs/admin_access.md for setup instructions.
+// Security note: The Firestore security rule for `reports/` must allow admin reads.
+// Add this rule in Firebase Console → Firestore → Rules:
+//
+//   match /reports/{reportId} {
+//     allow create: if request.auth != null
+//                   && request.resource.data.reporterId == request.auth.uid;
+//     allow read, update: if request.auth != null
+//                   && get(/databases/$(database)/documents/users/$(request.auth.uid))
+//                        .data.roles.isAdmin == true;
+//     allow delete: if false;
+//   }
+//
+// Without this rule, the StreamBuilder will receive a permissions-denied error
+// and show the "Could not load reports" message below.
 // =============================================================================
 
 /// Status filter for the report list.
@@ -257,10 +266,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'Could not load reports.\n\n'
-                    'Firestore security rules may need updating to allow admin reads.\n'
-                    'See docs/admin_access.md.',
+                    'The Firestore security rule for the reports collection needs '
+                    'updating to allow admin reads.\n\n'
+                    'In Firebase Console → Firestore → Rules, update the reports '
+                    'match block to allow read/update when roles.isAdmin == true.\n\n'
+                    'See the comment at the top of admin_dashboard_screen.dart '
+                    'for the exact rule syntax.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.disabledText, height: 1.6),
+                    style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.disabledText, height: 1.6),
                   ),
                 ],
               ),
