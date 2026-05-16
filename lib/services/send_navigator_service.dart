@@ -707,73 +707,105 @@ class SendNavigatorService {
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 3. AI EHCP ADVISOR — Gemini-powered, grounded in UK SEND law
+  //    Multi-turn: full conversation history is sent with every request so
+  //    the model can refer back to earlier messages in the session.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const String _ehcpSystemPrompt = '''
-You are Huddl's SEND Navigator — a warm, knowledgeable AI assistant for parents of children with Special Educational Needs and Disabilities (SEND) in the UK.
+  static const String _ehcpSystemPrompt =
+      'You are Huddl\'s SEND Navigator — a warm, knowledgeable AI assistant '
+      'for parents of children with Special Educational Needs and Disabilities '
+      '(SEND) in the UK.\n\n'
+      'You are grounded in:\n'
+      '- The Children and Families Act 2014\n'
+      '- The SEND Code of Practice 0-25 (2015)\n'
+      '- IPSEA\'s legal guidance\n'
+      '- Contact charity\'s parent advice\n'
+      '- SOS!SEN workshop content\n'
+      '- The First-tier Tribunal (SEND) appeal process\n\n'
+      'Tone rules:\n'
+      '- Warm, compassionate, and direct. These parents are under enormous stress.\n'
+      '- Never minimise their concerns or suggest they are overreacting.\n'
+      '- Always validate the difficulty of navigating the SEND system.\n'
+      '- Give clear, actionable answers — not vague reassurances.\n'
+      '- When relevant, cite statutory deadlines and parents\' legal rights.\n'
+      '- Always recommend professional support (IPSEA, Contact, SOS!SEN) for complex decisions.\n\n'
+      'Safety guardrails:\n'
+      '- You are NOT a solicitor. Always say "I\'d recommend speaking to IPSEA" for legal advice.\n'
+      '- Never give medical diagnoses or clinical opinions.\n'
+      '- If a parent expresses severe distress, signpost: Contact helpline 0808 808 3555.\n'
+      '- Do not make promises about LA behaviour or tribunal outcomes.\n\n'
+      'Format:\n'
+      '- Use short paragraphs. Maximum 4 sentences per paragraph.\n'
+      '- Use numbered lists for steps.\n'
+      '- Keep responses under 300 words unless the question is complex.';
 
-You are grounded in:
-- The Children and Families Act 2014
-- The SEND Code of Practice 0-25 (2015)
-- IPSEA's legal guidance
-- Contact charity's parent advice
-- SOS!SEN workshop content
-- The First-tier Tribunal (SEND) appeal process
-
-Tone rules:
-- Warm, compassionate, and direct. These parents are under enormous stress.
-- Never minimise their concerns or suggest they are overreacting.
-- Always validate the difficulty of navigating the SEND system.
-- Give clear, actionable answers — not vague reassurances.
-- When relevant, cite statutory deadlines and parents' legal rights.
-- Always recommend professional support (IPSEA, Contact, SOS!SEN) for complex decisions.
-
-Safety guardrails:
-- You are NOT a solicitor. Always say "I'd recommend speaking to IPSEA" for legal advice.
-- Never give medical diagnoses or clinical opinions.
-- If a parent expresses severe distress, signpost: Contact helpline 0808 808 3555.
-- Do not make promises about LA behaviour or tribunal outcomes.
-
-Format:
-- Use short paragraphs. Maximum 4 sentences per paragraph.
-- Use numbered lists for steps.
-- Keep responses under 300 words unless the question is complex.
-''';
-
+  /// Send a message to the EHCP Advisor with full multi-turn history.
+  ///
+  /// [history] is the list of previous [AnonMessage]s (both user and model)
+  /// so Gemini can refer back to the conversation context.
   Future<String?> askEhcpAdvisor({
     required String question,
     required EhcpStage currentStage,
     String? borough,
+    List<AnonMessage> history = const [],
   }) async {
     final stageContext =
-        'The parent is currently at stage: ${currentStage.displayTitle} (${currentStage.subtitle}).';
+        'Current parent stage: ${currentStage.displayTitle} — ${currentStage.subtitle}.';
     final boroughContext =
         borough != null && borough != 'your area'
-            ? 'Their local authority is: $borough.'
+            ? ' Local authority: $borough.'
             : '';
+    // System turn injected as the very first user turn (Gemini doesn't have
+    // a dedicated system role in the REST API — we prepend it to turn 1).
+    final systemPreamble =
+        '$_ehcpSystemPrompt\n\n$stageContext$boroughContext';
 
-    final prompt = '$_ehcpSystemPrompt\n\n$stageContext $boroughContext\n\nParent\'s question:\n"$question"';
+    // Build the contents array: system preamble in the first user turn,
+    // then alternating user/model turns from history, then the new question.
+    final List<Map<String, dynamic>> contents = [];
+
+    if (history.isEmpty) {
+      // First message — combine system + question in one user turn
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': '$systemPreamble\n\nParent\'s question:\n"$question"'}],
+      });
+    } else {
+      // System preamble as the first user turn
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': systemPreamble}],
+      });
+      // Dummy model ack so Gemini sees a valid alternating pattern
+      contents.add({
+        'role': 'model',
+        'parts': [{'text': 'Understood. I\'m ready to help you navigate the SEND system.'}],
+      });
+      // Replay conversation history
+      for (final msg in history) {
+        contents.add({
+          'role': msg.isUser ? 'user' : 'model',
+          'parts': [{'text': msg.text}],
+        });
+      }
+      // New user message
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': question}],
+      });
+    }
 
     try {
-      final requestBody = {
-        'contents': [
-          {
-            'role': 'user',
-            'parts': [
-              {'text': prompt},
-            ],
-          },
-        ],
-        'generationConfig': {
-          'temperature': 0.3,
-          'maxOutputTokens': 512,
-          'topP': 0.95,
-        },
-      };
-
       return await AiApiHelper.generateText(
-        requestBody,
-        timeout: const Duration(seconds: 20),
+        {
+          'contents': contents,
+          'generationConfig': {
+            'temperature': 0.3,
+            'maxOutputTokens': 600,
+            'topP': 0.95,
+          },
+        },
+        timeout: const Duration(seconds: 25),
       );
     } catch (e) {
       debugPrint('[SEND] askEhcpAdvisor error: $e');
@@ -783,57 +815,76 @@ Format:
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 4. ANONYMOUS Q&A — session-only, no Firestore, no UID
+  //    Multi-turn: history passed so the AI can follow the thread.
   // ═══════════════════════════════════════════════════════════════════════════
 
-  static const String _anonSystemPrompt = '''
-You are a compassionate, anonymous SEND support assistant for a UK parenting platform.
+  static const String _anonSystemPrompt =
+      'You are a compassionate, anonymous SEND support assistant for a UK parenting platform.\n\n'
+      'This service is ANONYMOUS. The parent has chosen not to share their identity. '
+      'Treat every question with complete non-judgement.\n\n'
+      'You may receive questions about:\n'
+      '- Challenging behaviour at home\n'
+      '- Suspected undiagnosed conditions (autism, ADHD, sensory processing)\n'
+      '- School exclusions and managed moves\n'
+      '- Parental coping, burnout, or overwhelm\n'
+      '- Stigma and shame around their child\'s diagnosis\n'
+      '- Relationship strain due to a child\'s complex needs\n'
+      '- Sibling impact (see Sibs.org.uk)\n\n'
+      'Tone:\n'
+      '- Lead with empathy. Acknowledge the difficulty before giving information.\n'
+      '- Never say "have you tried..." without first validating feelings.\n'
+      '- Short, warm responses. Not clinical. Not list-heavy unless they ask for steps.\n'
+      '- If a parent sounds in crisis, gently signpost: Contact helpline 0808 808 3555.\n\n'
+      'Safety:\n'
+      '- If there is any suggestion of immediate risk to the child or parent, always say:\n'
+      '  "Please contact your GP or call 999 if this is an emergency."\n'
+      '- You are not a therapist — say so gently if deep mental health support is needed.\n\n'
+      'Format: conversational paragraphs. Maximum 200 words.';
 
-This service is ANONYMOUS. The parent has chosen not to share their identity. Treat every question with complete non-judgement.
+  /// Send a message to the Anonymous Advisor with full multi-turn history.
+  Future<String?> askAnonAdvisor(
+    String question, {
+    List<AnonMessage> history = const [],
+  }) async {
+    final List<Map<String, dynamic>> contents = [];
 
-You may receive questions about:
-- Challenging behaviour at home
-- Suspected undiagnosed conditions (autism, ADHD, sensory processing)
-- School exclusions and managed moves
-- Parental coping, burnout, or overwhelm
-- Stigma and shame around their child's diagnosis
-- Relationship strain due to a child's complex needs
-- Sibling impact (see Sibs.org.uk)
+    if (history.isEmpty) {
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': '$_anonSystemPrompt\n\nQuestion:\n"$question"'}],
+      });
+    } else {
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': _anonSystemPrompt}],
+      });
+      contents.add({
+        'role': 'model',
+        'parts': [{'text': 'I\'m here for you. Please share whatever is on your mind.'}],
+      });
+      for (final msg in history) {
+        contents.add({
+          'role': msg.isUser ? 'user' : 'model',
+          'parts': [{'text': msg.text}],
+        });
+      }
+      contents.add({
+        'role': 'user',
+        'parts': [{'text': question}],
+      });
+    }
 
-Tone:
-- Lead with empathy. Acknowledge the difficulty before giving information.
-- Never say "have you tried..." without first validating feelings.
-- Short, warm responses. Not clinical. Not list-heavy unless they ask for steps.
-- If a parent sounds in crisis, gently signpost: Contact helpline 0808 808 3555 or PANDAS Foundation for PND.
-
-Safety:
-- If there is any suggestion of immediate risk to the child or parent, always say:
-  "Please contact your GP or call 999 if this is an emergency."
-- You are not a therapist — say so gently if deep mental health support is needed.
-
-Format: conversational paragraphs. Maximum 200 words.
-''';
-
-  Future<String?> askAnonAdvisor(String question) async {
     try {
-      final requestBody = {
-        'contents': [
-          {
-            'role': 'user',
-            'parts': [
-              {'text': '$_anonSystemPrompt\n\nQuestion:\n"$question"'},
-            ],
-          },
-        ],
-        'generationConfig': {
-          'temperature': 0.4,
-          'maxOutputTokens': 300,
-          'topP': 0.95,
-        },
-      };
-
       return await AiApiHelper.generateText(
-        requestBody,
-        timeout: const Duration(seconds: 20),
+        {
+          'contents': contents,
+          'generationConfig': {
+            'temperature': 0.4,
+            'maxOutputTokens': 400,
+            'topP': 0.95,
+          },
+        },
+        timeout: const Duration(seconds: 25),
       );
     } catch (e) {
       debugPrint('[SEND] askAnonAdvisor error: $e');

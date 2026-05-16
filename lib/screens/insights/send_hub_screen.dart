@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/send_navigator_service.dart';
 import '../../theme/huddl_colors.dart';
+import 'package:intl/intl.dart';
 
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
@@ -686,7 +687,52 @@ class _ResourceCard extends StatelessWidget {
 
 // =============================================================================
 // TAB 2 — AI ADVISOR  (EHCP Advisor + Anonymous Q&A toggle)
+//
+// Agent capabilities:
+//   • Multi-turn conversation memory — full history sent on every request
+//   • Suggested starter questions — tap to auto-fill and send
+//   • Message timestamps — shown below each bubble
+//   • Long-press to copy — copies any bubble's text to clipboard
+//   • Clear conversation — wipe and start fresh
+//   • Stage-aware context — EHCP stage woven into every model turn
 // =============================================================================
+
+class _ChatMsg {
+  final String text;
+  final bool isUser;
+  final DateTime sentAt;
+  const _ChatMsg({
+    required this.text,
+    required this.isUser,
+    required this.sentAt,
+  });
+
+  /// Convert to the [AnonMessage] format the service expects.
+  AnonMessage toServiceMsg() =>
+      AnonMessage(text: text, isUser: isUser, createdAt: sentAt);
+}
+
+// ── Suggested starter prompts ─────────────────────────────────────────────────
+
+const List<(String, String)> _kEhcpStarters = [
+  ('📋', 'What are my rights if the LA refuses to assess?'),
+  ('⏱️', 'What are the key statutory deadlines I need to know?'),
+  ('📝', 'What should I look for in a draft EHCP?'),
+  ('🏫', 'Can I choose my child\'s school in Section I?'),
+  ('⚖️', 'How do I appeal to the SEND Tribunal?'),
+  ('💬', 'What does the SEND Code of Practice say about provision?'),
+];
+
+const List<(String, String)> _kAnonStarters = [
+  ('💙', 'I\'m feeling completely overwhelmed. Where do I start?'),
+  ('🧩', 'My child was just diagnosed with autism. What now?'),
+  ('😔', 'School keeps excluding my child. Is this legal?'),
+  ('😤', 'The LA keeps ignoring my requests. What can I do?'),
+  ('🌙', 'My child\'s sleep issues are affecting the whole family.'),
+  ('🤐', 'I feel embarrassed asking for help. Is that normal?'),
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _AiAdvisorTab extends StatefulWidget {
   const _AiAdvisorTab();
@@ -736,28 +782,38 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
       if (ctrl.hasClients) {
         ctrl.animateTo(
           ctrl.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 350),
           curve: Curves.easeOut,
         );
       }
     });
   }
 
-  Future<void> _sendEhcpMessage() async {
-    final text = _ehcpController.text.trim();
+  // ── Send helpers ─────────────────────────────────────────────────────────
+
+  Future<void> _sendEhcpMessage([String? override]) async {
+    final text = (override ?? _ehcpController.text).trim();
     if (text.isEmpty || _ehcpLoading) return;
     _ehcpController.clear();
 
+    final userMsg = _ChatMsg(text: text, isUser: true, sentAt: DateTime.now());
     setState(() {
-      _ehcpMessages.add(_ChatMsg(text: text, isUser: true));
+      _ehcpMessages.add(userMsg);
       _ehcpLoading = true;
     });
     _scrollToBottom(_ehcpScrollCtrl);
+
+    // Build history for multi-turn (everything except the message we just added)
+    final history = _ehcpMessages
+        .sublist(0, _ehcpMessages.length - 1)
+        .map((m) => m.toServiceMsg())
+        .toList();
 
     final reply = await SendNavigatorService().askEhcpAdvisor(
       question: text,
       currentStage: _stage ?? EhcpStage.notStarted,
       borough: SendNavigatorService().userBorough,
+      history: history,
     );
 
     if (mounted) {
@@ -767,6 +823,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
               'I\'m sorry, I couldn\'t connect right now. Please try again, '
                   'or contact IPSEA directly: ipsea.org.uk | 01799 582030.',
           isUser: false,
+          sentAt: DateTime.now(),
         ));
         _ehcpLoading = false;
       });
@@ -774,18 +831,27 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
     }
   }
 
-  Future<void> _sendAnonMessage() async {
-    final text = _anonController.text.trim();
+  Future<void> _sendAnonMessage([String? override]) async {
+    final text = (override ?? _anonController.text).trim();
     if (text.isEmpty || _anonLoading) return;
     _anonController.clear();
 
+    final userMsg = _ChatMsg(text: text, isUser: true, sentAt: DateTime.now());
     setState(() {
-      _anonMessages.add(_ChatMsg(text: text, isUser: true));
+      _anonMessages.add(userMsg);
       _anonLoading = true;
     });
     _scrollToBottom(_anonScrollCtrl);
 
-    final reply = await SendNavigatorService().askAnonAdvisor(text);
+    final history = _anonMessages
+        .sublist(0, _anonMessages.length - 1)
+        .map((m) => m.toServiceMsg())
+        .toList();
+
+    final reply = await SendNavigatorService().askAnonAdvisor(
+      text,
+      history: history,
+    );
 
     if (mounted) {
       setState(() {
@@ -794,6 +860,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
               'I\'m sorry, I\'m having trouble connecting right now. '
                   'You can reach the Contact helpline any time: 0808 808 3555.',
           isUser: false,
+          sentAt: DateTime.now(),
         ));
         _anonLoading = false;
       });
@@ -801,72 +868,126 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
     }
   }
 
+  // ── Clear conversation ───────────────────────────────────────────────────
+
+  void _clearChat() {
+    final isAnon = _anonymousMode;
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Clear conversation?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+        content: Text(
+          'This will delete all messages in this session.',
+          style: GoogleFonts.poppins(fontSize: 13, color: HuddlColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: Text('Cancel', style: GoogleFonts.poppins(color: HuddlColors.textHint)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(c);
+              setState(() {
+                if (isAnon) {
+                  _anonMessages.clear();
+                } else {
+                  _ehcpMessages.clear();
+                }
+              });
+            },
+            child: Text('Clear',
+                style: GoogleFonts.poppins(
+                    color: HuddlColors.error, fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
+    final messages = _anonymousMode ? _anonMessages : _ehcpMessages;
+    final isLoading = _anonymousMode ? _anonLoading : _ehcpLoading;
+    final accent = _anonymousMode ? _kSendCrimson : _kSendAccent;
+    final starters = _anonymousMode ? _kAnonStarters : _kEhcpStarters;
+
     return Column(
       children: [
-        // ── Mode toggle ──────────────────────────────────────────────────
-        _AdvisorModeToggle(
-          isAnon: _anonymousMode,
-          onChanged: (v) => setState(() => _anonymousMode = v),
+        // ── Mode toggle + clear button ───────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 12, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: _AdvisorModeToggle(
+                  isAnon: _anonymousMode,
+                  onChanged: (v) => setState(() => _anonymousMode = v),
+                ),
+              ),
+              if (messages.isNotEmpty) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: 'Clear conversation',
+                  child: IconButton(
+                    onPressed: _clearChat,
+                    icon: const Icon(Icons.delete_sweep_outlined, size: 20),
+                    color: HuddlColors.textHint,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
+
         // ── Stage context pill (EHCP mode only) ──────────────────────────
         if (!_anonymousMode && _stage != null)
           _StageContextPill(
             stage: _stage!,
-            onTap: () {
-              // Navigate to EHCP tab
-              final tabController = DefaultTabController.of(context);
-              tabController.animateTo(0);
-            },
+            onTap: () => DefaultTabController.of(context).animateTo(0),
           ),
+
         // ── Chat area ────────────────────────────────────────────────────
         Expanded(
-          child: _anonymousMode
-              ? _ChatView(
-                  messages: _anonMessages,
-                  scrollCtrl: _anonScrollCtrl,
-                  isLoading: _anonLoading,
-                  emptyTitle: 'Ask anything — completely anonymously',
-                  emptySubtitle:
-                      'Your question is not stored and carries no identifying information. '
-                      'Ask about behaviour, diagnosis, exclusions, coping — anything.',
-                  accentColor: _kSendCrimson,
-                )
-              : _ChatView(
-                  messages: _ehcpMessages,
-                  scrollCtrl: _ehcpScrollCtrl,
-                  isLoading: _ehcpLoading,
-                  emptyTitle: 'Ask your EHCP Advisor',
-                  emptySubtitle:
-                      'Ask about your rights, next steps, timelines, school placements, '
-                      'or tribunal appeals. Powered by Huddl\'s SEND AI.',
-                  accentColor: _kSendAccent,
-                ),
+          child: _ChatView(
+            messages: messages,
+            scrollCtrl: _anonymousMode ? _anonScrollCtrl : _ehcpScrollCtrl,
+            isLoading: isLoading,
+            accentColor: accent,
+            starters: messages.isEmpty ? starters : const [],
+            emptyTitle: _anonymousMode
+                ? 'Ask anything — completely anonymously'
+                : 'Ask your EHCP Advisor',
+            emptySubtitle: _anonymousMode
+                ? 'Your question carries no identifying information. '
+                    'Ask about behaviour, diagnosis, exclusions, coping — anything.'
+                : 'Ask about your rights, next steps, timelines, school placements, '
+                    'or tribunal appeals. Powered by Huddl\'s SEND AI.',
+            onStarterTap: (q) => _anonymousMode
+                ? _sendAnonMessage(q)
+                : _sendEhcpMessage(q),
+          ),
         ),
+
         // ── Input bar ─────────────────────────────────────────────────────
         _ChatInputBar(
-          controller:
-              _anonymousMode ? _anonController : _ehcpController,
-          isLoading:
-              _anonymousMode ? _anonLoading : _ehcpLoading,
+          controller: _anonymousMode ? _anonController : _ehcpController,
+          isLoading: isLoading,
           hint: _anonymousMode
-              ? 'Ask anything — your question is anonymous…'
+              ? 'Ask anything — completely anonymous…'
               : 'Ask about EHCP, rights, schools, appeals…',
-          accentColor: _anonymousMode
-              ? _kSendCrimson
-              : _kSendAccent,
-          onSend: _anonymousMode ? _sendAnonMessage : _sendEhcpMessage,
+          accentColor: accent,
+          onSend: () => _anonymousMode ? _sendAnonMessage() : _sendEhcpMessage(),
         ),
       ],
     );
   }
-}
-
-class _ChatMsg {
-  final String text;
-  final bool isUser;
-  const _ChatMsg({required this.text, required this.isUser});
 }
 
 class _AdvisorModeToggle extends StatelessWidget {
@@ -877,33 +998,32 @@ class _AdvisorModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ModeButton(
-              label: 'EHCP Advisor',
-              icon: Icons.school_outlined,
-              isActive: !isAnon,
-              color: _kSendAccent,
-              onTap: () => onChanged(false),
-              isDark: isDark,
-            ),
+    // NOTE: No internal Padding/Row — the call site in _AiAdvisorTabState.build()
+    // already wraps this widget in Padding > Row > Expanded.
+    return Row(
+      children: [
+        Expanded(
+          child: _ModeButton(
+            label: 'EHCP Advisor',
+            icon: Icons.school_outlined,
+            isActive: !isAnon,
+            color: _kSendAccent,
+            onTap: () => onChanged(false),
+            isDark: isDark,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _ModeButton(
-              label: 'Anonymous Q&A',
-              icon: Icons.visibility_off_outlined,
-              isActive: isAnon,
-              color: _kSendCrimson,
-              onTap: () => onChanged(true),
-              isDark: isDark,
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _ModeButton(
+            label: 'Anonymous Q&A',
+            icon: Icons.visibility_off_outlined,
+            isActive: isAnon,
+            color: _kSendCrimson,
+            onTap: () => onChanged(true),
+            isDark: isDark,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1019,6 +1139,11 @@ class _ChatView extends StatelessWidget {
   final String emptyTitle;
   final String emptySubtitle;
   final Color accentColor;
+  /// Suggested starter questions shown as tappable chips when the chat is empty.
+  /// Each record is (emoji, questionText). Pass an empty list to suppress chips.
+  final List<(String, String)> starters;
+  /// Called with the full question text when a starter chip is tapped.
+  final void Function(String question) onStarterTap;
 
   const _ChatView({
     required this.messages,
@@ -1027,6 +1152,8 @@ class _ChatView extends StatelessWidget {
     required this.emptyTitle,
     required this.emptySubtitle,
     required this.accentColor,
+    this.starters = const [],
+    required this.onStarterTap,
   });
 
   @override
@@ -1036,6 +1163,8 @@ class _ChatView extends StatelessWidget {
         title: emptyTitle,
         subtitle: emptySubtitle,
         accentColor: accentColor,
+        starters: starters,
+        onStarterTap: onStarterTap,
       );
     }
 
@@ -1058,54 +1187,123 @@ class _EmptyChat extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color accentColor;
+  final List<(String, String)> starters;
+  final void Function(String question) onStarterTap;
+
   const _EmptyChat({
     required this.title,
     required this.subtitle,
     required this.accentColor,
+    this.starters = const [],
+    required this.onStarterTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.chat_bubble_outline,
-                  color: accentColor, size: 26),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Icon ──────────────────────────────────────────────────────────
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 14),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: HuddlColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
+            child: Icon(Icons.chat_bubble_outline,
+                color: accentColor, size: 26),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.textSecondary,
             ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: HuddlColors.textHint,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: HuddlColors.textHint,
+              height: 1.5,
             ),
-          ],
-        ),
+            textAlign: TextAlign.center,
+          ),
+          // ── Suggested starters ──────────────────────────────────────────
+          if (starters.isNotEmpty) ...
+            _buildStarters(context),
+        ],
       ),
     );
+  }
+
+  List<Widget> _buildStarters(BuildContext context) {
+    return [
+      const SizedBox(height: 24),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'Suggested questions',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: HuddlColors.textHint,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      ...starters.map((starter) {
+        final (emoji, question) = starter;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            onStarterTap(question);
+          },
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            decoration: BoxDecoration(
+              color: accentColor.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: accentColor.withValues(alpha: 0.22),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(emoji,
+                    style: const TextStyle(fontSize: 16)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    question,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: accentColor,
+                      fontWeight: FontWeight.w500,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: accentColor.withValues(alpha: 0.5)),
+              ],
+            ),
+          ),
+        );
+      }),
+    ];
   }
 }
 
@@ -1114,47 +1312,96 @@ class _ChatBubble extends StatelessWidget {
   final Color accentColor;
   const _ChatBubble({required this.msg, required this.accentColor});
 
+  static final _timeFmt = DateFormat('HH:mm');
+
+  void _copyToClipboard(BuildContext context) {
+    Clipboard.setData(ClipboardData(text: msg.text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Copied to clipboard',
+          style: GoogleFonts.poppins(fontSize: 13),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final timeLabel = _timeFmt.format(msg.sentAt);
+
     return Align(
       alignment:
           msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+        margin: const EdgeInsets.only(bottom: 6),
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.82,
         ),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: msg.isUser
-              ? accentColor
-              : (isDark
-                  ? HuddlColors.darkSurface
-                  : HuddlColors.gray100),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: msg.isUser
-                ? const Radius.circular(16)
-                : const Radius.circular(4),
-            bottomRight: msg.isUser
-                ? const Radius.circular(4)
-                : const Radius.circular(16),
-          ),
-        ),
-        child: Text(
-          msg.text,
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            height: 1.5,
-            color: msg.isUser
-                ? Colors.white
-                : (isDark
-                    ? HuddlColors.darkTextPrimary
-                    : HuddlColors.textDark),
-          ),
+        child: Column(
+          crossAxisAlignment: msg.isUser
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            // ── Bubble ────────────────────────────────────────────────────
+            GestureDetector(
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                _copyToClipboard(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: msg.isUser
+                      ? accentColor
+                      : (isDark
+                          ? HuddlColors.darkSurface
+                          : HuddlColors.gray100),
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: msg.isUser
+                        ? const Radius.circular(16)
+                        : const Radius.circular(4),
+                    bottomRight: msg.isUser
+                        ? const Radius.circular(4)
+                        : const Radius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  msg.text,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: msg.isUser
+                        ? Colors.white
+                        : (isDark
+                            ? HuddlColors.darkTextPrimary
+                            : HuddlColors.textDark),
+                  ),
+                ),
+              ),
+            ),
+            // ── Timestamp ─────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.only(top: 3, bottom: 4,
+                  left: 4, right: 4),
+              child: Text(
+                timeLabel,
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  color: HuddlColors.textHint,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
