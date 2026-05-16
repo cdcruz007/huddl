@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../services/browser_storage.dart';
 import '../../services/send_navigator_service.dart';
 import '../../theme/huddl_colors.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +21,34 @@ import 'package:intl/intl.dart';
 const Color _kSendAccent  = HuddlColors.primary; // orange — matches Discover & Connect tabs
 const Color _kSendCrimson = Color(0xFF9B2335);
 const Color _kSendInfoBg  = Color(0xFFFFF3EC); // light peach-tinted bg — matches primary brand
+// =============================================================================
+// AI ADVISOR — SAFETY & COMPLIANCE CONSTANTS
+// =============================================================================
+
+/// Persistent storage key for AI Advisor consent.
+/// Value is 'v1' when the user has accepted; absent/null = not yet consented.
+const String _kAiConsentKey = 'send_ai_advisor_consent_v1';
+const String _kAiConsentAccepted = 'accepted';
+
+// Crisis-keyword set — checked client-side BEFORE the message reaches Gemini.
+// Any match triggers the _CrisisInterceptSheet regardless of AI response.
+// Words are lowercase; message is lowercased before comparison.
+// Rec 3: Hard-coded so this check cannot be disabled by model behaviour.
+const Set<String> _kCrisisKeywords = {
+  // Self-harm / suicide signals
+  'hurt myself', 'harm myself', 'end it', 'end my life', 'kill myself',
+  'want to die', 'don\'t want to be here', 'don\'t want to live',
+  'suicidal', 'suicide', 'self harm', 'self-harm', 'cutting myself',
+  'overdose', 'take my life',
+  // Child safeguarding signals
+  'hurting my child', 'hurting him', 'hurting her', 'hurting them',
+  'abuse', 'being abused', 'someone is abusing', 'being hurt',
+  'scared of my partner', 'scared of my husband', 'scared of my wife',
+  'domestic violence', 'domestic abuse',
+  // Immediate danger
+  'call the police', 'called 999', 'emergency',
+};
+
 // =============================================================================
 // SEND HUB SCREEN — HUDDL SEND NAVIGATOR
 //
@@ -742,6 +771,10 @@ class _AiAdvisorTab extends StatefulWidget {
 }
 
 class _AiAdvisorTabState extends State<_AiAdvisorTab> {
+  // ── Rec 1 / 5: Consent gate ──────────────────────────────────────────────
+  bool _consentLoading = true;
+  bool _consentGranted = false;
+
   bool _anonymousMode = false;
 
   // EHCP Advisor state
@@ -760,7 +793,25 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
   @override
   void initState() {
     super.initState();
+    _loadConsent();
     _loadStage();
+  }
+
+  // ── Consent persistence ──────────────────────────────────────────────────
+
+  Future<void> _loadConsent() async {
+    final stored = await BrowserStorage.getString(_kAiConsentKey);
+    if (mounted) {
+      setState(() {
+        _consentGranted = stored == _kAiConsentAccepted;
+        _consentLoading = false;
+      });
+    }
+  }
+
+  Future<void> _grantConsent() async {
+    await BrowserStorage.setString(_kAiConsentKey, _kAiConsentAccepted);
+    if (mounted) setState(() => _consentGranted = true);
   }
 
   Future<void> _loadStage() async {
@@ -789,11 +840,34 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
     });
   }
 
+  // ── Rec 3: Crisis intercept ───────────────────────────────────────────────
+  // Checks the message text against _kCrisisKeywords BEFORE sending to Gemini.
+  // If a match is found, shows _CrisisInterceptSheet and does not send.
+  // Returns true if a crisis was detected (caller should abort send).
+  bool _checkAndHandleCrisis(String text) {
+    final lower = text.toLowerCase();
+    final isCrisis = _kCrisisKeywords.any((kw) => lower.contains(kw));
+    if (isCrisis) {
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => const _CrisisInterceptSheet(),
+      );
+      return true;
+    }
+    return false;
+  }
+
   // ── Send helpers ─────────────────────────────────────────────────────────
 
   Future<void> _sendEhcpMessage([String? override]) async {
     final text = (override ?? _ehcpController.text).trim();
     if (text.isEmpty || _ehcpLoading) return;
+
+    // Rec 3: crisis check before touching any state
+    if (_checkAndHandleCrisis(text)) return;
+
     _ehcpController.clear();
 
     final userMsg = _ChatMsg(text: text, isUser: true, sentAt: DateTime.now());
@@ -834,6 +908,10 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
   Future<void> _sendAnonMessage([String? override]) async {
     final text = (override ?? _anonController.text).trim();
     if (text.isEmpty || _anonLoading) return;
+
+    // Rec 3: crisis check before touching any state
+    if (_checkAndHandleCrisis(text)) return;
+
     _anonController.clear();
 
     final userMsg = _ChatMsg(text: text, isUser: true, sentAt: DateTime.now());
@@ -911,6 +989,16 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Rec 1: Show loading shimmer while checking stored consent
+    if (_consentLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    // Rec 1: Gate the entire advisor behind explicit consent
+    if (!_consentGranted) {
+      return _SendAiConsentGate(onConsent: _grantConsent);
+    }
+
     final messages = _anonymousMode ? _anonMessages : _ehcpMessages;
     final isLoading = _anonymousMode ? _anonLoading : _ehcpLoading;
     final accent = _anonymousMode ? _kSendCrimson : _kSendAccent;
@@ -953,6 +1041,9 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
             onTap: () => DefaultTabController.of(context).animateTo(0),
           ),
 
+        // ── Rec 2: Persistent AI disclaimer strip ────────────────────────
+        const _AiDisclaimerStrip(),
+
         // ── Chat area ────────────────────────────────────────────────────
         Expanded(
           child: _ChatView(
@@ -965,7 +1056,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
                 ? 'Ask anything — completely anonymously'
                 : 'Ask your EHCP Advisor',
             emptySubtitle: _anonymousMode
-                ? 'Your question carries no identifying information. '
+                ? 'Your question is not stored by Huddl. '
                     'Ask about behaviour, diagnosis, exclusions, coping — anything.'
                 : 'Ask about your rights, next steps, timelines, school placements, '
                     'or tribunal appeals. Powered by Huddl\'s SEND AI.',
@@ -980,7 +1071,7 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
           controller: _anonymousMode ? _anonController : _ehcpController,
           isLoading: isLoading,
           hint: _anonymousMode
-              ? 'Ask anything — completely anonymous…'
+              ? 'Ask anything — not stored by Huddl…'
               : 'Ask about EHCP, rights, schools, appeals…',
           accentColor: accent,
           onSend: () => _anonymousMode ? _sendAnonMessage() : _sendEhcpMessage(),
@@ -989,6 +1080,528 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
     );
   }
 }
+
+// =============================================================================
+// REC 1 + 5: AI ADVISOR CONSENT GATE
+// Shown the first time a user opens the AI Advisor tab.
+// Explains: what the AI is, what it isn't, data processor (Google), DPA,
+// and obtains explicit GDPR Article 9(2)(a) consent before any data flows.
+// Consent is stored in shared_preferences (_kAiConsentKey) so it is asked
+// once only per device/profile.
+// =============================================================================
+
+class _SendAiConsentGate extends StatelessWidget {
+  final VoidCallback onConsent;
+  const _SendAiConsentGate({required this.onConsent});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Icon + title ───────────────────────────────────────────────
+          Center(
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: _kSendAccent.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.privacy_tip_outlined,
+                  color: _kSendAccent, size: 30),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              'Before you use the AI Advisor',
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? HuddlColors.darkTextPrimary
+                    : HuddlColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              'Please read this short notice carefully',
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: HuddlColors.textHint),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── What it is ────────────────────────────────────────────────
+          _ConsentSection(
+            icon: Icons.auto_awesome_outlined,
+            color: _kSendAccent,
+            title: 'What this AI Advisor is',
+            body: 'A conversational AI assistant informed by publicly '
+                'available UK SEND law and guidance (Children and Families '
+                'Act 2014, SEND Code of Practice 2015). It can help you '
+                'understand your rights, navigate the EHCP process, and '
+                'identify the right support organisations.',
+          ),
+          const SizedBox(height: 16),
+
+          // ── What it isn't ─────────────────────────────────────────────
+          _ConsentSection(
+            icon: Icons.gavel_outlined,
+            color: _kSendCrimson,
+            title: 'What it is NOT',
+            body: 'It is not a solicitor, not a therapist, and not a '
+                'replacement for professional legal or clinical advice. '
+                'It can make mistakes. Always verify important information '
+                'with IPSEA (ipsea.org.uk) or Contact (contact.org.uk) '
+                'before acting on it.',
+          ),
+          const SizedBox(height: 16),
+
+          // ── Data & infrastructure ─────────────────────────────────────
+          _ConsentSection(
+            icon: Icons.cloud_outlined,
+            color: HuddlColors.teal,
+            title: 'How your messages are processed',
+            body: 'Your messages are sent to Google\'s AI infrastructure '
+                '(Vertex AI / Gemini API) to generate responses. This means '
+                'Google processes your message text as part of this service. '
+                'Huddl does not store your AI Advisor conversations in its '
+                'own database. Google operates under a Data Processing '
+                'Agreement with Huddl and processes data in accordance with '
+                'Google Cloud\'s privacy and security terms.',
+          ),
+          const SizedBox(height: 16),
+
+          // ── Special category data ─────────────────────────────────────
+          _ConsentSection(
+            icon: Icons.shield_outlined,
+            color: HuddlColors.warning,
+            title: 'Special category data (GDPR Article 9)',
+            body: 'Questions about your child\'s disability, diagnosis, or '
+                'health, or about your own emotional wellbeing, constitute '
+                '\'special category\' personal data under UK GDPR. By '
+                'continuing, you explicitly consent (Article 9(2)(a)) to '
+                'this data being processed by Huddl and Google solely to '
+                'generate your AI Advisor response. You may withdraw this '
+                'consent at any time via Profile → Privacy Settings.',
+          ),
+          const SizedBox(height: 16),
+
+          // ── Crisis & safeguarding ─────────────────────────────────────
+          _ConsentSection(
+            icon: Icons.favorite_outline,
+            color: _kSendCrimson,
+            title: 'If you\'re in crisis',
+            body: 'If you or your child are in immediate danger, please '
+                'call 999. For emotional support, the Contact helpline is '
+                'free: 0808 808 3555. The AI Advisor is not an emergency '
+                'service and cannot contact anyone on your behalf.',
+          ),
+          const SizedBox(height: 28),
+
+          // ── Privacy policy link ───────────────────────────────────────
+          Center(
+            child: GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/privacy'),
+              child: Text(
+                'Read Huddl\'s full Privacy Policy →',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: _kSendAccent,
+                  fontWeight: FontWeight.w500,
+                  decoration: TextDecoration.underline,
+                  decorationColor: _kSendAccent,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // ── Consent button ────────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: onConsent,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _kSendAccent,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                'I understand — open the AI Advisor',
+                style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: Text(
+              'You can withdraw consent at any time in Profile → Privacy Settings.',
+              style: GoogleFonts.poppins(
+                  fontSize: 11, color: HuddlColors.textHint, height: 1.4),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One row in the consent gate — icon, title, body text.
+class _ConsentSection extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String body;
+  const _ConsentSection({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.body,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? HuddlColors.darkTextPrimary
+                        : HuddlColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  body,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: isDark
+                        ? HuddlColors.darkTextSecondary
+                        : HuddlColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// REC 2: PERSISTENT AI DISCLAIMER STRIP
+// Shown above the chat area on every render — not just in the footer.
+// One-line, dismissible per session (not persisted — intentionally reappears).
+// =============================================================================
+
+class _AiDisclaimerStrip extends StatefulWidget {
+  const _AiDisclaimerStrip();
+
+  @override
+  State<_AiDisclaimerStrip> createState() => _AiDisclaimerStripState();
+}
+
+class _AiDisclaimerStripState extends State<_AiDisclaimerStrip> {
+  bool _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: HuddlColors.warningBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: HuddlColors.warning.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded,
+              size: 13, color: HuddlColors.warning),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              'AI — not legal advice. Verify with IPSEA or Contact before acting.',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: HuddlColors.warningDark,
+                height: 1.3,
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _dismissed = true),
+            child: const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Icon(Icons.close_rounded,
+                  size: 14, color: HuddlColors.warningDark),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// REC 3: CRISIS INTERCEPT SHEET
+// Shown when crisis keywords are detected in the user's message.
+// Hard-coded — cannot be bypassed by model behaviour.
+// Provides immediate human support contacts before any AI response.
+// =============================================================================
+
+class _CrisisInterceptSheet extends StatelessWidget {
+  const _CrisisInterceptSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+              color: HuddlColors.inputBorderLight,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Icon
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: _kSendCrimson.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.favorite_outline,
+                color: _kSendCrimson, size: 26),
+          ),
+          const SizedBox(height: 14),
+
+          Text(
+            'You\'re not alone',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: _kSendCrimson,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'It sounds like things might be very hard right now. '
+            'Please reach out to one of these services — '
+            'real people are ready to help.',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: HuddlColors.textSecondary,
+              height: 1.55,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+
+          // ── Emergency ──────────────────────────────────────────────────
+          _CrisisContactCard(
+            icon: Icons.emergency_outlined,
+            color: HuddlColors.error,
+            label: 'Immediate danger',
+            name: 'Emergency services',
+            detail: 'Call 999',
+          ),
+          const SizedBox(height: 10),
+
+          // ── Contact helpline ───────────────────────────────────────────
+          _CrisisContactCard(
+            icon: Icons.phone_in_talk_outlined,
+            color: _kSendAccent,
+            label: 'Free SEND family helpline',
+            name: 'Contact charity',
+            detail: '0808 808 3555',
+          ),
+          const SizedBox(height: 10),
+
+          // ── Samaritans ─────────────────────────────────────────────────
+          _CrisisContactCard(
+            icon: Icons.support_agent_outlined,
+            color: HuddlColors.teal,
+            label: 'Emotional support — 24 / 7',
+            name: 'Samaritans',
+            detail: '116 123 (free, any time)',
+          ),
+          const SizedBox(height: 10),
+
+          // ── GP ─────────────────────────────────────────────────────────
+          _CrisisContactCard(
+            icon: Icons.local_hospital_outlined,
+            color: HuddlColors.teal,
+            label: 'Non-emergency medical / mental health',
+            name: 'Your GP or NHS 111',
+            detail: 'Call 111',
+          ),
+          const SizedBox(height: 24),
+
+          // ── Dismiss ───────────────────────────────────────────────────
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side:
+                    BorderSide(color: HuddlColors.inputBorderLight),
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                'Go back',
+                style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: HuddlColors.textSecondary),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CrisisContactCard extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final String name;
+  final String detail;
+  const _CrisisContactCard({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.name,
+    required this.detail,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withValues(alpha: 0.25),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: HuddlColors.textHint,
+                      fontWeight: FontWeight.w500),
+                ),
+                Text(
+                  name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? HuddlColors.darkTextPrimary
+                        : HuddlColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  detail,
+                  style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: color),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// END OF SAFETY / COMPLIANCE WIDGETS
+// =============================================================================
 
 class _AdvisorModeToggle extends StatelessWidget {
   final bool isAnon;

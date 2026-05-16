@@ -243,8 +243,10 @@ In rare cases, processing may be necessary to protect vital interests:
 • Emergency situations requiring user contact
 • Child safety concerns requiring immediate action
 
-f) Special Categories of Data:
-We do NOT intentionally collect special categories of personal data (racial or ethnic origin, political opinions, religious beliefs, health data, sexual orientation). If such data is inadvertently collected through user-generated content, processing is based on your explicit consent (Article 9(2)(a) GDPR) or another applicable legal basis.''',
+f) Special Categories of Data (GDPR Article 9):
+We intentionally collect special category personal data in one specific context: the SEND AI Navigator feature (Section 17). When you use the EHCP Advisor or Anonymous Q&A, you may submit questions containing health data, disability information, or mental health information about yourself or your child. This processing is based on your explicit consent (Article 9(2)(a) GDPR), obtained via a dedicated consent screen before first use.
+
+Outside the SEND AI Navigator, we do NOT intentionally collect other special categories (racial or ethnic origin, political opinions, religious beliefs, sexual orientation). If such data is inadvertently collected through user-generated content, processing is based on your explicit consent (Article 9(2)(a) GDPR) or another applicable legal basis.''',
             ),
             _buildSection(
               '4. Data Sharing, Disclosure, and Third-Party Access',
@@ -857,6 +859,97 @@ k) Security Measures:
 l) Contact:
 For any questions about voice message data processing, contact our Data Protection Officer at dpo@huddl.app.''',
             ),
+            // ── Rec 6: SEND AI Navigator — special category data section ──
+            _buildSection(
+              '17. SEND AI Navigator — Special Category Data & AI Processing',
+              'This section applies specifically to the SEND Navigator feature, '
+              'including the EHCP Advisor and Anonymous Q&A, available under '
+              'the Insights tab.\n\n'
+              'a) What the SEND AI Advisor Is\n'
+              'The SEND AI Advisor is an AI-powered conversational assistant '
+              'informed by publicly available UK SEND law and guidance '
+              '(Children and Families Act 2014, SEND Code of Practice 0-25 '
+              '2015). It is designed to help parents understand their rights '
+              'and navigate the EHCP process.\n\n'
+              'It is NOT a legal service, a solicitor, a medical professional, '
+              'or a therapist. Always verify important information with IPSEA '
+              '(ipsea.org.uk), Contact (contact.org.uk), or SOS!SEN '
+              '(sossen.org.uk) before acting on it. AI responses may contain '
+              'errors, outdated information, or omissions.\n\n'
+              'b) Special Category Data (GDPR Article 9)\n'
+              'Questions you ask the SEND AI Advisor will frequently contain, '
+              'or imply, special category personal data under UK GDPR '
+              'Article 9, including:\n'
+              '• Health and medical data (a child\'s diagnosis, condition, '
+              'or treatment)\n'
+              '• Information about a child\'s disability\n'
+              '• Your own mental health or emotional wellbeing\n\n'
+              'We process this data solely for the purpose of generating your '
+              'AI response.\n\n'
+              'Lawful basis: Explicit consent (Article 9(2)(a) GDPR). You '
+              'provide this consent when you tap "I understand — open the AI '
+              'Advisor" on the consent screen shown before first use. You may '
+              'withdraw consent at any time via Profile → Privacy & Security '
+              '→ AI Advisor Settings. Withdrawal means you will no longer be '
+              'able to use the AI Advisor, but does not affect the lawfulness '
+              'of processing carried out before withdrawal.\n\n'
+              'c) AI Infrastructure Processor — Google LLC\n'
+              'Your messages are sent to Google\'s Vertex AI / Gemini API '
+              'infrastructure to generate responses. Google LLC acts as a data '
+              'processor on Huddl\'s behalf under a Data Processing Agreement '
+              '(DPA). Processing is subject to Google Cloud\'s data processing '
+              'terms and privacy policy (policies.google.com/privacy).\n\n'
+              'What this means for you:\n'
+              '• Your message text is transmitted to Google\'s servers to '
+              'generate a response\n'
+              '• Google processes this data as a processor under Huddl\'s '
+              'instructions\n'
+              '• Google does not use this data for its own purposes outside '
+              'the terms of the DPA\n'
+              '• Data may be processed in the United States and other countries '
+              'where Google operates, under Standard Contractual Clauses\n\n'
+              'Huddl does not store your AI Advisor conversation history in '
+              'its own database. Each session exists in device memory only '
+              'and is deleted when you close the app or clear the '
+              'conversation.\n\n'
+              'd) Anonymous Q&A Mode\n'
+              'The Anonymous Q&A mode does not attach your Huddl user ID to '
+              'your messages before they are sent to the AI. However, '
+              'technical identifiers (such as IP address) are inherent in any '
+              'internet request and are processed by Google\'s infrastructure. '
+              'The "anonymous" label refers specifically to Huddl\'s '
+              'application layer — we do not log or store your UID alongside '
+              'your question. It does not mean the session is invisible at the '
+              'network infrastructure layer.\n\n'
+              'e) Jurisdiction\n'
+              'The SEND AI Advisor is designed for use within England under '
+              'the Children and Families Act 2014 and the SEND Code of '
+              'Practice 2015. SEND law differs materially in Scotland, Wales, '
+              'and Northern Ireland. If you are outside England, the AI\'s '
+              'responses may not apply to your situation.\n\n'
+              'f) AI Accuracy Limitations\n'
+              'The AI model has a training data cutoff date and may not reflect '
+              'the most recent changes to statutory guidance, LA policies, or '
+              'case law. It may produce inaccurate or incomplete responses. '
+              'Huddl is not liable for decisions made on the basis of AI '
+              'Advisor responses. Always verify with a qualified professional '
+              'before taking legal or medical action.\n\n'
+              'g) Your Rights Regarding AI Advisor Data\n'
+              '• Right to withdraw consent: Profile → Privacy & Security → '
+              'AI Advisor Settings\n'
+              '• Right to erasure: Huddl does not store AI conversations '
+              'server-side; for data held by Google see '
+              'policies.google.com/privacy\n'
+              '• Questions: dpo@huddl.app\n\n'
+              'h) Crisis Safeguarding\n'
+              'The SEND AI Advisor includes an automatic crisis detection '
+              'system. If your message contains language indicating immediate '
+              'risk of harm, a screen will be shown directing you to emergency '
+              'services (999), Samaritans (116 123), the Contact helpline '
+              '(0808 808 3555), or your GP / NHS 111 before any AI response '
+              'is generated. This system operates on-device and cannot be '
+              'disabled by the AI.',
+            ),
             const SizedBox(height: 8),
             _buildDataProtectionSummary(),
             const SizedBox(height: 24),
@@ -883,7 +976,7 @@ For any questions about voice message data processing, contact our Data Protecti
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last Updated: May 2026',
+                  'Last Updated: June 2026',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -891,7 +984,7 @@ For any questions about voice message data processing, contact our Data Protecti
                   ),
                 ),
                 Text(
-                  'Version 2.1 - Voice Message & Microphone Data Added',
+                  'Version 2.2 — SEND AI Navigator & Special Category Data Added',
                   style: GoogleFonts.poppins(
                       fontSize: 11, color: HuddlColors.textSecondary),
                 ),
