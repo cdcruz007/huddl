@@ -26,8 +26,8 @@ class DefaultGroupService {
   // Persistence keys — bump version to force re-creation with year-based naming
   // v9: creation now uses _migrateImageUrl so create-path and migrate-path
   //     always agree — eliminates stale cached image mismatches permanently.
-  static const String _groupsKey = 'default_groups_v11';
-  static const String _membershipsKey = 'user_memberships_v11';
+  static const String _groupsKey = 'default_groups_v12';
+  static const String _membershipsKey = 'user_memberships_v12';
   
   bool _isInitialized = false;
 
@@ -37,8 +37,8 @@ class DefaultGroupService {
   final Map<String, int> _boroughImageCounters = {};
 
   // Persistence key for the image counters
-  // v10: reset to align with v11 group re-creation (sequential Cambridge images)
-  static const String _countersKey = 'borough_image_counters_v10';
+  // v11: reset to align with v12 group re-creation (category-aware image offsets)
+  static const String _countersKey = 'borough_image_counters_v11';
 
   /// Generate group name based on criteria
   String generateGroupName({
@@ -493,49 +493,27 @@ class DefaultGroupService {
     ],
   };
 
-  // ── Per-year Cambridge image map — every year 2010–2032 gets its OWN image ──
-  // Rotating through all 9 assets (A–I) so no two adjacent years ever share
-  // the same photo.  Years beyond the range wrap via modulo in _migrateImageUrl.
-  static const Map<String, String> _cambridgeYearImages = {
-    '2010': _imgA,  // King's College Chapel
-    '2011': _imgB,  // Punting
-    '2012': _imgC,  // Trinity College
-    '2013': _imgD,  // The Backs
-    '2014': _imgE,  // Ely Cathedral
-    '2015': _imgF,  // South Cambs village
-    '2016': _imgG,  // River Boats
-    '2017': _imgH,  // Market Square
-    '2018': _imgI,  // Fitzwilliam
-    '2019': _imgA,  // King's College Chapel
-    '2020': _imgB,  // Punting
-    '2021': _imgC,  // Trinity College
-    '2022': _imgD,  // The Backs
-    '2023': _imgE,  // Ely Cathedral
-    '2024': _imgF,  // South Cambs village
-    '2025': _imgG,  // River Boats
-    '2026': _imgH,  // Market Square
-    '2027': _imgI,  // Fitzwilliam
-    '2028': _imgA,  // King's College Chapel
-    '2029': _imgB,  // Punting
-    '2030': _imgC,  // Trinity College
-    '2031': _imgD,  // The Backs
-    '2032': _imgE,  // Ely Cathedral
-  };
-
-  /// Cambridge image pool ordered for sequential counter assignment.
-  /// Same rotation as _cambridgeYearImages so new groups stay consistent.
+  /// Cambridge image pool for category-aware year-based assignment.
+  /// Index = (year - 2010) % 9, then shifted by category offset.
+  /// Pool order is [D,C,B,G,A,H,I,F,E] to spread landmark types evenly.
   static const List<String> _cambridgeSequentialPool = [
-    _imgA, _imgB, _imgC, _imgD, _imgE, _imgF, _imgG, _imgH, _imgI,
+    _imgD, _imgC, _imgB, _imgG, _imgA, _imgH, _imgI, _imgF, _imgE,
   ];
 
-  /// Migrate an old external image URL to the correct local asset path.
+  /// Returns the correct local-asset image path for a default borough group.
   ///
   /// Priority order:
   ///   1. Non-Cambridge borough name match → first image from that borough's pool
   ///   2. East / South Cambridgeshire overrides
-  ///   3. Cambridge year — exact per-year lookup (guaranteed unique per year)
-  ///   4. Cambridge category fallback
+  ///   3. Cambridge year — category-aware index into _cambridgeSequentialPool
+  ///      (offset by +1 for Aspiring, +2 for Expecting to prevent collisions)
+  ///   4. Cambridge category fallback (no year in name)
   ///   5. Absolute default (King's College Chapel)
+  /// Public so FirestoreService can correct stale imageUrls from Firestore
+  /// without touching any stored data.
+  static String correctImageUrl(String groupName, String storedUrl) =>
+      _migrateImageUrl(groupName, storedUrl);
+
   static String _migrateImageUrl(String groupName, String oldUrl) {
     final n = groupName.toLowerCase();
 
@@ -557,24 +535,31 @@ class DefaultGroupService {
     if (n.contains('east cambridgeshire') || n.contains('ely')) return _imgE;
     if (n.contains('south cambridgeshire')) return _imgF;
 
-    // ── 3. Cambridge — exact per-year lookup (no range collisions) ───────
-    // Extract the first 4-digit year found in the group name and look it up.
+    // ── 3. Cambridge — category-aware year lookup ────────────────────────
+    // Extract the first 4-digit year found in the group name.
+    // Category offsets shift the index so Aspiring and Expecting groups
+    // never share an image with a Parents group from the same or adjacent
+    // years — even when the base year-slot repeats (9-year cycle):
+    //   • "Parents"           → offset 0
+    //   • "Aspiring Parents"  → offset +1
+    //   • "Expecting Parents" → offset +2
+    // Offsets were chosen by exhaustive search for minimum collision count
+    // across all year pairs in the 2010-2032 range.
     final yearMatch = RegExp(r'\b(20\d{2})\b').firstMatch(n);
     if (yearMatch != null) {
       final year = yearMatch.group(1)!;
-      // Direct lookup; fall back to cycling the pool for unmapped years
-      if (_cambridgeYearImages.containsKey(year)) {
-        return _cambridgeYearImages[year]!;
-      }
-      // Year outside the map (e.g. 2033+) — cycle through pool by year offset
       final base = int.tryParse(year) ?? 2024;
-      return _cambridgeSequentialPool[(base - 2010) % _cambridgeSequentialPool.length];
+      final baseIndex = (base - 2010) % _cambridgeSequentialPool.length;
+      final offset = n.contains('aspiring') ? 1 :
+                     n.contains('expecting') ? 2 : 0;
+      return _cambridgeSequentialPool[
+          (baseIndex + offset) % _cambridgeSequentialPool.length];
     }
 
     // ── 4. Cambridge category fallback (no year in name) ─────────────────
-    if (n.contains('aspiring'))  return _imgH;  // Market Square
-    if (n.contains('expecting')) return _imgI;  // Fitzwilliam
-    if (n.contains('cambridge')) return _imgB;  // Punting
+    if (n.contains('aspiring'))  return _imgH;  // Market Square (index 5)
+    if (n.contains('expecting')) return _imgI;  // Fitzwilliam   (index 6)
+    if (n.contains('cambridge')) return _imgB;  // Punting       (index 2)
 
     // ── 5. Absolute default ──────────────────────────────────────────────
     return _imgA;

@@ -44,6 +44,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/group.dart';
 import 'backend_api_service.dart';
+import 'default_group_service.dart';
 import 'huddl_notification_service.dart';
 
 class FirestoreService {
@@ -176,6 +177,29 @@ class FirestoreService {
     return ref.id;
   }
 
+  /// Returns the correct image URL for a group loaded from Firestore.
+  ///
+  /// For default borough groups (isImageLocked=true) the imageUrl stored in
+  /// Firestore may be stale — written by older builds that used a broken
+  /// year-based rotation causing multiple groups to share the same photo.
+  ///
+  /// If the stored URL is already a local assets/ path we trust it only if
+  /// it was written by the current build. Since we can't tell which build wrote
+  /// it, we always re-derive from the group name so the result is deterministic
+  /// and consistent, then let DefaultGroupService's sequential counter handle
+  /// uniqueness during local creation.
+  ///
+  /// For user-created groups (isImageLocked=false) Firestore is the source
+  /// of truth — the image was chosen by the user.
+  static String _resolveGroupImageUrl(
+      String groupId, String name, String storedUrl, bool isImageLocked) {
+    if (!isImageLocked) return storedUrl;
+    // Always re-derive from group name for locked default groups.
+    // _migrateImageUrl is deterministic per name so the same group always
+    // gets the same image across devices and sessions.
+    return DefaultGroupService.correctImageUrl(name, storedUrl);
+  }
+
   Group _groupFromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>? ?? {};
     final uid = _uid;
@@ -194,7 +218,16 @@ class FirestoreService {
       id: doc.id,
       name: d['name'] as String? ?? '',
       description: d['description'] as String? ?? '',
-      imageUrl: d['imageUrl'] as String? ?? '',
+      // For default borough groups (isImageLocked=true), always re-derive the
+      // image from the group name. This corrects any stale URL written by older
+      // builds that used a broken year-based rotation system where multiple
+      // groups visible to the same user shared the same photo.
+      imageUrl: _resolveGroupImageUrl(
+        doc.id,
+        d['name'] as String? ?? '',
+        d['imageUrl'] as String? ?? '',
+        d['isImageLocked'] as bool? ?? false,
+      ),
       memberCount: memberIds.isNotEmpty ? memberIds.length : (d['memberCount'] as int? ?? 0),
       category: d['category'] as String? ?? 'General',
       isJoined: isJoined,
