@@ -304,15 +304,18 @@ class _StagePickerItem extends StatelessWidget {
     required this.onTap,
   });
 
+  // All stages use HuddlColors.primary (orange) — consistent with brand.
+  // Stage 8 (Appealing/Tribunal) retains _kSendCrimson as a semantic urgency
+  // signal (legal escalation), which is an intentional exception in the palette.
   static const List<Color> _stageColors = [
-    Color(0xFF7B68EE), // not started — medium slate blue
-    _kSendAccent, // requesting — indigo
-    Color(0xFF3A7BD5), // awaiting — blue
-    Color(0xFF00B4D8), // being assessed — sky
-    Color(0xFF06D6A0), // draft received — teal
-    Color(0xFF22C55E), // final issued — green
-    Color(0xFFF59E0B), // annual review — amber
-    _kSendCrimson, // appealing — crimson
+    HuddlColors.primary,  // 1 — Starting out
+    HuddlColors.primary,  // 2 — Requesting assessment
+    HuddlColors.primary,  // 3 — Awaiting LA decision
+    HuddlColors.primary,  // 4 — Assessment underway
+    HuddlColors.primary,  // 5 — Draft EHCP received
+    HuddlColors.primary,  // 6 — Final EHCP issued
+    HuddlColors.primary,  // 7 — Annual review
+    _kSendCrimson,        // 8 — Appealing / Tribunal (urgency exception)
   ];
 
   @override
