@@ -104,6 +104,9 @@ class _SendHubScreenState extends State<SendHubScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // resizeToAvoidBottomInset=true ensures the input bar rides above the
+      // keyboard instead of being hidden behind it.
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
@@ -124,11 +127,11 @@ class _SendHubScreenState extends State<SendHubScreen>
                 ],
               ),
             ),
+            // ── Bottom disclaimer — inline so it moves with the keyboard ─────
+            _Disclaimer(isDark: isDark),
           ],
         ),
       ),
-      // ── Bottom disclaimer ──────────────────────────────────────────────────
-      bottomNavigationBar: _Disclaimer(isDark: isDark),
     );
   }
 }
@@ -239,20 +242,20 @@ class _Disclaimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: Text(
-          'Huddl is not a legal service. For formal SEND legal advice contact '
-          'IPSEA (ipsea.org.uk) or SOS!SEN (sossen.org.uk). '
-          'In a crisis call Contact: 0808 808 3555.',
-          style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: HuddlColors.textHint,
-            height: 1.4,
-          ),
-          textAlign: TextAlign.center,
+    // Compact single-line footer — the full legal copy lives in the privacy
+    // policy and the consent gate; this is a brief ambient reminder only.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
+      child: Text(
+        'Not legal advice. Verify important decisions with IPSEA · Crisis: 0808 808 3555',
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          color: HuddlColors.textHint,
+          height: 1.3,
         ),
+        textAlign: TextAlign.center,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -1006,43 +1009,41 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
 
     return Column(
       children: [
-        // ── Mode toggle + clear button ───────────────────────────────────
+        // ── Compact header: mode toggle + stage pill + clear ─────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 12, 4),
+          padding: const EdgeInsets.fromLTRB(12, 6, 8, 4),
           child: Row(
             children: [
+              // Segmented mode toggle
               Expanded(
                 child: _AdvisorModeToggle(
                   isAnon: _anonymousMode,
                   onChanged: (v) => setState(() => _anonymousMode = v),
                 ),
               ),
-              if (messages.isNotEmpty) ...[
+              // Stage pill — only in EHCP mode, tucked right of toggle
+              if (!_anonymousMode && _stage != null) ...[
                 const SizedBox(width: 6),
-                Tooltip(
-                  message: 'Clear conversation',
-                  child: IconButton(
-                    onPressed: _clearChat,
-                    icon: const Icon(Icons.delete_sweep_outlined, size: 20),
-                    color: HuddlColors.textHint,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  ),
+                _StageContextPill(
+                  stage: _stage!,
+                  onTap: () => DefaultTabController.of(context).animateTo(0),
+                ),
+              ],
+              // Clear button — only when conversation exists
+              if (messages.isNotEmpty) ...[
+                const SizedBox(width: 2),
+                IconButton(
+                  onPressed: _clearChat,
+                  icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                  color: HuddlColors.textHint,
+                  tooltip: 'Clear conversation',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
               ],
             ],
           ),
         ),
-
-        // ── Stage context pill (EHCP mode only) ──────────────────────────
-        if (!_anonymousMode && _stage != null)
-          _StageContextPill(
-            stage: _stage!,
-            onTap: () => DefaultTabController.of(context).animateTo(0),
-          ),
-
-        // ── Rec 2: Persistent AI disclaimer strip ────────────────────────
-        const _AiDisclaimerStrip(),
 
         // ── Chat area ────────────────────────────────────────────────────
         Expanded(
@@ -1052,14 +1053,6 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
             isLoading: isLoading,
             accentColor: accent,
             starters: messages.isEmpty ? starters : const [],
-            emptyTitle: _anonymousMode
-                ? 'Ask anything — completely anonymously'
-                : 'Ask your EHCP Advisor',
-            emptySubtitle: _anonymousMode
-                ? 'Your question is not stored by Huddl. '
-                    'Ask about behaviour, diagnosis, exclusions, coping — anything.'
-                : 'Ask about your rights, next steps, timelines, school placements, '
-                    'or tribunal appeals. Powered by Huddl\'s SEND AI.',
             onStarterTap: (q) => _anonymousMode
                 ? _sendAnonMessage(q)
                 : _sendEhcpMessage(q),
@@ -1603,6 +1596,8 @@ class _CrisisContactCard extends StatelessWidget {
 // END OF SAFETY / COMPLIANCE WIDGETS
 // =============================================================================
 
+/// Compact segmented toggle — a single rounded pill containing two options.
+/// Matches the style used on other Huddl screens (e.g. Market Buy/Sell tabs).
 class _AdvisorModeToggle extends StatelessWidget {
   final bool isAnon;
   final ValueChanged<bool> onChanged;
@@ -1611,94 +1606,123 @@ class _AdvisorModeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // NOTE: No internal Padding/Row — the call site in _AiAdvisorTabState.build()
-    // already wraps this widget in Padding > Row > Expanded.
-    return Row(
-      children: [
-        Expanded(
-          child: _ModeButton(
+    final trackColor = isDark ? HuddlColors.darkSurface : HuddlColors.gray100;
+    final selectedBg = isDark
+        ? HuddlColors.darkSurfaceVariant
+        : HuddlColors.white;
+    final selectedBorder = isDark ? HuddlColors.darkDivider : HuddlColors.divider;
+
+    return Container(
+      height: 34,
+      decoration: BoxDecoration(
+        color: trackColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? HuddlColors.darkDivider : HuddlColors.inputBorderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          _SegmentButton(
             label: 'EHCP Advisor',
             icon: Icons.school_outlined,
             isActive: !isAnon,
-            color: _kSendAccent,
-            onTap: () => onChanged(false),
+            activeColor: _kSendAccent,
+            selectedBg: selectedBg,
+            selectedBorder: selectedBorder,
             isDark: isDark,
+            onTap: () { HapticFeedback.selectionClick(); onChanged(false); },
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _ModeButton(
+          _SegmentButton(
             label: 'Anonymous Q&A',
             icon: Icons.visibility_off_outlined,
             isActive: isAnon,
-            color: _kSendCrimson,
-            onTap: () => onChanged(true),
+            activeColor: _kSendAccent,
+            selectedBg: selectedBg,
+            selectedBorder: selectedBorder,
             isDark: isDark,
+            onTap: () { HapticFeedback.selectionClick(); onChanged(true); },
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _ModeButton extends StatelessWidget {
+class _SegmentButton extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isActive;
-  final Color color;
-  final VoidCallback onTap;
+  final Color activeColor;
+  final Color selectedBg;
+  final Color selectedBorder;
   final bool isDark;
-  const _ModeButton({
+  final VoidCallback onTap;
+
+  const _SegmentButton({
     required this.label,
     required this.icon,
     required this.isActive,
-    required this.color,
-    required this.onTap,
+    required this.activeColor,
+    required this.selectedBg,
+    required this.selectedBorder,
     required this.isDark,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isActive
-              ? color.withValues(alpha: isDark ? 0.25 : 0.10)
-              : (isDark ? HuddlColors.darkSurface : HuddlColors.gray100),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isActive ? color : HuddlColors.inputBorderLight,
-            width: isActive ? 1.5 : 1.0,
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          margin: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            color: isActive ? selectedBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+            border: isActive
+                ? Border.all(color: selectedBorder, width: 0.5)
+                : null,
+            boxShadow: isActive && !isDark
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.07),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 14, color: isActive ? color : HuddlColors.textHint),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight:
-                    isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? color : HuddlColors.textSecondary,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isActive ? activeColor : HuddlColors.textHint,
               ),
-            ),
-          ],
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                    color: isActive ? activeColor : HuddlColors.textSecondary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// Compact inline stage pill — sits in the header row next to the mode toggle.
 class _StageContextPill extends StatelessWidget {
   final EhcpStage stage;
   final VoidCallback onTap;
@@ -1706,39 +1730,41 @@ class _StageContextPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-        child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: _kSendAccent.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: _kSendAccent.withValues(alpha: 0.3),
-            ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isDark
+              ? HuddlColors.darkSurface
+              : _kSendAccent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: _kSendAccent.withValues(alpha: isDark ? 0.4 : 0.25),
+            width: 0.8,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.map_outlined,
-                  size: 12, color: _kSendAccent),
-              const SizedBox(width: 5),
-              Text(
-                'Stage: ${stage.displayTitle}',
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.layers_outlined, size: 11, color: _kSendAccent),
+            const SizedBox(width: 4),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 80),
+              child: Text(
+                stage.displayTitle,
                 style: GoogleFonts.poppins(
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: FontWeight.w500,
                   color: _kSendAccent,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 4),
-              const Icon(Icons.edit_outlined,
-                  size: 11, color: _kSendAccent),
-            ],
-          ),
+            ),
+            const SizedBox(width: 3),
+            const Icon(Icons.edit_outlined, size: 10, color: _kSendAccent),
+          ],
         ),
       ),
     );
@@ -1749,8 +1775,6 @@ class _ChatView extends StatelessWidget {
   final List<_ChatMsg> messages;
   final ScrollController scrollCtrl;
   final bool isLoading;
-  final String emptyTitle;
-  final String emptySubtitle;
   final Color accentColor;
   /// Suggested starter questions shown as tappable chips when the chat is empty.
   /// Each record is (emoji, questionText). Pass an empty list to suppress chips.
@@ -1762,8 +1786,6 @@ class _ChatView extends StatelessWidget {
     required this.messages,
     required this.scrollCtrl,
     required this.isLoading,
-    required this.emptyTitle,
-    required this.emptySubtitle,
     required this.accentColor,
     this.starters = const [],
     required this.onStarterTap,
@@ -1773,8 +1795,6 @@ class _ChatView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (messages.isEmpty && !isLoading) {
       return _EmptyChat(
-        title: emptyTitle,
-        subtitle: emptySubtitle,
         accentColor: accentColor,
         starters: starters,
         onStarterTap: onStarterTap,
@@ -1797,15 +1817,11 @@ class _ChatView extends StatelessWidget {
 }
 
 class _EmptyChat extends StatelessWidget {
-  final String title;
-  final String subtitle;
   final Color accentColor;
   final List<(String, String)> starters;
   final void Function(String question) onStarterTap;
 
   const _EmptyChat({
-    required this.title,
-    required this.subtitle,
     required this.accentColor,
     this.starters = const [],
     required this.onStarterTap,
@@ -1813,110 +1829,86 @@ class _EmptyChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Icon ──────────────────────────────────────────────────────────
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.chat_bubble_outline,
-                color: accentColor, size: 26),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: HuddlColors.textHint,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          // ── Suggested starters ──────────────────────────────────────────
-          if (starters.isNotEmpty) ...
-            _buildStarters(context),
-        ],
-      ),
-    );
-  }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? HuddlColors.darkSurface : HuddlColors.white;
+    final borderColor = isDark ? HuddlColors.darkDivider : HuddlColors.divider;
 
-  List<Widget> _buildStarters(BuildContext context) {
-    return [
-      const SizedBox(height: 24),
-      Align(
-        alignment: Alignment.centerLeft,
+    if (starters.isEmpty) {
+      // Fallback when no starters — simple centred prompt
+      return Center(
         child: Text(
-          'Suggested questions',
+          'Type a question below to get started',
           style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: HuddlColors.textHint,
-            letterSpacing: 0.3,
+              fontSize: 13, color: HuddlColors.textHint),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          child: Text(
+            'Suggested questions',
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: HuddlColors.textHint,
+              letterSpacing: 0.2,
+            ),
           ),
         ),
-      ),
-      const SizedBox(height: 10),
-      ...starters.map((starter) {
-        final (emoji, question) = starter;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            onStarterTap(question);
-          },
-          child: Container(
-            width: double.infinity,
-            margin: const EdgeInsets.only(bottom: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: accentColor.withValues(alpha: 0.22),
+        ...starters.map((starter) {
+          final (emoji, question) = starter;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onStarterTap(question);
+            },
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
               ),
-            ),
-            child: Row(
-              children: [
-                Text(emoji,
-                    style: const TextStyle(fontSize: 16)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    question,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: accentColor,
-                      fontWeight: FontWeight.w500,
-                      height: 1.35,
+              child: Row(
+                children: [
+                  Text(emoji, style: const TextStyle(fontSize: 18)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      question,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: HuddlColors.textDark,
+                        fontWeight: FontWeight.w500,
+                        height: 1.35,
+                      ),
                     ),
                   ),
-                ),
-                Icon(Icons.arrow_forward_ios_rounded,
-                    size: 12,
-                    color: accentColor.withValues(alpha: 0.5)),
-              ],
+                  Icon(Icons.arrow_forward_ios_rounded,
+                      size: 12, color: HuddlColors.textHint),
+                ],
+              ),
             ),
-          ),
-        );
-      }),
-    ];
+          );
+        }),
+      ],
+    );
   }
 }
 
