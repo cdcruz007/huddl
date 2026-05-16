@@ -733,10 +733,18 @@ class _ChatMsg {
   final String text;
   final bool isUser;
   final DateTime sentAt;
+  /// True when this message represents an AI call failure (shows error styling).
+  final bool isError;
+  /// True when the failure is a permanent config issue (API key blocked/missing)
+  /// rather than a transient network error. Used to suppress the retry hint.
+  final bool isConfigError;
+
   const _ChatMsg({
     required this.text,
     required this.isUser,
     required this.sentAt,
+    this.isError = false,
+    this.isConfigError = false,
   });
 
   /// Convert to the [AnonMessage] format the service expects.
@@ -886,21 +894,37 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
         .map((m) => m.toServiceMsg())
         .toList();
 
-    final reply = await SendNavigatorService().askEhcpAdvisor(
-      question: text,
-      currentStage: _stage ?? EhcpStage.notStarted,
-      borough: SendNavigatorService().userBorough,
-      history: history,
-    );
+    String replyText;
+    bool isError = false;
+    bool isConfigError = false;
+    try {
+      final reply = await SendNavigatorService().askEhcpAdvisor(
+        question: text,
+        currentStage: _stage ?? EhcpStage.notStarted,
+        borough: SendNavigatorService().userBorough,
+        history: history,
+      );
+      replyText = reply ?? 'I didn\'t receive a response. Please try again.';
+    } on SendAiException catch (e) {
+      isError = true;
+      isConfigError = e.isConfigError;
+      replyText = isConfigError
+          ? 'The AI service isn\'t configured yet — the Generative Language '
+              'API needs to be enabled in Google Cloud Console for this app.'
+          : 'I couldn\'t connect right now. Please check your connection and try again.';
+    } catch (_) {
+      isError = true;
+      replyText = 'Something went wrong. Please try again.';
+    }
 
     if (mounted) {
       setState(() {
         _ehcpMessages.add(_ChatMsg(
-          text: reply ??
-              'I\'m sorry, I couldn\'t connect right now. Please try again, '
-                  'or contact IPSEA directly: ipsea.org.uk | 01799 582030.',
+          text: replyText,
           isUser: false,
           sentAt: DateTime.now(),
+          isError: isError,
+          isConfigError: isConfigError,
         ));
         _ehcpLoading = false;
       });
@@ -929,19 +953,35 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
         .map((m) => m.toServiceMsg())
         .toList();
 
-    final reply = await SendNavigatorService().askAnonAdvisor(
-      text,
-      history: history,
-    );
+    String replyText;
+    bool isError = false;
+    bool isConfigError = false;
+    try {
+      final reply = await SendNavigatorService().askAnonAdvisor(
+        text,
+        history: history,
+      );
+      replyText = reply ?? 'I didn\'t receive a response. Please try again.';
+    } on SendAiException catch (e) {
+      isError = true;
+      isConfigError = e.isConfigError;
+      replyText = isConfigError
+          ? 'The AI service isn\'t configured yet — the Generative Language '
+              'API needs to be enabled in Google Cloud Console for this app.'
+          : 'I couldn\'t connect right now. Please check your connection and try again.';
+    } catch (_) {
+      isError = true;
+      replyText = 'Something went wrong. Please try again.';
+    }
 
     if (mounted) {
       setState(() {
         _anonMessages.add(_ChatMsg(
-          text: reply ??
-              'I\'m sorry, I\'m having trouble connecting right now. '
-                  'You can reach the Contact helpline any time: 0808 808 3555.',
+          text: replyText,
           isUser: false,
           sentAt: DateTime.now(),
+          isError: isError,
+          isConfigError: isConfigError,
         ));
         _anonLoading = false;
       });
@@ -1940,6 +1980,81 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final timeLabel = _timeFmt.format(msg.sentAt);
+
+    // ── Error bubble (AI call failed) ──────────────────────────────────────
+    if (msg.isError) {
+      return Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.88,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? HuddlColors.error.withValues(alpha: 0.12)
+                : HuddlColors.errorLight,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: HuddlColors.error.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.wifi_off_rounded,
+                      size: 14, color: HuddlColors.error),
+                  const SizedBox(width: 6),
+                  Text(
+                    msg.isConfigError ? 'AI not available' : 'Connection failed',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.error,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                msg.text,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: isDark
+                      ? HuddlColors.darkTextSecondary
+                      : HuddlColors.textSecondary,
+                ),
+              ),
+              if (!msg.isConfigError) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Tap the send button to try again.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+              if (msg.isConfigError) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'For SEND advice now: IPSEA ipsea.org.uk · 01799 582030',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: HuddlColors.textHint,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
 
     return Align(
       alignment:

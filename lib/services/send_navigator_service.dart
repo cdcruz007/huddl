@@ -5,6 +5,21 @@ import 'browser_storage.dart';
 import 'onboarding_data_service.dart';
 import 'postcode_service.dart';
 
+// ─── Typed AI error ───────────────────────────────────────────────────────────
+
+/// Thrown when the Gemini / Vertex AI call fails.
+/// [isConfigError] = true means the API key is blocked or missing (403/401)
+///   — the user cannot retry; a developer action is required.
+/// [isConfigError] = false means a transient network or timeout failure —
+///   the user can try again.
+class SendAiException implements Exception {
+  final String message;
+  final bool isConfigError;
+  const SendAiException(this.message, {this.isConfigError = false});
+  @override
+  String toString() => 'SendAiException($message, configError=$isConfigError)';
+}
+
 // =============================================================================
 // SEND NAVIGATOR SERVICE
 //
@@ -824,7 +839,14 @@ class SendNavigatorService {
       );
     } catch (e) {
       debugPrint('[SEND] askEhcpAdvisor error: $e');
-      return null;
+      final msg = e.toString();
+      // 403 API_KEY_SERVICE_BLOCKED means the Generative Language API is not
+      // enabled for this project's key — a config error, not a network error.
+      final isConfig = msg.contains('403') ||
+          msg.contains('PERMISSION_DENIED') ||
+          msg.contains('API_KEY_SERVICE_BLOCKED') ||
+          msg.contains('API key');
+      throw SendAiException(msg, isConfigError: isConfig);
     }
   }
 
@@ -911,7 +933,12 @@ class SendNavigatorService {
       );
     } catch (e) {
       debugPrint('[SEND] askAnonAdvisor error: $e');
-      return null;
+      final msg = e.toString();
+      final isConfig = msg.contains('403') ||
+          msg.contains('PERMISSION_DENIED') ||
+          msg.contains('API_KEY_SERVICE_BLOCKED') ||
+          msg.contains('API key');
+      throw SendAiException(msg, isConfigError: isConfig);
     }
   }
 
