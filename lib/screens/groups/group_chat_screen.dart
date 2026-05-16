@@ -6393,23 +6393,44 @@ class _GroupImageBubble extends StatelessWidget {
                               )
                             : (imageUrl.startsWith('http://') ||
                                     imageUrl.startsWith('https://'))
-                                ? CachedNetworkImage(
-                                    imageUrl: imageUrl,
-                                    fit: BoxFit.cover,
-                                    width: 240,
-                                    height: 240,
-                                    placeholder: (_, __) => Container(
-                                      width: 240,
-                                      height: 240,
-                                      color: HuddlColors.gray200,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                                // On web use Image.network — the browser handles
+                                // CORS via standard <img> fetch, avoiding the
+                                // dart:io-based CachedNetworkImage CORS issues.
+                                // On native use CachedNetworkImage for disk cache.
+                                ? (kIsWeb
+                                    ? Image.network(
+                                        imageUrl,
+                                        fit: BoxFit.cover,
+                                        width: 240,
+                                        height: 240,
+                                        loadingBuilder: (_, child, progress) =>
+                                            progress == null
+                                                ? child
+                                                : Container(
+                                                    width: 240,
+                                                    height: 240,
+                                                    color: HuddlColors.gray200,
+                                                    child: const Center(
+                                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                                    ),
+                                                  ),
+                                        errorBuilder: (_, __, ___) => _brokenImage(),
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: imageUrl,
+                                        fit: BoxFit.cover,
+                                        width: 240,
+                                        height: 240,
+                                        placeholder: (_, __) => Container(
+                                          width: 240,
+                                          height: 240,
+                                          color: HuddlColors.gray200,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(strokeWidth: 2),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    errorWidget: (_, __, ___) => _brokenImage(),
-                                  )
+                                        errorWidget: (_, __, ___) => _brokenImage(),
+                                      ))
                                 : _brokenImage(),
                       ),
                     ),

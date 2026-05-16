@@ -6,6 +6,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:path_provider/path_provider.dart';
+import 'web_blob_helper_stub.dart' if (dart.library.html) 'web_blob_helper.dart';
 
 
 /// Singleton service that handles voice message recording, uploading, and playback.
@@ -221,11 +222,15 @@ class VoiceMessageService {
 
     UploadTask task;
     if (kIsWeb) {
-      // On web, `record` writes to a blob URL – we can't read file bytes easily here.
-      // In practice the web path returned by record is a blob URI; skip upload and
-      // return it directly (the blob is local). For full web support use
-      // record's `stream` mode in a future iteration.
-      return localPath;
+      // On web, `record` returns a blob: URL.  We fetch the blob as bytes using
+      // XHR then upload via putData so the audio is stored in Firebase Storage
+      // and playable by all users (a blob: URL is local to one browser tab).
+      // Fetch blob: URL as bytes, then upload to Firebase Storage
+      final bytes = await fetchBlobAsBytes(localPath);
+      task = ref.putData(
+        bytes,
+        SettableMetadata(contentType: 'audio/webm'),
+      );
     } else {
       // stopRecording() already strips file:// — handle both just in case.
       final cleanPath = localPath.startsWith('file://')
