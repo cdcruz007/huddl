@@ -1013,173 +1013,194 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       if (s.boostReason != null) boostReasons[s.meetup.id] = s.boostReason!;
     }
 
-    return GestureDetector(
-      onTap: () => _searchFocusNode.unfocus(),
-      behavior: HitTestBehavior.translucent,
-      child: Column(
+    // ── Figma design tokens ────────────────────────────────────────
+    const Color feedBg       = Color(0xFFF7F7F8); // warm light gray page bg
+    const Color chipBlue     = Color(0xFF3B82F6); // selected chip — bright blue
+    const Color chipTextSel  = Colors.white;       // selected chip text
+    const Color chipBgUn     = Colors.white;       // unselected chip bg
+    const Color chipTextUn   = Color(0xFF555555);  // unselected chip text
+    const Color filterText   = Color(0xFF333333);  // filter pill icon+text
+    const Color distanceText = Color(0xFF9E9E9E);  // 'Distance: 10 km' gray
+    const Color sectionText  = Color(0xFF1A1A1A);  // 'Suggested for you'
+
+    return Column(
       children: [
-        // ── Unified search + filter bar ──────────────────────────
+        // ══ TOP HEADER — light gray bg (Figma-exact) ══════════════
         Container(
-          color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
+          color: feedBg,
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search pill
-              Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: context.hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: TextField(
-                    controller: _localSearchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (v) => setState(() => _localSearchQuery = v),
-                    textAlignVertical: TextAlignVertical.center,
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search meetups...',
-                      hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                      prefixIcon: Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.7)),
-                      suffixIcon: _localSearchQuery.isNotEmpty
-                          ? GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                _localSearchController.clear();
-                                setState(() => _localSearchQuery = '');
-                              },
-                              child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Filter pill button — opens full filter bottom sheet
-              Semantics(
-                label: _hasActiveFilter ? 'Filters active. Tap to change.' : 'Filter meetups',
-                button: true,
-                child: GestureDetector(
-                  onTap: () => _showFilterSheet(context),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: _hasActiveFilter
-                          ? HuddlColors.primary.withValues(alpha: 0.12)
-                          : context.hc.inputBg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: _hasActiveFilter
-                            ? HuddlColors.primary.withValues(alpha: 0.4)
-                            : Colors.transparent,
-                        width: 1.2,
+              // ── Row 1: Filter pill + Distance label ──────────────
+              Row(
+                children: [
+                  // Filter and sort pill — white, soft shadow
+                  Semantics(
+                    label: _hasActiveFilter ? 'Filters active. Tap to change.' : 'Filter meetups',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => _showFilterSheet(context),
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 18,
+                              color: _hasActiveFilter
+                                  ? const Color(0xFFF4845F)
+                                  : filterText,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _hasActiveFilter && _filterPillLabel.isNotEmpty
+                                  ? _filterPillLabel
+                                  : 'Filter and sort',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: _hasActiveFilter
+                                    ? const Color(0xFFF4845F)
+                                    : filterText,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          size: 16,
-                          color: _hasActiveFilter
-                              ? HuddlColors.primary
-                              : context.hc.textTertiary,
-                        ),
-                        if (_filterPillLabel.isNotEmpty) ...[
-                          const SizedBox(width: 4),
-                          Text(
-                            _filterPillLabel,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
-                            ),
-                          ),
-                        ],
-                      ],
+                  ),
+                  const Spacer(),
+                  // Distance label — plain gray text
+                  GestureDetector(
+                    onTap: () => _showFilterSheet(context),
+                    child: Text(
+                      'Distance: 10 km',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: distanceText,
+                      ),
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ── Row 2: Date/category chips — horizontally scrollable ──
+              SizedBox(
+                height: 42,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  padding: EdgeInsets.zero,
+                  children: _categoryChips.map((chip) {
+                    final label = chip['label'] as String;
+                    final isSelected = _selectedCategory == label;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          _aiService.trackCategoryTap(label);
+                          setState(() => _selectedCategory = label);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          decoration: BoxDecoration(
+                            color: isSelected ? chipBlue : chipBgUn,
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSelected
+                                    ? chipBlue.withValues(alpha: 0.25)
+                                    : Colors.black.withValues(alpha: 0.06),
+                                blurRadius: isSelected ? 8 : 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            label,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? chipTextSel : chipTextUn,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // ── Active participant badge ───────────────────────────
+              if (_selectedParticipant != 'All') ...[
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4845F).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: const Color(0xFFF4845F).withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.people_outline, size: 14, color: Color(0xFFF4845F)),
+                          const SizedBox(width: 5),
+                          Text(_selectedParticipant,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFF4845F))),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              setState(() => _selectedParticipant = 'All');
+                            },
+                            child: const Icon(Icons.close, size: 14, color: Color(0xFFF4845F)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // ── Section label: "Suggested for you" ────────────────
+              Text(
+                'Suggested for you',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: sectionText,
+                ),
+              ),
+              const SizedBox(height: 12),
             ],
           ),
         ),
-        // ── Category chips row — full 9 categories from create form ──
-        Container(
-          color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(0, 2, 0, 8),
-          child: SizedBox(
-            height: 36,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _categoryChips.map((chip) {
-                final label = chip['label'] as String;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: _FilterChip(
-                    label: label,
-                    isSelected: _selectedCategory == label,
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      _aiService.trackCategoryTap(label);
-                      setState(() => _selectedCategory = label);
-                    },
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-        // Active participant filter badge (shown when participant is filtered)
-        if (_selectedParticipant != 'All')
-          Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: HuddlColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.people_outline, size: 14,
-                          color: HuddlColors.primary),
-                      const SizedBox(width: 5),
-                      Text(_selectedParticipant,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary)),
-                      const SizedBox(width: 6),
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _selectedParticipant = 'All');
-                        },
-                        child: Icon(Icons.close, size: 14,
-                            color: HuddlColors.primary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
 
         // ── E) Smart Nudge — contextual one-liner (dismissible) ──
         if (_activeNudge != null)
@@ -1192,49 +1213,51 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             onCreateMeetup: widget.onCreateMeetup,
           ),
 
-        // ── List ─────────────────────────────────────────────────
+        // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
-          child: filtered.isEmpty
-              ? _EmptyState(
-                  icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
-                  illustration: HuddlIllustration.meetup,
-                  title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
-                  subtitle: _hasActiveFilter
-                      ? 'Try adjusting your filters to see more meetups.'
-                      : 'Organise a casual get-together with\nother parents in your area.',
-                  actionLabel: _hasActiveFilter ? 'Clear filters' : 'Create Meet-up',
-                  onAction: _hasActiveFilter
-                      ? () => setState(() {
-                            _selectedCategory = 'All';
-                            _selectedParticipant = 'All';
-                          })
-                      : widget.onCreateMeetup,
-                )
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    await _loadUserContext();
-                    if (mounted) setState(() {});
-                  },
-                  color: HuddlColors.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                    itemCount: filtered.length,
-                    itemBuilder: (_, i) {
-                      final meetup = filtered[i];
-                      return _MeetupCard(
-                        meetup: meetup,
-                        canAccess: _canAccessMeetup(meetup),
-                        onAccessDenied: () => _showAccessDeniedDialog(context, meetup),
-                        boostReason: boostReasons[meetup.id],
-                        onView: () => _aiService.trackMeetupView(meetup.id, meetup.category),
-                      );
+          child: ColoredBox(
+            color: const Color(0xFFF7F7F8),
+            child: filtered.isEmpty
+                ? _EmptyState(
+                    icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
+                    illustration: HuddlIllustration.meetup,
+                    title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
+                    subtitle: _hasActiveFilter
+                        ? 'Try adjusting your filters to see more meetups.'
+                        : 'Organise a casual get-together with\nother parents in your area.',
+                    actionLabel: _hasActiveFilter ? 'Clear filters' : 'Create Meet-up',
+                    onAction: _hasActiveFilter
+                        ? () => setState(() {
+                              _selectedCategory = 'All';
+                              _selectedParticipant = 'All';
+                            })
+                        : widget.onCreateMeetup,
+                  )
+                : RefreshIndicator(
+                    onRefresh: () async {
+                      await _loadUserContext();
+                      if (mounted) setState(() {});
                     },
+                    color: const Color(0xFFF4845F),
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemCount: filtered.length,
+                      itemBuilder: (_, i) {
+                        final meetup = filtered[i];
+                        return _MeetupCard(
+                          meetup: meetup,
+                          canAccess: _canAccessMeetup(meetup),
+                          onAccessDenied: () => _showAccessDeniedDialog(context, meetup),
+                          boostReason: boostReasons[meetup.id],
+                          onView: () => _aiService.trackMeetupView(meetup.id, meetup.category),
+                        );
+                      },
+                    ),
                   ),
-                ),
+          ),
         ),
       ],
-      ),
     );
   }
 }
