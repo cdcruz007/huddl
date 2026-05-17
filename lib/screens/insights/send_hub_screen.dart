@@ -177,34 +177,22 @@ class _SendHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SEND Navigator',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? HuddlColors.darkTextPrimary
-                              : HuddlColors.textPrimary,
-                          height: 1.1,
-                        ),
-                      ),
-                      Text(
-                        'AI-assisted EHCP & complex needs support',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: HuddlColors.textHint,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    'SEND Navigator',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? HuddlColors.darkTextPrimary
+                          : HuddlColors.textPrimary,
+                      height: 1.1,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Tab bar — underline style, matching Discover and Connect tabs
           TabBar(
             controller: tabController,
@@ -227,7 +215,6 @@ class _SendHeader extends StatelessWidget {
               Tab(text: 'Support'),
             ],
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );
@@ -1049,26 +1036,18 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
 
     return Column(
       children: [
-        // ── Compact header: mode toggle + stage pill + clear ─────────────
+        // ── Mode toggle row ───────────────────────────────────────────────
         Padding(
-          padding: const EdgeInsets.fromLTRB(12, 6, 8, 4),
+          padding: const EdgeInsets.fromLTRB(12, 6, 8, 2),
           child: Row(
             children: [
-              // Segmented mode toggle
+              // Segmented mode toggle — full width, clear button right-edge
               Expanded(
                 child: _AdvisorModeToggle(
                   isAnon: _anonymousMode,
                   onChanged: (v) => setState(() => _anonymousMode = v),
                 ),
               ),
-              // Stage pill — only in EHCP mode, tucked right of toggle
-              if (!_anonymousMode && _stage != null) ...[
-                const SizedBox(width: 6),
-                _StageContextPill(
-                  stage: _stage!,
-                  onTap: () => DefaultTabController.of(context).animateTo(0),
-                ),
-              ],
               // Clear button — only when conversation exists
               if (messages.isNotEmpty) ...[
                 const SizedBox(width: 2),
@@ -1084,6 +1063,19 @@ class _AiAdvisorTabState extends State<_AiAdvisorTab> {
             ],
           ),
         ),
+        // ── Stage context pill — sits below toggle, EHCP mode only ────────
+        if (!_anonymousMode && _stage != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+            child: Row(
+              children: [
+                _StageContextPill(
+                  stage: _stage!,
+                  onTap: () => DefaultTabController.of(context).animateTo(0),
+                ),
+              ],
+            ),
+          ),
 
         // ── Chat area ────────────────────────────────────────────────────
         Expanded(
@@ -1886,20 +1878,8 @@ class _EmptyChat extends StatelessWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
       children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 8),
-          child: Text(
-            'Suggested questions',
-            style: GoogleFonts.poppins(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: HuddlColors.textHint,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
         ...starters.map((starter) {
           final (emoji, question) = starter;
           return GestureDetector(
@@ -1909,8 +1889,8 @@ class _EmptyChat extends StatelessWidget {
             },
             child: Container(
               width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              margin: const EdgeInsets.only(bottom: 7),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               decoration: BoxDecoration(
                 color: cardColor,
                 borderRadius: BorderRadius.circular(12),
@@ -1927,8 +1907,8 @@ class _EmptyChat extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 12),
+                  Text(emoji, style: const TextStyle(fontSize: 16)),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       question,
@@ -1936,7 +1916,7 @@ class _EmptyChat extends StatelessWidget {
                         fontSize: 13,
                         color: HuddlColors.textDark,
                         fontWeight: FontWeight.w500,
-                        height: 1.35,
+                        height: 1.3,
                       ),
                     ),
                   ),
