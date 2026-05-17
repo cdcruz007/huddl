@@ -19,7 +19,6 @@ import '../../services/invisible_ai_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
-import '../../widgets/huddl_widgets.dart' show HuddlBottomSheetHandle;
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../groups/forward_message_sheet.dart';
@@ -660,167 +659,329 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   // ── Filter bottom sheet ───────────────────────────────────────
   void _showFilterSheet(BuildContext context) {
     HapticFeedback.selectionClick();
+    // Capture current filter state so sheet can mutate locally
+    // then commit on "Show results" tap.
+    String sheetCategory = _selectedCategory;
+    String sheetParticipant = _selectedParticipant;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.hc.surface,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          final hc = ctx.hc;
-          return SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          // ── Design tokens ──────────────────────────────────────
+          const Color bgSheet     = Color(0xFFF7F7F7);
+          const Color bgCard      = Colors.white;
+          const Color accentBlue  = Color(0xFF3A7FEA);
+          const Color accentOrange= Color(0xFFF89A5A);
+          const Color textPrimary = Color(0xFF1D1D1D);
+          const Color textSec     = Color(0xFF6B6B6B);
+          const Color chipBorder  = Color(0xFFE0E0E0);
+
+          // ── Helpers ────────────────────────────────────────────
+          Widget sectionLabel(String title) => Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textSec,
+              letterSpacing: 0.1,
+            ),
+          );
+
+          Widget filterChip({
+            required String label,
+            required bool isSelected,
+            required VoidCallback onTap,
+            IconData? icon,
+          }) {
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onTap();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: icon != null ? 10 : 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? accentBlue : bgCard,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: isSelected ? accentBlue : chipBorder,
+                    width: 1.2,
+                  ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: accentBlue.withValues(alpha: 0.18), blurRadius: 6, offset: const Offset(0, 2))]
+                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 14, color: isSelected ? Colors.white : accentBlue),
+                      const SizedBox(width: 5),
+                    ],
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          // ── Count active filters for CTA label ────────────────
+          int activeCount = 0;
+          if (sheetCategory != 'All') activeCount++;
+          if (sheetParticipant != 'All') activeCount++;
+
+          // ── Category icon map ──────────────────────────────────
+          const Map<String, IconData> catIcons = {
+            'All':                Icons.apps_rounded,
+            'Hanging out':        Icons.people_alt_outlined,
+            'Pregnancy':          Icons.pregnant_woman_outlined,
+            'Playdate':           Icons.child_friendly_outlined,
+            'Sports & exercise':  Icons.fitness_center_outlined,
+            'Coffee & tea':       Icons.coffee_outlined,
+            'Parks & Walks':      Icons.park_outlined,
+            'Food & nutrition':   Icons.restaurant_outlined,
+            'Performance & shows':Icons.theater_comedy_outlined,
+            'Other':              Icons.more_horiz_rounded,
+          };
+
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Container(
+              color: bgSheet,
+              // Use DraggableScrollableSheet sizing
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle + header
-                  const HuddlBottomSheetHandle(),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text('Filter Meetups',
-                          style: GoogleFonts.poppins(
-                              fontSize: 18, fontWeight: FontWeight.w700,
-                              color: hc.textPrimary)),
-                      const Spacer(),
-                      if (_hasActiveFilter)
-                        TextButton(
-                          onPressed: () {
-                            setSheetState(() {
-                              _selectedCategory = 'All';
-                              _selectedParticipant = 'All';
-                            });
-                            setState(() {
-                              _selectedCategory = 'All';
-                              _selectedParticipant = 'All';
-                            });
-                          },
-                          child: Text('Clear all',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13, color: HuddlColors.primary,
-                                  fontWeight: FontWeight.w500)),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // ── Category section ──────────────────────────
-                  Text('Category',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w600,
-                          color: hc.textSecondary)),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categoryChips.map((chip) {
-                      final label = chip['label'] as String;
-                      final isSelected = _selectedCategory == label;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setSheetState(() => _selectedCategory = label);
-                          setState(() {
-                            _selectedCategory = label;
-                            _aiService.trackCategoryTap(label);
-                          });
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? HuddlColors.primary
-                                : HuddlColors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? HuddlColors.primary
-                                  : hc.divider,
-                              width: 1.2,
+                  // ══ STICKY HEADER ════════════════════════════════
+                  Container(
+                    color: bgCard,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Drag handle
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 10),
+                          child: Center(
+                            child: Container(
+                              width: 36, height: 4,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4D4D4),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
-                          child: Text(label,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isSelected
-                                      ? HuddlColors.white
-                                      : hc.textSecondary)),
                         ),
-                      );
-                    }).toList(),
+                        // Header row
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 16, 14),
+                          child: Row(
+                            children: [
+                              // Close button
+                              GestureDetector(
+                                onTap: () => Navigator.pop(ctx),
+                                child: Container(
+                                  width: 32, height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0F0F0),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close_rounded, size: 17, color: textPrimary),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Filter and sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // RESET button
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  setSheetState(() {
+                                    sheetCategory = 'All';
+                                    sheetParticipant = 'All';
+                                  });
+                                },
+                                child: Text(
+                                  'RESET',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: accentOrange,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(height: 1, thickness: 1, color: const Color(0xFFEEEEEE)),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 20),
-                  // ── Participants section ───────────────────────
-                  Text('Participants',
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w600,
-                          color: hc.textSecondary)),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ['All', ..._participantOptions].map((p) {
-                      final isSelected = _selectedParticipant == p;
-                      return GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setSheetState(() => _selectedParticipant = p);
-                          setState(() => _selectedParticipant = p);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? HuddlColors.primary
-                                : HuddlColors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: isSelected
-                                  ? HuddlColors.primary
-                                  : hc.divider,
-                              width: 1.2,
+
+                  // ══ SCROLLABLE FILTER CONTENT ════════════════════
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          // ── CATEGORY SECTION ──────────────────────
+                          sectionLabel('Category'),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: bgCard,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                            ),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 10,
+                              children: _categoryChips.map((chip) {
+                                final label = chip['label'] as String;
+                                final icon = catIcons[label] ?? Icons.label_outline;
+                                final isSelected = sheetCategory == label;
+                                return filterChip(
+                                  label: label,
+                                  isSelected: isSelected,
+                                  icon: icon,
+                                  onTap: () {
+                                    setSheetState(() => sheetCategory = label);
+                                    setState(() => _aiService.trackCategoryTap(label));
+                                  },
+                                );
+                              }).toList(),
                             ),
                           ),
-                          child: Text(p,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isSelected
-                                      ? HuddlColors.white
-                                      : hc.textSecondary)),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-                  // ── Apply button ──────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
-                        elevation: 0,
+
+                          const SizedBox(height: 28),
+
+                          // ── PARTICIPANTS SECTION ───────────────────
+                          sectionLabel('Participants'),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: bgCard,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                            ),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 10,
+                              children: ['All', ..._participantOptions].map((p) {
+                                final isSelected = sheetParticipant == p;
+                                const Map<String, IconData> pIcons = {
+                                  'All':               Icons.groups_outlined,
+                                  'Mums':              Icons.face_outlined,
+                                  'Dads':              Icons.face_2_outlined,
+                                  'Aspiring parents':  Icons.favorite_border_rounded,
+                                  'Expecting parents': Icons.pregnant_woman_outlined,
+                                  'Kids':              Icons.child_care_outlined,
+                                };
+                                final icon = pIcons[p];
+                                return filterChip(
+                                  label: p,
+                                  isSelected: isSelected,
+                                  icon: icon,
+                                  onTap: () => setSheetState(() => sheetParticipant = p),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      child: Text('Show meetups',
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+
+                  // ══ STICKY BOTTOM CTA ════════════════════════════
+                  Container(
+                    decoration: BoxDecoration(
+                      color: bgCard,
+                      border: Border(top: BorderSide(color: const Color(0xFFEEEEEE), width: 1)),
+                      boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            // Commit local sheet state back to parent
+                            setState(() {
+                              _selectedCategory = sheetCategory;
+                              _selectedParticipant = sheetParticipant;
+                            });
+                            Navigator.pop(ctx);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            height: 52,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(26),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accentOrange.withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              activeCount > 0 ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}' : 'Show results',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -2229,178 +2390,519 @@ class _EventsTabState extends State<_EventsTab> {
   // ── Events filter bottom sheet ────────────────────────────────
   void _showEventsFilterSheet(BuildContext context) {
     HapticFeedback.selectionClick();
-    // Snapshot current values so the sheet can restore on cancel
+    // Snapshot current values — all filter logic preserved unchanged
     String sheetPrice = _priceFilter;
     String sheetFormat = _formatFilter;
+    // Sort state (local to sheet; maps to intelligent sort ordering)
+    String sheetSort = 'Most popular'; // Most popular | Latest
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.hc.surface,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          final hc = ctx.hc;
-          final hasAny = sheetPrice != 'All' || sheetFormat != 'All';
+          // ── Design tokens ──────────────────────────────────────
+          const Color bgSheet      = Color(0xFFF7F7F7);
+          const Color bgCard       = Colors.white;
+          const Color accentBlue   = Color(0xFF3A7FEA);
+          const Color accentOrange = Color(0xFFF89A5A);
+          const Color textPrimary  = Color(0xFF1D1D1D);
+          const Color textSec      = Color(0xFF6B6B6B);
+          const Color chipBorder   = Color(0xFFE0E0E0);
+          const Color infoBg       = Color(0xFFEAF1FD);
 
-          Widget optionChip(String label, String current, void Function(String) onSelect) {
-            final isSelected = current == label;
+          // ── Reusable chip builder ──────────────────────────────
+          Widget evChip({
+            required String label,
+            required bool isSelected,
+            required VoidCallback onTap,
+            IconData? icon,
+          }) {
             return GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onSelect(label);
-              },
+              onTap: () { HapticFeedback.selectionClick(); onTap(); },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                curve: Curves.easeOut,
+                padding: EdgeInsets.symmetric(
+                  horizontal: icon != null ? 10 : 16,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? HuddlColors.primary
-                      : HuddlColors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isSelected ? accentBlue : bgCard,
+                  borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isSelected
-                        ? HuddlColors.primary
-                        : hc.divider,
+                    color: isSelected ? accentBlue : chipBorder,
                     width: 1.2,
                   ),
+                  boxShadow: isSelected
+                      ? [BoxShadow(color: accentBlue.withValues(alpha: 0.18), blurRadius: 6, offset: const Offset(0, 2))]
+                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))],
                 ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? HuddlColors.white : hc.textSecondary,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (icon != null) ...[
+                      Icon(icon, size: 14, color: isSelected ? Colors.white : accentBlue),
+                      const SizedBox(width: 5),
+                    ],
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          // ── Section label ──────────────────────────────────────
+          Widget evSectionLabel(String title) => Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: textSec,
+              letterSpacing: 0.1,
+            ),
+          );
+
+          // ── Card wrapper ───────────────────────────────────────
+          Widget evCard(Widget child) => Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: bgCard,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              )],
+            ),
+            child: child,
+          );
+
+          // Is "Online" format selected?
+          final isOnline = sheetFormat == 'Online';
+
+          // Count active non-default filters
+          int activeCount = 0;
+          if (sheetPrice != 'All') activeCount++;
+          if (sheetFormat != 'All') activeCount++;
+
+          return ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: Container(
+              color: bgSheet,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle
-                  const HuddlBottomSheetHandle(),
-                  const SizedBox(height: 8),
-                  // Header row
-                  Row(
-                    children: [
-                      Text(
-                        'Filter Events',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: hc.textPrimary,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (hasAny)
-                        TextButton(
-                          onPressed: () {
-                            setSheetState(() {
-                              sheetPrice = 'All';
-                              sheetFormat = 'All';
-                            });
-                            setState(() {
-                              _priceFilter = 'All';
-                              _formatFilter = 'All';
-                            });
-                          },
-                          child: Text(
-                            'Clear all',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: HuddlColors.primary,
-                              fontWeight: FontWeight.w500,
+
+                  // ══ STICKY HEADER ══════════════════════════════════
+                  Container(
+                    color: bgCard,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 10),
+                          child: Center(
+                            child: Container(
+                              width: 36, height: 4,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFD4D4D4),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 18),
-
-                  // ── Price section ────────────────────────────
-                  Text(
-                    'Price',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ['All', 'Free', 'Paid'].map((label) {
-                      return optionChip(label, sheetPrice, (v) {
-                        setSheetState(() => sheetPrice = v);
-                        setState(() {
-                          _priceFilter = v;
-                          // Clear chip-level filter if it overlaps price
-                          if (v != 'All' && (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid')) {
-                            _activeManualFilter = 'All';
-                          }
-                        });
-                      });
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // ── Format section ───────────────────────────
-                  Text(
-                    'Format',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: ['All', 'Online', 'In-Person'].map((label) {
-                      return optionChip(label, sheetFormat, (v) {
-                        setSheetState(() => sheetFormat = v);
-                        setState(() {
-                          _formatFilter = v;
-                          // Clear chip-level filter if it overlaps format
-                          if (v != 'All' && (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person')) {
-                            _activeManualFilter = 'All';
-                          }
-                        });
-                      });
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // ── Apply button ─────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 16, 14),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => Navigator.pop(ctx),
+                                child: Container(
+                                  width: 32, height: 32,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF0F0F0),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close_rounded, size: 17, color: textPrimary),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  'Filter and sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  setSheetState(() {
+                                    sheetPrice = 'All';
+                                    sheetFormat = 'All';
+                                    sheetSort = 'Most popular';
+                                  });
+                                  setState(() {
+                                    _priceFilter = 'All';
+                                    _formatFilter = 'All';
+                                  });
+                                },
+                                child: Text(
+                                  'RESET',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: accentOrange,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        elevation: 0,
+                        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+                      ],
+                    ),
+                  ),
+
+                  // ══ SCROLLABLE CONTENT ══════════════════════════════
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          // ── TYPE / PRICE SECTION ───────────────────
+                          evSectionLabel('Type'),
+                          const SizedBox(height: 12),
+                          evCard(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 10,
+                              children: [
+                                evChip(
+                                  label: 'All',
+                                  isSelected: sheetPrice == 'All',
+                                  icon: Icons.apps_rounded,
+                                  onTap: () {
+                                    setSheetState(() => sheetPrice = 'All');
+                                    setState(() {
+                                      _priceFilter = 'All';
+                                    });
+                                  },
+                                ),
+                                evChip(
+                                  label: 'Free',
+                                  isSelected: sheetPrice == 'Free',
+                                  icon: Icons.card_giftcard_outlined,
+                                  onTap: () {
+                                    setSheetState(() => sheetPrice = 'Free');
+                                    setState(() {
+                                      _priceFilter = 'Free';
+                                      if (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid') {
+                                        _activeManualFilter = 'All';
+                                      }
+                                    });
+                                  },
+                                ),
+                                evChip(
+                                  label: 'Paid',
+                                  isSelected: sheetPrice == 'Paid',
+                                  icon: Icons.confirmation_num_outlined,
+                                  onTap: () {
+                                    setSheetState(() => sheetPrice = 'Paid');
+                                    setState(() {
+                                      _priceFilter = 'Paid';
+                                      if (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid') {
+                                        _activeManualFilter = 'All';
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          // ── LOCALISATION / FORMAT SECTION ──────────
+                          evSectionLabel('Localisation'),
+                          const SizedBox(height: 12),
+                          evCard(
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 10,
+                                  children: [
+                                    evChip(
+                                      label: 'All',
+                                      isSelected: sheetFormat == 'All',
+                                      icon: Icons.tune_rounded,
+                                      onTap: () {
+                                        setSheetState(() => sheetFormat = 'All');
+                                        setState(() {
+                                          _formatFilter = 'All';
+                                        });
+                                      },
+                                    ),
+                                    evChip(
+                                      label: 'Online',
+                                      isSelected: sheetFormat == 'Online',
+                                      icon: Icons.wifi_outlined,
+                                      onTap: () {
+                                        setSheetState(() => sheetFormat = 'Online');
+                                        setState(() {
+                                          _formatFilter = 'Online';
+                                          if (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person') {
+                                            _activeManualFilter = 'All';
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    evChip(
+                                      label: 'In-Person',
+                                      isSelected: sheetFormat == 'In-Person',
+                                      icon: Icons.location_on_outlined,
+                                      onTap: () {
+                                        setSheetState(() => sheetFormat = 'In-Person');
+                                        setState(() {
+                                          _formatFilter = 'In-Person';
+                                          if (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person') {
+                                            _activeManualFilter = 'All';
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                // Helper note when Online is selected
+                                AnimatedSize(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeOut,
+                                  child: isOnline
+                                      ? Padding(
+                                          padding: const EdgeInsets.only(top: 14),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                            decoration: BoxDecoration(
+                                              color: infoBg,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.info_outline_rounded, size: 15, color: accentBlue),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    'Online events have no distance restriction',
+                                                    style: GoogleFonts.poppins(
+                                                      fontSize: 12,
+                                                      color: accentBlue,
+                                                      height: 1.4,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          // ── SHOW ONLY FREE EVENTS TOGGLE ───────────
+                          evCard(
+                            Row(
+                              children: [
+                                Icon(Icons.sell_outlined, size: 18, color: textSec),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Show only free events',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    final newVal = sheetPrice != 'Free' ? 'Free' : 'All';
+                                    setSheetState(() => sheetPrice = newVal);
+                                    setState(() {
+                                      _priceFilter = newVal;
+                                      if (newVal != 'All' && (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid')) {
+                                        _activeManualFilter = 'All';
+                                      }
+                                    });
+                                  },
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: 48,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      color: sheetPrice == 'Free'
+                                          ? accentOrange
+                                          : const Color(0xFFD9D9D9),
+                                    ),
+                                    child: AnimatedAlign(
+                                      duration: const Duration(milliseconds: 200),
+                                      curve: Curves.easeOut,
+                                      alignment: sheetPrice == 'Free'
+                                          ? Alignment.centerRight
+                                          : Alignment.centerLeft,
+                                      child: Container(
+                                        width: 22,
+                                        height: 22,
+                                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 28),
+
+                          // ── SORT BY SECTION ────────────────────────
+                          evSectionLabel('Sort by'),
+                          const SizedBox(height: 12),
+                          evCard(
+                            Column(
+                              children: ['Most popular', 'Latest'].map((option) {
+                                final isSelected = sheetSort == option;
+                                return GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    setSheetState(() => sheetSort = option);
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 6),
+                                    child: Row(
+                                      children: [
+                                        AnimatedContainer(
+                                          duration: const Duration(milliseconds: 180),
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: isSelected ? accentOrange : chipBorder,
+                                              width: 2,
+                                            ),
+                                            color: isSelected ? accentOrange : Colors.transparent,
+                                          ),
+                                          child: isSelected
+                                              ? const Icon(Icons.check, size: 12, color: Colors.white)
+                                              : null,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          option,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isSelected ? textPrimary : textSec,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      child: Text(
-                        'Show events',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                    ),
+                  ),
+
+                  // ══ STICKY BOTTOM CTA ══════════════════════════════
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: bgCard,
+                      border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
+                      boxShadow: [BoxShadow(color: Color(0x0F000000), blurRadius: 12, offset: Offset(0, -4))],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            Navigator.pop(ctx);
+                          },
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(26),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: accentOrange.withValues(alpha: 0.35),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              activeCount > 0
+                                  ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
+                                  : 'Show results',
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
