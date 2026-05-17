@@ -970,9 +970,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _messageController.clear();
     _fireMessageSentNotifier();
 
-    // ── AI safety pre-filter (best-effort, safe-by-default on error) ────
+    // ── Safety pre-filter: Layer 1 (local blocklist) + Layer 2 (AI) ────────
     final safetyResult = await MessageSafetyService().classify(text);
-    if (safetyResult == MessageSafetyResult.hold) {
+    if (safetyResult != MessageSafetyResult.safe) {
       // Remove the optimistic message we added above
       if (mounted) {
         setState(() {
@@ -980,10 +980,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           _messageStatuses.remove(optimisticId);
         });
         _firestoreMsgIds.remove(optimisticId);
+        final isLocalBlock = safetyResult == MessageSafetyResult.localBlock;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Your message could not be sent — it may violate our community guidelines.',
+            content: Text(
+              isLocalBlock
+                  ? 'That message contains language that isn\'t allowed in Huddl. '
+                    'Please keep our community respectful.'
+                  : 'Your message could not be sent — it may violate our community guidelines.',
             ),
             backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
