@@ -2811,14 +2811,30 @@ class _EventsTabState extends State<_EventsTab> {
 
   String _activeManualFilter = 'All';
 
-  // ── Events filter bottom sheet ────────────────────────────────
+  // ── Extended Events filter state (mirrors Meetup filter Figma) ─
+  String        _evLocalization    = 'none';   // 'none' | 'online' | 'live'
+  double        _evDistanceKm      = 10.0;
+  final Set<String>   _evParticipants    = {};
+  final Set<String>   _evCategories      = {};
+  bool          _evFreeOnly        = false;
+  DateTimeRange? _evDateRange;
+  String        _evSortBy          = 'mostPopular'; // 'mostPopular' | 'latest'
+
+  // ── Events filter bottom sheet — Figma-exact ─────────────────
   void _showEventsFilterSheet(BuildContext context) {
     HapticFeedback.selectionClick();
-    // Snapshot current values — all filter logic preserved unchanged
-    String sheetPrice = _priceFilter;
-    String sheetFormat = _formatFilter;
-    // Sort state (local to sheet; maps to intelligent sort ordering)
-    String sheetSort = 'Most popular'; // Most popular | Latest
+
+    // Snapshot all state into local sheet vars
+    String         sheetLocalization  = _evLocalization;
+    double         sheetDistanceKm    = _evDistanceKm;
+    Set<String>    sheetParticipants  = Set<String>.from(_evParticipants);
+    Set<String>    sheetCategories    = Set<String>.from(_evCategories);
+    bool           sheetFreeOnly      = _evFreeOnly;
+    DateTimeRange? sheetDateRange     = _evDateRange;
+    String         sheetSortBy        = _evSortBy;
+    // Legacy price/format preserved for existing filter logic
+    String         sheetPrice         = _priceFilter;
+    String         sheetFormat        = _formatFilter;
 
     showModalBottomSheet(
       context: context,
@@ -2830,18 +2846,72 @@ class _EventsTabState extends State<_EventsTab> {
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          // ── Design tokens ──────────────────────────────────────
-          const Color bgSheet      = Color(0xFFF7F7F7);
-          const Color bgCard       = Colors.white;
-          const Color accentBlue   = Color(0xFF3A7FEA);
-          const Color accentOrange = Color(0xFFF89A5A);
-          const Color textPrimary  = Color(0xFF1D1D1D);
-          const Color textSec      = Color(0xFF6B6B6B);
-          const Color chipBorder   = Color(0xFFE0E0E0);
-          const Color infoBg       = Color(0xFFEAF1FD);
 
-          // ── Reusable chip builder ──────────────────────────────
-          Widget evChip({
+          // ══ DESIGN TOKENS (Figma-exact) ════════════════════════
+          const Color bgSheet      = Colors.white;
+          const Color orange       = Color(0xFFF4845F);
+          const Color blue         = Color(0xFF4A90D9);
+          const Color textPrimary  = Color(0xFF1A1A1A);
+          const Color textSecGray  = Color(0xFF9E9E9E);
+          const Color chipBg       = Color(0xFFF0F0F0);
+          const Color dividerColor = Color(0xFFE0E0E0);
+          const Color trackInactive= Color(0xFFE0E0E0);
+          const Color toggleOff    = Color(0xFFC7C7CC);
+
+          final bool isOnline = sheetLocalization == 'online';
+
+          // ── Section heading ────────────────────────────────────
+          Widget sectionHeading(String title) => Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+            ),
+          );
+
+          // ── Localization chip ──────────────────────────────────
+          Widget locChip(String label, String value) {
+            final sel = sheetLocalization == value;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setSheetState(() {
+                  sheetLocalization = (sheetLocalization == value) ? 'none' : value;
+                  // Sync legacy format filter
+                  if (sheetLocalization == 'online') {
+                    sheetFormat = 'Online';
+                  } else if (sheetLocalization == 'live') {
+                    sheetFormat = 'In-Person';
+                  } else {
+                    sheetFormat = 'All';
+                  }
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+                decoration: BoxDecoration(
+                  color: sel ? blue : chipBg,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                    color: sel ? Colors.white : textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // ── Filter chip (multi-select) ─────────────────────────
+          Widget filterChip({
             required String label,
             required bool isSelected,
             required VoidCallback onTap,
@@ -2850,29 +2920,22 @@ class _EventsTabState extends State<_EventsTab> {
             return GestureDetector(
               onTap: () { HapticFeedback.selectionClick(); onTap(); },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                curve: Curves.easeOut,
+                duration: const Duration(milliseconds: 180),
                 padding: EdgeInsets.symmetric(
-                  horizontal: icon != null ? 10 : 16,
+                  horizontal: icon != null ? 12 : 16,
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? accentBlue : bgCard,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isSelected ? accentBlue : chipBorder,
-                    width: 1.2,
-                  ),
-                  boxShadow: isSelected
-                      ? [BoxShadow(color: accentBlue.withValues(alpha: 0.18), blurRadius: 6, offset: const Offset(0, 2))]
-                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))],
+                  color: isSelected ? const Color(0xFF1A1A1A) : chipBg,
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: 14, color: isSelected ? Colors.white : accentBlue),
-                      const SizedBox(width: 5),
+                      Icon(icon, size: 15,
+                          color: isSelected ? Colors.white : blue),
+                      const SizedBox(width: 6),
                     ],
                     Text(
                       label,
@@ -2888,55 +2951,95 @@ class _EventsTabState extends State<_EventsTab> {
             );
           }
 
-          // ── Section label ──────────────────────────────────────
-          Widget evSectionLabel(String title) => Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textSec,
-              letterSpacing: 0.1,
-            ),
-          );
+          // ── Radio row ──────────────────────────────────────────
+          Widget radioRow(String label, String value) {
+            final sel = sheetSortBy == value;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setSheetState(() => sheetSortBy = value);
+              },
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(label,
+                          style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              color: textPrimary)),
+                    ),
+                    Container(
+                      width: 22, height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: sel ? orange : const Color(0xFFCCCCCC),
+                          width: sel ? 0 : 1.5,
+                        ),
+                        color: sel ? orange : Colors.transparent,
+                      ),
+                      child: sel
+                          ? const Center(
+                              child: CircleAvatar(radius: 4, backgroundColor: Colors.white))
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
-          // ── Card wrapper ───────────────────────────────────────
-          Widget evCard(Widget child) => Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: bgCard,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              )],
-            ),
-            child: child,
-          );
+          // ── Category icon map ──────────────────────────────────
+          const Map<String, IconData> catIcons = {
+            'Hanging out':         Icons.chat_bubble_outline_rounded,
+            'Pregnancy':           Icons.pregnant_woman_outlined,
+            'Playdate':            Icons.directions_run_rounded,
+            'Sports & exercise':   Icons.fitness_center_outlined,
+            'Coffee & tea':        Icons.coffee_outlined,
+            'Parks & Walks':       Icons.park_outlined,
+            'Performance & shows': Icons.theater_comedy_outlined,
+          };
 
-          // Is "Online" format selected?
-          final isOnline = sheetFormat == 'Online';
+          const List<String> participantOptions = [
+            'Mums', 'Dads', 'Kids', 'Aspiring parents', 'Expecting parents',
+          ];
 
-          // Count active non-default filters
+          // ── Active count for CTA label ─────────────────────────
           int activeCount = 0;
-          if (sheetPrice != 'All') activeCount++;
-          if (sheetFormat != 'All') activeCount++;
+          if (sheetLocalization != 'none') activeCount++;
+          if (sheetParticipants.isNotEmpty) activeCount++;
+          if (sheetCategories.isNotEmpty) activeCount++;
+          if (sheetFreeOnly) activeCount++;
+          if (sheetDateRange != null) activeCount++;
+          if (sheetSortBy != 'mostPopular') activeCount++;
+
+          // ── Date label ─────────────────────────────────────────
+          final bool dateHasValue = sheetDateRange != null;
+          String dateLabel = 'Date range';
+          if (dateHasValue) {
+            final s = sheetDateRange!.start;
+            final e = sheetDateRange!.end;
+            const months = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            dateLabel = '${s.day} ${months[s.month]} ${s.year} – ${e.day} ${months[e.month]} ${e.year}';
+          }
 
           return ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             child: Container(
               color: bgSheet,
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+                maxHeight: MediaQuery.of(ctx).size.height * 0.93,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
 
-                  // ══ STICKY HEADER ══════════════════════════════════
+                  // ══ STICKY HEADER ══════════════════════════════
                   Container(
-                    color: bgCard,
+                    color: bgSheet,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -2953,7 +3056,7 @@ class _EventsTabState extends State<_EventsTab> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 16, 14),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                           child: Row(
                             children: [
                               GestureDetector(
@@ -2969,49 +3072,50 @@ class _EventsTabState extends State<_EventsTab> {
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: Text(
-                                  'Filter and sort',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                child: Text('Filter and sort',
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: textPrimary)),
                               ),
                               const SizedBox(width: 12),
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   setSheetState(() {
-                                    sheetPrice = 'All';
-                                    sheetFormat = 'All';
-                                    sheetSort = 'Most popular';
+                                    sheetLocalization = 'none';
+                                    sheetDistanceKm   = 10.0;
+                                    sheetParticipants = {};
+                                    sheetCategories   = {};
+                                    sheetFreeOnly     = false;
+                                    sheetDateRange    = null;
+                                    sheetSortBy       = 'mostPopular';
+                                    sheetPrice        = 'All';
+                                    sheetFormat       = 'All';
                                   });
                                   setState(() {
-                                    _priceFilter = 'All';
+                                    _priceFilter  = 'All';
                                     _formatFilter = 'All';
+                                    _activeManualFilter = 'All';
                                   });
                                 },
-                                child: Text(
-                                  'RESET',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: accentOrange,
-                                    letterSpacing: 0.3,
-                                  ),
-                                ),
+                                child: Text('RESET',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: orange,
+                                        letterSpacing: 0.3)),
                               ),
                             ],
                           ),
                         ),
-                        const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+                        Divider(height: 1, thickness: 1, color: dividerColor),
                       ],
                     ),
                   ),
 
-                  // ══ SCROLLABLE CONTENT ══════════════════════════════
+                  // ══ SCROLLABLE CONTENT ═════════════════════════
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
@@ -3019,274 +3123,205 @@ class _EventsTabState extends State<_EventsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // ── TYPE / PRICE SECTION ───────────────────
-                          evSectionLabel('Type'),
-                          const SizedBox(height: 12),
-                          evCard(
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 10,
-                              children: [
-                                evChip(
-                                  label: 'All',
-                                  isSelected: sheetPrice == 'All',
-                                  icon: Icons.apps_rounded,
-                                  onTap: () {
-                                    setSheetState(() => sheetPrice = 'All');
-                                    setState(() {
-                                      _priceFilter = 'All';
-                                    });
-                                  },
-                                ),
-                                evChip(
-                                  label: 'Free',
-                                  isSelected: sheetPrice == 'Free',
-                                  icon: Icons.card_giftcard_outlined,
-                                  onTap: () {
-                                    setSheetState(() => sheetPrice = 'Free');
-                                    setState(() {
-                                      _priceFilter = 'Free';
-                                      if (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid') {
-                                        _activeManualFilter = 'All';
-                                      }
-                                    });
-                                  },
-                                ),
-                                evChip(
-                                  label: 'Paid',
-                                  isSelected: sheetPrice == 'Paid',
-                                  icon: Icons.confirmation_num_outlined,
-                                  onTap: () {
-                                    setSheetState(() => sheetPrice = 'Paid');
-                                    setState(() {
-                                      _priceFilter = 'Paid';
-                                      if (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid') {
-                                        _activeManualFilter = 'All';
-                                      }
-                                    });
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
+                          // ── SECTION 1: LOCALIZATION ────────────
+                          sectionHeading('Localization'),
+                          Row(children: [
+                            locChip('Online', 'online'),
+                            const SizedBox(width: 10),
+                            locChip('Live', 'live'),
+                          ]),
                           const SizedBox(height: 28),
 
-                          // ── LOCALISATION / FORMAT SECTION ──────────
-                          evSectionLabel('Localisation'),
-                          const SizedBox(height: 12),
-                          evCard(
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Wrap(
-                                  spacing: 8,
-                                  runSpacing: 10,
-                                  children: [
-                                    evChip(
-                                      label: 'All',
-                                      isSelected: sheetFormat == 'All',
-                                      icon: Icons.tune_rounded,
-                                      onTap: () {
-                                        setSheetState(() => sheetFormat = 'All');
-                                        setState(() {
-                                          _formatFilter = 'All';
-                                        });
-                                      },
-                                    ),
-                                    evChip(
-                                      label: 'Online',
-                                      isSelected: sheetFormat == 'Online',
-                                      icon: Icons.wifi_outlined,
-                                      onTap: () {
-                                        setSheetState(() => sheetFormat = 'Online');
-                                        setState(() {
-                                          _formatFilter = 'Online';
-                                          if (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person') {
-                                            _activeManualFilter = 'All';
-                                          }
-                                        });
-                                      },
-                                    ),
-                                    evChip(
-                                      label: 'In-Person',
-                                      isSelected: sheetFormat == 'In-Person',
-                                      icon: Icons.location_on_outlined,
-                                      onTap: () {
-                                        setSheetState(() => sheetFormat = 'In-Person');
-                                        setState(() {
-                                          _formatFilter = 'In-Person';
-                                          if (_activeManualFilter == 'Online' || _activeManualFilter == 'In-Person') {
-                                            _activeManualFilter = 'All';
-                                          }
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                // Helper note when Online is selected
-                                AnimatedSize(
-                                  duration: const Duration(milliseconds: 220),
-                                  curve: Curves.easeOut,
-                                  child: isOnline
-                                      ? Padding(
-                                          padding: const EdgeInsets.only(top: 14),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                            decoration: BoxDecoration(
-                                              color: infoBg,
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.info_outline_rounded, size: 15, color: accentBlue),
-                                                const SizedBox(width: 8),
-                                                Expanded(
-                                                  child: Text(
-                                                    'Online events have no distance restriction',
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 12,
-                                                      color: accentBlue,
-                                                      height: 1.4,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                              ],
+                          // ── SECTION 2: DISTANCE ────────────────
+                          Text('Distance',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: isOnline ? textSecGray : textPrimary)),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: ['1 km','5 km','10 km','<50 km'].map((t) =>
+                              Text(t, style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: isOnline ? textSecGray : textPrimary))
+                            ).toList(),
+                          ),
+                          const SizedBox(height: 4),
+                          SliderTheme(
+                            data: SliderTheme.of(ctx).copyWith(
+                              activeTrackColor: isOnline ? trackInactive : orange,
+                              inactiveTrackColor: trackInactive,
+                              thumbColor: isOnline ? textSecGray : orange,
+                              overlayColor: orange.withValues(alpha: 0.15),
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
+                            ),
+                            child: Slider(
+                              value: [1.0,5.0,10.0,50.0].reduce(
+                                  (a,b) => (a-sheetDistanceKm).abs()<(b-sheetDistanceKm).abs()?a:b),
+                              min: 1, max: 50, divisions: 3,
+                              onChanged: isOnline ? null : (v) {
+                                setSheetState(() {
+                                  sheetDistanceKm = [1.0,5.0,10.0,50.0].reduce(
+                                      (a,b) => (a-v).abs()<(b-v).abs()?a:b);
+                                });
+                              },
                             ),
                           ),
-
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 200),
+                            child: isOnline
+                              ? Padding(
+                                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                                  child: Row(children: [
+                                    Icon(Icons.info_outline_rounded, size: 16, color: orange),
+                                    const SizedBox(width: 6),
+                                    Text('Online events have no distance',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 13, color: orange)),
+                                  ]),
+                                )
+                              : const SizedBox.shrink(),
+                          ),
                           const SizedBox(height: 28),
 
-                          // ── SHOW ONLY FREE EVENTS TOGGLE ───────────
-                          evCard(
-                            Row(
-                              children: [
-                                Icon(Icons.sell_outlined, size: 18, color: textSec),
-                                const SizedBox(width: 10),
+                          // ── SECTION 3: PARTICIPANTS ────────────
+                          sectionHeading('Participants'),
+                          Wrap(
+                            spacing: 8, runSpacing: 10,
+                            children: participantOptions.map((p) {
+                              final sel = sheetParticipants.contains(p);
+                              return filterChip(
+                                label: p, isSelected: sel,
+                                onTap: () => setSheetState(() {
+                                  if (sel) { sheetParticipants.remove(p); }
+                                  else { sheetParticipants.add(p); }
+                                }),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ── SECTION 4: CATEGORY ────────────────
+                          sectionHeading('Category'),
+                          Wrap(
+                            spacing: 8, runSpacing: 10,
+                            children: catIcons.entries.map((e) {
+                              final sel = sheetCategories.contains(e.key);
+                              return filterChip(
+                                label: e.key, isSelected: sel, icon: e.value,
+                                onTap: () => setSheetState(() {
+                                  if (sel) { sheetCategories.remove(e.key); }
+                                  else { sheetCategories.add(e.key); }
+                                }),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ── SECTION 5: SHOW FREE ONLY ──────────
+                          Row(children: [
+                            Expanded(
+                              child: Text('Show only free events',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: textPrimary)),
+                            ),
+                            Switch(
+                              value: sheetFreeOnly,
+                              onChanged: (v) => setSheetState(() {
+                                sheetFreeOnly = v;
+                                sheetPrice = v ? 'Free' : 'All';
+                              }),
+                              activeThumbColor: Colors.white,
+                              activeTrackColor: orange,
+                              inactiveThumbColor: Colors.white,
+                              inactiveTrackColor: toggleOff,
+                            ),
+                          ]),
+                          const SizedBox(height: 28),
+
+                          // ── SECTION 6: PICK A DATE ─────────────
+                          sectionHeading('Pick a date'),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDateRangePicker(
+                                context: ctx,
+                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                                initialDateRange: sheetDateRange,
+                                builder: (context, child) => Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                                      primary: orange,
+                                      onPrimary: Colors.white,
+                                    ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (picked != null) {
+                                setSheetState(() => sheetDateRange = picked);
+                              }
+                            },
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                border: Border(bottom: BorderSide(
+                                    color: Color(0xFFE0E0E0), width: 1)),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(children: [
                                 Expanded(
-                                  child: Text(
-                                    'Show only free events',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: textPrimary,
-                                    ),
-                                  ),
+                                  child: dateHasValue
+                                    ? Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text('Date range',
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  color: textSecGray)),
+                                          const SizedBox(height: 2),
+                                          Text(dateLabel,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: textPrimary)),
+                                        ],
+                                      )
+                                    : Text('Date range',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 14, color: textSecGray)),
                                 ),
-                                GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    final newVal = sheetPrice != 'Free' ? 'Free' : 'All';
-                                    setSheetState(() => sheetPrice = newVal);
-                                    setState(() {
-                                      _priceFilter = newVal;
-                                      if (newVal != 'All' && (_activeManualFilter == 'Free' || _activeManualFilter == 'Paid')) {
-                                        _activeManualFilter = 'All';
-                                      }
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 48,
-                                    height: 28,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(14),
-                                      color: sheetPrice == 'Free'
-                                          ? accentOrange
-                                          : const Color(0xFFD9D9D9),
-                                    ),
-                                    child: AnimatedAlign(
-                                      duration: const Duration(milliseconds: 200),
-                                      curve: Curves.easeOut,
-                                      alignment: sheetPrice == 'Free'
-                                          ? Alignment.centerRight
-                                          : Alignment.centerLeft,
-                                      child: Container(
-                                        width: 22,
-                                        height: 22,
-                                        margin: const EdgeInsets.symmetric(horizontal: 3),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                Icon(Icons.calendar_month_outlined,
+                                    color: orange, size: 22),
+                              ]),
                             ),
                           ),
-
                           const SizedBox(height: 28),
 
-                          // ── SORT BY SECTION ────────────────────────
-                          evSectionLabel('Sort by'),
-                          const SizedBox(height: 12),
-                          evCard(
-                            Column(
-                              children: ['Most popular', 'Latest'].map((option) {
-                                final isSelected = sheetSort == option;
-                                return GestureDetector(
-                                  onTap: () {
-                                    HapticFeedback.selectionClick();
-                                    setSheetState(() => sheetSort = option);
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 6),
-                                    child: Row(
-                                      children: [
-                                        AnimatedContainer(
-                                          duration: const Duration(milliseconds: 180),
-                                          width: 20,
-                                          height: 20,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            border: Border.all(
-                                              color: isSelected ? accentOrange : chipBorder,
-                                              width: 2,
-                                            ),
-                                            color: isSelected ? accentOrange : Colors.transparent,
-                                          ),
-                                          child: isSelected
-                                              ? const Icon(Icons.check, size: 12, color: Colors.white)
-                                              : null,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          option,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 14,
-                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                            color: isSelected ? textPrimary : textSec,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
+                          // ── SECTION 7: SORT BY ─────────────────
+                          sectionHeading('Sort by'),
+                          radioRow('Most popular', 'mostPopular'),
+                          Divider(height: 1, thickness: 1, color: dividerColor),
+                          radioRow('Latest', 'latest'),
+                          const SizedBox(height: 8),
 
-                          const SizedBox(height: 32),
                         ],
                       ),
                     ),
                   ),
 
-                  // ══ STICKY BOTTOM CTA ══════════════════════════════
+                  // ══ STICKY BOTTOM CTA ═════════════════════════
                   Container(
-                    decoration: const BoxDecoration(
-                      color: bgCard,
-                      border: Border(top: BorderSide(color: Color(0xFFEEEEEE), width: 1)),
-                      boxShadow: [BoxShadow(color: Color(0x0F000000), blurRadius: 12, offset: Offset(0, -4))],
+                    decoration: BoxDecoration(
+                      color: bgSheet,
+                      border: Border(top: BorderSide(color: dividerColor, width: 1)),
+                      boxShadow: [BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 12, offset: const Offset(0, -4))],
                     ),
                     child: SafeArea(
                       top: false,
@@ -3295,24 +3330,43 @@ class _EventsTabState extends State<_EventsTab> {
                         child: GestureDetector(
                           onTap: () {
                             HapticFeedback.mediumImpact();
+                            setState(() {
+                              // Commit extended filter state
+                              _evLocalization = sheetLocalization;
+                              _evDistanceKm   = sheetDistanceKm;
+                              _evParticipants
+                                ..clear()
+                                ..addAll(sheetParticipants);
+                              _evCategories
+                                ..clear()
+                                ..addAll(sheetCategories);
+                              _evFreeOnly   = sheetFreeOnly;
+                              _evDateRange  = sheetDateRange;
+                              _evSortBy     = sheetSortBy;
+                              // Also commit legacy filters for existing Events filter logic
+                              _priceFilter  = sheetPrice;
+                              _formatFilter = sheetFormat;
+                              if (sheetLocalization == 'online') {
+                                _activeManualFilter = 'Online';
+                              } else if (sheetLocalization == 'live') {
+                                _activeManualFilter = 'In-Person';
+                              } else {
+                                if (_activeManualFilter == 'Online' ||
+                                    _activeManualFilter == 'In-Person') {
+                                  _activeManualFilter = 'All';
+                                }
+                              }
+                            });
                             Navigator.pop(ctx);
                           },
                           child: Container(
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: orange,
                               borderRadius: BorderRadius.circular(26),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: accentOrange.withValues(alpha: 0.35),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
+                              boxShadow: [BoxShadow(
+                                  color: orange.withValues(alpha: 0.35),
+                                  blurRadius: 14, offset: const Offset(0, 5))],
                             ),
                             alignment: Alignment.center,
                             child: Text(
@@ -3320,17 +3374,17 @@ class _EventsTabState extends State<_EventsTab> {
                                   ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
                                   : 'Show results',
                               style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                                letterSpacing: 0.2,
-                              ),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                  letterSpacing: 0.2),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),
