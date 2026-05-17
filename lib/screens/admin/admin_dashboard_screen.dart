@@ -478,14 +478,18 @@ class _ReportCardState extends State<_ReportCard> {
 
   @override
   Widget build(BuildContext context) {
-    final status    = widget.data['status']       as String? ?? 'pending';
-    final type      = widget.data['type']         as String? ?? 'other';
-    final ctx       = widget.data['context']      as String? ?? '';
-    final reporterId  = widget.data['reporterId']   as String? ?? '';
-    final targetId    = widget.data['targetUserId'] as String? ?? '';
-    final contentId   = widget.data['messageId']   as String? ?? '';
-    final groupId   = widget.data['groupId']      as String?;
-    final timestamp = widget.data['timestamp'];
+    final status         = widget.data['status']         as String? ?? 'pending';
+    final type           = widget.data['type']           as String? ?? 'other';
+    final ctx            = widget.data['context']        as String? ?? '';
+    final reporterId     = widget.data['reporterId']     as String? ?? '';
+    final targetId       = widget.data['targetUserId']   as String? ?? '';
+    final contentId      = widget.data['messageId']      as String? ?? '';
+    final groupId        = widget.data['groupId']        as String?;
+    final timestamp      = widget.data['timestamp'];
+    // Fields denormalised at report-submission time (present on new reports)
+    final docReason      = widget.data['reason']         as String?;
+    final docChatName    = widget.data['chatName']       as String?;
+    final docMsgPreview  = widget.data['messagePreview'] as String?;
     final d = _details;
 
     return Container(
@@ -515,8 +519,10 @@ class _ReportCardState extends State<_ReportCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Reason: prefer human label stored at submit time,
+                      // fall back to raw type string for older reports
                       Text(
-                        type.replaceAll('_', ' ').toUpperCase(),
+                        docReason ?? type.replaceAll('_', ' ').toUpperCase(),
                         style: GoogleFonts.poppins(
                           fontSize: 13, fontWeight: FontWeight.w700,
                           color: Theme.of(context).colorScheme.onSurface,
@@ -564,14 +570,59 @@ class _ReportCardState extends State<_ReportCard> {
                 ),
                 const SizedBox(height: 10),
 
-                // Chat / context name
-                if (d?.chatName != null) ...[
+                // ── Reason / what the reporter said was wrong ───────────
+                if (docReason != null) ...[
                   _DetailRow(
-                    label: _contextLabel(ctx),
-                    value: d!.chatName!,
-                    icon: ctx == 'dm_message'
-                        ? Icons.chat_bubble_outline
-                        : Icons.group_outlined,
+                    label: 'Reason',
+                    value: docReason,
+                    icon: Icons.flag_outlined,
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
+                // ── Where it happened ───────────────────────────────────
+                // Prefer denormalised chatName from the document; fall back
+                // to the async-resolved name from _details for older reports.
+                () {
+                  final name = docChatName ?? d?.chatName;
+                  if (name == null) return const SizedBox.shrink();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _DetailRow(
+                        label: _contextLabel(ctx),
+                        value: name,
+                        icon: ctx == 'dm_message'
+                            ? Icons.chat_bubble_outline
+                            : Icons.group_outlined,
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  );
+                }(),
+
+                // ── Reported message / content preview ──────────────────
+                if (docMsgPreview != null && docMsgPreview.trim().isNotEmpty) ...[
+                  _SectionLabel(label: 'Reported message'),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.error.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: HuddlColors.error.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Text(
+                      docMsgPreview,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        height: 1.45,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 10),
                 ],

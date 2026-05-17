@@ -59,19 +59,15 @@ extension ReportContextValue on ReportContext {
 ///     reporterId     : String   — UID of the user filing the report
 ///     targetUserId   : String   — UID of the content author
 ///     type           : String   — ReportType.firestoreValue
+///     reason         : String   — Human-readable label of the report type
 ///     context        : String   — ReportContext.firestoreValue
 ///     groupId        : String?  — set for group_message reports
+///     chatName       : String?  — group name, DM partner name, or listing title
+///     messagePreview : String?  — first 300 chars of the reported message/content
 ///     status         : String   — 'pending' on creation
 ///     timestamp      : Timestamp
 ///   }
 /// ```
-///
-/// Security rule (add to Firestore rules):
-///   match /reports/{reportId} {
-///     allow create: if request.auth != null
-///                   && request.resource.data.reporterId == request.auth.uid;
-///     allow read, update, delete: if false; // admin only via Console/SDK
-///   }
 class ReportService {
   static final ReportService _instance = ReportService._internal();
   factory ReportService() => _instance;
@@ -79,7 +75,13 @@ class ReportService {
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Submit a report for a message or listing.
+  /// Submit a report for a message, listing, or user profile.
+  ///
+  /// [messagePreview] — the text of the reported message (truncated to 300 chars).
+  ///   Pass null for profile/listing reports where there is no message body.
+  /// [chatName] — the group name, DM recipient name, or listing title.
+  ///   Denormalised at write time so the admin dashboard never needs a
+  ///   secondary Firestore lookup for the chat/context name.
   ///
   /// Returns `true` on success, `false` if the write failed (e.g. offline).
   Future<bool> submitReport({
@@ -88,12 +90,19 @@ class ReportService {
     required ReportType type,
     required ReportContext context,
     String? groupId,
+    String? chatName,
+    String? messagePreview,
   }) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       debugPrint('[ReportService] Not authenticated — cannot file report');
       return false;
     }
+
+    // Truncate message preview to 300 chars to keep document size reasonable
+    final preview = messagePreview != null && messagePreview.trim().isNotEmpty
+        ? messagePreview.trim().substring(0, messagePreview.trim().length.clamp(0, 300))
+        : null;
 
     try {
       final doc = _db.collection('reports').doc();
@@ -102,8 +111,11 @@ class ReportService {
         'reporterId'  : uid,
         'targetUserId': targetUserId,
         'type'        : type.firestoreValue,
+        'reason'      : type.label,
         'context'     : context.firestoreValue,
-        if (groupId != null) 'groupId': groupId,
+        if (groupId  != null) 'groupId'       : groupId,
+        if (chatName != null) 'chatName'       : chatName,
+        if (preview  != null) 'messagePreview' : preview,
         'status'      : 'pending',
         'timestamp'   : FieldValue.serverTimestamp(),
       });

@@ -877,7 +877,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                       ? () => _resendMessage(msg)
                                       : null,
                                   onReportUser: !msg.isMe
-                                      ? () => _showReportMessageDialog(msg.id, widget.recipientId)
+                                      ? () => _showReportMessageDialog(msg.id, widget.recipientId, msg.message)
                                       : null,
                                   onAvatarTap: msg.isMe ? null : () => _showMemberProfileSheet(context),
                                 ),
@@ -1833,7 +1833,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   }
 
   // ── Report message dialog ─────────────────────────────────────────
-  void _showReportMessageDialog(String messageId, String? targetUserId) {
+  void _showReportMessageDialog(String messageId, String? targetUserId, String messageText) {
     final reportService = ReportService();
     ReportType? selectedType;
     showDialog(
@@ -1923,6 +1923,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                                   targetUserId: targetUserId ?? '',
                                   type: selectedType!,
                                   context: ReportContext.dmMessage,
+                                  chatName: 'DM with ${widget.recipientName}',
+                                  messagePreview: messageText,
                                 );
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(

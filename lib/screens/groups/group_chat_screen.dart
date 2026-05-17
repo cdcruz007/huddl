@@ -2219,6 +2219,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   // ── Report User dialog (profile-level, from message long-press) ──────────
   void _showReportUserDialog(String targetUserId, String targetName) {
+    // Profile-level report — no message preview, chat name is the group
     final reportService = ReportService();
     ReportType? selectedType;
     showDialog(
@@ -2314,6 +2315,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   type: selectedType!,
                                   context: ReportContext.userProfile,
                                   groupId: widget.groupId,
+                                  chatName: widget.groupName,
                                 );
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -2352,7 +2354,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   // ── Report message dialog ──────────────────────────────────────────────
-  void _showReportMessageDialog(String messageId, String targetUserId, String senderName) {
+  void _showReportMessageDialog(String messageId, String targetUserId, String senderName, String messageText) {
     final reportService = ReportService();
     ReportType? selectedType;
     showDialog(
@@ -2443,6 +2445,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   type: selectedType!,
                                   context: ReportContext.groupMessage,
                                   groupId: widget.groupId,
+                                  chatName: widget.groupName,
+                                  messagePreview: messageText,
                                 );
                                 if (mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -3649,7 +3653,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       : null,
                                   isBlockedUser: !msg.isMe && _blockService.isUserBlocked(msg.senderId),
                                   onReportUser: (!msg.isMe && msg.senderId != 'system')
-                                      ? () => _showReportMessageDialog(msg.id, msg.senderId, msg.senderName)
+                                      ? () => _showReportMessageDialog(msg.id, msg.senderId, msg.senderName, msg.message)
                                       : null,
                                   onReportSender: (!msg.isMe && msg.senderId != 'system')
                                       ? () => _showReportUserDialog(msg.senderId, msg.senderName)
