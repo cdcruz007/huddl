@@ -553,8 +553,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = Color(0xFF3D82D4);   // banner — pure medium azure blue (no violet)
-  static const _bannerBlue2  = Color(0xFF2E73C4);   // banner gradient end — deeper azure, same hue
+  static const _bannerBlue   = Color(0xFF5B9DFF);   // banner — exact Figma blue (user-confirmed hex)
   static const _accentOrange = Color(0xFFFF9B57);   // date/time/location icons + toggle
   static const _accentBlue   = Color(0xFF4B82F6);   // category icons + selected pill fill
   static const _fieldBg      = Color(0xFFF6F6F8);   // text field fill
@@ -1328,7 +1327,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PHOTO UPLOAD — flat blue gradient banner (Figma exact)
+  // PHOTO UPLOAD — flat solid #5B9DFF banner (Figma exact, user-confirmed)
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _photoPlaceholder() {
@@ -1336,50 +1335,21 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       width: double.infinity,
       height: 200,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [_bannerBlue, _bannerBlue2],
-        ),
+        color: _bannerBlue,   // flat solid #5B9DFF — no gradient
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Figma icon: image frame with small + badge in bottom-right corner
-          SizedBox(
-            width: 52, height: 52,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: 52, height: 52,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.image_outlined, color: Colors.white, size: 28),
-                ),
-                Positioned(
-                  right: -2, bottom: -2,
-                  child: Container(
-                    width: 20, height: 20,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _bannerBlue, width: 1.5),
-                    ),
-                    child: const Icon(Icons.add, color: _bannerBlue, size: 14),
-                  ),
-                ),
-              ],
-            ),
+          // Figma icon: outlined image-frame square with + at top-right corner
+          // Matches: rounded rect outline + landscape/sun inside + plus badge top-right
+          const Icon(
+            Icons.add_photo_alternate_outlined,
+            color: Colors.white,
+            size: 48,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text('Click to add photo',
               style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white)),
-          const SizedBox(height: 4),
-          Text('Add a cover image for your meetup',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.white.withValues(alpha: 0.80))),
         ],
       ),
     );
