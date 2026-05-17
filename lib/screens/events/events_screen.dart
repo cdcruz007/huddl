@@ -1946,107 +1946,133 @@ class _EventsTabState extends State<_EventsTab> {
     // Active filter chips for NLP
     final activeNlpChips = _buildActiveNlpChips();
 
+    // ── Accent colour for "Clear All" text ─────────────────────
+    const Color clearAllOrange = Color(0xFFFF6B35);
+
     return Column(
       children: [
-        // ── Unified search + filter bar ───────────────────────
+        // ── Premium header bar: search + filter/sort row ──────────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search pill
-              Expanded(
-                child: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: context.hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: TextField(
-                    controller: _nlpController,
-                    focusNode: _nlpFocusNode,
-                    onChanged: _onNlpQueryChanged,
-                    textAlignVertical: TextAlignVertical.center,
-                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search events...',
-                      hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                      prefixIcon: Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.7)),
-                      suffixIcon: _nlpQuery.isNotEmpty
-                          ? GestureDetector(
-                              onTap: _clearSearch,
-                              child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      isDense: true,
-                    ),
+              // Row 1: NLP search bar
+              Container(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: context.hc.inputBg,
+                  borderRadius: BorderRadius.circular(22),
+                ),
+                child: TextField(
+                  controller: _nlpController,
+                  focusNode: _nlpFocusNode,
+                  onChanged: _onNlpQueryChanged,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: GoogleFonts.poppins(fontSize: 13.5, color: context.hc.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Search events...',
+                    hintStyle: GoogleFonts.poppins(fontSize: 13.5, color: context.hc.textTertiary),
+                    prefixIcon: Icon(Icons.search_rounded, size: 20, color: context.hc.textTertiary.withValues(alpha: 0.7)),
+                    suffixIcon: _nlpQuery.isNotEmpty
+                        ? GestureDetector(
+                            onTap: _clearSearch,
+                            child: Icon(Icons.close_rounded, size: 18, color: context.hc.textTertiary),
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    isDense: true,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              // Filter pill button — opens bottom sheet
-              Semantics(
-                label: hasSheetFilters
-                    ? 'Filters active ($sheetFilterCount). Tap to change.'
-                    : 'Filter events',
-                button: true,
-                child: GestureDetector(
-                  onTap: () => _showEventsFilterSheet(context),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: hasSheetFilters
-                          ? HuddlColors.primary.withValues(alpha: 0.12)
-                          : context.hc.inputBg,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: hasSheetFilters
-                            ? HuddlColors.primary.withValues(alpha: 0.4)
-                            : Colors.transparent,
-                        width: 1.2,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.tune_rounded,
-                          size: 16,
+              const SizedBox(height: 10),
+              // Row 2: "Filter and sort" pill + "Clear All" text
+              Row(
+                children: [
+                  // Filter and sort pill button
+                  Semantics(
+                    label: hasSheetFilters
+                        ? 'Filters active ($sheetFilterCount). Tap to change.'
+                        : 'Filter and sort events',
+                    button: true,
+                    child: GestureDetector(
+                      onTap: () => _showEventsFilterSheet(context),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
                           color: hasSheetFilters
-                              ? HuddlColors.primary
-                              : context.hc.textTertiary,
+                              ? HuddlColors.primary.withValues(alpha: 0.08)
+                              : context.hc.surfaceAlt,
+                          borderRadius: BorderRadius.circular(19),
+                          border: Border.all(
+                            color: hasSheetFilters
+                                ? HuddlColors.primary.withValues(alpha: 0.35)
+                                : context.hc.divider,
+                            width: 1.2,
+                          ),
                         ),
-                        if (hasSheetFilters) ...[
-                          const SizedBox(width: 4),
-                          Container(
-                            width: 16,
-                            height: 16,
-                            decoration: const BoxDecoration(
-                              color: HuddlColors.primary,
-                              shape: BoxShape.circle,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 16,
+                              color: hasSheetFilters
+                                  ? HuddlColors.primary
+                                  : context.hc.textSecondary,
                             ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              '$sheetFilterCount',
+                            const SizedBox(width: 6),
+                            Text(
+                              hasSheetFilters
+                                  ? 'Filter and sort ($sheetFilterCount)'
+                                  : 'Filter and sort',
                               style: GoogleFonts.poppins(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: hasSheetFilters
+                                    ? HuddlColors.primary
+                                    : context.hc.textSecondary,
                               ),
                             ),
-                          ),
-                        ],
-                      ],
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const Spacer(),
+                  // "Clear All" — only visible when any filter/search is active
+                  if (hasSheetFilters || _activeManualFilter != 'All' || _nlpQuery.isNotEmpty)
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        setState(() {
+                          _priceFilter = 'All';
+                          _formatFilter = 'All';
+                          _activeManualFilter = 'All';
+                        });
+                        _clearSearch();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                        child: Text(
+                          'Clear All',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: clearAllOrange,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
+              const SizedBox(height: 10),
             ],
           ),
         ),
@@ -2074,12 +2100,12 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
 
-        // ── Filter chips row (always visible) ────────────────────
+        // ── Filter chips row (always visible, premium style) ──────
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 10),
           child: SizedBox(
-            height: 36,
+            height: 38,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2087,8 +2113,6 @@ class _EventsTabState extends State<_EventsTab> {
                 padding: const EdgeInsets.only(right: 8),
                 child: _FilterChip(
                   label: f,
-                  // Chip is highlighted when it matches the chip-level filter
-                  // OR when the sheet filter matches it
                   isSelected: _activeManualFilter == f ||
                       (f == 'Free' && _priceFilter == 'Free') ||
                       (f == 'Paid' && _priceFilter == 'Paid') ||
@@ -2097,10 +2121,8 @@ class _EventsTabState extends State<_EventsTab> {
                   onTap: () {
                     _invisibleAi.trackFilterClick(f);
                     setState(() {
-                      // Selecting a chip clears the sheet filters to avoid conflict
                       _priceFilter = 'All';
                       _formatFilter = 'All';
-                      // Toggle: tapping the active chip deselects it
                       _activeManualFilter = (_activeManualFilter == f) ? 'All' : f;
                     });
                   },
@@ -2109,8 +2131,6 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
         ),
-
-
 
         // ── Discovering indicator ─────────────────────────────
         if (_isDiscovering)
@@ -2134,66 +2154,69 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
 
-        // ── Event list ───────────────────────────────────────
+        // ── Event list (off-white #F7F7F7 background) ────────────
         Expanded(
-          child: events.isEmpty && !showCarousel
-              ? _EmptyState(
-                  icon: hasSheetFilters || _activeManualFilter != 'All'
-                      ? Icons.filter_list_off
-                      : Icons.event_outlined,
-                  illustration: HuddlIllustration.events,
-                  title: _nlpQuery.isNotEmpty
-                      ? 'No matches'
-                      : (hasSheetFilters || _activeManualFilter != 'All')
-                          ? 'No events match your filters'
-                          : 'No events found',
-                  subtitle: _nlpQuery.isNotEmpty
-                      ? 'Try a different search like\n"free baby classes near me"'
-                      : (hasSheetFilters || _activeManualFilter != 'All')
-                          ? 'Try adjusting or clearing your filters.'
-                          : 'Pull down to refresh or try searching.',
-                  actionLabel: _nlpQuery.isNotEmpty
-                      ? 'Clear search'
-                      : (hasSheetFilters || _activeManualFilter != 'All')
-                          ? 'Clear filters'
-                          : null,
-                  onAction: _nlpQuery.isNotEmpty
-                      ? _clearSearch
-                      : (hasSheetFilters || _activeManualFilter != 'All')
-                          ? () => setState(() {
-                                _priceFilter = 'All';
-                                _formatFilter = 'All';
-                                _activeManualFilter = 'All';
-                              })
-                          : null,
-                )
-              : RefreshIndicator(
-                  onRefresh: _forceRefreshDiscovery,
-                  color: HuddlColors.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                    itemCount: events.length + (showCarousel ? 1 : 0),
-                    itemBuilder: (_, i) {
-                      if (showCarousel && i == 0) {
-                        return _RecommendedCarousel(
-                          scoredEvents: _recommended,
-                          eventService: widget.eventService,
+          child: ColoredBox(
+            color: const Color(0xFFF7F7F7),
+            child: events.isEmpty && !showCarousel
+                ? _EmptyState(
+                    icon: hasSheetFilters || _activeManualFilter != 'All'
+                        ? Icons.filter_list_off
+                        : Icons.event_outlined,
+                    illustration: HuddlIllustration.events,
+                    title: _nlpQuery.isNotEmpty
+                        ? 'No matches'
+                        : (hasSheetFilters || _activeManualFilter != 'All')
+                            ? 'No events match your filters'
+                            : 'No events found',
+                    subtitle: _nlpQuery.isNotEmpty
+                        ? 'Try a different search like\n"free baby classes near me"'
+                        : (hasSheetFilters || _activeManualFilter != 'All')
+                            ? 'Try adjusting or clearing your filters.'
+                            : 'Pull down to refresh or try searching.',
+                    actionLabel: _nlpQuery.isNotEmpty
+                        ? 'Clear search'
+                        : (hasSheetFilters || _activeManualFilter != 'All')
+                            ? 'Clear filters'
+                            : null,
+                    onAction: _nlpQuery.isNotEmpty
+                        ? _clearSearch
+                        : (hasSheetFilters || _activeManualFilter != 'All')
+                            ? () => setState(() {
+                                  _priceFilter = 'All';
+                                  _formatFilter = 'All';
+                                  _activeManualFilter = 'All';
+                                })
+                            : null,
+                  )
+                : RefreshIndicator(
+                    onRefresh: _forceRefreshDiscovery,
+                    color: HuddlColors.primary,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      itemCount: events.length + (showCarousel ? 1 : 0),
+                      itemBuilder: (_, i) {
+                        if (showCarousel && i == 0) {
+                          return _RecommendedCarousel(
+                            scoredEvents: _recommended,
+                            eventService: widget.eventService,
+                          );
+                        }
+                        final eventIdx = showCarousel ? i - 1 : i;
+                        final event = events[eventIdx];
+                        final eventId = event['id'] as String? ?? '';
+                        final scored = _scoredEventMap[eventId];
+                        return _EventListCard(
+                          event: event,
+                          matchReasons: scored?.reasons ?? [],
+                          aiScore: scored?.score ?? 0,
+                          invisibleAi: _invisibleAi,
                         );
-                      }
-                      final eventIdx = showCarousel ? i - 1 : i;
-                      final event = events[eventIdx];
-                      final eventId = event['id'] as String? ?? '';
-                      final scored = _scoredEventMap[eventId];
-                      return _EventListCard(
-                        event: event,
-                        matchReasons: scored?.reasons ?? [],
-                        aiScore: scored?.score ?? 0,
-                        invisibleAi: _invisibleAi,
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
+          ),
         ),
       ],
     );
@@ -2483,69 +2506,42 @@ class _RecommendedCarousel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header — clean, no AI branding
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.star_rounded, size: 18, color: HuddlColors.primary),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Picked for you',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
-              ),
-            ],
+        // ── "Suggested for you" section header ────────────────────
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Text(
+            'Suggested for you',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: context.hc.textPrimary,
+            ),
           ),
         ),
         // Horizontal carousel
         SizedBox(
-          height: 230,
+          height: 240,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: scoredEvents.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               final scored = scoredEvents[index];
               return _RecommendedCard(scored: scored);
             },
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         // "All Events" divider label
-        Row(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: HuddlColors.teal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(Icons.event, size: 16, color: HuddlColors.teal),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'All Events',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: context.hc.textPrimary,
-              ),
-            ),
-          ],
+        Text(
+          'All Events',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: context.hc.textPrimary,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -2580,15 +2576,15 @@ class _RecommendedCard extends StatelessWidget {
         );
       },
       child: Container(
-        width: 220,
+        width: 230,
         decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: context.hc.cardBorder,
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: context.hc.shadow.withValues(alpha: 0.08),
-              blurRadius: 12,
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              spreadRadius: 0,
               offset: const Offset(0, 4),
             ),
           ],
@@ -2597,50 +2593,35 @@ class _RecommendedCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Clean cover image (no overlay tags)
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              child: SizedBox(
-                height: 110,
-                width: double.infinity,
-                child: _buildCoverImage(
-                  imageUrl: event.imageUrl,
-                  fallbackIcon: event.icon,
-                  fallbackColor: HuddlColors.primary,
-                ),
+            // Cover image — taller for premium feel
+            SizedBox(
+              height: 128,
+              width: double.infinity,
+              child: _buildCoverImage(
+                imageUrl: event.imageUrl,
+                fallbackIcon: event.icon,
+                fallbackColor: HuddlColors.primary,
               ),
             ),
             // Card body
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+                padding: const EdgeInsets.fromLTRB(13, 10, 13, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      event.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
+                    // Date — light grey
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 11, color: HuddlColors.primary),
+                        const Icon(Icons.calendar_today_outlined,
+                            size: 11, color: Color(0xFFABABAB)),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             event.dateDisplay,
                             style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: context.hc.textTertiary,
+                              fontSize: 11,
+                              color: const Color(0xFFABABAB),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -2650,12 +2631,24 @@ class _RecommendedCard extends StatelessWidget {
                         Text(
                           event.isFree ? 'Free' : event.price,
                           style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: event.isFree ? HuddlColors.teal : HuddlColors.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: event.isFree ? HuddlColors.teal : const Color(0xFF3580F0),
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      event.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1A2E),
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const Spacer(),
                     // Match reason chips
@@ -3123,68 +3116,64 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    // Event card uses teal for subtle borders/shadows; type chips use
-    // semantic blue (#3580F0) for "Event" badge and amber for "New" badge.
-    const Color eventBorderColor = HuddlColors.teal;
     const Color eventTypeBlue = Color(0xFF3580F0);
+    const Radius cardRadius = Radius.circular(20);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
     final String organiser = event['organiser'] as String? ?? '';
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
     final String borough = event['borough'] as String? ?? '';
-    // "New" badge: events with fewer than 10 attendees are considered newly listed
     final int attendees = event['attendees'] as int? ?? 0;
+    // "New" badge: events with fewer than 10 attendees are considered newly listed
     final bool isNew = attendees < 10;
+    final String priceLabel = isFree ? 'Free' : (event['price'] as String? ?? '');
+
     return Semantics(
       label: 'Event: ${event['title']}, ${event['date']} ${event['time']}, ${event['location']}${isFree ? ", Free" : ", ${event['price']}"}',
       button: true,
       child: GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => EventDetailScreen(event: event),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 300),
-          ),
-        );
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: eventBorderColor.withValues(alpha: 0.15),
-            width: 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: eventBorderColor.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => EventDetailScreen(event: event),
+              transitionsBuilder: (_, animation, __, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 300),
             ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Cover image with "New" badge overlay ─────────────────
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.all(cardRadius),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 18,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
               ),
-              child: Stack(
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Hero cover image — tall, full-bleed ──────────────────
+              Stack(
                 children: [
                   SizedBox(
-                    height: 150,
+                    height: 190,
                     width: double.infinity,
                     child: Hero(
                       tag: 'event_cover_$eventId',
@@ -3195,24 +3184,40 @@ class _EventListCardState extends State<_EventListCard> {
                       ),
                     ),
                   ),
-                  // ── Type chips overlaid on the image top-left ──────
+                  // Subtle bottom gradient over image for readability
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    bottom: 0, left: 0, right: 0,
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.22),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ── Tag chips overlaid top-left ──────────────────────
+                  Positioned(
+                    top: 12,
+                    left: 12,
                     child: Row(
                       children: [
                         if (isNew)
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: HuddlColors.accentAmber,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               'New',
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
@@ -3220,16 +3225,15 @@ class _EventListCardState extends State<_EventListCard> {
                           ),
                         if (isNew) const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                           decoration: BoxDecoration(
                             color: eventTypeBlue,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            'Event',
+                            isOnline ? 'Online' : 'Event',
                             style: GoogleFonts.poppins(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
@@ -3238,216 +3242,236 @@ class _EventListCardState extends State<_EventListCard> {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            // ── Info row (price, attendees) ───────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-              child: Row(
-                children: [
-                  // Price
-                  Text(
-                    isFree ? 'Free' : event['price'] as String,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: isFree ? HuddlColors.teal : eventTypeBlue,
-                    ),
-                  ),
-                  if (isOnline) ...[
-                    const SizedBox(width: 8),
-                    Icon(Icons.videocam_outlined, size: 13, color: HuddlColors.teal),
-                    const SizedBox(width: 3),
-                    Text(
-                      'Online',
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.teal,
+                  // ── Price badge top-right ────────────────────────────
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isFree
+                            ? HuddlColors.teal
+                            : Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                    ),
-                  ],
-                  const Spacer(),
-                  // Attendees
-                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${event['attendees']} going',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textTertiary,
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-            // ── Card body ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    event['title'] as String,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  // Date + time
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 13, color: eventTypeBlue),
-                      const SizedBox(width: 5),
-                      Text(
-                        event['date'] as String,
+                      child: Text(
+                        priceLabel,
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isFree ? Colors.white : eventTypeBlue,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.access_time,
-                          size: 13, color: eventTypeBlue),
-                      const SizedBox(width: 4),
-                      Text(
-                        event['time'] as String,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+
+              // ── Card body ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Date + time row — light grey
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: const Color(0xFFABABAB)),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${event['date'] as String}  ·  ${event['time'] as String}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: const Color(0xFFABABAB),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Bold event title — 2-line max
+                    Text(
+                      event['title'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: context.hc.textPrimary,
+                        height: 1.25,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    // Location row with outline pin
+                    Row(
+                      children: [
+                        Icon(
+                          isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
+                          size: 14,
                           color: context.hc.textTertiary,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            event['location'] as String,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.5,
+                              color: context.hc.textTertiary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Borough tag (if present)
+                    if (borough.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.teal.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.location_on, size: 11, color: HuddlColors.teal),
+                            const SizedBox(width: 3),
+                            Text(
+                              borough,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.teal,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 4),
-                  // Location
-                  Row(
-                    children: [
-                      Icon(isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
-                          size: 13, color: eventTypeBlue),
-                      const SizedBox(width: 5),
+                    // AI match reason badges
+                    if (widget.matchReasons.isNotEmpty) ..._buildMatchReasonChips(),
+                    // AI source attribution
+                    if (event['isAiDiscovered'] == true) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.teal,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.language, size: 10, color: Colors.white),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            event['aiSourceIcon'] as IconData? ?? Icons.language,
+                            size: 12,
+                            color: HuddlColors.teal,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Found on ${event['aiSourceName'] as String? ?? 'the web'}',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.teal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // ── Bottom action row ──────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 12, 14),
+                child: Row(
+                  children: [
+                    // Attendees count
+                    Icon(Icons.people_outline, size: 14, color: context.hc.textTertiary),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$attendees interested',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: context.hc.textTertiary,
+                      ),
+                    ),
+                    if (organiser.isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      Container(
+                        width: 4, height: 4,
+                        decoration: BoxDecoration(
+                          color: context.hc.textTertiary.withValues(alpha: 0.4),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          event['location'] as String,
+                          organiser,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
+                            fontWeight: FontWeight.w400,
                             color: context.hc.textTertiary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                    ],
-                  ),
-                  // Borough tag
-                  if (borough.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.teal.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
+                    ] else
+                      const Spacer(),
+                    // Floating blue circular "See details" button
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => EventDetailScreen(event: event),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                            transitionDuration: const Duration(milliseconds: 300),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.location_on, size: 11, color: HuddlColors.teal),
-                              const SizedBox(width: 3),
-                              Text(
-                                borough,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w500,
-                                  color: HuddlColors.teal,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  // AI Match reason badges
-                if (widget.matchReasons.isNotEmpty) ..._buildMatchReasonChips(),
-                if (organiser.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 11,
-                          backgroundColor: eventTypeBlue.withValues(alpha: 0.15),
-                          child: Icon(Icons.business, size: 12, color: eventTypeBlue),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'By $organiser',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: context.hc.textSecondary,
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: eventTypeBlue,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: eventTypeBlue.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
                         ),
-                      ],
+                        child: const Icon(Icons.arrow_forward_rounded,
+                            color: Colors.white, size: 20),
+                      ),
                     ),
                   ],
-                  // AI source attribution row
-                  if (event['isAiDiscovered'] == true) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.teal,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Icon(Icons.language, size: 10, color: Colors.white),
-                        ),
-                        const SizedBox(width: 6),
-                        Icon(
-                          event['aiSourceIcon'] as IconData? ?? Icons.language,
-                          size: 12,
-                          color: HuddlColors.teal,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            'Found on ${event['aiSourceName'] as String? ?? 'the web'}',
-                            style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: HuddlColors.teal,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
