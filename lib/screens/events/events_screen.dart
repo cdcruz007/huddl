@@ -408,38 +408,20 @@ class _EventsScreenState extends State<EventsScreen>
                 _navigateToCreateMeetup();
               },
               child: Container(
-                height: 50,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.circular(HuddlColors.radiusFull),
+                  color: const Color(0xFF5B9DFF),
+                  shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: HuddlColors.primary.withValues(alpha: 0.4),
-                      blurRadius: 14,
+                      color: const Color(0xFF5B9DFF).withValues(alpha: 0.35),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.add, color: Colors.white, size: 20),
-                    const SizedBox(width: 6),
-                    Text(
-                      'New meetup',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                child: const Icon(Icons.add, color: Colors.white, size: 28),
               ),
             ),
           ),

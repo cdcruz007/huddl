@@ -555,7 +555,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   static const _bannerBlue   = Color(0xFF5B9DFF);   // banner — exact Figma blue (user-confirmed hex)
   static const _accentOrange = Color(0xFFFF9B57);   // date/time/location icons + toggle
-  static const _accentBlue   = Color(0xFF4B82F6);   // category icons + selected pill fill
+  static const _accentBlue   = Color(0xFF5B9DFF);   // category icons + selected pill fill (Figma #5B9DFF)
   static const _fieldBg      = Color(0xFFF6F6F8);   // text field fill
   static const _fieldLine    = Color(0xFFD0D0D0);   // field bottom underline
   static const _sectionText  = Color(0xFF1A1A1A);   // section header (bold dark)
