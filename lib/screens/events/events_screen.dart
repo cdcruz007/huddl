@@ -471,8 +471,21 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     'Mums', 'Dads', 'Aspiring parents', 'Expecting parents', 'Kids',
   ];
 
-  String _selectedCategory = 'All'; // chip row selection
-  String _selectedParticipant = 'All'; // participant filter from bottom sheet
+  String _selectedCategory = 'All'; // top chip-row (feed header)
+  String _selectedParticipant = 'All'; // legacy single-select (kept for compat)
+
+  // ── Extended filter state (filter sheet) ─────────────────────
+  /// 'none' | 'online' | 'live'
+  String _localization = 'none';
+  double _distanceKm = 10.0;
+  /// Multi-select categories from sheet (labels, e.g. 'Hanging out')
+  final Set<String> _sheetCategories = {};
+  /// Multi-select participants from sheet (labels, e.g. 'Mums')
+  final Set<String> _sheetParticipants = {};
+  bool _showFreeOnly = false;
+  DateTimeRange? _dateRange;
+  /// 'mostPopular' | 'latest'
+  String _sortBy = 'mostPopular';
 
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
@@ -484,11 +497,20 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   final TextEditingController _localSearchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
-  /// True when any filter beyond 'All' is active.
-  bool get _hasActiveFilter =>
-      _selectedCategory != 'All' || _selectedParticipant != 'All';
+  /// True when any filter beyond defaults is active.
+  bool get _hasActiveFilter {
+    return _selectedCategory != 'All'
+        || _selectedParticipant != 'All'
+        || _localization != 'none'
+        || _sheetCategories.isNotEmpty
+        || _sheetParticipants.isNotEmpty
+        || _showFreeOnly
+        || _dateRange != null
+        || _sortBy != 'mostPopular'
+        || _distanceKm != 10.0;
+  }
 
-  /// The category codes to match (empty = show all).
+  /// The category codes to match from TOP chip row (empty = show all).
   List<String> get _activeCategoryCodes {
     if (_selectedCategory == 'All') return [];
     final chip = _categoryChips.firstWhere(
@@ -500,12 +522,32 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
   /// Short label for the filter pill.
   String get _filterPillLabel {
-    if (_selectedCategory != 'All' && _selectedParticipant != 'All') {
-      return '2 filters';
+    final int count = [
+      if (_sheetCategories.isNotEmpty) true,
+      if (_sheetParticipants.isNotEmpty) true,
+      if (_localization != 'none') true,
+      if (_showFreeOnly) true,
+      if (_dateRange != null) true,
+      if (_sortBy != 'mostPopular') true,
+    ].length;
+    if (count == 0 && _selectedCategory != 'All') return _selectedCategory;
+    if (count == 0 && _selectedParticipant != 'All') return _selectedParticipant;
+    if (count == 1) {
+      if (_localization != 'none') return _localization == 'online' ? 'Online' : 'Live';
+      if (_sheetCategories.isNotEmpty) return _sheetCategories.first;
+      if (_sheetParticipants.isNotEmpty) return _sheetParticipants.first;
+      if (_showFreeOnly) return 'Free only';
+      if (_sortBy != 'mostPopular') return 'Latest';
     }
-    if (_selectedCategory != 'All') return _selectedCategory;
-    if (_selectedParticipant != 'All') return _selectedParticipant;
+    if (count > 1) return '$count filters';
     return '';
+  }
+
+  /// Distance label shown in feed bar ("10 km", "1 km", etc.)
+  String get _distanceLabel {
+    if (_localization == 'online') return 'Online';
+    final v = _distanceKm.round();
+    return v >= 50 ? '<50 km' : '$v km';
   }
 
   @override
@@ -570,22 +612,88 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }).toList();
   }
 
-  /// Apply both category and participant filters.
+  /// Apply all active filters and sort order.
   List<Meetup> _applyFilters(List<Meetup> meetups) {
     var result = meetups;
-    // Category filter
+
+    // ── 1. Top chip-row category (single-select, legacy) ─────────
     final codes = _activeCategoryCodes;
     if (codes.isNotEmpty) {
       result = result.where((m) => codes.contains(m.category)).toList();
     }
-    // Participant filter
+
+    // ── 2. Sheet multi-select categories ─────────────────────────
+    if (_sheetCategories.isNotEmpty) {
+      // Build union of all codes for selected sheet categories
+      final Set<String> allCodes = {};
+      for (final label in _sheetCategories) {
+        final chip = _categoryChips.firstWhere(
+          (c) => c['label'] == label,
+          orElse: () => {'label': label, 'codes': <String>[]},
+        );
+        allCodes.addAll((chip['codes'] as List<String>? ?? []));
+      }
+      if (allCodes.isNotEmpty) {
+        result = result.where((m) => allCodes.contains(m.category)).toList();
+      }
+    }
+
+    // ── 3. Legacy single-select participant ──────────────────────
     if (_selectedParticipant != 'All') {
       result = result.where((m) {
-        // If targetAudience is empty it means open to everyone — include it.
         if (m.targetAudience.isEmpty) return true;
         return m.targetAudience.contains(_selectedParticipant);
       }).toList();
     }
+
+    // ── 4. Sheet multi-select participants ───────────────────────
+    if (_sheetParticipants.isNotEmpty) {
+      result = result.where((m) {
+        if (m.targetAudience.isEmpty) return true;
+        return m.targetAudience.any((a) => _sheetParticipants.contains(a));
+      }).toList();
+    }
+
+    // ── 5. Localization (online / live) ───────────────────────────
+    // Meetup.isFree is repurposed as isOnline proxy if no dedicated field.
+    // We use location == 'Online' or category to infer; or we use the
+    // existing `isOnline` flag in the data layer where available.
+    // For robustness we check both.
+    if (_localization == 'online') {
+      result = result.where((m) =>
+        m.location.toLowerCase().contains('online') ||
+        m.category.toLowerCase().contains('online')
+      ).toList();
+    } else if (_localization == 'live') {
+      result = result.where((m) =>
+        !m.location.toLowerCase().contains('online') &&
+        !m.category.toLowerCase().contains('online')
+      ).toList();
+    }
+
+    // ── 6. Free only ──────────────────────────────────────────────
+    if (_showFreeOnly) {
+      result = result.where((m) => m.isFree || (m.price == null || m.price == 0)).toList();
+    }
+
+    // ── 7. Date range ─────────────────────────────────────────────
+    if (_dateRange != null) {
+      final start = DateTime(_dateRange!.start.year, _dateRange!.start.month, _dateRange!.start.day);
+      final end   = DateTime(_dateRange!.end.year,   _dateRange!.end.month,   _dateRange!.end.day, 23, 59, 59);
+      result = result.where((m) =>
+        m.dateTime.isAfter(start.subtract(const Duration(seconds: 1))) &&
+        m.dateTime.isBefore(end.add(const Duration(seconds: 1)))
+      ).toList();
+    }
+
+    // ── 8. Sort ───────────────────────────────────────────────────
+    if (_sortBy == 'latest') {
+      result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    } else {
+      // mostPopular — sort by attendeeCount descending
+      result.sort((a, b) => b.attendeeCount.compareTo(a.attendeeCount));
+    }
+
     return result;
   }
 
@@ -656,13 +764,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     );
   }
 
-  // ── Filter bottom sheet ───────────────────────────────────────
+  // ── Filter bottom sheet — Figma-exact redesign ───────────────
   void _showFilterSheet(BuildContext context) {
     HapticFeedback.selectionClick();
-    // Capture current filter state so sheet can mutate locally
-    // then commit on "Show results" tap.
-    String sheetCategory = _selectedCategory;
-    String sheetParticipant = _selectedParticipant;
+
+    // ── Local copies of all filter state for the sheet ────────
+    String        sheetLocalization    = _localization;
+    double        sheetDistanceKm      = _distanceKm;
+    Set<String>   sheetCategories      = Set<String>.from(_sheetCategories);
+    Set<String>   sheetParticipants    = Set<String>.from(_sheetParticipants);
+    bool          sheetFreeOnly        = _showFreeOnly;
+    DateTimeRange? sheetDateRange      = _dateRange;
+    String        sheetSortBy          = _sortBy;
 
     showModalBottomSheet(
       context: context,
@@ -674,31 +787,69 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       ),
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
-          // ── Design tokens ──────────────────────────────────────
-          const Color bgSheet     = Color(0xFFF7F7F7);
-          const Color bgCard      = Colors.white;
-          const Color accentBlue  = Color(0xFF3A7FEA);
-          const Color accentOrange= Color(0xFFF89A5A);
-          const Color textPrimary = Color(0xFF1D1D1D);
-          const Color textSec     = Color(0xFF6B6B6B);
-          const Color chipBorder  = Color(0xFFE0E0E0);
 
-          // ── Helpers ────────────────────────────────────────────
-          Widget sectionLabel(String title) => Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textSec,
-              letterSpacing: 0.1,
+          // ══ DESIGN TOKENS ══════════════════════════════════════
+          const Color bgSheet      = Colors.white;
+          const Color orange       = Color(0xFFF4845F);  // brand orange
+          const Color blue         = Color(0xFF4A90D9);  // localization chip selected
+          const Color textPrimary  = Color(0xFF1A1A1A);
+          const Color textSecGray  = Color(0xFF9E9E9E);
+          const Color chipBg       = Color(0xFFF0F0F0);  // unselected chip
+          const Color dividerColor = Color(0xFFE0E0E0);
+          const Color trackInactive= Color(0xFFE0E0E0);
+          const Color toggleOff    = Color(0xFFC7C7CC);
+
+          final bool isOnline = sheetLocalization == 'online';
+
+          // ── Helper: section heading ────────────────────────────
+          Widget sectionHeading(String title) => Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
             ),
           );
 
+          // ── Helper: localization chip ─────────────────────────
+          Widget locChip(String label, String value) {
+            final sel = sheetLocalization == value;
+            return GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setSheetState(() {
+                  sheetLocalization = (sheetLocalization == value) ? 'none' : value;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
+                decoration: BoxDecoration(
+                  color: sel ? blue : chipBg,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
+                    color: sel ? Colors.white : textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // ── Helper: filter chip (Participants / Category) ─────
           Widget filterChip({
             required String label,
             required bool isSelected,
             required VoidCallback onTap,
             IconData? icon,
+            Color? iconColor,
           }) {
             return GestureDetector(
               onTap: () {
@@ -706,29 +857,25 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 onTap();
               },
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                curve: Curves.easeOut,
+                duration: const Duration(milliseconds: 180),
                 padding: EdgeInsets.symmetric(
-                  horizontal: icon != null ? 10 : 14,
-                  vertical: 8,
+                  horizontal: icon != null ? 12 : 16,
+                  vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? accentBlue : bgCard,
+                  color: isSelected ? const Color(0xFF1A1A1A) : chipBg,
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(
-                    color: isSelected ? accentBlue : chipBorder,
-                    width: 1.2,
-                  ),
-                  boxShadow: isSelected
-                      ? [BoxShadow(color: accentBlue.withValues(alpha: 0.18), blurRadius: 6, offset: const Offset(0, 2))]
-                      : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 3, offset: const Offset(0, 1))],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: 14, color: isSelected ? Colors.white : accentBlue),
-                      const SizedBox(width: 5),
+                      Icon(
+                        icon,
+                        size: 15,
+                        color: isSelected ? Colors.white : (iconColor ?? blue),
+                      ),
+                      const SizedBox(width: 6),
                     ],
                     Text(
                       label,
@@ -744,39 +891,102 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             );
           }
 
-          // ── Count active filters for CTA label ────────────────
-          int activeCount = 0;
-          if (sheetCategory != 'All') activeCount++;
-          if (sheetParticipant != 'All') activeCount++;
+          // ── Helper: radio option row ──────────────────────────
+          Widget radioRow(String label, String value) {
+            final sel = sheetSortBy == value;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setSheetState(() => sheetSortBy = value);
+              },
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ),
+                    // Custom radio button
+                    Container(
+                      width: 22, height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: sel ? orange : const Color(0xFFCCCCCC),
+                          width: sel ? 0 : 1.5,
+                        ),
+                        color: sel ? orange : Colors.transparent,
+                      ),
+                      child: sel
+                          ? const Center(
+                              child: CircleAvatar(
+                                radius: 4,
+                                backgroundColor: Colors.white,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
           // ── Category icon map ──────────────────────────────────
           const Map<String, IconData> catIcons = {
-            'All':                Icons.apps_rounded,
-            'Hanging out':        Icons.people_alt_outlined,
-            'Pregnancy':          Icons.pregnant_woman_outlined,
-            'Playdate':           Icons.child_friendly_outlined,
-            'Sports & exercise':  Icons.fitness_center_outlined,
-            'Coffee & tea':       Icons.coffee_outlined,
-            'Parks & Walks':      Icons.park_outlined,
-            'Food & nutrition':   Icons.restaurant_outlined,
-            'Performance & shows':Icons.theater_comedy_outlined,
-            'Other':              Icons.more_horiz_rounded,
+            'All':                 Icons.apps_rounded,
+            'Hanging out':         Icons.chat_bubble_outline_rounded,
+            'Pregnancy':           Icons.pregnant_woman_outlined,
+            'Playdate':            Icons.directions_run_rounded,
+            'Sports & exercise':   Icons.fitness_center_outlined,
+            'Coffee & tea':        Icons.coffee_outlined,
+            'Parks & Walks':       Icons.park_outlined,
+            'Food & nutrition':    Icons.restaurant_outlined,
+            'Performance & shows': Icons.theater_comedy_outlined,
+            'Other':               Icons.more_horiz_rounded,
           };
+
+          // ── Count active sheet filters for CTA label ──────────
+          int activeCount = 0;
+          if (sheetLocalization != 'none') activeCount++;
+          if (sheetCategories.isNotEmpty) activeCount++;
+          if (sheetParticipants.isNotEmpty) activeCount++;
+          if (sheetFreeOnly) activeCount++;
+          if (sheetDateRange != null) activeCount++;
+          if (sheetSortBy != 'mostPopular') activeCount++;
+
+          // ── Date range display string ─────────────────────────
+          String dateLabel = 'Date range';
+          bool dateHasValue = sheetDateRange != null;
+          if (dateHasValue) {
+            final s = sheetDateRange!.start;
+            final e = sheetDateRange!.end;
+            final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            dateLabel = '${s.day} ${months[s.month-1]} ${s.year} – ${e.day} ${months[e.month-1]} ${e.year}';
+          }
 
           return ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             child: Container(
               color: bgSheet,
-              // Use DraggableScrollableSheet sizing
               constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+                maxHeight: MediaQuery.of(ctx).size.height * 0.93,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // ══ STICKY HEADER ════════════════════════════════
+
+                  // ══ STICKY HEADER ══════════════════════════════
                   Container(
-                    color: bgCard,
+                    color: bgSheet,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -793,18 +1003,17 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ),
                           ),
                         ),
-                        // Header row
+                        // Header row: close | title | RESET
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 16, 14),
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                           child: Row(
                             children: [
-                              // Close button
                               GestureDetector(
                                 onTap: () => Navigator.pop(ctx),
                                 child: Container(
                                   width: 32, height: 32,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF0F0F0),
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF0F0F0),
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.close_rounded, size: 17, color: textPrimary),
@@ -814,22 +1023,26 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               Expanded(
                                 child: Text(
                                   'Filter and sort',
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: textPrimary,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              // RESET button
                               GestureDetector(
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   setSheetState(() {
-                                    sheetCategory = 'All';
-                                    sheetParticipant = 'All';
+                                    sheetLocalization  = 'none';
+                                    sheetDistanceKm    = 10.0;
+                                    sheetCategories    = {};
+                                    sheetParticipants  = {};
+                                    sheetFreeOnly      = false;
+                                    sheetDateRange     = null;
+                                    sheetSortBy        = 'mostPopular';
                                   });
                                 },
                                 child: Text(
@@ -837,7 +1050,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
-                                    color: accentOrange,
+                                    color: orange,
                                     letterSpacing: 0.3,
                                   ),
                                 ),
@@ -845,12 +1058,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ],
                           ),
                         ),
-                        Divider(height: 1, thickness: 1, color: const Color(0xFFEEEEEE)),
+                        Divider(height: 1, thickness: 1, color: dividerColor),
                       ],
                     ),
                   ),
 
-                  // ══ SCROLLABLE FILTER CONTENT ════════════════════
+                  // ══ SCROLLABLE CONTENT ═════════════════════════
                   Flexible(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
@@ -858,83 +1071,259 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // ── CATEGORY SECTION ──────────────────────
-                          sectionLabel('Category'),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: bgCard,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
-                            ),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 10,
-                              children: _categoryChips.map((chip) {
-                                final label = chip['label'] as String;
-                                final icon = catIcons[label] ?? Icons.label_outline;
-                                final isSelected = sheetCategory == label;
-                                return filterChip(
-                                  label: label,
-                                  isSelected: isSelected,
-                                  icon: icon,
-                                  onTap: () {
-                                    setSheetState(() => sheetCategory = label);
-                                    setState(() => _aiService.trackCategoryTap(label));
-                                  },
-                                );
-                              }).toList(),
-                            ),
+                          // ══ SECTION 1 — LOCALIZATION ═══════════
+                          sectionHeading('Localization'),
+                          Row(
+                            children: [
+                              locChip('Online', 'online'),
+                              const SizedBox(width: 10),
+                              locChip('Live', 'live'),
+                            ],
                           ),
-
                           const SizedBox(height: 28),
 
-                          // ── PARTICIPANTS SECTION ───────────────────
-                          sectionLabel('Participants'),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: bgCard,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+                          // ══ SECTION 2 — DISTANCE ═══════════════
+                          Row(
+                            children: [
+                              Text(
+                                'Distance',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: isOnline ? textSecGray : textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // Distance tick labels
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: ['1 km', '5 km', '10 km', '<50 km'].map((t) => Text(
+                              t,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: isOnline ? textSecGray : textPrimary,
+                              ),
+                            )).toList(),
+                          ),
+                          const SizedBox(height: 4),
+                          // Slider
+                          SliderTheme(
+                            data: SliderTheme.of(ctx).copyWith(
+                              activeTrackColor: isOnline ? trackInactive : orange,
+                              inactiveTrackColor: trackInactive,
+                              thumbColor: isOnline ? textSecGray : orange,
+                              overlayColor: orange.withValues(alpha: 0.15),
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
                             ),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 10,
-                              children: ['All', ..._participantOptions].map((p) {
-                                final isSelected = sheetParticipant == p;
-                                const Map<String, IconData> pIcons = {
-                                  'All':               Icons.groups_outlined,
-                                  'Mums':              Icons.face_outlined,
-                                  'Dads':              Icons.face_2_outlined,
-                                  'Aspiring parents':  Icons.favorite_border_rounded,
-                                  'Expecting parents': Icons.pregnant_woman_outlined,
-                                  'Kids':              Icons.child_care_outlined,
-                                };
-                                final icon = pIcons[p];
-                                return filterChip(
-                                  label: p,
-                                  isSelected: isSelected,
-                                  icon: icon,
-                                  onTap: () => setSheetState(() => sheetParticipant = p),
-                                );
-                              }).toList(),
+                            child: Slider(
+                              value: [1.0, 5.0, 10.0, 50.0].reduce(
+                                (a, b) => (a - sheetDistanceKm).abs() < (b - sheetDistanceKm).abs() ? a : b,
+                              ),
+                              min: 1,
+                              max: 50,
+                              divisions: 3,
+                              onChanged: isOnline ? null : (v) {
+                                setSheetState(() {
+                                  // snap to 4 discrete values
+                                  final snapped = [1.0, 5.0, 10.0, 50.0].reduce(
+                                    (a, b) => (a - v).abs() < (b - v).abs() ? a : b,
+                                  );
+                                  sheetDistanceKm = snapped;
+                                });
+                              },
                             ),
                           ),
+                          // Online info message
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 200),
+                            child: isOnline
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.info_outline_rounded, size: 16, color: orange),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Online events have no distance',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: orange,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                          const SizedBox(height: 28),
 
-                          const SizedBox(height: 32),
+                          // ══ SECTION 3 — PARTICIPANTS ════════════
+                          sectionHeading('Participants'),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 10,
+                            children: _participantOptions.map((p) {
+                              final sel = sheetParticipants.contains(p);
+                              return filterChip(
+                                label: p,
+                                isSelected: sel,
+                                onTap: () => setSheetState(() {
+                                  if (sel) { sheetParticipants.remove(p); }
+                                  else { sheetParticipants.add(p); }
+                                }),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ SECTION 4 — CATEGORY ════════════════
+                          sectionHeading('Category'),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 10,
+                            children: _categoryChips
+                                .where((c) => (c['label'] as String) != 'All')
+                                .map((chip) {
+                              final label = chip['label'] as String;
+                              final icon  = catIcons[label] ?? Icons.label_outline;
+                              final sel   = sheetCategories.contains(label);
+                              return filterChip(
+                                label: label,
+                                isSelected: sel,
+                                icon: icon,
+                                iconColor: blue,
+                                onTap: () {
+                                  setSheetState(() {
+                                    if (sel) { sheetCategories.remove(label); }
+                                    else { sheetCategories.add(label); }
+                                  });
+                                  _aiService.trackCategoryTap(label);
+                                },
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ SECTION 5 — SHOW FREE ONLY ══════════
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Show only free events',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ),
+                              Switch(
+                                value: sheetFreeOnly,
+                                onChanged: (v) => setSheetState(() => sheetFreeOnly = v),
+                                activeThumbColor: Colors.white,
+                                activeTrackColor: orange,
+                                inactiveThumbColor: Colors.white,
+                                inactiveTrackColor: toggleOff,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ SECTION 6 — PICK A DATE ══════════════
+                          sectionHeading('Pick a date'),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDateRangePicker(
+                                context: ctx,
+                                firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                                lastDate: DateTime.now().add(const Duration(days: 365)),
+                                initialDateRange: sheetDateRange,
+                                builder: (context, child) => Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: Theme.of(context).colorScheme.copyWith(
+                                      primary: orange,
+                                      onPrimary: Colors.white,
+                                    ),
+                                  ),
+                                  child: child!,
+                                ),
+                              );
+                              if (picked != null) {
+                                setSheetState(() => sheetDateRange = picked);
+                              }
+                            },
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: dateHasValue
+                                        ? Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                'Date range',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  color: textSecGray,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                dateLabel,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  color: textPrimary,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Text(
+                                            'Date range',
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              color: textSecGray,
+                                              fontWeight: FontWeight.w400,
+                                            ),
+                                          ),
+                                  ),
+                                  Icon(Icons.calendar_month_outlined, color: orange, size: 22),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 28),
+
+                          // ══ SECTION 7 — SORT BY ══════════════════
+                          sectionHeading('Sort by'),
+                          radioRow('Most popular', 'mostPopular'),
+                          Divider(height: 1, thickness: 1, color: dividerColor),
+                          radioRow('Latest', 'latest'),
+
+                          const SizedBox(height: 8),
                         ],
                       ),
                     ),
                   ),
 
-                  // ══ STICKY BOTTOM CTA ════════════════════════════
+                  // ══ STICKY BOTTOM CTA ═══════════════════════════
                   Container(
                     decoration: BoxDecoration(
-                      color: bgCard,
-                      border: Border(top: BorderSide(color: const Color(0xFFEEEEEE), width: 1)),
+                      color: bgSheet,
+                      border: Border(top: BorderSide(color: dividerColor, width: 1)),
                       boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
                     ),
                     child: SafeArea(
@@ -944,26 +1333,29 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         child: GestureDetector(
                           onTap: () {
                             HapticFeedback.mediumImpact();
-                            // Commit local sheet state back to parent
                             setState(() {
-                              _selectedCategory = sheetCategory;
-                              _selectedParticipant = sheetParticipant;
+                              _localization      = sheetLocalization;
+                              _distanceKm        = sheetDistanceKm;
+                              _sheetCategories
+                                ..clear()
+                                ..addAll(sheetCategories);
+                              _sheetParticipants
+                                ..clear()
+                                ..addAll(sheetParticipants);
+                              _showFreeOnly      = sheetFreeOnly;
+                              _dateRange         = sheetDateRange;
+                              _sortBy            = sheetSortBy;
                             });
                             Navigator.pop(ctx);
                           },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 120),
+                          child: Container(
                             height: 52,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              color: orange,
                               borderRadius: BorderRadius.circular(26),
                               boxShadow: [
                                 BoxShadow(
-                                  color: accentOrange.withValues(alpha: 0.35),
+                                  color: orange.withValues(alpha: 0.35),
                                   blurRadius: 14,
                                   offset: const Offset(0, 5),
                                 ),
@@ -971,7 +1363,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ),
                             alignment: Alignment.center,
                             child: Text(
-                              activeCount > 0 ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}' : 'Show results',
+                              activeCount > 0
+                                  ? 'Show results · $activeCount filter${activeCount > 1 ? 's' : ''}'
+                                  : 'Show results',
                               style: GoogleFonts.poppins(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
@@ -984,6 +1378,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       ),
                     ),
                   ),
+
                 ],
               ),
             ),
@@ -1088,7 +1483,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   GestureDetector(
                     onTap: () => _showFilterSheet(context),
                     child: Text(
-                      'Distance: 10 km',
+                      'Distance: $_distanceLabel',
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
