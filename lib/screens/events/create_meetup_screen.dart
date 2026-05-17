@@ -553,8 +553,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = Color(0xFF5B8FF0);   // banner gradient start
-  static const _bannerBlue2  = Color(0xFF6E73E8);   // banner gradient end
+  static const _bannerBlue   = Color(0xFF5894F5);   // banner gradient left — pure azure blue
+  static const _bannerBlue2  = Color(0xFF5B7FDB);   // banner gradient right — stays in blue family
   static const _accentOrange = Color(0xFFFF9B57);   // date/time/location icons + toggle
   static const _accentBlue   = Color(0xFF4B82F6);   // category icons + selected pill fill
   static const _fieldBg      = Color(0xFFF6F6F8);   // text field fill
@@ -1337,8 +1337,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       height: 200,
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
           colors: [_bannerBlue, _bannerBlue2],
         ),
       ),
