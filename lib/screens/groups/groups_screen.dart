@@ -4547,7 +4547,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
                   child: Semantics(
-                    label: 'AI context: $contextLine',
+                    label: contextLine,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
@@ -4564,7 +4564,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           ),
                           // Human override toggle
                           Semantics(
-                            label: 'Toggle AI recommendations',
+                            label: 'Toggle smart sort',
                             button: true,
                             child: GestureDetector(
                               onTap: () {
@@ -4623,7 +4623,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               children: [
                                 const Icon(Icons.explore, size: 10, color: HuddlColors.teal),
                                 const SizedBox(width: 3),
-                                Text('AI', style: _adaptiveText(
+                                Text('For you', style: _adaptiveText(
                                   fontSize: 9, fontWeight: FontWeight.w700,
                                   color: HuddlColors.teal,
                                 )),
@@ -4635,8 +4635,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         // Sort toggle
                         Semantics(
                           label: _aiRecommendationsEnabled
-                              ? 'Smart sort on. Tap to see default order.'
-                              : 'Default order. Tap for smart sort.',
+                              ? 'Sorted by relevance. Tap to see default order.'
+                              : 'Default order. Tap to sort by relevance.',
                           button: true,
                           child: GestureDetector(
                             onTap: () {

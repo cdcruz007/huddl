@@ -195,7 +195,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                     children: [
                       const Icon(Icons.verified, size: 12, color: HuddlColors.teal),
                       const SizedBox(width: 3),
-                      Text('AI', style: GoogleFonts.poppins(
+                      Text('Smart', style: GoogleFonts.poppins(
                         fontSize: 10, fontWeight: FontWeight.w600,
                         color: HuddlColors.teal,
                       )),
@@ -397,7 +397,7 @@ class _AiAssistantSheetState extends State<_AiAssistantSheet>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'AI suggestions improve as you use them. Tap \u{1F44D} or \u{1F44E} on any suggestion to help me learn.',
+                      'Suggestions improve as you use them. Tap \u{1F44D} or \u{1F44E} on any suggestion.',
                       style: GoogleFonts.poppins(
                         fontSize: 11, color: HuddlColors.teal, height: 1.3,
                       ),

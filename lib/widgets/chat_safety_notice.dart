@@ -86,7 +86,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
 
             // ── Title ────────────────────────────────────────────────────────
             Text(
-              'Messages are safety-checked',
+              'Huddl keeps chats safe',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 17,
@@ -98,8 +98,8 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
 
             // ── Body ─────────────────────────────────────────────────────────
             Text(
-              'To keep Huddl safe for everyone — especially children — '
-              'all chat messages are automatically checked before they\'re sent.',
+              'We want Huddl to feel like a trusted space for every parent. '
+              'A few things happen in the background to help keep it that way.',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13,
@@ -109,26 +109,20 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── What's checked list ───────────────────────────────────────
+            // ── What happens list ─────────────────────────────────────────
             _BulletRow(
               icon: Icons.check_circle_outline,
-              text: 'A local word filter runs on-device — no data leaves your phone',
-            ),
-            const SizedBox(height: 8),
-            _BulletRow(
-              icon: Icons.cloud_outlined,
-              text: 'An AI safety layer (Google Gemini) checks for threats, '
-                  'grooming, and severe harassment',
+              text: 'Automated checks help catch harmful content before it reaches others',
             ),
             const SizedBox(height: 8),
             _BulletRow(
               icon: Icons.block_outlined,
-              text: 'Messages that fail either check are blocked and never stored',
+              text: 'Anything that breaks our community guidelines is quietly blocked — not stored',
             ),
             const SizedBox(height: 8),
             _BulletRow(
-              icon: Icons.person_outline,
-              text: 'Huddl moderators can review flagged content via the Report button',
+              icon: Icons.flag_outlined,
+              text: 'You can always report a message using the long-press menu',
             ),
             const SizedBox(height: 20),
 
@@ -173,7 +167,7 @@ class _ChatSafetyNoticeDialog extends StatelessWidget {
                   elevation: 0,
                 ),
                 child: Text(
-                  'Got it',
+                  'Got it, thanks',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -256,7 +250,7 @@ class ChatSafetyStrip extends StatelessWidget {
           const SizedBox(width: 5),
           Expanded(
             child: Text(
-              'Messages are AI-checked for safety before sending.',
+              'Huddl keeps this a safe space for families.',
               style: GoogleFonts.poppins(
                 fontSize: 10.5,
                 color: isDark ? HuddlColors.textHint : HuddlColors.textSecondary,
@@ -269,7 +263,7 @@ class ChatSafetyStrip extends StatelessWidget {
           GestureDetector(
             onTap: () => _showFullNotice(context),
             child: Text(
-              'Learn more',
+              'About this',
               style: GoogleFonts.poppins(
                 fontSize: 10.5,
                 color: HuddlColors.primary,

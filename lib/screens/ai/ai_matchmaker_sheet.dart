@@ -75,7 +75,7 @@ class _AiMatchmakerSheetState extends State<AiMatchmakerSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI Matchmaker',
+                            'Find your match',
                             style: GoogleFonts.poppins(
                               fontSize: 20, fontWeight: FontWeight.w700,
                               color: context.hc.textPrimary,

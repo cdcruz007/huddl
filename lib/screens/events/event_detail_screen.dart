@@ -657,7 +657,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'AI Summary',
+                  'Summary',
                   style: GoogleFonts.poppins(
                     fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
                 ),
@@ -856,7 +856,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ),
           const SizedBox(height: 8),
           Text(
-            'Your feedback helps AI learn your family\u2019s preferences',
+            'Your feedback helps us show you more of what suits your family',
             style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
           ),
         ],
@@ -900,7 +900,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     ),
                     Text(
-                      'AI-matched to your family profile',
+                      'Matched to your family',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: context.hc.textTertiary,
@@ -993,7 +993,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'AI Discovered Event',
+                      'Newly found for you',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -1001,7 +1001,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       ),
                     ),
                     Text(
-                      'Found automatically by our AI scanner',
+                      'Spotted from local listings and community boards',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: context.hc.textTertiary,
@@ -1072,7 +1072,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                           const Icon(Icons.star_rounded, size: 12, color: Colors.white),
                           const SizedBox(width: 4),
                           Text(
-                            'AI Found',
+                            'New Find',
                             style: GoogleFonts.poppins(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
@@ -1098,7 +1098,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Our AI scans local event listings, council sites, and community boards daily to find events near you.',
+                          'We search local listings, council sites, and community boards daily to find events near you.',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             color: context.hc.textSecondary,

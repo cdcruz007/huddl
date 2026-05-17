@@ -1926,7 +1926,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   Widget _buildSellCTA(HuddlContextColors hc) {
     return Semantics(
       label: 'Create a new listing',
-      hint: 'Opens listing form. AI will pre-fill details from your photo.',
+      hint: 'Opens listing form. We\'ll fill in the details from your photo.',
       button: true,
       child: Material(
         color: Colors.transparent,

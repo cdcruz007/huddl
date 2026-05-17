@@ -109,7 +109,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'huddl AI',
+                  'huddl Assistant',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -188,7 +188,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Hi! I\'m your huddl AI copilot',
+            'Hi! I\'m your huddl assistant',
             style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w700,
@@ -221,8 +221,8 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
               query: 'Find nurseries near me'),
           _buildFeatureCard(
               Icons.storefront,
-              'Market AI',
-              'Sell items instantly with AI',
+              'Smart Listing',
+              'We\'ll fill in the details from your photo',
               HuddlColors.aiBlue,
               query: 'Help me sell an item on Market'),
           _buildFeatureCard(
@@ -401,7 +401,7 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'huddl AI',
+                  'huddl Assistant',
                   style: GoogleFonts.poppins(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,

@@ -139,7 +139,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'AI Listing Generator',
+                            'Smart Listing',
                             style: GoogleFonts.poppins(
                               fontSize: 20, fontWeight: FontWeight.w700,
                               color: context.hc.textPrimary,
@@ -208,7 +208,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         const CircularProgressIndicator(color: HuddlColors.aiBlue),
                         const SizedBox(height: 16),
                         Text(
-                          'AI is analysing your item...',
+                          'Looking at your photo...',
                           style: GoogleFonts.poppins(
                             fontSize: 14, fontWeight: FontWeight.w500,
                             color: HuddlColors.aiBlue,
@@ -246,7 +246,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Our AI will generate everything for you',
+                          'We\'ll fill in the details for you',
                           style: GoogleFonts.poppins(
                             fontSize: 12, color: context.hc.textSecondary,
                           ),
@@ -360,7 +360,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                 const Icon(Icons.check_circle, size: 18, color: HuddlColors.success),
                 const SizedBox(width: 6),
                 Text(
-                  'AI identified with ${(draft.confidence * 100).round()}% confidence',
+                  'Details filled in automatically',
                   style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
                     color: HuddlColors.success,
@@ -421,7 +421,7 @@ class _AiListingGeneratorSheetState extends State<AiListingGeneratorSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('AI suggested price',
+                        Text('Suggested price',
                           style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary)),
                         Row(
                           children: [

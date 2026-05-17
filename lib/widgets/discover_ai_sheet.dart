@@ -227,7 +227,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                               size: 12, color: HuddlColors.teal),
                           const SizedBox(width: 3),
                           Text(
-                            'AI',
+                            'Smart',
                             style: GoogleFonts.poppins(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -564,7 +564,7 @@ class _DiscoverAiSheetState extends State<_DiscoverAiSheet>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Tap \u{1F44D} or \u{1F44E} on group cards to help AI learn your preferences.',
+                        'Tap \u{1F44D} or \u{1F44E} on group cards to help us show you better matches.',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
                           color: HuddlColors.teal,
