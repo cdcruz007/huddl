@@ -121,13 +121,25 @@ class AiEventDiscoveryService {
   }
 
   /// Run the daily discovery. Returns the number of new events found.
+  ///
+  /// Guard logic:
+  ///   • EventService is in-memory only — _events resets to [] on every cold
+  ///     start.  If the list is empty we MUST regenerate regardless of whether
+  ///     the "ran today" flag is stored, otherwise the Events tab always shows
+  ///     an empty state after a page reload / app restart.
+  ///   • If events are already loaded in this session AND we ran today AND
+  ///     force==false, skip to avoid redundant API calls.
   Future<int> runDailyDiscovery({bool force = false}) async {
     await initialize();
 
-    if (_hasRunToday && !force) return 0;
-
     final existingDiscovered =
         _eventService.events.where((e) => e.isAiDiscovered).length;
+
+    // Only skip when we already have events in memory AND the daily flag is set.
+    // An empty in-memory list means it's a fresh load — always regenerate.
+    if (_hasRunToday && !force && existingDiscovered > 0) return 0;
+
+    // Secondary cap: don't add more if we already have ≥10 events loaded.
     if (existingDiscovered >= 10 && !force) {
       _hasRunToday = true;
       return 0;
