@@ -50,11 +50,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   bool _isOnline = false;
   bool _repeatOn = false;
   String _repeatFrequency = 'Every week';
-  String _repeatEndOption = 'no_end';
+  final String _repeatEndOption = 'no_end';
   DateTime? _repeatEndDate;
-  DateTime? _endDate;
-  bool _showEndDate = false;
-  bool _showEndTime = false;
   String? _pickedImageUrl;
   bool _isCreating = false;
   int? _maxAttendees;
@@ -232,32 +229,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       _selectedCategories.isNotEmpty &&
       _pickedImageUrl != null; // Photo is required
 
-  String get _repeatSummary {
-    if (!_repeatOn || _repeatFrequency == 'Does not repeat') return 'Does not repeat';
-    final end = _repeatEndOption == 'by_date' && _repeatEndDate != null
-        ? ' · until ${_formatDate(_repeatEndDate!)}'
-        : '';
-    return '$_repeatFrequency$end';
-  }
-
-  String get _privacyLabel {
-    switch (_privacy) {
-      case 'public': return 'Public';
-      case 'group': return _selectedGroupName != null ? 'Group · $_selectedGroupName' : 'Group';
-      case 'private': return 'Private · invite only';
-      default: return 'Choose privacy';
-    }
-  }
-
-  IconData get _privacyIcon {
-    switch (_privacy) {
-      case 'public': return Icons.public;
-      case 'group': return Icons.group_outlined;
-      case 'private': return Icons.lock_outline;
-      default: return Icons.shield_outlined;
-    }
-  }
-
   // ── Pickers ──────────────────────────────────────────────────────────
   void _pickDate() async {
     final date = await showDatePicker(
@@ -290,22 +261,6 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       initialTime: _endTime ?? const TimeOfDay(hour: 15, minute: 0),
     );
     if (time != null) setState(() => _endTime = time);
-  }
-
-  void _pickEndDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: _endDate ?? _selectedDate ?? DateTime.now().add(const Duration(days: 3)),
-      firstDate: _selectedDate ?? DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (ctx, child) => Theme(
-        data: Theme.of(ctx).copyWith(
-          colorScheme: ColorScheme.light(primary: HuddlColors.primary),
-        ),
-        child: child!,
-      ),
-    );
-    if (date != null) setState(() => _endDate = date);
   }
 
   // ── Image picker ──────────────────────────────────────────────────
@@ -596,12 +551,12 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // BUILD
+  // BUILD — Figma flat layout (no cards, underline inputs, inline controls)
   // ══════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: HuddlColors.gray100,
+      backgroundColor: Colors.white,
       appBar: _buildAppBar(),
       body: SafeArea(
         top: false,
@@ -617,113 +572,81 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     // ── Borough gate note ──
                     const BoroughGateMessage(featureLabel: 'Meetups'),
 
-                    // ── Cover photo ──
+                    // ── Cover photo banner ──
                     _buildPhotoUpload(),
 
-                    const SizedBox(height: 16),
+                    // ── Form body (white, flat, padded) ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 24),
 
-                    // ── Main details card ──
-                    _buildSectionCard([
-                      _buildTitleField(),
-                      _sectionDivider(),
-                      _buildLocationRow(),
-                    ]),
+                          // Meetup name
+                          _buildFlatTextField(
+                            controller: _titleCtrl,
+                            label: 'Meetup name',
+                            hint: 'Give your meetup a name',
+                            onChanged: (_) { setState(() {}); _saveDraft(); },
+                          ),
 
-                    const SizedBox(height: 12),
+                          _flatDivider(),
 
-                    // ── Date & time card ──
-                    _buildSectionCard([
-                      _buildDateTimeRow(
-                        label: 'Start date',
-                        icon: Icons.calendar_today_outlined,
-                        value: _selectedDate != null ? _formatDate(_selectedDate!) : null,
-                        onTap: _pickDate,
+                          // Location
+                          _buildFlatLocationField(),
+
+                          _flatDivider(),
+
+                          // Date row — single date field + From / To side-by-side
+                          _buildFlatDateTimeBlock(),
+
+                          _flatDivider(),
+
+                          // Repeat — inline toggle switch
+                          _buildFlatRepeatRow(),
+
+                          _flatDivider(),
+
+                          // Category chips
+                          _buildFlatCategorySection(),
+
+                          _flatDivider(),
+
+                          // Participants (square checkboxes)
+                          _buildFlatParticipantsSection(),
+
+                          _flatDivider(),
+
+                          // Max attendees
+                          _buildFlatAttendeesSection(),
+
+                          _flatDivider(),
+
+                          // Price — Free checkbox + price field
+                          _buildFlatPriceSection(),
+
+                          _flatDivider(),
+
+                          // Description textarea
+                          _buildFlatDescriptionSection(),
+
+                          _flatDivider(),
+
+                          // Privacy — inline radio buttons
+                          _buildFlatPrivacySection(),
+
+                          // Invite friends section (public) / invite members (private)
+                          if (_privacy == 'public') _buildPublicInviteRow(),
+                          if (_privacy == 'private') ...[
+                            _flatDivider(),
+                            _buildInviteMembersWidget(),
+                          ],
+
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      _sectionDivider(),
-                      _buildDateTimeRow(
-                        label: 'Start time',
-                        icon: Icons.access_time_outlined,
-                        value: _startTime != null ? _formatTime(_startTime!) : null,
-                        onTap: _pickStartTime,
-                      ),
-                      if (_showEndDate) ...[
-                        _sectionDivider(),
-                        _buildDateTimeRow(
-                          label: 'End date',
-                          icon: Icons.calendar_today_outlined,
-                          value: _endDate != null ? _formatDate(_endDate!) : null,
-                          onTap: _pickEndDate,
-                        ),
-                      ],
-                      if (_showEndTime) ...[
-                        _sectionDivider(),
-                        _buildDateTimeRow(
-                          label: 'End time',
-                          icon: Icons.access_time_outlined,
-                          value: _endTime != null ? _formatTime(_endTime!) : null,
-                          onTap: _pickEndTime,
-                        ),
-                      ],
-                      if (!_showEndDate || !_showEndTime) ...[
-                        _sectionDivider(),
-                        _buildAddRowsFooter(),
-                      ],
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Repeat row ──
-                    _buildSectionCard([
-                      _buildRepeatRow(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Category card ──
-                    _buildSectionCard([
-                      _buildCategorySection(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Participants card ──
-                    _buildSectionCard([
-                      _buildParticipantsSection(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Attendees card ──
-                    _buildSectionCard([
-                      _buildAttendeesSection(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Price card ──
-                    _buildSectionCard([
-                      _buildPriceSection(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Description card ──
-                    _buildSectionCard([
-                      _buildDescriptionSection(),
-                    ]),
-
-                    const SizedBox(height: 12),
-
-                    // ── Privacy card ──
-                    _buildSectionCard([
-                      _buildPrivacyRow(),
-                      if (_privacy == 'private') ...[
-                        _sectionDivider(),
-                        _buildInviteMembersWidget(),
-                      ],
-                    ]),
-
-                    const SizedBox(height: 32),
+                    ),
                   ],
                 ),
               ),
@@ -743,9 +666,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: context.hc.surface,
+      backgroundColor: Colors.white,
       elevation: 0,
-      surfaceTintColor: context.hc.surface,
+      surfaceTintColor: Colors.white,
       automaticallyImplyLeading: false,
       leading: GestureDetector(
         onTap: () => Navigator.pop(context),
@@ -780,14 +703,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // STICKY CTA
+  // STICKY CTA — orange gradient button
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _buildStickyCreateButton() {
     return Container(
-      color: context.hc.surface,
+      color: Colors.white,
       padding: EdgeInsets.fromLTRB(
-        16, 10, 16, MediaQuery.of(context).padding.bottom + 12),
+        20, 10, 20, MediaQuery.of(context).padding.bottom + 14),
       child: GestureDetector(
         onTap: _isFormValid && !_isCreating ? _createMeetup : null,
         child: AnimatedContainer(
@@ -796,13 +719,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           decoration: BoxDecoration(
             gradient: _isFormValid
                 ? const LinearGradient(
-                    colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
+                    colors: [Color(0xFFF8A15F), Color(0xFFE8601E)],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   )
                 : null,
             color: _isFormValid ? null : HuddlColors.gray200,
-            borderRadius: BorderRadius.circular(HuddlColors.radiusFull),
+            borderRadius: BorderRadius.circular(26),
             boxShadow: _isFormValid
                 ? [
                     BoxShadow(
@@ -834,44 +757,82 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // SECTION CARD WRAPPER
+  // FLAT DIVIDER — lightweight horizontal rule between form sections
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildSectionCard(List<Widget> children) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: context.hc.surface,
-        borderRadius: BorderRadius.circular(HuddlColors.radiusLG),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: children,
-      ),
-    );
-  }
-
-  Widget _sectionDivider() {
+  Widget _flatDivider() {
     return Divider(
-      height: 1,
+      height: 28,
       thickness: 1,
-      indent: 16,
-      endIndent: 16,
       color: HuddlColors.gray200,
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PHOTO UPLOAD
+  // SECTION LABEL — uppercase small label above each section
   // ══════════════════════════════════════════════════════════════════════
+
+  Widget _sectionLabel(String text) {
+    return Text(
+      text,
+      style: GoogleFonts.poppins(
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: HuddlColors.gray500,
+        letterSpacing: 0.4,
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PHOTO UPLOAD — blue gradient banner, "Click to add photo"
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _photoPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: 200,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF4A90E2), Color(0xFF6B6FC5)],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.camera_alt_outlined,
+                color: Colors.white, size: 26),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Click to add photo',
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Add a cover image for your meetup',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.80),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildPhotoUpload() {
     if (_pickedImageUrl != null) {
@@ -879,1524 +840,975 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         onTap: _pickImage,
         child: SizedBox(
           width: double.infinity,
-          height: 220,
+          height: 200,
           child: Stack(
             fit: StackFit.expand,
             children: [
               _buildPickedImage(),
-              // Scrim gradient at bottom
+              // Bottom scrim + change label
               Positioned(
                 left: 0, right: 0, bottom: 0,
                 child: Container(
-                  height: 64,
+                  height: 56,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.55),
+                        Colors.black.withValues(alpha: 0.60),
                         Colors.transparent,
                       ],
                     ),
                   ),
-                ),
-              ),
-              Positioned(
-                bottom: 12,
-                right: 14,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.edit_outlined, size: 14, color: HuddlColors.textDark),
-                    const SizedBox(width: 4),
-                    Text('Change photo',
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.edit_outlined,
+                          color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Change photo',
                         style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.textDark)),
-                  ]),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              // Required badge
-              if (_pickedImageUrl == null)
-                Positioned(
-                  top: 12, right: 14,
-                  child: _requiredBadge(),
-                ),
             ],
           ),
         ),
       );
     }
 
-    // Empty state — gradient placeholder
     return GestureDetector(
       onTap: _pickImage,
-      child: Container(
-        width: double.infinity,
-        height: 220,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFF3ED), Color(0xFFFFE8D5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: HuddlColors.primary.withValues(alpha: 0.2),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.add_photo_alternate_outlined,
-                      size: 28,
-                      color: HuddlColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Add cover photo',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: HuddlColors.primaryDark,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Required · helps people recognise your meetup',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: HuddlColors.primary.withValues(alpha: 0.75),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _photoPlaceholder() {
-    return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
-      child: const Center(
-        child: Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
-      ),
-    );
-  }
-
-  Widget _requiredBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: HuddlColors.error.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        'Required',
-        style: GoogleFonts.poppins(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
+      child: _photoPlaceholder(),
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // TITLE FIELD
+  // FLAT TEXT FIELD — underline style (no border box)
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildTitleField() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Meetup name'),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _titleCtrl,
-            onChanged: (_) { setState(() {}); _saveDraft(); },
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: context.hc.textPrimary,
-            ),
-            decoration: InputDecoration(
-              hintText: 'e.g. Sunday Park Playdate',
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 15,
-                color: context.hc.textTertiary,
-              ),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.zero,
-            ),
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.next,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // LOCATION ROW
-  // ══════════════════════════════════════════════════════════════════════
-
-  Widget _buildLocationRow() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _cardSectionLabel('Location'),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Online',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: context.hc.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Transform.scale(
-                    scale: 0.78,
-                    child: CupertinoSwitch(
-                      value: _isOnline,
-                      onChanged: (v) => setState(() => _isOnline = v),
-                      activeTrackColor: HuddlColors.teal,
-                      inactiveTrackColor: HuddlColors.gray300,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _locationCtrl,
-            onChanged: (_) { setState(() {}); _saveDraft(); },
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: context.hc.textPrimary,
-            ),
-            decoration: InputDecoration(
-              hintText: _isOnline ? 'Meeting link or platform' : 'Address or place name',
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 14,
-                color: context.hc.textTertiary,
-              ),
-              prefixIcon: Icon(
-                _isOnline ? Icons.videocam_outlined : Icons.location_on_outlined,
-                size: 18,
-                color: HuddlColors.primary,
-              ),
-              filled: true,
-              fillColor: HuddlColors.gray100,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              isDense: true,
-            ),
-            textInputAction: TextInputAction.next,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // DATE / TIME ROWS
-  // ══════════════════════════════════════════════════════════════════════
-
-  Widget _buildDateTimeRow({
+  Widget _buildFlatTextField({
+    required TextEditingController controller,
     required String label,
-    required IconData icon,
-    String? value,
-    required VoidCallback onTap,
+    required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    String? prefixText,
+    void Function(String)? onChanged,
   }) {
-    final hasValue = value != null;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () { HapticFeedback.selectionClick(); onTap(); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 18, color: HuddlColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  value ?? label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: hasValue ? FontWeight.w500 : FontWeight.w400,
-                    color: hasValue ? context.hc.textPrimary : context.hc.textTertiary,
-                  ),
-                ),
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: context.hc.textTertiary,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddRowsFooter() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          if (!_showEndDate)
-            _addPillButton(
-              label: '+ End date',
-              onTap: () { HapticFeedback.selectionClick(); setState(() => _showEndDate = true); },
-            ),
-          if (!_showEndDate && !_showEndTime)
-            const SizedBox(width: 8),
-          if (!_showEndTime)
-            _addPillButton(
-              label: '+ End time',
-              onTap: () { HapticFeedback.selectionClick(); setState(() => _showEndTime = true); },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _addPillButton({required String label, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          border: Border.all(color: HuddlColors.gray300),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: context.hc.textSecondary,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // REPEAT ROW — opens bottom sheet picker
-  // ══════════════════════════════════════════════════════════════════════
-
-  Widget _buildRepeatRow() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () { HapticFeedback.selectionClick(); _showRepeatSheet(); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.repeat_rounded, size: 18, color: HuddlColors.teal),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Repeat',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textTertiary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      _repeatSummary,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _repeatOn ? HuddlColors.teal : context.hc.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // REPEAT BOTTOM SHEET
-  // ══════════════════════════════════════════════════════════════════════
-
-  void _showRepeatSheet() {
-    String sheetFrequency = _repeatOn ? _repeatFrequency : 'Does not repeat';
-    String sheetEndOption = _repeatEndOption;
-    DateTime? sheetEndDate = _repeatEndDate;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheet) {
-          final isRepeating = sheetFrequency != 'Does not repeat';
-
-          return Container(
-            decoration: BoxDecoration(
-              color: context.hc.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle
-                Container(
-                  width: 36, height: 4,
-                  margin: const EdgeInsets.only(top: 12, bottom: 4),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.gray300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Repeat',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Container(
-                          width: 32, height: 32,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.gray100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close, size: 18, color: context.hc.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Frequency options
-                ..._repeatOptions.map((opt) {
-                  final isSelected = sheetFrequency == opt;
-                  return Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setSheet(() => sheetFrequency = opt);
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                opt,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  color: isSelected
-                                      ? HuddlColors.teal
-                                      : context.hc.textPrimary,
-                                ),
-                              ),
-                            ),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isSelected ? HuddlColors.teal : Colors.transparent,
-                                border: Border.all(
-                                  color: isSelected ? HuddlColors.teal : HuddlColors.gray300,
-                                  width: 2,
-                                ),
-                              ),
-                              child: isSelected
-                                  ? const Icon(Icons.check, size: 13, color: Colors.white)
-                                  : null,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-
-                // End date section (only when repeating)
-                if (isRepeating) ...[
-                  Divider(height: 1, color: HuddlColors.gray200, indent: 20, endIndent: 20),
-                  const SizedBox(height: 4),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                    child: Text(
-                      'Ends',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: context.hc.textTertiary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  _repeatEndOptionRow(
-                    ctx: ctx,
-                    setSheet: setSheet,
-                    label: 'No end date',
-                    value: 'no_end',
-                    current: sheetEndOption,
-                    onTap: () => setSheet(() {
-                      sheetEndOption = 'no_end';
-                      sheetEndDate = null;
-                    }),
-                  ),
-                  _repeatEndOptionRow(
-                    ctx: ctx,
-                    setSheet: setSheet,
-                    label: 'End by a date',
-                    value: 'by_date',
-                    current: sheetEndOption,
-                    onTap: () => setSheet(() => sheetEndOption = 'by_date'),
-                  ),
-                  if (sheetEndOption == 'by_date') ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                      child: GestureDetector(
-                        onTap: () async {
-                          final date = await showDatePicker(
-                            context: ctx,
-                            initialDate: sheetEndDate ??
-                                (_selectedDate ?? DateTime.now())
-                                    .add(const Duration(days: 30)),
-                            firstDate: _selectedDate ?? DateTime.now(),
-                            lastDate: DateTime.now().add(const Duration(days: 730)),
-                            builder: (c, child) => Theme(
-                              data: Theme.of(c).copyWith(
-                                colorScheme: ColorScheme.light(primary: HuddlColors.teal),
-                              ),
-                              child: child!,
-                            ),
-                          );
-                          if (date != null) setSheet(() => sheetEndDate = date);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.gray100,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: sheetEndDate != null
-                                  ? HuddlColors.teal
-                                  : HuddlColors.gray300,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                size: 16,
-                                color: sheetEndDate != null
-                                    ? HuddlColors.teal
-                                    : context.hc.textTertiary,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                sheetEndDate != null
-                                    ? _formatDate(sheetEndDate!)
-                                    : 'Choose end date',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: sheetEndDate != null
-                                      ? context.hc.textPrimary
-                                      : context.hc.textTertiary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-
-                const SizedBox(height: 8),
-                // Confirm button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() {
-                        if (sheetFrequency == 'Does not repeat') {
-                          _repeatOn = false;
-                          _repeatFrequency = 'Every week';
-                          _repeatEndOption = 'no_end';
-                          _repeatEndDate = null;
-                        } else {
-                          _repeatOn = true;
-                          _repeatFrequency = sheetFrequency;
-                          _repeatEndOption = sheetEndOption;
-                          _repeatEndDate = sheetEndDate;
-                        }
-                      });
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(HuddlColors.radiusFull),
-                        boxShadow: [
-                          BoxShadow(
-                            color: HuddlColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Confirm',
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _repeatEndOptionRow({
-    required BuildContext ctx,
-    required StateSetter setSheet,
-    required String label,
-    required String value,
-    required String current,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = current == value;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () { HapticFeedback.selectionClick(); onTap(); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textPrimary,
-                  ),
-                ),
-              ),
-              Container(
-                width: 20, height: 20,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected ? HuddlColors.teal : Colors.transparent,
-                  border: Border.all(
-                    color: isSelected ? HuddlColors.teal : HuddlColors.gray300,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, size: 12, color: Colors.white)
-                    : null,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // CATEGORY SECTION
-  // ══════════════════════════════════════════════════════════════════════
-
-  Widget _buildCategorySection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Category'),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _categories.map((cat) {
-              final label = cat['label'] as String;
-              final icon = cat['icon'] as IconData;
-              final isSelected = _selectedCategories.contains(label);
-              return _categoryChip(
-                label: label, icon: icon,
-                isSelected: isSelected,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    if (isSelected) {
-                      _selectedCategories.remove(label);
-                    } else {
-                      _selectedCategories.add(label);
-                    }
-                  });
-                },
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _categoryChip({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    final isYellowCategory = label == 'Food & nutrition';
-    final chipColor = isYellowCategory ? HuddlColors.accentAmber : HuddlColors.teal;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? chipColor.withValues(alpha: 0.1) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? chipColor : HuddlColors.gray200,
-            width: isSelected ? 1.5 : 1.2,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 15, color: isSelected ? chipColor : context.hc.textTertiary),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? chipColor : HuddlColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // PARTICIPANTS SECTION
-  // ══════════════════════════════════════════════════════════════════════
-
-  Widget _buildParticipantsSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Who\'s it for?'),
-          const SizedBox(height: 10),
-          ..._participants.keys.map((key) {
-            final isChecked = _participants[key]!;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _participants[key] = !_participants[key]!);
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    child: Row(
-                      children: [
-                        _checkbox(isChecked),
-                        const SizedBox(width: 12),
-                        Text(
-                          key,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            color: context.hc.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (key == 'Kids' && isChecked) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(left: 34, bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(child: _ageField(label: 'Min age', ctrl: _minAgeCtrl, hint: '0')),
-                        const SizedBox(width: 16),
-                        Expanded(child: _ageField(label: 'Max age', ctrl: _maxAgeCtrl, hint: '17')),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _ageField({required String label, required TextEditingController ctrl, required String hint}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary)),
-        const SizedBox(height: 4),
+        _sectionLabel(label),
+        const SizedBox(height: 6),
         TextField(
-          controller: ctrl,
-          keyboardType: TextInputType.number,
-          style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: context.hc.textPrimary,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-            filled: true,
-            fillColor: HuddlColors.gray100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
+            hintStyle: GoogleFonts.poppins(
+              fontSize: 15,
+              color: HuddlColors.gray400,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            prefixText: prefixText,
+            prefixStyle: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: context.hc.textPrimary,
+            ),
             isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.gray200, width: 1),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
+            ),
           ),
+          onChanged: onChanged,
         ),
       ],
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // ATTENDEES SECTION
+  // LOCATION FIELD — underline with pin icon
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildAttendeesSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Attendee limit'),
-          const SizedBox(height: 10),
-          // No-limit toggle chip
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() {
-                if (_maxAttendees == null) {
-                  _maxAttendees = 10;
-                  _attendeesCtrl.text = '10';
-                } else {
-                  _maxAttendees = null;
-                  _attendeesCtrl.clear();
-                }
-              });
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 160),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              decoration: BoxDecoration(
-                color: _maxAttendees == null
-                    ? HuddlColors.primary.withValues(alpha: 0.1)
-                    : HuddlColors.gray100,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _maxAttendees == null
-                      ? HuddlColors.primary
-                      : HuddlColors.gray200,
+  Widget _buildFlatLocationField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Location'),
+        const SizedBox(height: 6),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.location_on_outlined,
+                size: 20, color: HuddlColors.primary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _locationCtrl,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textPrimary,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.all_inclusive,
-                    size: 16,
-                    color: _maxAttendees == null ? HuddlColors.primary : context.hc.textTertiary,
+                decoration: InputDecoration(
+                  hintText: 'Add a location or address',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 15,
+                    color: HuddlColors.gray400,
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _maxAttendees == null ? 'No limit' : 'Set a limit',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _maxAttendees == null
-                          ? HuddlColors.primary
-                          : context.hc.textSecondary,
-                    ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: HuddlColors.gray200, width: 1),
                   ),
-                ],
-              ),
-            ),
-          ),
-          // Stepper (only when cap is set)
-          if (_maxAttendees != null) ...[
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: HuddlColors.gray200),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  // − button
-                  GestureDetector(
-                    onTap: () {
-                      final current = _maxAttendees ?? 1;
-                      if (current > 1) {
-                        final next = current - 1;
-                        setState(() => _maxAttendees = next);
-                        _attendeesCtrl.text = next.toString();
-                        _attendeesCtrl.selection = TextSelection.collapsed(
-                            offset: _attendeesCtrl.text.length);
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      child: Icon(
-                        Icons.remove,
-                        size: 20,
-                        color: (_maxAttendees ?? 1) > 1
-                            ? HuddlColors.primary
-                            : HuddlColors.gray300,
-                      ),
-                    ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide:
+                        BorderSide(color: HuddlColors.primary, width: 1.5),
                   ),
-                  // Number input
-                  Expanded(
-                    child: TextField(
-                      controller: _attendeesCtrl,
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(4),
-                      ],
-                      style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          color: HuddlColors.textDark,
-                          fontWeight: FontWeight.w600),
-                      decoration: InputDecoration(
-                        hintText: 'Number',
-                        hintStyle: GoogleFonts.poppins(fontSize: 15, color: HuddlColors.textHint),
-                        border: InputBorder.none,
-                        suffixText: ' people',
-                        suffixStyle: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textHint),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                        isDense: true,
-                      ),
-                      onChanged: (v) {
-                        final parsed = int.tryParse(v);
-                        setState(() {
-                          _maxAttendees = (parsed != null && parsed > 0) ? parsed : 1;
-                        });
-                      },
-                    ),
-                  ),
-                  // + button
-                  GestureDetector(
-                    onTap: () {
-                      final next = (_maxAttendees ?? 0) + 1;
-                      setState(() => _maxAttendees = next);
-                      _attendeesCtrl.text = next.toString();
-                      _attendeesCtrl.selection = TextSelection.collapsed(
-                          offset: _attendeesCtrl.text.length);
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                      child: const Icon(Icons.add, color: HuddlColors.primary, size: 20),
-                    ),
-                  ),
-                ],
+                ),
+                onChanged: (_) { setState(() {}); _saveDraft(); },
               ),
             ),
           ],
-        ],
-      ),
+        ),
+        // Online toggle
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            SizedBox(
+              height: 24,
+              child: Transform.scale(
+                scale: 0.85,
+                child: CupertinoSwitch(
+                  value: _isOnline,
+                  activeTrackColor: HuddlColors.primary,
+                  onChanged: (v) => setState(() => _isOnline = v),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Online meetup',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: context.hc.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PRICE SECTION
+  // DATE / TIME BLOCK — Date field + From/To side-by-side
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildPriceSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Price'),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _isFree = !_isFree;
-                if (_isFree) _priceCtrl.clear();
-              });
-            },
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 44),
-              child: Row(
-              children: [
-                _checkbox(_isFree),
-                const SizedBox(width: 12),
-                Text(
-                  'Free event',
+  Widget _buildFlatDateTimeBlock() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Date & Time'),
+        const SizedBox(height: 10),
+
+        // Date row
+        GestureDetector(
+          onTap: _pickDate,
+          child: Row(
+            children: [
+              Icon(Icons.calendar_today_outlined,
+                  size: 18, color: HuddlColors.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _selectedDate != null
+                      ? _formatDate(_selectedDate!)
+                      : 'Add date',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: context.hc.textPrimary,
+                    fontSize: 15,
+                    fontWeight: _selectedDate != null
+                        ? FontWeight.w500
+                        : FontWeight.w400,
+                    color: _selectedDate != null
+                        ? context.hc.textPrimary
+                        : HuddlColors.gray400,
                   ),
                 ),
-                const SizedBox(width: 8),
-                if (_isFree)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.teal.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Free',
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // From / To time side-by-side
+        Row(
+          children: [
+            // From
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickStartTime,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'From',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: HuddlColors.teal,
+                        color: HuddlColors.gray500,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                  ),
-              ],
-            ),
-            ),
-          ),
-          if (!_isFree) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _priceCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.poppins(fontSize: 15, color: context.hc.textPrimary),
-              decoration: InputDecoration(
-                hintText: '0.00',
-                hintStyle: GoogleFonts.poppins(fontSize: 15, color: context.hc.textTertiary),
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  child: Text(
-                    '\u00A3',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_outlined,
+                            size: 16, color: HuddlColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          _startTime != null
+                              ? _formatTime(_startTime!)
+                              : 'Start time',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: _startTime != null
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                            color: _startTime != null
+                                ? context.hc.textPrimary
+                                : HuddlColors.gray400,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 1,
+                      color: HuddlColors.gray200,
+                    ),
+                  ],
                 ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 48),
-                filled: true,
-                fillColor: HuddlColors.gray100,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: HuddlColors.primary, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
-              onChanged: (_) => _saveDraft(),
+            ),
+
+            const SizedBox(width: 20),
+
+            // To
+            Expanded(
+              child: GestureDetector(
+                onTap: _pickEndTime,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'To',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.gray500,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_outlined,
+                            size: 16, color: HuddlColors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          _endTime != null
+                              ? _formatTime(_endTime!)
+                              : 'End time',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: _endTime != null
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                            color: _endTime != null
+                                ? context.hc.textPrimary
+                                : HuddlColors.gray400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 1,
+                      color: HuddlColors.gray200,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // DESCRIPTION SECTION
+  // REPEAT ROW — inline label + CupertinoSwitch + frequency picker
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildDescriptionSection() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardSectionLabel('Description'),
+  Widget _buildFlatRepeatRow() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Repeat',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: context.hc.textPrimary,
+                    ),
+                  ),
+                  if (_repeatOn)
+                    Text(
+                      _repeatFrequency,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Transform.scale(
+              scale: 0.85,
+              child: CupertinoSwitch(
+                value: _repeatOn,
+                activeTrackColor: HuddlColors.primary,
+                onChanged: (v) => setState(() {
+                  _repeatOn = v;
+                  if (!v) _repeatFrequency = 'Every week';
+                }),
+              ),
+            ),
+          ],
+        ),
+
+        // Frequency chips — visible when repeat is ON
+        if (_repeatOn) ...[
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _repeatOptions.where((o) => o != 'Does not repeat').map((option) {
+                final selected = _repeatFrequency == option;
+                return GestureDetector(
+                  onTap: () => setState(() => _repeatFrequency = option),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? HuddlColors.primary
+                          : HuddlColors.gray100,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: selected
+                            ? HuddlColors.primary
+                            : HuddlColors.gray200,
+                      ),
+                    ),
+                    child: Text(
+                      option,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? Colors.white : context.hc.textSecondary,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // CATEGORY SECTION — rounded pill chips with icon + label
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildFlatCategorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Category'),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _categories.map((cat) {
+            final label = cat['label'] as String;
+            final icon = cat['icon'] as IconData;
+            final selected = _selectedCategories.contains(label);
+            return GestureDetector(
+              onTap: () => setState(() {
+                if (selected) {
+                  _selectedCategories.remove(label);
+                } else {
+                  _selectedCategories.add(label);
+                }
+              }),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? HuddlColors.primary
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: selected
+                        ? HuddlColors.primary
+                        : HuddlColors.gray300,
+                    width: 1.2,
+                  ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: HuddlColors.primary.withValues(alpha: 0.20),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 14,
+                      color: selected ? Colors.white : HuddlColors.gray500,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: selected ? Colors.white : context.hc.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PARTICIPANTS — square checkboxes, Kids triggers age range fields
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildFlatParticipantsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Participants'),
+        const SizedBox(height: 10),
+        ..._participants.keys.map((key) {
+          final checked = _participants[key]!;
+          return GestureDetector(
+            onTap: () => setState(() => _participants[key] = !checked),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  _squareCheckbox(checked),
+                  const SizedBox(width: 12),
+                  Text(
+                    key,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: context.hc.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+
+        // Kids age range — appears when Kids is checked
+        if (_participants['Kids'] == true) ...[
           const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Min age',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.gray500),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: _minAgeCtrl,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, color: context.hc.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        hintStyle: GoogleFonts.poppins(
+                            fontSize: 14, color: HuddlColors.gray400),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: HuddlColors.gray200, width: 1),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: HuddlColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Max age',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.gray500),
+                    ),
+                    const SizedBox(height: 4),
+                    TextField(
+                      controller: _maxAgeCtrl,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, color: context.hc.textPrimary),
+                      decoration: InputDecoration(
+                        hintText: '16',
+                        hintStyle: GoogleFonts.poppins(
+                            fontSize: 14, color: HuddlColors.gray400),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: HuddlColors.gray200, width: 1),
+                        ),
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide:
+                              BorderSide(color: HuddlColors.primary, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // ATTENDEES — max count field
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildFlatAttendeesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Max Attendees (optional)'),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _attendeesCtrl,
+          keyboardType: TextInputType.number,
+          style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: context.hc.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'No limit',
+            hintStyle:
+                GoogleFonts.poppins(fontSize: 15, color: HuddlColors.gray400),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.gray200, width: 1),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
+            ),
+          ),
+          onChanged: (v) {
+            setState(() {
+              _maxAttendees = int.tryParse(v);
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PRICE — Free checkbox + price field below
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildFlatPriceSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Price'),
+        const SizedBox(height: 10),
+
+        // Free toggle row
+        GestureDetector(
+          onTap: () => setState(() {
+            _isFree = !_isFree;
+            if (_isFree) _priceCtrl.clear();
+          }),
+          child: Row(
+            children: [
+              _squareCheckbox(_isFree),
+              const SizedBox(width: 12),
+              Text(
+                'Free',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Price input — visible when not free
+        if (!_isFree) ...[
+          const SizedBox(height: 12),
           TextField(
-            controller: _descriptionCtrl,
-            maxLines: 4,
-            textInputAction: TextInputAction.done,
-            style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
+            controller: _priceCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: context.hc.textPrimary),
             decoration: InputDecoration(
-              hintText: 'Who is this meetup for? What\'s planned?',
-              hintStyle: GoogleFonts.poppins(
-                fontSize: 13,
-                color: context.hc.textTertiary,
-                height: 1.4,
+              hintText: '0.00',
+              hintStyle:
+                  GoogleFonts.poppins(fontSize: 15, color: HuddlColors.gray400),
+              prefixText: '£ ',
+              prefixStyle: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: context.hc.textSecondary),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 4),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: HuddlColors.gray200, width: 1),
               ),
-              filled: true,
-              fillColor: HuddlColors.gray100,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: HuddlColors.primary, width: 1.5),
-              ),
-              contentPadding: const EdgeInsets.all(14),
             ),
             onChanged: (_) => _saveDraft(),
           ),
         ],
-      ),
+      ],
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // PRIVACY ROW — opens premium bottom sheet
+  // DESCRIPTION — multiline textarea
   // ══════════════════════════════════════════════════════════════════════
 
-  Widget _buildPrivacyRow() {
-    final hasPrivacy = _privacy.isNotEmpty;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () { HapticFeedback.selectionClick(); _showPrivacySheet(); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(_privacyIcon, size: 18, color: HuddlColors.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Privacy',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textTertiary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      _privacyLabel,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: hasPrivacy ? context.hc.textPrimary : context.hc.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, size: 20, color: context.hc.textTertiary),
-            ],
+  Widget _buildFlatDescriptionSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Description'),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _descriptionCtrl,
+          maxLines: 5,
+          minLines: 3,
+          style: GoogleFonts.poppins(
+              fontSize: 14, color: context.hc.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'Tell people what to expect at your meetup...',
+            hintStyle:
+                GoogleFonts.poppins(fontSize: 14, color: HuddlColors.gray400),
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 6),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.gray200, width: 1),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
+            ),
           ),
+          onChanged: (_) => _saveDraft(),
         ),
-      ),
+      ],
     );
   }
 
-  // ── Privacy bottom sheet ──────────────────────────────────────────────
-  void _showPrivacySheet() {
-    String sheetPrivacy = _privacy.isEmpty ? 'public' : _privacy;
-    String? sheetGroupId = _selectedGroupId;
-    String? sheetGroupName = _selectedGroupName;
+  // ══════════════════════════════════════════════════════════════════════
+  // PRIVACY — inline radio buttons directly in form
+  // ══════════════════════════════════════════════════════════════════════
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setSheet) {
-          return Container(
-            decoration: BoxDecoration(
-              color: context.hc.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.viewInsetsOf(ctx).bottom + MediaQuery.paddingOf(ctx).bottom,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Handle
-                Container(
-                  width: 36, height: 4,
-                  margin: const EdgeInsets.only(top: 12, bottom: 4),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.gray300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+  Widget _buildFlatPrivacySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Privacy'),
+        const SizedBox(height: 10),
+
+        // Public
+        _privacyRadioTile(
+          value: 'public',
+          icon: Icons.public,
+          title: 'Public',
+          subtitle: 'Visible to all Huddl members in your area',
+        ),
+        const SizedBox(height: 2),
+
+        // Group
+        _privacyRadioTile(
+          value: 'group',
+          icon: Icons.group_outlined,
+          title: 'Group',
+          subtitle: 'Shared to a specific group you belong to',
+        ),
+
+        // Group picker — visible when group is selected
+        if (_privacy == 'group') ...[
+          const SizedBox(height: 10),
+          _buildSheetGroupPicker(
+            selectedGroupId: _selectedGroupId,
+            onChanged: (id, name) {
+              setState(() {
+                _selectedGroupId = id;
+                _selectedGroupName = name;
+              });
+            },
+          ),
+          const SizedBox(height: 4),
+        ],
+
+        const SizedBox(height: 2),
+
+        // Private
+        _privacyRadioTile(
+          value: 'private',
+          icon: Icons.lock_outline,
+          title: 'Private — invite only',
+          subtitle: 'Only invited people can see this meetup',
+        ),
+      ],
+    );
+  }
+
+  Widget _privacyRadioTile({
+    required String value,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final selected = _privacy == value;
+    return GestureDetector(
+      onTap: () => setState(() {
+        _privacy = value;
+        if (value != 'group') {
+          _selectedGroupId = null;
+          _selectedGroupName = null;
+        }
+        if (value != 'private') {
+          _selectedMemberIds.clear();
+        }
+      }),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Custom radio circle
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: selected ? HuddlColors.primary : HuddlColors.gray300,
+                  width: selected ? 2 : 1.5,
                 ),
-                // Header
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Privacy settings',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
+              ),
+              child: selected
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: HuddlColors.primary,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: () => Navigator.pop(ctx),
-                        child: Container(
-                          width: 32, height: 32,
-                          decoration: BoxDecoration(
-                            color: HuddlColors.gray100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.close, size: 18, color: context.hc.textSecondary),
-                        ),
-                      ),
-                    ],
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 12),
+            Icon(icon,
+                size: 18,
+                color: selected ? HuddlColors.primary : HuddlColors.gray400),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: selected
+                          ? context.hc.textPrimary
+                          : context.hc.textSecondary,
+                    ),
                   ),
-                ),
-
-                // Options
-                _privacyOptionTile(
-                  ctx: ctx,
-                  setSheet: setSheet,
-                  value: 'public',
-                  current: sheetPrivacy,
-                  icon: Icons.public,
-                  label: 'Public',
-                  description: 'Anyone in your local community can see and join.',
-                  onTap: () => setSheet(() => sheetPrivacy = 'public'),
-                ),
-                _privacyOptionTile(
-                  ctx: ctx,
-                  setSheet: setSheet,
-                  value: 'group',
-                  current: sheetPrivacy,
-                  icon: Icons.group_outlined,
-                  label: 'Group',
-                  description: 'Only members of a specific group can see and join.',
-                  onTap: () => setSheet(() {
-                    sheetPrivacy = 'group';
-                    if (_userGroups.isNotEmpty && sheetGroupId == null) {
-                      sheetGroupId = _userGroups.first.id;
-                      sheetGroupName = _userGroups.first.name;
-                    }
-                  }),
-                ),
-                // Group picker (inline, only when group is selected)
-                if (sheetPrivacy == 'group') ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    child: _buildSheetGroupPicker(
-                      ctx: ctx,
-                      setSheet: setSheet,
-                      selectedGroupId: sheetGroupId,
-                      onChanged: (id, name) => setSheet(() {
-                        sheetGroupId = id;
-                        sheetGroupName = name;
-                      }),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: HuddlColors.gray500,
                     ),
                   ),
                 ],
-                _privacyOptionTile(
-                  ctx: ctx,
-                  setSheet: setSheet,
-                  value: 'private',
-                  current: sheetPrivacy,
-                  icon: Icons.lock_outline,
-                  label: 'Private',
-                  description: 'Invite only — you choose specific people.',
-                  onTap: () => setSheet(() => sheetPrivacy = 'private'),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Confirm
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      setState(() {
-                        _privacy = sheetPrivacy;
-                        if (sheetPrivacy == 'group') {
-                          _selectedGroupId = sheetGroupId;
-                          _selectedGroupName = sheetGroupName;
-                        } else {
-                          _selectedGroupId = null;
-                          _selectedGroupName = null;
-                        }
-                        if (sheetPrivacy != 'private') {
-                          _selectedMemberIds.clear();
-                        }
-                      });
-                      Navigator.pop(ctx);
-                    },
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFF8A15F), Color(0xFFF07030)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(HuddlColors.radiusFull),
-                        boxShadow: [
-                          BoxShadow(
-                            color: HuddlColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Confirm',
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _privacyOptionTile({
-    required BuildContext ctx,
-    required StateSetter setSheet,
-    required String value,
-    required String current,
-    required IconData icon,
-    required String label,
-    required String description,
-    required VoidCallback onTap,
-  }) {
-    final isSelected = current == value;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () { HapticFeedback.selectionClick(); onTap(); },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? HuddlColors.primary.withValues(alpha: 0.12)
-                      : HuddlColors.gray100,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isSelected ? HuddlColors.primary : Colors.transparent,
-                  border: Border.all(
-                    color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
-                    width: 2,
-                  ),
-                ),
-                child: isSelected
-                    ? const Icon(Icons.check, size: 13, color: Colors.white)
-                    : null,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSheetGroupPicker({
-    required BuildContext ctx,
-    required StateSetter setSheet,
-    String? selectedGroupId,
-    required Function(String? id, String? name) onChanged,
-  }) {
-    if (_userGroups.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.info_outline, size: 16, color: HuddlColors.primary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'You don\'t have any groups yet. Join a group first.',
-                style: GoogleFonts.poppins(fontSize: 12, color: HuddlColors.primary, height: 1.3),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // PUBLIC INVITE ROW — "0 invited friends" + "Invite friends +"
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildPublicInviteRow() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Row(
+        children: [
+          // Count badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: HuddlColors.gray100,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: HuddlColors.gray200),
+            ),
+            child: Text(
+              '${_selectedMemberIds.length} invited friend${_selectedMemberIds.length == 1 ? '' : 's'}',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: context.hc.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Invite button
+          GestureDetector(
+            onTap: _showInviteMembersSheet,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: HuddlColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: HuddlColors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.person_add_outlined,
+                      size: 14, color: HuddlColors.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Invite friends +',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // GROUP DROPDOWN PICKER (reused from old code, styling updated)
+  // ══════════════════════════════════════════════════════════════════════
+
+  Widget _buildSheetGroupPicker({
+    required String? selectedGroupId,
+    required void Function(String? id, String name) onChanged,
+  }) {
+    if (_userGroups.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Text(
+          'No groups found. Join a group first.',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: context.hc.textTertiary,
+            fontStyle: FontStyle.italic,
+          ),
         ),
       );
     }
@@ -2453,113 +1865,116 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   // ══════════════════════════════════════════════════════════════════════
   // INVITE MEMBERS WIDGET (inline when privacy = private)
+  // Preserved 1:1 from original — only padding adjusted
   // ══════════════════════════════════════════════════════════════════════
 
   Widget _buildInviteMembersWidget() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Selected member chips
-          if (_selectedMemberIds.isNotEmpty) ...[
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: _selectedMemberIds.map((id) {
-                final member = _boroughMembers.firstWhere(
-                  (m) => m.id == id,
-                  orElse: () => const BoroughMember(
-                    id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
-                  ),
-                );
-                final photoUrl = MemberPhotoService.getPhotoByName(member.name);
-                return Chip(
-                  avatar: photoUrl != null
-                      ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 14)
-                      : MemberAvatar(name: member.name, size: 28),
-                  label: Text(
-                    member.name,
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
-                  ),
-                  deleteIcon: const Icon(Icons.close, size: 16),
-                  onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
-                  backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-          ],
-          // Add members button
-          GestureDetector(
-            onTap: _showInviteMembersSheet,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: HuddlColors.gray100,
-                border: Border.all(
-                  color: _selectedMemberIds.isNotEmpty
-                      ? HuddlColors.primary.withValues(alpha: 0.4)
-                      : HuddlColors.gray200,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel('Invite members'),
+        const SizedBox(height: 10),
+
+        // Selected member chips
+        if (_selectedMemberIds.isNotEmpty) ...[
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _selectedMemberIds.map((id) {
+              final member = _boroughMembers.firstWhere(
+                (m) => m.id == id,
+                orElse: () => const BoroughMember(
+                  id: '', name: 'Unknown', parentType: 'mum', stagesOfLife: [],
                 ),
-                borderRadius: BorderRadius.circular(12),
+              );
+              final photoUrl = MemberPhotoService.getPhotoByName(member.name);
+              return Chip(
+                avatar: photoUrl != null
+                    ? CircleAvatar(backgroundImage: NetworkImage(photoUrl), radius: 14)
+                    : MemberAvatar(name: member.name, size: 28),
+                label: Text(
+                  member.name,
+                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+                deleteIcon: const Icon(Icons.close, size: 16),
+                onDeleted: () => setState(() => _selectedMemberIds.remove(id)),
+                backgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: HuddlColors.primary.withValues(alpha: 0.3)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+        ],
+
+        // Add members button
+        GestureDetector(
+          onTap: _showInviteMembersSheet,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: HuddlColors.gray100,
+              border: Border.all(
+                color: _selectedMemberIds.isNotEmpty
+                    ? HuddlColors.primary.withValues(alpha: 0.4)
+                    : HuddlColors.gray200,
               ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.person_add_outlined,
-                    size: 18,
-                    color: _selectedMemberIds.isNotEmpty
-                        ? HuddlColors.primary
-                        : context.hc.textTertiary,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _selectedMemberIds.isEmpty
-                          ? 'Invite friends to this meetup'
-                          : '${_selectedMemberIds.length} member${_selectedMemberIds.length == 1 ? '' : 's'} invited',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _selectedMemberIds.isNotEmpty
-                            ? HuddlColors.textDark
-                            : context.hc.textTertiary,
-                      ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_add_outlined,
+                  size: 18,
+                  color: _selectedMemberIds.isNotEmpty
+                      ? HuddlColors.primary
+                      : context.hc.textTertiary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _selectedMemberIds.isEmpty
+                        ? 'Invite friends to this meetup'
+                        : '${_selectedMemberIds.length} member${_selectedMemberIds.length == 1 ? '' : 's'} invited',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: _selectedMemberIds.isNotEmpty
+                          ? HuddlColors.textDark
+                          : context.hc.textTertiary,
                     ),
                   ),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 18,
-                    color: context.hc.textTertiary,
-                  ),
-                ],
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: context.hc.textTertiary,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        if (_userBorough != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              'From $_userBorough',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: context.hc.textTertiary,
+                fontStyle: FontStyle.italic,
               ),
             ),
           ),
-          if (_userBorough != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                'From ${_userBorough!}',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: context.hc.textTertiary,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 
-  /// Show bottom sheet to invite members for private meetups
+  /// Show bottom sheet to invite members
   void _showInviteMembersSheet() {
     showModalBottomSheet(
       context: context,
@@ -2639,7 +2054,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'Members in ${_userBorough!}',
+                                'Members in $_userBorough',
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   color: context.hc.textTertiary,
@@ -2818,21 +2233,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // SHARED COMPONENT HELPERS
   // ══════════════════════════════════════════════════════════════════════
 
-  /// Card-internal section label — slightly smaller than page-level, uppercase tracking
-  Widget _cardSectionLabel(String text) {
-    return Text(
-      text,
-      style: GoogleFonts.poppins(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: context.hc.textTertiary,
-        letterSpacing: 0.2,
-      ),
-    );
-  }
-
-  /// Custom checkbox — orange when checked
-  Widget _checkbox(bool checked) {
+  /// Square checkbox — orange when checked (Figma style)
+  Widget _squareCheckbox(bool checked) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
       width: 22,
@@ -2845,10 +2247,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           width: 1.5,
         ),
         boxShadow: checked
-            ? [BoxShadow(
-                color: HuddlColors.primary.withValues(alpha: 0.25),
-                blurRadius: 4,
-                offset: const Offset(0, 1))]
+            ? [
+                BoxShadow(
+                  color: HuddlColors.primary.withValues(alpha: 0.25),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                )
+              ]
             : null,
       ),
       child: checked
@@ -2856,5 +2261,4 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           : null,
     );
   }
-
 }
