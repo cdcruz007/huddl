@@ -3269,234 +3269,325 @@ class _MeetupCard extends StatelessWidget {
     this.onView,
   });
 
+  // ── Design tokens (Figma-exact) ────────────────────────────────
+  static const _cardOrange  = Color(0xFFF4845F); // brand orange
+  static const _cardText    = Color(0xFF1A1A1A); // primary dark text
+  static const _cardMeta    = Color(0xFF9E9E9E); // secondary gray meta
+
   @override
   Widget build(BuildContext context) {
     final catStyle = _meetupCategoryStyle(meetup.category);
     final isRestricted = !canAccess;
 
+    // Price display
+    final priceText = meetup.isFree
+        ? 'Free'
+        : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
+    final isFree = meetup.isFree;
+
+    // Date + time display: "1 MAY 2021  |  10 AM – 6 PM"
+    final dateStr = meetup.dateDisplay.toUpperCase();
+    final timeStr = meetup.timeDisplay;
+
     return Semantics(
       label: 'Meetup: ${meetup.title}, ${meetup.dateDisplay} ${meetup.timeDisplay}, ${meetup.location}, organised by ${meetup.organiserName}${isRestricted ? ", restricted access" : ""}',
       button: true,
       child: GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onView?.call(); // track for AI learning
-        if (isRestricted) {
-          onAccessDenied?.call();
-          return;
-        }
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 300),
-          ),
-        );
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          color: context.hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: catStyle.color.withValues(alpha: 0.15),
-            width: 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: catStyle.color.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onView?.call();
+          if (isRestricted) {
+            onAccessDenied?.call();
+            return;
+          }
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+              transitionsBuilder: (_, animation, __, child) =>
+                  FadeTransition(opacity: animation, child: child),
+              transitionDuration: const Duration(milliseconds: 300),
             ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Clean cover image (no overlay tags) ──────────────────
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
               ),
-              child: SizedBox(
-                height: 150,
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Hero image with badge overlay ───────────────────────
+              SizedBox(
+                height: 185,
                 width: double.infinity,
-                child: Hero(
-                  tag: 'meetup_cover_${meetup.id}',
-                  child: _buildCoverImage(
-                    imageUrl: meetup.imageUrl.isNotEmpty
-                        ? meetup.imageUrl
-                        : _GoingItem._meetupCategoryImage(meetup.category),
-                    fallbackIcon: catStyle.icon,
-                    fallbackColor: catStyle.color,
-                  ),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: 'meetup_cover_${meetup.id}',
+                      child: _buildCoverImage(
+                        imageUrl: meetup.imageUrl.isNotEmpty
+                            ? meetup.imageUrl
+                            : _GoingItem._meetupCategoryImage(meetup.category),
+                        fallbackIcon: catStyle.icon,
+                        fallbackColor: catStyle.color,
+                      ),
+                    ),
+                    // Badge row — top-left
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Row(
+                        children: [
+                          // "Meetup" badge — brand orange
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _cardOrange,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'Meetup',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          if (isRestricted) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.lock_outline, size: 11, color: Colors.white),
+                                  const SizedBox(width: 3),
+                                  Text('Private',
+                                    style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            // ── Info row (category, price, attendees) ─────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-              child: Row(
-                children: [
-                  // Category
-                  Icon(catStyle.icon, size: 13, color: catStyle.color),
-                  const SizedBox(width: 4),
-                  Text(
-                    meetup.category,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: catStyle.color,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Price
-                  Text(
-                    meetup.isFree
-                        ? 'Free'
-                        : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: meetup.isFree ? HuddlColors.teal : HuddlColors.accentAmber,
-                    ),
-                  ),
-                  const Spacer(),
-                  // Attendees
-                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // ── Card body ────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    meetup.title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 6),
-                  // Date + time
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today_outlined,
-                          size: 13, color: catStyle.color),
-                      const SizedBox(width: 5),
-                      Text(
-                        meetup.dateDisplay,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.access_time,
-                          size: 13, color: catStyle.color),
-                      const SizedBox(width: 4),
-                      Text(
-                        meetup.timeDisplay,
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textTertiary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  // Location
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 13, color: catStyle.color),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          meetup.location,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textTertiary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 10),
-                  // Organiser row + share button
-                  Row(
-                    children: [
-                      _buildOrganiserAvatar(meetup.organiserName, meetup.organiserId, 22, catStyle.color),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          'Organised by ${meetup.organiserName}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textSecondary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              // ── Card body ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Date + time row
+                    Text(
+                      '$dateStr  |  $timeStr',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: _cardMeta,
+                        letterSpacing: 0.2,
                       ),
-                      // Share button -- public: anyone can share; group/private: only creator
-                      if (meetup.privacy == MeetupPrivacy.public ||
-                          meetup.organiserId == (FirebaseAuth.instance.currentUser?.uid ?? 'current_user'))
-                        Semantics(
-                          label: 'Share meetup',
-                          button: true,
-                          child: GestureDetector(
-                            onTap: () => _shareMeetup(context, meetup),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              alignment: Alignment.center,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Title
+                    Text(
+                      meetup.title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: _cardText,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Location row
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on_outlined, size: 14, color: _cardMeta),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            meetup.location,
+                            style: GoogleFonts.poppins(fontSize: 13, color: _cardMeta),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Attendees + price row
+                    Row(
+                      children: [
+                        // Avatar stack placeholder circles
+                        SizedBox(
+                          width: 60,
+                          height: 24,
+                          child: Stack(
+                            children: List.generate(3, (i) => Positioned(
+                              left: i * 16.0,
                               child: Container(
-                                padding: const EdgeInsets.all(6),
+                                width: 24,
+                                height: 24,
                                 decoration: BoxDecoration(
-                                  color: catStyle.color.withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
+                                  color: [
+                                    const Color(0xFFF4845F),
+                                    const Color(0xFF4A90D9),
+                                    const Color(0xFFABABAB),
+                                  ][i],
+                                  border: Border.all(color: Colors.white, width: 1.5),
                                 ),
-                                child: Icon(Icons.share_outlined,
-                                    size: 16, color: catStyle.color),
+                                child: Icon(Icons.person, size: 13, color: Colors.white),
+                              ),
+                            )).reversed.toList(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${meetup.attendeeCount} interested',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: _cardText,
+                          ),
+                        ),
+                        const Spacer(),
+                        // Price
+                        Text(
+                          priceText,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: isFree ? _cardOrange : _cardText,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Action buttons row
+                    Row(
+                      children: [
+                        // Interested button
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              if (!isRestricted) {
+                                Navigator.push(
+                                  context,
+                                  PageRouteBuilder(
+                                    pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+                                    transitionsBuilder: (_, anim, __, child) =>
+                                        FadeTransition(opacity: anim, child: child),
+                                    transitionDuration: const Duration(milliseconds: 300),
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF5F5F5),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.favorite_border, size: 16, color: _cardText),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Interested',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: _cardText,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        // See details button
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              onView?.call();
+                              if (isRestricted) {
+                                onAccessDenied?.call();
+                                return;
+                              }
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+                                  transitionsBuilder: (_, anim, __, child) =>
+                                      FadeTransition(opacity: anim, child: child),
+                                  transitionDuration: const Duration(milliseconds: 300),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: _cardOrange.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.visibility_outlined, size: 16, color: _cardOrange),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'See details',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: _cardOrange,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -4180,7 +4271,7 @@ class _FilterChipState extends State<_FilterChip>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? (widget.selectedColor ?? HuddlColors.primary)
+                  ? (widget.selectedColor ?? const Color(0xFFF4845F))
                   : context.hc.surfaceAlt,
               borderRadius: BorderRadius.circular(20),
               border: widget.isSelected
@@ -4189,7 +4280,7 @@ class _FilterChipState extends State<_FilterChip>
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: (widget.selectedColor ?? HuddlColors.primary)
+                        color: (widget.selectedColor ?? const Color(0xFFF4845F))
                             .withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
