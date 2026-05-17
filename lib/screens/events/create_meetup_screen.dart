@@ -553,8 +553,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = Color(0xFF5894F5);   // banner gradient left — pure azure blue
-  static const _bannerBlue2  = Color(0xFF5B7FDB);   // banner gradient right — stays in blue family
+  static const _bannerBlue   = Color(0xFF3D82D4);   // banner — pure medium azure blue (no violet)
+  static const _bannerBlue2  = Color(0xFF2E73C4);   // banner gradient end — deeper azure, same hue
   static const _accentOrange = Color(0xFFFF9B57);   // date/time/location icons + toggle
   static const _accentBlue   = Color(0xFF4B82F6);   // category icons + selected pill fill
   static const _fieldBg      = Color(0xFFF6F6F8);   // text field fill
@@ -1345,14 +1345,34 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Image-with-plus icon (Figma uses image+plus, not camera)
-          Container(
+          // Figma icon: image frame with small + badge in bottom-right corner
+          SizedBox(
             width: 52, height: 52,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.22),
-              shape: BoxShape.circle,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.22),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.image_outlined, color: Colors.white, size: 28),
+                ),
+                Positioned(
+                  right: -2, bottom: -2,
+                  child: Container(
+                    width: 20, height: 20,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _bannerBlue, width: 1.5),
+                    ),
+                    child: const Icon(Icons.add, color: _bannerBlue, size: 14),
+                  ),
+                ),
+              ],
             ),
-            child: const Icon(Icons.add_photo_alternate_outlined, color: Colors.white, size: 26),
           ),
           const SizedBox(height: 10),
           Text('Click to add photo',
