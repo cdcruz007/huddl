@@ -2118,6 +2118,8 @@ class _EventsTabState extends State<_EventsTab> {
                       (f == 'Paid' && _priceFilter == 'Paid') ||
                       (f == 'Online' && _formatFilter == 'Online') ||
                       (f == 'In-Person' && _formatFilter == 'In-Person'),
+                  // Events tab uses blue active chips (reference design)
+                  selectedColor: const Color(0xFF3580F0),
                   onTap: () {
                     _invisibleAi.trackFilterClick(f);
                     setState(() {
@@ -3608,11 +3610,14 @@ class _FilterChip extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  /// Override the selected fill/shadow colour (defaults to HuddlColors.primary).
+  final Color? selectedColor;
 
   const _FilterChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.selectedColor,
   });
 
   @override
@@ -3672,7 +3677,9 @@ class _FilterChipState extends State<_FilterChip>
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: widget.isSelected ? HuddlColors.primary : context.hc.surfaceAlt,
+              color: widget.isSelected
+                  ? (widget.selectedColor ?? HuddlColors.primary)
+                  : context.hc.surfaceAlt,
               borderRadius: BorderRadius.circular(20),
               border: widget.isSelected
                   ? null
@@ -3680,7 +3687,8 @@ class _FilterChipState extends State<_FilterChip>
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: HuddlColors.primary.withValues(alpha: 0.3),
+                        color: (widget.selectedColor ?? HuddlColors.primary)
+                            .withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
