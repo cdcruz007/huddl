@@ -22,6 +22,7 @@ import '../../services/media_attach_service.dart';
 import '../../services/block_service.dart';
 import '../../services/report_service.dart';
 import '../../services/message_safety_service.dart';
+import '../../widgets/chat_safety_notice.dart';
 import 'forward_message_sheet.dart';
 import '../../widgets/attach_bottom_sheet.dart';
 import '../../widgets/document_bubble.dart';
@@ -144,6 +145,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
     // for this conversation are suppressed (OS heads-up is sufficient).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       MainShell.shellKey.currentState?.setActiveDmChat(widget.recipientId);
+      // Show AI moderation transparency notice on first ever chat open
+      if (mounted) showChatSafetyNoticeIfNeeded(context);
     });
   }
 
@@ -884,7 +887,8 @@ class _DMChatScreenState extends State<DMChatScreen> {
                       ),
           ),
 
-          // ── Input bar ─────────────────────────────────────────────
+          // ── Safety notice strip + Input bar ───────────────────────
+          const ChatSafetyStrip(),
           _buildInputBar(),
         ],
       ),

@@ -19,6 +19,7 @@ import '../../services/block_service.dart';
 import '../../services/report_service.dart';
 import '../../services/message_safety_service.dart';
 import '../../services/browser_storage.dart';
+import '../../widgets/chat_safety_notice.dart';
 import '../../services/default_group_service.dart';
 import '../../services/poll_service.dart';
 import '../../models/saved_message.dart' show SavedThreadMessage;
@@ -213,6 +214,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     // for this conversation are suppressed (OS heads-up is sufficient).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       MainShell.shellKey.currentState?.setActiveGroupChat(widget.groupId);
+      // Show AI moderation transparency notice on first ever chat open
+      if (mounted) showChatSafetyNoticeIfNeeded(context);
     });
   }
 
@@ -3727,10 +3730,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               ),
             ),
 
-          // ── Input bar ─────────────────────────────────────────────
-          // Note: flow poll cards are now rendered inside the ListView
-          // (as the last item) so they scroll with messages and the
-          // input bar always sits at the very bottom.
+          // ── Safety notice strip + Input bar ───────────────────────
+          const ChatSafetyStrip(),
           _buildInputBar(),
         ],
       ),
