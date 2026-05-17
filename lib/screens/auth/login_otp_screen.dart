@@ -526,6 +526,8 @@ class _OtpBoxRow extends StatelessWidget {
               cursorColor: Colors.transparent,
               decoration: const InputDecoration(
                 border: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                enabledBorder: InputBorder.none,
                 counterText: '',
                 fillColor: Colors.transparent,
                 filled: true,

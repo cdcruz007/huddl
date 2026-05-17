@@ -146,16 +146,22 @@ class _SendHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // When embedded inside Insights, the parent screen already shows "SEND"
+    // as the active tab title — showing a second "SEND Navigator" title here
+    // creates two stacked titles and two stacked tab bars, making the screen
+    // feel crowded before any content appears. Suppress the title row in that
+    // case, keeping only the functional secondary tab bar.
+    final showTitleRow = showBack; // showBack == false ↔ embedded == true
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Row(
-              children: [
-                if (showBack) ...[  
+          if (showTitleRow) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                     onPressed: () => Navigator.pop(context),
@@ -163,36 +169,36 @@ class _SendHeader extends StatelessWidget {
                     constraints: const BoxConstraints(),
                   ),
                   const SizedBox(width: 10),
-                ],
-                // SEND badge
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _kSendAccent,
-                    borderRadius: BorderRadius.circular(10),
+                  // SEND badge
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _kSendAccent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.diversity_3,
+                        color: Colors.white, size: 16),
                   ),
-                  child: const Icon(Icons.diversity_3,
-                      color: Colors.white, size: 16),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'SEND Navigator',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: isDark
-                          ? HuddlColors.darkTextPrimary
-                          : HuddlColors.textPrimary,
-                      height: 1.1,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'SEND Navigator',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? HuddlColors.darkTextPrimary
+                            : HuddlColors.textPrimary,
+                        height: 1.1,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 8),
+          ],
           // Tab bar — underline style, matching Discover and Connect tabs
           TabBar(
             controller: tabController,
