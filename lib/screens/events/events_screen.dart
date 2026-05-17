@@ -64,6 +64,8 @@ class _EventsScreenState extends State<EventsScreen>
         _meetupService.addListener(_refresh);
         _eventService.addListener(_refresh);
         _meetupService.restoreCustomImages();
+        // Load meetups from Firestore (also seeds demo data when Firestore is empty)
+        _meetupService.loadFromFirestore();
       }
     });
   }
@@ -1394,10 +1396,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     var filtered = _applyFilters(visible);
 
     // ── B) Smart Sort: AI silently reorders meetups ──────────────
+    // Skip AI sort when user has explicitly chosen a sort order in the filter sheet
     List<ScoredMeetup> scored = [];
     if (_aiReady) {
-      scored = _aiService.smartSort(filtered);
-      filtered = scored.map((s) => s.meetup).toList();
+      if (_sortBy == 'mostPopular') {
+        // Default sort — let AI boost personalised results
+        scored = _aiService.smartSort(filtered);
+        filtered = scored.map((s) => s.meetup).toList();
+      }
       // ── E) Smart Nudge: contextual one-liner ────────────────
       _activeNudge = _aiService.getSmartNudge(visible);
     }

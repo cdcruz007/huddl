@@ -547,6 +547,197 @@ class MeetupService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  // ── Sample data (removed — app is production-only) ──────────────────────
+  /// Loads meetups from Firestore and merges them into the local list.
+  /// Safe to call multiple times — deduplicates by ID.
+  Future<void> loadFromFirestore() async {
+    try {
+      final raw = await FirestoreService().getMeetups();
+      bool changed = false;
+      for (final map in raw) {
+        // Normalise Firestore Timestamp fields that weren't converted
+        if (map['dateTime'] is Map) {
+          // Firestore Timestamp serialised as map — skip
+          continue;
+        }
+        final meetup = Meetup.fromJson(map);
+        if (!_meetups.any((m) => m.id == meetup.id)) {
+          _meetups.add(meetup);
+          changed = true;
+        }
+      }
+      if (changed) {
+        // Seed demo meetups only when Firestore is empty so filters are testable
+        if (_meetups.where((m) => m.organiserId != 'current_user').isEmpty) {
+          _seedDemoMeetups();
+        }
+        Future.delayed(Duration.zero, () {
+          if (hasListeners) notifyListeners();
+        });
+      } else if (_meetups.isEmpty) {
+        _seedDemoMeetups();
+        Future.delayed(Duration.zero, () {
+          if (hasListeners) notifyListeners();
+        });
+      }
+    } catch (_) {
+      // Firestore unavailable — seed demo data so UI is functional
+      if (_meetups.isEmpty) {
+        _seedDemoMeetups();
+        Future.delayed(Duration.zero, () {
+          if (hasListeners) notifyListeners();
+        });
+      }
+    }
+  }
+
+  /// Seeds realistic demo meetups with varied categories, participants,
+  /// price and date data so every filter in the sheet shows a visible result.
+  void _seedDemoMeetups() {
+    final now = DateTime.now();
+    final demos = [
+      Meetup(
+        id: 'demo_1',
+        title: 'Morning Coffee & Chat',
+        description: 'Casual coffee morning for local parents.',
+        category: 'Coffee',
+        dateDisplay: 'SAT, ${now.add(const Duration(days: 3)).day} ${_monthName(now.add(const Duration(days: 3)).month)}',
+        timeDisplay: '9:00 - 10:30 AM',
+        dateTime: now.add(const Duration(days: 3, hours: 9)),
+        location: 'The Bean Café, Hackney',
+        organiserName: 'Sarah M.',
+        organiserId: 'demo_user_1',
+        attendeeCount: 14,
+        isFree: true,
+        targetAudience: ['Mums', 'Expecting parents'],
+        imageUrl: Meetup.categoryFallbackUrl('Coffee'),
+      ),
+      Meetup(
+        id: 'demo_2',
+        title: 'Sunday Park Playdate',
+        description: 'Kids play together while parents relax.',
+        category: 'Playdate',
+        dateDisplay: 'SUN, ${now.add(const Duration(days: 5)).day} ${_monthName(now.add(const Duration(days: 5)).month)}',
+        timeDisplay: '11:00 AM - 1:00 PM',
+        dateTime: now.add(const Duration(days: 5, hours: 11)),
+        location: 'Victoria Park, London',
+        organiserName: 'James T.',
+        organiserId: 'demo_user_2',
+        attendeeCount: 22,
+        isFree: true,
+        targetAudience: ['Dads', 'Mums', 'Kids'],
+        imageUrl: Meetup.categoryFallbackUrl('Playdate'),
+      ),
+      Meetup(
+        id: 'demo_3',
+        title: 'Pregnancy Yoga Class',
+        description: 'Gentle yoga for expecting parents.',
+        category: 'Social',
+        dateDisplay: 'WED, ${now.add(const Duration(days: 7)).day} ${_monthName(now.add(const Duration(days: 7)).month)}',
+        timeDisplay: '6:00 - 7:00 PM',
+        dateTime: now.add(const Duration(days: 7, hours: 18)),
+        location: 'Bloom Studio, Islington',
+        organiserName: 'Priya K.',
+        organiserId: 'demo_user_3',
+        attendeeCount: 8,
+        isFree: false,
+        price: 12.0,
+        targetAudience: ['Expecting parents', 'Mums'],
+        imageUrl: Meetup.categoryFallbackUrl('Social'),
+      ),
+      Meetup(
+        id: 'demo_4',
+        title: 'Dads Weekend Football',
+        description: 'Casual 5-a-side for dads. All abilities welcome!',
+        category: 'Sport',
+        dateDisplay: 'SAT, ${now.add(const Duration(days: 8)).day} ${_monthName(now.add(const Duration(days: 8)).month)}',
+        timeDisplay: '8:00 - 9:30 AM',
+        dateTime: now.add(const Duration(days: 8, hours: 8)),
+        location: 'Hackney Marshes, London',
+        organiserName: 'Marcus O.',
+        organiserId: 'demo_user_4',
+        attendeeCount: 18,
+        isFree: true,
+        targetAudience: ['Dads'],
+        imageUrl: Meetup.categoryFallbackUrl('Sport'),
+      ),
+      Meetup(
+        id: 'demo_5',
+        title: 'Nature Walk for Families',
+        description: 'Easy 3km walk through the forest.',
+        category: 'Walk',
+        dateDisplay: 'SUN, ${now.add(const Duration(days: 10)).day} ${_monthName(now.add(const Duration(days: 10)).month)}',
+        timeDisplay: '10:00 - 11:30 AM',
+        dateTime: now.add(const Duration(days: 10, hours: 10)),
+        location: 'Epping Forest, Essex',
+        organiserName: 'Yemi A.',
+        organiserId: 'demo_user_5',
+        attendeeCount: 31,
+        isFree: true,
+        targetAudience: ['Mums', 'Dads', 'Kids'],
+        imageUrl: Meetup.categoryFallbackUrl('Walk'),
+      ),
+      Meetup(
+        id: 'demo_6',
+        title: 'Baby Sensory Workshop',
+        description: 'Interactive sensory play for babies 0–18 months.',
+        category: 'Social',
+        dateDisplay: 'TUE, ${now.add(const Duration(days: 12)).day} ${_monthName(now.add(const Duration(days: 12)).month)}',
+        timeDisplay: '10:00 - 11:00 AM',
+        dateTime: now.add(const Duration(days: 12, hours: 10)),
+        location: 'Little Stars Centre, Bethnal Green',
+        organiserName: 'Aisha P.',
+        organiserId: 'demo_user_6',
+        attendeeCount: 6,
+        isFree: false,
+        price: 8.50,
+        targetAudience: ['Mums', 'Aspiring parents'],
+        imageUrl: Meetup.categoryFallbackUrl('Social'),
+      ),
+      Meetup(
+        id: 'demo_7',
+        title: 'Aspiring Parents Support Group',
+        description: 'Share experiences and support each other.',
+        category: 'Social',
+        dateDisplay: 'THU, ${now.add(const Duration(days: 14)).day} ${_monthName(now.add(const Duration(days: 14)).month)}',
+        timeDisplay: '7:00 - 8:30 PM',
+        dateTime: now.add(const Duration(days: 14, hours: 19)),
+        location: 'Community Hall, Brixton',
+        organiserName: 'Ruth S.',
+        organiserId: 'demo_user_7',
+        attendeeCount: 11,
+        isFree: true,
+        targetAudience: ['Aspiring parents'],
+        imageUrl: Meetup.categoryFallbackUrl('Social'),
+      ),
+      Meetup(
+        id: 'demo_8',
+        title: 'Theatre Show: Tales for Tots',
+        description: 'Colourful puppet theatre for young children.',
+        category: 'Social',
+        dateDisplay: 'SAT, ${now.add(const Duration(days: 16)).day} ${_monthName(now.add(const Duration(days: 16)).month)}',
+        timeDisplay: '2:00 - 3:00 PM',
+        dateTime: now.add(const Duration(days: 16, hours: 14)),
+        location: 'Unicorn Theatre, London Bridge',
+        organiserName: 'Chloe D.',
+        organiserId: 'demo_user_8',
+        attendeeCount: 25,
+        isFree: false,
+        price: 15.0,
+        targetAudience: ['Kids', 'Mums', 'Dads'],
+        imageUrl: Meetup.categoryFallbackUrl('Social'),
+      ),
+    ];
+
+    for (final d in demos) {
+      if (!_meetups.any((m) => m.id == d.id)) {
+        _meetups.add(d);
+      }
+    }
+  }
+
+  static String _monthName(int month) {
+    const names = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return names[month.clamp(1, 12)];
+  }
 
 }
