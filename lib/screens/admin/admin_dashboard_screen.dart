@@ -329,7 +329,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
 // ── Report Card ────────────────────────────────────────────────────────────────
 
-class _ReportCard extends StatelessWidget {
+/// Resolved human-readable details fetched async after the card renders.
+class _ReportDetails {
+  final String reporterName;
+  final String reporterPhone;
+  final String reporterEmail;
+  final String targetName;
+  final String targetPhone;
+  final String targetEmail;
+  final String? chatName; // group name, or null for DMs/listings/profiles
+
+  const _ReportDetails({
+    required this.reporterName,
+    required this.reporterPhone,
+    required this.reporterEmail,
+    required this.targetName,
+    required this.targetPhone,
+    required this.targetEmail,
+    this.chatName,
+  });
+}
+
+class _ReportCard extends StatefulWidget {
   final String reportId;
   final Map<String, dynamic> data;
   final Future<void> Function(String reportId, String status) onAction;
@@ -339,6 +360,86 @@ class _ReportCard extends StatelessWidget {
     required this.data,
     required this.onAction,
   });
+
+  @override
+  State<_ReportCard> createState() => _ReportCardState();
+}
+
+class _ReportCardState extends State<_ReportCard> {
+  _ReportDetails? _details;
+  bool _showRawIds = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetails();
+  }
+
+  Future<void> _loadDetails() async {
+    final reporterId = widget.data['reporterId']  as String? ?? '';
+    final targetId   = widget.data['targetUserId'] as String? ?? '';
+    final groupId    = widget.data['groupId']      as String?;
+    final context    = widget.data['context']      as String? ?? '';
+
+    final db = FirebaseFirestore.instance;
+
+    // Fire all three lookups in parallel
+    final futures = await Future.wait([
+      reporterId.isNotEmpty
+          ? db.collection('users').doc(reporterId).get()
+          : Future.value(null),
+      targetId.isNotEmpty
+          ? db.collection('users').doc(targetId).get()
+          : Future.value(null),
+      groupId != null && context == 'group_message'
+          ? db.collection('groups').doc(groupId).get()
+          : Future.value(null),
+    ]);
+
+    Map<String, dynamic>? rData;
+    Map<String, dynamic>? tData;
+    Map<String, dynamic>? gData;
+
+    final rSnap = futures[0];
+    if (rSnap is DocumentSnapshot<Map<String, dynamic>>) rData = rSnap.data();
+
+    final tSnap = futures[1];
+    if (tSnap is DocumentSnapshot<Map<String, dynamic>>) tData = tSnap.data();
+
+    final gSnap = futures[2];
+    if (gSnap is DocumentSnapshot<Map<String, dynamic>>) gData = gSnap.data();
+
+    String displayName(Map<String, dynamic>? d) {
+      if (d == null) return 'Unknown user';
+      final n = (d['name'] as String? ?? '').trim();
+      if (n.isNotEmpty) return n;
+      final fn = (d['firstName'] as String? ?? '').trim();
+      final ln = (d['lastName']  as String? ?? '').trim();
+      return '$fn $ln'.trim().isNotEmpty ? '$fn $ln'.trim() : 'Unknown user';
+    }
+
+    String? chatName;
+    if (gData != null) {
+      chatName = gData['name'] as String?;
+    } else if (context == 'dm_message') {
+      final tName = displayName(tData);
+      chatName = 'Direct message with $tName';
+    }
+
+    if (mounted) {
+      setState(() {
+        _details = _ReportDetails(
+          reporterName:  displayName(rData),
+          reporterPhone: rData?['phone'] as String? ?? '—',
+          reporterEmail: rData?['email'] as String? ?? '—',
+          targetName:    displayName(tData),
+          targetPhone:   tData?['phone'] as String? ?? '—',
+          targetEmail:   tData?['email'] as String? ?? '—',
+          chatName:      chatName,
+        );
+      });
+    }
+  }
 
   Color _statusColor(String status) => switch (status) {
         'pending'   => HuddlColors.error,
@@ -362,19 +463,30 @@ class _ReportCard extends StatelessWidget {
   String _formatTimestamp(dynamic ts) {
     if (ts is! Timestamp) return 'Unknown time';
     final dt = ts.toDate().toLocal();
-    return '${dt.day}/${dt.month}/${dt.year}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    final date = '${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}';
+    final time = '${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}';
+    return '$date at $time';
   }
+
+  String _contextLabel(String ctx) => switch (ctx) {
+        'group_message' => 'Group chat',
+        'dm_message'    => 'Direct message',
+        'listing'       => 'Marketplace listing',
+        'user_profile'  => 'User profile',
+        _               => ctx.replaceAll('_', ' '),
+      };
 
   @override
   Widget build(BuildContext context) {
-    final status    = data['status']       as String? ?? 'pending';
-    final type      = data['type']         as String? ?? 'other';
-    final ctx       = data['context']      as String? ?? '';
-    final reporterId  = data['reporterId']   as String? ?? '';
-    final targetId    = data['targetUserId'] as String? ?? '';
-    final contentId   = data['messageId']   as String? ?? '';
-    final groupId   = data['groupId']      as String?;
-    final timestamp = data['timestamp'];
+    final status    = widget.data['status']       as String? ?? 'pending';
+    final type      = widget.data['type']         as String? ?? 'other';
+    final ctx       = widget.data['context']      as String? ?? '';
+    final reporterId  = widget.data['reporterId']   as String? ?? '';
+    final targetId    = widget.data['targetUserId'] as String? ?? '';
+    final contentId   = widget.data['messageId']   as String? ?? '';
+    final groupId   = widget.data['groupId']      as String?;
+    final timestamp = widget.data['timestamp'];
+    final d = _details;
 
     return Container(
       decoration: BoxDecoration(
@@ -411,7 +523,7 @@ class _ReportCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        ctx.replaceAll('_', ' '),
+                        _contextLabel(ctx),
                         style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
                       ),
                     ],
@@ -437,33 +549,112 @@ class _ReportCard extends StatelessWidget {
 
           Divider(height: 1, color: Theme.of(context).dividerColor),
 
-          // ── Details ────────────────────────────────────────────────────
+          // ── Human-readable details ──────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _DetailRow(label: 'Reporter UID', value: reporterId),
-                const SizedBox(height: 4),
-                _DetailRow(label: 'Target UID',   value: targetId),
-                const SizedBox(height: 4),
-                _DetailRow(label: 'Content ID',   value: contentId),
-                if (groupId != null) ...[
-                  const SizedBox(height: 4),
-                  _DetailRow(label: 'Group ID', value: groupId),
+
+                // Filed timestamp — always at the top
+                _DetailRow(
+                  label: 'Filed',
+                  value: _formatTimestamp(timestamp),
+                  icon: Icons.schedule_outlined,
+                ),
+                const SizedBox(height: 10),
+
+                // Chat / context name
+                if (d?.chatName != null) ...[
+                  _DetailRow(
+                    label: _contextLabel(ctx),
+                    value: d!.chatName!,
+                    icon: ctx == 'dm_message'
+                        ? Icons.chat_bubble_outline
+                        : Icons.group_outlined,
+                  ),
+                  const SizedBox(height: 10),
                 ],
-                const SizedBox(height: 4),
-                _DetailRow(label: 'Filed',         value: _formatTimestamp(timestamp)),
-                const SizedBox(height: 4),
-                _DetailRow(label: 'Report ID',     value: reportId, mono: true),
+
+                // ── Reported-by person ──────────────────────────────────
+                _SectionLabel(label: 'Reported by'),
+                const SizedBox(height: 6),
+                if (d == null)
+                  const _LoadingRow()
+                else ...[
+                  _DetailRow(label: 'Name',  value: d.reporterName,  icon: Icons.person_outline),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Phone', value: d.reporterPhone, icon: Icons.phone_outlined),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Email', value: d.reporterEmail, icon: Icons.email_outlined),
+                ],
+                const SizedBox(height: 10),
+
+                // ── Reported user ───────────────────────────────────────
+                _SectionLabel(label: 'Reported user'),
+                const SizedBox(height: 6),
+                if (d == null)
+                  const _LoadingRow()
+                else ...[
+                  _DetailRow(label: 'Name',  value: d.targetName,  icon: Icons.person_outline),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Phone', value: d.targetPhone, icon: Icons.phone_outlined),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Email', value: d.targetEmail, icon: Icons.email_outlined),
+                ],
               ],
             ),
           ),
 
+          // ── Raw IDs — collapsed by default ─────────────────────────────
+          InkWell(
+            onTap: () => setState(() => _showRawIds = !_showRawIds),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+              child: Row(
+                children: [
+                  Icon(
+                    _showRawIds ? Icons.expand_less : Icons.expand_more,
+                    size: 16, color: HuddlColors.disabledText,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _showRawIds ? 'Hide technical IDs' : 'Show technical IDs',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11, color: HuddlColors.disabledText,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_showRawIds)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _DetailRow(label: 'Reporter UID', value: reporterId, mono: true),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Target UID',   value: targetId,   mono: true),
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Content ID',   value: contentId,  mono: true),
+                  if (groupId != null) ...[
+                    const SizedBox(height: 4),
+                    _DetailRow(label: 'Group ID',   value: groupId,    mono: true),
+                  ],
+                  const SizedBox(height: 4),
+                  _DetailRow(label: 'Report ID',    value: widget.reportId, mono: true),
+                ],
+              ),
+            ),
+
+          Divider(height: 1, color: Theme.of(context).dividerColor),
+
           // ── Action buttons (only for pending / reviewed) ───────────────
           if (status == 'pending' || status == 'reviewed')
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
               child: Row(
                 children: [
                   if (status == 'pending')
@@ -472,7 +663,7 @@ class _ReportCard extends StatelessWidget {
                         label: 'Mark reviewed',
                         icon: Icons.visibility_outlined,
                         color: HuddlColors.warning,
-                        onTap: () => onAction(reportId, 'reviewed'),
+                        onTap: () => widget.onAction(widget.reportId, 'reviewed'),
                       ),
                     ),
                   if (status == 'pending') const SizedBox(width: 8),
@@ -481,7 +672,7 @@ class _ReportCard extends StatelessWidget {
                       label: 'Action',
                       icon: Icons.gavel_outlined,
                       color: HuddlColors.primary,
-                      onTap: () => onAction(reportId, 'actioned'),
+                      onTap: () => widget.onAction(widget.reportId, 'actioned'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -490,7 +681,7 @@ class _ReportCard extends StatelessWidget {
                       label: 'Dismiss',
                       icon: Icons.close,
                       color: HuddlColors.disabledText,
-                      onTap: () => onAction(reportId, 'dismissed'),
+                      onTap: () => widget.onAction(widget.reportId, 'dismissed'),
                     ),
                   ),
                 ],
@@ -502,19 +693,69 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label.toUpperCase(),
+      style: GoogleFonts.poppins(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        color: HuddlColors.disabledText,
+        letterSpacing: 0.6,
+      ),
+    );
+  }
+}
+
+class _LoadingRow extends StatelessWidget {
+  const _LoadingRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 14, height: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 1.5,
+            color: HuddlColors.disabledText,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Loading…',
+          style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
+        ),
+      ],
+    );
+  }
+}
+
 class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
   final bool mono;
-  const _DetailRow({required this.label, required this.value, this.mono = false});
+  final IconData? icon;
+  const _DetailRow({required this.label, required this.value, this.mono = false, this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (icon != null) ...[
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(icon, size: 13, color: HuddlColors.disabledText),
+          ),
+          const SizedBox(width: 6),
+        ],
         SizedBox(
-          width: 90,
+          width: icon != null ? 46 : 100,
           child: Text(
             label,
             style: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.disabledText),
@@ -525,7 +766,7 @@ class _DetailRow extends StatelessWidget {
             value.isEmpty ? '—' : value,
             style: mono
                 ? const TextStyle(
-                    fontSize: 11,
+                    fontSize: 10,
                     fontFamily: 'monospace',
                     color: HuddlColors.textDark,
                   )
