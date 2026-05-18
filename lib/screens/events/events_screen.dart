@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
 import '../../services/event_service.dart';
-import '../../services/member_photo_service.dart';
 import '../../services/default_group_service.dart';
 import '../../services/browser_storage.dart';
 import '../../models/group.dart';
@@ -21,7 +20,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/common/huddl_empty_state.dart';
-import '../groups/forward_message_sheet.dart';
 import '../services/services_screen.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
@@ -580,7 +578,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
   bool _aiReady = false;
-  SmartNudge? _activeNudge;
 
   // ── Local search ──────────────────────────────────────────────
   bool _isSearchActive = false;
@@ -632,13 +629,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
     if (count > 1) return '$count filters';
     return '';
-  }
-
-  /// Distance label shown in feed bar ("10 km", "1 km", etc.)
-  String get _distanceLabel {
-    if (_localization == 'online') return 'Online';
-    final v = _distanceKm.round();
-    return v >= 50 ? '<50 km' : '$v km';
   }
 
   @override
@@ -1502,8 +1492,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         scored = _aiService.smartSort(filtered);
         filtered = scored.map((s) => s.meetup).toList();
       }
-      // ── E) Smart Nudge: contextual one-liner ────────────────
-      _activeNudge = _aiService.getSmartNudge(visible);
     }
 
     // Build a map from meetup id to boost reason for card display
@@ -1761,84 +1749,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     );
   }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SMART NUDGE BANNER — single contextual line, dismissible
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _SmartNudgeBanner extends StatelessWidget {
-  final SmartNudge nudge;
-  final VoidCallback onDismiss;
-  final VoidCallback onCreateMeetup;
-
-  const _SmartNudgeBanner({
-    required this.nudge,
-    required this.onDismiss,
-    required this.onCreateMeetup,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: context.hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 4, 8, 8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.12)),
-        ),
-        child: Row(
-          children: [
-            Text(nudge.icon, style: const TextStyle(fontSize: 18)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                nudge.text,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: context.hc.textPrimary,
-                  height: 1.35,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (nudge.actionLabel != null) ...[              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onCreateMeetup,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    nudge.actionLabel!,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.white),
-                  ),
-                ),
-              ),
-            ],
-            // Dismiss button
-            GestureDetector(
-              onTap: onDismiss,
-              child: Container(
-                width: 32, height: 32,
-                alignment: Alignment.center,
-                child: Icon(Icons.close, size: 15, color: context.hc.textTertiary.withValues(alpha: 0.6)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EVENTS TAB — 3rd party / company advertised events (mostly paid)
@@ -2510,7 +2420,6 @@ class _EventsTabState extends State<_EventsTab> {
   // ── Recommender state ──────────────────────────────────────
   bool _recommenderReady = false;
   bool _isDiscovering = false;
-  List<ScoredEvent> _recommended = [];
   Map<String, ScoredEvent> _scoredEventMap = {};
 
   // ── Inline search state (mirrors Meetups tab) ───────────────
@@ -2519,11 +2428,7 @@ class _EventsTabState extends State<_EventsTab> {
   final TextEditingController _localSearchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
 
-  // ── Legacy NLP / invisible AI state (kept for filter logic) ─
-  String _nlpQuery = '';
-  final TextEditingController _nlpController = TextEditingController();
-  final FocusNode _nlpFocusNode = FocusNode();
-  bool _showSuggestions = false;
+  // ── NLP / invisible AI filter state ─────────────────────────
   Map<String, dynamic> _activeParsedFilters = {};
 
   // ── Manual filter state (set via bottom sheet) ─────────────
@@ -2540,16 +2445,12 @@ class _EventsTabState extends State<_EventsTab> {
 
   void _clearSearch() {
     _localSearchController.clear();
-    _nlpController.clear();
     setState(() {
       _isSearchActive = false;
       _localSearchQuery = '';
-      _nlpQuery = '';
       _activeParsedFilters = {};
-      _showSuggestions = false;
     });
     _searchFocusNode.unfocus();
-    _nlpFocusNode.unfocus();
   }
 
   @override
@@ -2557,9 +2458,6 @@ class _EventsTabState extends State<_EventsTab> {
     super.initState();
     _initServices();
     widget.searchTrigger.addListener(_onSearchTrigger);
-    _nlpFocusNode.addListener(() {
-      if (mounted) setState(() => _showSuggestions = _nlpFocusNode.hasFocus && _nlpQuery.isEmpty);
-    });
   }
 
   @override
@@ -2567,8 +2465,6 @@ class _EventsTabState extends State<_EventsTab> {
     widget.searchTrigger.removeListener(_onSearchTrigger);
     _localSearchController.dispose();
     _searchFocusNode.dispose();
-    _nlpController.dispose();
-    _nlpFocusNode.dispose();
     super.dispose();
   }
 
@@ -2607,30 +2503,11 @@ class _EventsTabState extends State<_EventsTab> {
   }
 
   void _refreshRecommendations() {
-    _recommended = _recommender.recommendedEvents;
     final allScored = _recommender.rankAllEvents();
     _scoredEventMap = { for (final s in allScored) s.event.id: s };
   }
 
-  void _onNlpQueryChanged(String value) {
-    setState(() {
-      _nlpQuery = value;
-      _showSuggestions = value.isEmpty && _nlpFocusNode.hasFocus;
-      if (value.isNotEmpty) {
-        _activeParsedFilters = _invisibleAi.parseNaturalQuery(value);
-      } else {
-        _activeParsedFilters = {};
-      }
-    });
-  }
 
-  void _applySuggestion(AiSearchSuggestion suggestion) {
-    _nlpController.text = suggestion.query;
-    _onNlpQueryChanged(suggestion.query);
-    _nlpFocusNode.unfocus();
-  }
-
-  // AI assistant sheet removed — AI now works invisibly behind the scenes.
 
   @override
   Widget build(BuildContext context) {
@@ -3536,295 +3413,6 @@ class _EventsTabState extends State<_EventsTab> {
     );
   }
 
-  Widget _buildSuggestionsPanel() {
-    final suggestions = _invisibleAi.getSearchSuggestions();
-    if (suggestions.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      color: context.hc.surface,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Try searching for', style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w500, color: context.hc.textTertiary)),
-          const SizedBox(height: 6),
-          ...suggestions.map((s) => GestureDetector(
-            onTap: () => _applySuggestion(s),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: context.hc.scaffold,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Text(s.icon, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(s.query, style: GoogleFonts.poppins(
-                          fontSize: 13, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
-                        Text(s.reason, style: GoogleFonts.poppins(
-                          fontSize: 11, color: context.hc.textTertiary)),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.north_west, size: 14, color: context.hc.textTertiary),
-                ],
-              ),
-            ),
-          )),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildActiveNlpChips() {
-    final chips = <Widget>[];
-    final p = _activeParsedFilters;
-
-    void addChip(String label, Color color) {
-      chips.add(Container(
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(label, style: GoogleFonts.poppins(
-          fontSize: 10, fontWeight: FontWeight.w600, color: color)),
-      ));
-    }
-
-    if (p.containsKey('priceFilter')) addChip(p['priceFilter'] as String, HuddlColors.teal);
-    if (p.containsKey('formatFilter')) addChip(p['formatFilter'] as String, HuddlColors.teal);
-    if (p.containsKey('timeFilter')) addChip(p['timeFilter'] as String, HuddlColors.primaryDark);
-    if (p.containsKey('category')) addChip(p['category'] as String, HuddlColors.accentAmber);
-    if (p.containsKey('ageStage')) addChip(p['ageStage'] as String, HuddlColors.primary);
-    if (p.containsKey('keywords')) addChip('"${p['keywords']}"', HuddlColors.textSecondary);
-
-    return chips;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// AI RECOMMENDED FOR YOU CAROUSEL
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _RecommendedCarousel extends StatelessWidget {
-  final List<ScoredEvent> scoredEvents;
-  final EventService eventService;
-
-  const _RecommendedCarousel({
-    required this.scoredEvents,
-    required this.eventService,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── "Suggested for you" section header ────────────────────
-        Padding(
-          padding: const EdgeInsets.only(bottom: 14),
-          child: Text(
-            'Suggested for you',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: context.hc.textPrimary,
-            ),
-          ),
-        ),
-        // Horizontal carousel
-        SizedBox(
-          height: 240,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: scoredEvents.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 14),
-            itemBuilder: (context, index) {
-              final scored = scoredEvents[index];
-              return _RecommendedCard(scored: scored);
-            },
-          ),
-        ),
-        const SizedBox(height: 24),
-        // "All Events" divider label
-        Text(
-          'All Events',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: context.hc.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 14),
-      ],
-    );
-  }
-}
-
-class _RecommendedCard extends StatelessWidget {
-  final ScoredEvent scored;
-
-  const _RecommendedCard({required this.scored});
-
-  @override
-  Widget build(BuildContext context) {
-    final event = scored.event;
-    final topReasons = scored.reasons.take(2).toList();
-    final scorePercent = scored.score.round();
-
-    return Semantics(
-      label: 'Recommended event: ${event.title}, $scorePercent% match, ${event.dateDisplay}${event.isFree ? ", Free" : ""}',
-      button: true,
-      child: GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.push(
-          context,
-          PageRouteBuilder(
-            pageBuilder: (_, __, ___) => EventDetailScreen(event: event.toMap()),
-            transitionsBuilder: (_, animation, __, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 300),
-          ),
-        );
-      },
-      child: Container(
-        width: 230,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Cover image — taller for premium feel
-            SizedBox(
-              height: 128,
-              width: double.infinity,
-              child: _buildCoverImage(
-                imageUrl: event.imageUrl,
-                fallbackIcon: event.icon,
-                fallbackColor: HuddlColors.primary,
-              ),
-            ),
-            // Card body
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(13, 10, 13, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Date — light grey
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today_outlined,
-                            size: 11, color: HuddlColors.textTertiary),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            event.dateDisplay,
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: HuddlColors.textTertiary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          event.isFree ? 'Free' : event.price,
-                          style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: event.isFree ? HuddlColors.teal : HuddlColors.blueDark,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      event.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        color: HuddlColors.textDark,
-                        height: 1.3,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const Spacer(),
-                    // Match reason chips
-                    if (topReasons.isNotEmpty)
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: topReasons.map((reason) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.teal.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: HuddlColors.teal.withValues(alpha: 0.2),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  reason.emoji,
-                                  style: const TextStyle(fontSize: 10),
-                                ),
-                                const SizedBox(width: 3),
-                                Flexible(
-                                  child: Text(
-                                    reason.label,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w500,
-                                      color: HuddlColors.teal,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4247,58 +3835,6 @@ class _MeetupCard extends StatelessWidget {
     );
   }
 
-  static void _shareMeetup(BuildContext context, Meetup meetup) {
-    HapticFeedback.mediumImpact();
-    
-    // Convert meetup to map for forwarding
-    final meetupData = {
-      'id': meetup.id,
-      'title': meetup.title,
-      'category': meetup.category,
-      'dateDisplay': meetup.dateDisplay,
-      'timeDisplay': meetup.timeDisplay,
-      'location': meetup.location,
-      'imageUrl': meetup.imageUrl,
-      'organiserName': meetup.organiserName,
-      'attendeeCount': meetup.attendeeCount,
-      'maxAttendees': meetup.maxAttendees,
-      'isFree': meetup.isFree,
-      'price': meetup.price,
-      'description': meetup.description,
-      'privacy': meetup.privacy.toString(),
-      'groupName': meetup.groupName,
-    };
-
-    final priceText = meetup.isFree
-        ? 'Free'
-        : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
-    final privacyText = meetup.privacy == MeetupPrivacy.public
-        ? ''
-        : meetup.privacy == MeetupPrivacy.group
-            ? ' [Group: ${meetup.groupName ?? ''}]'
-            : ' [Private]';
-
-    final shareText = '''
-\u{1F91D} ${meetup.title}$privacyText
-\u{1F4C5} ${meetup.dateDisplay}  \u23F0 ${meetup.timeDisplay}
-\u{1F4CD} ${meetup.location}
-\u{1F3F7}\uFE0F ${meetup.category}  |  $priceText
-\u{1F464} Organised by ${meetup.organiserName}
-\u{1F465} ${meetup.attendeeCount}${meetup.maxAttendees != null ? '/${meetup.maxAttendees}' : ''} going
-
-${meetup.description.isNotEmpty ? meetup.description : ''}
----
-Shared from Huddl
-'''.trim();
-
-    // Show forward sheet to send as meetup card
-    showForwardSheet(
-      context: context,
-      messageText: shareText,
-      meetupData: meetupData,
-      isMeetupCard: true,
-    );
-  }
 }
 
 /// ── EVENT CARD (3rd party / company events) ─────────────────────────────────
@@ -4870,14 +4406,10 @@ class _FilterChip extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
-  /// Override the selected fill/shadow colour (defaults to HuddlColors.primary).
-  final Color? selectedColor;
-
   const _FilterChip({
     required this.label,
     required this.isSelected,
     required this.onTap,
-    this.selectedColor,
   });
 
   @override
@@ -4938,7 +4470,7 @@ class _FilterChipState extends State<_FilterChip>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? (widget.selectedColor ?? HuddlColors.primary)
+                  ? HuddlColors.primary
                   : context.hc.surfaceAlt,
               borderRadius: BorderRadius.circular(20),
               border: widget.isSelected
@@ -4947,7 +4479,7 @@ class _FilterChipState extends State<_FilterChip>
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: (widget.selectedColor ?? HuddlColors.primary)
+                        color: HuddlColors.primary
                             .withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
@@ -5039,95 +4571,8 @@ _CatStyle _meetupCategoryStyle(String category) {
 // SHARED — Organiser avatar helper
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/// Builds a small circular avatar for the meetup organiser.
-/// For the current user: show onboarding photo or local asset fallback.
-/// For known community members: show their Pexels photo.
-Widget _buildOrganiserAvatar(String name, String organiserId, double size, Color accentColor) {
-  // Current user: use local asset avatar
-  final currentUid = FirebaseAuth.instance.currentUser?.uid;
-  if (organiserId == (currentUid ?? 'current_user') || organiserId == 'current_user' || MemberPhotoService.isCurrentUser(name)) {
-    final photoUrl = MemberPhotoService.getPhotoByName(name);
-    if (photoUrl != null && photoUrl.isNotEmpty) {
-      if (photoUrl.startsWith('data:')) {
-        try {
-          final parts = photoUrl.split(',');
-          if (parts.length > 1) {
-            final bytes = base64Decode(parts[1]);
-            return Container(
-              width: size, height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: HuddlColors.primary, width: 1),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Image.memory(bytes, fit: BoxFit.cover, width: size, height: size),
-            );
-          }
-        } catch (_) {}
-      }
-      return Container(
-        width: size, height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: HuddlColors.primary, width: 1),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
-          errorBuilder: (_, __, ___) => _currentUserAssetAvatar(size)),
-      );
-    }
-    return _currentUserAssetAvatar(size);
-  }
 
-  // Known community member
-  final photoUrl = MemberPhotoService.getPhotoByName(name);
-  if (photoUrl != null && photoUrl.isNotEmpty) {
-    return Container(
-      width: size, height: size,
-      decoration: const BoxDecoration(shape: BoxShape.circle),
-      clipBehavior: Clip.antiAlias,
-      child: Image.network(photoUrl, fit: BoxFit.cover, width: size, height: size,
-        errorBuilder: (_, __, ___) => CircleAvatar(
-          radius: size / 2,
-          backgroundColor: accentColor.withValues(alpha: 0.15),
-          child: Text(
-            name.isNotEmpty ? name[0].toUpperCase() : '?',
-            style: GoogleFonts.poppins(fontSize: size * 0.45, fontWeight: FontWeight.w700, color: accentColor),
-          ),
-        )),
-    );
-  }
 
-  return CircleAvatar(
-    radius: size / 2,
-    backgroundColor: accentColor.withValues(alpha: 0.15),
-    child: Text(
-      name.isNotEmpty ? name[0].toUpperCase() : '?',
-      style: GoogleFonts.poppins(fontSize: size * 0.45, fontWeight: FontWeight.w700, color: accentColor),
-    ),
-  );
-}
-
-/// Local asset avatar for the current user (gender-based), used in events_screen.
-Widget _currentUserAssetAvatar(double size) {
-  return Container(
-    width: size, height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      border: Border.all(color: HuddlColors.primary, width: 1),
-    ),
-    child: ClipOval(
-      child: Image.asset(
-        MemberPhotoService.currentUserAvatarAsset,
-        width: size, height: size, fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
-          child: Center(child: Icon(Icons.person, size: size * 0.5, color: HuddlColors.primary)),
-        ),
-      ),
-    ),
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SHARED — universal cover-image builder (data-URI, http, asset, fallback)

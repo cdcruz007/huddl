@@ -32,7 +32,6 @@ import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../../services/firestore_service.dart';
-import 'forward_message_sheet.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
@@ -3248,7 +3247,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   // ── Invisible AI state ────────────────────────────────────────────
   bool _aiRecommendationsEnabled = true; // human override toggle
   List<DiscoverSearchSuggestion> _aiSuggestions = [];
-  bool _showAiContextBanner = false;
+  final bool _showAiContextBanner = false;
 
   @override
   void initState() {
@@ -5388,17 +5387,7 @@ class _DiscoverGroupCard extends StatelessWidget {
     }
   }
 
-  /// Privacy tag colour (kept for potential future use)
-  Color get _privacyTagColor {
-    switch (group.privacy) {
-      case GroupPrivacy.public:
-        return HuddlColors.teal;
-      case GroupPrivacy.group:
-        return HuddlColors.primaryDark;
-      case GroupPrivacy.private_:
-        return HuddlColors.error;
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -5573,74 +5562,6 @@ class _DiscoverGroupCard extends StatelessWidget {
         ),
       ),
       ),
-    );
-  }
-
-  static Color _matchScoreColor(double score) {
-    if (score >= 70) return HuddlColors.teal;
-    if (score >= 50) return HuddlColors.accentAmber;
-    return HuddlColors.textHint;
-  }
-
-  static void _shareGroup(BuildContext context, _GroupItem group) {
-    // Convert group to map for forwarding
-    final groupData = {
-      'id': group.id,
-      'name': group.name,
-      'description': group.description,
-      'imageUrl': group.imageUrl,
-      'memberCount': group.memberCount,
-      'privacy': group.privacy.toString(),
-      'creatorName': group.creatorName,
-      'creatorBorough': group.creatorBorough,
-      'targetAudience': group.targetAudience,
-      'parentGroupName': group.parentGroupName,
-    };
-
-    final privacyText = group.privacy == GroupPrivacy.public
-        ? 'Public'
-        : group.privacy == GroupPrivacy.group
-            ? 'Group${group.parentGroupName != null ? ' (${group.parentGroupName})' : ''}'
-            : 'Private';
-
-    final audienceText = group.targetAudience.isNotEmpty
-        ? '\n👥 For: ${group.targetAudience.join(', ')}'
-        : '';
-
-    final boroughText = group.creatorBorough != null &&
-            group.creatorBorough!.isNotEmpty &&
-            group.creatorBorough != 'Unknown Borough'
-        ? '\n📍 ${group.creatorBorough}'
-        : '';
-
-    // ENHANCED SHARE FORMAT: Rich formatted card with visual structure
-    final shareText = '''
-╔═══════════════════════════════
-║ 🔵 HUDDL GROUP
-╠═══════════════════════════════
-║
-║ 👥 ${group.name}
-║
-║ 🔒 $privacyText  •  ${group.memberCount} members$audienceText$boroughText
-${group.creatorName != null && group.creatorName!.isNotEmpty ? '║ ✨ Created by ${group.creatorName}' : ''}
-║
-║ 📝 ${group.description}
-║
-╚═══════════════════════════════
-
-💬 Join this group on Huddl!
-🔗 Tap "Join" to become a member
-
----
-Shared from Huddl 🚀
-'''.trim();
-
-    // Show forward sheet to send as group card
-    showForwardSheet(
-      context: context,
-      messageText: shareText,
-      groupData: groupData,
-      isGroupCard: true,
     );
   }
 
