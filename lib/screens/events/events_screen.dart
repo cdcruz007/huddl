@@ -65,6 +65,8 @@ class _EventsScreenState extends State<EventsScreen>
   final ValueNotifier<bool> _meetupSearchTrigger = ValueNotifier<bool>(false);
   // Fires true to open inline search in the Events tab.
   final ValueNotifier<bool> _eventSearchTrigger  = ValueNotifier<bool>(false);
+  // Fires true to open inline search in the Services tab.
+  final ValueNotifier<bool> _serviceSearchTrigger = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -106,6 +108,7 @@ class _EventsScreenState extends State<EventsScreen>
     _groupResetTrigger.dispose();
     _meetupSearchTrigger.dispose();
     _eventSearchTrigger.dispose();
+    _serviceSearchTrigger.dispose();
     super.dispose();
   }
 
@@ -363,6 +366,16 @@ class _EventsScreenState extends State<EventsScreen>
                                 _eventSearchTrigger.value = true;
                               },
                             )
+                          else if (_selectedTab == 3)
+                            IconButton(
+                              icon: Icon(Icons.search,
+                                  color: context.hc.textPrimary),
+                              tooltip: 'Search services',
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                _serviceSearchTrigger.value = true;
+                              },
+                            )
                           else
                             IconButton(
                               icon: Icon(Icons.notifications_outlined,
@@ -433,7 +446,7 @@ class _EventsScreenState extends State<EventsScreen>
                     eventService: _eventService,
                     searchTrigger: _eventSearchTrigger,
                   ),
-                  const ServicesScreen(),
+                  ServicesScreen(searchTrigger: _serviceSearchTrigger),
                 ],
               ),
             ),

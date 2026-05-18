@@ -319,7 +319,7 @@ class AppRouter {
 
       case '/services':
         return SlidePageRoute(
-          page: const ServicesScreen(),
+          page: ServicesScreen(searchTrigger: ValueNotifier<bool>(false)),
           direction: SlideDirection.up,
         );
 
