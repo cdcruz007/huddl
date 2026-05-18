@@ -42,6 +42,34 @@ const List<String> _kEndorserAvatars = [
   'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
 ];
 
+// ── Category hero images — one curated photo per ServiceCategory ──────────────
+const Map<ServiceCategory, String> _kCategoryImages = {
+  ServiceCategory.childcare:
+      'https://sspark.genspark.ai/cfimages?u1=lXQJOTgp%2BBgUHbIUlDooUhY1RjxmNpAY6dhMucQAvu%2FrpyRTNW1h4vpaBj0C2tkmYa%2BN07zzptHirLPADMQxg5MRNKPfnOEHKw3d23L%2B6cLg9Q%3D%3D&u2=0vonpIy3sTCMtw9X&width=2560',
+  ServiceCategory.babysitting:
+      'https://sspark.genspark.ai/cfimages?u1=zUnqifKxClGrNUm6GoTXowYATp0XqFTSytIJR7pdCtSOp8MocMU812LDEl7DolWGS7P4Jk4R%2FBvqTKZj9tUV9A%2Fw1WNsHdo6ZvWETNScQIEhlg%3D%3D&u2=IIyyPruEViQXNViU&width=2560',
+  ServiceCategory.cleaning:
+      'https://sspark.genspark.ai/cfimages?u1=Ir9IwEGTZIY2zHnOp1hqot8frnYUGm%2B%2FtyMbR%2BWKPTJF%2BweraxYXseqLe5IAgOnjgowSfifGoB%2FsHf9sVt6LEnh9vK%2BHHrW8zLmgHrkUgodPgw%3D%3D&u2=xUqpAqOwJ8FBMSlZ&width=2560',
+  ServiceCategory.healthWellness:
+      'https://sspark.genspark.ai/cfimages?u1=gE36%2BF9IRRKA81Qe8wkFpnM9B3n8uj2pOOynW1kX4%2FNHvUEYpcDER%2FMU1cpIEJKMRXmxhv8m2WP0UGo%2Bik5Ixx7G0sEKbmQqwbfUbTLjpltAdxRxiN1GIOTpIgpo1QZ79%2Feq&u2=KnDk%2BdQFkvloygdp&width=2560',
+  ServiceCategory.education:
+      'https://sspark.genspark.ai/cfimages?u1=%2F0bNAL0Csqkyzu1%2Bjz15Z0tp%2F5tnLmJ7XLCFL%2FUGfHmqwVYvPW4Pn5aM5tkvBHXhDtNiCVkgrC%2FTh8w2gqElG17gY775fq9PGrK50Hn%2F05MNQ2rEegOyrExuTc30WzQ4v7UQFO7rLObrLqB7vrlpatdUDjWKPMn0ZGkwmpbiYrIcn6SMFnohWpTQfOcFcEO5&u2=lwHFEtk7ntXgewHG&width=2560',
+  ServiceCategory.fitness:
+      'https://sspark.genspark.ai/cfimages?u1=AA3ZqHXUzMSz5RuWraTIKisgThzm09WpV%2BK78xNCqAXGyDwZCcTvMLVODNXx3KfHBj2wS4CdN%2FBrpOPaws9mD6RcDL6XBFTpwbkvJ%2FRi2qgl4%2FRxZSATwcNgx6caGZzRpNkBHeY5LrWf7s0N%2BwwKU4e64BCwHgJ1YjrAfuS0jJMPCzkeZFIlnw0k2i2ytzOfZSCy%2FjKFsc%2FN%2FSMzAaKniPJ1V45%2F0JiVnsydbP6NJjjrMtKvAMPxzdz0TWOnLZuwfvpjhvbynL9kOG1%2ButLO&u2=VzRgfy8MQafQjSCr&width=2560',
+  ServiceCategory.firstAid:
+      'https://sspark.genspark.ai/cfimages?u1=loy08xxY9jBnV7BSEK2VzzjE7wmPR8LYQ1CynY17K%2BqbouTAmpaMVz4tiwvfOSEFVp9ePAYrpY1hkT67fSrVjHqDmNclcYvESyiNdo4jPDaB9dRb7ROp5v9L9wK8J5BCEdqGIQf7DjZ2p1K38FWzMlTVVku0zXvjTIt2&u2=%2BqrRuvb%2FmfoL91qi&width=2560',
+  ServiceCategory.doula:
+      'https://sspark.genspark.ai/cfimages?u1=T730qrMnzIlihb6AVRVEPf2LDcj%2FhdkMduB%2BSzbDhVcWQKBcwxhS8Yh%2Fdd%2FV%2BVPLEu6pdyZ22u2yYfpYMSB%2BnSKFMYOa5nVxsbLz073wnYW2%2Bhi0Oscq34cvvEBbfmjWxdMb2fV7PP3FqhNyGs8FPF6zieQFX320Ng%3D%3D&u2=dJRcXVAPVRoT%2FjuR&width=2560',
+  ServiceCategory.homeServices:
+      'https://sspark.genspark.ai/cfimages?u1=VQEnOudVNSytwnVj%2FvAiOyaKDAIOEPdImM348pslvy4UFflhtpoH%2BroVM2%2BTc8zT4PaMUMc6Mq%2FgliWTrU36qPwhJDK61qJl8Z4xIF0%2Fbq2ww9TxId52flaQzbW%2BqCSnz3kjQle8LLak25ag57dwwPWF9pMXuEsXqnrK5aD%2BPKxDUvvlarC8LIKHy2YrzoWFv8VVDUKwJvI%3D&u2=J0%2FOk1F0WA52PAYC&width=2560',
+  ServiceCategory.photography:
+      'https://sspark.genspark.ai/cfimages?u1=E6EGUX%2F81QxpI1lLVaVIi0%2FyiHSxpt3HdZvjgvuaviqbW6nKSOFR%2BTC6VIz0uKr2KEFTEGyNykOtHxBQquMVRCRNeyNUztdlCcLMU0qSJ2XhLg0xuw%3D%3D&u2=4PXKFb2zKZk5kNE0&width=2560',
+  ServiceCategory.food:
+      'https://sspark.genspark.ai/cfimages?u1=hyqXHGIn7Mt9RwSV2eb58nVtvwWDcTEEGr63uoGDwPO02UBYOIpd8lAtcGB5XeC3PsLGG2iPeg8X5SkMXB%2BIc%2FoF7zXb60X1Xxwt8r1hVx%2BLMBFCLwbCaZz2xoiK8npNHA%3D%3D&u2=p5wcIzklSiUvDaeZ&width=2560',
+  ServiceCategory.other:
+      'https://sspark.genspark.ai/cfimages?u1=vvpuu4fxcCh%2F2P6GC9ZVw0eSAJQN6nnLJ2YZROvppLjxFNixe5Id8LjI9BNiZDgm4KhOqzBjf%2Fh4ETocGLSdiWgS%2B7RhH6Sy9uXq3TKSPZnzHGR8i%2Bk0cx%2Bwr9c2gw3wx4vepGMBiqxoahiw9dQtZnTEVE3EdMuCtZK8D%2FrwU5AxL7%2Fo47N0CQ8wezk0tDYn8KYSyo2pu1Xo1Zozul76rKNvT2Wc0WfrYrYsy5zhBM%2Bryh9pa%2F5sAgKy4w%2FJiRU%2B3gGRFGWQZSMw8As%3D&u2=BhCAnYALcyZ1r%2BVK&width=2560',
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 class ServicesScreen extends StatefulWidget {
@@ -419,9 +447,13 @@ class _DirectoryTabState extends State<_DirectoryTab>
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                  padding: const EdgeInsets.only(top: 8, bottom: 100),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  separatorBuilder: (_, __) => const Divider(
+                    height: 1,
+                    indent: 82, // aligns with text column (16 pad + 54 avatar + 12 gap)
+                    endIndent: 16,
+                  ),
                   itemBuilder: (context, i) => _ListingCard(
                     listing: filtered[i],
                     service: widget.service,
@@ -679,261 +711,208 @@ class _ListingCardState extends State<_ListingCard> {
   Widget build(BuildContext context) {
     final hc = context.hc;
     final listing = widget.listing;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final catColor = _categoryColor(listing.category);
+    final imageUrl = _kCategoryImages[listing.category] ??
+        _kCategoryImages[ServiceCategory.childcare]!;
+
+    // ── Verification badge label (inline, not a full widget) ─────────────
+    String? badgeLabel;
+    Color? badgeColor;
+    if (listing.isVerified ||
+        listing.verificationTier == VerificationTier.verified) {
+      badgeLabel = 'Verified';
+      badgeColor = HuddlColors.teal;
+    } else if (listing.verificationTier == VerificationTier.community ||
+        listing.endorsementCount >= 3) {
+      badgeLabel = 'Community Pick';
+      badgeColor = HuddlColors.teal;
+    }
 
     return GestureDetector(
       onTap: () {
         widget.service.recordView(listing.id);
         _showListingDetail(context, listing, widget.service);
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: hc.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: hc.cardBorder,
-          boxShadow: isDark
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Hero block with gradient + badges ─────────────────────────
-            Stack(
-              children: [
-                // Gradient hero (same height as Events card)
-                Container(
-                  height: 140,
+            // ── 54 px rounded-square avatar (category photo) ──────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                imageUrl,
+                width: 54,
+                height: 54,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 54,
+                  height: 54,
                   decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(16)),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        catColor.withValues(alpha: 0.85),
-                        catColor.withValues(alpha: 0.55),
-                        catColor.withValues(alpha: 0.35),
-                      ],
-                    ),
+                    color: catColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Center(
                     child: Text(
                       listing.category.emoji,
-                      style: const TextStyle(fontSize: 52),
+                      style: const TextStyle(fontSize: 26),
                     ),
                   ),
                 ),
-                // Gradient scrim at bottom (for badge readability)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 48,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16)),
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha: 0.25),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                // Top-left badges: category type + "New" if few endorsements
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: Row(
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // ── Text column (name + tagline + meta) ───────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Name row + optional verified badge
+                  Row(
                     children: [
-                      // Category type pill (blueDark)
-                      _HeroBadge(
-                        label: listing.category.displayName,
-                        color: HuddlColors.blueDark,
+                      Expanded(
+                        child: Text(
+                          listing.name,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: hc.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      if (_count < 3) ...[
+                      if (badgeLabel != null) ...[
                         const SizedBox(width: 6),
-                        _HeroBadge(
-                          label: 'New',
-                          color: HuddlColors.accentAmber,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: badgeColor!.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            badgeLabel,
+                            style: GoogleFonts.poppins(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: badgeColor,
+                            ),
+                          ),
                         ),
                       ],
                     ],
                   ),
-                ),
-                // Top-right: verified / community pick badge
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: _HeroVerifiedBadge(listing: listing),
-                ),
-              ],
-            ),
 
-            // ── Card body ──────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Name
-                  Text(
-                    listing.name,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                   const SizedBox(height: 2),
+
                   // Tagline
                   Text(
                     listing.tagline,
                     style: GoogleFonts.poppins(
-                      fontSize: 13,
+                      fontSize: 12,
                       color: hc.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 10),
-                  // ── Bottom row: avatar stack + count (left) | Endorse pill (right) ──
+
+                  const SizedBox(height: 5),
+
+                  // Meta row: endorsement count + category chip
                   Row(
                     children: [
-                      // Overlapping endorser avatar stack — driven by live _count
-                      if (_count > 0)
-                        SizedBox(
-                          width: _count >= 3
-                              ? 24.0 + 18.0 + 18.0
-                              : _count == 2
-                                  ? 24.0 + 18.0
-                                  : 24.0,
-                          height: 24,
-                          child: Stack(
-                            children: List.generate(
-                              _count.clamp(0, 3),
-                              (i) {
-                                final seed = listing.id.hashCode + i;
-                                final url = _kEndorserAvatars[
-                                    seed.abs() % _kEndorserAvatars.length];
-                                return Positioned(
-                                  left: i * 18.0,
-                                  child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: Colors.white, width: 1.5),
-                                    ),
-                                    child: ClipOval(
-                                      child: Image.network(
-                                        url,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            CircleAvatar(
-                                          backgroundColor: catColor
-                                              .withValues(alpha: 0.25),
-                                          radius: 12,
-                                          child: Text(
-                                            listing.name.isNotEmpty
-                                                ? listing.name[0]
-                                                : '?',
-                                            style: const TextStyle(
-                                                fontSize: 10),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      if (_count > 0) const SizedBox(width: 8),
-                      // Parent endorsement count — the trust signal
+                      Icon(Icons.thumb_up_rounded,
+                          size: 11, color: hc.textTertiary),
+                      const SizedBox(width: 3),
                       Text(
                         _count > 0
-                            ? '$_count parent${_count == 1 ? '' : 's'} endorsed'
-                            : 'Be the first to endorse',
+                            ? '$_count endorsed'
+                            : 'Be first to endorse',
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: _count > 0
-                              ? hc.textSecondary
-                              : hc.textTertiary,
-                          fontWeight: FontWeight.w500,
+                          color: hc.textTertiary,
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
-                      const Spacer(),
-                      // Endorse pill — orange + filled when endorsed, grey when not
-                      GestureDetector(
-                        onTap: _endorsing ? null : _toggleEndorse,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: _hasEndorsed
-                                ? HuddlColors.primary
-                                : const Color(0xFFF2F2F2),
-                            borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: catColor.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          listing.category.displayName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: catColor,
                           ),
-                          child: _endorsing
-                              ? SizedBox(
-                                  width: 14,
-                                  height: 14,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: _hasEndorsed
-                                        ? Colors.white
-                                        : HuddlColors.primary,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      _hasEndorsed
-                                          ? Icons.thumb_up_rounded
-                                          : Icons.thumb_up_outlined,
-                                      size: 14,
-                                      color: _hasEndorsed
-                                          ? Colors.white
-                                          : hc.textSecondary,
-                                    ),
-                                    const SizedBox(width: 5),
-                                    Text(
-                                      _hasEndorsed ? 'Endorsed' : 'Endorse',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: _hasEndorsed
-                                            ? Colors.white
-                                            : hc.textPrimary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                         ),
                       ),
                     ],
                   ),
                 ],
+              ),
+            ),
+
+            const SizedBox(width: 10),
+
+            // ── Endorse pill (right-trailing) ─────────────────────────────
+            GestureDetector(
+              onTap: _endorsing ? null : _toggleEndorse,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: _hasEndorsed
+                      ? HuddlColors.primary
+                      : const Color(0xFFF2F2F2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: _endorsing
+                    ? SizedBox(
+                        width: 13,
+                        height: 13,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _hasEndorsed
+                              ? Colors.white
+                              : HuddlColors.primary,
+                        ),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _hasEndorsed
+                                ? Icons.thumb_up_rounded
+                                : Icons.thumb_up_outlined,
+                            size: 13,
+                            color: _hasEndorsed
+                                ? Colors.white
+                                : hc.textSecondary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _hasEndorsed ? 'Endorsed' : 'Endorse',
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: _hasEndorsed
+                                  ? Colors.white
+                                  : hc.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
           ],
