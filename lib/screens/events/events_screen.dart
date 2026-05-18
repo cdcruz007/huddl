@@ -63,6 +63,8 @@ class _EventsScreenState extends State<EventsScreen>
   final ValueNotifier<bool> _groupResetTrigger = ValueNotifier<bool>(false);
   // Fires true to open inline search in the Meetups tab.
   final ValueNotifier<bool> _meetupSearchTrigger = ValueNotifier<bool>(false);
+  // Fires true to open inline search in the Events tab.
+  final ValueNotifier<bool> _eventSearchTrigger  = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -103,6 +105,7 @@ class _EventsScreenState extends State<EventsScreen>
     _groupSearchTrigger.dispose();
     _groupResetTrigger.dispose();
     _meetupSearchTrigger.dispose();
+    _eventSearchTrigger.dispose();
     super.dispose();
   }
 
@@ -350,6 +353,16 @@ class _EventsScreenState extends State<EventsScreen>
                                 _meetupSearchTrigger.value = true;
                               },
                             )
+                          else if (_selectedTab == 2)
+                            IconButton(
+                              icon: Icon(Icons.search,
+                                  color: context.hc.textPrimary),
+                              tooltip: 'Search events',
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                _eventSearchTrigger.value = true;
+                              },
+                            )
                           else
                             IconButton(
                               icon: Icon(Icons.notifications_outlined,
@@ -418,6 +431,7 @@ class _EventsScreenState extends State<EventsScreen>
                   ),
                   _EventsTab(
                     eventService: _eventService,
+                    searchTrigger: _eventSearchTrigger,
                   ),
                   const ServicesScreen(),
                 ],
@@ -2463,8 +2477,12 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
 
 class _EventsTab extends StatefulWidget {
   final EventService eventService;
+  final ValueNotifier<bool> searchTrigger;
 
-  const _EventsTab({required this.eventService});
+  const _EventsTab({
+    required this.eventService,
+    required this.searchTrigger,
+  });
 
   @override
   State<_EventsTab> createState() => _EventsTabState();
@@ -2476,13 +2494,19 @@ class _EventsTabState extends State<_EventsTab> {
   final AiEventDiscoveryService _discovery = AiEventDiscoveryService();
   final InvisibleAiService _invisibleAi = InvisibleAiService();
 
-  // ── State ──────────────────────────────────────────────────
+  // ── Recommender state ──────────────────────────────────────
   bool _recommenderReady = false;
   bool _isDiscovering = false;
   List<ScoredEvent> _recommended = [];
   Map<String, ScoredEvent> _scoredEventMap = {};
 
-  // ── "Less is more" invisible AI state ──────────────────────
+  // ── Inline search state (mirrors Meetups tab) ───────────────
+  bool _isSearchActive = false;
+  String _localSearchQuery = '';
+  final TextEditingController _localSearchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+
+  // ── Legacy NLP / invisible AI state (kept for filter logic) ─
   String _nlpQuery = '';
   final TextEditingController _nlpController = TextEditingController();
   final FocusNode _nlpFocusNode = FocusNode();
@@ -2493,10 +2517,33 @@ class _EventsTabState extends State<_EventsTab> {
   String _priceFilter = 'All';   // All | Free | Paid
   String _formatFilter = 'All';  // All | Online | In-Person
 
+  void _onSearchTrigger() {
+    if (!mounted) return;
+    setState(() => _isSearchActive = true);
+    Future.delayed(const Duration(milliseconds: 50), () {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
+  }
+
+  void _clearSearch() {
+    _localSearchController.clear();
+    _nlpController.clear();
+    setState(() {
+      _isSearchActive = false;
+      _localSearchQuery = '';
+      _nlpQuery = '';
+      _activeParsedFilters = {};
+      _showSuggestions = false;
+    });
+    _searchFocusNode.unfocus();
+    _nlpFocusNode.unfocus();
+  }
+
   @override
   void initState() {
     super.initState();
     _initServices();
+    widget.searchTrigger.addListener(_onSearchTrigger);
     _nlpFocusNode.addListener(() {
       if (mounted) setState(() => _showSuggestions = _nlpFocusNode.hasFocus && _nlpQuery.isEmpty);
     });
@@ -2504,6 +2551,9 @@ class _EventsTabState extends State<_EventsTab> {
 
   @override
   void dispose() {
+    widget.searchTrigger.removeListener(_onSearchTrigger);
+    _localSearchController.dispose();
+    _searchFocusNode.dispose();
     _nlpController.dispose();
     _nlpFocusNode.dispose();
     super.dispose();
@@ -2567,35 +2617,23 @@ class _EventsTabState extends State<_EventsTab> {
     _nlpFocusNode.unfocus();
   }
 
-  void _clearSearch() {
-    _nlpController.clear();
-    setState(() {
-      _nlpQuery = '';
-      _activeParsedFilters = {};
-      _showSuggestions = false;
-    });
-    _nlpFocusNode.unfocus();
-  }
-
   // AI assistant sheet removed — AI now works invisibly behind the scenes.
 
   @override
   Widget build(BuildContext context) {
     if (_recommenderReady) _refreshRecommendations();
 
-    // ── Build events list ────────────────────────────────────
+    // ── Build events list with local search + filters ────────────
     var allEvents = widget.eventService.eventMaps;
 
-    // Apply parent-level search
-    final parentQuery = ''; // search now handled by in-tab search bar
-    if (parentQuery.isNotEmpty) {
+    // Apply inline local search (title / location / organiser)
+    if (_localSearchQuery.isNotEmpty) {
+      final q = _localSearchQuery.toLowerCase();
       allEvents = allEvents.where((e) {
-        final title = (e['title'] as String? ?? '').toLowerCase();
+        final title    = (e['title']    as String? ?? '').toLowerCase();
         final location = (e['location'] as String? ?? '').toLowerCase();
         final organiser = (e['organiser'] as String? ?? '').toLowerCase();
-        return title.contains(parentQuery) ||
-            location.contains(parentQuery) ||
-            organiser.contains(parentQuery);
+        return title.contains(q) || location.contains(q) || organiser.contains(q);
       }).toList();
     }
 
@@ -2607,17 +2645,16 @@ class _EventsTabState extends State<_EventsTab> {
       events = allEvents;
     }
 
-    // Apply manual filters (set via chip row or bottom-sheet)
+    // Apply manual filter (price / format)
     if (_activeManualFilter != 'All') {
       events = events.where((e) {
-        if (_activeManualFilter == 'Free') return e['isFree'] == true;
-        if (_activeManualFilter == 'Paid') return e['isFree'] != true;
-        if (_activeManualFilter == 'Online') return e['isOnline'] == true;
+        if (_activeManualFilter == 'Free')      return e['isFree'] == true;
+        if (_activeManualFilter == 'Paid')      return e['isFree'] != true;
+        if (_activeManualFilter == 'Online')    return e['isOnline'] == true;
         if (_activeManualFilter == 'In-Person') return e['isOnline'] != true;
         return true;
       }).toList();
     }
-    // Apply bottom-sheet price filter
     if (_priceFilter != 'All') {
       events = events.where((e) {
         if (_priceFilter == 'Free') return e['isFree'] == true;
@@ -2625,225 +2662,212 @@ class _EventsTabState extends State<_EventsTab> {
         return true;
       }).toList();
     }
-    // Apply bottom-sheet format filter
     if (_formatFilter != 'All') {
       events = events.where((e) {
-        if (_formatFilter == 'Online') return e['isOnline'] == true;
+        if (_formatFilter == 'Online')    return e['isOnline'] == true;
         if (_formatFilter == 'In-Person') return e['isOnline'] != true;
         return true;
       }).toList();
     }
 
-    // Intelligent sort (AI-powered ranking)
+    // AI-powered intelligent sort
     if (_recommenderReady && events.isNotEmpty) {
       events = _invisibleAi.intelligentSort(events, _scoredEventMap);
     }
 
-    // Show carousel only when clean state (no active search/filter)
+    // Show carousel only in clean (no search / filter) state
     final showCarousel = _recommenderReady &&
         _recommended.isNotEmpty &&
-        parentQuery.isEmpty &&
+        _localSearchQuery.isEmpty &&
         _nlpQuery.isEmpty &&
         _activeManualFilter == 'All' &&
         _priceFilter == 'All' &&
         _formatFilter == 'All';
 
-    // Whether bottom-sheet filters are active
-    final bool hasSheetFilters = _priceFilter != 'All' || _formatFilter != 'All';
-    final int sheetFilterCount = (_priceFilter != 'All' ? 1 : 0) + (_formatFilter != 'All' ? 1 : 0);
+    final bool hasActiveFilter = _priceFilter != 'All' ||
+        _formatFilter != 'All' ||
+        _activeManualFilter != 'All';
 
-    // Active filter chips for NLP
-    final activeNlpChips = _buildActiveNlpChips();
-
-    // ── Accent colour for "Clear All" text ─────────────────────
-    const Color clearAllOrange = HuddlColors.primary;
+    const Color filterText  = Color(0xFF42464C);
+    const Color sectionText = Color(0xFF42464C);
 
     return Column(
       children: [
-        // ── Premium header bar: search + filter/sort row ──────────
+        // ══ TOP HEADER — filter pill ↔ inline search (Meetups pattern) ══
         Container(
           color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row 1: NLP search bar
-              Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: context.hc.inputBg,
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: TextField(
-                  controller: _nlpController,
-                  focusNode: _nlpFocusNode,
-                  onChanged: _onNlpQueryChanged,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: GoogleFonts.poppins(fontSize: 13.5, color: context.hc.textPrimary),
-                  decoration: InputDecoration(
-                    hintText: 'Search events...',
-                    hintStyle: GoogleFonts.poppins(fontSize: 13.5, color: context.hc.textTertiary),
-                    prefixIcon: Icon(Icons.search_rounded, size: 20, color: context.hc.textTertiary.withValues(alpha: 0.7)),
-                    suffixIcon: _nlpQuery.isNotEmpty
-                        ? GestureDetector(
-                            onTap: _clearSearch,
-                            child: Icon(Icons.close_rounded, size: 18, color: context.hc.textTertiary),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    enabledBorder: InputBorder.none,
-                    focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                    isDense: true,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Row 2: "Filter and sort" pill + "Clear All" text
-              Row(
-                children: [
-                  // Filter and sort pill button
-                  Semantics(
-                    label: hasSheetFilters
-                        ? 'Filters active ($sheetFilterCount). Tap to change.'
-                        : 'Filter and sort events',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: () => _showEventsFilterSheet(context),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        height: 38,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: hasSheetFilters
-                              ? HuddlColors.primary.withValues(alpha: 0.08)
-                              : context.hc.surfaceAlt,
-                          borderRadius: BorderRadius.circular(19),
-                          border: Border.all(
-                            color: hasSheetFilters
-                                ? HuddlColors.primary.withValues(alpha: 0.35)
-                                : context.hc.divider,
-                            width: 1.2,
+              // AnimatedCrossFade: filter pill  ↔  inline search bar
+              AnimatedCrossFade(
+                duration: const Duration(milliseconds: 220),
+                crossFadeState: _isSearchActive
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                firstChild: Row(
+                  children: [
+                    Semantics(
+                      label: hasActiveFilter
+                          ? 'Filters active. Tap to change.'
+                          : 'Filter and sort events',
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () => _showEventsFilterSheet(context),
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                size: 18,
+                                color: hasActiveFilter
+                                    ? HuddlColors.primary
+                                    : filterText,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                hasActiveFilter ? 'Filter and sort •' : 'Filter and sort',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: hasActiveFilter
+                                      ? HuddlColors.primary
+                                      : filterText,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: 16,
-                              color: hasSheetFilters
-                                  ? HuddlColors.primary
-                                  : context.hc.textSecondary,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Clear all — visible only when filters active
+                    if (hasActiveFilter)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _priceFilter = 'All';
+                            _formatFilter = 'All';
+                            _activeManualFilter = 'All';
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 8),
+                          child: Text(
+                            'Clear',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              hasSheetFilters
-                                  ? 'Filter and sort ($sheetFilterCount)'
-                                  : 'Filter and sort',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                color: hasSheetFilters
-                                    ? HuddlColors.primary
-                                    : context.hc.textSecondary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                // ── Inline search bar ──────────────────────────────────
+                secondChild: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: HuddlColors.background,
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                              color: HuddlColors.primary.withValues(alpha: 0.35),
+                              width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 14),
+                            const Icon(Icons.search, size: 18,
+                                color: HuddlColors.primary),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _localSearchController,
+                                focusNode: _searchFocusNode,
+                                onChanged: (v) =>
+                                    setState(() => _localSearchQuery = v),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 14, color: filterText),
+                                decoration: InputDecoration(
+                                  hintText: 'Search events\u2026',
+                                  hintStyle: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: HuddlColors.textTertiary),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
                               ),
                             ),
+                            if (_localSearchQuery.isNotEmpty)
+                              GestureDetector(
+                                onTap: () => setState(() {
+                                  _localSearchQuery = '';
+                                  _localSearchController.clear();
+                                }),
+                                child: const Padding(
+                                  padding: EdgeInsets.only(right: 10),
+                                  child: Icon(Icons.close, size: 16,
+                                      color: HuddlColors.textTertiary),
+                                ),
+                              ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                  const Spacer(),
-                  // "Clear All" — only visible when any filter/search is active
-                  if (hasSheetFilters || _activeManualFilter != 'All' || _nlpQuery.isNotEmpty)
+                    const SizedBox(width: 10),
                     GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        setState(() {
-                          _priceFilter = 'All';
-                          _formatFilter = 'All';
-                          _activeManualFilter = 'All';
-                        });
-                        _clearSearch();
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                        child: Text(
-                          'Clear All',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: clearAllOrange,
-                          ),
+                      onTap: _clearSearch,
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.primary,
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 12),
+              // Section label — mirrors Meetups pattern
+              Text(
+                _localSearchQuery.isEmpty ? 'Suggested for you' : 'Search results',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: sectionText,
+                ),
+              ),
+              const SizedBox(height: 4),
             ],
           ),
         ),
 
-        // ── AI Suggestions (shown when search is focused & empty) ──
-        if (_showSuggestions)
-          _buildSuggestionsPanel(),
-
-        // ── Active NLP filter chips (shown when smart search is active) ──
-        if (activeNlpChips.isNotEmpty && _nlpQuery.isNotEmpty)
-          Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-            child: Row(
-              children: [
-                Icon(Icons.filter_list_rounded, size: 14, color: context.hc.textTertiary),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(children: activeNlpChips),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-        // ── Filter chips row (always visible, premium style) ──────
-        Container(
-          color: context.hc.surface,
-          padding: const EdgeInsets.only(bottom: 10),
-          child: SizedBox(
-            height: 38,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: _invisibleAi.adaptiveFilterOrder.map((f) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _FilterChip(
-                  label: f,
-                  isSelected: _activeManualFilter == f ||
-                      (f == 'Free' && _priceFilter == 'Free') ||
-                      (f == 'Paid' && _priceFilter == 'Paid') ||
-                      (f == 'Online' && _formatFilter == 'Online') ||
-                      (f == 'In-Person' && _formatFilter == 'In-Person'),
-                  // Events tab uses blue active chips (reference design)
-                  selectedColor: HuddlColors.blueDark,
-                  onTap: () {
-                    _invisibleAi.trackFilterClick(f);
-                    setState(() {
-                      _priceFilter = 'All';
-                      _formatFilter = 'All';
-                      _activeManualFilter = (_activeManualFilter == f) ? 'All' : f;
-                    });
-                  },
-                ),
-              )).toList(),
-            ),
-          ),
-        ),
-
-        // ── Discovering indicator ─────────────────────────────
+        // ── Discovering indicator ─────────────────────────────────
         if (_isDiscovering)
           Container(
             color: context.hc.surface,
@@ -2853,46 +2877,48 @@ class _EventsTabState extends State<_EventsTab> {
                 const SizedBox(
                   width: 14, height: 14,
                   child: CircularProgressIndicator(
-                    strokeWidth: 2, color: HuddlColors.teal),
+                      strokeWidth: 2, color: HuddlColors.teal),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   'Finding events for you\u2026',
                   style: GoogleFonts.poppins(
-                    fontSize: 12, color: HuddlColors.teal, fontWeight: FontWeight.w500),
+                      fontSize: 12,
+                      color: HuddlColors.teal,
+                      fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
 
-        // ── Event list (off-white #F7F7F7 background) ────────────
+        // ── Event list ───────────────────────────────────────────
         Expanded(
           child: ColoredBox(
             color: HuddlColors.background,
             child: events.isEmpty && !showCarousel
                 ? _EmptyState(
-                    icon: hasSheetFilters || _activeManualFilter != 'All'
+                    icon: hasActiveFilter
                         ? Icons.filter_list_off
                         : Icons.event_outlined,
                     illustration: HuddlIllustration.events,
-                    title: _nlpQuery.isNotEmpty
+                    title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
-                        : (hasSheetFilters || _activeManualFilter != 'All')
+                        : hasActiveFilter
                             ? 'No events match your filters'
                             : 'No events found',
-                    subtitle: _nlpQuery.isNotEmpty
-                        ? 'Try a different search like\n"free baby classes near me"'
-                        : (hasSheetFilters || _activeManualFilter != 'All')
+                    subtitle: _localSearchQuery.isNotEmpty
+                        ? 'Try a different search term.'
+                        : hasActiveFilter
                             ? 'Try adjusting or clearing your filters.'
-                            : 'Pull down to refresh or try searching.',
-                    actionLabel: _nlpQuery.isNotEmpty
+                            : 'Pull down to refresh or use the search icon.',
+                    actionLabel: _localSearchQuery.isNotEmpty
                         ? 'Clear search'
-                        : (hasSheetFilters || _activeManualFilter != 'All')
+                        : hasActiveFilter
                             ? 'Clear filters'
                             : null,
-                    onAction: _nlpQuery.isNotEmpty
+                    onAction: _localSearchQuery.isNotEmpty
                         ? _clearSearch
-                        : (hasSheetFilters || _activeManualFilter != 'All')
+                        : hasActiveFilter
                             ? () => setState(() {
                                   _priceFilter = 'All';
                                   _formatFilter = 'All';
@@ -2904,8 +2930,9 @@ class _EventsTabState extends State<_EventsTab> {
                     onRefresh: _forceRefreshDiscovery,
                     color: HuddlColors.primary,
                     child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      keyboardDismissBehavior:
+                          ScrollViewKeyboardDismissBehavior.onDrag,
                       itemCount: events.length + (showCarousel ? 1 : 0),
                       itemBuilder: (_, i) {
                         if (showCarousel && i == 0) {
@@ -4346,7 +4373,6 @@ class _EventListCardState extends State<_EventListCard> {
     const Radius cardRadius = Radius.circular(20);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
-    final String organiser = event['organiser'] as String? ?? '';
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
     final String borough = event['borough'] as String? ?? '';
@@ -4619,77 +4645,90 @@ class _EventListCardState extends State<_EventListCard> {
                 ),
               ),
 
-              // ── Bottom action row ──────────────────────────────────────
+              // ── Bottom row: avatar stack + count (left) + Join pill (right) ──
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 12, 14),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
                 child: Row(
                   children: [
-                    // Attendees count
-                    Icon(Icons.people_outline, size: 14, color: context.hc.textTertiary),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$attendees interested',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textTertiary,
+                    // Overlapping real-photo avatar circles — mirrors Groups/Meetups cards
+                    SizedBox(
+                      width: 62,
+                      height: 24,
+                      child: Stack(
+                        children: [
+                          for (int i = 0; i < 3; i++)
+                            Positioned(
+                              left: i * 18.0,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: Colors.white, width: 1.5),
+                                ),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    _kAttendeeAvatars[
+                                        (eventId.hashCode + i) %
+                                            _kAttendeeAvatars.length],
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: eventTypeBlue.withValues(alpha: 0.25),
+                                      child: Icon(Icons.person,
+                                          size: 12, color: eventTypeBlue),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                    if (organiser.isNotEmpty) ...[
-                      const SizedBox(width: 10),
-                      Container(
-                        width: 4, height: 4,
-                        decoration: BoxDecoration(
-                          color: context.hc.textTertiary.withValues(alpha: 0.4),
-                          shape: BoxShape.circle,
+                    const SizedBox(width: 6),
+                    // Attendee count
+                    Expanded(
+                      child: Text(
+                        '$attendees attending',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: context.hc.textTertiary,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          organiser,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: context.hc.textTertiary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ] else
-                      const Spacer(),
-                    // Floating blue circular "See details" button
+                    ),
+                    // Join pill — Groups-style grey
                     GestureDetector(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         Navigator.push(
                           context,
                           PageRouteBuilder(
-                            pageBuilder: (_, __, ___) => EventDetailScreen(event: event),
-                            transitionsBuilder: (_, animation, __, child) {
-                              return FadeTransition(opacity: animation, child: child);
-                            },
-                            transitionDuration: const Duration(milliseconds: 300),
+                            pageBuilder: (_, __, ___) =>
+                                EventDetailScreen(event: event),
+                            transitionsBuilder: (_, animation, __, child) =>
+                                FadeTransition(opacity: animation, child: child),
+                            transitionDuration:
+                                const Duration(milliseconds: 300),
                           ),
                         );
                       },
                       child: Container(
-                        width: 40,
-                        height: 40,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
-                          color: eventTypeBlue,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: eventTypeBlue.withValues(alpha: 0.35),
-                              blurRadius: 10,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
+                          color: const Color(0xFFF2F2F2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.arrow_forward_rounded,
-                            color: Colors.white, size: 20),
+                        child: Text(
+                          'Join',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF42464C),
+                          ),
+                        ),
                       ),
                     ),
                   ],
