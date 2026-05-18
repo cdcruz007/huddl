@@ -127,7 +127,7 @@ class _GroupsScreenState extends State<GroupsScreen>
     _searchController.clear();
     _searchFocusNode.unfocus();
     _searchNotifier.value = '';
-    if (_isSearchActive) setState(() => _isSearchActive = false);
+    setState(() => _isSearchActive = false);
   }
 
   String get _searchHint {
@@ -156,31 +156,129 @@ class _GroupsScreenState extends State<GroupsScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header: Connect title + tabs + shared search bar ───
+            // ── Header: Connect title (or search bar) + tabs ──────────
             Container(
               color: context.hc.surface,
               padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title row
-                  Row(
-                    children: [
-                      Text(
-                        'Connect',
-                        style: _adaptiveText(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: context.hc.textPrimary,
+                  // Title row — collapses into search bar when active
+                  AnimatedCrossFade(
+                    duration: const Duration(milliseconds: 200),
+                    crossFadeState: _isSearchActive
+                        ? CrossFadeState.showSecond
+                        : CrossFadeState.showFirst,
+                    firstChild: Row(
+                      children: [
+                        Text(
+                          'Connect',
+                          style: _adaptiveText(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary,
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                        const BoroughScopeChip(feature: HuddlFeature.chat),
+                        const Spacer(),
+                        // 🔍 Search trigger icon — top-right, above tabs
+                        IconButton(
+                          onPressed: () {
+                            setState(() => _isSearchActive = true);
+                            Future.microtask(() => _searchFocusNode.requestFocus());
+                          },
+                          icon: Icon(
+                            Icons.search,
+                            color: context.hc.textSecondary,
+                            size: 22,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          tooltip: 'Search',
+                        ),
+                      ],
+                    ),
+                    // Expanded search bar — replaces title row
+                    secondChild: SizedBox(
+                      height: 36,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: context.hc.inputBg,
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Row(
+                                children: [
+                                  const SizedBox(width: 12),
+                                  Icon(Icons.search,
+                                      size: 16,
+                                      color: context.hc.textTertiary
+                                          .withValues(alpha: 0.7)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      focusNode: _searchFocusNode,
+                                      autofocus: false,
+                                      onChanged: (val) =>
+                                          _searchNotifier.value = val,
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          color: context.hc.textPrimary),
+                                      decoration: InputDecoration(
+                                        hintText: _searchHint,
+                                        border: InputBorder.none,
+                                        enabledBorder: InputBorder.none,
+                                        focusedBorder: InputBorder.none,
+                                        contentPadding: EdgeInsets.zero,
+                                        isDense: true,
+                                        hintStyle: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: context.hc.textTertiary),
+                                      ),
+                                    ),
+                                  ),
+                                  if (_searchController.text.isNotEmpty)
+                                    GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                        _searchNotifier.value = '';
+                                        setState(() {});
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8),
+                                        child: Icon(Icons.close,
+                                            size: 15,
+                                            color: context.hc.textTertiary),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: _clearSearch,
+                            child: Text(
+                              'Cancel',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: HuddlColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      const BoroughScopeChip(feature: HuddlFeature.chat),
-                      const Spacer(),
-                    ],
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  // Tabs
+                  // Tabs — always visible, no search bar below them
                   TabBar(
                     controller: _tabController,
                     tabs: const [
@@ -200,87 +298,6 @@ class _GroupsScreenState extends State<GroupsScreen>
                     padding: EdgeInsets.zero,
                     labelPadding:
                         const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                  // Shared search bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 10, 4, 10),
-                    child: Container(
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: context.hc.inputBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        children: [
-                          // Search icon — tap activates input
-                          GestureDetector(
-                            onTap: () {
-                              setState(() => _isSearchActive = true);
-                              _searchFocusNode.requestFocus();
-                            },
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 12, right: 8),
-                              child: Icon(Icons.search,
-                                  size: 18,
-                                  color: context.hc.textTertiary
-                                      .withValues(alpha: 0.7)),
-                            ),
-                          ),
-                          Expanded(
-                            child: _isSearchActive
-                                ? TextField(
-                                    controller: _searchController,
-                                    focusNode: _searchFocusNode,
-                                    autofocus: false,
-                                    onChanged: (val) =>
-                                        _searchNotifier.value = val,
-                                    style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: context.hc.textPrimary),
-                                    decoration: InputDecoration(
-                                      hintText: _searchHint,
-                                      border: InputBorder.none,
-                                      enabledBorder: InputBorder.none,
-                                      focusedBorder: InputBorder.none,
-                                      contentPadding: EdgeInsets.zero,
-                                      isDense: true,
-                                      hintStyle: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          color: context.hc.textTertiary),
-                                    ),
-                                  )
-                                : GestureDetector(
-                                    onTap: () {
-                                      setState(
-                                          () => _isSearchActive = true);
-                                      _searchFocusNode.requestFocus();
-                                    },
-                                    child: Text(
-                                      _searchHint,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          color: context.hc.textTertiary),
-                                    ),
-                                  ),
-                          ),
-                          // Clear button (only when active)
-                          if (_isSearchActive)
-                            GestureDetector(
-                              onTap: _clearSearch,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10),
-                                child: Icon(Icons.close,
-                                    size: 16,
-                                    color: context.hc.textTertiary),
-                              ),
-                            )
-                          else
-                            const SizedBox(width: 10),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
