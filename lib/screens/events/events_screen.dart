@@ -3596,7 +3596,7 @@ class _MeetupCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                         ],
-                        // Type badge: "Private" (lock) for restricted, "Meetup" category for open
+                        // Type badge: "Private" lock only — shown when restricted
                         if (isRestricted)
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -3618,22 +3618,6 @@ class _MeetupCard extends StatelessWidget {
                                   ),
                                 ),
                               ],
-                            ),
-                          )
-                        else
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.blueDark,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'Meetup',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
                             ),
                           ),
                       ],
