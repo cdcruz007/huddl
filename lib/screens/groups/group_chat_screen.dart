@@ -5620,14 +5620,14 @@ class _ChatBubble extends StatelessWidget {
                               children: [
                                 if (isSaved) ...[
                                   Icon(Icons.bookmark, size: 12,
-                                      color: HuddlColors.primary.withValues(alpha: 0.6)),
+                                      color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : HuddlColors.primary.withValues(alpha: 0.6)),
                                   const SizedBox(width: 4),
                                 ],
                                 Text(
                                   _formatTime(message.timestamp),
                                   style: GoogleFonts.poppins(
                                     fontSize: 10,
-                                    color: context.hc.textTertiary,
+                                    color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : context.hc.textTertiary,
                                   ),
                                 ),
                                 if (isMe && messageStatus != null) ...[
@@ -5884,10 +5884,11 @@ class _ChatBubble extends StatelessWidget {
   }
 
   Widget _buildHighlightedText(String text, String query, {bool isMe = false}) {
+    final baseColor = isMe ? HuddlColors.white : HuddlColors.textDark;
     if (query.isEmpty) {
       return Text(text,
           style: GoogleFonts.poppins(
-              fontSize: 14, color: HuddlColors.textDark, height: 1.4));
+              fontSize: 14, color: baseColor, height: 1.4));
     }
     final spans = <TextSpan>[];
     final lower = text.toLowerCase();
@@ -5919,7 +5920,7 @@ class _ChatBubble extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textDark, height: 1.4),
+            fontSize: 14, color: baseColor, height: 1.4),
         children: spans,
       ),
     );

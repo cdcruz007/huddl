@@ -36,8 +36,8 @@ import '../../services/voice_message_service.dart';
 import '../../services/firestore_service.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-// My-bubble: very soft brand orange tint (non-const — uses runtime withValues)
-final Color _kMyBubble = HuddlColors.primary.withValues(alpha: 0.10);
+// My-bubble: solid brand orange (Figma spec)
+const Color _kMyBubble = HuddlColors.primary;
 
 /// Maps borough member IDs to realistic profile photo URLs
 const Map<String, String> _kMemberProfilePhotos = {
@@ -2853,7 +2853,7 @@ class _DMBubble extends StatelessWidget {
                                 message.message,
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
-                                  color: context.hc.textPrimary,
+                                  color: isMe ? HuddlColors.white : context.hc.textPrimary,
                                   height: 1.4,
                                 ),
                               ),
@@ -2866,12 +2866,12 @@ class _DMBubble extends StatelessWidget {
                               _formatTime(message.timestamp),
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
-                                color: context.hc.textTertiary,
+                                color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : context.hc.textTertiary,
                               ),
                             ),
                             if (isSaved) ...[
                               Icon(Icons.bookmark, size: 12,
-                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
+                                  color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : HuddlColors.primary.withValues(alpha: 0.6)),
                               const SizedBox(width: 4),
                             ],
                             if (isMe) ...[
@@ -3099,10 +3099,11 @@ class _DMBubble extends StatelessWidget {
   }
 
   Widget _buildHighlightedText(String text, String query, {bool isMe = false}) {
+    final baseColor = isMe ? HuddlColors.white : HuddlColors.textDark;
     if (query.isEmpty) {
       return Text(text,
           style: GoogleFonts.poppins(
-              fontSize: 14, color: HuddlColors.textDark, height: 1.4));
+              fontSize: 14, color: baseColor, height: 1.4));
     }
     final spans = <TextSpan>[];
     final lower = text.toLowerCase();
@@ -3134,7 +3135,7 @@ class _DMBubble extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: GoogleFonts.poppins(
-            fontSize: 14, color: HuddlColors.textDark, height: 1.4),
+            fontSize: 14, color: baseColor, height: 1.4),
         children: spans,
       ),
     );
