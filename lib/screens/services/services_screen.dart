@@ -707,8 +707,11 @@ class _ListingCardState extends State<_ListingCard> {
     final hc = context.hc;
     final listing = widget.listing;
     final catColor = _categoryColor(listing.category);
-    final imageUrl = _kCategoryImages[listing.category] ??
-        _kCategoryImages[ServiceCategory.childcare]!;
+    // Use per-listing image (from business website), falling back to category image
+    final imageUrl = (listing.imageUrl?.isNotEmpty == true)
+        ? listing.imageUrl!
+        : (_kCategoryImages[listing.category] ??
+            _kCategoryImages[ServiceCategory.childcare]!);
 
     // ── Verification badge ────────────────────────────────────────────────
     String? badgeLabel;

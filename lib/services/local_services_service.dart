@@ -220,6 +220,10 @@ class ServiceListing {
   /// When the AI discovery job last found/updated this listing
   final DateTime? aiDiscoveredAt;
 
+  /// Per-listing image URL sourced from the business website or web search.
+  /// Falls back to category image in the UI if null or empty.
+  final String? imageUrl;
+
   const ServiceListing({
     required this.id,
     required this.name,
@@ -243,6 +247,7 @@ class ServiceListing {
     this.listingSource = 'parent_added',
     this.aiRating,
     this.aiDiscoveredAt,
+    this.imageUrl,
   });
 
   ServiceListing copyWith({
@@ -268,6 +273,7 @@ class ServiceListing {
     String? listingSource,
     double? aiRating,
     DateTime? aiDiscoveredAt,
+    String? imageUrl,
   }) => ServiceListing(
         id:                  id                  ?? this.id,
         name:                name                ?? this.name,
@@ -291,6 +297,7 @@ class ServiceListing {
         listingSource:       listingSource       ?? this.listingSource,
         aiRating:            aiRating            ?? this.aiRating,
         aiDiscoveredAt:      aiDiscoveredAt      ?? this.aiDiscoveredAt,
+        imageUrl:            imageUrl            ?? this.imageUrl,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -313,6 +320,7 @@ class ServiceListing {
         'listingSource':     listingSource,
         if (aiRating != null)       'aiRating':       aiRating,
         if (aiDiscoveredAt != null) 'aiDiscoveredAt': Timestamp.fromDate(aiDiscoveredAt!),
+        if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
       };
 
   factory ServiceListing.fromFirestore(
@@ -348,6 +356,7 @@ class ServiceListing {
       aiDiscoveredAt: d['aiDiscoveredAt'] is Timestamp
           ? (d['aiDiscoveredAt'] as Timestamp).toDate()
           : null,
+      imageUrl:       d['imageUrl'] as String?,
     );
   }
 }
