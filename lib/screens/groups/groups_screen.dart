@@ -3361,13 +3361,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
   }
 
-  final List<String> _sortOptions = [
-    'Recommended',
-    'Most Members',
-    'Newest',
-    'A-Z',
-  ];
-
   final List<_GroupItem> _allDiscoverGroups = [
     // ── GENERAL / POPULAR ──────────────────────────────────────────────────
     _GroupItem(
@@ -4135,6 +4128,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   void _showFilterSortSheet() {
     Set<String> tempAudiences = Set<String>.from(_selectedAudiences);
     String tempSort = _selectedSort;
+    bool tempSmartSort = _aiRecommendationsEnabled;
 
     showModalBottomSheet(
       context: context,
@@ -4143,234 +4137,293 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setSheetState) {
+            // ── helper: non-Recommended sort options ─────────────────
+            const otherSorts = ['Most Members', 'Newest', 'A-Z'];
+
             return Container(
               decoration: BoxDecoration(
                 color: context.hc.surface,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              // Let sheet grow with content but cap at 92% of screen
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.92,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Header: X  |  "Filter and sort"  |  RESET ──────
-                  Row(
-                    children: [
-                      Semantics(
-                        label: 'Close filter sheet',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(ctx);
-                          },
-                          child: SizedBox(
-                            width: 48, height: 48, // P0: 48dp touch target
-                            child: Icon(Icons.close, size: 24, color: context.hc.textPrimary),
+                  // ── drag handle ──────────────────────────────────────
+                  Container(
+                    width: 40, height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.gray300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          // ── Header: X | "Filter and sort" | RESET ──
+                          Row(
+                            children: [
+                              Semantics(
+                                label: 'Close filter sheet',
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    Navigator.pop(ctx);
+                                  },
+                                  child: SizedBox(
+                                    width: 48, height: 48,
+                                    child: Icon(Icons.close, size: 24,
+                                        color: context.hc.textPrimary),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: Text('Filter and sort',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 18, fontWeight: FontWeight.w700,
+                                      color: context.hc.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Semantics(
+                                label: 'Reset all filters',
+                                button: true,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    setSheetState(() {
+                                      tempAudiences = {};
+                                      tempSort = 'Recommended';
+                                      tempSmartSort = true;
+                                    });
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8),
+                                    child: Text('RESET',
+                                      style: _adaptiveText(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: HuddlColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Text(
-                            'Filter and sort',
+                          const SizedBox(height: 24),
+
+                          // ── "Show groups for" checkboxes ─────────────
+                          Text('Show groups for',
                             style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+                              fontSize: 16, fontWeight: FontWeight.w600,
                               color: context.hc.textPrimary,
                             ),
                           ),
-                        ),
-                      ),
-                      Semantics(
-                        label: 'Reset all filters',
-                        button: true,
-                        child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setSheetState(() {
-                              tempAudiences = {};
-                              tempSort = 'Recommended';
-                            });
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Text(
-                              'RESET',
-                              style: _adaptiveText(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-
-                  // ── "Show groups for" multi-select checkboxes ──────
-                  Text(
-                    'Show groups for',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ..._audienceLabels.map((label) {
-                    final isChecked = tempAudiences.contains(label);
-                    return Semantics(
-                      label: isChecked ? '$label filter selected' : '$label filter',
-                      toggled: isChecked,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setSheetState(() {
-                            if (isChecked) {
-                              tempAudiences.remove(label);
-                            } else {
-                              tempAudiences.add(label);
-                            }
-                          });
-                        },
-                        behavior: HitTestBehavior.opaque,
-                        child: Container(
-                          constraints: const BoxConstraints(minHeight: 48), // P0: 48dp min touch height
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                          children: [
-                            Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                color: isChecked ? HuddlColors.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: isChecked ? HuddlColors.primary : HuddlColors.gray300,
-                                  width: 2,
+                          const SizedBox(height: 10),
+                          ..._audienceLabels.map((label) {
+                            final isChecked = tempAudiences.contains(label);
+                            return Semantics(
+                              label: isChecked
+                                  ? '$label filter selected'
+                                  : '$label filter',
+                              toggled: isChecked,
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setSheetState(() {
+                                    if (isChecked) {
+                                      tempAudiences.remove(label);
+                                    } else {
+                                      tempAudiences.add(label);
+                                    }
+                                  });
+                                },
+                                behavior: HitTestBehavior.opaque,
+                                child: Container(
+                                  constraints: const BoxConstraints(minHeight: 48),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 26, height: 26,
+                                        decoration: BoxDecoration(
+                                          color: isChecked
+                                              ? HuddlColors.primary
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: isChecked
+                                                ? HuddlColors.primary
+                                                : HuddlColors.gray300,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: isChecked
+                                            ? const Icon(Icons.check,
+                                                size: 18, color: HuddlColors.white)
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 14),
+                                      Text(label,
+                                        style: _adaptiveText(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                          color: context.hc.textPrimary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              child: isChecked
-                                  ? const Icon(Icons.check, size: 18, color: HuddlColors.white)
-                                  : null,
-                            ),
-                            const SizedBox(width: 14),
-                            Text(
-                              label,
-                              style: _adaptiveText(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                                color: context.hc.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    );
-                  }),
-                  const SizedBox(height: 24),
+                            );
+                          }),
+                          const SizedBox(height: 24),
 
-                  // ── Sort by section (kept from existing) ──────────
-                  Text(
-                    'Sort by',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.hc.textPrimary,
+                          // ╔══════════════════════════════════════════════╗
+                          // ║  SORT BY                                     ║
+                          // ╚══════════════════════════════════════════════╝
+                          Text('Sort by',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16, fontWeight: FontWeight.w600,
+                              color: context.hc.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // ── ① Smart Sort card (Recommended) ─────────
+                          _buildSmartSortCard(
+                            isSelected: tempSort == 'Recommended',
+                            smartEnabled: tempSmartSort,
+                            onTap: () {
+                              HapticFeedback.selectionClick();
+                              setSheetState(() => tempSort = 'Recommended');
+                            },
+                            onToggle: (val) {
+                              HapticFeedback.selectionClick();
+                              setSheetState(() {
+                                tempSmartSort = val;
+                                // selecting the card when enabling smart sort
+                                if (val) tempSort = 'Recommended';
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 6),
+
+                          // ── ② Other sort options ─────────────────────
+                          ...otherSorts.map((option) {
+                            final isActive = tempSort == option;
+                            return Semantics(
+                              label: isActive
+                                  ? '$option sort selected'
+                                  : 'Sort by $option',
+                              selected: isActive,
+                              child: GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setSheetState(() => tempSort = option);
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  constraints:
+                                      const BoxConstraints(minHeight: 48),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 12),
+                                  margin: const EdgeInsets.only(bottom: 6),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? HuddlColors.primary
+                                            .withValues(alpha: 0.07)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isActive
+                                          ? HuddlColors.primary
+                                              .withValues(alpha: 0.25)
+                                          : Colors.transparent,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(_sortIcon(option),
+                                        size: 18,
+                                        color: isActive
+                                            ? HuddlColors.primary
+                                            : HuddlColors.textHint,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(option,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: isActive
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                          color: isActive
+                                              ? HuddlColors.primary
+                                              : HuddlColors.textDark,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      if (isActive)
+                                        const Icon(Icons.check_circle,
+                                            size: 20,
+                                            color: HuddlColors.primary),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  ..._sortOptions.map((option) {
-                    final isActive = tempSort == option;
-                    return Semantics(
-                      label: isActive ? '$option sort selected' : 'Sort by $option',
-                      selected: isActive,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setSheetState(() => tempSort = option);
+
+                  // ── Apply button (sticky at bottom) ──────────────────
+                  Container(
+                    color: context.hc.surface,
+                    padding: EdgeInsets.fromLTRB(
+                        20, 10, 20,
+                        MediaQuery.of(ctx).padding.bottom + 16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _selectedAudiences = tempAudiences;
+                            _selectedSort = tempSort;
+                            _aiRecommendationsEnabled = tempSmartSort;
+                          });
                         },
-                        child: Container(
-                          width: double.infinity,
-                          constraints: const BoxConstraints(minHeight: 48), // P0: 48dp min touch height
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                        margin: const EdgeInsets.only(bottom: 6),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? HuddlColors.primary.withValues(alpha: 0.08)
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isActive
-                                ? HuddlColors.primary.withValues(alpha: 0.3)
-                                : Colors.transparent,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: HuddlColors.primary,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(26),
                           ),
                         ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _sortIcon(option),
-                              size: 18,
-                              color: isActive
-                                  ? HuddlColors.primary
-                                  : HuddlColors.textHint,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              option,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: isActive
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: isActive
-                                    ? HuddlColors.primary
-                                    : HuddlColors.textDark,
-                              ),
-                            ),
-                            const Spacer(),
-                            if (isActive)
-                              const Icon(Icons.check_circle,
-                                  size: 20, color: HuddlColors.primary),
-                          ],
-                        ),
-                      ),
-                    ),
-                    );
-                  }),
-                  const SizedBox(height: 20),
-
-                  // ── Apply button ───────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.pop(ctx);
-                        setState(() {
-                          _selectedAudiences = tempAudiences;
-                          _selectedSort = tempSort;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: HuddlColors.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(25),
-                        ),
-                      ),
-                      child: Text(
-                        'Apply',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.surface,
+                        child: Text('Apply',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16, fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -4381,6 +4434,271 @@ class _DiscoverTabState extends State<_DiscoverTab> {
           },
         );
       },
+    );
+  }
+
+  // ── Smart Sort card widget ────────────────────────────────────────────────
+  Widget _buildSmartSortCard({
+    required bool isSelected,
+    required bool smartEnabled,
+    required VoidCallback onTap,
+    required ValueChanged<bool> onToggle,
+  }) {
+    // Compute a live score preview for the current user's profile
+    final sampleScore = _discoverAi.getGroupRecommendationScore(
+      {'id': 'sample', 'category': 'PARENTING', 'memberCount': 500,
+       'creatorBorough': _userBorough, 'targetAudience': <String>[]},
+      userBorough: _userBorough,
+      parentType: _userParentType,
+      stagesOfLife: _userStagesOfLife,
+    );
+    final scoreFactors = _buildScoreFactors();
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  colors: [
+                    HuddlColors.primary.withValues(alpha: 0.12),
+                    HuddlColors.blueUI.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : HuddlColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? HuddlColors.primary.withValues(alpha: 0.45)
+                : HuddlColors.divider,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── Row 1: icon + title + AI badge + checkmark ──────────
+            Row(
+              children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? HuddlColors.primary
+                        : HuddlColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.auto_awesome_rounded,
+                    size: 18,
+                    color: isSelected ? Colors.white : HuddlColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('Smart Sort',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: isSelected
+                                  ? HuddlColors.primary
+                                  : HuddlColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // AI badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [HuddlColors.blueUI, HuddlColors.primary],
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text('AI',
+                              style: GoogleFonts.poppins(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text('Personalised to your profile',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: HuddlColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(Icons.check_circle,
+                      size: 22, color: HuddlColors.primary),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // ── Row 2: score factor pills ────────────────────────────
+            if (scoreFactors.isNotEmpty)
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: scoreFactors.map((f) => _scoreFactorPill(f)).toList(),
+              ),
+
+            if (scoreFactors.isNotEmpty) const SizedBox(height: 12),
+
+            // ── Row 3: "What's this?" description ────────────────────
+            Text(
+              'Groups are ranked by how well they match your profile — '
+              'borough, parenting stage, interests, and activity.',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: HuddlColors.textSecondary,
+                height: 1.45,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
+
+            // ── Row 4: Smart Sort on/off toggle ─────────────────────
+            Row(
+              children: [
+                Icon(
+                  smartEnabled
+                      ? Icons.psychology_rounded
+                      : Icons.psychology_alt_outlined,
+                  size: 16,
+                  color: smartEnabled
+                      ? HuddlColors.primary
+                      : HuddlColors.textTertiary,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    smartEnabled
+                        ? 'AI ranking active'
+                        : 'AI ranking off — showing default order',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: smartEnabled
+                          ? HuddlColors.primary
+                          : HuddlColors.textTertiary,
+                    ),
+                  ),
+                ),
+                Transform.scale(
+                  scale: 0.82,
+                  alignment: Alignment.centerRight,
+                  child: Switch(
+                    value: smartEnabled,
+                    activeThumbColor: HuddlColors.primary,
+                    activeTrackColor: HuddlColors.primary.withValues(alpha: 0.35),
+                    onChanged: onToggle,
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Row 5: score bar (only when AI is on) ───────────────
+            if (smartEnabled) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text('Match quality',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: HuddlColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: (sampleScore / 100).clamp(0.0, 1.0),
+                        minHeight: 6,
+                        backgroundColor:
+                            HuddlColors.primary.withValues(alpha: 0.12),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                            HuddlColors.primary),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('${sampleScore.round()}%',
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Returns a short list of scoring factors active for the current user.
+  List<String> _buildScoreFactors() {
+    final factors = <String>[];
+    if (_userBorough != null && _userBorough!.isNotEmpty &&
+        _userBorough != 'Unknown Borough') {
+      factors.add('📍 ${_userBorough!}');
+    }
+    if (_userParentType == 'mum') {
+      factors.add('👩 Mums');
+    } else if (_userParentType == 'dad') {
+      factors.add('👨 Dads');
+    }
+    if (_userStagesOfLife.contains('expecting')) {
+      factors.add('🤰 Expecting');
+    }
+    if (_userStagesOfLife.contains('new_parent')) {
+      factors.add('👶 New parent');
+    }
+    factors.add('⭐ Popularity');
+    return factors;
+  }
+
+  Widget _scoreFactorPill(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: HuddlColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: HuddlColors.primary.withValues(alpha: 0.18),
+        ),
+      ),
+      child: Text(label,
+        style: GoogleFonts.poppins(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: HuddlColors.primary,
+        ),
+      ),
     );
   }
 
