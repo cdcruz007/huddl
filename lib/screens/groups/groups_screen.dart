@@ -105,20 +105,46 @@ class _GroupsScreenState extends State<GroupsScreen>
   /// Shared notifier: increment to tell tabs to reload user-created groups.
   final ValueNotifier<int> _groupsChangedNotifier = ValueNotifier<int>(0);
 
+  /// Shared search query — passed to each tab so they can filter their content.
+  final ValueNotifier<String> _searchNotifier = ValueNotifier<String>('');
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
+  bool _isSearchActive = false;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
-        setState(() {}); // rebuild to show/hide header icons per tab
+        _clearSearch();       // reset search when switching tabs
+        setState(() {});      // rebuild hint text + header icons
       }
     });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    _searchNotifier.value = '';
+    if (_isSearchActive) setState(() => _isSearchActive = false);
+  }
+
+  String get _searchHint {
+    switch (_tabController.index) {
+      case 0:  return 'Search chats…';
+      case 1:  return 'Search attending…';
+      case 2:  return 'Search saved…';
+      default: return 'Search…';
+    }
   }
 
   @override
   void dispose() {
     _groupsChangedNotifier.dispose();
+    _searchNotifier.dispose();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -130,17 +156,18 @@ class _GroupsScreenState extends State<GroupsScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── Minimal header ─────────────────────────────────────
+            // ── Header: Connect title + tabs + shared search bar ───
             Container(
               color: context.hc.surface,
               padding: const EdgeInsets.fromLTRB(20, 10, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Title row
                   Row(
                     children: [
                       Text(
-                        'Groups',
+                        'Connect',
                         style: _adaptiveText(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -148,13 +175,12 @@ class _GroupsScreenState extends State<GroupsScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const BoroughScopeChip(
-                        feature: HuddlFeature.chat,
-                      ),
+                      const BoroughScopeChip(feature: HuddlFeature.chat),
                       const Spacer(),
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // Tabs
                   TabBar(
                     controller: _tabController,
                     tabs: const [
@@ -165,18 +191,96 @@ class _GroupsScreenState extends State<GroupsScreen>
                     labelColor: HuddlColors.primary,
                     unselectedLabelColor: HuddlColors.textHint,
                     labelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                        fontSize: 13, fontWeight: FontWeight.w600),
                     unselectedLabelStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                    ),
+                        fontSize: 13, fontWeight: FontWeight.w400),
                     indicatorColor: HuddlColors.primary,
                     indicatorSize: TabBarIndicatorSize.label,
                     dividerColor: HuddlColors.divider,
                     padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
+                    labelPadding:
+                        const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  // Shared search bar
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 10, 4, 10),
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.hc.inputBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          // Search icon — tap activates input
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _isSearchActive = true);
+                              _searchFocusNode.requestFocus();
+                            },
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.only(left: 12, right: 8),
+                              child: Icon(Icons.search,
+                                  size: 18,
+                                  color: context.hc.textTertiary
+                                      .withValues(alpha: 0.7)),
+                            ),
+                          ),
+                          Expanded(
+                            child: _isSearchActive
+                                ? TextField(
+                                    controller: _searchController,
+                                    focusNode: _searchFocusNode,
+                                    autofocus: false,
+                                    onChanged: (val) =>
+                                        _searchNotifier.value = val,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        color: context.hc.textPrimary),
+                                    decoration: InputDecoration(
+                                      hintText: _searchHint,
+                                      border: InputBorder.none,
+                                      enabledBorder: InputBorder.none,
+                                      focusedBorder: InputBorder.none,
+                                      contentPadding: EdgeInsets.zero,
+                                      isDense: true,
+                                      hintStyle: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          color: context.hc.textTertiary),
+                                    ),
+                                  )
+                                : GestureDetector(
+                                    onTap: () {
+                                      setState(
+                                          () => _isSearchActive = true);
+                                      _searchFocusNode.requestFocus();
+                                    },
+                                    child: Text(
+                                      _searchHint,
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          color: context.hc.textTertiary),
+                                    ),
+                                  ),
+                          ),
+                          // Clear button (only when active)
+                          if (_isSearchActive)
+                            GestureDetector(
+                              onTap: _clearSearch,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10),
+                                child: Icon(Icons.close,
+                                    size: 16,
+                                    color: context.hc.textTertiary),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 10),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -186,9 +290,12 @@ class _GroupsScreenState extends State<GroupsScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  _MessagesTab(groupsChangedNotifier: _groupsChangedNotifier),
-                  const ImGoingTab(),
-                  _SavedTab(),
+                  _MessagesTab(
+                    groupsChangedNotifier: _groupsChangedNotifier,
+                    searchNotifier: _searchNotifier,
+                  ),
+                  ImGoingTab(searchNotifier: _searchNotifier),
+                  _SavedTab(searchNotifier: _searchNotifier),
                 ],
               ),
             ),
@@ -205,7 +312,11 @@ class _GroupsScreenState extends State<GroupsScreen>
 
 class _MessagesTab extends StatefulWidget {
   final ValueNotifier<int> groupsChangedNotifier;
-  const _MessagesTab({required this.groupsChangedNotifier});
+  final ValueNotifier<String> searchNotifier;
+  const _MessagesTab({
+    required this.groupsChangedNotifier,
+    required this.searchNotifier,
+  });
 
   @override
   State<_MessagesTab> createState() => _MessagesTabState();
@@ -233,10 +344,8 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _hasLoadError = false;
   String _errorMessage = '';
   String _searchQuery = '';
-  bool _showSearch = false;
   bool _summariesLoaded = false;
   bool _showAiSuggestions = false;
-  final TextEditingController _searchController = TextEditingController();
 
   // ── Deep search state ─────────────────────────────────────────────────
   List<MessageSearchResult> _deepSearchResults = [];
@@ -259,6 +368,8 @@ class _MessagesTabState extends State<_MessagesTab> {
       EventService.groupChatCreated.addListener(_onGroupsChanged);
       // Re-sort list whenever the user sends a message in any group chat
       GroupChatScreen.messageSent.addListener(_onMessageSentFromChat);
+      // Listen to the shared search notifier from GroupsScreen
+      widget.searchNotifier.addListener(_onSearchChanged);
       _loadGroups();
       _loadMutedAndPinned();
       _loadDemoSummaries();
@@ -275,13 +386,21 @@ class _MessagesTabState extends State<_MessagesTab> {
     widget.groupsChangedNotifier.removeListener(_onGroupsChanged);
     _invitationService.removeListener(_onGroupsChanged);
     GroupChatScreen.messageSent.removeListener(_onMessageSentFromChat);
-    _searchController.dispose();
+    widget.searchNotifier.removeListener(_onSearchChanged);
     _dmService.removeListener(_onDMUpdate);
     super.dispose();
   }
 
   void _onGroupsChanged() {
     _loadGroups();
+  }
+
+  /// Called whenever the shared search notifier changes value.
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = widget.searchNotifier.value;
+      _applyFilter();
+    });
   }
 
   /// Subscribe to Firestore groups collection for the current user.
@@ -1308,7 +1427,7 @@ class _MessagesTabState extends State<_MessagesTab> {
     final unified = _unifiedMessageList;
     final bool hasDeepResults =
         _searchQuery.isNotEmpty && _deepSearchResults.isNotEmpty;
-    final bool isSearchActive = _showSearch && _searchQuery.isNotEmpty;
+    final bool isSearchActive = _searchQuery.isNotEmpty;
 
     // AI suggestions
     final aiSuggestions = _aiService.getPredictiveSuggestions(
@@ -1321,119 +1440,8 @@ class _MessagesTabState extends State<_MessagesTab> {
       children: [
         Column(
           children: [
-            // ── Compact search bar + AI sparkle ──────────────────────
-            Container(
-              color: context.hc.surface,
-              padding: const EdgeInsets.fromLTRB(16, 6, 12, 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _showSearch = true;
-                          _showAiSuggestions = true;
-                        });
-                      },
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: context.hc.inputBg,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 14),
-                            Icon(Icons.search, size: 18, color: context.hc.textTertiary.withValues(alpha: 0.6)),
-                            const SizedBox(width: 8),
-                            if (_showSearch)
-                              Expanded(
-                                child: TextField(
-                                  controller: _searchController,
-                                  autofocus: true,
-                                  onChanged: (val) {
-                                    _aiService.recordSearch(val);
-                                    setState(() {
-                                      _searchQuery = val;
-                                      _showAiSuggestions = val.isEmpty;
-                                      _applyFilter();
-                                    });
-                                  },
-                                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textPrimary),
-                                  decoration: InputDecoration(
-                                    hintText: 'Search chats...',
-                                    border: InputBorder.none,
-                                    enabledBorder: InputBorder.none,
-                                    focusedBorder: InputBorder.none,
-                                    contentPadding: EdgeInsets.zero,
-                                    isDense: true,
-                                    hintStyle: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                                  ),
-                                ),
-                              )
-                            else
-                              Expanded(
-                                child: Text(
-                                  'Search chats...',
-                                  style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
-                                ),
-                              ),
-                            if (_searchQuery.isNotEmpty)
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() {
-                                    _searchController.clear();
-                                    _searchQuery = '';
-                                    _showSearch = false;
-                                    _showAiSuggestions = false;
-                                    _applyFilter();
-                                  });
-                                },
-                                child: Semantics(
-                                  label: 'Clear search',
-                                  button: true,
-                                  child: Container(
-                                    width: 32, height: 32,
-                                    alignment: Alignment.center,
-                                    child: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(width: 4),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_showSearch) ...[
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        FocusScope.of(context).unfocus();
-                        setState(() {
-                          _showSearch = false;
-                          _searchQuery = '';
-                          _showAiSuggestions = false;
-                          _searchController.clear();
-                          _applyFilter();
-                        });
-                      },
-                      child: Text('Cancel', style: GoogleFonts.poppins(
-                        color: HuddlColors.primary, fontSize: 13, fontWeight: FontWeight.w500,
-                      )),
-                    ),
-                  ] else ...[
-                    const SizedBox(width: 4),
-
-                  ],
-                ],
-              ),
-            ),
-
-            // ── AI predictive suggestions (shown when search focused but empty) ─
-            if (_showAiSuggestions && _showSearch && _searchQuery.isEmpty && aiSuggestions.isNotEmpty)
+            // ── AI predictive suggestions (shown when search active but query empty) ─
+            if (_showAiSuggestions && _searchQuery.isEmpty && aiSuggestions.isNotEmpty)
               Container(
                 color: context.hc.surface,
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -1450,7 +1458,6 @@ class _MessagesTabState extends State<_MessagesTab> {
                       children: aiSuggestions.take(4).map((s) => GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          _searchController.text = s.query;
                           setState(() {
                             _searchQuery = s.query;
                             _showAiSuggestions = false;
@@ -1501,18 +1508,18 @@ class _MessagesTabState extends State<_MessagesTab> {
               child: Material(
                 elevation: 4,
                 shadowColor: HuddlColors.primary.withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: const CircleBorder(),
                 color: HuddlColors.primary,
                 child: InkWell(
                   onTap: () {
                     HapticFeedback.lightImpact();
                     Navigator.pushNamed(context, '/new_dm');
                   },
-                  borderRadius: BorderRadius.circular(16),
+                  customBorder: const CircleBorder(),
                   child: const SizedBox(
                     width: 52,
                     height: 52,
-                    child: Icon(Icons.edit_outlined, color: Colors.white, size: 22),
+                    child: Icon(Icons.add, color: Colors.white, size: 26),
                   ),
                 ),
               ),
@@ -1631,7 +1638,7 @@ class _MessagesTabState extends State<_MessagesTab> {
   Widget _buildConversationList(List<_MessageListItem> unified) {
     if (unified.isEmpty && _pendingInvitations.isEmpty) {
       return _EmptyMessagesState(onSearch: () {
-        setState(() => _showSearch = true);
+        // Search is driven by the parent GroupsScreen shared bar — nothing to do here
       });
     }
 
@@ -5494,6 +5501,9 @@ class _SavedItem {
 }
 
 class _SavedTab extends StatefulWidget {
+  final ValueNotifier<String> searchNotifier;
+  const _SavedTab({required this.searchNotifier});
+
   @override
   State<_SavedTab> createState() => _SavedTabState();
 }
@@ -5501,8 +5511,6 @@ class _SavedTab extends StatefulWidget {
 class _SavedTabState extends State<_SavedTab> {
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isLoading = true;
-  String _searchQuery = '';
-  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -5511,6 +5519,7 @@ class _SavedTabState extends State<_SavedTab> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _savedMessageService.addListener(_onUpdate);
+      widget.searchNotifier.addListener(_onSearchChanged);
       _init();
     });
   }
@@ -5518,11 +5527,15 @@ class _SavedTabState extends State<_SavedTab> {
   @override
   void dispose() {
     _savedMessageService.removeListener(_onUpdate);
-    _searchController.dispose();
+    widget.searchNotifier.removeListener(_onSearchChanged);
     super.dispose();
   }
 
   void _onUpdate() {
+    if (mounted) setState(() {});
+  }
+
+  void _onSearchChanged() {
     if (mounted) setState(() {});
   }
 
@@ -5534,7 +5547,7 @@ class _SavedTabState extends State<_SavedTab> {
   /// Build a unified list of saved messages + saved threads + saved events,
   /// sorted newest first.
   List<_SavedItem> _filteredSaved() {
-    final q = _searchQuery.toLowerCase();
+    final q = widget.searchNotifier.value.toLowerCase();
     final items = <_SavedItem>[];
 
     // Add saved events (bookmarks) — shown first by default as they tend
@@ -5684,52 +5697,6 @@ class _SavedTabState extends State<_SavedTab> {
 
     return Column(
       children: [
-        // ── Search bar ─────────────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-          child: Container(
-            height: 44,
-            decoration: BoxDecoration(
-              color: context.hc.scaffold,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Icon(Icons.search, size: 20, color: context.hc.textTertiary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (v) => setState(() => _searchQuery = v.trim()),
-                    style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'Search saved messages\u2026',
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                      hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-                    ),
-                  ),
-                ),
-                if (_searchQuery.isNotEmpty)
-                  GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
-                    },
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(Icons.close, size: 18, color: context.hc.textTertiary),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-
         // ── Results list ───────────────────────────────────────────
         Expanded(
           child: filtered.isEmpty
@@ -5740,7 +5707,7 @@ class _SavedTabState extends State<_SavedTab> {
                       Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
                       const SizedBox(height: 12),
                       Text(
-                        'No results for "$_searchQuery"',
+                        'No results for "${widget.searchNotifier.value}"',
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,

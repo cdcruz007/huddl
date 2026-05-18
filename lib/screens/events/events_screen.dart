@@ -2234,7 +2234,9 @@ class _GoingAvatar extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class ImGoingTab extends StatefulWidget {
-  const ImGoingTab({super.key});
+  /// Optional search notifier passed from the Connect screen shared search bar.
+  final ValueNotifier<String>? searchNotifier;
+  const ImGoingTab({super.key, this.searchNotifier});
 
   @override
   State<ImGoingTab> createState() => _ImGoingTabWrapperState();
@@ -2245,6 +2247,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
   final EventService _eventService = EventService();
   // Rebuild key — incremented on every cancel to force list rebuild
   int _rebuildKey = 0;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -2256,6 +2259,7 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
       if (!mounted) return;
       _meetupService.addListener(_refresh);
       _eventService.addListener(_refresh);
+      widget.searchNotifier?.addListener(_onSearchChanged);
       // Restore RSVP state from Firestore so "I'm Going" survives reinstall
       _meetupService.syncRsvpsFromFirestore();
       _eventService.syncRsvpsFromFirestore();
@@ -2266,11 +2270,20 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
   void dispose() {
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
+    widget.searchNotifier?.removeListener(_onSearchChanged);
     super.dispose();
   }
 
   void _refresh() {
     if (mounted) setState(() => _rebuildKey++);
+  }
+
+  void _onSearchChanged() {
+    if (mounted) {
+      setState(() {
+        _searchQuery = widget.searchNotifier?.value ?? '';
+      });
+    }
   }
 
   void _cancelItem(_GoingItem item) {
@@ -2281,6 +2294,16 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     }
     // Force immediate rebuild even if listener hasn't fired yet
     if (mounted) setState(() => _rebuildKey++);
+  }
+
+  /// Apply query filter to a list of going items.
+  List<_GoingItem> _filter(List<_GoingItem> items) {
+    if (_searchQuery.isEmpty) return items;
+    final q = _searchQuery.toLowerCase();
+    return items.where((i) =>
+        i.title.toLowerCase().contains(q) ||
+        i.location.toLowerCase().contains(q) ||
+        i.organiser.toLowerCase().contains(q)).toList();
   }
 
   @override
@@ -2299,8 +2322,11 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     // Sort by date ascending
     allGoing.sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-    final upcoming = allGoing.where((i) => i.dateTime.isAfter(now)).toList();
-    final past = allGoing.where((i) => !i.dateTime.isAfter(now)).toList();
+    // Apply search filter
+    final filtered = _filter(allGoing);
+
+    final upcoming = filtered.where((i) => i.dateTime.isAfter(now)).toList();
+    final past = filtered.where((i) => !i.dateTime.isAfter(now)).toList();
 
     if (allGoing.isEmpty) {
       return _EmptyState(
@@ -2309,6 +2335,32 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
         title: "You're not going to anything yet",
         subtitle:
             "Tap 'Count Me In' on a meetup or event to add it here!",
+      );
+    }
+
+    // Search active but no matches
+    if (filtered.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 48, color: context.hc.textTertiary),
+            const SizedBox(height: 12),
+            Text(
+              'No results for "$_searchQuery"',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: context.hc.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Try a different keyword',
+              style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary),
+            ),
+          ],
+        ),
       );
     }
 
