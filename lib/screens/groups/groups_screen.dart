@@ -4895,7 +4895,7 @@ class _DiscoverGroupCard extends StatelessWidget {
     }
   }
 
-  /// Privacy tag colour
+  /// Privacy tag colour (kept for potential future use)
   Color get _privacyTagColor {
     switch (group.privacy) {
       case GroupPrivacy.public:
@@ -4904,18 +4904,6 @@ class _DiscoverGroupCard extends StatelessWidget {
         return HuddlColors.primaryDark;
       case GroupPrivacy.private_:
         return HuddlColors.error;
-    }
-  }
-
-  /// Privacy tag icon
-  IconData get _privacyTagIcon {
-    switch (group.privacy) {
-      case GroupPrivacy.public:
-        return Icons.public;
-      case GroupPrivacy.group:
-        return Icons.group;
-      case GroupPrivacy.private_:
-        return Icons.lock;
     }
   }
 
@@ -4963,62 +4951,28 @@ class _DiscoverGroupCard extends StatelessWidget {
                 ),
               ),
             ),
-            // ── Card body: info moved below photo ────────────────────
+            // ── Card body: Figma-style — category + name + members + Join ──
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-              child: Row(
-                children: [
-                  // Privacy + audience info as subtle text chips
-                  Icon(_privacyTagIcon, size: 13, color: _privacyTagColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    _privacyTagLabel,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: _privacyTagColor,
-                    ),
-                  ),
-                  if (group.creatorId == 'current_user') ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Your group',
-                        style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const Spacer(),
-                  // Member count
-                  Icon(Icons.people_outline, size: 13, color: context.hc.textTertiary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${group.memberCount}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // ── Card body ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
+                  // Category label (small uppercase, grey)
+                  Text(
+                    group.targetAudience.isNotEmpty
+                        ? group.targetAudience.join(', ').toUpperCase()
+                        : _privacyTagLabel.toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textTertiary,
+                      letterSpacing: 0.5,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Group name — bold, dark
                   Text(
                     group.name,
                     style: GoogleFonts.poppins(
@@ -5029,212 +4983,45 @@ class _DiscoverGroupCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (group.description.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      group.description,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: context.hc.textTertiary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  // Borough info
-                  if (group.creatorBorough != null &&
-                      group.creatorBorough!.isNotEmpty &&
-                      group.creatorBorough != 'Unknown Borough') ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.location_on_outlined,
-                            size: 13, color: catColor),
-                        const SizedBox(width: 5),
-                        Expanded(
-                          child: Text(
-                            group.creatorBorough!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: context.hc.textTertiary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  // ── AI suitability badge + match score ──────────────
-                  if (showAiBadges && aiSummary != null) ...[
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        // Suitability line
-                        Expanded(
-                          child: Row(
-                            children: [
-                              const Icon(Icons.star_rounded, size: 11, color: HuddlColors.teal),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  aiSummary!.suitability,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: HuddlColors.teal,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Match score
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: _matchScoreColor(aiSummary!.matchScore).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${aiSummary!.matchScore.round()}% match',
-                            style: GoogleFonts.poppins(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: _matchScoreColor(aiSummary!.matchScore),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  // ── Feedback row (thumbs up/down) ──────────────────
-                  if (onFeedback != null && showAiBadges) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          'Is this relevant?',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            color: context.hc.textTertiary,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Semantics(
-                          label: 'This group is relevant to me',
-                          button: true,
-                          child: GestureDetector(
-                            onTap: () => onFeedback!(true),
-                            child: Container(
-                              width: 28, height: 28,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: aiFeedback == true
-                                    ? HuddlColors.teal.withValues(alpha: 0.15)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Icon(
-                                aiFeedback == true ? Icons.thumb_up : Icons.thumb_up_outlined,
-                                size: 14,
-                                color: aiFeedback == true ? HuddlColors.teal : context.hc.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Semantics(
-                          label: 'This group is not relevant to me',
-                          button: true,
-                          child: GestureDetector(
-                            onTap: () => onFeedback!(false),
-                            child: Container(
-                              width: 28, height: 28,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: aiFeedback == false
-                                    ? HuddlColors.error.withValues(alpha: 0.1)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Icon(
-                                aiFeedback == false ? Icons.thumb_down : Icons.thumb_down_outlined,
-                                size: 14,
-                                color: aiFeedback == false ? HuddlColors.error : context.hc.textTertiary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                   const SizedBox(height: 10),
-                  // Bottom row: creator avatar + Join/Joined button
+                  // Bottom row: member count avatars + Join button
                   Row(
                     children: [
-                      // Creator / group avatar
-                      CircleAvatar(
-                        radius: 11,
-                        backgroundColor: catColor.withValues(alpha: 0.15),
-                        child: Text(
-                          group.name.isNotEmpty
-                              ? group.name[0].toUpperCase()
-                              : '?',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: catColor,
-                          ),
+                      // Small overlapping avatar circles (up to 3)
+                      SizedBox(
+                        width: 52,
+                        height: 20,
+                        child: Stack(
+                          children: [
+                            for (int i = 0; i < 3; i++)
+                              Positioned(
+                                left: i * 14.0,
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: catColor.withValues(alpha: 0.20 + i * 0.05),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: context.hc.surface, width: 1.5),
+                                  ),
+                                  child: Center(
+                                    child: Icon(Icons.person, size: 10, color: catColor),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          group.creatorName != null && group.creatorName!.isNotEmpty
-                              ? 'Created by ${group.creatorName}'
-                              : 'Community group',
+                          '${group.memberCount} members',
                           style: GoogleFonts.poppins(
                             fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: context.hc.textSecondary,
+                            color: context.hc.textTertiary,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      // Share button — public: anyone; group/private: only creator
-                      if (group.privacy == GroupPrivacy.public ||
-                          group.creatorId == 'current_user')
-                        Padding(
-                          padding: const EdgeInsets.only(right: 6),
-                          child: Semantics(
-                            label: 'Share ${group.name}',
-                            button: true,
-                            child: GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                _shareGroup(context, group);
-                              },
-                              child: Container(
-                                width: 44, height: 44, // P0: min 44×44 touch target
-                                alignment: Alignment.center,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: catColor.withValues(alpha: 0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(Icons.share_outlined,
-                                      size: 16, color: catColor),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
                       // Join / Joined / Restricted button
                       Semantics(
                         label: isJoined ? 'Already joined ${group.name}' : (!canAccess ? 'Restricted group' : 'Join ${group.name}'),
@@ -5244,41 +5031,31 @@ class _DiscoverGroupCard extends StatelessWidget {
                             HapticFeedback.lightImpact();
                             onJoinTap();
                           },
-                        child: Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isJoined
-                                ? context.hc.scaffold
-                                : (!canAccess
-                                    ? HuddlColors.textHint.withValues(alpha: 0.15)
-                                    : HuddlColors.primary),
-                            borderRadius: BorderRadius.circular(20),
-                            border: (isJoined || !canAccess)
-                                ? Border.all(color: context.hc.divider)
-                                : null,
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (!canAccess && !isJoined) ...[
-                                Icon(Icons.lock_outline, size: 14, color: context.hc.textTertiary),
-                                const SizedBox(width: 4),
-                              ],
-                              Text(
-                                isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isJoined
-                                      ? HuddlColors.textSecondary
-                                      : (!canAccess ? HuddlColors.textHint : HuddlColors.white),
-                                ),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isJoined
+                                  ? context.hc.scaffold
+                                  : (!canAccess
+                                      ? HuddlColors.textHint.withValues(alpha: 0.15)
+                                      : HuddlColors.primary),
+                              borderRadius: BorderRadius.circular(20),
+                              border: (isJoined || !canAccess)
+                                  ? Border.all(color: context.hc.divider)
+                                  : null,
+                            ),
+                            child: Text(
+                              isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isJoined
+                                    ? HuddlColors.textSecondary
+                                    : (!canAccess ? HuddlColors.textHint : HuddlColors.white),
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
                       ),
                     ],
                   ),

@@ -275,7 +275,7 @@ class _EventsScreenState extends State<EventsScreen>
                       Row(
                         children: [
                           Text(
-                            'Events',
+                            'Discover',
                             style: GoogleFonts.poppins(
                               fontSize: 22,
                               fontWeight: FontWeight.w700,
