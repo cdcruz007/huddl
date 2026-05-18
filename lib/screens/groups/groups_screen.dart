@@ -38,6 +38,23 @@ import 'group_chat_screen.dart' show GroupChatScreen;
 // ── Design tokens — aliases to the single source of truth (HuddlColors) ─────
 const Color _kOnline = HuddlColors.teal; // HuddlColors.teal — online = positive status
 
+// ── Member avatar photo pool — used for overlapping circles in group cards ──
+// Deterministic selection: (group.id.hashCode + i) % length
+const List<String> _kMemberAvatars = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+];
+
 // ── Persistence key for user-created groups ──────────────────────────────
 const String _userGroupsKey = 'user_created_groups_v1';
 // ── Persistence key for groups the user has explicitly left ─────────────
@@ -3248,6 +3265,17 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     });
   }
 
+  /// Called when the user navigates away from the Groups tab — resets to card view.
+  void deactivateSearch() {
+    if (!_isSearchActive) return;
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    setState(() {
+      _isSearchActive = false;
+      _searchQuery = '';
+    });
+  }
+
   void _onGroupsChanged() {
     // Reload user-created groups when notified
     _reloadUserCreatedGroups();
@@ -4411,31 +4439,40 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        height: 36,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        height: 40,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: hasActiveFilters
                               ? HuddlColors.primary.withValues(alpha: 0.08)
                               : Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: hasActiveFilters
-                                ? HuddlColors.primary.withValues(alpha: 0.4)
-                                : const Color(0xFFDDDDDD),
-                            width: 1.0,
-                          ),
+                          boxShadow: hasActiveFilters
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                          border: hasActiveFilters
+                              ? Border.all(
+                                  color: HuddlColors.primary.withValues(alpha: 0.4),
+                                  width: 1.0,
+                                )
+                              : null,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.tune_rounded,
-                              size: 15,
+                              size: 17,
                               color: hasActiveFilters
                                   ? HuddlColors.primary
                                   : context.hc.textPrimary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             Text(
                               hasActiveFilters && _selectedAudiences.isNotEmpty
                                   ? 'Filter and sort (${_selectedAudiences.length})'
@@ -4443,8 +4480,8 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                       ? 'Filter and sort · $_selectedSort'
                                       : 'Filter and sort',
                               style: _adaptiveText(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
                                 color: hasActiveFilters
                                     ? HuddlColors.primary
                                     : context.hc.textPrimary,
@@ -5099,28 +5136,42 @@ class _DiscoverGroupCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
-                  // Bottom row: member count avatars + Join button
+                  // Bottom row: member avatar photos + count + Join button
                   Row(
                     children: [
-                      // Small overlapping avatar circles (up to 3)
+                      // Overlapping real-photo avatar circles (3 fixed)
                       SizedBox(
-                        width: 52,
-                        height: 20,
+                        width: 62,
+                        height: 24,
                         child: Stack(
                           children: [
                             for (int i = 0; i < 3; i++)
                               Positioned(
-                                left: i * 14.0,
+                                left: i * 18.0,
                                 child: Container(
-                                  width: 20,
-                                  height: 20,
+                                  width: 24,
+                                  height: 24,
                                   decoration: BoxDecoration(
-                                    color: catColor.withValues(alpha: 0.20 + i * 0.05),
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: context.hc.surface, width: 1.5),
+                                    border: Border.all(
+                                        color: Colors.white, width: 1.5),
                                   ),
-                                  child: Center(
-                                    child: Icon(Icons.person, size: 10, color: catColor),
+                                  child: ClipOval(
+                                    child: Image.network(
+                                      _kMemberAvatars[
+                                          (group.id.hashCode + i) %
+                                              _kMemberAvatars.length],
+                                      width: 24,
+                                      height: 24,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          Container(
+                                        color: catColor
+                                            .withValues(alpha: 0.25),
+                                        child: Icon(Icons.person,
+                                            size: 12, color: catColor),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -5137,7 +5188,7 @@ class _DiscoverGroupCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // Join / Joined / Restricted button
+                      // Join / Joined / Restricted button — grey pill (Figma)
                       Semantics(
                         label: isJoined ? 'Already joined ${group.name}' : (!canAccess ? 'Restricted group' : 'Join ${group.name}'),
                         button: !isJoined,
@@ -5147,26 +5198,26 @@ class _DiscoverGroupCard extends StatelessWidget {
                             onJoinTap();
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
                             decoration: BoxDecoration(
                               color: isJoined
-                                  ? context.hc.scaffold
+                                  ? const Color(0xFFF0F0F0)
                                   : (!canAccess
-                                      ? HuddlColors.textHint.withValues(alpha: 0.15)
-                                      : HuddlColors.primary),
-                              borderRadius: BorderRadius.circular(20),
-                              border: (isJoined || !canAccess)
-                                  ? Border.all(color: context.hc.divider)
-                                  : null,
+                                      ? const Color(0xFFF0F0F0)
+                                      : const Color(0xFFF2F2F2)),
+                              borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               isJoined ? 'Joined' : (!canAccess ? 'Restricted' : 'Join'),
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w500,
                                 color: isJoined
-                                    ? HuddlColors.textSecondary
-                                    : (!canAccess ? HuddlColors.textHint : HuddlColors.white),
+                                    ? HuddlColors.textTertiary
+                                    : (!canAccess
+                                        ? HuddlColors.textHint
+                                        : context.hc.textPrimary),
                               ),
                             ),
                           ),
@@ -5323,10 +5374,11 @@ Shared from Huddl 🚀
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class DiscoverGroupsTab extends StatefulWidget {
-  /// When this notifier is set to `true` by the parent, the Groups tab
-  /// activates its inline search mode and resets the notifier back to false.
+  /// Set to `true` to activate inline search mode.
   final ValueNotifier<bool>? searchTrigger;
-  const DiscoverGroupsTab({super.key, this.searchTrigger});
+  /// Set to `true` to close/reset search mode (e.g. when leaving the tab).
+  final ValueNotifier<bool>? resetTrigger;
+  const DiscoverGroupsTab({super.key, this.searchTrigger, this.resetTrigger});
 
   @override
   State<DiscoverGroupsTab> createState() => _DiscoverGroupsTabState();
@@ -5340,6 +5392,7 @@ class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
   void initState() {
     super.initState();
     widget.searchTrigger?.addListener(_onSearchTrigger);
+    widget.resetTrigger?.addListener(_onResetTrigger);
   }
 
   @override
@@ -5349,19 +5402,30 @@ class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
       oldWidget.searchTrigger?.removeListener(_onSearchTrigger);
       widget.searchTrigger?.addListener(_onSearchTrigger);
     }
+    if (oldWidget.resetTrigger != widget.resetTrigger) {
+      oldWidget.resetTrigger?.removeListener(_onResetTrigger);
+      widget.resetTrigger?.addListener(_onResetTrigger);
+    }
   }
 
   void _onSearchTrigger() {
     if (widget.searchTrigger?.value == true) {
       _discoverKey.currentState?.activateSearch();
-      // Reset so the notifier can be fired again later.
       widget.searchTrigger?.value = false;
+    }
+  }
+
+  void _onResetTrigger() {
+    if (widget.resetTrigger?.value == true) {
+      _discoverKey.currentState?.deactivateSearch();
+      widget.resetTrigger?.value = false;
     }
   }
 
   @override
   void dispose() {
     widget.searchTrigger?.removeListener(_onSearchTrigger);
+    widget.resetTrigger?.removeListener(_onResetTrigger);
     _groupsChangedNotifier.dispose();
     super.dispose();
   }

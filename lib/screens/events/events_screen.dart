@@ -43,6 +43,8 @@ class _EventsScreenState extends State<EventsScreen>
   final EventService _eventService = EventService();
   // Fires true to trigger search mode in the Groups tab.
   final ValueNotifier<bool> _groupSearchTrigger = ValueNotifier<bool>(false);
+  // Fires true to reset/close search mode when leaving the Groups tab.
+  final ValueNotifier<bool> _groupResetTrigger = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -53,6 +55,10 @@ class _EventsScreenState extends State<EventsScreen>
       // so the FAB never shows/hides based on a mid-swipe index.
       if (!_tabController.indexIsChanging) {
         if (_selectedTab != _tabController.index) {
+          // If leaving the Groups tab, reset any active search.
+          if (_selectedTab == 0 && _tabController.index != 0) {
+            _groupResetTrigger.value = true;
+          }
           setState(() { _selectedTab = _tabController.index; });
         }
       }
@@ -77,6 +83,7 @@ class _EventsScreenState extends State<EventsScreen>
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
     _groupSearchTrigger.dispose();
+    _groupResetTrigger.dispose();
     super.dispose();
   }
 
@@ -369,7 +376,10 @@ class _EventsScreenState extends State<EventsScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  DiscoverGroupsTab(searchTrigger: _groupSearchTrigger),
+                  DiscoverGroupsTab(
+                    searchTrigger: _groupSearchTrigger,
+                    resetTrigger: _groupResetTrigger,
+                  ),
                   _MeetupsTab(
                     meetupService: _meetupService,
                     onCreateMeetup: _navigateToCreateMeetup,
