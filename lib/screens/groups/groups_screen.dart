@@ -3175,7 +3175,10 @@ class _GroupAvatar extends StatelessWidget {
 
 class _DiscoverTab extends StatefulWidget {
   final ValueNotifier<int> groupsChangedNotifier;
-  const _DiscoverTab({required this.groupsChangedNotifier});
+  const _DiscoverTab({
+    super.key,
+    required this.groupsChangedNotifier,
+  });
 
   @override
   State<_DiscoverTab> createState() => _DiscoverTabState();
@@ -3234,6 +3237,15 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  /// Called from EventsScreen AppBar to open search mode.
+  void activateSearch() {
+    setState(() => _isSearchActive = true);
+    // Focus is requested after the frame so the field is built first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocusNode.requestFocus();
+    });
   }
 
   void _onGroupsChanged() {
@@ -4383,164 +4395,12 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 ),
               ),
 
-            // ── Header row: title + search icon  ─OR─  search input ────
-            SliverToBoxAdapter(
-              child: Container(
-                color: context.hc.surface,
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: _isSearchActive
-                      // ── SEARCH ACTIVE: back arrow + search icon + input + clear ──
-                      ? Row(
-                          key: const ValueKey('search_active'),
-                          children: [
-                            // Orange back arrow — exits search mode
-                            GestureDetector(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                _searchController.clear();
-                                _searchFocusNode.unfocus();
-                                setState(() {
-                                  _isSearchActive = false;
-                                  _searchQuery = '';
-                                });
-                              },
-                              child: const Padding(
-                                padding: EdgeInsets.only(right: 10),
-                                child: Icon(
-                                  Icons.arrow_back_ios_new_rounded,
-                                  size: 20,
-                                  color: HuddlColors.primary,
-                                ),
-                              ),
-                            ),
-                            // Expanded search field (white bg, rounded pill)
-                            Expanded(
-                              child: Container(
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: context.hc.inputBg,
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  children: [
-                                    const Padding(
-                                      padding: EdgeInsets.only(left: 12, right: 6),
-                                      child: Icon(
-                                        Icons.search,
-                                        size: 18,
-                                        color: HuddlColors.primary,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _searchController,
-                                        focusNode: _searchFocusNode,
-                                        autofocus: true,
-                                        textAlignVertical: TextAlignVertical.center,
-                                        onChanged: (val) {
-                                          _discoverAi.recordSearch(val);
-                                          setState(() {
-                                            _searchQuery = val;
-                                            if (val.isNotEmpty) {
-                                              _aiSuggestions = _discoverAi.getPredictiveSuggestions(
-                                                partialQuery: val,
-                                                userBorough: _userBorough,
-                                                stagesOfLife: _userStagesOfLife,
-                                                parentType: _userParentType,
-                                              );
-                                            }
-                                          });
-                                        },
-                                        style: _adaptiveText(
-                                          fontSize: 14,
-                                          color: context.hc.textPrimary,
-                                        ),
-                                        decoration: InputDecoration(
-                                          hintText: 'Search groups...',
-                                          hintStyle: _adaptiveText(
-                                            fontSize: 14,
-                                            color: context.hc.textTertiary,
-                                          ),
-                                          border: InputBorder.none,
-                                          enabledBorder: InputBorder.none,
-                                          focusedBorder: InputBorder.none,
-                                          contentPadding: const EdgeInsets.only(bottom: 2),
-                                          isDense: true,
-                                        ),
-                                      ),
-                                    ),
-                                    // Clear X button (only when text is present)
-                                    if (_searchQuery.isNotEmpty)
-                                      GestureDetector(
-                                        onTap: () {
-                                          HapticFeedback.lightImpact();
-                                          _searchController.clear();
-                                          setState(() => _searchQuery = '');
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                                          child: Icon(
-                                            Icons.close,
-                                            size: 16,
-                                            color: context.hc.textTertiary,
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      const SizedBox(width: 10),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      // ── DEFAULT: "Discover groups" title + search icon ────────
-                      : Row(
-                          key: const ValueKey('search_default'),
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Discover groups',
-                                style: _adaptiveText(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.hc.textPrimary,
-                                ),
-                              ),
-                            ),
-                            // Search icon — activates search mode
-                            Semantics(
-                              label: 'Search groups',
-                              button: true,
-                              child: GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() => _isSearchActive = true);
-                                },
-                                child: Padding(
-                                  padding: const EdgeInsets.all(4),
-                                  child: Icon(
-                                    Icons.search,
-                                    size: 24,
-                                    color: context.hc.textPrimary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-
             // ── Filter and sort pill (hidden when search is active) ────
             if (!_isSearchActive)
               SliverToBoxAdapter(
                 child: Container(
                   color: context.hc.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
                   child: Semantics(
                     label: hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort groups',
                     button: true,
@@ -4556,12 +4416,12 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         decoration: BoxDecoration(
                           color: hasActiveFilters
                               ? HuddlColors.primary.withValues(alpha: 0.08)
-                              : Colors.transparent,
+                              : Colors.white,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: hasActiveFilters
                                 ? HuddlColors.primary.withValues(alpha: 0.4)
-                                : context.hc.textTertiary.withValues(alpha: 0.35),
+                                : const Color(0xFFDDDDDD),
                             width: 1.0,
                           ),
                         ),
@@ -4573,7 +4433,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                               size: 15,
                               color: hasActiveFilters
                                   ? HuddlColors.primary
-                                  : context.hc.textTertiary,
+                                  : context.hc.textPrimary,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -4587,13 +4447,92 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                 fontWeight: FontWeight.w500,
                                 color: hasActiveFilters
                                     ? HuddlColors.primary
-                                    : context.hc.textTertiary,
+                                    : context.hc.textPrimary,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
+
+            // ── Search active: inline search field row ─────────────────
+            if (_isSearchActive)
+              SliverToBoxAdapter(
+                child: Container(
+                  color: context.hc.surface,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: context.hc.inputBg,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 12, right: 6),
+                                child: Icon(Icons.search, size: 18,
+                                    color: HuddlColors.primary),
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  focusNode: _searchFocusNode,
+                                  textAlignVertical: TextAlignVertical.center,
+                                  onChanged: (val) {
+                                    _discoverAi.recordSearch(val);
+                                    setState(() {
+                                      _searchQuery = val;
+                                      if (val.isNotEmpty) {
+                                        _aiSuggestions = _discoverAi.getPredictiveSuggestions(
+                                          partialQuery: val,
+                                          userBorough: _userBorough,
+                                          stagesOfLife: _userStagesOfLife,
+                                          parentType: _userParentType,
+                                        );
+                                      }
+                                    });
+                                  },
+                                  style: _adaptiveText(
+                                      fontSize: 14, color: context.hc.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search groups',
+                                    hintStyle: _adaptiveText(
+                                        fontSize: 14, color: context.hc.textTertiary),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    contentPadding: const EdgeInsets.only(bottom: 2),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              if (_searchQuery.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    child: Icon(Icons.close, size: 16,
+                                        color: context.hc.textTertiary),
+                                  ),
+                                )
+                              else
+                                const SizedBox(width: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -4694,115 +4633,40 @@ class _DiscoverTabState extends State<_DiscoverTab> {
 
             // CTA Card removed — circular FAB below is the sole "Create group" action
 
-            // ── AI-powered "Suggested for you" header ────────────────
+            // ── "Suggested for you" header — default view only ────────
             if (!_isSearchActive)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Suggested for you',
-                          style: _adaptiveText(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: context.hc.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-                        Semantics(
-                          label: 'Suggested groups',
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.teal.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.explore, size: 10, color: HuddlColors.teal),
-                                const SizedBox(width: 3),
-                                Text('For you', style: _adaptiveText(
-                                  fontSize: 9, fontWeight: FontWeight.w700,
-                                  color: HuddlColors.teal,
-                                )),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        // Sort toggle
-                        Semantics(
-                          label: _aiRecommendationsEnabled
-                              ? 'Sorted by relevance. Tap to see default order.'
-                              : 'Default order. Tap to sort by relevance.',
-                          button: true,
-                          child: GestureDetector(
-                            onTap: () {
-                              HapticFeedback.selectionClick();
-                              setState(() {
-                                _aiRecommendationsEnabled = !_aiRecommendationsEnabled;
-                                _showAiContextBanner = _aiRecommendationsEnabled;
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: _aiRecommendationsEnabled
-                                    ? HuddlColors.teal.withValues(alpha: 0.08)
-                                    : HuddlColors.gray100,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    _aiRecommendationsEnabled
-                                        ? Icons.sort
-                                        : Icons.sort,
-                                    size: 12,
-                                    color: _aiRecommendationsEnabled
-                                        ? HuddlColors.teal
-                                        : HuddlColors.textHint,
-                                  ),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    _aiRecommendationsEnabled ? 'Smart sort' : 'Default',
-                                    style: _adaptiveText(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: _aiRecommendationsEnabled
-                                          ? HuddlColors.teal
-                                          : HuddlColors.textHint,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Suggested for you',
+                    style: _adaptiveText(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: context.hc.textPrimary,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _userBorough != null && _userBorough != 'Unknown Borough'
-                          ? 'Groups in $_userBorough and beyond'
-                          : 'Groups you might be interested in',
-                      style: _adaptiveText(
-                        fontSize: 13,
-                        color: context.hc.textSecondary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
 
-            // ── Group cards with AI feedback ─────────────────────────
+            // ── Search active: section label ──────────────────────────
+            if (_isSearchActive)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                  child: Text(
+                    'SUGGESTED GROUPS',
+                    style: _adaptiveText(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textTertiary,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+              ),
+
+            // ── Group list — compact rows when searching, cards otherwise ──
             if (groups.isNotEmpty)
               SliverList(
                 delegate: SliverChildBuilderDelegate(
@@ -4812,7 +4676,129 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         group.creatorId == 'current_user';
                     final canAccess = _canAccessGroup(group);
 
-                    // AI summary for the group
+                    if (_isSearchActive) {
+                      // ── Compact search result row (Figma style) ────────────
+                      return GestureDetector(
+                        onTap: () {
+                          _discoverAi.recordGroupView(group.id, group.category);
+                          if (!canAccess) {
+                            _showGroupAccessDeniedDialog(context, group);
+                            return;
+                          }
+                          Navigator.pushNamed(context, '/group_details',
+                              arguments: {
+                                'groupId': group.id,
+                                'groupName': group.name,
+                                'groupImageUrl': group.imageUrl,
+                                'groupDescription': group.description,
+                                'memberCount': group.memberCount,
+                                'isPrivate': group.isPrivate,
+                                'creatorId': group.creatorId,
+                                'creatorBorough': group.creatorBorough,
+                                'isJoined': isJoined,
+                              });
+                        },
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          color: context.hc.surface,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          child: Row(
+                            children: [
+                              // Thumbnail — 56×56 rounded rect
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: group.imageUrl.isNotEmpty
+                                    ? Image.network(
+                                        group.imageUrl,
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            _SearchResultPlaceholder(
+                                                name: group.name),
+                                      )
+                                    : _SearchResultPlaceholder(
+                                        name: group.name),
+                              ),
+                              const SizedBox(width: 12),
+                              // Text block
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Category label — uppercase light grey
+                                    Text(
+                                      group.targetAudience.join(', ').toUpperCase(),
+                                      style: _adaptiveText(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                        color: context.hc.textTertiary,
+                                        letterSpacing: 0.4,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    // Group name — bold dark
+                                    Text(
+                                      group.name,
+                                      style: _adaptiveText(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: context.hc.textPrimary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    // Member count
+                                    Text(
+                                      '${group.memberCount} members',
+                                      style: _adaptiveText(
+                                        fontSize: 12,
+                                        color: context.hc.textTertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Join button — light grey pill
+                              if (!isJoined)
+                                GestureDetector(
+                                  onTap: () {
+                                    if (!canAccess) {
+                                      _showGroupAccessDeniedDialog(
+                                          context, group);
+                                      return;
+                                    }
+                                    _onJoinTap(group.id);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 7),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF2F2F2),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      'Join',
+                                      style: _adaptiveText(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: context.hc.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    // ── Full card (default view) ────────────────────────────
                     final aiSummary = _discoverAi.summarizeGroup(
                       group.toJson(),
                       parentType: _userParentType,
@@ -4860,7 +4846,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           group.id, isPositive,
                           category: group.category,
                         );
-                        setState(() {}); // Refresh to show updated state
+                        setState(() {});
                       },
                     );
                   },
@@ -4962,6 +4948,32 @@ const Map<String, Map<String, dynamic>> _discoverCardStyles = {
   'disc_eco_parenting':       {'icon': Icons.eco,                  'color': HuddlColors.teal},
   'disc_travel_tribe':        {'icon': Icons.flight_takeoff,       'color': HuddlColors.teal},
 };
+
+// ── Small placeholder thumbnail for search result rows ────────────────────────
+class _SearchResultPlaceholder extends StatelessWidget {
+  final String name;
+  const _SearchResultPlaceholder({required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+    return Container(
+      width: 56,
+      height: 56,
+      color: HuddlColors.textTertiary.withValues(alpha: 0.18),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: HuddlColors.textTertiary,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _DiscoverGroupCard extends StatelessWidget {
   final _GroupItem group;
@@ -5311,7 +5323,10 @@ Shared from Huddl 🚀
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class DiscoverGroupsTab extends StatefulWidget {
-  const DiscoverGroupsTab({super.key});
+  /// When this notifier is set to `true` by the parent, the Groups tab
+  /// activates its inline search mode and resets the notifier back to false.
+  final ValueNotifier<bool>? searchTrigger;
+  const DiscoverGroupsTab({super.key, this.searchTrigger});
 
   @override
   State<DiscoverGroupsTab> createState() => _DiscoverGroupsTabState();
@@ -5319,16 +5334,44 @@ class DiscoverGroupsTab extends StatefulWidget {
 
 class _DiscoverGroupsTabState extends State<DiscoverGroupsTab> {
   final ValueNotifier<int> _groupsChangedNotifier = ValueNotifier<int>(0);
+  final GlobalKey<_DiscoverTabState> _discoverKey = GlobalKey<_DiscoverTabState>();
+
+  @override
+  void initState() {
+    super.initState();
+    widget.searchTrigger?.addListener(_onSearchTrigger);
+  }
+
+  @override
+  void didUpdateWidget(DiscoverGroupsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.searchTrigger != widget.searchTrigger) {
+      oldWidget.searchTrigger?.removeListener(_onSearchTrigger);
+      widget.searchTrigger?.addListener(_onSearchTrigger);
+    }
+  }
+
+  void _onSearchTrigger() {
+    if (widget.searchTrigger?.value == true) {
+      _discoverKey.currentState?.activateSearch();
+      // Reset so the notifier can be fired again later.
+      widget.searchTrigger?.value = false;
+    }
+  }
 
   @override
   void dispose() {
+    widget.searchTrigger?.removeListener(_onSearchTrigger);
     _groupsChangedNotifier.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return _DiscoverTab(groupsChangedNotifier: _groupsChangedNotifier);
+    return _DiscoverTab(
+      key: _discoverKey,
+      groupsChangedNotifier: _groupsChangedNotifier,
+    );
   }
 }
 

@@ -41,7 +41,8 @@ class _EventsScreenState extends State<EventsScreen>
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();
   final EventService _eventService = EventService();
-  // Search is now handled per-tab (each tab has its own search bar)
+  // Fires true to trigger search mode in the Groups tab.
+  final ValueNotifier<bool> _groupSearchTrigger = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -75,6 +76,7 @@ class _EventsScreenState extends State<EventsScreen>
     _tabController.dispose();
     _meetupService.removeListener(_refresh);
     _eventService.removeListener(_refresh);
+    _groupSearchTrigger.dispose();
     super.dispose();
   }
 
@@ -286,14 +288,26 @@ class _EventsScreenState extends State<EventsScreen>
                       ),
                       Row(
                         children: [
-                          IconButton(
-                            icon: Icon(Icons.notifications_outlined,
-                                color: context.hc.textPrimary),
-                            tooltip: 'Notifications',
-                            onPressed: () {
-                              _showNotificationsSheet();
-                            },
-                          ),
+                          // Show search icon on Groups tab, bell on others
+                          if (_selectedTab == 0)
+                            IconButton(
+                              icon: Icon(Icons.search,
+                                  color: context.hc.textPrimary),
+                              tooltip: 'Search groups',
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                _groupSearchTrigger.value = true;
+                              },
+                            )
+                          else
+                            IconButton(
+                              icon: Icon(Icons.notifications_outlined,
+                                  color: context.hc.textPrimary),
+                              tooltip: 'Notifications',
+                              onPressed: () {
+                                _showNotificationsSheet();
+                              },
+                            ),
                         ],
                       ),
                     ],
@@ -355,7 +369,7 @@ class _EventsScreenState extends State<EventsScreen>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  const DiscoverGroupsTab(),
+                  DiscoverGroupsTab(searchTrigger: _groupSearchTrigger),
                   _MeetupsTab(
                     meetupService: _meetupService,
                     onCreateMeetup: _navigateToCreateMeetup,
