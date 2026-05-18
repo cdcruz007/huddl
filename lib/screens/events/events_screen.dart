@@ -291,6 +291,20 @@ class _EventsScreenState extends State<EventsScreen>
                               color: context.hc.textPrimary,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          // Borough chip: blue for Groups/Meetups, UK-wide teal for Events, hidden for Services
+                          if (_selectedTab != 3)
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 200),
+                              child: BoroughScopeChip(
+                                key: ValueKey('discover_chip_$_selectedTab'),
+                                feature: _selectedTab == 2
+                                    ? HuddlFeature.events   // UK-wide
+                                    : _selectedTab == 1
+                                        ? HuddlFeature.meetups  // borough blue
+                                        : HuddlFeature.groups,  // borough blue
+                              ),
+                            ),
                         ],
                       ),
                       Row(
