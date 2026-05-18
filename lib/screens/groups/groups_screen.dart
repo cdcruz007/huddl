@@ -4428,7 +4428,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
               SliverToBoxAdapter(
                 child: Container(
                   color: context.hc.surface,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                   child: Semantics(
                     label: hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort groups',
                     button: true,
@@ -4439,25 +4439,31 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        height: 40,
+                        height: 42,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
                           color: hasActiveFilters
                               ? HuddlColors.primary.withValues(alpha: 0.08)
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(21),
                           boxShadow: hasActiveFilters
-                              ? null
+                              ? [
+                                  BoxShadow(
+                                    color: HuddlColors.primary.withValues(alpha: 0.15),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
                               : [
                                   BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.08),
-                                    blurRadius: 8,
+                                    color: Colors.black.withValues(alpha: 0.09),
+                                    blurRadius: 10,
                                     offset: const Offset(0, 2),
                                   ),
                                 ],
                           border: hasActiveFilters
                               ? Border.all(
-                                  color: HuddlColors.primary.withValues(alpha: 0.4),
+                                  color: HuddlColors.primary.withValues(alpha: 0.35),
                                   width: 1.0,
                                 )
                               : null,
@@ -4674,14 +4680,28 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             if (!_isSearchActive)
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Text(
-                    'Suggested for you',
-                    style: _adaptiveText(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: context.hc.textPrimary,
-                    ),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Suggested for you',
+                        style: _adaptiveText(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Groups you might be interested in',
+                        style: _adaptiveText(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w400,
+                          color: context.hc.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

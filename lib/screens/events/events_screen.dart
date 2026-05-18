@@ -324,7 +324,12 @@ class _EventsScreenState extends State<EventsScreen>
                   TabBar(
                     controller: _tabController,
                     onTap: (index) {
-                      // Immediately update FAB when user taps a tab
+                      // Immediately update FAB when user taps a tab.
+                      // Also: tapping the Groups tab while already on it
+                      // dismisses any active search and returns to tiled view.
+                      if (index == 0) {
+                        _groupResetTrigger.value = true;
+                      }
                       setState(() { _selectedTab = index; });
                     },
                     tabs: const [
