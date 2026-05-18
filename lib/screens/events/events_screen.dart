@@ -292,19 +292,20 @@ class _EventsScreenState extends State<EventsScreen>
                             ),
                           ),
                           const SizedBox(width: 8),
-                          // Borough chip: blue for Groups/Meetups, UK-wide teal for Events, hidden for Services
-                          if (_selectedTab != 3)
-                            AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 200),
-                              child: BoroughScopeChip(
-                                key: ValueKey('discover_chip_$_selectedTab'),
-                                feature: _selectedTab == 2
-                                    ? HuddlFeature.events   // UK-wide
-                                    : _selectedTab == 1
-                                        ? HuddlFeature.meetups  // borough blue
-                                        : HuddlFeature.groups,  // borough blue
-                              ),
+                          // Borough chip: blue for Groups/Meetups/Services, UK-wide teal for Events
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: BoroughScopeChip(
+                              key: ValueKey('discover_chip_$_selectedTab'),
+                              feature: _selectedTab == 2
+                                  ? HuddlFeature.events     // UK-wide teal
+                                  : _selectedTab == 3
+                                      ? HuddlFeature.services // borough blue
+                                      : _selectedTab == 1
+                                          ? HuddlFeature.meetups  // borough blue
+                                          : HuddlFeature.groups,  // borough blue
                             ),
+                          ),
                         ],
                       ),
                       Row(
@@ -374,7 +375,10 @@ class _EventsScreenState extends State<EventsScreen>
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: _selectedTab == 3
-                  ? const SizedBox.shrink(key: ValueKey('services-no-borough'))
+                  ? const BoroughHeader(
+                      key: ValueKey('services-borough'),
+                      feature: HuddlFeature.services,
+                    )
                   : _selectedTab == 2
                       ? const BoroughHeader(
                           key: ValueKey('uk-wide'),

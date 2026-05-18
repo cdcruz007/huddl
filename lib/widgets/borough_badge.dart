@@ -252,7 +252,7 @@ class BoroughHeader extends StatelessWidget {
                 ? 'Showing results in $boroughName'
                 : 'Showing results in your borough');
         icon = Icons.location_on_outlined;
-        color = HuddlColors.teal;
+        color = HuddlColors.blueUI;
         break;
       case FeatureScope.boroughAware:
         label = customLabel ??
