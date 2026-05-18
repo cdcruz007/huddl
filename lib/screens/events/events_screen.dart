@@ -578,6 +578,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
   bool _aiReady = false;
+  SmartNudge? _activeNudge; // contextual banner shown above the list
 
   // ── Local search ──────────────────────────────────────────────
   bool _isSearchActive = false;
@@ -1510,6 +1511,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       if (s.boostReason != null) boostReasons[s.meetup.id] = s.boostReason!;
     }
 
+    // ── Smart Nudge — compute once per build from live filtered list ──
+    // Only re-evaluate when AI is ready and no nudge is already showing.
+    if (_aiReady && _activeNudge == null) {
+      final nudge = _aiService.getSmartNudge(filtered);
+      if (nudge != null) {
+        // Schedule state update after build — avoids setState-during-build.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _activeNudge = nudge);
+        });
+      }
+    }
+
     // ── Figma design tokens ────────────────────────────────────────
     const Color filterText  = Color(0xFF42464C); // Figma: dark text
     const Color sectionText = Color(0xFF42464C); // Figma: "Black" grayscale
@@ -1735,7 +1748,20 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             ],
           ),
         ),
-        // Smart Nudge / trending banner removed — surfaced in Home feed instead.
+        // ── Smart Nudge banner ─────────────────────────────────────
+        // Contextual one-liner from MeetupAiService — only shown when relevant.
+        // Dismissed per-session via _aiService.dismissNudge(); hides during search.
+        if (_activeNudge != null && _localSearchQuery.isEmpty)
+          _SmartNudgeBanner(
+            nudge: _activeNudge!,
+            onDismiss: () {
+              _aiService.dismissNudge(_activeNudge!.type.name);
+              setState(() => _activeNudge = null);
+            },
+            onAction: _activeNudge!.actionLabel != null
+                ? widget.onCreateMeetup
+                : null,
+          ),
 
         // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
@@ -4608,3 +4634,102 @@ Widget _buildCoverImage({
 }
 
 // Events data is now managed by EventService (lib/services/event_service.dart)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SMART NUDGE BANNER — Meetups tab contextual engagement prompt
+// Thin orange-left-bordered card; dismissible; optional action button.
+// Sits between the filter header and the meetup list, hidden during search.
+// ═══════════════════════════════════════════════════════════════════════════════
+class _SmartNudgeBanner extends StatelessWidget {
+  final SmartNudge nudge;
+  final VoidCallback onDismiss;
+  final VoidCallback? onAction;
+
+  const _SmartNudgeBanner({
+    required this.nudge,
+    required this.onDismiss,
+    this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: HuddlColors.background,
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border(
+            left: BorderSide(color: HuddlColors.primary, width: 3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Emoji icon
+            Text(nudge.icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 10),
+            // Text + optional action
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nudge.text,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF42464C),
+                      height: 1.4,
+                    ),
+                  ),
+                  if (onAction != null && nudge.actionLabel != null) ...[
+                    const SizedBox(height: 6),
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        onAction!();
+                      },
+                      child: Text(
+                        nudge.actionLabel!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Dismiss ✕
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                onDismiss();
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8, top: 1),
+                child: Icon(
+                  Icons.close_rounded,
+                  size: 16,
+                  color: HuddlColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -3247,7 +3247,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
   // ── Invisible AI state ────────────────────────────────────────────
   bool _aiRecommendationsEnabled = true; // human override toggle
   List<DiscoverSearchSuggestion> _aiSuggestions = [];
-  final bool _showAiContextBanner = false;
+  bool _showAiContextBanner = true; // contextual personalisation banner above group list
 
   @override
   void initState() {
@@ -4975,23 +4975,21 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                             child: Text(contextLine,
                               style: _adaptiveText(fontSize: 11, color: HuddlColors.teal)),
                           ),
-                          // Human override toggle
+                          // Dismiss banner
                           Semantics(
-                            label: 'Toggle smart sort',
+                            label: 'Dismiss personalisation banner',
                             button: true,
                             child: GestureDetector(
                               onTap: () {
-                                HapticFeedback.selectionClick();
-                                setState(() => _aiRecommendationsEnabled = !_aiRecommendationsEnabled);
+                                HapticFeedback.lightImpact();
+                                setState(() => _showAiContextBanner = false);
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.all(4),
+                              child: const Padding(
+                                padding: EdgeInsets.all(4),
                                 child: Icon(
-                                  _aiRecommendationsEnabled ? Icons.toggle_on : Icons.toggle_off,
-                                  size: 22,
-                                  color: _aiRecommendationsEnabled
-                                      ? HuddlColors.teal
-                                      : HuddlColors.textHint,
+                                  Icons.close_rounded,
+                                  size: 14,
+                                  color: HuddlColors.teal,
                                 ),
                               ),
                             ),
