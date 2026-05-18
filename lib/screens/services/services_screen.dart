@@ -763,7 +763,7 @@ class _ListingCardState extends State<_ListingCard> {
                         label: listing.category.displayName,
                         color: HuddlColors.blueDark,
                       ),
-                      if (listing.endorsementCount < 3) ...[
+                      if (_count < 3) ...[
                         const SizedBox(width: 6),
                         _HeroBadge(
                           label: 'New',
@@ -811,21 +811,21 @@ class _ListingCardState extends State<_ListingCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
-                  // ── Bottom row: avatar stack + endorsement count + Enquire pill ──
+                  // ── Bottom row: avatar stack + count (left) | Endorse pill (right) ──
                   Row(
                     children: [
-                      // Overlapping endorser avatar stack (same as Groups/Meetups)
-                      if (listing.endorsementCount > 0)
+                      // Overlapping endorser avatar stack — driven by live _count
+                      if (_count > 0)
                         SizedBox(
-                          width: listing.endorsementCount >= 3
+                          width: _count >= 3
                               ? 24.0 + 18.0 + 18.0
-                              : listing.endorsementCount == 2
+                              : _count == 2
                                   ? 24.0 + 18.0
                                   : 24.0,
                           height: 24,
                           child: Stack(
                             children: List.generate(
-                              listing.endorsementCount.clamp(0, 3),
+                              _count.clamp(0, 3),
                               (i) {
                                 final seed = listing.id.hashCode + i;
                                 final url = _kEndorserAvatars[
@@ -865,42 +865,70 @@ class _ListingCardState extends State<_ListingCard> {
                             ),
                           ),
                         ),
-                      const SizedBox(width: 8),
-                      // Endorsement count text
+                      if (_count > 0) const SizedBox(width: 8),
+                      // Parent endorsement count — the trust signal
                       Text(
-                        listing.endorsementCount > 0
-                            ? '${listing.endorsementCount} endorsement${listing.endorsementCount == 1 ? '' : 's'}'
-                            : 'No endorsements yet',
+                        _count > 0
+                            ? '$_count parent${_count == 1 ? '' : 's'} endorsed'
+                            : 'Be the first to endorse',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: hc.textSecondary,
+                          fontSize: 11,
+                          color: _count > 0
+                              ? hc.textSecondary
+                              : hc.textTertiary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const Spacer(),
-                      // Grey "Enquire" pill — mirrors Groups/Events Join pill spec
+                      // Endorse pill — orange + filled when endorsed, grey when not
                       GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          widget.service.recordView(listing.id);
-                          _showListingDetail(
-                              context, listing, widget.service);
-                        },
-                        child: Container(
+                        onTap: _endorsing ? null : _toggleEndorse,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
+                              horizontal: 14, vertical: 9),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF2F2F2),
+                            color: _hasEndorsed
+                                ? HuddlColors.primary
+                                : const Color(0xFFF2F2F2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            'Enquire',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: hc.textPrimary,
-                            ),
-                          ),
+                          child: _endorsing
+                              ? SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: _hasEndorsed
+                                        ? Colors.white
+                                        : HuddlColors.primary,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _hasEndorsed
+                                          ? Icons.thumb_up_rounded
+                                          : Icons.thumb_up_outlined,
+                                      size: 14,
+                                      color: _hasEndorsed
+                                          ? Colors.white
+                                          : hc.textSecondary,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      _hasEndorsed ? 'Endorsed' : 'Endorse',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: _hasEndorsed
+                                            ? Colors.white
+                                            : hc.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ],
