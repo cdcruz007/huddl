@@ -17,10 +17,8 @@ import '../../services/report_service.dart';
 import '../rehome/create_listing_screen.dart';
 import '../groups/forward_message_sheet.dart';
 
-// Marketplace price colour — semantic blue preserved from original design
-// HuddlColors.blue is remapped to teal globally; we need the actual blue
-// for price text, SOLD badges, and offer buttons in marketplace screens.
-const Color _kMarketBlue = Color(0xFF3580F0);
+// Marketplace price colour — Figma dark blue (selected state) #347FEF
+const Color _kMarketBlue = HuddlColors.blueDark;
 
 // =============================================================================
 // PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)

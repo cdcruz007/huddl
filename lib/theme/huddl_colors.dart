@@ -104,6 +104,14 @@ class HuddlColors {
 
   // Secondary / Accent
   static const Color teal = Color(0xFF199A85);
+  // ── Figma blue tokens (actual UI blues from Figma styleguide) ───────────
+  // blueDark  (#347FEF) — Figma "Dark blue"  — selected state chips, buttons, prices
+  // blueUI    (#5B9CFF) — Figma "Medium blue" — FAB, secondary accents
+  // blueUIPale(#EDF4FF) — Figma pale blue bg
+  static const Color blueDark    = Color(0xFF347FEF);   // Figma: selected state / dark blue
+  static const Color blueUI      = Color(0xFF5B9CFF);   // Figma: medium blue / FAB
+  static const Color blueUIPale  = Color(0xFFEDF4FF);   // Figma: pale blue background
+
   // ── Blue tokens remapped to brand palette (orange/teal) ──────────────────
   // These names are preserved for API stability; values now use brand colours.
   static const Color blue = Color(0xFF199A85);          // → brand teal

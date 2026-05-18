@@ -19,8 +19,8 @@ import 'package:intl/intl.dart';
 //   _kSendCrimson — escalation/appeal accent (urgency, legal challenge)
 // ─────────────────────────────────────────────────────────────────────────────
 const Color _kSendAccent  = HuddlColors.primary; // orange — matches Discover & Connect tabs
-const Color _kSendCrimson = Color(0xFF9B2335);
-const Color _kSendInfoBg  = Color(0xFFFFF3EC); // light peach-tinted bg — matches primary brand
+const Color _kSendCrimson = HuddlColors.error;          // escalation accent — Figma #FF5151
+const Color _kSendInfoBg  = HuddlColors.peachVeryLight; // light peach bg — Figma #FFF3ED
 // =============================================================================
 // AI ADVISOR — SAFETY & COMPLIANCE CONSTANTS
 // =============================================================================

@@ -514,11 +514,11 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   }
 
   // ── Design tokens (Figma-exact) ─────────────────────────────────────
-  static const _detailOrange = Color(0xFFF4845F); // brand orange
-  static const _detailBlue   = Color(0xFF4A90D9); // secondary blue (participant labels)
-  static const _detailText   = Color(0xFF1A1A1A); // primary dark
-  static const _detailMeta   = Color(0xFF9E9E9E); // gray meta
-  static const _detailGray   = Color(0xFFF5F5F5); // light gray bg
+  static const _detailOrange = HuddlColors.primary;      // brand orange — Figma #FF965C
+  static const _detailBlue   = HuddlColors.blueDark;      // selected blue — Figma #347FEF
+  static const _detailText   = HuddlColors.textDark;      // primary dark — Figma #42464C
+  static const _detailMeta   = HuddlColors.textTertiary;  // gray meta — Figma #949494
+  static const _detailGray   = HuddlColors.background;    // light gray bg — Figma #F6F6F6
 
   @override
   Widget build(BuildContext context) {
@@ -604,7 +604,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.arrow_back_ios_new, size: 16, color: Color(0xFF555555)),
+                        child: const Icon(Icons.arrow_back_ios_new, size: 16, color: HuddlColors.textSecondary),
                       ),
                     ),
                   ),
@@ -620,7 +620,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.more_vert, size: 20, color: Color(0xFF555555)),
+                        child: const Icon(Icons.more_vert, size: 20, color: HuddlColors.textSecondary),
                       ),
                     ),
                   ),
@@ -765,9 +765,9 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: [
-                                    const Color(0xFFF4845F),
-                                    const Color(0xFF4A90D9),
-                                    const Color(0xFFABABAB),
+                                    HuddlColors.primary,
+                                    HuddlColors.blueDark,
+                                    HuddlColors.textTertiary,
                                   ][i],
                                   border: Border.all(color: Colors.white, width: 2),
                                 ),
@@ -791,7 +791,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                  const Divider(height: 1, color: HuddlColors.divider),
                   const SizedBox(height: 16),
 
                   // Posted by row
@@ -862,7 +862,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                  const Divider(height: 1, color: HuddlColors.divider),
                   const SizedBox(height: 16),
 
                   // Details section
@@ -889,7 +889,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   // Repeat & Privacy info (if applicable)
                   if (_meetup.repeat != MeetupRepeat.none || _meetup.privacy != MeetupPrivacy.public) ...[
                     const SizedBox(height: 16),
-                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    const Divider(height: 1, color: HuddlColors.divider),
                     const SizedBox(height: 16),
                     if (_meetup.repeat != MeetupRepeat.none)
                       _InfoRow(
@@ -910,7 +910,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   // Invitees section (if any)
                   if (_meetup.invitees.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    const Divider(height: 1, color: HuddlColors.divider),
                     const SizedBox(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1071,12 +1071,12 @@ class _InfoRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF9E9E9E)),
+        Icon(icon, size: 20, color: HuddlColors.textTertiary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 14, color: const Color(0xFF1A1A1A)),
+            style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
           ),
         ),
       ],

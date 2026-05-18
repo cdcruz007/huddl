@@ -553,14 +553,14 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // ─────────────────────────────────────────────────────────────────────
   // DESIGN TOKENS  (Figma-exact)
   // ─────────────────────────────────────────────────────────────────────
-  static const _bannerBlue   = Color(0xFF5B9DFF);   // banner — exact Figma blue (user-confirmed hex)
-  static const _accentOrange = Color(0xFFFF9B57);   // date/time/location icons + toggle
-  static const _accentBlue   = Color(0xFF5B9DFF);   // category icons + selected pill fill (Figma #5B9DFF)
-  static const _fieldBg      = Color(0xFFF6F6F8);   // text field fill
-  static const _fieldLine    = Color(0xFFD0D0D0);   // field bottom underline
-  static const _sectionText  = Color(0xFF1A1A1A);   // section header (bold dark)
-  static const _hintGray     = Color(0xFFAAAAAA);   // placeholder hint text
-  static const _pillBorder   = Color(0xFFD5D5D5);   // unselected pill border
+  static const _bannerBlue   = HuddlColors.blueUI;        // banner — Figma #5B9CFF
+  static const _accentOrange = HuddlColors.primary;        // date/time/location icons + toggle — Figma #FF965C
+  static const _accentBlue   = HuddlColors.blueUI;         // category icons + selected pill fill — Figma #5B9CFF
+  static const _fieldBg      = HuddlColors.background;     // text field fill — Figma #F6F6F6
+  static const _fieldLine    = HuddlColors.divider;        // field bottom underline — Figma #D5D5D5
+  static const _sectionText  = HuddlColors.textDark;       // section header — Figma #42464C
+  static const _hintGray     = HuddlColors.textTertiary;   // placeholder hint text — Figma #949494
+  static const _pillBorder   = HuddlColors.divider;        // unselected pill border — Figma #D5D5D5
 
   // ══════════════════════════════════════════════════════════════════════
   // BUILD
@@ -718,12 +718,12 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           decoration: BoxDecoration(
             gradient: _isFormValid
                 ? const LinearGradient(
-                    colors: [Color(0xFFF8A15F), Color(0xFFE8601E)],
+                    colors: [HuddlColors.primaryLight, HuddlColors.primary],
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
                   )
                 : null,
-            color: _isFormValid ? null : const Color(0xFFE0E0E0),
+            color: _isFormValid ? null : HuddlColors.divider,
             borderRadius: BorderRadius.circular(26),
             boxShadow: _isFormValid
                 ? [BoxShadow(color: HuddlColors.primary.withValues(alpha: 0.30), blurRadius: 12, offset: const Offset(0, 4))]
@@ -737,7 +737,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _isFormValid ? Colors.white : const Color(0xFF999999),
+                      color: _isFormValid ? Colors.white : HuddlColors.textTertiary,
                     ),
                   ),
           ),
@@ -1292,7 +1292,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFF2F2F5),
+              color: HuddlColors.background,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: _pillBorder),
             ),

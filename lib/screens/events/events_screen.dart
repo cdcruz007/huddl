@@ -413,11 +413,11 @@ class _EventsScreenState extends State<EventsScreen>
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF5B9DFF),
+                  color: HuddlColors.blueUI,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF5B9DFF).withValues(alpha: 0.35),
+                      color: HuddlColors.blueUI.withValues(alpha: 0.35),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -865,7 +865,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF1A1A1A) : chipBg,
+                  color: isSelected ? HuddlColors.textDark : chipBg,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Row(
@@ -922,7 +922,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: sel ? orange : const Color(0xFFCCCCCC),
+                          color: sel ? orange : HuddlColors.divider,
                           width: sel ? 0 : 1.5,
                         ),
                         color: sel ? orange : Colors.transparent,
@@ -999,7 +999,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             child: Container(
                               width: 36, height: 4,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD4D4D4),
+                                color: HuddlColors.divider,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -1259,7 +1259,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             child: Container(
                               decoration: const BoxDecoration(
                                 border: Border(
-                                  bottom: BorderSide(color: Color(0xFFE0E0E0), width: 1),
+                                  bottom: BorderSide(color: HuddlColors.divider, width: 1),
                                 ),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1453,7 +1453,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               Icons.tune_rounded,
                               size: 18,
                               color: _hasActiveFilter
-                                  ? const Color(0xFFF4845F)
+                                  ? HuddlColors.primary
                                   : filterText,
                             ),
                             const SizedBox(width: 8),
@@ -1465,7 +1465,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
                                 color: _hasActiveFilter
-                                    ? const Color(0xFFF4845F)
+                                    ? HuddlColors.primary
                                     : filterText,
                               ),
                             ),
@@ -1549,27 +1549,27 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4845F).withValues(alpha: 0.1),
+                        color: HuddlColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: const Color(0xFFF4845F).withValues(alpha: 0.3)),
+                            color: HuddlColors.primary.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.people_outline, size: 14, color: Color(0xFFF4845F)),
+                          const Icon(Icons.people_outline, size: 14, color: HuddlColors.primary),
                           const SizedBox(width: 5),
                           Text(_selectedParticipant,
                               style: GoogleFonts.poppins(
                                   fontSize: 12, fontWeight: FontWeight.w600,
-                                  color: const Color(0xFFF4845F))),
+                                  color: HuddlColors.primary)),
                           const SizedBox(width: 6),
                           GestureDetector(
                             onTap: () {
                               HapticFeedback.lightImpact();
                               setState(() => _selectedParticipant = 'All');
                             },
-                            child: const Icon(Icons.close, size: 14, color: Color(0xFFF4845F)),
+                            child: const Icon(Icons.close, size: 14, color: HuddlColors.primary),
                           ),
                         ],
                       ),
@@ -1607,7 +1607,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
         // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
           child: ColoredBox(
-            color: const Color(0xFFF7F7F8),
+            color: HuddlColors.background,
             child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
@@ -1629,7 +1629,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                       await _loadUserContext();
                       if (mounted) setState(() {});
                     },
-                    color: const Color(0xFFF4845F),
+                    color: HuddlColors.primary,
                     child: ListView.builder(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
@@ -2522,7 +2522,7 @@ class _EventsTabState extends State<_EventsTab> {
     final activeNlpChips = _buildActiveNlpChips();
 
     // ── Accent colour for "Clear All" text ─────────────────────
-    const Color clearAllOrange = Color(0xFFFF6B35);
+    const Color clearAllOrange = HuddlColors.primary;
 
     return Column(
       children: [
@@ -2694,7 +2694,7 @@ class _EventsTabState extends State<_EventsTab> {
                       (f == 'Online' && _formatFilter == 'Online') ||
                       (f == 'In-Person' && _formatFilter == 'In-Person'),
                   // Events tab uses blue active chips (reference design)
-                  selectedColor: const Color(0xFF3580F0),
+                  selectedColor: HuddlColors.blueDark,
                   onTap: () {
                     _invisibleAi.trackFilterClick(f);
                     setState(() {
@@ -2734,7 +2734,7 @@ class _EventsTabState extends State<_EventsTab> {
         // ── Event list (off-white #F7F7F7 background) ────────────
         Expanded(
           child: ColoredBox(
-            color: const Color(0xFFF7F7F7),
+            color: HuddlColors.background,
             child: events.isEmpty && !showCarousel
                 ? _EmptyState(
                     icon: hasSheetFilters || _activeManualFilter != 'All'
@@ -2916,7 +2916,7 @@ class _EventsTabState extends State<_EventsTab> {
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF1A1A1A) : chipBg,
+                  color: isSelected ? HuddlColors.textDark : chipBg,
                   borderRadius: BorderRadius.circular(22),
                 ),
                 child: Row(
@@ -2966,7 +2966,7 @@ class _EventsTabState extends State<_EventsTab> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: sel ? orange : const Color(0xFFCCCCCC),
+                          color: sel ? orange : HuddlColors.divider,
                           width: sel ? 0 : 1.5,
                         ),
                         color: sel ? orange : Colors.transparent,
@@ -3039,7 +3039,7 @@ class _EventsTabState extends State<_EventsTab> {
                             child: Container(
                               width: 36, height: 4,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFD4D4D4),
+                                color: HuddlColors.divider,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -3256,7 +3256,7 @@ class _EventsTabState extends State<_EventsTab> {
                             child: Container(
                               decoration: const BoxDecoration(
                                 border: Border(bottom: BorderSide(
-                                    color: Color(0xFFE0E0E0), width: 1)),
+                                    color: HuddlColors.divider, width: 1)),
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               child: Row(children: [
@@ -3580,14 +3580,14 @@ class _RecommendedCard extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(Icons.calendar_today_outlined,
-                            size: 11, color: Color(0xFFABABAB)),
+                            size: 11, color: HuddlColors.textTertiary),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
                             event.dateDisplay,
                             style: GoogleFonts.poppins(
                               fontSize: 11,
-                              color: const Color(0xFFABABAB),
+                              color: HuddlColors.textTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -3599,7 +3599,7 @@ class _RecommendedCard extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
-                            color: event.isFree ? HuddlColors.teal : const Color(0xFF3580F0),
+                            color: event.isFree ? HuddlColors.teal : HuddlColors.blueDark,
                           ),
                         ),
                       ],
@@ -3610,7 +3610,7 @@ class _RecommendedCard extends StatelessWidget {
                       style: GoogleFonts.poppins(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF1A1A2E),
+                        color: HuddlColors.textDark,
                         height: 1.3,
                       ),
                       maxLines: 2,
@@ -3732,9 +3732,9 @@ class _MeetupCard extends StatelessWidget {
   });
 
   // ── Design tokens (Figma-exact) ────────────────────────────────
-  static const _cardOrange  = Color(0xFFF4845F); // brand orange
-  static const _cardText    = Color(0xFF1A1A1A); // primary dark text
-  static const _cardMeta    = Color(0xFF9E9E9E); // secondary gray meta
+  static const _cardOrange  = HuddlColors.primary;     // brand orange — Figma #FF965C
+  static const _cardText    = HuddlColors.textDark;     // primary dark text — Figma #42464C
+  static const _cardMeta    = HuddlColors.textTertiary; // secondary gray meta — Figma #949494
 
   @override
   Widget build(BuildContext context) {
@@ -3919,9 +3919,9 @@ class _MeetupCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: [
-                                    const Color(0xFFF4845F),
-                                    const Color(0xFF4A90D9),
-                                    const Color(0xFFABABAB),
+                                    HuddlColors.primary,
+                                    HuddlColors.blueUI,
+                                    HuddlColors.textTertiary,
                                   ][i],
                                   border: Border.all(color: Colors.white, width: 1.5),
                                 ),
@@ -3976,7 +3976,7 @@ class _MeetupCard extends StatelessWidget {
                             child: Container(
                               height: 44,
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF5F5F5),
+                                color: HuddlColors.background,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
@@ -4173,7 +4173,7 @@ class _EventListCardState extends State<_EventListCard> {
 
   @override
   Widget build(BuildContext context) {
-    const Color eventTypeBlue = Color(0xFF3580F0);
+    const Color eventTypeBlue = HuddlColors.blueDark;
     const Radius cardRadius = Radius.circular(20);
     final bool isFree = event['isFree'] == true;
     final bool isOnline = event['isOnline'] == true;
@@ -4334,14 +4334,14 @@ class _EventListCardState extends State<_EventListCard> {
                     Row(
                       children: [
                         Icon(Icons.calendar_today_outlined,
-                            size: 13, color: const Color(0xFFABABAB)),
+                            size: 13, color: HuddlColors.textTertiary),
                         const SizedBox(width: 5),
                         Text(
                           '${event['date'] as String}  ·  ${event['time'] as String}',
                           style: GoogleFonts.poppins(
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
-                            color: const Color(0xFFABABAB),
+                            color: HuddlColors.textTertiary,
                           ),
                         ),
                       ],
@@ -4733,7 +4733,7 @@ class _FilterChipState extends State<_FilterChip>
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? (widget.selectedColor ?? const Color(0xFFF4845F))
+                  ? (widget.selectedColor ?? HuddlColors.primary)
                   : context.hc.surfaceAlt,
               borderRadius: BorderRadius.circular(20),
               border: widget.isSelected
@@ -4742,7 +4742,7 @@ class _FilterChipState extends State<_FilterChip>
               boxShadow: widget.isSelected
                   ? [
                       BoxShadow(
-                        color: (widget.selectedColor ?? const Color(0xFFF4845F))
+                        color: (widget.selectedColor ?? HuddlColors.primary)
                             .withValues(alpha: 0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
