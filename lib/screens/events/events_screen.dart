@@ -24,6 +24,22 @@ import '../../widgets/common/huddl_empty_state.dart';
 import '../groups/forward_message_sheet.dart';
 import '../services/services_screen.dart';
 
+// ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
+const List<String> _kAttendeeAvatars = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+];
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DISCOVER SCREEN — main entry with 4 tabs: Groups · Meetups · Events · Services
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4093,55 +4109,109 @@ class _MeetupCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
 
-                    // Join button — Groups-style grey pill (not orange gradient)
-                    Semantics(
-                      label: isRestricted
-                          ? 'Restricted meetup'
-                          : 'Join ${meetup.title}',
-                      button: true,
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          onView?.call();
-                          if (isRestricted) {
-                            onAccessDenied?.call();
-                            return;
-                          }
-                          Navigator.push(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) =>
-                                  MeetupDetailScreen(meetup: meetup),
-                              transitionsBuilder: (_, anim, __, child) =>
-                                  FadeTransition(opacity: anim, child: child),
-                              transitionDuration:
-                                  const Duration(milliseconds: 300),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isRestricted
-                                ? const Color(0xFFF0F0F0)
-                                : const Color(0xFFF2F2F2),
-                            borderRadius: BorderRadius.circular(12),
+                    // Bottom row: avatar stack + attendee count (left) + grey pill Join (right)
+                    Row(
+                      children: [
+                        // Overlapping real-photo avatar circles — mirrors Groups card
+                        SizedBox(
+                          width: 62,
+                          height: 24,
+                          child: Stack(
+                            children: [
+                              for (int i = 0; i < 3; i++)
+                                Positioned(
+                                  left: i * 18.0,
+                                  child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 1.5),
+                                    ),
+                                    child: ClipOval(
+                                      child: Image.network(
+                                        _kAttendeeAvatars[
+                                            (meetup.id.hashCode + i) %
+                                                _kAttendeeAvatars.length],
+                                        width: 24,
+                                        height: 24,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Container(
+                                          color: catStyle.color
+                                              .withValues(alpha: 0.25),
+                                          child: Icon(Icons.person,
+                                              size: 12,
+                                              color: catStyle.color),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          child: Center(
-                            child: Text(
-                              isRestricted ? 'Restricted' : 'Join',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                        ),
+                        const SizedBox(width: 6),
+                        // Attendee count
+                        Expanded(
+                          child: Text(
+                            '${meetup.attendeeCount} attending',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: _cardMeta,
+                            ),
+                          ),
+                        ),
+                        // Join / Restricted button — Groups-style grey pill
+                        Semantics(
+                          label: isRestricted
+                              ? 'Restricted meetup'
+                              : 'Join ${meetup.title}',
+                          button: true,
+                          child: GestureDetector(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              onView?.call();
+                              if (isRestricted) {
+                                onAccessDenied?.call();
+                                return;
+                              }
+                              Navigator.push(
+                                context,
+                                PageRouteBuilder(
+                                  pageBuilder: (_, __, ___) =>
+                                      MeetupDetailScreen(meetup: meetup),
+                                  transitionsBuilder: (_, anim, __, child) =>
+                                      FadeTransition(opacity: anim, child: child),
+                                  transitionDuration:
+                                      const Duration(milliseconds: 300),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 10),
+                              decoration: BoxDecoration(
                                 color: isRestricted
-                                    ? HuddlColors.textTertiary
-                                    : _cardText,
+                                    ? const Color(0xFFF0F0F0)
+                                    : const Color(0xFFF2F2F2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isRestricted ? 'Restricted' : 'Join',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: isRestricted
+                                      ? HuddlColors.textTertiary
+                                      : _cardText,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
