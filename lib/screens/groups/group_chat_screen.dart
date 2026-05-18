@@ -6118,22 +6118,21 @@ class _SenderAvatarState extends State<_SenderAvatar> {
     }
   }
 
-  /// Plain coloured-circle fallback showing only the sender's first initial.
-  /// No illustration asset — keeps avatars clean when no photo is available.
+  /// Neutral grey circular fallback showing only the sender's first initial.
+  /// Matches Figma style — clean grey circle with white initial text.
   Widget _buildFallback() {
-    final color = _colorFromHex(widget.colorHex);
     final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
     return Container(
       width: 32,
       height: 32,
-      color: color.withValues(alpha: 0.20),
+      color: HuddlColors.textTertiary.withValues(alpha: 0.30),
       child: Center(
         child: Text(
           initial,
           style: GoogleFonts.poppins(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: color,
+            color: HuddlColors.white,
           ),
         ),
       ),
@@ -6142,11 +6141,9 @@ class _SenderAvatarState extends State<_SenderAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorFromHex(widget.colorHex);
-
     // Priority 1: photoUrl passed on the message (stored when sent)
     // Priority 2: real photoUrl fetched live from Firestore profile
-    // Priority 3: plain coloured-circle with first initial (no illustration)
+    // Priority 3: neutral grey circle with first initial (Figma fallback)
     final resolvedPhoto = (widget.photoUrl != null && widget.photoUrl!.startsWith('http'))
         ? widget.photoUrl!
         : (_firestorePhoto.startsWith('http') ? _firestorePhoto : null);
@@ -6157,10 +6154,10 @@ class _SenderAvatarState extends State<_SenderAvatar> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
+            color: HuddlColors.textTertiary.withValues(alpha: 0.20),
             shape: BoxShape.circle,
             border: widget.showTapHint
-                ? Border.all(color: color.withValues(alpha: 0.4), width: 1.5)
+                ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.4), width: 1.5)
                 : null,
           ),
           clipBehavior: Clip.antiAlias,
@@ -6170,7 +6167,6 @@ class _SenderAvatarState extends State<_SenderAvatar> {
                   fit: BoxFit.cover,
                   width: 32,
                   height: 32,
-                  // If the network photo fails, fall back to illustration
                   errorBuilder: (_, __, ___) => _buildFallback(),
                 )
               : _buildFallback(),

@@ -3451,21 +3451,21 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
     }
   }
 
-  /// Plain coloured-circle fallback showing only the sender's first initial.
+  /// Neutral grey circular fallback showing only the sender's first initial.
+  /// Matches Figma style — clean grey circle with white initial text.
   Widget _buildFallback() {
-    final color = _colorFromHex(widget.colorHex);
     final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
     return Container(
       width: widget.size,
       height: widget.size,
-      color: color.withValues(alpha: 0.20),
+      color: HuddlColors.textTertiary.withValues(alpha: 0.30),
       child: Center(
         child: Text(
           initial,
           style: GoogleFonts.poppins(
             fontSize: widget.size * 0.38,
             fontWeight: FontWeight.w700,
-            color: color,
+            color: HuddlColors.white,
           ),
         ),
       ),
@@ -3474,10 +3474,9 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorFromHex(widget.colorHex);
     // Priority 1: pre-resolved photo from message doc (fastest — no network)
     // Priority 2: live Firestore profile photo
-    // Priority 3: plain coloured-circle with first initial (no illustration)
+    // Priority 3: neutral grey circle with first initial (Figma fallback)
     final preResolved = widget.photoUrl;
     final resolvedPhoto = (preResolved != null && preResolved.startsWith('http'))
         ? preResolved
@@ -3489,7 +3488,7 @@ class _RecipientAvatarState extends State<_RecipientAvatar> {
       width: widget.size,
       height: widget.size,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
+        color: HuddlColors.textTertiary.withValues(alpha: 0.20),
         shape: BoxShape.circle,
       ),
       clipBehavior: Clip.antiAlias,
