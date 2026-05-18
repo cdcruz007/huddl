@@ -4453,57 +4453,62 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                 child: Container(
                   color: context.hc.surface,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                  child: Semantics(
-                    label: hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort groups',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        _showFilterSortSheet();
-                      },
-                      child: Container(
-                        height: 44,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                  child: Row(
+                    children: [
+                      Semantics(
+                        label: hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort groups',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            _showFilterSortSheet();
+                          },
+                          child: Container(
+                            height: 44,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: 18,
-                              color: hasActiveFilters
-                                  ? HuddlColors.primary
-                                  : context.hc.textPrimary,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 18,
+                                  color: hasActiveFilters
+                                      ? HuddlColors.primary
+                                      : context.hc.textPrimary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  hasActiveFilters && _selectedAudiences.isNotEmpty
+                                      ? 'Filter and sort (${_selectedAudiences.length})'
+                                      : hasActiveFilters
+                                          ? 'Filter and sort · $_selectedSort'
+                                          : 'Filter and sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: hasActiveFilters
+                                        ? HuddlColors.primary
+                                        : context.hc.textPrimary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              hasActiveFilters && _selectedAudiences.isNotEmpty
-                                  ? 'Filter and sort (${_selectedAudiences.length})'
-                                  : hasActiveFilters
-                                      ? 'Filter and sort · $_selectedSort'
-                                      : 'Filter and sort',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: hasActiveFilters
-                                    ? HuddlColors.primary
-                                    : context.hc.textPrimary,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                      const Spacer(),
+                    ],
                   ),
                 ),
               ),
