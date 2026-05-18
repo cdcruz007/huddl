@@ -22,7 +22,17 @@ import '../../widgets/borough_badge.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
+// Logic, Firebase, BrowserStorage: 100% unchanged.
+// Only presentation layer updated to match Create Meetup Figma style.
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Design tokens (mirrors create_meetup_screen.dart) ───────────────────────
+const _fieldBg      = HuddlColors.background;   // #F6F6F6 grey field fill
+const _fieldLine    = HuddlColors.divider;       // #D5D5D5 bottom underline
+const _sectionText  = HuddlColors.textDark;      // #42464C section headers
+const _hintGray     = HuddlColors.textTertiary;  // #949494 placeholder text
+const _accentOrange = HuddlColors.primary;       // #FF965C orange accent
+const _bannerBlue   = HuddlColors.blueUI;        // #5B9CFF photo banner bg
 
 const String _userGroupsKey = 'user_created_groups_v1';
 
@@ -42,6 +52,12 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   bool _isCreating = false;
   String? _pickedImageUrl;
   bool _showImageError = false;
+
+  // ── Inline duplicate-name detection ─────────────────────────────────────
+  // True when the typed name closely matches an existing group.
+  // Non-blocking: user sees a warning but can still proceed.
+  bool _hasSimilarGroup = false;
+  List<String> _similarGroupNames = [];
 
   // ── "Who is this group for?" checkboxes ─────────────────────────────────
   final Map<String, bool> _audienceChecks = {
@@ -71,6 +87,45 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.initState();
     _loadBoroughMembers();
     _loadUserGroups();
+    _nameController.addListener(_onNameChanged);
+  }
+
+  // ── Duplicate name check on each keystroke ───────────────────────────────
+  void _onNameChanged() {
+    final input = _nameController.text.trim().toLowerCase();
+    if (input.length < 3) {
+      if (_hasSimilarGroup) setState(() { _hasSimilarGroup = false; _similarGroupNames = []; });
+      return;
+    }
+    final allNames = _userGroups.map((g) => g.name.toLowerCase()).toList();
+    final matches = allNames
+        .where((name) => name.contains(input) || input.contains(name) ||
+            _levenshteinSimilar(name, input))
+        .map((name) => _userGroups.firstWhere((g) => g.name.toLowerCase() == name).name)
+        .take(2)
+        .toList();
+    setState(() {
+      _hasSimilarGroup = matches.isNotEmpty;
+      _similarGroupNames = matches;
+    });
+  }
+
+  /// Returns true when two strings are within edit-distance 2 of each other
+  /// (catches typos like "Hackney Mums" vs "Hackny Mums").
+  bool _levenshteinSimilar(String a, String b) {
+    if ((a.length - b.length).abs() > 3) return false;
+    int m = a.length, n = b.length;
+    final dp = List.generate(m + 1, (i) => List.filled(n + 1, 0));
+    for (int i = 0; i <= m; i++) { dp[i][0] = i; }
+    for (int j = 0; j <= n; j++) { dp[0][j] = j; }
+    for (int i = 1; i <= m; i++) {
+      for (int j = 1; j <= n; j++) {
+        dp[i][j] = a[i - 1] == b[j - 1]
+            ? dp[i - 1][j - 1]
+            : 1 + [dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]].reduce((x, y) => x < y ? x : y);
+      }
+    }
+    return dp[m][n] <= 2;
   }
 
   Future<void> _loadUserGroups() async {
@@ -109,6 +164,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
 
   @override
   void dispose() {
+    _nameController.removeListener(_onNameChanged);
     _nameController.dispose();
     _descriptionController.dispose();
     _memberSearchController.dispose();
@@ -230,13 +286,22 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           return Image.memory(
             Uint8List.fromList(bytes),
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _photoPlaceholder(),
+            errorBuilder: (_, __, ___) => _emptyPhotoFallback(),
           );
         }
       } catch (_) {}
     }
-    return _photoPlaceholder();
+    return _emptyPhotoFallback();
   }
+
+  /// Inline fallback shown when picked image fails to decode.
+  Widget _emptyPhotoFallback() => Container(
+        color: _bannerBlue,
+        child: const Center(
+          child: Icon(Icons.add_photo_alternate_outlined,
+              size: 48, color: Colors.white),
+        ),
+      );
 
   // ── Show invite members bottom sheet ──────────────────────────────────
   void _showInviteMembersSheet() {
@@ -958,216 +1023,160 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
-        surfaceTintColor: Colors.white,
-        automaticallyImplyLeading: false,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4),
-              child: Text('Cancel',
-                  style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
-            ),
-          ),
-        ),
-        leadingWidth: 80,
-        centerTitle: true,
-        title: Text(
-          'Create group',
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
-          ),
-        ),
-        actions: [
-          GestureDetector(
-            onTap: _isValid && !_isCreating ? _createGroup : null,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Center(
-                child: _isCreating
-                    ? const SizedBox(
-                        width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text('Save',
-                        style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: _isValid
-                                ? HuddlColors.textDark
-                                : HuddlColors.textHint)),
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
+      backgroundColor: Colors.white,
+      appBar: _buildAppBar(),
+      body: SafeArea(
+        top: false,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─────────── BOROUGH SCOPE NOTE ───────────
-            const BoroughGateMessage(
-              featureLabel: 'Groups',
-            ),
-            // ─────────── PHOTO UPLOAD (full-width banner) ───────────
-            _buildPhotoUpload(),
-            const SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ─────────── BOROUGH SCOPE NOTE ───────────
+                    const BoroughGateMessage(featureLabel: 'Groups'),
 
-            // ─────────── GROUP TITLE ───────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              child: _sectionLabel('Group title'),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _underlineTextField(
-                controller: _nameController,
-                hint: 'Group title',
-              ),
-            ),
-            const SizedBox(height: 8),
+                    // ─────────── PHOTO UPLOAD (blue banner) ───────────
+                    _buildPhotoUpload(),
 
-            // ─────────── DESCRIPTION ───────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
-              child: _sectionLabel('Group description'),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextField(
-                controller: _descriptionController,
-                onChanged: (_) => setState(() {}),
-                maxLines: 4,
-                textInputAction: TextInputAction.done,
-                style: GoogleFonts.poppins(
-                    fontSize: 14, color: context.hc.textPrimary),
-                decoration: InputDecoration(
-                  hintText:
-                      'e.g. who this group is for, what activities are planned.',
-                  hintStyle: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: context.hc.textTertiary,
-                      height: 1.4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: HuddlColors.gray300),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: HuddlColors.gray300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        BorderSide(color: HuddlColors.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.all(14),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 22),
 
-            // ─────────── WHO IS THIS GROUP FOR? ───────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sectionLabel('Who is this group for?'),
-            ),
-            const SizedBox(height: 8),
-            ..._audienceChecks.keys.map((label) {
-              final isChecked = _audienceChecks[label]!;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: GestureDetector(
-                  onTap: () => setState(() {
-                    _audienceChecks[label] = !_audienceChecks[label]!;
-                  }),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      children: [
-                        _checkbox(isChecked),
-                        const SizedBox(width: 10),
-                        Text(label,
-                            style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: context.hc.textPrimary)),
-                      ],
+                          // ─────────── GROUP TITLE ───────────
+                          _sectionHeader('Group title'),
+                          const SizedBox(height: 6),
+                          _buildGrayField(
+                            controller: _nameController,
+                            hint: 'e.g. Hackney Toddler Playgroup',
+                            onChanged: (_) => setState(() {}),
+                          ),
+                          // Inline duplicate warning
+                          if (_hasSimilarGroup) ...[  
+                            const SizedBox(height: 6),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.info_outline,
+                                    size: 14, color: _accentOrange),
+                                const SizedBox(width: 5),
+                                Expanded(
+                                  child: Text(
+                                    'A similar group already exists: ${_similarGroupNames.join(', ')}. Consider joining it instead.',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: _accentOrange,
+                                        height: 1.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+
+                          const SizedBox(height: 20),
+
+                          // ─────────── DESCRIPTION ───────────
+                          _sectionHeader('Group description'),
+                          const SizedBox(height: 6),
+                          _buildGrayField(
+                            controller: _descriptionController,
+                            hint: 'e.g. who this group is for, what activities are planned.',
+                            maxLines: 4,
+                            onChanged: (_) => setState(() {}),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // ─────────── WHO IS THIS GROUP FOR? ───────────
+                          _sectionHeader('Who is this group for?'),
+                          const SizedBox(height: 10),
+                          ..._audienceChecks.keys.map((label) {
+                            final isChecked = _audienceChecks[label]!;
+                            return GestureDetector(
+                              onTap: () => setState(() {
+                                _audienceChecks[label] = !_audienceChecks[label]!;
+                              }),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Row(
+                                  children: [
+                                    _checkbox(isChecked),
+                                    const SizedBox(width: 10),
+                                    Text(label,
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 14,
+                                            color: context.hc.textPrimary)),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }),
+
+                          const SizedBox(height: 20),
+
+                          // ─────────── PRIVACY SETTINGS ───────────
+                          _sectionHeader('Privacy settings'),
+                          const SizedBox(height: 10),
+                          _privacyRadio(
+                            label: 'Public',
+                            description:
+                                'Everyone in your local community can see and join your group.',
+                            isSelected: _privacy == 'public',
+                            icon: Icons.public,
+                            onTap: () => setState(() {
+                              _privacy = 'public';
+                              _selectedParentGroupId = null;
+                              _selectedParentGroupName = null;
+                            }),
+                          ),
+                          const SizedBox(height: 10),
+                          _privacyRadio(
+                            label: 'Group',
+                            description:
+                                'Only members of a specific group can see and join your group.',
+                            isSelected: _privacy == 'group',
+                            icon: Icons.group,
+                            onTap: () => setState(() {
+                              _privacy = 'group';
+                            }),
+                          ),
+                          if (_privacy == 'group') ...[
+                            const SizedBox(height: 12),
+                            _buildGroupPicker(),
+                          ],
+                          const SizedBox(height: 10),
+                          _privacyRadio(
+                            label: 'Private',
+                            description:
+                                'Invite only — choose specific people in ${_userBorough ?? 'your borough'} to invite.',
+                            isSelected: _privacy == 'private',
+                            icon: Icons.lock_outline,
+                            onTap: () => setState(() {
+                              _privacy = 'private';
+                              _selectedParentGroupId = null;
+                              _selectedParentGroupName = null;
+                            }),
+                          ),
+                          if (_privacy == 'private') ...[
+                            const SizedBox(height: 12),
+                            _buildInviteMembersWidget(),
+                          ],
+
+                          const SizedBox(height: 36),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              );
-            }),
-
-            const SizedBox(height: 20),
-
-            // ─────────── PRIVACY SETTINGS (3-tier) ───────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _sectionLabel('Privacy settings'),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _privacyRadio(
-                    label: 'Public',
-                    description:
-                        'Everyone in your local community can see and join your group.',
-                    isSelected: _privacy == 'public',
-                    icon: Icons.public,
-                    onTap: () => setState(() {
-                      _privacy = 'public';
-                      _selectedParentGroupId = null;
-                      _selectedParentGroupName = null;
-                    }),
-                  ),
-                  const SizedBox(height: 10),
-                  _privacyRadio(
-                    label: 'Group',
-                    description:
-                        'Only members of a specific group can see and join your group.',
-                    isSelected: _privacy == 'group',
-                    icon: Icons.group,
-                    onTap: () => setState(() {
-                      _privacy = 'group';
-                    }),
-                  ),
-                  if (_privacy == 'group') ...[
-                    const SizedBox(height: 12),
-                    _buildGroupPicker(),
-                  ],
-                  const SizedBox(height: 10),
-                  _privacyRadio(
-                    label: 'Private',
-                    description:
-                        'Invite only \u2014 choose specific people in ${_userBorough ?? 'your borough'} to invite.',
-                    isSelected: _privacy == 'private',
-                    icon: Icons.lock_outline,
-                    onTap: () => setState(() {
-                      _privacy = 'private';
-                      _selectedParentGroupId = null;
-                      _selectedParentGroupName = null;
-                    }),
-                  ),
-                  if (_privacy == 'private') ...[
-                    const SizedBox(height: 12),
-                    _buildInviteMembersWidget(),
-                  ],
-                ],
               ),
             ),
-
-            const SizedBox(height: 32),
+            // ─────────── STICKY CREATE BUTTON ───────────
+            _buildStickyCreateButton(),
           ],
         ),
       ),
@@ -1175,10 +1184,100 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // COMPONENT WIDGETS (matching Create Meetup design language)
+  // COMPONENT WIDGETS (Create Meetup design language — Figma-aligned)
   // ══════════════════════════════════════════════════════════════════════════
 
-  /// Full-width peach photo upload banner matching Create Meetup style
+  // ────────────────────────────────────────────────────────────────────────
+  // APP BAR — white bg, orange back arrow, centred title, bottom divider
+  // ────────────────────────────────────────────────────────────────────────
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 0,
+      surfaceTintColor: Colors.white,
+      automaticallyImplyLeading: false,
+      leading: GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Icon(Icons.arrow_back_ios, size: 18, color: _accentOrange),
+          ),
+        ),
+      ),
+      centerTitle: true,
+      title: Text(
+        'Create group',
+        style: GoogleFonts.poppins(
+          fontSize: 17,
+          fontWeight: FontWeight.w700,
+          color: _sectionText,
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Divider(height: 1, color: context.hc.divider),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // STICKY CREATE BUTTON — gradient orange, disabled grey, h52, r26
+  // ────────────────────────────────────────────────────────────────────────
+  Widget _buildStickyCreateButton() {
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(
+          20, 10, 20, MediaQuery.of(context).padding.bottom + 14),
+      child: GestureDetector(
+        onTap: _isValid && !_isCreating ? _createGroup : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          height: 52,
+          decoration: BoxDecoration(
+            gradient: _isValid
+                ? const LinearGradient(
+                    colors: [HuddlColors.primaryLight, HuddlColors.primary],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  )
+                : null,
+            color: _isValid ? null : HuddlColors.divider,
+            borderRadius: BorderRadius.circular(26),
+            boxShadow: _isValid
+                ? [
+                    BoxShadow(
+                        color: HuddlColors.primary.withValues(alpha: 0.30),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4))
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: _isCreating
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2.5, color: Colors.white))
+                : Text(
+                    'Create group',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          _isValid ? Colors.white : HuddlColors.textTertiary,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
+  // PHOTO UPLOAD — blue banner placeholder + picked-image overlay
+  // ────────────────────────────────────────────────────────────────────────
   Widget _buildPhotoUpload() {
     if (_pickedImageUrl != null) {
       return GestureDetector(
@@ -1191,24 +1290,33 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             children: [
               _buildPickedImage(),
               Positioned(
-                bottom: 10,
-                right: 10,
+                left: 0, right: 0, bottom: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  height: 52,
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.55),
+                        Colors.transparent
+                      ],
+                    ),
                   ),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.edit, size: 14, color: Colors.white),
-                    const SizedBox(width: 4),
-                    Text('Change',
-                        style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white)),
-                  ]),
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.edit_outlined,
+                          color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text('Change photo',
+                          style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white)),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -1217,14 +1325,14 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       );
     }
 
+    // Placeholder: solid blue banner (matches Create Meetup Figma style)
     return GestureDetector(
       onTap: _pickGroupImage,
       child: Container(
         width: double.infinity,
         height: 200,
-        margin: EdgeInsets.zero,
         decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.08),
+          color: _bannerBlue,
           border: _showImageError
               ? Border.all(color: HuddlColors.error, width: 2)
               : null,
@@ -1232,45 +1340,18 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                border: Border.all(
-                    color: HuddlColors.primary.withValues(alpha: 0.6),
-                    width: 2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(Icons.image_outlined,
-                      size: 28,
-                      color: HuddlColors.primary.withValues(alpha: 0.8)),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.add,
-                          size: 12, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
+            const Icon(
+              Icons.add_photo_alternate_outlined,
+              color: Colors.white,
+              size: 48,
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               'Click to add group photo',
               style: GoogleFonts.poppins(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w500,
-                color: HuddlColors.primary,
+                color: Colors.white,
               ),
             ),
             if (_showImageError) ...[
@@ -1289,52 +1370,51 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     );
   }
 
-  Widget _photoPlaceholder() {
-    return Container(
-      color: HuddlColors.primary.withValues(alpha: 0.08),
-      child: const Center(
-        child:
-            Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
-      ),
-    );
-  }
-
-  /// Section label — bold dark text matching Create Meetup style
-  Widget _sectionLabel(String text) {
+  // ────────────────────────────────────────────────────────────────────────
+  // SECTION HEADER — 16/w700 matching Create Meetup Figma
+  // ────────────────────────────────────────────────────────────────────────
+  Widget _sectionHeader(String text) {
     return Text(
       text,
       style: GoogleFonts.poppins(
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: context.hc.textPrimary,
+        color: _sectionText,
       ),
     );
   }
 
-  /// Underline text field matching Create Meetup style
-  Widget _underlineTextField({
+  // ────────────────────────────────────────────────────────────────────────
+  // GRAY FILLED TEXT FIELD — #F6F6F8 bg, bottom underline (Figma)
+  // ────────────────────────────────────────────────────────────────────────
+  Widget _buildGrayField({
     required TextEditingController controller,
     required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    void Function(String)? onChanged,
   }) {
-    return TextField(
-      controller: controller,
-      onChanged: (_) => setState(() {}),
-      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle:
-            GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-        border: UnderlineInputBorder(
-          borderSide: BorderSide(color: HuddlColors.gray300),
+    return Container(
+      decoration: const BoxDecoration(
+        color: _fieldBg,
+        border: Border(bottom: BorderSide(color: _fieldLine, width: 1.2)),
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        textInputAction:
+            maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
+        style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
         ),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: HuddlColors.gray300),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+        onChanged: onChanged,
       ),
     );
   }
