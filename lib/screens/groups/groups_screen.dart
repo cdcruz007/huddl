@@ -4461,43 +4461,26 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                         HapticFeedback.lightImpact();
                         _showFilterSortSheet();
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        height: 42,
+                      child: Container(
+                        height: 44,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         decoration: BoxDecoration(
-                          color: hasActiveFilters
-                              ? HuddlColors.primary.withValues(alpha: 0.08)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(21),
-                          boxShadow: hasActiveFilters
-                              ? [
-                                  BoxShadow(
-                                    color: HuddlColors.primary.withValues(alpha: 0.15),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ]
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.09),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                          border: hasActiveFilters
-                              ? Border.all(
-                                  color: HuddlColors.primary.withValues(alpha: 0.35),
-                                  width: 1.0,
-                                )
-                              : null,
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.tune_rounded,
-                              size: 17,
+                              size: 18,
                               color: hasActiveFilters
                                   ? HuddlColors.primary
                                   : context.hc.textPrimary,
@@ -4509,9 +4492,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                                   : hasActiveFilters
                                       ? 'Filter and sort · $_selectedSort'
                                       : 'Filter and sort',
-                              style: _adaptiveText(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                                 color: hasActiveFilters
                                     ? HuddlColors.primary
                                     : context.hc.textPrimary,

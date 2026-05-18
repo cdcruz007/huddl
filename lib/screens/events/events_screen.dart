@@ -371,29 +371,8 @@ class _EventsScreenState extends State<EventsScreen>
                 ],
               ),
             ),
-            // ── Borough scope context bar ───────────────────────
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: _selectedTab == 3
-                  ? const BoroughHeader(
-                      key: ValueKey('services-borough'),
-                      feature: HuddlFeature.services,
-                    )
-                  : _selectedTab == 2
-                      ? const BoroughHeader(
-                          key: ValueKey('uk-wide'),
-                          feature: HuddlFeature.events,
-                        )
-                      : _selectedTab == 1
-                          ? const BoroughHeader(
-                              key: ValueKey('meetups-borough'),
-                              feature: HuddlFeature.meetups,
-                            )
-                          : const BoroughHeader(
-                              key: ValueKey('groups-borough'),
-                              feature: HuddlFeature.groups,
-                            ),
-            ),
+            // Borough header banners removed — scope shown via compact
+            // chip next to the Discover title instead.
             // ── Tab content ─────────────────────────────────────────
             Expanded(
               child: TabBarView(
