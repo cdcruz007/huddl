@@ -163,7 +163,7 @@ class BoroughScopeChip extends StatelessWidget {
           context: context,
           icon: Icons.location_on_outlined,
           label: boroughName.isNotEmpty ? boroughName : 'Your borough',
-          color: HuddlColors.teal,
+          color: HuddlColors.blueUI,
           isDark: isDark,
         );
       case FeatureScope.boroughAware:
