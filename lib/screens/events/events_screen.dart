@@ -3850,9 +3850,8 @@ class _MeetupCard extends StatelessWidget {
   });
 
   // ── Design tokens (Figma-exact) ────────────────────────────────
-  static const _cardOrange  = HuddlColors.primary;     // brand orange — Figma #FF965C
-  static const _cardText    = HuddlColors.textDark;     // primary dark text — Figma #42464C
-  static const _cardMeta    = HuddlColors.textTertiary; // secondary gray meta — Figma #949494
+  static const _cardText = HuddlColors.textDark;     // primary dark text — Figma #42464C
+  static const _cardMeta = HuddlColors.textTertiary; // secondary gray meta — Figma #949494
 
   @override
   Widget build(BuildContext context) {
@@ -3865,7 +3864,10 @@ class _MeetupCard extends StatelessWidget {
         : '\u00A3${meetup.price?.toStringAsFixed(0) ?? ''}';
     final isFree = meetup.isFree;
 
-    // Date + time display: "1 MAY 2021  |  10 AM – 6 PM"
+    // "New" badge: fewer than 10 attendees = newly listed (mirrors Events card logic)
+    final isNew = meetup.attendeeCount < 10;
+
+    // Date + time display: "1 MAY 2021  ·  10 AM – 6 PM"
     final dateStr = meetup.dateDisplay.toUpperCase();
     final timeStr = meetup.timeDisplay;
 
@@ -3907,14 +3909,13 @@ class _MeetupCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Hero image with badge overlay ───────────────────────
-              SizedBox(
-                height: 185,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Hero(
+              // ── Hero image with Events-style badge overlay ──────────
+              Stack(
+                children: [
+                  SizedBox(
+                    height: 185,
+                    width: double.infinity,
+                    child: Hero(
                       tag: 'meetup_cover_${meetup.id}',
                       child: _buildCoverImage(
                         imageUrl: meetup.imageUrl.isNotEmpty
@@ -3924,58 +3925,149 @@ class _MeetupCard extends StatelessWidget {
                         fallbackColor: catStyle.color,
                       ),
                     ),
-                    // Badge row — top-left (only show "Private" when restricted)
-                    if (isRestricted)
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.lock_outline, size: 11, color: Colors.white),
-                              const SizedBox(width: 3),
-                              Text('Private',
-                                style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
-                            ],
-                          ),
+                  ),
+                  // Subtle bottom gradient for readability (mirrors Events card)
+                  Positioned(
+                    bottom: 0, left: 0, right: 0,
+                    child: Container(
+                      height: 55,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.20),
+                          ],
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                  ),
+                  // ── Top-left: New + type badges (mirrors Events card) ──
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Row(
+                      children: [
+                        // "New" badge — amber/yellow, same as Events tab
+                        if (isNew) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'New',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        // Type badge: "Private" (lock) for restricted, "Meetup" category for open
+                        if (isRestricted)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.lock_outline, size: 11, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Private',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.blueDark,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Meetup',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  // ── Top-right: price badge (mirrors Events card) ───────
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isFree
+                            ? HuddlColors.teal
+                            : Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        priceText,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: isFree ? Colors.white : HuddlColors.blueDark,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
 
-              // ── Card body ──────────────────────────────────────────
+              // ── Card body — Events-style: date · title · location + Join ─
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date + time row
-                    Text(
-                      '$dateStr  |  $timeStr',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: _cardMeta,
-                        letterSpacing: 0.2,
-                      ),
+                    // Date + time row (calendar icon, mirrors Events card)
+                    Row(
+                      children: [
+                        Icon(Icons.calendar_today_outlined,
+                            size: 13, color: _cardMeta),
+                        const SizedBox(width: 5),
+                        Text(
+                          '$dateStr  ·  $timeStr',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: _cardMeta,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
 
                     // Title
                     Text(
                       meetup.title,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: _cardText,
-                        height: 1.2,
+                        height: 1.25,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -3985,73 +4077,28 @@ class _MeetupCard extends StatelessWidget {
                     // Location row
                     Row(
                       children: [
-                        const Icon(Icons.location_on_outlined, size: 14, color: _cardMeta),
+                        const Icon(Icons.location_on_outlined,
+                            size: 14, color: _cardMeta),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             meetup.location,
-                            style: GoogleFonts.poppins(fontSize: 13, color: _cardMeta),
+                            style: GoogleFonts.poppins(
+                                fontSize: 12.5, color: _cardMeta),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
 
-                    // Attendees + price row
-                    Row(
-                      children: [
-                        // Avatar stack placeholder circles
-                        SizedBox(
-                          width: 60,
-                          height: 24,
-                          child: Stack(
-                            children: List.generate(3, (i) => Positioned(
-                              left: i * 16.0,
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: [
-                                    HuddlColors.primary,
-                                    HuddlColors.blueUI,
-                                    HuddlColors.textTertiary,
-                                  ][i],
-                                  border: Border.all(color: Colors.white, width: 1.5),
-                                ),
-                                child: Icon(Icons.person, size: 13, color: Colors.white),
-                              ),
-                            )).reversed.toList(),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${meetup.attendeeCount} interested',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: _cardText,
-                          ),
-                        ),
-                        const Spacer(),
-                        // Price
-                        Text(
-                          priceText,
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isFree ? _cardOrange : _cardText,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Single "Join" button — consistent with Groups tab
-                    SizedBox(
-                      width: double.infinity,
+                    // Join button — Groups-style grey pill (not orange gradient)
+                    Semantics(
+                      label: isRestricted
+                          ? 'Restricted meetup'
+                          : 'Join ${meetup.title}',
+                      button: true,
                       child: GestureDetector(
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -4063,33 +4110,33 @@ class _MeetupCard extends StatelessWidget {
                           Navigator.push(
                             context,
                             PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+                              pageBuilder: (_, __, ___) =>
+                                  MeetupDetailScreen(meetup: meetup),
                               transitionsBuilder: (_, anim, __, child) =>
                                   FadeTransition(opacity: anim, child: child),
-                              transitionDuration: const Duration(milliseconds: 300),
+                              transitionDuration:
+                                  const Duration(milliseconds: 300),
                             ),
                           );
                         },
                         child: Container(
-                          height: 44,
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: isRestricted
-                                ? null
-                                : const LinearGradient(
-                                    colors: [HuddlColors.primaryLight, HuddlColors.primary],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  ),
-                            color: isRestricted ? HuddlColors.divider : null,
+                            color: isRestricted
+                                ? const Color(0xFFF0F0F0)
+                                : const Color(0xFFF2F2F2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Center(
                             child: Text(
-                              'Join',
+                              isRestricted ? 'Restricted' : 'Join',
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isRestricted ? HuddlColors.textTertiary : Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: isRestricted
+                                    ? HuddlColors.textTertiary
+                                    : _cardText,
                               ),
                             ),
                           ),
