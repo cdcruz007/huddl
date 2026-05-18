@@ -3914,47 +3914,7 @@ class _EventListCard extends StatefulWidget {
 class _EventListCardState extends State<_EventListCard> {
   Map<String, dynamic> get event => widget.event;
 
-  List<Widget> _buildMatchReasonChips() {
-    final reasons = widget.matchReasons.take(2).toList();
-    if (reasons.isEmpty) return [];
-    return [
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 6,
-        runSpacing: 4,
-        children: [
-          // Reason tags (AI score hidden — works invisibly)
-          ...reasons.map((reason) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-              decoration: BoxDecoration(
-                color: HuddlColors.teal.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: HuddlColors.teal.withValues(alpha: 0.2),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(reason.emoji, style: const TextStyle(fontSize: 10)),
-                  const SizedBox(width: 3),
-                  Text(
-                    reason.label,
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: HuddlColors.teal,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    ];
-  }
+  // Match reason chips removed — kept only in detail screen to reduce card clutter.
 
   @override
   Widget build(BuildContext context) {
@@ -3964,7 +3924,6 @@ class _EventListCardState extends State<_EventListCard> {
     final bool isOnline = event['isOnline'] == true;
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
-    final String borough = event['borough'] as String? ?? '';
     final int attendees = event['attendees'] as int? ?? 0;
     // "New" badge: events with fewer than 10 attendees are considered newly listed
     final bool isNew = attendees < 10;
@@ -4169,70 +4128,8 @@ class _EventListCardState extends State<_EventListCard> {
                         ),
                       ],
                     ),
-                    // Borough tag (if present)
-                    if (borough.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: HuddlColors.teal.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.2)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.location_on, size: 11, color: HuddlColors.teal),
-                            const SizedBox(width: 3),
-                            Text(
-                              borough,
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.teal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    // AI match reason badges
-                    if (widget.matchReasons.isNotEmpty) ..._buildMatchReasonChips(),
-                    // AI source attribution
-                    if (event['isAiDiscovered'] == true) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.teal,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(Icons.language, size: 10, color: Colors.white),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            event['aiSourceIcon'] as IconData? ?? Icons.language,
-                            size: 12,
-                            color: HuddlColors.teal,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              'Found on ${event['aiSourceName'] as String? ?? 'the web'}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.teal,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                    // Borough, match-reason chips, and AI source attribution
+                    // removed from card — available in detail screen on tap.
                   ],
                 ),
               ),
