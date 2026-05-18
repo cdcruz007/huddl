@@ -792,7 +792,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
           // ══ DESIGN TOKENS ══════════════════════════════════════
           const Color bgSheet      = Colors.white;
-          const Color orange       = Color(0xFFF4845F);  // brand orange
+          const Color orange       = Color(0xFFFCA878);  // Huddl brand orange
           const Color blue         = Color(0xFF4A90D9);  // localization chip selected
           const Color textPrimary  = Color(0xFF1A1A1A);
           const Color textSecGray  = Color(0xFF9E9E9E);
@@ -1010,15 +1010,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                           child: Row(
                             children: [
+                              // Bare orange X — Figma-exact (no circle background)
                               GestureDetector(
                                 onTap: () => Navigator.pop(ctx),
-                                child: Container(
-                                  width: 32, height: 32,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF0F0F0),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.close_rounded, size: 17, color: textPrimary),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(Icons.close_rounded, size: 20, color: orange),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -1355,13 +1352,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             decoration: BoxDecoration(
                               color: orange,
                               borderRadius: BorderRadius.circular(26),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: orange.withValues(alpha: 0.35),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
                             ),
                             alignment: Alignment.center,
                             child: Text(
@@ -2849,7 +2839,7 @@ class _EventsTabState extends State<_EventsTab> {
 
           // ══ DESIGN TOKENS (Figma-exact) ════════════════════════
           const Color bgSheet      = Colors.white;
-          const Color orange       = Color(0xFFF4845F);
+          const Color orange       = Color(0xFFFCA878);  // Huddl brand orange
           const Color blue         = Color(0xFF4A90D9);
           const Color textPrimary  = Color(0xFF1A1A1A);
           const Color textSecGray  = Color(0xFF9E9E9E);
@@ -3059,15 +3049,12 @@ class _EventsTabState extends State<_EventsTab> {
                           padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
                           child: Row(
                             children: [
+                              // Bare orange X — Figma-exact (no circle background)
                               GestureDetector(
                                 onTap: () => Navigator.pop(ctx),
-                                child: Container(
-                                  width: 32, height: 32,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFF0F0F0),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.close_rounded, size: 17, color: textPrimary),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(Icons.close_rounded, size: 20, color: orange),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -3364,9 +3351,6 @@ class _EventsTabState extends State<_EventsTab> {
                             decoration: BoxDecoration(
                               color: orange,
                               borderRadius: BorderRadius.circular(26),
-                              boxShadow: [BoxShadow(
-                                  color: orange.withValues(alpha: 0.35),
-                                  blurRadius: 14, offset: const Offset(0, 5))],
                             ),
                             alignment: Alignment.center,
                             child: Text(
