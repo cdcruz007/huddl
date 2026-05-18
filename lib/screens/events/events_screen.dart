@@ -2675,15 +2675,6 @@ class _EventsTabState extends State<_EventsTab> {
       events = _invisibleAi.intelligentSort(events, _scoredEventMap);
     }
 
-    // Show carousel only in clean (no search / filter) state
-    final showCarousel = _recommenderReady &&
-        _recommended.isNotEmpty &&
-        _localSearchQuery.isEmpty &&
-        _nlpQuery.isEmpty &&
-        _activeManualFilter == 'All' &&
-        _priceFilter == 'All' &&
-        _formatFilter == 'All';
-
     final bool hasActiveFilter = _priceFilter != 'All' ||
         _formatFilter != 'All' ||
         _activeManualFilter != 'All';
@@ -2891,11 +2882,11 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           ),
 
-        // ── Event list ───────────────────────────────────────────
+        // ── Event list — all events as vertical cards under "Suggested for you" ──
         Expanded(
           child: ColoredBox(
             color: HuddlColors.background,
-            child: events.isEmpty && !showCarousel
+            child: events.isEmpty
                 ? _EmptyState(
                     icon: hasActiveFilter
                         ? Icons.filter_list_off
@@ -2933,16 +2924,9 @@ class _EventsTabState extends State<_EventsTab> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                       keyboardDismissBehavior:
                           ScrollViewKeyboardDismissBehavior.onDrag,
-                      itemCount: events.length + (showCarousel ? 1 : 0),
+                      itemCount: events.length,
                       itemBuilder: (_, i) {
-                        if (showCarousel && i == 0) {
-                          return _RecommendedCarousel(
-                            scoredEvents: _recommended,
-                            eventService: widget.eventService,
-                          );
-                        }
-                        final eventIdx = showCarousel ? i - 1 : i;
-                        final event = events[eventIdx];
+                        final event = events[i];
                         final eventId = event['id'] as String? ?? '';
                         final scored = _scoredEventMap[eventId];
                         return _EventListCard(

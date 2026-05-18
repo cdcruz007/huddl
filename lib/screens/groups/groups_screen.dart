@@ -5022,15 +5022,6 @@ class _DiscoverTabState extends State<_DiscoverTab> {
                           color: context.hc.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Groups you might be interested in',
-                        style: _adaptiveText(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w400,
-                          color: context.hc.textSecondary,
-                        ),
-                      ),
                     ],
                   ),
                 ),
