@@ -790,16 +790,16 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
 
-          // ══ DESIGN TOKENS ══════════════════════════════════════
+          // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
-          const Color orange       = Color(0xFFFCA878);  // Huddl brand orange
-          const Color blue         = Color(0xFF4A90D9);  // localization chip selected
-          const Color textPrimary  = Color(0xFF1A1A1A);
-          const Color textSecGray  = Color(0xFF9E9E9E);
-          const Color chipBg       = Color(0xFFF0F0F0);  // unselected chip
-          const Color dividerColor = Color(0xFFE0E0E0);
-          const Color trackInactive= Color(0xFFE0E0E0);
-          const Color toggleOff    = Color(0xFFC7C7CC);
+          const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
+          const Color blue         = Color(0xFF347FEF);  // Figma: "Dark blue" — selected state
+          const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
+          const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
+          const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page background = unselected chip
+          const Color dividerColor = Color(0xFFD5D5D5);  // Figma: grayscale divider
+          const Color trackInactive= Color(0xFFD5D5D5);
+          const Color toggleOff    = Color(0xFFD5D5D5);
 
           final bool isOnline = sheetLocalization == 'online';
 
@@ -1405,14 +1405,14 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     }
 
     // ── Figma design tokens ────────────────────────────────────────
-    const Color feedBg       = Color(0xFFF7F7F8); // warm light gray page bg
-    const Color chipBlue     = Color(0xFF3B82F6); // selected chip — bright blue
-    const Color chipTextSel  = Colors.white;       // selected chip text
-    const Color chipBgUn     = Colors.white;       // unselected chip bg
-    const Color chipTextUn   = Color(0xFF555555);  // unselected chip text
-    const Color filterText   = Color(0xFF333333);  // filter pill icon+text
-    const Color distanceText = Color(0xFF9E9E9E);  // 'Distance: 10 km' gray
-    const Color sectionText  = Color(0xFF1A1A1A);  // 'Suggested for you'
+    const Color feedBg       = Color(0xFFF6F6F6); // Figma: page background
+    const Color chipBlue     = Color(0xFF347FEF); // Figma: "Dark blue" — selected chip
+    const Color chipTextSel  = Colors.white;
+    const Color chipBgUn     = Color(0xFFF6F6F6); // Figma: unselected chip bg = page bg
+    const Color chipTextUn   = Color(0xFF42464C); // Figma: "Black" grayscale
+    const Color filterText   = Color(0xFF42464C); // Figma: dark text
+    const Color distanceText = Color(0xFF949494); // Figma: light gray
+    const Color sectionText  = Color(0xFF42464C); // Figma: "Black" grayscale
 
     return Column(
       children: [
@@ -2837,16 +2837,16 @@ class _EventsTabState extends State<_EventsTab> {
       builder: (_) => StatefulBuilder(
         builder: (ctx, setSheetState) {
 
-          // ══ DESIGN TOKENS (Figma-exact) ════════════════════════
+          // ══ DESIGN TOKENS — Figma styleguide exact ════════════
           const Color bgSheet      = Colors.white;
-          const Color orange       = Color(0xFFFCA878);  // Huddl brand orange
-          const Color blue         = Color(0xFF4A90D9);
-          const Color textPrimary  = Color(0xFF1A1A1A);
-          const Color textSecGray  = Color(0xFF9E9E9E);
-          const Color chipBg       = Color(0xFFF0F0F0);
-          const Color dividerColor = Color(0xFFE0E0E0);
-          const Color trackInactive= Color(0xFFE0E0E0);
-          const Color toggleOff    = Color(0xFFC7C7CC);
+          const Color orange       = Color(0xFFFF965C);  // Figma: "Dark orange" — primary brand
+          const Color blue         = Color(0xFF347FEF);  // Figma: "Dark blue" — selected state
+          const Color textPrimary  = Color(0xFF42464C);  // Figma: "Black" grayscale
+          const Color textSecGray  = Color(0xFF949494);  // Figma: light gray
+          const Color chipBg       = Color(0xFFF6F6F6);  // Figma: page bg = unselected chip
+          const Color dividerColor = Color(0xFFD5D5D5);  // Figma: grayscale divider
+          const Color trackInactive= Color(0xFFD5D5D5);
+          const Color toggleOff    = Color(0xFFD5D5D5);
 
           final bool isOnline = sheetLocalization == 'online';
 

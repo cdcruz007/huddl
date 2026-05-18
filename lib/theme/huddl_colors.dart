@@ -92,10 +92,15 @@ import 'package:flutter/material.dart';
 // =============================================================================
 
 class HuddlColors {
-  // Primary — unified to the warm Huddl orange
-  static const Color primary = Color(0xFFFCA878);
-  static const Color primaryLight = Color(0xFFFFCBA0);
-  static const Color primaryDark = Color(0xFFE8935E);
+  // ── Primary orange — Figma styleguide exact values ─────────────────────────
+  // Dark orange  (#FF965C) → buttons, CTAs, active accents, filter slider
+  // Medium orange (#FFAD7F) → secondary fills, hover states
+  // Light orange  (#FFC7A8) → soft tints
+  // Pale orange   (#FFE8DB) → very light backgrounds, chips hover
+  static const Color primary      = Color(0xFFFF965C);  // Figma: "Dark orange"
+  static const Color primaryLight = Color(0xFFFFAD7F);  // Figma: "Medium orange"
+  static const Color primaryPale  = Color(0xFFFFC7A8);  // Figma: "Light orange"
+  static const Color primaryDark  = Color(0xFFFF965C);  // same as primary (was E8935E)
 
   // Secondary / Accent
   static const Color teal = Color(0xFF199A85);
@@ -160,12 +165,12 @@ class HuddlColors {
   static const Color darkTextTertiary = Color(0xFF8A8A8A);   // low-emphasis (still 4.5:1 on #1E1E1E)
   static const Color darkInputBg = Color(0xFF2A2A2A);
 
-  // Status
-  static const Color error = Color(0xFFE53935);
-  static const Color errorSoft = Color(0xFFFF7575);
-  static const Color errorLight = Color(0xFFFFE9E9);
-  static const Color success = Color(0xFF199A85);
-  static const Color successGreen = Color(0xFF22C55E);
+  // Status — Figma exact
+  static const Color error        = Color(0xFFFF5151);  // Figma: "Error"
+  static const Color errorSoft    = Color(0xFFFF7575);
+  static const Color errorLight   = Color(0xFFFFE8E8);  // Figma: "Error light"
+  static const Color success      = Color(0xFF199A85);  // Figma: "Success"
+  static const Color successGreen = Color(0xFF199A85);  // same as success teal
   static const Color successBg = Color(0xFFE6F5F3);
   static const Color warning = Color(0xFFF59E0B);
   static const Color warningBg = Color(0xFFFEF3C7);
@@ -181,9 +186,9 @@ class HuddlColors {
   static const Color inputBorderLight = Color(0xFFE0E0E0);
 
   // Onboarding
-  static const Color onboardingOrange = Color(0xFFFCA878);
-  static const Color avatarBg = Color(0xFFFFF9D6);
-  static const Color avatarIcon = Color(0xFFE8A87C);
+  static const Color onboardingOrange = Color(0xFFFF965C);  // Figma primary orange
+  static const Color avatarBg         = Color(0xFFFFF9D6);
+  static const Color avatarIcon       = Color(0xFFFF965C);
 
   // Grayscale
   static const Color gray100 = Color(0xFFF6F6F6);
@@ -196,48 +201,48 @@ class HuddlColors {
   static const Color gray800 = Color(0xFF2D2D2D);
   static const Color gray900 = Color(0xFF1A1A1A);
 
-  // Subscription / Premium — remapped to brand palette
-  static const Color premiumPurpleBg = Color(0xFFFFF3ED);    // → peachLight
-  static const Color premiumPurpleLight = Color(0xFFFFF8F0); // → peachVeryLight
-  static const Color premiumPurpleMid = Color(0xFFFFEDD6);   // → warm peach mid
-  static const Color premiumBlue = Color(0xFFE8935E);        // → primaryDark orange
-  static const Color coralSoft = Color(0xFFE8935E);          // → primaryDark orange
+  // Subscription / Premium
+  static const Color premiumPurpleBg    = Color(0xFFFFE8DB);  // Figma peach light
+  static const Color premiumPurpleLight = Color(0xFFFFF3ED);
+  static const Color premiumPurpleMid   = Color(0xFFFFD4B8);
+  static const Color premiumBlue        = Color(0xFF347FEF);  // Figma dark blue
+  static const Color coralSoft          = Color(0xFFFFAD7F);  // Figma medium orange
   static const Color peachBg = Color(0xFFFFF0E6);
   static const Color disabledBorder = Color(0xFFE9E9EA);
 
-  // Category dynamic colours — remapped to brand palette
-  static const Color categoryBaby = Color(0xFFFCA878);  // → primary orange
-  static const Color categorySport = Color(0xFF199A85); // → teal (already brand)
-  static const Color categoryTech = Color(0xFF199A85);  // → teal
-  static const Color actionSkip = Color(0xFFE53935);    // keep red — swipe-delete semantic
-  static const Color actionGreen = Color(0xFF199A85);   // → teal (success green)
-  static const Color pinkSoft = Color(0xFFFCA878);      // → primary orange
-  static const Color amberWarm = Color(0xFFE8A838);     // keep — is brand amber/yellow
-  static const Color purpleAccent = Color(0xFF199A85);  // → teal
+  // Category dynamic colours
+  static const Color categoryBaby  = Color(0xFFFF965C);  // Figma primary orange
+  static const Color categorySport = Color(0xFF199A85);
+  static const Color categoryTech  = Color(0xFF199A85);
+  static const Color actionSkip    = Color(0xFFFF5151);  // Figma error red
+  static const Color actionGreen   = Color(0xFF199A85);
+  static const Color pinkSoft      = Color(0xFFFFAD7F);  // Figma medium orange
+  static const Color amberWarm     = Color(0xFFFFCE51);  // Figma yellow dark
+  static const Color purpleAccent  = Color(0xFF199A85);
   static const Color checkoutSuccessBg = Color(0xFFE6F5F3);
   static const Color checkoutSuccessBgLight = Color(0xFFF0FAF8);
 
-  // Attachment sheet colours — remapped to brand palette
-  static const Color attachPhoto = Color(0xFFE8935E);       // → primaryDark orange
-  static const Color attachPhotoBg = Color(0xFFFFF3ED);     // → peachLight
-  static const Color attachFile = Color(0xFF199A85);        // → teal
-  static const Color attachFileBg = Color(0xFFE6F5F3);      // → teal bg (successBg)
-  static const Color attachLocation = Color(0xFF199A85);    // → teal
-  static const Color attachLocationBg = Color(0xFFE6F5F3);  // → teal bg
-  static const Color attachContact = Color(0xFF199A85);     // → teal
-  static const Color attachContactBg = Color(0xFFE6F5F3);   // → teal bg
-  static const Color attachPoll = Color(0xFFF3C54F);        // → brand yellow/amber
-  static const Color attachPollBg = Color(0xFFFFF7C9);      // → yellowLight
+  // Attachment sheet colours
+  static const Color attachPhoto      = Color(0xFFFF965C);
+  static const Color attachPhotoBg    = Color(0xFFFFE8DB);
+  static const Color attachFile       = Color(0xFF199A85);
+  static const Color attachFileBg     = Color(0xFFE6F5F3);
+  static const Color attachLocation   = Color(0xFF199A85);
+  static const Color attachLocationBg = Color(0xFFE6F5F3);
+  static const Color attachContact    = Color(0xFF199A85);
+  static const Color attachContactBg  = Color(0xFFE6F5F3);
+  static const Color attachPoll       = Color(0xFFFFCE51);  // Figma yellow dark
+  static const Color attachPollBg     = Color(0xFFFFF6C9);
 
   // Gradient helpers
-  static const Color coralGradientEnd = Color(0xFFFCA878);
+  static const Color coralGradientEnd = Color(0xFFFFAD7F);
 
-  // Divider
-  static const Color divider = Color(0xFFE8E8E8);
+  // Divider — Figma: #D5D5D5
+  static const Color divider = Color(0xFFD5D5D5);
 
-  // Gradients
+  // Gradients — Figma orange family
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [Color(0xFFFCA878), Color(0xFFFFCBA0)],
+    colors: [Color(0xFFFF965C), Color(0xFFFFAD7F)],
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
@@ -245,17 +250,17 @@ class HuddlColors {
   static const LinearGradient splashGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0xFFFFF0E6), Color(0xFFFFF8F0), Color(0xFFFFFFFF)],
+    colors: [Color(0xFFFFE8DB), Color(0xFFFFF3ED), Color(0xFFFFFFFF)],
   );
 
-  // AI feature gradient — remapped to brand orange
+  // AI feature gradient
   static const LinearGradient aiGradient = LinearGradient(
-    colors: [Color(0xFFE8935E), Color(0xFFFCA878)],  // primaryDark → primary
+    colors: [Color(0xFFFF965C), Color(0xFFFFAD7F)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-  static const Color aiBlue = Color(0xFF199A85);      // → brand teal
-  static const Color aiBlueLight = Color(0xFFE8935E); // → primaryDark orange
+  static const Color aiBlue      = Color(0xFF347FEF);  // Figma dark blue
+  static const Color aiBlueLight = Color(0xFFEDF4FF);  // Figma pale blue bg
 
   // ── Shimmer / Skeleton loading ─────────────────────────────────────────
   static const Color shimmerBase = Color(0xFFE0E0E0);
