@@ -631,6 +631,16 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     return '';
   }
 
+  /// Human-readable distance label shown beneath the section header.
+  /// Mirrors the original _distanceLabel getter removed in the dead-code sweep.
+  String get _distanceLabel {
+    if (_localization == 'online') return 'Online';
+    if (_distanceKm <= 1.0)  return 'Within 1 km';
+    if (_distanceKm <= 5.0)  return 'Within 5 km';
+    if (_distanceKm <= 10.0) return 'Within 10 km';
+    return 'Within 50 km';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1695,6 +1705,32 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                   color: sectionText,
                 ),
               ),
+              // ── Distance indicator ──────────────────────────────────────
+              // Shows the active radius (or "Online") below the section header.
+              // Hidden during search — the label is irrelevant when searching by keyword.
+              if (_localSearchQuery.isEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      _localization == 'online'
+                          ? Icons.wifi_rounded
+                          : Icons.place_outlined,
+                      size: 13,
+                      color: HuddlColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _distanceLabel,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: HuddlColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 8),
             ],
           ),
@@ -2743,6 +2779,32 @@ class _EventsTabState extends State<_EventsTab> {
                   color: sectionText,
                 ),
               ),
+              // ── Distance indicator ──────────────────────────────────────
+              // Shows the active radius (or "Online") below the section header.
+              // Hidden during search — the label is irrelevant when searching by keyword.
+              if (_localSearchQuery.isEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      _evLocalization == 'online'
+                          ? Icons.wifi_rounded
+                          : Icons.place_outlined,
+                      size: 13,
+                      color: HuddlColors.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _evDistanceLabel,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: HuddlColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 4),
             ],
           ),
@@ -2844,6 +2906,16 @@ class _EventsTabState extends State<_EventsTab> {
   bool          _evFreeOnly        = false;
   DateTimeRange? _evDateRange;
   String        _evSortBy          = 'mostPopular'; // 'mostPopular' | 'latest'
+
+  /// Human-readable distance label shown beneath the section header.
+  /// Mirrors the original _distanceLabel getter removed in the dead-code sweep.
+  String get _evDistanceLabel {
+    if (_evLocalization == 'online') return 'Online';
+    if (_evDistanceKm <= 1.0)  return 'Within 1 km';
+    if (_evDistanceKm <= 5.0)  return 'Within 5 km';
+    if (_evDistanceKm <= 10.0) return 'Within 10 km';
+    return 'Within 50 km';
+  }
 
   // ── Events filter bottom sheet — Figma-exact ─────────────────
   void _showEventsFilterSheet(BuildContext context) {
