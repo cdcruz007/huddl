@@ -49,8 +49,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
-// My-bubble: very soft brand orange tint (non-const — uses runtime withValues)
-final Color _kMyBubble = HuddlColors.primary.withValues(alpha: 0.10);
+// My-bubble: solid brand orange (Figma spec)
+const Color _kMyBubble = HuddlColors.primary;
 
 class GroupChatScreen extends StatefulWidget {
   /// Fires the groupId string whenever the current user sends any message
@@ -3748,7 +3748,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
         onPressed: () {
           setState(() {
             _isSearching = false;
@@ -3785,7 +3785,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       elevation: 0,
       surfaceTintColor: HuddlColors.white,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -5572,7 +5572,7 @@ class _ChatBubble extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: _colorFromHex(message.senderAvatar),
+                                color: HuddlColors.textTertiary,
                               ),
                             ),
                           ),
@@ -5585,20 +5585,13 @@ class _ChatBubble extends StatelessWidget {
                               ? HuddlColors.primary.withValues(alpha: 0.12)
                               : isMe
                                   ? _kMyBubble
-                                  : HuddlColors.white,
+                                  : HuddlColors.background,
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(16),
                             topRight: const Radius.circular(16),
                             bottomLeft: Radius.circular(isMe ? 16 : 4),
                             bottomRight: Radius.circular(isMe ? 4 : 16),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -5610,7 +5603,7 @@ class _ChatBubble extends StatelessWidget {
                                     message.message,
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
-                                      color: context.hc.textPrimary,
+                                      color: isMe ? HuddlColors.white : context.hc.textPrimary,
                                       height: 1.4,
                                     ),
                                   ),

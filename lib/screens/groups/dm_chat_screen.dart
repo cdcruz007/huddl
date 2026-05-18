@@ -901,7 +901,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
         onPressed: () => Navigator.pop(context),
       ),
       titleSpacing: 0,
@@ -1071,7 +1071,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
       elevation: 0,
       surfaceTintColor: context.hc.surface,
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: context.hc.textPrimary),
+        icon: const Icon(Icons.arrow_back, color: HuddlColors.primary),
         onPressed: () {
           setState(() {
             _isSearching = false;
@@ -2828,20 +2828,13 @@ class _DMBubble extends StatelessWidget {
                           ? HuddlColors.primary.withValues(alpha: 0.12)
                           : isMe
                               ? _kMyBubble
-                              : HuddlColors.white,
+                              : HuddlColors.background,
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(16),
                         topRight: const Radius.circular(16),
                         bottomLeft: Radius.circular(isMe ? 16 : 4),
                         bottomRight: Radius.circular(isMe ? 4 : 16),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
