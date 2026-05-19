@@ -1621,20 +1621,25 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                     childAspectRatio: 0.72,
                   ),
                   itemCount: items.length,
-                  itemBuilder: (context, index) => _MarketGridCard(
-                    item: items[index],
-                    onTap: () => _openItemDetail(items[index]),
-                    onToggleSave: () {
-                      HapticFeedback.lightImpact();
-                      final item = items[index];
-                      if (!item.isSaved) {
-                        _ai.recordSave(item);
-                      } else {
-                        _ai.recordUnsave(item);
-                      }
-                      _service.toggleSaved(item.id);
-                    },
-                  ),
+                  itemBuilder: (context, index) {
+                    final uid = FirebaseAuth.instance.currentUser?.uid;
+                    final isOwn = uid != null && items[index].sellerId == uid;
+                    return _MarketGridCard(
+                      item: items[index],
+                      isOwn: isOwn,
+                      onTap: () => _openItemDetail(items[index]),
+                      onToggleSave: () {
+                        HapticFeedback.lightImpact();
+                        final item = items[index];
+                        if (!item.isSaved) {
+                          _ai.recordSave(item);
+                        } else {
+                          _ai.recordUnsave(item);
+                        }
+                        _service.toggleSaved(item.id);
+                      },
+                    );
+                  },
                 ),
         ),
       ],
@@ -2953,11 +2958,14 @@ class _MarketGridCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;
   final VoidCallback onToggleSave;
+  /// True when the signed-in user is the seller — hides the save heart.
+  final bool isOwn;
 
   const _MarketGridCard({
     required this.item,
     required this.onTap,
     required this.onToggleSave,
+    this.isOwn = false,
   });
 
   @override
@@ -3059,7 +3067,7 @@ class _MarketGridCardState extends State<_MarketGridCard>
                             )
                           : _gridPlaceholder(hc, item),
 
-                      // Condition badge — top-left
+                      // Condition badge OR "Your listing" — top-left
                       Positioned(
                         top: 8,
                         left: 8,
@@ -3067,11 +3075,13 @@ class _MarketGridCardState extends State<_MarketGridCard>
                           padding: const EdgeInsets.symmetric(
                               horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
-                            color: condColor,
+                            color: widget.isOwn
+                                ? HuddlColors.textTertiary
+                                : condColor,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            item.condition.label,
+                            widget.isOwn ? 'Your listing' : item.condition.label,
                             style: _adaptiveText(
                               fontSize: 9.5,
                               fontWeight: FontWeight.w700,
@@ -3081,7 +3091,8 @@ class _MarketGridCardState extends State<_MarketGridCard>
                         ),
                       ),
 
-                      // Save / heart — top-right
+                      // Save / heart — top-right (hidden for own listings)
+                      if (!widget.isOwn)
                       Positioned(
                         top: 6,
                         right: 6,
