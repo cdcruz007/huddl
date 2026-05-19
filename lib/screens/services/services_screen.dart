@@ -899,8 +899,8 @@ class _ListingCardState extends State<_ListingCard> {
                       ),
                     ),
                   ),
-                  // Enquire pill — grey resting, primary when endorsed
-                  // Same spec as grey 'Join' pill in Events tab
+                  // Endorse pill — grey resting, primary fill when endorsed
+                  // Same visual spec as grey 'Join' pill in Events tab
                   GestureDetector(
                     onTap: _endorsing ? null : _toggleEndorse,
                     child: AnimatedContainer(
@@ -922,7 +922,7 @@ class _ListingCardState extends State<_ListingCard> {
                               ),
                             )
                           : Text(
-                              _hasEndorsed ? 'Endorsed' : 'Enquire',
+                              _hasEndorsed ? 'Endorsed ✓' : 'Endorse',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
