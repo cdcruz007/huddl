@@ -22,6 +22,22 @@ import '../../widgets/common/huddl_empty_state.dart';
 // Marketplace price colour — Figma dark blue (selected state) #347FEF
 const Color _kMarketBlue = HuddlColors.blueDark;
 
+// 12 deterministic Unsplash face URLs for seller avatar stack
+const List<String> _kMarketAvatarPool = [
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=48&q=70',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=70',
+  'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=48&q=70',
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=70',
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=48&q=70',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=70',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=48&q=70',
+  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=48&q=70',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=48&q=70',
+  'https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?w=48&q=70',
+  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=48&q=70',
+  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=48&q=70',
+];
+
 // =============================================================================
 // PLATFORM-ADAPTIVE TEXT HELPER  (SF Pro on iOS/macOS, Poppins elsewhere)
 // =============================================================================
@@ -1313,216 +1329,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
-  // == FILTER BAR ============================================================
-
-  Widget _buildFilterBar(HuddlContextColors hc) {
-    return Container(
-      color: hc.surface,
-      padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
-      child: SizedBox(
-        height: 36,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          children: [
-            _FilterChip(
-              label: _selectedAge?.shortLabel ?? 'For age',
-              icon: Icons.child_care,
-              isActive: _selectedAge != null,
-              onTap: () => _showAgeSheet(hc),
-            ),
-            const SizedBox(width: 8),
-            _FilterChip(
-              label: _selectedCategory?.label ?? 'Category',
-              icon: Icons.category_outlined,
-              isActive: _selectedCategory != null,
-              onTap: () => _showCategorySheet(hc),
-            ),
-            const SizedBox(width: 8),
-            _FilterChip(
-              label: _selectedPriceType == PriceType.free
-                  ? 'Free'
-                  : _selectedPriceType == PriceType.paid
-                      ? 'Paid'
-                      : 'Price',
-              icon: Icons.sell_outlined,
-              isActive: _selectedPriceType != null,
-              onTap: () => _showPriceSheet(hc),
-            ),
-            const SizedBox(width: 8),
-            _FilterChip(
-              label: _selectedCondition?.label ?? 'Condition',
-              icon: Icons.star_outline,
-              isActive: _selectedCondition != null,
-              onTap: () => _showConditionSheet(hc),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // == FILTER BOTTOM SHEETS ==================================================
-
-  void _showAgeSheet(HuddlContextColors hc) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: hc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _AgeFilterSheet(
-        selected: _selectedAge,
-        onSelect: (age) {
-          HapticFeedback.selectionClick();
-          setState(() => _selectedAge = age);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showCategorySheet(HuddlContextColors hc) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: hc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _CategoryFilterSheet(
-        selected: _selectedCategory,
-        onSelect: (cat) {
-          HapticFeedback.selectionClick();
-          setState(() => _selectedCategory = cat);
-          Navigator.pop(context);
-        },
-      ),
-    );
-  }
-
-  void _showPriceSheet(HuddlContextColors hc) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: hc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const HuddlBottomSheetHandle(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Price',
-                  style: _adaptiveText(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _sheetOption('All prices', _selectedPriceType == null, hc, () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedPriceType = null);
-                Navigator.pop(context);
-              }),
-              _sheetOption(
-                  'Free only', _selectedPriceType == PriceType.free, hc, () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedPriceType = PriceType.free);
-                Navigator.pop(context);
-              }),
-              _sheetOption('Paid only', _selectedPriceType == PriceType.paid,
-                  hc, () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedPriceType = PriceType.paid);
-                Navigator.pop(context);
-              }),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showConditionSheet(HuddlContextColors hc) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: hc.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const HuddlBottomSheetHandle(),
-              Text(
-                'Condition',
-                style: _adaptiveText(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              _sheetOption('All conditions', _selectedCondition == null, hc,
-                  () {
-                HapticFeedback.selectionClick();
-                setState(() => _selectedCondition = null);
-                Navigator.pop(context);
-              }),
-              ...ItemCondition.values.map((c) => _sheetOption(
-                    c.label,
-                    _selectedCondition == c,
-                    hc,
-                    () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _selectedCondition = c);
-                      Navigator.pop(context);
-                    },
-                  )),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _sheetOption(
-      String label, bool isSelected, HuddlContextColors hc, VoidCallback onTap) {
-    return Semantics(
-      label: '$label filter option${isSelected ? ", currently selected" : ""}',
-      button: true,
-      child: ListTile(
-        title: Text(
-          label,
-          style: _adaptiveText(
-            fontSize: 15,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? HuddlColors.primary : hc.textPrimary,
-          ),
-        ),
-        trailing: isSelected
-            ? const Icon(Icons.check_circle,
-                color: HuddlColors.primary, size: 22)
-            : null,
-        onTap: onTap,
-        minTileHeight: 48,
-      ),
-    );
-  }
+  // Individual filter sheets are accessed via _showAllFiltersSheet (combined).
 
   // == BUY TAB — clean, uncluttered ==========================================
   // No AI badges, no thumbs up/down, no smart ranking toggle.
@@ -1715,9 +1523,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ],
           ),
         ),
-        // ── Filter chips row (always visible) ────────────────────
-        _buildFilterBar(hc),
-        // Item count
+        // Item count + clear row
         Semantics(
           liveRegion: true,
           child: Container(
@@ -1746,7 +1552,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ),
           ),
         ),
-        // Grid or empty state
+        // Full-width hero-card list (Discover/Events style)
         Expanded(
           child: items.isEmpty
               ? _buildEmptyState(
@@ -1770,17 +1576,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         )
                       : null,
                 )
-              : GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 100),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.62,
-                  ),
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                   itemCount: items.length,
-                  itemBuilder: (context, index) => _ProductCard(
+                  itemBuilder: (context, index) => _MarketItemCard(
                     item: items[index],
                     onTap: () => _openItemDetail(items[index]),
                     onToggleSave: () {
@@ -1794,7 +1593,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       _service.toggleSaved(item.id);
                     },
                     onDismiss: () {
-                      // Long-press "not interested" — feeds negative signal
                       HapticFeedback.mediumImpact();
                       _ai.recordDismiss(items[index]);
                       setState(() {});
@@ -2723,16 +2521,10 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           ),
         ),
         Expanded(
-          child: GridView.builder(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 0.62,
-            ),
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
             itemCount: saved.length,
-            itemBuilder: (context, index) => _ProductCard(
+            itemBuilder: (context, index) => _MarketItemCard(
               item: saved[index],
               onTap: () => _openItemDetail(saved[index]),
               onToggleSave: () {
@@ -2855,86 +2647,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 }
 
 // =============================================================================
-// AI ASSISTANT BOTTOM SHEET — progressive disclosure entry point v2
-//
-// Accessed via the subtle sparkle icon. Context-aware:
-// - On Buy tab: search, voice search, chat
-// =============================================================================
-// FILTER CHIP -- 48dp minimum touch target, accessible, dark-mode aware
-// =============================================================================
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    final Color bgColor = isActive
-            ? HuddlColors.primary.withValues(alpha: 0.1)
-            : hc.inputBg;
-    final Color fgColor = isActive
-            ? HuddlColors.primary
-            : hc.textSecondary;
-
-    return Semantics(
-      label: '$label filter${isActive ? ", active" : ""}',
-      button: true,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          height: 36,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isActive
-                  ? HuddlColors.primary.withValues(alpha: 0.3)
-                  : hc.divider,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: fgColor),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: _adaptiveText(
-                  fontSize: 12.5,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                  color: fgColor,
-                ),
-              ),
-              if (isActive) ...[
-                const SizedBox(width: 3),
-                Icon(Icons.keyboard_arrow_down, size: 16, color: fgColor),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
 // SHARED IMAGE HELPER — handles data:URI (base64), http, and empty URLs
 // =============================================================================
 
@@ -2968,17 +2680,33 @@ Widget _buildItemImage(String url, RehomeItem item) {
 }
 
 // =============================================================================
-// PRODUCT CARD — clean, no AI badges, no thumbs up/down
-// Long-press triggers "not interested" feedback (invisible AI signal)
+// MARKET ITEM CARD — full-width Events-style hero card for Buy + Saved tabs
+//
+// Layout mirrors _EventListCard exactly:
+//   Container(margin: only(bottom:18), radius:20, clipBehavior:antiAlias)
+//   Hero image: SizedBox(height:190) → Image fit:cover
+//   Bottom gradient: height:60, transparent → black.withValues(alpha:0.22)
+//   Top-left badge: Free (teal) OR nothing
+//   Top-right badge: Condition pill (scrim)
+//   Top-right heart: save button (white circle, 48dp)
+//   Body: Padding(LTRB:16,14,16,0)
+//     → category row (emoji icon + 12px label)
+//     → bold title (16px w700)
+//     → price row
+//     → location row (icon size:14 + gap:5)
+//   Bottom row: Padding(LTRB:16,10,16,14)
+//     → SizedBox(w:62,h:24) avatar stack (3 overlapping 24px circles)
+//     → count text
+//     → "Message" action pill (grey resting, matches Events "Join")
 // =============================================================================
 
-class _ProductCard extends StatefulWidget {
+class _MarketItemCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;
   final VoidCallback onToggleSave;
   final VoidCallback? onDismiss;
 
-  const _ProductCard({
+  const _MarketItemCard({
     required this.item,
     required this.onTap,
     required this.onToggleSave,
@@ -2986,10 +2714,10 @@ class _ProductCard extends StatefulWidget {
   });
 
   @override
-  State<_ProductCard> createState() => _ProductCardState();
+  State<_MarketItemCard> createState() => _MarketItemCardState();
 }
 
-class _ProductCardState extends State<_ProductCard>
+class _MarketItemCardState extends State<_MarketItemCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _heartAnim;
   late Animation<double> _heartScale;
@@ -3011,15 +2739,9 @@ class _ProductCardState extends State<_ProductCard>
     super.dispose();
   }
 
-  void _onSaveTap() {
-    _heartAnim.forward(from: 0);
-    widget.onToggleSave();
-  }
-
-  void _onLongPress() {
-    if (widget.onDismiss != null) {
-      widget.onDismiss!();
-    }
+  String _avatarUrl(int i) {
+    final idx = (widget.item.id.hashCode + i).abs() % _kMarketAvatarPool.length;
+    return _kMarketAvatarPool[idx];
   }
 
   @override
@@ -3027,26 +2749,31 @@ class _ProductCardState extends State<_ProductCard>
     final item = widget.item;
     final hc = context.hc;
 
+    // Seller avatar count label — fake-realistic "X interested" number
+    final interestedCount =
+        12 + ((item.id.hashCode.abs()) % 38); // 12–49
+
     return Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
-          '${item.ageStage.shortLabel}, ${item.sellerLocation}. '
-          'Long press to dismiss.',
+          '${item.ageStage.shortLabel}, ${item.sellerLocation}.',
       button: true,
       child: GestureDetector(
-        onLongPress: _onLongPress,
+        onLongPress: () {
+          if (widget.onDismiss != null) widget.onDismiss!();
+        },
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Container(
+            margin: const EdgeInsets.only(bottom: 18),
             decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
               color: hc.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: hc.cardBorder,
               boxShadow: [
                 BoxShadow(
-                  color: hc.shadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -3054,60 +2781,95 @@ class _ProductCardState extends State<_ProductCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Image — clean, no AI match badge
-                Expanded(
-                  flex: 5,
+                // ── Hero image ──────────────────────────────────────
+                SizedBox(
+                  height: 190,
                   child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      SizedBox.expand(
-                        child: _buildItemImage(
-                          item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
-                          item,
+                      _buildItemImage(
+                        item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                        item,
+                      ),
+                      // Bottom gradient scrim
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.22),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
-                      // Save button — animated heart, 48dp touch target
+                      // Free badge — top-left (teal, matches Services 'Parent Added')
+                      if (item.isFree)
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: _MarketBadgePill(
+                            label: 'Free',
+                            color: HuddlColors.teal,
+                          ),
+                        ),
+                      // Condition badge — top-right scrim pill
+                      if (!item.isFree)
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: _MarketBadgePill(
+                            label: item.condition.label,
+                            color: Colors.black.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      // Save heart button — top-right (or below condition badge)
                       Positioned(
-                        top: 0,
-                        right: 0,
+                        top: item.isFree ? 12 : 46,
+                        right: 12,
                         child: Semantics(
                           label: item.isSaved
                               ? 'Remove ${item.title} from saved'
                               : 'Save ${item.title}',
                           button: true,
                           child: InkWell(
-                            onTap: _onSaveTap,
+                            onTap: () {
+                              _heartAnim.forward(from: 0);
+                              widget.onToggleSave();
+                            },
                             borderRadius: BorderRadius.circular(24),
-                            child: Container(
-                              width: 48,
-                              height: 48,
-                              alignment: Alignment.center,
-                              child: AnimatedBuilder(
-                                animation: _heartScale,
-                                builder: (_, __) => Transform.scale(
-                                  scale: _heartScale.value,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: HuddlColors.white
-                                          .withValues(alpha: 0.92),
-                                      shape: BoxShape.circle,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black
-                                              .withValues(alpha: 0.08),
-                                          blurRadius: 4,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      item.isSaved
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      size: 18,
-                                      color: item.isSaved
-                                          ? HuddlColors.error
-                                          : HuddlColors.textHint,
-                                    ),
+                            child: AnimatedBuilder(
+                              animation: _heartScale,
+                              builder: (_, __) => Transform.scale(
+                                scale: _heartScale.value,
+                                child: Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.92),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.1),
+                                        blurRadius: 4,
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    item.isSaved
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    size: 17,
+                                    color: item.isSaved
+                                        ? HuddlColors.error
+                                        : HuddlColors.textHint,
                                   ),
                                 ),
                               ),
@@ -3115,109 +2877,179 @@ class _ProductCardState extends State<_ProductCard>
                           ),
                         ),
                       ),
-                      // Free badge
-                      if (item.isFree)
-                        Positioned(
-                          top: 6,
-                          left: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'Free',
-                              style: _adaptiveText(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      // Condition badge — subtle, bottom-left
-                      if (!item.isFree)
-                        Positioned(
-                          bottom: 6,
-                          left: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.55),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              item.condition.label,
-                              style: _adaptiveText(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
-                // Details — clean, no AI feedback row
-                Expanded(
-                  flex: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.title,
-                          style: _adaptiveText(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w500,
-                            color: hc.textPrimary,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const Spacer(),
-                        Text(
-                          item.priceDisplay,
-                          style: _adaptiveText(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: item.isFree
-                                ? HuddlColors.teal
-                                : _kMarketBlue,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(Icons.child_care,
-                                size: 12, color: hc.textTertiary),
-                            const SizedBox(width: 3),
-                            Expanded(
-                              child: Text(
-                                '${item.ageStage.shortLabel} \u2022 ${item.sellerLocation}',
-                                style: _adaptiveText(
-                                  fontSize: 10,
-                                  color: hc.textTertiary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+
+                // ── Card body ───────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category row — category icon + 12px label
+                      Row(
+                        children: [
+                          Icon(item.category.icon,
+                              size: 13, color: hc.textTertiary),
+                          const SizedBox(width: 5),
+                          Text(
+                            item.category.label.toUpperCase(),
+                            style: _adaptiveText(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: hc.textTertiary,
                             ),
-                          ],
+                          ),
+                          const Spacer(),
+                          // Price — right-aligned in category row
+                          Text(
+                            item.priceDisplay,
+                            style: _adaptiveText(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: item.isFree
+                                  ? HuddlColors.teal
+                                  : _kMarketBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Title
+                      Text(
+                        item.title,
+                        style: _adaptiveText(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: hc.textPrimary,
                         ),
-                      ],
-                    ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Location row
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 14, color: hc.textTertiary),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              '${item.ageStage.shortLabel} \u2022 ${item.sellerLocation}',
+                              style: _adaptiveText(
+                                fontSize: 12,
+                                color: hc.textTertiary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── Bottom row: avatars + count + action pill ───────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+                  child: Row(
+                    children: [
+                      // 3 overlapping avatar circles (24px each)
+                      SizedBox(
+                        width: 62,
+                        height: 24,
+                        child: Stack(
+                          children: List.generate(3, (i) {
+                            return Positioned(
+                              left: i * 18.0,
+                              child: Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                      color: hc.surface, width: 1.5),
+                                ),
+                                child: ClipOval(
+                                  child: Image.network(
+                                    _avatarUrl(i),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: HuddlColors.primary
+                                          .withValues(alpha: 0.12),
+                                      child: Icon(Icons.person,
+                                          size: 14,
+                                          color: HuddlColors.primary),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$interestedCount interested',
+                          style: _adaptiveText(
+                            fontSize: 12,
+                            color: hc.textTertiary,
+                          ),
+                        ),
+                      ),
+                      // Action pill — matches Events "Join" pill exactly
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF2F2F2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Message',
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF42464C),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// Badge pill for market cards — same spec as Services _BadgePill
+class _MarketBadgePill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _MarketBadgePill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        label,
+        style: _adaptiveText(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
         ),
       ),
     );
@@ -3894,232 +3726,4 @@ class _SmartOfferTile extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// AGE FILTER SHEET
-// =============================================================================
 
-class _AgeFilterSheet extends StatelessWidget {
-  final AgeStage? selected;
-  final ValueChanged<AgeStage?> onSelect;
-
-  const _AgeFilterSheet({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const HuddlBottomSheetHandle(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.child_care,
-                    color: HuddlColors.primary, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  'Who is this for?',
-                  style: _adaptiveText(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'Choose an age group to see items suited for that stage.',
-              style: _adaptiveText(
-                  fontSize: 13, color: hc.textTertiary),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _sheetOptionTile(
-            label: 'All ages',
-            emoji: '\u{2B50}',
-            isSelected: selected == null,
-            onTap: () => onSelect(null),
-            hc: hc,
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                children: AgeStage.values.map((age) {
-                  return _sheetOptionTile(
-                    label: age.label,
-                    emoji: age.emoji,
-                    isSelected: selected == age,
-                    onTap: () => onSelect(age),
-                    hc: hc,
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-Widget _sheetOptionTile({
-  required String label,
-  required String emoji,
-  required bool isSelected,
-  required VoidCallback onTap,
-  required HuddlContextColors hc,
-}) {
-  return Semantics(
-    label: '$label${isSelected ? ", selected" : ""}',
-    button: true,
-    child: ListTile(
-      leading: Text(emoji, style: const TextStyle(fontSize: 22)),
-      title: Text(
-        label,
-        style: _adaptiveText(
-          fontSize: 15,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-          color: isSelected ? HuddlColors.primary : hc.textPrimary,
-        ),
-      ),
-      trailing: isSelected
-          ? const Icon(Icons.check_circle,
-              color: HuddlColors.primary, size: 22)
-          : null,
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
-      minTileHeight: 48,
-    ),
-  );
-}
-
-// =============================================================================
-// CATEGORY FILTER SHEET
-// =============================================================================
-
-class _CategoryFilterSheet extends StatelessWidget {
-  final ItemCategory? selected;
-  final ValueChanged<ItemCategory?> onSelect;
-
-  const _CategoryFilterSheet({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const HuddlBottomSheetHandle(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(Icons.category_outlined,
-                    color: HuddlColors.primary, size: 22),
-                const SizedBox(width: 8),
-                Text(
-                  'Category',
-                  style: _adaptiveText(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Semantics(
-            label: 'All categories${selected == null ? ", selected" : ""}',
-            button: true,
-            child: ListTile(
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.grid_view,
-                    size: 18, color: HuddlColors.primary),
-              ),
-              title: Text(
-                'All categories',
-                style: _adaptiveText(
-                  fontSize: 15,
-                  fontWeight:
-                      selected == null ? FontWeight.w600 : FontWeight.w400,
-                  color:
-                      selected == null ? HuddlColors.primary : hc.textPrimary,
-                ),
-              ),
-              trailing: selected == null
-                  ? const Icon(Icons.check_circle,
-                      color: HuddlColors.primary, size: 22)
-                  : null,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onSelect(null);
-              },
-              minTileHeight: 48,
-            ),
-          ),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                children: ItemCategory.values.map((cat) {
-                  final isActive = selected == cat;
-                  return Semantics(
-                    label: '${cat.label}${isActive ? ", selected" : ""}',
-                    button: true,
-                    child: ListTile(
-                      leading: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: cat.color.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(cat.icon, size: 18, color: cat.color),
-                      ),
-                      title: Text(
-                        cat.label,
-                        style: _adaptiveText(
-                          fontSize: 15,
-                          fontWeight:
-                              isActive ? FontWeight.w600 : FontWeight.w400,
-                          color:
-                              isActive ? HuddlColors.primary : hc.textPrimary,
-                        ),
-                      ),
-                      trailing: isActive
-                          ? const Icon(Icons.check_circle,
-                              color: HuddlColors.primary, size: 22)
-                          : null,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        onSelect(cat);
-                      },
-                      minTileHeight: 48,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
