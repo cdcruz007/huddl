@@ -25,12 +25,12 @@ import '../../widgets/upgrade_prompt.dart';
 import '../../services/ai_feed_service.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
-import '../../widgets/learning_maturity_indicator.dart';
 import '../../services/daily_ai_refresh_service.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/rehome_service.dart';
+import '../../services/local_services_service.dart';
 import '../../screens/marketplace/item_detail_screen.dart';
 import '../../screens/groups/group_chat_screen.dart';
 import '../../screens/groups/dm_chat_screen.dart';
@@ -69,6 +69,8 @@ class _HomeScreenState extends State<HomeScreen>
   final InvitationService _invitationService = InvitationService();
   final DMService _dmService = DMService();
   final AiFeedService _aiFeedService = AiFeedService();
+  final LocalServicesService _servicesService = LocalServicesService();
+  final RehomeService _rehomeService = RehomeService();
 
   bool _isLoading = true;
 
@@ -83,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen>
   List<Event> _goingEvents = []; // Events the user is attending
   List<Group> _newPublicGroups = [];
   List<BoroughMember> _boroughMembers = [];
+  List<ServiceListing> _featuredServices = [];
 
   // ── Unified smart-feed items ──────────────────────────────────────────────
   List<_SmartFeedItem> _smartFeed = [];
@@ -280,6 +283,15 @@ class _HomeScreenState extends State<HomeScreen>
         boroughMembers = InvitationService.getBoroughMembers(pc);
       }
 
+      // Load services + market items for carousels (non-blocking)
+      List<ServiceListing> featuredServices = [];
+      try {
+        featuredServices = await _servicesService
+            .topEndorsedStream(limit: 8)
+            .first
+            .timeout(const Duration(seconds: 4));
+      } catch (_) {}
+
       setState(() {
         _name = _onboarding.name ?? 'there';
         _borough = borough;
@@ -291,6 +303,7 @@ class _HomeScreenState extends State<HomeScreen>
         _goingEvents = goingEvents;
         _newPublicGroups = newGroups;
         _boroughMembers = boroughMembers;
+        _featuredServices = featuredServices;
         _isLoading = false;
       });
 
@@ -1071,7 +1084,7 @@ class _HomeScreenState extends State<HomeScreen>
           onRefresh: _loadData,
           child: CustomScrollView(
             slivers: [
-              // ── Streamlined App Bar ────────────────────────────────
+              // ── App Bar ─────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Container(
                   color: hc.surface,
@@ -1079,31 +1092,25 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Row(
                     children: [
                       Semantics(
-                        label: 'Huddl home logo',
+                        label: 'Huddl home',
                         child: _buildAdaptiveLogo(isDark),
                       ),
                       const Spacer(),
-
                       // Notification bell
                       Semantics(
-                        label:
-                            'Notifications, $_notifBadgeCount new',
+                        label: 'Notifications, $_notifBadgeCount new',
                         button: true,
                         child: HuddlBadge(
                           count: _notifBadgeCount,
                           child: IconButton(
-                            icon:
-                                const Icon(Icons.notifications_outlined),
+                            icon: const Icon(Icons.notifications_outlined),
                             color: hc.textPrimary,
                             onPressed: () {
                               HapticFeedback.lightImpact();
                               _openNotifications();
                             },
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 48,
-                              minHeight: 48,
-                            ),
+                            constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                           ),
                         ),
                       ),
@@ -1112,15 +1119,9 @@ class _HomeScreenState extends State<HomeScreen>
                         label: 'Your profile',
                         button: true,
                         child: GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _onAvatarTap();
-                          },
-                          child: SizedBox(
-                            width: 44,
-                            height: 44,
-                            child: Center(child: _buildSmallAvatar()),
-                          ),
+                          onTap: () { HapticFeedback.lightImpact(); _onAvatarTap(); },
+                          child: SizedBox(width: 40, height: 40,
+                              child: Center(child: _buildSmallAvatar())),
                         ),
                       ),
                     ],
@@ -1128,13 +1129,13 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
-              // ── Compact Greeting + Top Insight ─────────────────────
+              // ── Compact greeting row ────────────────────────────────
               SliverToBoxAdapter(
                 child: SlideTransition(
                   position: _greetingSlide,
                   child: FadeTransition(
                     opacity: _greetingFade,
-                    child: _buildContextualGreeting(hc, isDark),
+                    child: _buildCompactGreeting(hc, isDark),
                   ),
                 ),
               ),
@@ -1143,96 +1144,134 @@ class _HomeScreenState extends State<HomeScreen>
               if (SubscriptionService().isFree)
                 SliverToBoxAdapter(
                   child: UpgradeBanner(
-                    message:
-                        'Unlock more groups, meetups & private features',
-                    onTap: () => Navigator.pushNamed(
-                        context, '/subscription_plans'),
+                    message: 'Unlock more groups, meetups & private features',
+                    onTap: () => Navigator.pushNamed(context, '/subscription_plans'),
                   ),
                 ),
 
-              // ── Step 14: Learning Maturity Indicator ─────────────────
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: LearningMaturityIndicator(compact: false),
+              // ── Noticeboard section ────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildNoticeboardSection(hc, isDark),
+              ),
+
+              // ── Groups carousel ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(
+                  hc: hc,
+                  icon: Icons.people_rounded,
+                  iconColor: HuddlColors.primary,
+                  title: 'Groups',
+                  subtitle: 'New & active in $_borough',
+                  onSeeAll: () => _switchToTab(2), // Discover tab
                 ),
               ),
-
-              // ── Smart Post Composer (AI pre-fill) ──────────────────
               SliverToBoxAdapter(
-                child: _buildSmartPostComposer(hc, isDark),
+                child: _buildGroupsCarousel(hc),
               ),
 
-              // ── AI curation transparency note ──────────────────────
+              // ── Meetups carousel ───────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(
+                  hc: hc,
+                  icon: Icons.place_rounded,
+                  iconColor: HuddlColors.teal,
+                  title: 'Meetups',
+                  subtitle: 'Upcoming near you',
+                  onSeeAll: () => _switchToTab(2), // Discover tab
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildMeetupsCarousel(hc),
+              ),
+
+              // ── Events carousel ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(
+                  hc: hc,
+                  icon: Icons.event_rounded,
+                  iconColor: HuddlColors.accentAmber,
+                  title: 'Events',
+                  subtitle: 'What\'s on in $_borough',
+                  onSeeAll: () => _switchToTab(2), // Discover tab
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildEventsCarousel(hc),
+              ),
+
+              // ── Services carousel ──────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(
+                  hc: hc,
+                  icon: Icons.handshake_rounded,
+                  iconColor: HuddlColors.blueDark,
+                  title: 'Services',
+                  subtitle: 'Recommended by parents',
+                  onSeeAll: () => _switchToTab(2), // Discover tab
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildServicesCarousel(hc),
+              ),
+
+              // ── Market carousel ────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _buildSectionHeader(
+                  hc: hc,
+                  icon: Icons.storefront_rounded,
+                  iconColor: HuddlColors.primary,
+                  title: 'Market',
+                  subtitle: 'New items for sale nearby',
+                  onSeeAll: () => _switchToTab(3), // Market tab
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildMarketCarousel(hc),
+              ),
+
+              // ── AI curation note + feed prefs ─────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Semantics(
-                    liveRegion: true,
-                    child: Row(
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) =>
-                              HuddlColors.yellowGradient.createShader(bounds),
-                          child: const Icon(Icons.lightbulb_outline,
-                              size: 14, color: HuddlColors.white),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.auto_awesome, size: 13, color: HuddlColors.primary),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Curated for you \u00B7 ${_smartFeed.length} updates since you last visited',
+                          style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Curated for you \u00B7 ${_smartFeed.length} updates',
-                            style: GoogleFonts.poppins(
-                              fontSize: 11,
-                              color: hc.textTertiary,
-                            ),
-                          ),
+                      ),
+                      GestureDetector(
+                        onTap: () { HapticFeedback.lightImpact(); _showFeedPreferences(); },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Icon(Icons.tune, size: 16, color: hc.textTertiary),
                         ),
-                        // Feed preferences
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            _showFeedPreferences();
-                          },
-                          child: SizedBox(
-                            width: 48,
-                            height: 32,
-                            child: Center(
-                              child: Icon(Icons.tune,
-                                  size: 16,
-                                  color: context.hc.textTertiary),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
 
-              // ── Unified Smart Feed ─────────────────────────────────
+              // ── Smart feed (AI-curated: attending/announcements/tips) ──
               SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     if (index >= _smartFeed.length) return null;
                     final item = _smartFeed[index];
-                    // Staggered entry animation
                     return AnimatedBuilder(
                       animation: _feedStaggerCtrl,
                       builder: (context, child) {
                         final start = (index * 0.08).clamp(0.0, 0.7);
                         final end = (start + 0.5).clamp(0.0, 1.0);
-                        final progress =
-                            ((_feedStaggerCtrl.value - start) /
-                                    (end - start))
-                                .clamp(0.0, 1.0);
-                        final curved =
-                            Curves.easeOutCubic.transform(progress);
+                        final progress = ((_feedStaggerCtrl.value - start) / (end - start)).clamp(0.0, 1.0);
+                        final curved = Curves.easeOutCubic.transform(progress);
                         return Transform.translate(
                           offset: Offset(0, 20 * (1 - curved)),
-                          child: Opacity(
-                            opacity: curved,
-                            child: _buildSmartFeedCard(item, hc, isDark),
-                          ),
+                          child: Opacity(opacity: curved,
+                              child: _buildSmartFeedCard(item, hc, isDark)),
                         );
                       },
                     );
@@ -1288,93 +1327,596 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  /// Compact greeting that merges greeting text + top AI insight into one card
-  Widget _buildContextualGreeting(dynamic hc, bool isDark) {
-    final topNudge = _aiFeedService.activeNudges.isNotEmpty
-        ? _aiFeedService.activeNudges.first
-        : null;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? HuddlColors.darkSurface : HuddlColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: isDark
-            ? Border.all(color: HuddlColors.darkDivider, width: 0.5)
-            : null,
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+
+  /// Minimal single-line greeting — name + borough chip, no AI card bloat
+  Widget _buildCompactGreeting(dynamic hc, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$_greeting, ',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400,
+                        color: hc.textSecondary,
+                      ),
+                    ),
+                    TextSpan(
+                      text: _name.isNotEmpty ? _name : 'there',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: hc.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          BoroughBadge(
+            borough: _borough,
+            size: BoroughBadgeSize.medium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Section header with coloured icon, title + See all ───────────────────
+  Widget _buildSectionHeader({
+    required dynamic hc,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onSeeAll,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, size: 18, color: iconColor),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: hc.textPrimary,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: hc.textTertiary,
+                  ),
                 ),
               ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Greeting row
-          Row(
-            children: [
-              Expanded(
-                child: Semantics(
-                  header: true,
-                  child: Text(
-                    '$_greeting, $_name!',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: hc.textPrimary,
-                    ),
+            ),
+          ),
+          Semantics(
+            label: 'See all $title',
+            button: true,
+            child: GestureDetector(
+              onTap: () { HapticFeedback.selectionClick(); onSeeAll(); },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.09),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  'See all',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: HuddlColors.primary,
                   ),
                 ),
               ),
-              BoroughBadge(
-                borough: _borough,
-                size: BoroughBadgeSize.medium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Noticeboard section ───────────────────────────────────────────────────
+  Widget _buildNoticeboardSection(dynamic hc, bool isDark) {
+    final topAnnouncements = _announcements.take(3).toList();
+    final topNudge = _aiFeedService.activeNudges.isNotEmpty
+        ? _aiFeedService.activeNudges.first : null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 32, height: 32,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.campaign_rounded, size: 18, color: HuddlColors.primary),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Noticeboard',
+                      style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700, color: hc.textPrimary)),
+                    Text('${_borough.isNotEmpty ? _borough : 'Your borough'} community board',
+                      style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+                  ],
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          // Contextual subtitle with AI nudge embedded
-          if (topNudge != null)
-            GestureDetector(
-              onTap: () => _handleNudgeTap(topNudge),
-              child: Row(
-                children: [
-                  Text(topNudge.emoji,
-                      style: const TextStyle(fontSize: 14)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      topNudge.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: hc.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+        ),
+
+        // AI prompt — why the noticeboard exists (only shown when board is empty or first time)
+        if (topNudge != null || _announcements.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            child: GestureDetector(
+              onTap: topNudge != null ? () => _handleNudgeTap(topNudge) : null,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      HuddlColors.primary.withValues(alpha: 0.08),
+                      HuddlColors.teal.withValues(alpha: 0.06),
+                    ],
                   ),
-                  Icon(Icons.chevron_right,
-                      size: 16, color: context.hc.textTertiary),
-                ],
-              ),
-            )
-          else
-            Text(
-              _borough.isNotEmpty
-                  ? 'Here\'s what\'s happening in $_borough'
-                  : 'Here\'s what\'s happening in your community',
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: hc.textSecondary,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.15)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.auto_awesome, size: 16, color: HuddlColors.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        topNudge != null
+                          ? topNudge.title
+                          : 'Share road closures, lost pets, local news — anything your ${_borough.isNotEmpty ? _borough : "community"} neighbours should know.',
+                        style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary, height: 1.35),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (topNudge != null)
+                      Icon(Icons.chevron_right, size: 16, color: hc.textTertiary),
+                  ],
+                ),
               ),
             ),
-        ],
+          ),
+
+        // Post composer
+        _buildSmartPostComposer(hc, isDark),
+
+        // Recent announcements (max 3, compact)
+        if (topAnnouncements.isNotEmpty)
+          ...topAnnouncements.map((a) => _buildAnnouncementFeedCard(
+            _SmartFeedItem(
+              type: _SmartFeedType.announcement,
+              score: 0.7,
+              reason: a.isPinned ? 'Pinned' : 'Recent',
+              announcement: a,
+            ),
+            hc, isDark,
+          )),
+      ],
+    );
+  }
+
+  // ── Groups carousel ───────────────────────────────────────────────────────
+  Widget _buildGroupsCarousel(dynamic hc) {
+    final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
+    if (groups.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
+    }
+    return SizedBox(
+      height: 130,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: groups.length,
+        itemBuilder: (context, i) {
+          final g = groups[i];
+          return GestureDetector(
+            onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
+            child: Container(
+              width: 140,
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 36, height: 36,
+                      child: _buildGroupImage(g.imageUrl),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(g.name,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const Spacer(),
+                  Row(children: [
+                    Icon(Icons.people_outline, size: 10, color: hc.textTertiary),
+                    const SizedBox(width: 3),
+                    Text('${g.memberCount}',
+                      style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
+                  ]),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Meetups carousel ──────────────────────────────────────────────────────
+  Widget _buildMeetupsCarousel(dynamic hc) {
+    final meetups = _upcomingMeetups.take(8).toList();
+    if (meetups.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place_outlined);
+    }
+    return SizedBox(
+      height: 148,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: meetups.length,
+        itemBuilder: (context, i) {
+          final m = meetups[i];
+          final isGoing = m.isGoing;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _meetupTaps++);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
+            },
+            child: Container(
+              width: 180,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)) : null,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    child: SizedBox(
+                      width: double.infinity, height: 72,
+                      child: _buildMeetupImage(m.imageUrl, m.category),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.title,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 2),
+                        Row(children: [
+                          Expanded(child: Text(m.dateDisplay,
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
+                            overflow: TextOverflow.ellipsis)),
+                          if (isGoing) ...[
+                            const Icon(Icons.check_circle, size: 10, color: HuddlColors.primary),
+                            const SizedBox(width: 2),
+                            Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                          ],
+                        ]),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Events carousel ───────────────────────────────────────────────────────
+  Widget _buildEventsCarousel(dynamic hc) {
+    final events = _eventService.events.take(8).toList();
+    if (events.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No events listed yet', Icons.event_outlined);
+    }
+    return SizedBox(
+      height: 148,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: events.length,
+        itemBuilder: (context, i) {
+          final e = events[i];
+          final isGoing = _goingEvents.any((ge) => ge.id == e.id);
+          final eMap = e.toMap();
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
+            },
+            child: Container(
+              width: 180,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4)) : null,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Colour band top
+                  Container(
+                    width: double.infinity, height: 6,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.accentAmber,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Date chip
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            e.dateDisplay,
+                            style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.accentAmber),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(e.title,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 4),
+                        Text(e.location,
+                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        if (isGoing)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(children: [
+                              const Icon(Icons.check_circle, size: 10, color: HuddlColors.accentAmber),
+                              const SizedBox(width: 3),
+                              Text('You\'re going',
+                                style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.accentAmber)),
+                            ]),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Services carousel ─────────────────────────────────────────────────────
+  Widget _buildServicesCarousel(dynamic hc) {
+    if (_featuredServices.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
+    }
+    return SizedBox(
+      height: 130,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _featuredServices.length,
+        itemBuilder: (context, i) {
+          final s = _featuredServices[i];
+          return GestureDetector(
+            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+            child: Container(
+              width: 160,
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.blueDark.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(s.category.emoji, style: const TextStyle(fontSize: 18)),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(s.category.displayName,
+                        style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.blueDark),
+                        overflow: TextOverflow.ellipsis),
+                    ),
+                  ]),
+                  const SizedBox(height: 8),
+                  Text(s.name,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const Spacer(),
+                  if (s.endorsementCount > 0)
+                    Row(children: [
+                      const Icon(Icons.favorite, size: 10, color: HuddlColors.primary),
+                      const SizedBox(width: 3),
+                      Text('${s.endorsementCount} endorsed',
+                        style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
+                    ]),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Market carousel ───────────────────────────────────────────────────────
+  Widget _buildMarketCarousel(dynamic hc) {
+    final items = _rehomeService.allItems.take(8).toList();
+    if (items.isEmpty) {
+      return _buildCarouselEmpty(hc, 'No items listed yet', Icons.storefront_outlined);
+    }
+    return SizedBox(
+      height: 150,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          final hasImage = item.imageUrls.isNotEmpty;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _marketTaps++);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ItemDetailScreen(item: item),
+              ));
+            },
+            child: Container(
+              width: 130,
+              margin: const EdgeInsets.only(right: 10),
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Image or fallback
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    child: SizedBox(
+                      width: double.infinity, height: 85,
+                      child: hasImage
+                          ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                          : _marketImageFallback(item),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title,
+                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 2),
+                        Text(item.priceDisplay,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w700,
+                            color: item.isFree ? HuddlColors.teal : HuddlColors.primary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _marketImageFallback(RehomeItem item) {
+    return Container(
+      color: HuddlColors.primary.withValues(alpha: 0.07),
+      child: Center(
+        child: Icon(item.category.icon, size: 28, color: HuddlColors.primary.withValues(alpha: 0.4)),
+      ),
+    );
+  }
+
+  Widget _buildCarouselEmpty(dynamic hc, String message, IconData icon) {
+    return Container(
+      height: 80,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: hc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: hc.divider),
+      ),
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: hc.textTertiary),
+            const SizedBox(width: 8),
+            Text(message, style: GoogleFonts.poppins(fontSize: 13, color: hc.textTertiary)),
+          ],
+        ),
       ),
     );
   }

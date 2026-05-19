@@ -13,7 +13,6 @@ import '../../services/huddl_notification_service.dart';
 import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
-import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 
@@ -559,8 +558,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   final _searchFocus = FocusNode();
 
   // UI state
-  bool _showSuggestions = false;
   bool _isLoadingItems = false;
+  bool _isSearchActive = false;
 
   @override
   void initState() {
@@ -574,9 +573,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       // Load real listings from Firestore on first open
       _loadListingsFromFirestore();
     });
-    _searchFocus.addListener(() {
-      if (mounted) setState(() => _showSuggestions = _searchFocus.hasFocus);
-    });
+
   }
 
   /// Load all active marketplace listings from Firestore and populate the
@@ -1275,33 +1272,172 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // No gradient AI button, no prominent branding
 
   Widget _buildHeader(HuddlContextColors hc) {
+    final guard = BoroughScopeGuard();
+    final boroughName = guard.currentBoroughOr('Nearby');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final badgeBg = isDark
+        ? HuddlColors.teal.withValues(alpha: 0.2)
+        : HuddlColors.teal.withValues(alpha: 0.08);
+    final badgeText = isDark ? HuddlColors.teal : HuddlColors.primaryDark;
+
     return Container(
       color: hc.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Semantics(
-                header: true,
-                child: Text(
-                  'Market',
-                  style: _adaptiveText(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: hc.textPrimary,
+          // Title row — Market + compact borough chip + search icon
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _isSearchActive
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: Row(
+              children: [
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'Market',
+                    style: _adaptiveText(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: hc.textPrimary,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Compact borough chip — replaces the full BoroughHeader stripe
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: badgeBg,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: HuddlColors.teal.withValues(alpha: 0.2),
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 11, color: badgeText),
+                      const SizedBox(width: 3),
+                      Text(
+                        boroughName,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: badgeText,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                // Search icon — top-right, like Discover
+                Semantics(
+                  label: 'Search market items',
+                  button: true,
+                  child: IconButton(
+                    onPressed: () {
+                      setState(() => _isSearchActive = true);
+                      Future.microtask(() => _searchFocus.requestFocus());
+                    },
+                    icon: Icon(
+                      Icons.search,
+                      color: hc.textSecondary,
+                      size: 22,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Search',
+                  ),
+                ),
+              ],
+            ),
+            // Expanded search bar — replaces title row when active
+            secondChild: SizedBox(
+              height: 36,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: hc.inputBg,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 12),
+                          Icon(Icons.search, size: 16,
+                              color: hc.textTertiary.withValues(alpha: 0.7)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              focusNode: _searchFocus,
+                              autofocus: false,
+                              onChanged: (val) {
+                                _ai.recordSearch(val);
+                                setState(() => _searchQuery = val);
+                              },
+                              onSubmitted: (_) => _searchFocus.unfocus(),
+                              style: _adaptiveText(
+                                  fontSize: 13, color: hc.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: _ai.smartPlaceholder(),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                contentPadding: EdgeInsets.zero,
+                                isDense: true,
+                                hintStyle: _adaptiveText(
+                                    fontSize: 13,
+                                    color: hc.textTertiary),
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                _searchController.clear();
+                                setState(() => _searchQuery = '');
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                child: Icon(Icons.close, size: 15,
+                                    color: hc.textTertiary),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                        _isSearchActive = false;
+                      });
+                      _searchFocus.unfocus();
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 8),
-          // Borough scope context for marketplace (Buy/Sell and Offers = borough-only)
-          const BoroughHeader(
-            feature: HuddlFeature.marketplace,  // Buy/Sell/Offers all borough-only
-          ),
           TabBar(
             controller: _tabController,
             tabs: const [
@@ -1338,217 +1474,95 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
   Widget _buildBuyTab(HuddlContextColors hc) {
     final items = _filteredItems;
-    final suggestions = _ai.searchSuggestions(_searchQuery);
 
     return Column(
       children: [
-        // ── Unified search + filter bar ───────────────────────────
+        // ── Filter and sort pill — Groups/Events style ────────────
         Container(
           color: hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  // Search pill
-                  Expanded(
-                    child: Semantics(
-                      label: 'Search market items',
-                      textField: true,
-                      child: Container(
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: hc.inputBg,
-                          borderRadius: BorderRadius.circular(20),
+              Semantics(
+                label: _hasActiveFilters ? 'Active filters. Tap to change.' : 'Filter and sort items',
+                button: true,
+                child: GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    _showAllFiltersSheet(hc);
+                  },
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: TextField(
-                          controller: _searchController,
-                          focusNode: _searchFocus,
-                          textAlignVertical: TextAlignVertical.center,
-                          onChanged: (val) {
-                            setState(() {
-                              _searchQuery = val;
-                              _showSuggestions = val.isEmpty && _searchFocus.hasFocus;
-                            });
-                          },
-                          onSubmitted: (val) {
-                            _ai.recordSearch(val);
-                            _searchFocus.unfocus();
-                          },
-                          style: _adaptiveText(fontSize: 13, color: hc.textPrimary),
-                          decoration: InputDecoration(
-                            hintText: _ai.smartPlaceholder(),
-                            hintStyle: _adaptiveText(fontSize: 13, color: hc.textTertiary),
-                            prefixIcon: Icon(Icons.search, size: 18,
-                                color: hc.textTertiary.withValues(alpha: 0.7)),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? Semantics(
-                                    label: 'Clear search',
-                                    button: true,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        HapticFeedback.lightImpact();
-                                        _searchController.clear();
-                                        setState(() {
-                                          _searchQuery = '';
-                                          _showSuggestions = false;
-                                        });
-                                      },
-                                      child: Icon(Icons.close, size: 16,
-                                          color: hc.textTertiary),
-                                    ),
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Filter pill button
-                  Semantics(
-                    label: _hasActiveFilters ? 'Filters active. Tap to change.' : 'Filter items',
-                    button: true,
-                    child: GestureDetector(
-                      onTap: () => _showAllFiltersSheet(hc),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          size: 18,
                           color: _hasActiveFilters
-                              ? HuddlColors.primary.withValues(alpha: 0.12)
-                              : hc.inputBg,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+                              ? HuddlColors.primary
+                              : hc.textPrimary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _hasActiveFilters && _activeFilterCount > 1
+                              ? 'Filter and sort ($_activeFilterCount)'
+                              : _hasActiveFilters
+                                  ? 'Filter and sort · $_activeFilterLabel'
+                                  : 'Filter and sort',
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
                             color: _hasActiveFilters
-                                ? HuddlColors.primary.withValues(alpha: 0.4)
-                                : Colors.transparent,
-                            width: 1.2,
+                                ? HuddlColors.primary
+                                : hc.textPrimary,
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: 16,
-                              color: _hasActiveFilters
-                                  ? HuddlColors.primary
-                                  : hc.textTertiary,
-                            ),
-                            if (_hasActiveFilters) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                _activeFilterCount > 1
-                                    ? '$_activeFilterCount'
-                                    : _activeFilterLabel,
-                                style: _adaptiveText(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              // Search suggestions
-              if (_showSuggestions && suggestions.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: suggestions.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (_, i) {
-                      final isRecent = _ai._recentSearches.contains(suggestions[i]);
-                      return Semantics(
-                        label: 'Search for ${suggestions[i]}',
-                        button: true,
-                        child: InkWell(
-                          onTap: () {
-                            HapticFeedback.selectionClick();
-                            _searchController.text = suggestions[i];
-                            setState(() {
-                              _searchQuery = suggestions[i];
-                              _showSuggestions = false;
-                              _searchFocus.unfocus();
-                            });
-                            _ai.recordSearch(suggestions[i]);
-                          },
-                          borderRadius: BorderRadius.circular(18),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: hc.inputBg,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: hc.divider),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (isRecent)
-                                  Icon(Icons.history, size: 12,
-                                      color: hc.textTertiary),
-                                if (isRecent) const SizedBox(width: 4),
-                                Text(
-                                  suggestions[i],
-                                  style: _adaptiveText(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: hc.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
                   ),
                 ),
-              ],
+              ),
+              const Spacer(),
+              if (_hasActiveFilters)
+                GestureDetector(
+                  onTap: _clearAllFilters,
+                  child: Text(
+                    'Clear all',
+                    style: _adaptiveText(
+                      fontSize: 12,
+                      color: HuddlColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        // Item count + clear row
+        // Item count row
         Semantics(
           liveRegion: true,
           child: Container(
             color: hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
-            child: Row(
-              children: [
-                Text(
-                  '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' (filtered)' : ''}',
-                  style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
-                ),
-                const Spacer(),
-                if (_hasActiveFilters)
-                  GestureDetector(
-                    onTap: _clearAllFilters,
-                    child: Text(
-                      'Clear all',
-                      style: _adaptiveText(
-                        fontSize: 11,
-                        color: HuddlColors.primary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-              ],
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${items.length} item${items.length == 1 ? '' : 's'}${_hasActiveFilters ? ' (filtered)' : ''}${_searchQuery.isNotEmpty ? ' matching “$_searchQuery”' : ''}',
+                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+              ),
             ),
           ),
         ),
@@ -1559,15 +1573,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   hc: hc,
                   illustration: HuddlIllustration.marketplaceEmpty,
                   title: 'No items found',
-                  subtitle: _hasActiveFilters
+                  subtitle: _hasActiveFilters || _searchQuery.isNotEmpty
                       ? 'Try adjusting your filters to see more results.'
                       : 'Nothing listed yet. Check back soon!',
-                  action: _hasActiveFilters
+                  action: (_hasActiveFilters || _searchQuery.isNotEmpty)
                       ? Semantics(
                           label: 'Clear all filters',
                           button: true,
                           child: TextButton.icon(
-                            onPressed: _clearAllFilters,
+                            onPressed: () {
+                              _clearAllFilters();
+                              setState(() => _searchQuery = '');
+                              _searchController.clear();
+                            },
                             icon: const Icon(Icons.filter_list_off, size: 18),
                             label: Text('Clear filters',
                                 style: _adaptiveText(
@@ -1671,9 +1689,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           // ── Single-tap listing prompt — AI adapts the copy ──
           _buildSellCTA(hc),
 
-          // ── Quick sell suggestions — trending categories ──
-          _buildQuickSellChips(hc),
-
           // ── Adaptive section ordering ──
           if (offersFirst && offers.isNotEmpty) ...[
             _buildOffersSection(hc, offers),
@@ -1718,7 +1733,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
-  // ── Sell CTA Card — one tappable surface, AI-adapted copy ──
+  // ── Sell CTA — compact single-row prompt, AI-adapted copy ──
   Widget _buildSellCTA(HuddlContextColors hc) {
     return Semantics(
       label: 'Create a new listing',
@@ -1726,112 +1741,44 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
       button: true,
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: InkWell(
           onTap: _openCreateListing,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: hc.surface,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: hc.cardBorder,
-              boxShadow: [
-                BoxShadow(color: hc.shadow, blurRadius: 8, offset: const Offset(0, 2)),
-              ],
             ),
             child: Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: HuddlColors.primary,
-                    borderRadius: BorderRadius.circular(14),
+                    color: HuddlColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 24),
+                  child: Icon(Icons.camera_alt_rounded,
+                      color: HuddlColors.primary, size: 18),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _ai.sellPrompt(),
-                        style: _adaptiveText(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: hc.textPrimary,
-                          height: 1.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _ai.sellSubtitle(),
-                        style: _adaptiveText(fontSize: 12, color: hc.textTertiary),
-                      ),
-                    ],
+                  child: Text(
+                    _ai.sellPrompt(),
+                    style: _adaptiveText(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: hc.textPrimary,
+                    ),
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, size: 14, color: hc.textTertiary),
+                Icon(Icons.arrow_forward_ios, size: 13, color: hc.textTertiary),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // ── Quick sell suggestion chips — AI-driven trending categories ──
-  // Progressive disclosure: only appears after first use.
-  // Contextual intelligence: categories adapt based on community demand.
-  Widget _buildQuickSellChips(HuddlContextColors hc) {
-    final suggestions = _ai.quickSellSuggestions();
-    if (suggestions.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(top: 10),
-      child: SizedBox(
-        height: 36,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: suggestions.length,
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemBuilder: (_, i) {
-            return Semantics(
-              label: 'Quick list ${suggestions[i]}',
-              button: true,
-              child: InkWell(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  _openCreateListing();
-                },
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: hc.surfaceAlt,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: hc.divider),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.add, size: 14, color: HuddlColors.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        suggestions[i],
-                        style: _adaptiveText(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: hc.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
         ),
       ),
     );
