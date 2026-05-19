@@ -122,48 +122,27 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           SliverAppBar(
             expandedHeight: 240,
             pinned: true,
-            backgroundColor: color,
-            leading: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: HuddlColors.gray900.withValues(alpha: 0.3),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, color: context.hc.surface, size: 20),
-                onPressed: () => Navigator.pop(context),
-              ),
+            backgroundColor: context.hc.surface,
+            leading: _EventCircleButton(
+              icon: Icons.arrow_back,
+              onTap: () => Navigator.pop(context),
             ),
             actions: [
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: HuddlColors.gray900.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                    color: context.hc.surface, size: 20,
-                  ),
-                  onPressed: () async {
-                    final id = widget.event['id'] as String? ?? '';
-                    if (id.isNotEmpty) {
-                      await _eventService.toggleBookmark(id);
-                      if (mounted) setState(() {});
-                    }
-                  },
-                ),
+              _EventCircleButton(
+                icon: _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                onTap: () async {
+                  final id = widget.event['id'] as String? ?? '';
+                  if (id.isNotEmpty) {
+                    await _eventService.toggleBookmark(id);
+                    if (mounted) setState(() {});
+                  }
+                },
               ),
-              Container(
-                margin: const EdgeInsets.fromLTRB(0, 8, 8, 8),
-                decoration: BoxDecoration(
-                  color: HuddlColors.gray900.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.share_outlined, color: context.hc.surface, size: 20),
-                  onPressed: () => _shareEvent(),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _EventCircleButton(
+                  icon: Icons.share_outlined,
+                  onTap: () => _shareEvent(),
                 ),
               ),
             ],
@@ -1295,4 +1274,31 @@ Widget _buildEventDetailCover({
   }
 
   return gradientFallback();
+}
+
+// ── Circle icon button (matches Groups _CircleButton style) ───────────────
+class _EventCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _EventCircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.3),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
+    );
+  }
 }
