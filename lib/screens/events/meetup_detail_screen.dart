@@ -711,23 +711,20 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                           width: 68,
                           height: 32,
                           child: Stack(
-                            children: List.generate(3, (i) => Positioned(
-                              left: i * 18.0,
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: [
-                                    HuddlColors.primary,
-                                    HuddlColors.blueDark,
-                                    HuddlColors.textTertiary,
-                                  ][i],
-                                  border: Border.all(color: Colors.white, width: 2),
+                            children: List.generate(3, (i) {
+                              // Use real member photos from MemberPhotoService
+                              final sampleNames = ['Sarah M.', 'Emma T.', 'James K.'];
+                              return Positioned(
+                                left: i * 18.0,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: _buildAttendeePhoto(sampleNames[i], 32),
                                 ),
-                                child: const Icon(Icons.person, size: 16, color: Colors.white),
-                              ),
-                            )).reversed.toList(),
+                              );
+                            }).reversed.toList(),
                           ),
                         ),
                         const SizedBox(width: 8),

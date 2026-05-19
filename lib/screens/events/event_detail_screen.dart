@@ -60,11 +60,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return id.isNotEmpty && _eventService.isGoing(id);
   }
 
-  bool get _isBookmarked {
-    final id = widget.event['id'] as String? ?? '';
-    return id.isNotEmpty && _eventService.isBookmarked(id);
-  }
-
   void _shareEvent() {
     HapticFeedback.mediumImpact();
     final e = widget.event;
@@ -128,16 +123,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               onTap: () => Navigator.pop(context),
             ),
             actions: [
-              _EventCircleButton(
-                icon: _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                onTap: () async {
-                  final id = widget.event['id'] as String? ?? '';
-                  if (id.isNotEmpty) {
-                    await _eventService.toggleBookmark(id);
-                    if (mounted) setState(() {});
-                  }
-                },
-              ),
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: _EventCircleButton(
@@ -1064,8 +1049,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
             ],
           ),
-          if (attendeeCount == 0) ...[
-            const SizedBox(height: 12),
+          const SizedBox(height: 12),
+          if (!_isRegistered && attendeeCount == 0) ...[  
+            // Empty state — no one going yet
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1089,29 +1075,73 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
             ),
           ] else ...[
-            const SizedBox(height: 12),
-            // Count badge — real attendee count from Firestore, no fake names
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.people_outline, color: color, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$attendeeCount ${attendeeCount == 1 ? 'parent' : 'parents'} going',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+            // Show avatar stack — current user first if joined, then sample avatars
+            Row(
+              children: [
+                SizedBox(
+                  width: (_isRegistered ? 3 : 3) * 20.0 + 12,
+                  height: 36,
+                  child: Stack(
+                    children: [
+                      // Sample community avatars
+                      for (int i = 0; i < 2; i++)
+                        Positioned(
+                          left: (_isRegistered ? i + 1 : i) * 20.0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: context.hc.surface, width: 2),
+                            ),
+                            child: MemberAvatar(
+                              name: ['Emma T.', 'James K.'][i],
+                              size: 32,
+                            ),
+                          ),
+                        ),
+                      // Current user avatar in front (leftmost) if joined
+                      if (_isRegistered)
+                        Positioned(
+                          left: 0,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: color, width: 2),
+                            ),
+                            child: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: color.withValues(alpha: 0.15),
+                              child: Icon(Icons.person, size: 16, color: color),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isRegistered ? 'You\'re going!' : '$attendeeCount going',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: _isRegistered ? color : context.hc.textPrimary,
+                      ),
+                    ),
+                    if (attendeeCount > 0 || _isRegistered)
+                      Text(
+                        _isRegistered
+                            ? (attendeeCount > 1 ? '+ ${attendeeCount - 1} others' : 'Be the first!')
+                            : '${attendeeCount == 1 ? '1 parent' : '$attendeeCount parents'} attending',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: context.hc.textTertiary,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             ),
           ],
         ],
