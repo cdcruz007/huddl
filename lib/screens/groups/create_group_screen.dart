@@ -19,6 +19,7 @@ import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
+import '../../services/ai_api_helper.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE GROUP — single-page scrollable form matching Create Meetup design
@@ -739,6 +740,51 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     );
   }
 
+  // ── AI tagline generation ─────────────────────────────────────────────
+  // Silently generates a one-line tagline from the user's group description.
+  // Returns null on any failure so group creation is never blocked by AI.
+  Future<String?> _generateAiTagline({
+    required String groupName,
+    required String description,
+    required List<String> audience,
+  }) async {
+    if (description.trim().isEmpty) return null;
+    try {
+      final audienceLabel =
+          audience.isNotEmpty ? audience.join(', ') : 'parents';
+      final prompt =
+          'Write a single short tagline (max 10 words, no quotes, no punctuation '
+          'at the end) for a parenting community group called "$groupName" '
+          'aimed at $audienceLabel. '
+          'The creator described it as: "${description.trim()}". '
+          'The tagline must capture the group\'s essence in plain, friendly language. '
+          'Return only the tagline text — no explanation, no quotes.';
+      final requestBody = {
+        'contents': [
+          {
+            'role': 'user',
+            'parts': [
+              {'text': prompt}
+            ],
+          }
+        ],
+        'generationConfig': {
+          'temperature': 0.7,
+          'maxOutputTokens': 40,
+        },
+      };
+      final raw = await AiApiHelper.generateText(requestBody,
+          timeout: const Duration(seconds: 15));
+      if (raw == null) return null;
+      // Strip any trailing punctuation / newlines
+      final cleaned = raw.trim().replaceAll(RegExp(r'[\n\r"]+'), '');
+      return cleaned.isEmpty ? null : cleaned;
+    } catch (e) {
+      if (kDebugMode) debugPrint('create_group: AI tagline failed — $e');
+      return null;
+    }
+  }
+
   // ── Create group logic ────────────────────────────────────────────────
   Future<void> _createGroup() async {
     // ── Subscription gate: group creation limit ────────────────────────
@@ -832,6 +878,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         privacy = GroupPrivacy.private_;
       }
 
+      // ── AI tagline: generate silently from the user's description ─────
+      final aiTagline = await _generateAiTagline(
+        groupName: _nameController.text.trim(),
+        description: _descriptionController.text.trim(),
+        audience: selectedAudience,
+      );
+
       var newGroup = Group(
         id: 'user_${DateTime.now().millisecondsSinceEpoch}',
         name: _nameController.text.trim(),
@@ -854,6 +907,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
         lastMessage: '$creatorName created this group',
         lastSenderName: 'System',
         lastMessageTime: DateTime.now(),
+        aiTagline: aiTagline,
       );
 
       // ── Write to Firestore so the group survives reinstall ────────────
@@ -882,6 +936,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'lastMessage': newGroup.lastMessage ?? '$creatorName created this group',
           'lastSenderName': 'System',
           'lastMessageTime': newGroup.lastMessageTime?.toIso8601String(),
+          if (aiTagline != null && aiTagline.isNotEmpty) 'aiTagline': aiTagline,
         });
         persistedId = firestoreId;
       } catch (e) {

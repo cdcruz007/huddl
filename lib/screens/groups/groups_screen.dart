@@ -5463,6 +5463,21 @@ class _DiscoverGroupCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  // AI-generated one-line tagline (shown when available)
+                  if (group.aiTagline != null && group.aiTagline!.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      group.aiTagline!,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: context.hc.textTertiary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   // Bottom row: member avatar photos + count + Join button
                   Row(
@@ -7191,6 +7206,8 @@ class _GroupItem {
   final String? creatorName;
   final String? creatorBorough;
   final List<String> invitedMemberIds;
+  /// AI-generated one-line tagline shown beneath the group name in Discover cards.
+  final String? aiTagline;
 
   _GroupItem({
     required this.id,
@@ -7213,6 +7230,7 @@ class _GroupItem {
     this.creatorName,
     this.creatorBorough,
     this.invitedMemberIds = const [],
+    this.aiTagline,
   });
 
   factory _GroupItem.fromGroup(Group g, {required bool isDefault}) {
@@ -7237,6 +7255,7 @@ class _GroupItem {
       creatorName: g.creatorName,
       creatorBorough: g.creatorBorough,
       invitedMemberIds: g.invitedMemberIds,
+      aiTagline: g.aiTagline,
     );
   }
 

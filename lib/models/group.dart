@@ -39,6 +39,11 @@ class Group {
   /// Used to show private groups on the Discover tab only to those invitees.
   final List<String> invitedMemberIds;
 
+  /// AI-generated one-line tagline derived from the creator's group description.
+  /// Generated at creation time via Gemini/Vertex AI and stored on the document.
+  /// Displayed beneath the group name in Discover cards.
+  final String? aiTagline;
+
   Group({
     required this.id,
     required this.name,
@@ -60,6 +65,7 @@ class Group {
     this.creatorName,
     this.creatorBorough,
     this.invitedMemberIds = const [],
+    this.aiTagline,
   });
   
   // JSON serialization for persistence
@@ -85,6 +91,7 @@ class Group {
       'creatorName': creatorName,
       'creatorBorough': creatorBorough,
       'invitedMemberIds': invitedMemberIds,
+      if (aiTagline != null && aiTagline!.isNotEmpty) 'aiTagline': aiTagline,
     };
   }
   
@@ -112,6 +119,7 @@ class Group {
       creatorName: json['creatorName'] as String?,
       creatorBorough: json['creatorBorough'] as String?,
       invitedMemberIds: (json['invitedMemberIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
+      aiTagline: json['aiTagline'] as String?,
     );
   }
 
@@ -154,6 +162,7 @@ class Group {
     String? creatorName,
     String? creatorBorough,
     List<String>? invitedMemberIds,
+    String? aiTagline,
   }) {
     return Group(
       id: id ?? this.id,
@@ -176,6 +185,7 @@ class Group {
       creatorName: creatorName ?? this.creatorName,
       creatorBorough: creatorBorough ?? this.creatorBorough,
       invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
+      aiTagline: aiTagline ?? this.aiTagline,
     );
   }
 }
