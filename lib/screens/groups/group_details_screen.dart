@@ -510,6 +510,106 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
     return Scaffold(
       backgroundColor: context.hc.scaffold,
+
+      // ── Bottom CTA: locked Join/Chat button (matches Events detail pattern) ──
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+            20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+        decoration: BoxDecoration(
+          color: context.hc.surface,
+          boxShadow: [
+            BoxShadow(
+              color: HuddlColors.gray900.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Primary action: Open Chat (joined) or Join Group (not joined)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isJoining
+                    ? null
+                    : _isJoined
+                        ? () => Navigator.pushNamed(context, '/group_chat', arguments: {
+                              'groupId': widget.groupId,
+                              'groupName': _editableName,
+                              'groupImageUrl': widget.groupImageUrl,
+                            })
+                        : _joinGroup,
+                icon: _isJoining
+                    ? const SizedBox(
+                        width: 20, height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : Icon(
+                        _isJoined ? Icons.chat_bubble_outline : Icons.group_add_outlined,
+                        color: context.hc.surface,
+                        size: 20,
+                      ),
+                label: Text(
+                  _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join Group',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: context.hc.surface,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isJoined ? HuddlColors.teal : HuddlColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(26)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  elevation: 0,
+                ),
+              ),
+            ),
+            // Invite row — only for private-group admins/creators when already joined
+            if (_isJoined && widget.isPrivate && _isAdmin) ...
+              [
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _showInviteMembersSheet,
+                    icon: const Icon(Icons.person_add_outlined,
+                        color: HuddlColors.primary, size: 18),
+                    label: Text(
+                      'Invite Members',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: HuddlColors.primary,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: HuddlColors.primary),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            // Helper text when not yet joined
+            if (!_isJoined) ...
+              [
+                const SizedBox(height: 6),
+                Text(
+                  'Join to start chatting with this group',
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: context.hc.textTertiary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+          ],
+        ),
+      ),
+
       body: CustomScrollView(
         slivers: [
           // ── Hero image area ─────────────────────────────────────────
@@ -907,119 +1007,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           if (_isJoined)
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // ── Action buttons ──────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Container(
-              color: context.hc.surface,
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  if (_isJoined) ...[
-                    // Open chat (already joined)
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/group_chat', arguments: {
-                            'groupId': widget.groupId,
-                            'groupName': _editableName,
-                            'groupImageUrl': widget.groupImageUrl,
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24)),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Open Chat',
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: context.hc.surface,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Invite members (only for private group admins/creator)
-                    if (widget.isPrivate && _isAdmin)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: _showInviteMembersSheet,
-                          icon: const Icon(Icons.person_add_outlined,
-                              color: HuddlColors.primary),
-                          label: Text(
-                            'Invite Members',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: HuddlColors.primary),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24)),
-                          ),
-                        ),
-                      ),
-                  ] else ...[
-                    // Join button (not yet joined)
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isJoining ? null : _joinGroup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: HuddlColors.primary,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24)),
-                          elevation: 0,
-                        ),
-                        child: _isJoining
-                            ? const SizedBox(
-                                width: 24, height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: HuddlColors.white),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.group_add, color: HuddlColors.white),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Join Group',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: context.hc.surface,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Join to start chatting with this group',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: context.hc.textTertiary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          // Bottom spacer so content clears the fixed bottom bar
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );

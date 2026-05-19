@@ -545,6 +545,53 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // ── Bottom CTA: locked Join button (matches Events detail pattern) ──────
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+            20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              HapticFeedback.mediumImpact();
+              _toggleGoing();
+            },
+            icon: Icon(
+              _meetup.isGoing ? Icons.check_circle : Icons.group_add_outlined,
+              color: Colors.white,
+              size: 20,
+            ),
+            label: Text(
+              _meetup.isGoing ? 'Joined' : 'Join',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _meetup.isGoing ? HuddlColors.teal : _detailOrange,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(26),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ),
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,41 +719,6 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     RichText(
                       text: TextSpan(children: tagSpans),
                     ),
-                  const SizedBox(height: 16),
-
-                  // Join / Leave button — single full-width CTA
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        HapticFeedback.mediumImpact();
-                        _toggleGoing();
-                      },
-                      icon: Icon(
-                        _meetup.isGoing ? Icons.check_circle : Icons.group_add_outlined,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                      label: Text(
-                        _meetup.isGoing ? 'Joined' : 'Join',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _meetup.isGoing
-                            ? HuddlColors.teal
-                            : _detailOrange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 16),
 
                   // Attendees row — avatar stack + "N interested" + chevron
@@ -923,7 +935,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                         style: GoogleFonts.poppins(fontSize: 12, color: _detailOrange, fontWeight: FontWeight.w500)),
                   ],
 
-                  SizedBox(height: safeBottom + 32),
+                  SizedBox(height: safeBottom + 120),
                 ],
               ),
             ),
