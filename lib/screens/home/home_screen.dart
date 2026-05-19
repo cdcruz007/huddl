@@ -1753,290 +1753,307 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Groups carousel ───────────────────────────────────────────────────────
   Widget _buildGroupsCarousel(dynamic hc) {
-    final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
+    final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(5).toList();
     if (groups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
     }
-    return SizedBox(
-      height: 192,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: groups.length,
-        itemBuilder: (context, i) {
-          final g = groups[i];
-          return GestureDetector(
-            onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity, height: 100,
-                          child: _buildGroupImage(g.imageUrl),
-                        ),
-                        Positioned(
-                          bottom: 6, left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.people_rounded, size: 9, color: Colors.white),
-                                const SizedBox(width: 3),
-                                Text('${g.memberCount}',
-                                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: groups.map((g) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: GestureDetector(
+              onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero photo
+                    SizedBox(
+                      height: 160, width: double.infinity,
+                      child: _buildGroupImage(g.imageUrl),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(g.name,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
-                        Text(g.category,
-                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ],
+                    // Card body
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(g.category.toUpperCase(),
+                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text(g.name,
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _buildAvatarStack(g.id.hashCode, hc),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text('${g.memberCount} members',
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
+                            _buildActionPill('Join', HuddlColors.primary, hc),
+                          ]),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
 
   // ── Meetups carousel ──────────────────────────────────────────────────────
   Widget _buildMeetupsCarousel(dynamic hc) {
-    final meetups = _upcomingMeetups.take(8).toList();
+    final meetups = _upcomingMeetups.take(5).toList();
     if (meetups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place_outlined);
     }
-    return SizedBox(
-      height: 192,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: meetups.length,
-        itemBuilder: (context, i) {
-          final m = meetups[i];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: meetups.map((m) {
           final isGoing = m.isGoing;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _meetupTaps++);
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
-            },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3)) : null,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity, height: 100,
-                          child: _buildMeetupImage(m.imageUrl, m.category),
-                        ),
-                        // Date badge overlay — matches Events card style
-                        Positioned(
-                          bottom: 6, left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.teal,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(m.dateDisplay,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
-                          ),
-                        ),
-                        if (isGoing)
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _meetupTaps++);
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3), width: 1.5) : null,
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero photo with date badge
+                    SizedBox(
+                      height: 160, width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildMeetupImage(m.imageUrl, m.category),
+                          // Date badge — bottom-left
                           Positioned(
-                            top: 6, right: 6,
+                            bottom: 10, left: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: HuddlColors.primary,
+                                color: HuddlColors.teal,
                                 borderRadius: BorderRadius.circular(8),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                               ),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.check_circle, size: 9, color: Colors.white),
-                                const SizedBox(width: 3),
-                                Text('Going', style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white)),
-                              ]),
+                              child: Text(m.dateDisplay,
+                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
                             ),
                           ),
-                      ],
+                          // Going badge — top-right
+                          if (isGoing)
+                            Positioned(
+                              top: 10, right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.primary,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  const Icon(Icons.check_circle, size: 11, color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  Text('Going', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
+                                ]),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(m.title,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Icon(Icons.location_on_outlined, size: 10, color: hc.textTertiary),
-                          const SizedBox(width: 3),
-                          Expanded(child: Text(m.location,
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
-                            overflow: TextOverflow.ellipsis)),
-                        ]),
-                      ],
+                    // Card body
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(m.category.toUpperCase(),
+                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text(m.title,
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                          if (m.location.isNotEmpty) ...[  
+                            const SizedBox(height: 3),
+                            Row(children: [
+                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                              const SizedBox(width: 3),
+                              Expanded(child: Text(m.location,
+                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                                maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            ]),
+                          ],
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _buildAvatarStack(m.id.hashCode, hc),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text('${m.attendeeCount} attending',
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
+                            _buildActionPill(
+                              isGoing ? 'Going ✓' : 'Join',
+                              isGoing ? HuddlColors.teal : HuddlColors.primary,
+                              hc,
+                              isActive: isGoing,
+                            ),
+                          ]),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
 
   // ── Events carousel ───────────────────────────────────────────────────────
   Widget _buildEventsCarousel(dynamic hc) {
-    final events = _eventService.events.take(8).toList();
+    final events = _eventService.events.take(5).toList();
     if (events.isEmpty) {
       return _buildCarouselEmpty(hc, 'No events listed yet', Icons.event_outlined);
     }
-    return SizedBox(
-      height: 192,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: events.length,
-        itemBuilder: (context, i) {
-          final e = events[i];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: events.map((e) {
           final isGoing = _goingEvents.any((ge) => ge.id == e.id);
           final eMap = e.toMap();
           final hasImage = e.imageUrl.isNotEmpty;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
-            },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4)) : null,
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Photo header
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity, height: 100,
-                          child: hasImage
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1.5) : null,
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero photo
+                    SizedBox(
+                      height: 160, width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          hasImage
                               ? Image.network(e.imageUrl, fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => _eventImageFallback())
                               : _eventImageFallback(),
-                        ),
-                        // Date badge overlay
-                        Positioned(
-                          bottom: 6, left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.accentAmber,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              e.dateDisplay,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        if (isGoing)
+                          // Date badge — bottom-left
                           Positioned(
-                            top: 6, right: 6,
+                            bottom: 10, left: 12,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal,
+                                color: HuddlColors.accentAmber,
                                 borderRadius: BorderRadius.circular(8),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                               ),
-                              child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                const Icon(Icons.check_circle, size: 9, color: Colors.white),
-                                const SizedBox(width: 3),
-                                Text('Going', style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white)),
-                              ]),
+                              child: Text(e.dateDisplay,
+                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
                             ),
                           ),
-                      ],
+                          // Going badge — top-right
+                          if (isGoing)
+                            Positioned(
+                              top: 10, right: 12,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: HuddlColors.teal,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                  const Icon(Icons.check_circle, size: 11, color: Colors.white),
+                                  const SizedBox(width: 4),
+                                  Text('Going', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
+                                ]),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(e.title,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 4),
-                        Row(children: [
-                          Icon(Icons.location_on_outlined, size: 10, color: hc.textTertiary),
-                          const SizedBox(width: 3),
-                          Expanded(child: Text(e.location,
-                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
-                            maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        ]),
-                      ],
+                    // Card body
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(e.category.toUpperCase(),
+                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text(e.title,
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                          if (e.location.isNotEmpty) ...[  
+                            const SizedBox(height: 3),
+                            Row(children: [
+                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                              const SizedBox(width: 3),
+                              Expanded(child: Text(e.location,
+                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                                maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            ]),
+                          ],
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _buildAvatarStack(e.id.hashCode, hc),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text('${e.attendees} attending',
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
+                            _buildActionPill(
+                              isGoing ? 'Going ✓' : 'Book',
+                              isGoing ? HuddlColors.teal : HuddlColors.accentAmber,
+                              hc,
+                              isActive: isGoing,
+                            ),
+                          ]),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
@@ -2052,85 +2069,93 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Services carousel ─────────────────────────────────────────────────────
   Widget _buildServicesCarousel(dynamic hc) {
-    if (_featuredServices.isEmpty) {
+    final services = _featuredServices.take(5).toList();
+    if (services.isEmpty) {
       return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
     }
-    return SizedBox(
-      height: 192,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _featuredServices.length,
-        itemBuilder: (context, i) {
-          final s = _featuredServices[i];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: services.map((s) {
           final hasImage = s.imageUrl != null && s.imageUrl!.isNotEmpty;
-          return GestureDetector(
-            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Photo header
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity, height: 100,
-                          child: hasImage
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: GestureDetector(
+              onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero photo with category badge
+                    SizedBox(
+                      height: 160, width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          hasImage
                               ? Image.network(s.imageUrl!, fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
                               : _serviceImageFallback(s.category.emoji),
-                        ),
-                        // Category badge overlay
-                        Positioned(
-                          bottom: 6, left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: HuddlColors.blueDark,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              s.category.displayName,
-                              style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white),
+                          // Category badge — top-right
+                          Positioned(
+                            top: 10, right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.blueDark,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                              ),
+                              child: Text(s.category.displayName,
+                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(s.name,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 6),
-                        if (s.endorsementCount > 0)
+                    // Card body
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(s.category.displayName.toUpperCase(),
+                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text(s.name,
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                          if (s.tagline.isNotEmpty) ...[  
+                            const SizedBox(height: 3),
+                            Text(s.tagline,
+                              style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ],
+                          const SizedBox(height: 10),
                           Row(children: [
-                            const Icon(Icons.favorite, size: 10, color: HuddlColors.primary),
-                            const SizedBox(width: 3),
-                            Text('${s.endorsementCount} endorsed',
-                              style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
+                            _buildAvatarStack(s.id.hashCode, hc),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text(
+                              s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
+                            _buildActionPill('View', HuddlColors.blueDark, hc),
                           ]),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
@@ -2144,8 +2169,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Market carousel ───────────────────────────────────────────────────────
-  // ── Market section — single-column vertical list (matches Buy tab layout) ──
+  // ── Market carousel — full-width cards matching Groups/Meetups style ─────
   Widget _buildMarketCarousel(dynamic hc) {
     final items = _rehomeService.allItems.take(5).toList();
     if (items.isEmpty) {
@@ -2159,8 +2183,9 @@ class _HomeScreenState extends State<HomeScreen>
           final priceStr = item.isFree
               ? 'Free'
               : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+          final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.primary;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 14),
             child: GestureDetector(
               onTap: () {
                 HapticFeedback.selectionClick();
@@ -2170,69 +2195,97 @@ class _HomeScreenState extends State<HomeScreen>
                 ));
               },
               child: Container(
-                height: 100,
                 decoration: BoxDecoration(
                   color: hc.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
                 ),
-                child: Row(
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Square photo — left
-                    ClipRRect(
-                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
-                      child: SizedBox(
-                        width: 100, height: 100,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          children: [
-                            hasImage
-                                ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => _marketImageFallback(item))
-                                : _marketImageFallback(item),
-                            // Condition badge bottom-left
-                            Positioned(
-                              bottom: 5, left: 5,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: item.condition.color,
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(item.condition.label,
-                                  style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
+                    // Hero photo with condition badge overlay
+                    SizedBox(
+                      height: 160, width: double.infinity,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          hasImage
+                              ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                              : _marketImageFallback(item),
+                          // Subtle gradient
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Colors.transparent, Color(0x22000000)],
+                                stops: [0.55, 1.0],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          // Condition badge — top-right
+                          Positioned(
+                            top: 10, right: 12,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: item.condition.color,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                              ),
+                              child: Text(item.condition.label,
+                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    // Info — right
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.title,
-                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                              maxLines: 2, overflow: TextOverflow.ellipsis),
-                            const SizedBox(height: 2),
-                            Text(item.category.label,
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
-                            const Spacer(),
-                            Text(priceStr,
-                              style: GoogleFonts.poppins(
-                                fontSize: 15, fontWeight: FontWeight.w700,
-                                color: item.isFree ? HuddlColors.teal : HuddlColors.primary)),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Chevron
+                    // Card body
                     Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: Icon(Icons.chevron_right, size: 20, color: hc.textTertiary),
+                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(item.category.label.toUpperCase(),
+                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                            maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 4),
+                          Text(item.title,
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                          if (item.sellerLocation.isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Row(children: [
+                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                              const SizedBox(width: 3),
+                              Expanded(child: Text(item.sellerLocation,
+                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                                maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            ]),
+                          ],
+                          const SizedBox(height: 10),
+                          Row(children: [
+                            _buildAvatarStack(item.id.hashCode, hc),
+                            const SizedBox(width: 6),
+                            Expanded(child: Text('Near you',
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
+                            // Price pill (Groups "Join" button pattern)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: item.isFree
+                                    ? HuddlColors.teal.withValues(alpha: 0.10)
+                                    : const Color(0xFFF2F2F2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(priceStr,
+                                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: priceColor)),
+                            ),
+                          ]),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -2240,6 +2293,69 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  // ── Shared carousel card helpers ──────────────────────────────────────────
+
+  /// 3 overlapping deterministic avatar circles (Groups-card pattern).
+  Widget _buildAvatarStack(int seed, dynamic hc, [Color borderColor = Colors.white]) {
+    const avatars = [
+      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=48&q=70',
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=48&q=70',
+      'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=48&q=70',
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=48&q=70',
+      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=48&q=70',
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=48&q=70',
+    ];
+    return SizedBox(
+      width: 56, height: 22,
+      child: Stack(
+        children: [
+          for (int i = 0; i < 3; i++)
+            Positioned(
+              left: i * 16.0,
+              child: Container(
+                width: 22, height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    avatars[(seed + i) % avatars.length],
+                    width: 22, height: 22, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: HuddlColors.primary.withValues(alpha: 0.2),
+                      child: const Icon(Icons.person, size: 11, color: HuddlColors.primary),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// Rounded pill action button (Groups "Join" button pattern).
+  Widget _buildActionPill(String label, Color accentColor, dynamic hc, {bool isActive = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+      decoration: BoxDecoration(
+        color: isActive
+            ? accentColor.withValues(alpha: 0.12)
+            : const Color(0xFFF2F2F2),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: isActive ? accentColor : HuddlColors.textPrimary,
+        ),
       ),
     );
   }
