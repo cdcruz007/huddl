@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
@@ -64,26 +63,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   bool get _isBookmarked {
     final id = widget.event['id'] as String? ?? '';
     return id.isNotEmpty && _eventService.isBookmarked(id);
-  }
-
-  /// Open the external source URL for this event.
-  Future<void> _launchSourceUrl(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri != null && await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Could not open event link'),
-            backgroundColor: HuddlColors.textSecondary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
-    }
   }
 
   void _shareEvent() {

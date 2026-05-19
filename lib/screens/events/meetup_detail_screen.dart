@@ -148,17 +148,6 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     );
   }
 
-  /// Opens the forward sheet to send the meetup card to a DM or group.
-  /// Used by the chat (bubble) button — sends a card, NOT plain text.
-  void _shareToChat() {
-    HapticFeedback.mediumImpact();
-    showForwardSheet(
-      context: context,
-      messageText: 'Check out this meetup: "${_meetup.title}"',
-      isMeetupCard: true,
-      meetupData: _meetupShareData,
-    );
-  }
 
   bool get _isOrganiser {
     final myUid = FirebaseAuth.instance.currentUser?.uid;
@@ -518,7 +507,6 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
   static const _detailBlue   = HuddlColors.blueDark;      // selected blue — Figma #347FEF
   static const _detailText   = HuddlColors.textDark;      // primary dark — Figma #42464C
   static const _detailMeta   = HuddlColors.textTertiary;  // gray meta — Figma #949494
-  static const _detailGray   = HuddlColors.background;    // light gray bg — Figma #F6F6F6
 
   @override
   Widget build(BuildContext context) {
@@ -1050,62 +1038,6 @@ class _InfoRow extends StatelessWidget {
           child: Text(
             text,
             style: GoogleFonts.poppins(fontSize: 14, color: HuddlColors.textDark),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ── Detail row widget (kept for compatibility) ────────────────────────────
-
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-
-  const _DetailRow({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, size: 20, color: iconColor),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: context.hc.textPrimary,
-                ),
-              ),
-              Text(
-                subtitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: context.hc.textTertiary,
-                ),
-              ),
-            ],
           ),
         ),
       ],

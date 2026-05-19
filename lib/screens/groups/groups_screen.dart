@@ -594,6 +594,8 @@ class _MessagesTabState extends State<_MessagesTab> {
   /// Called after _loadGroups() so _allGroups is populated.
   Future<void> _loadRealCatchUpSummaries() async {
     if (_allGroups.isEmpty) return;
+    // Don't re-run if card is dismissed or already has summaries loaded
+    if (_catchUpDismissed || _catchUpSummaries.isNotEmpty) return;
     if (mounted) setState(() => _catchUpLoading = true);
 
     // Determine "last seen" cutoff — use stored timestamp or fallback to 24h ago
