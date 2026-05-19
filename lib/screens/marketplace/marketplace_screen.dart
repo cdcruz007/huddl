@@ -1584,7 +1584,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ),
           ),
         ),
-        // Full-width hero-card list (Discover/Events style)
+        // 2-column grid (compact cards) — richer browse experience
         Expanded(
           child: items.isEmpty
               ? _buildEmptyState(
@@ -1612,10 +1612,16 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         )
                       : null,
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+              : GridView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 0.72,
+                  ),
                   itemCount: items.length,
-                  itemBuilder: (context, index) => _MarketItemCard(
+                  itemBuilder: (context, index) => _MarketGridCard(
                     item: items[index],
                     onTap: () => _openItemDetail(items[index]),
                     onToggleSave: () {
@@ -1627,22 +1633,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         _ai.recordUnsave(item);
                       }
                       _service.toggleSaved(item.id);
-                    },
-                    onDismiss: () {
-                      HapticFeedback.mediumImpact();
-                      _ai.recordDismiss(items[index]);
-                      setState(() {});
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                              'Got it. You\'ll see fewer like this.'),
-                          backgroundColor: hc.textSecondary,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
                     },
                   ),
                 ),
@@ -2954,6 +2944,255 @@ class _MarketItemCardState extends State<_MarketItemCard>
 }
 
 // Badge pill for market cards — same spec as Services _BadgePill
+// =============================================================================
+// BUY TAB — 2-COLUMN COMPACT GRID CARD
+// Half-screen-width card with product image + title, price, location, save.
+// =============================================================================
+
+class _MarketGridCard extends StatefulWidget {
+  final RehomeItem item;
+  final VoidCallback onTap;
+  final VoidCallback onToggleSave;
+
+  const _MarketGridCard({
+    required this.item,
+    required this.onTap,
+    required this.onToggleSave,
+  });
+
+  @override
+  State<_MarketGridCard> createState() => _MarketGridCardState();
+}
+
+class _MarketGridCardState extends State<_MarketGridCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _heartAnim;
+  late Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartAnim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
+    _heartScale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _heartAnim.dispose();
+    super.dispose();
+  }
+
+  Color _conditionColor(String condition) {
+    switch (condition.toLowerCase()) {
+      case 'new':
+        return const Color(0xFF2DBE8A);
+      case 'like new':
+        return const Color(0xFF5B9CFF);
+      case 'good':
+        return HuddlColors.primary;
+      default:
+        return HuddlColors.textTertiary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final hc = context.hc;
+    final hasImage = item.imageUrls.isNotEmpty;
+    final condColor = _conditionColor(item.condition.label);
+
+    return Semantics(
+      label:
+          '${item.title}, £${item.price.toStringAsFixed(0)}, ${item.condition.label}',
+      button: true,
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: hc.surface,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Product image ──────────────────────────────────────────
+              ClipRRect(
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(14)),
+                child: AspectRatio(
+                  aspectRatio: 1.05,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Image or placeholder
+                      hasImage
+                          ? Image.network(
+                              item.imageUrls.first,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _gridPlaceholder(hc, item),
+                              loadingBuilder: (_, child, progress) =>
+                                  progress == null
+                                      ? child
+                                      : Container(
+                                          color: hc.surfaceAlt,
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: HuddlColors.primary
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                        ),
+                            )
+                          : _gridPlaceholder(hc, item),
+
+                      // Condition badge — top-left
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: condColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            item.condition.label,
+                            style: _adaptiveText(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Save / heart — top-right
+                      Positioned(
+                        top: 6,
+                        right: 6,
+                        child: GestureDetector(
+                          onTap: () {
+                            _heartAnim.forward(from: 0);
+                            widget.onToggleSave();
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: hc.surface.withValues(alpha: 0.88),
+                              shape: BoxShape.circle,
+                            ),
+                            child: ScaleTransition(
+                              scale: _heartScale,
+                              child: Icon(
+                                item.isSaved
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                size: 16,
+                                color: item.isSaved
+                                    ? HuddlColors.primary
+                                    : hc.textTertiary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Info area ──────────────────────────────────────────────
+              Expanded(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        item.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: _adaptiveText(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: hc.textPrimary,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Price
+                      Text(
+                        '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}',
+                        style: _adaptiveText(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: _kMarketBlue,
+                        ),
+                      ),
+                      const Spacer(),
+                      // Location row
+                      if (item.sellerLocation.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined,
+                                size: 11, color: hc.textTertiary),
+                            const SizedBox(width: 2),
+                            Expanded(
+                              child: Text(
+                                item.sellerLocation,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: _adaptiveText(
+                                  fontSize: 10.5,
+                                  color: hc.textTertiary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _gridPlaceholder(HuddlContextColors hc, RehomeItem item) {
+    return Container(
+      color: hc.surfaceAlt,
+      child: Center(
+        child: Icon(Icons.child_care_outlined,
+            size: 36, color: hc.textTertiary.withValues(alpha: 0.4)),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+
 class _MarketBadgePill extends StatelessWidget {
   final String label;
   final Color color;
