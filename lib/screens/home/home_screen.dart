@@ -101,6 +101,9 @@ class _HomeScreenState extends State<HomeScreen>
     'tips': true,
   };
 
+  // ── AI catch-up card state ──────────────────────────────────────────────
+  bool _catchUpDismissed = false;
+
   // ── Notification state ───────────────────────────────────────────────────
   bool _notificationsRead = false;
   int _realUnreadNotifCount = 0;           // live count from Firestore
@@ -302,22 +305,21 @@ class _HomeScreenState extends State<HomeScreen>
       await _eventService.syncRsvpsFromFirestore().catchError((_) {});
       final goingEvents = _eventService.goingEvents;
 
-      // ── Load Groups from Firestore as fallback for carousel ──────────────
-      // _loadNewPublicGroups reads from BrowserStorage only (user-created groups).
-      // Also pull public Firestore groups so the Groups carousel is populated.
+      // ── Load Groups: merge BrowserStorage + Firestore ──────────────────────
+      // Always pull Firestore public groups so community/seeded groups appear
+      // even if the user has no locally-stored groups.
       List<Group> newGroups = await _loadNewPublicGroups(borough);
-      if (newGroups.isEmpty) {
-        try {
-          final firestoreGroups = await FirestoreService()
-              .getDiscoverGroups()
-              .timeout(const Duration(seconds: 5));
-          // Filter to non-system groups only, same rules as _isDefaultOnboardingGroup
-          newGroups = firestoreGroups
-              .where((g) => !_isDefaultOnboardingGroup(g))
-              .take(8)
-              .toList();
-        } catch (_) {}
-      }
+      try {
+        final firestoreGroups = await FirestoreService()
+            .getDiscoverGroups()
+            .timeout(const Duration(seconds: 5));
+        // Filter system/onboarding groups and deduplicate by id
+        final existingIds = newGroups.map((g) => g.id).toSet();
+        final filtered = firestoreGroups
+            .where((g) => !_isDefaultOnboardingGroup(g) && !existingIds.contains(g.id))
+            .toList();
+        newGroups = [...newGroups, ...filtered];
+      } catch (_) {}
 
       List<BoroughMember> boroughMembers = [];
       if (pc != null) {
@@ -1199,6 +1201,12 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
 
+              // ── AI Catch-Up Summary Card ───────────────────────────
+              if (!_isLoading)
+                SliverToBoxAdapter(
+                  child: _buildAiCatchUpCard(hc, isDark),
+                ),
+
               // ── Subscription upgrade (free users only) ────────────
               if (SubscriptionService().isFree)
                 SliverToBoxAdapter(
@@ -1601,6 +1609,221 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  // ── AI Catch-Up Summary Card ──────────────────────────────────────────────
+  // Always-visible card that surfaces what the user missed since last login:
+  // new meetups, events, groups, market items. Dismissible per session.
+  Widget _buildAiCatchUpCard(dynamic hc, bool isDark) {
+    if (_catchUpDismissed) return const SizedBox.shrink();
+
+    final lastLogin = _feedService.lastLogin;
+    final now = DateTime.now();
+
+    // Compute counts of new items since last login
+    final sinceTime = lastLogin ?? now.subtract(const Duration(days: 7));
+    final newMeetups = _upcomingMeetups
+        .where((m) => m.dateTime.isAfter(sinceTime))
+        .length;
+    final newEvents = _eventService.events
+        .where((e) => e.dateTime.isAfter(sinceTime))
+        .length;
+    final newGroupCount = _newPublicGroups
+        .where((g) => !_isDefaultOnboardingGroup(g))
+        .length;
+    final newMarket = _rehomeService.allItems
+        .where((i) => i.listedAt.isAfter(sinceTime))
+        .length;
+
+    // Friendly "last seen" label
+    String lastSeenLabel;
+    if (lastLogin == null) {
+      lastSeenLabel = 'since you joined';
+    } else {
+      final days = now.difference(lastLogin).inDays;
+      if (days == 0) {
+        lastSeenLabel = 'since earlier today';
+      } else if (days == 1) {
+        lastSeenLabel = 'since yesterday';
+      } else {
+        lastSeenLabel = 'in the last $days days';
+      }
+    }
+
+    // Build individual activity pills
+    final List<_CatchUpItem> items = [];
+    if (newMeetups > 0) {
+      items.add(_CatchUpItem(
+        icon: Icons.place_rounded,
+        color: HuddlColors.teal,
+        label: '$newMeetups new meetup${newMeetups == 1 ? '' : 's'}',
+        onTap: () => _switchToTab(2),
+      ));
+    }
+    if (newEvents > 0) {
+      items.add(_CatchUpItem(
+        icon: Icons.event_rounded,
+        color: HuddlColors.accentAmber,
+        label: '$newEvents new event${newEvents == 1 ? '' : 's'}',
+        onTap: () => _switchToTab(2),
+      ));
+    }
+    if (newGroupCount > 0) {
+      items.add(_CatchUpItem(
+        icon: Icons.people_rounded,
+        color: HuddlColors.primary,
+        label: '$newGroupCount group${newGroupCount == 1 ? '' : 's'} nearby',
+        onTap: () => _switchToTab(2),
+      ));
+    }
+    if (newMarket > 0) {
+      items.add(_CatchUpItem(
+        icon: Icons.storefront_rounded,
+        color: HuddlColors.blueDark,
+        label: '$newMarket item${newMarket == 1 ? '' : 's'} for sale',
+        onTap: () => _switchToTab(3),
+      ));
+    }
+
+    // If nothing to show, don't render the card
+    if (items.isEmpty && newMeetups == 0 && newEvents == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    HuddlColors.primary.withValues(alpha: 0.18),
+                    HuddlColors.teal.withValues(alpha: 0.12),
+                  ]
+                : [
+                    HuddlColors.primary.withValues(alpha: 0.06),
+                    HuddlColors.teal.withValues(alpha: 0.08),
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: HuddlColors.primary.withValues(alpha: isDark ? 0.25 : 0.15),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: HuddlColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Here's what you missed",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          lastSeenLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: hc.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Dismiss button
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.close, size: 16, color: hc.textTertiary),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _catchUpDismissed = true);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // Activity pills row (horizontal scroll)
+            if (items.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: items.map((item) {
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        item.onTap();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: isDark ? 0.18 : 0.10),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: item.color.withValues(alpha: isDark ? 0.35 : 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(item.icon, size: 13, color: item.color),
+                            const SizedBox(width: 5),
+                            Text(
+                              item.label,
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: item.color,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
+                child: Text(
+                  'Your community has been busy. Scroll down to explore.',
+                  style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ── Groups carousel ───────────────────────────────────────────────────────
   Widget _buildGroupsCarousel(dynamic hc) {
     final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
@@ -1734,7 +1957,7 @@ class _HomeScreenState extends State<HomeScreen>
       return _buildCarouselEmpty(hc, 'No events listed yet', Icons.event_outlined);
     }
     return SizedBox(
-      height: 148,
+      height: 192,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1743,6 +1966,7 @@ class _HomeScreenState extends State<HomeScreen>
           final e = events[i];
           final isGoing = _goingEvents.any((ge) => ge.id == e.id);
           final eMap = e.toMap();
+          final hasImage = e.imageUrl.isNotEmpty;
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
@@ -1760,49 +1984,68 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Colour band top
-                  Container(
-                    width: double.infinity, height: 6,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.accentAmber,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                  // Photo header
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity, height: 100,
+                          child: hasImage
+                              ? Image.network(e.imageUrl, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _eventImageFallback())
+                              : _eventImageFallback(),
+                        ),
+                        // Date badge overlay
+                        Positioned(
+                          bottom: 6, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              e.dateDisplay,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        if (isGoing)
+                          Positioned(
+                            top: 6, right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.teal,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Icon(Icons.check_circle, size: 9, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text('Going', style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white)),
+                              ]),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Date chip
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: HuddlColors.accentAmber.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            e.dateDisplay,
-                            style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.accentAmber),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
                         Text(e.title,
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 4),
-                        Text(e.location,
-                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        if (isGoing)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Row(children: [
-                              const Icon(Icons.check_circle, size: 10, color: HuddlColors.accentAmber),
-                              const SizedBox(width: 3),
-                              Text('You\'re going',
-                                style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.accentAmber)),
-                            ]),
-                          ),
+                        Row(children: [
+                          Icon(Icons.location_on_outlined, size: 10, color: hc.textTertiary),
+                          const SizedBox(width: 3),
+                          Expanded(child: Text(e.location,
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
+                            maxLines: 1, overflow: TextOverflow.ellipsis)),
+                        ]),
                       ],
                     ),
                   ),
@@ -1815,25 +2058,34 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  Widget _eventImageFallback() {
+    return Container(
+      color: HuddlColors.accentAmber.withValues(alpha: 0.12),
+      child: const Center(
+        child: Icon(Icons.event_outlined, size: 32, color: HuddlColors.accentAmber),
+      ),
+    );
+  }
+
   // ── Services carousel ─────────────────────────────────────────────────────
   Widget _buildServicesCarousel(dynamic hc) {
     if (_featuredServices.isEmpty) {
       return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
     }
     return SizedBox(
-      height: 130,
+      height: 175,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _featuredServices.length,
         itemBuilder: (context, i) {
           final s = _featuredServices[i];
+          final hasImage = s.imageUrl != null && s.imageUrl!.isNotEmpty;
           return GestureDetector(
             onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
             child: Container(
               width: 160,
               margin: const EdgeInsets.only(right: 10),
-              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: hc.surface,
                 borderRadius: BorderRadius.circular(14),
@@ -1842,39 +2094,69 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    Container(
-                      width: 32, height: 32,
-                      decoration: BoxDecoration(
-                        color: HuddlColors.blueDark.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(s.category.emoji, style: const TextStyle(fontSize: 18)),
+                  // Photo header
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity, height: 90,
+                          child: hasImage
+                              ? Image.network(s.imageUrl!, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
+                              : _serviceImageFallback(s.category.emoji),
+                        ),
+                        // Category badge overlay
+                        Positioned(
+                          bottom: 6, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.blueDark,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              s.category.displayName,
+                              style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(s.category.displayName,
-                        style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.blueDark),
-                        overflow: TextOverflow.ellipsis),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.name,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 6),
+                        if (s.endorsementCount > 0)
+                          Row(children: [
+                            const Icon(Icons.favorite, size: 10, color: HuddlColors.primary),
+                            const SizedBox(width: 3),
+                            Text('${s.endorsementCount} endorsed',
+                              style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
+                          ]),
+                      ],
                     ),
-                  ]),
-                  const SizedBox(height: 8),
-                  Text(s.name,
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                    maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const Spacer(),
-                  if (s.endorsementCount > 0)
-                    Row(children: [
-                      const Icon(Icons.favorite, size: 10, color: HuddlColors.primary),
-                      const SizedBox(width: 3),
-                      Text('${s.endorsementCount} endorsed',
-                        style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
-                    ]),
+                  ),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _serviceImageFallback(String emoji) {
+    return Container(
+      color: HuddlColors.blueDark.withValues(alpha: 0.08),
+      child: Center(
+        child: Text(emoji, style: const TextStyle(fontSize: 32)),
       ),
     );
   }
@@ -3364,6 +3646,21 @@ class _HomeScreenState extends State<HomeScreen>
 // ═══════════════════════════════════════════════════════════════════════════════
 // SMART FEED DATA MODELS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// ── AI Catch-Up card helper ───────────────────────────────────────────────
+class _CatchUpItem {
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
+
+  const _CatchUpItem({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
+  });
+}
 
 enum _SmartFeedType {
   aiNudge,
