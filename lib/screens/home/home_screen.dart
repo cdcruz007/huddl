@@ -2251,15 +2251,49 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Image or fallback
+                  // Photo header with badge overlays (matches Events/Meetups pattern)
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: SizedBox(
-                      width: double.infinity, height: 100,
-                      child: hasImage
-                          ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _marketImageFallback(item))
-                          : _marketImageFallback(item),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity, height: 100,
+                          child: hasImage
+                              ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                              : _marketImageFallback(item),
+                        ),
+                        // Price badge — bottom-left (orange=paid, teal=free)
+                        Positioned(
+                          bottom: 6, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: item.isFree ? HuddlColors.teal : HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.priceDisplay,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        // Condition badge — top-right (colour from ItemCondition.color)
+                        Positioned(
+                          top: 6, right: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: item.condition.color,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.condition.label,
+                              style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Padding(
@@ -2271,10 +2305,10 @@ class _HomeScreenState extends State<HomeScreen>
                           style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                         const SizedBox(height: 2),
-                        Text(item.priceDisplay,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w700,
-                            color: item.isFree ? HuddlColors.teal : HuddlColors.primary)),
+                        // Category as subtitle (price now shown as photo badge)
+                        Text(item.category.label,
+                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
                       ],
                     ),
                   ),
