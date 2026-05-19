@@ -242,6 +242,32 @@ extension ItemConditionExt on ItemCondition {
         return HuddlColors.textHint;
     }
   }
+
+  IconData get icon {
+    switch (this) {
+      case ItemCondition.brandNew:
+        return Icons.auto_awesome;
+      case ItemCondition.likeNew:
+        return Icons.star_outline;
+      case ItemCondition.good:
+        return Icons.thumb_up_outlined;
+      case ItemCondition.wellUsed:
+        return Icons.replay_outlined;
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case ItemCondition.brandNew:
+        return 'Unused, with or without original packaging';
+      case ItemCondition.likeNew:
+        return 'Barely used, in excellent condition';
+      case ItemCondition.good:
+        return 'Some signs of use, fully functional';
+      case ItemCondition.wellUsed:
+        return 'Visible wear but still works well';
+    }
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

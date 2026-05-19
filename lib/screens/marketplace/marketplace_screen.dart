@@ -14,6 +14,7 @@ import '../../services/backend_api_service.dart';
 import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../../services/borough_scope_guard.dart';
+import '../../widgets/borough_badge.dart';
 import '../../widgets/common/huddl_empty_state.dart';
 
 
@@ -1272,21 +1273,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // No gradient AI button, no prominent branding
 
   Widget _buildHeader(HuddlContextColors hc) {
-    final guard = BoroughScopeGuard();
-    final boroughName = guard.currentBoroughOr('Nearby');
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final badgeBg = isDark
-        ? HuddlColors.teal.withValues(alpha: 0.2)
-        : HuddlColors.teal.withValues(alpha: 0.08);
-    final badgeText = isDark ? HuddlColors.teal : HuddlColors.primaryDark;
-
     return Container(
       color: hc.surface,
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row — Market + compact borough chip + search icon
+          // Title row — Market + borough scope chip (matches Groups/Discover) + search icon
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 200),
             crossFadeState: _isSearchActive
@@ -1306,33 +1299,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Compact borough chip — replaces the full BoroughHeader stripe
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: HuddlColors.teal.withValues(alpha: 0.2),
-                      width: 0.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.location_on_outlined, size: 11, color: badgeText),
-                      const SizedBox(width: 3),
-                      Text(
-                        boroughName,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: badgeText,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Borough scope chip — exactly matches Groups/Discover header chip
+                const BoroughScopeChip(feature: HuddlFeature.marketplace),
                 const Spacer(),
                 // Search icon — top-right, like Discover
                 Semantics(

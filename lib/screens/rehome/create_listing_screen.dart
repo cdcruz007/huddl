@@ -477,7 +477,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 1: Category + Condition — clean list style from screenshot
+  // STEP 1: Category + Condition — pill-card style matching Step 0 / AgeStageCard
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildStep1() {
@@ -489,45 +489,35 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Category
+                // ── Category — pill cards matching Step 0 style ──
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-                  child: _sectionLabel('Category'),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: context.hc.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: HuddlColors.gray300),
-                    ),
-                    child: Column(
-                      children: [
-                        for (int i = 0; i < ItemCategory.values.length; i++) ...[
-                          _CategoryListTile(
-                            category: ItemCategory.values[i],
-                            isSelected: _selectedCategory == ItemCategory.values[i],
-                            onTap: () => setState(() => _selectedCategory = ItemCategory.values[i]),
-                            isFirst: i == 0,
-                            isLast: i == ItemCategory.values.length - 1,
-                          ),
-                          if (i < ItemCategory.values.length - 1)
-                            const Divider(height: 1, indent: 16, endIndent: 16),
-                        ],
-                      ],
+                  child: Text(
+                    'Select a category for your item.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: context.hc.textSecondary,
+                      height: 1.5,
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                ...ItemCategory.values.map((cat) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _CategoryListTile(
+                        category: cat,
+                        isSelected: _selectedCategory == cat,
+                        onTap: () => setState(() => _selectedCategory = cat),
+                      ),
+                    )),
                 const SizedBox(height: 24),
 
-                // Condition
+                // ── Condition — pill cards matching Step 0 style ──
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                   child: _sectionLabel('Condition'),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 ...ItemCondition.values.map((cond) {
                   final isSelected = _selectedCondition == cond;
                   return Padding(
@@ -535,43 +525,66 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     child: GestureDetector(
                       onTap: () => setState(() => _selectedCondition = cond),
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? HuddlColors.primary.withValues(alpha: 0.08)
+                              ? HuddlColors.primary.withValues(alpha: 0.04)
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
-                            width: isSelected ? 2 : 1,
+                            width: isSelected ? 1.8 : 1,
                           ),
                         ),
                         child: Row(
                           children: [
+                            // Condition icon container — matches AgeStageCard circle
                             Container(
-                              width: 24,
-                              height: 24,
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
+                                color: (isSelected ? HuddlColors.primary : context.hc.textTertiary)
+                                    .withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: isSelected
-                                      ? HuddlColors.primary
-                                      : HuddlColors.gray300,
-                                  width: isSelected ? 6 : 1.5,
+                                  color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
+                                  width: 1.5,
                                 ),
-                                color: Colors.white,
+                              ),
+                              child: Icon(
+                                cond.icon,
+                                color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
+                                size: 22,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Text(
-                              cond.label,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    cond.label,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    cond.description,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: context.hc.textTertiary,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
+                            if (isSelected)
+                              const Icon(Icons.check_circle, size: 22, color: HuddlColors.primary),
                           ],
                         ),
                       ),
@@ -654,42 +667,25 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
 
                   const SizedBox(height: 20),
 
-                  // ── Item name — underline field ──
+                  // ── Item name — gray-filled field (matching Create Group _buildGrayField) ──
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
                     child: _sectionLabel('Item name'),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextFormField(
+                    child: _buildGrayFormField(
                       controller: _titleController,
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Silver Cross pram with accessories',
-                        hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-                        border: UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        enabledBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
-                        ),
-                        errorBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(color: HuddlColors.error),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                      ),
+                      hint: 'e.g. Silver Cross pram with accessories',
                       validator: (v) => v == null || v.trim().isEmpty ? 'Enter a title' : null,
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Price — underline field + Free toggle ──
+                  // ── Price — gray-filled field + Free toggle ──
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
                     child: _sectionLabel('Price'),
                   ),
                   Padding(
@@ -698,29 +694,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: TextFormField(
+                          child: _buildGrayFormField(
                             controller: _priceController,
-                            style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: '\u00A30.00',
-                              hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
-                              border: UnderlineInputBorder(
-                                borderSide: BorderSide(color: HuddlColors.gray300),
-                              ),
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: HuddlColors.gray300),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
-                              ),
-                              disabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: HuddlColors.gray300),
-                              ),
-                              errorBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(color: HuddlColors.error),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
-                            ),
+                            hint: '£0.00',
                             keyboardType: TextInputType.number,
                             enabled: !_isFree,
                             validator: (v) {
@@ -731,32 +707,29 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                             onChanged: (_) => setState(() {}),
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isFree = !_isFree;
-                                if (_isFree) _priceController.clear();
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: _isFree ? HuddlColors.primary : Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: _isFree ? HuddlColors.primary : HuddlColors.gray300,
-                                ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _isFree = !_isFree;
+                              if (_isFree) _priceController.clear();
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: _isFree ? HuddlColors.primary : Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _isFree ? HuddlColors.primary : HuddlColors.gray300,
                               ),
-                              child: Text(
-                                'Free',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: _isFree ? Colors.white : HuddlColors.textSecondary,
-                                ),
+                            ),
+                            child: Text(
+                              'Free',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: _isFree ? Colors.white : HuddlColors.textSecondary,
                               ),
                             ),
                           ),
@@ -766,41 +739,16 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Description — outlined multiline (matching Create Group) ──
+                  // ── Description — gray-filled multiline (matching Create Group) ──
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
                     child: _sectionLabel('Description'),
                   ),
-                  const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextFormField(
+                    child: _buildGrayFormField(
                       controller: _descriptionController,
-                      style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textPrimary),
-                      decoration: InputDecoration(
-                        hintText: 'Describe the item \u2014 condition, brand, what\'s included...',
-                        hintStyle: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: context.hc.textTertiary,
-                            height: 1.4),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.gray300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.primary, width: 1.5),
-                        ),
-                        errorBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: HuddlColors.error),
-                        ),
-                        contentPadding: const EdgeInsets.all(14),
-                      ),
+                      hint: 'Describe the item — condition, brand, what\'s included...',
                       maxLines: 4,
                       validator: (v) => v == null || v.trim().isEmpty ? 'Enter a description' : null,
                       onChanged: (_) => setState(() {}),
@@ -828,74 +776,87 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   // COMPONENT WIDGETS — matching Create Group / Create Meetup design language
   // ══════════════════════════════════════════════════════════════════════════
 
-  /// Section label — bold dark text matching Create Group _sectionLabel
+  /// Section label — bold dark text matching Create Group _sectionHeader (16/w700)
   Widget _sectionLabel(String text) {
     return Text(
       text,
       style: GoogleFonts.poppins(
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         color: context.hc.textPrimary,
       ),
     );
   }
 
-  // ── Photo area — full-width peach banner (matching Create Group photo upload) ──
+  /// Gray-filled text form field — matches Create Group _buildGrayField style:
+  /// background fill (#F6F6F6), bottom underline divider, no outer border.
+  Widget _buildGrayFormField({
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    bool enabled = true,
+    String? Function(String?)? validator,
+    void Function(String)? onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: HuddlColors.background,
+        border: const Border(
+          bottom: BorderSide(color: HuddlColors.divider, width: 1.2),
+        ),
+      ),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        enabled: enabled,
+        textInputAction: maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
+        style: GoogleFonts.poppins(
+          fontSize: 15,
+          color: enabled ? context.hc.textPrimary : context.hc.textTertiary,
+        ),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.poppins(fontSize: 15, color: context.hc.textTertiary),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          errorStyle: GoogleFonts.poppins(fontSize: 11, color: HuddlColors.error),
+        ),
+        validator: validator,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  // ── Photo area — full-width blue banner (matching Create Group photo upload style) ──
 
   Widget _buildPhotoArea() {
     if (_pickedImages.isEmpty) {
-      // Empty state — full-width peach banner matching Create Group
+      // Empty state — full-width blue banner matching Create Group _buildPhotoUpload()
       return GestureDetector(
         onTap: _showImagePickerSheet,
         child: Container(
           width: double.infinity,
           height: 200,
           margin: EdgeInsets.zero,
-          decoration: BoxDecoration(
-            color: HuddlColors.primary.withValues(alpha: 0.08),
-          ),
+          color: HuddlColors.blueUI,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: HuddlColors.primary.withValues(alpha: 0.6),
-                      width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(Icons.image_outlined,
-                        size: 28,
-                        color: HuddlColors.primary.withValues(alpha: 0.8)),
-                    Positioned(
-                      bottom: 4,
-                      right: 4,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.primary.withValues(alpha: 0.9),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.add,
-                            size: 12, color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+              const Icon(
+                Icons.add_photo_alternate_outlined,
+                color: Colors.white,
+                size: 48,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Text(
                 'Click to add photos',
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: HuddlColors.primary,
+                  color: Colors.white,
                 ),
               ),
               const SizedBox(height: 4),
@@ -903,7 +864,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                 'Take photos or choose from gallery',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
-                  color: context.hc.textTertiary,
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
             ],
@@ -1226,22 +1187,19 @@ class _AgeStageCard extends StatelessWidget {
 }
 
 // =============================================================================
-// CATEGORY LIST TILE — clean list style matching the screenshot
+// CATEGORY LIST TILE — pill-card style matching AgeStageCard (Step 0)
+// Circle icon on the left, label, check circle on select.
 // =============================================================================
 
 class _CategoryListTile extends StatelessWidget {
   final ItemCategory category;
   final bool isSelected;
   final VoidCallback onTap;
-  final bool isFirst;
-  final bool isLast;
 
   const _CategoryListTile({
     required this.category,
     required this.isSelected,
     required this.onTap,
-    this.isFirst = false,
-    this.isLast = false,
   });
 
   @override
@@ -1249,30 +1207,53 @@ class _CategoryListTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? HuddlColors.primary.withValues(alpha: 0.06)
-              : Colors.transparent,
-          borderRadius: BorderRadius.vertical(
-            top: isFirst ? const Radius.circular(14) : Radius.zero,
-            bottom: isLast ? const Radius.circular(14) : Radius.zero,
+              ? HuddlColors.primary.withValues(alpha: 0.04)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
+            width: isSelected ? 1.8 : 1,
           ),
         ),
         child: Row(
           children: [
+            // Circle icon — matching AgeStageCard
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: (isSelected ? HuddlColors.primary : context.hc.textTertiary)
+                    .withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? HuddlColors.primary : HuddlColors.gray300,
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                category.icon,
+                color: isSelected ? HuddlColors.primary : context.hc.textTertiary,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
               child: Text(
                 category.label,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                   color: isSelected ? HuddlColors.primary : context.hc.textPrimary,
                 ),
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, size: 20, color: HuddlColors.primary),
+              const Icon(Icons.check_circle, size: 22, color: HuddlColors.primary),
           ],
         ),
       ),
