@@ -66,17 +66,10 @@ const List<String> _kAvatarPool = [
 
 // ─── Source badge helpers ─────────────────────────────────────────────────────
 
-/// Returns true for any AI-discovered listing source.
-bool _isAiSource(String source) =>
-    source == 'places_api' ||
-    source.startsWith('ai_discovered') ||
-    source == 'ai_discovered_search';
-
 bool _isParentSource(String source) => source == 'parent_added';
 
-// Badge colour tokens — matched exactly to Events tab
-const Color _kBadgeAi     = HuddlColors.accentAmber; // amber — same as 'New'  badge in Events
-const Color _kBadgeParent = HuddlColors.teal;         // teal  — same as 'Free' badge in Events
+// Badge colour token — teal, same as 'Free' badge in Events
+const Color _kBadgeParent = HuddlColors.teal;
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
@@ -687,7 +680,6 @@ class _ListingCardState extends State<_ListingCard> {
         ? listing.imageUrl!
         : (_kCategoryImages[listing.category] ?? _kCategoryImages[ServiceCategory.other]!);
 
-    final isAi     = _isAiSource(listing.listingSource);
     final isParent = _isParentSource(listing.listingSource);
     final isVerified = listing.isVerified ||
         listing.verificationTier == VerificationTier.verified;
@@ -762,20 +754,12 @@ class _ListingCardState extends State<_ListingCard> {
                     ),
                   ),
                 ),
-                // Top-left: AI Found (amber) / Parent (teal) — same colours as Events badges
-                Positioned(
-                  top: 12, left: 12,
-                  child: Row(
-                    children: [
-                      if (isAi) ...[
-                        _BadgePill(label: 'AI Found', color: _kBadgeAi),
-                        if (isParent) const SizedBox(width: 6),
-                      ],
-                      if (isParent)
-                        _BadgePill(label: 'Parent', color: _kBadgeParent),
-                    ],
+                // Top-left: Parent badge — only shown for parent-added listings
+                if (isParent)
+                  Positioned(
+                    top: 12, left: 12,
+                    child: _BadgePill(label: 'Parent Added', color: _kBadgeParent),
                   ),
-                ),
                 // Top-right: Verified / Community Pick
                 if (isVerified || isCommunityPick)
                   Positioned(
@@ -1121,8 +1105,6 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                                 fontSize: 13, color: hc.textSecondary),
                           ),
                           const SizedBox(width: 6),
-                          if (_isAiSource(listing.listingSource))
-                            _BadgePill(label: 'AI Found', color: _kBadgeAi),
                           if (_isParentSource(listing.listingSource))
                             _BadgePill(label: 'Parent Added', color: _kBadgeParent),
                         ],
