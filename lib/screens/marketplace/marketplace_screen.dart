@@ -1613,9 +1613,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                       : null,
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                   itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
                   itemBuilder: (context, index) {
                     final uid = FirebaseAuth.instance.currentUser?.uid;
                     final isOwn = uid != null && items[index].sellerId == uid;
@@ -2950,6 +2950,7 @@ class _MarketItemCardState extends State<_MarketItemCard>
 // =============================================================================
 
 // ─── Single-column list card (Buy tab) ───────────────────────────────────────
+// ─── Market full card (Groups/Meetups style — hero photo + card body) ─────────
 class _MarketListCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;
@@ -2989,12 +2990,12 @@ class _MarketListCardState extends State<_MarketListCard>
     super.dispose();
   }
 
-  Color _conditionColor(String condition) {
-    switch (condition.toLowerCase()) {
-      case 'new': return const Color(0xFF2DBE8A);
-      case 'like new': return const Color(0xFF5B9CFF);
-      case 'good': return HuddlColors.primary;
-      default: return HuddlColors.textTertiary;
+  Color get _conditionColor {
+    switch (widget.item.condition.label.toLowerCase()) {
+      case 'new':       return const Color(0xFF2DBE8A);
+      case 'like new':  return const Color(0xFF5B9CFF);
+      case 'good':      return HuddlColors.primary;
+      default:          return HuddlColors.textTertiary;
     }
   }
 
@@ -3003,144 +3004,268 @@ class _MarketListCardState extends State<_MarketListCard>
     final item = widget.item;
     final hc = context.hc;
     final hasImage = item.imageUrls.isNotEmpty;
-    final condColor = _conditionColor(item.condition.label);
     final priceStr = item.isFree
         ? 'Free'
         : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+    final priceColor = item.isFree ? HuddlColors.teal : _kMarketBlue;
 
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
-        height: 110,
+        // Full-width card — same shape/shadow as Groups discover card
         decoration: BoxDecoration(
           color: hc.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Row(
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Square photo (left) ────────────────────────────────────
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
-              child: SizedBox(
-                width: 110, height: 110,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    hasImage
-                        ? Image.network(
-                            item.imageUrls.first,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: hc.surfaceAlt,
-                              child: Icon(item.category.icon,
-                                  size: 28, color: HuddlColors.primary.withValues(alpha: 0.3)),
-                            ),
-                          )
-                        : Container(
-                            color: hc.surfaceAlt,
-                            child: Icon(item.category.icon,
-                                size: 28, color: HuddlColors.primary.withValues(alpha: 0.3)),
-                          ),
-                    // Condition badge — bottom-left of photo
+            // ── Hero photo (top, 160px, full-width) ───────────────────
+            SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Photo or fallback
+                  hasImage
+                      ? Image.network(
+                          item.imageUrls.first,
+                          fit: BoxFit.cover,
+                          alignment: Alignment.center,
+                          errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
+                        )
+                      : _MarketPhotoFallback(item: item),
+                  // Subtle gradient at bottom for text legibility
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Color(0x22000000)],
+                        stops: [0.55, 1.0],
+                      ),
+                    ),
+                  ),
+                  // Condition badge — top-right
+                  Positioned(
+                    top: 10, right: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: widget.isOwn ? HuddlColors.textTertiary : _conditionColor,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 4)],
+                      ),
+                      child: Text(
+                        widget.isOwn ? 'Your listing' : item.condition.label,
+                        style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  // Multiple-image indicator — top-left (if > 1 photo)
+                  if (item.imageUrls.length > 1)
                     Positioned(
-                      bottom: 6, left: 6,
+                      top: 10, left: 10,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                         decoration: BoxDecoration(
-                          color: widget.isOwn ? HuddlColors.textTertiary : condColor,
-                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.black.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          widget.isOwn ? 'Yours' : item.condition.label,
-                          style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.photo_library_outlined, size: 11, color: Colors.white),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${item.imageUrls.length}',
+                              style: _adaptiveText(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
 
-            // ── Info (right) ───────────────────────────────────────────
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: _adaptiveText(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                        height: 1.3,
-                      ),
+            // ── Card body ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category label — small uppercase grey (Groups pattern)
+                  Text(
+                    item.category.label.toUpperCase(),
+                    style: _adaptiveText(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textTertiary,
+                      letterSpacing: 0.5,
                     ),
-                    const SizedBox(height: 4),
-                    // Category
-                    Text(
-                      item.category.label,
-                      style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  // Title — bold dark
+                  Text(
+                    item.title,
+                    style: _adaptiveText(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textPrimary,
+                      height: 1.3,
                     ),
-                    const Spacer(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Description / seller location — italic grey
+                  if (item.sellerLocation.isNotEmpty) ...[
+                    const SizedBox(height: 3),
                     Row(
                       children: [
-                        // Price
-                        Text(
-                          priceStr,
-                          style: _adaptiveText(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                        Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            item.sellerLocation,
+                            style: _adaptiveText(
+                              fontSize: 12,
+                              color: hc.textTertiary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const Spacer(),
-                        // Location
-                        if (item.sellerLocation.isNotEmpty) ...[
-                          Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
-                          const SizedBox(width: 2),
-                          Flexible(
-                            child: Text(
-                              item.sellerLocation,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: _adaptiveText(fontSize: 10.5, color: hc.textTertiary),
-                            ),
-                          ),
-                        ],
-                        // Save heart (hidden for own listings)
-                        if (!widget.isOwn) ...[
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              _heartAnim.forward(from: 0);
-                              widget.onToggleSave();
-                            },
-                            child: ScaleTransition(
-                              scale: _heartScale,
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+
+                  // Bottom row — price bold + save heart (Groups join-button pattern)
+                  Row(
+                    children: [
+                      // Seller avatar stack (3 deterministic)
+                      SizedBox(
+                        width: 56,
+                        height: 22,
+                        child: Stack(
+                          children: [
+                            for (int i = 0; i < 3; i++)
+                              Positioned(
+                                left: i * 16.0,
+                                child: Container(
+                                  width: 22, height: 22,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: hc.surface, width: 1.5),
+                                  ),
+                                  child: ClipOval(
+                                    child: Image.network(
+                                      _kMarketAvatarPool[
+                                          (item.id.hashCode + i) % _kMarketAvatarPool.length],
+                                      width: 22, height: 22,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Container(
+                                        color: HuddlColors.primary.withValues(alpha: 0.2),
+                                        child: const Icon(Icons.person, size: 11, color: HuddlColors.primary),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // "Near you" or empty space
+                      Expanded(
+                        child: Text(
+                          'Near you',
+                          style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                        ),
+                      ),
+                      // Save heart (hidden for own listings)
+                      if (!widget.isOwn) ...[
+                        GestureDetector(
+                          onTap: () {
+                            _heartAnim.forward(from: 0);
+                            widget.onToggleSave();
+                          },
+                          child: ScaleTransition(
+                            scale: _heartScale,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               child: Icon(
                                 item.isSaved ? Icons.favorite : Icons.favorite_border,
-                                size: 18,
+                                size: 20,
                                 color: item.isSaved ? HuddlColors.primary : hc.textTertiary,
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ],
-                    ),
-                  ],
-                ),
+                      // Price pill (Groups "Join" button pattern — grey pill)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: item.isFree
+                              ? HuddlColors.teal.withValues(alpha: 0.10)
+                              : const Color(0xFFF2F2F2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          priceStr,
+                          style: _adaptiveText(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: priceColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Fallback when no item photo is available
+class _MarketPhotoFallback extends StatelessWidget {
+  final RehomeItem item;
+  const _MarketPhotoFallback({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: HuddlColors.primary.withValues(alpha: 0.07),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(item.category.icon, size: 44, color: HuddlColors.primary.withValues(alpha: 0.3)),
+            const SizedBox(height: 6),
+            Text(
+              item.category.label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: HuddlColors.primary.withValues(alpha: 0.4),
               ),
             ),
           ],
