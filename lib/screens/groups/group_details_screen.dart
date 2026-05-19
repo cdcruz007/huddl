@@ -528,7 +528,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Primary action: Open Chat (joined) or Join Group (not joined)
+            // Primary action: Open Chat (joined) or Join (not joined)
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -552,7 +552,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                         size: 20,
                       ),
                 label: Text(
-                  _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join Group',
+                  _isJoining ? 'Joining…' : _isJoined ? 'Open Chat' : 'Join',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
