@@ -404,7 +404,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: filtered.length,
                     itemBuilder: (context, i) => _ListingCard(
                       listing: filtered[i],
@@ -702,7 +702,7 @@ class _ListingCardState extends State<_ListingCard> {
         _showListingDetail(context, listing, widget.service);
       },
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 4, 12, 10),
+        margin: const EdgeInsets.only(bottom: 18),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -728,15 +728,15 @@ class _ListingCardState extends State<_ListingCard> {
             Stack(
               children: [
                 SizedBox(
-                  height: 180,
+                  height: 190,
                   width: double.infinity,
                   child: Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    height: 180,
+                    height: 190,
                     errorBuilder: (_, __, ___) => Container(
-                      height: 180,
+                      height: 190,
                       color: catColor.withValues(alpha: 0.14),
                       child: Center(
                         child: Text(listing.category.emoji,
@@ -749,7 +749,7 @@ class _ListingCardState extends State<_ListingCard> {
                 Positioned(
                   bottom: 0, left: 0, right: 0,
                   child: Container(
-                    height: 55,
+                    height: 60,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
@@ -803,15 +803,14 @@ class _ListingCardState extends State<_ListingCard> {
                       Text(
                         listing.category.displayName.toUpperCase(),
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w400,
                           color: HuddlColors.textTertiary,
-                          letterSpacing: 0.3,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   // Bold listing name — 2-line max (mirrors Event title style)
                   Text(
                     listing.name,
@@ -824,13 +823,13 @@ class _ListingCardState extends State<_ListingCard> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
-                  // Tagline / address (mirrors Event location row)
+                  const SizedBox(height: 8),
+                  // Tagline / borough (mirrors Event location row)
                   Row(
                     children: [
                       Icon(Icons.location_on_outlined,
-                          size: 13, color: context.hc.textTertiary),
-                      const SizedBox(width: 4),
+                          size: 14, color: context.hc.textTertiary),
+                      const SizedBox(width: 5),
                       Expanded(
                         child: Text(
                           listing.tagline.isNotEmpty
