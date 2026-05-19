@@ -678,245 +678,143 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget build(BuildContext context) {
     final hc = context.hc;
     return Scaffold(
-      backgroundColor: hc.surface,
-      appBar: AppBar(
-        backgroundColor: hc.surface,
-        elevation: 0,
-        surfaceTintColor: hc.surface,
-        automaticallyImplyLeading: false,
-        leading: Semantics(
-          label: 'Go back',
-          button: true,
-          child: InkWell(
-            onTap: () => Navigator.pop(context),
-            borderRadius: BorderRadius.circular(24),
-            child: Center(
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Center(
-                  child: Icon(Icons.arrow_back_ios_new,
-                      size: 18, color: hc.textPrimary),
-                ),
-              ),
-            ),
-          ),
-        ),
-        leadingWidth: 56,
-        centerTitle: true,
-        title: Semantics(
-          header: true,
-          child: Text(
-            'Details',
-            style: _adaptiveText(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: hc.textPrimary,
-            ),
-          ),
-        ),
-        actions: [
-          Semantics(
-            label: 'Share this item',
-            button: true,
-            child: InkWell(
-              onTap: _shareItem,
-              borderRadius: BorderRadius.circular(24),
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: Icon(Icons.share_outlined,
-                    size: 22, color: hc.textPrimary),
-              ),
-            ),
-          ),
-          if (!_isOwnItem)
-            Semantics(
-              label: item.isSaved
-                  ? 'Remove from saved items'
-                  : 'Save this item',
-              button: true,
-              child: InkWell(
-                onTap: _toggleSave,
-                borderRadius: BorderRadius.circular(24),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Icon(
-                    item.isSaved ? Icons.favorite : Icons.favorite_border,
-                    size: 22,
-                    color: item.isSaved
-                        ? HuddlColors.error
-                        : hc.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          if (!_isOwnItem)
-            Semantics(
-              label: 'Report this listing',
-              button: true,
-              child: InkWell(
-                onTap: _showReportListingSheet,
-                borderRadius: BorderRadius.circular(24),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Icon(Icons.flag_outlined,
-                      size: 22, color: hc.textTertiary),
-                ),
-              ),
-            ),
-          if (_isOwnItem) const SizedBox(width: 12),
-        ],
-      ),
+      backgroundColor: hc.scaffold,
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPhotoGallery(hc),
-                  const SizedBox(height: 16),
-
-                  // Price & Condition — streamlined, no section labels
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Semantics(
-                          label: 'Price: ${item.priceDisplay}',
-                          child: Text(
-                            item.priceDisplay,
-                            style: _adaptiveText(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: item.isFree
-                                  ? HuddlColors.teal
-                                  : _kMarketBlue,
-                            ),
-                          ),
+            child: CustomScrollView(
+              slivers: [
+                // ── Hero photo app bar ──────────────────────────────────
+                SliverAppBar(
+                  expandedHeight: 300,
+                  pinned: true,
+                  backgroundColor: hc.surface,
+                  leading: _ItemCircleButton(
+                    icon: Icons.arrow_back,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  actions: [
+                    _ItemCircleButton(
+                      icon: Icons.share_outlined,
+                      onTap: _shareItem,
+                    ),
+                    if (!_isOwnItem)
+                      _ItemCircleButton(
+                        icon: item.isSaved ? Icons.favorite : Icons.favorite_border,
+                        onTap: _toggleSave,
+                        color: item.isSaved ? HuddlColors.error : Colors.white,
+                      ),
+                    if (!_isOwnItem)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: _ItemCircleButton(
+                          icon: Icons.flag_outlined,
+                          onTap: _showReportListingSheet,
                         ),
-                        const SizedBox(width: 10),
-                        Semantics(
-                          label: 'Condition: ${item.condition.label}',
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: item.condition.color
-                                  .withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item.condition.label,
-                              style: _adaptiveText(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: item.condition.color,
+                      ),
+                    if (_isOwnItem) const SizedBox(width: 8),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: _buildHeroPhoto(),
+                  ),
+                ),
+
+                // ── Content ─────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    color: hc.surface,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Price + condition + time
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    item.priceDisplay,
+                                    style: _adaptiveText(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.w700,
+                                      color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: item.condition.color.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      item.condition.label,
+                                      style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w600, color: item.condition.color),
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  Text(item.timeAgo,
+                                    style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
+                                ],
                               ),
-                            ),
+                              const SizedBox(height: 10),
+
+                              // Title
+                              Text(
+                                item.title,
+                                style: _adaptiveText(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: hc.textPrimary,
+                                  height: 1.3,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Location + age + category — single clean row
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on_outlined, size: 14, color: hc.textTertiary),
+                                  const SizedBox(width: 3),
+                                  Text(item.sellerLocation,
+                                    style: _adaptiveText(fontSize: 13, color: hc.textTertiary)),
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    width: 3, height: 3,
+                                    decoration: BoxDecoration(color: hc.textTertiary, shape: BoxShape.circle),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(item.ageStage.shortLabel,
+                                    style: _adaptiveText(fontSize: 13, color: hc.textTertiary)),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                            ],
                           ),
                         ),
-                        const Spacer(),
-                        Text(
-                          item.timeAgo,
-                          style: _adaptiveText(
-                            fontSize: 12,
-                            color: hc.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
 
-                  // Title
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      item.title,
-                      style: _adaptiveText(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: hc.textPrimary,
-                        height: 1.3,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+                        // Thin divider
+                        Divider(height: 1, color: hc.divider),
 
-                  // Details — compact pills row
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        _DetailPill(
-                          icon: Icons.child_care,
-                          label: item.ageStage.shortLabel,
-                          color: HuddlColors.primary,
-                        ),
-                        _DetailPill(
-                          icon: item.category.icon,
-                          label: item.category.label,
-                          color: item.category.color,
-                        ),
-                        _DetailPill(
-                          icon: Icons.location_on_outlined,
-                          label: item.sellerLocation,
-                          color: HuddlColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Description — smart summary for long text
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: hc.surfaceAlt,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _showFullDescription
-                                ? item.description
-                                : _smartSummary(),
-                            style: _adaptiveText(
-                              fontSize: 14,
-                              color: hc.textSecondary,
-                              height: 1.6,
-                            ),
-                          ),
-                          if (item.description.length > 80) ...[
-                            const SizedBox(height: 6),
-                            Semantics(
-                              label: _showFullDescription
-                                  ? 'Show less'
-                                  : 'Read more',
-                              button: true,
-                              child: InkWell(
-                                onTap: () => setState(() =>
-                                    _showFullDescription =
-                                        !_showFullDescription),
-                                borderRadius: BorderRadius.circular(8),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 4),
+                        // Description
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _showFullDescription ? item.description : _smartSummary(),
+                                style: _adaptiveText(fontSize: 14, color: hc.textSecondary, height: 1.65),
+                              ),
+                              if (item.description.length > 80) ...[
+                                const SizedBox(height: 6),
+                                GestureDetector(
+                                  onTap: () => setState(() => _showFullDescription = !_showFullDescription),
                                   child: Text(
-                                    _showFullDescription
-                                        ? 'Show less'
-                                        : 'Read more',
+                                    _showFullDescription ? 'Show less' : 'Read more',
                                     style: _adaptiveText(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
@@ -924,38 +822,125 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                     ),
                                   ),
                                 ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        Divider(height: 1, color: hc.divider),
+
+                        // Seller row — clean, no border box
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                          child: Row(
+                            children: [
+                              MemberAvatar(name: item.sellerName, size: 42),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item.sellerName,
+                                      style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary)),
+                                    const SizedBox(height: 2),
+                                    Row(children: [
+                                      Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
+                                      const SizedBox(width: 3),
+                                      Text(item.sellerLocation,
+                                        style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
+                                    ]),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ],
-                      ),
+                            ],
+                          ),
+                        ),
+
+                        // Safety note — minimal, no box
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                          child: Row(
+                            children: [
+                              Icon(Icons.shield_outlined, size: 14,
+                                color: hc.textTertiary.withValues(alpha: 0.6)),
+                              const SizedBox(width: 8),
+                              Text('Meet in public. Check items before paying.',
+                                style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
-                  // Seller card
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildSellerCard(hc),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Safety Tips — collapsed by default (progressive disclosure)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildSafetyTips(hc),
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           _buildBottomBar(hc),
         ],
       ),
+    );
+  }
+
+  // == HERO PHOTO (replaces flat gallery in SliverAppBar) ====================
+
+  Widget _buildHeroPhoto() {
+    final images = item.imageUrls;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        images.isEmpty
+            ? Container(
+                color: HuddlColors.primary.withValues(alpha: 0.08),
+                child: Center(
+                  child: Icon(item.category.icon,
+                      size: 64, color: HuddlColors.primary.withValues(alpha: 0.4)),
+                ),
+              )
+            : PageView.builder(
+                itemCount: images.length,
+                onPageChanged: (i) => setState(() => _currentImage = i),
+                itemBuilder: (_, i) => _buildDetailImage(images[i]),
+              ),
+        // Subtle bottom gradient
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Color(0x33000000)],
+              stops: [0.6, 1.0],
+            ),
+          ),
+        ),
+        if (item.isSold)
+          Positioned(
+            bottom: 14, left: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(color: HuddlColors.error, borderRadius: BorderRadius.circular(8)),
+              child: Text('SOLD',
+                style: _adaptiveText(fontSize: 12, fontWeight: FontWeight.w700,
+                    color: Colors.white, letterSpacing: 1)),
+            ),
+          ),
+        if (images.length > 1)
+          Positioned(
+            bottom: 14, left: 0, right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(images.length, (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: i == _currentImage ? 20 : 7, height: 7,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: i == _currentImage ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              )),
+            ),
+          ),
+      ],
     );
   }
 
@@ -993,209 +978,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   // == PHOTO GALLERY =========================================================
-
-  Widget _buildPhotoGallery(HuddlContextColors hc) {
-    final images = item.imageUrls;
-    return Semantics(
-      label: 'Item photos, ${images.length} image${images.length > 1 ? "s" : ""}',
-      child: SizedBox(
-        width: double.infinity,
-        height: 260,
-        child: Stack(
-          children: [
-            PageView.builder(
-              itemCount: images.length,
-              onPageChanged: (i) => setState(() => _currentImage = i),
-              itemBuilder: (_, i) => Semantics(
-                label: '${item.title} photo ${i + 1} of ${images.length}',
-                image: true,
-                child: _buildDetailImage(images[i]),
-              ),
-            ),
-            if (images.length > 1)
-              Positioned(
-                bottom: 12,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(images.length, (i) {
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: i == _currentImage ? 20 : 7,
-                      height: 7,
-                      margin: const EdgeInsets.symmetric(horizontal: 2),
-                      decoration: BoxDecoration(
-                        color: i == _currentImage
-                            ? HuddlColors.primary
-                            : Colors.white.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  }),
-                ),
-              ),
-            if (images.length > 1)
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${_currentImage + 1}/${images.length}',
-                    style: _adaptiveText(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-            if (item.isSold)
-              Positioned(
-                top: 10,
-                left: 10,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.error,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'SOLD',
-                    style: _adaptiveText(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // == SELLER CARD ===========================================================
-
-  Widget _buildSellerCard(HuddlContextColors hc) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: hc.divider),
-      ),
-      child: Row(
-        children: [
-          MemberAvatar(name: item.sellerName, size: 44),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.sellerName,
-                  style: _adaptiveText(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: hc.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined,
-                        size: 14, color: hc.textTertiary),
-                    const SizedBox(width: 3),
-                    Text(
-                      item.sellerLocation,
-                      style: _adaptiveText(
-                        fontSize: 12,
-                        color: hc.textTertiary,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (!_isOwnItem)
-            Semantics(
-              label: 'Chat with ${item.sellerName}',
-              button: true,
-              child: InkWell(
-                onTap: _openSellerChat,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  constraints: const BoxConstraints(minHeight: 48),
-                  decoration: BoxDecoration(
-                    color: HuddlColors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.chat_bubble_outline,
-                          color: HuddlColors.primary, size: 16),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Chat',
-                        style: _adaptiveText(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  // == SAFETY TIPS (collapsed by default) ====================================
-
-  Widget _buildSafetyTips(HuddlContextColors hc) {
-    return Semantics(
-      label: 'Safety tips for buying items',
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: HuddlColors.primary.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.shield_outlined,
-                size: 18, color: HuddlColors.primary.withValues(alpha: 0.7)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Meet in public. Check items before paying.',
-                style: _adaptiveText(
-                  fontSize: 12,
-                  color: hc.textTertiary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   // == EDIT OWN LISTING ======================================================
 
@@ -1514,44 +1296,35 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 // DETAIL PILL — compact attribute badge
 // =============================================================================
 
-class _DetailPill extends StatelessWidget {
+// ── Circle icon button for SliverAppBar (matches Groups/Events style) ────────
+class _ItemCircleButton extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final VoidCallback onTap;
   final Color color;
 
-  const _DetailPill({
+  const _ItemCircleButton({
     required this.icon,
-    required this.label,
-    required this.color,
+    required this.onTap,
+    this.color = Colors.white,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Semantics(
-      label: label,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: _adaptiveText(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: hc.textSecondary,
-              ),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.3),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
         ),
       ),
     );
   }
 }
+
+
