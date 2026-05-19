@@ -1612,19 +1612,14 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         )
                       : null,
                 )
-              : GridView.builder(
+              : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 0.72,
-                  ),
                   itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final uid = FirebaseAuth.instance.currentUser?.uid;
                     final isOwn = uid != null && items[index].sellerId == uid;
-                    return _MarketGridCard(
+                    return _MarketListCard(
                       item: items[index],
                       isOwn: isOwn,
                       onTap: () => _openItemDetail(items[index]),
@@ -2954,6 +2949,208 @@ class _MarketItemCardState extends State<_MarketItemCard>
 // Half-screen-width card with product image + title, price, location, save.
 // =============================================================================
 
+// ─── Single-column list card (Buy tab) ───────────────────────────────────────
+class _MarketListCard extends StatefulWidget {
+  final RehomeItem item;
+  final VoidCallback onTap;
+  final VoidCallback onToggleSave;
+  final bool isOwn;
+
+  const _MarketListCard({
+    required this.item,
+    required this.onTap,
+    required this.onToggleSave,
+    this.isOwn = false,
+  });
+
+  @override
+  State<_MarketListCard> createState() => _MarketListCardState();
+}
+
+class _MarketListCardState extends State<_MarketListCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _heartAnim;
+  late Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartAnim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
+    _heartScale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _heartAnim.dispose();
+    super.dispose();
+  }
+
+  Color _conditionColor(String condition) {
+    switch (condition.toLowerCase()) {
+      case 'new': return const Color(0xFF2DBE8A);
+      case 'like new': return const Color(0xFF5B9CFF);
+      case 'good': return HuddlColors.primary;
+      default: return HuddlColors.textTertiary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final hc = context.hc;
+    final hasImage = item.imageUrls.isNotEmpty;
+    final condColor = _conditionColor(item.condition.label);
+    final priceStr = item.isFree
+        ? 'Free'
+        : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: Container(
+        height: 110,
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // ── Square photo (left) ────────────────────────────────────
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+              child: SizedBox(
+                width: 110, height: 110,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    hasImage
+                        ? Image.network(
+                            item.imageUrls.first,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: hc.surfaceAlt,
+                              child: Icon(item.category.icon,
+                                  size: 28, color: HuddlColors.primary.withValues(alpha: 0.3)),
+                            ),
+                          )
+                        : Container(
+                            color: hc.surfaceAlt,
+                            child: Icon(item.category.icon,
+                                size: 28, color: HuddlColors.primary.withValues(alpha: 0.3)),
+                          ),
+                    // Condition badge — bottom-left of photo
+                    Positioned(
+                      bottom: 6, left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: widget.isOwn ? HuddlColors.textTertiary : condColor,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          widget.isOwn ? 'Yours' : item.condition.label,
+                          style: _adaptiveText(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Info (right) ───────────────────────────────────────────
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: _adaptiveText(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: hc.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Category
+                    Text(
+                      item.category.label,
+                      style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        // Price
+                        Text(
+                          priceStr,
+                          style: _adaptiveText(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                          ),
+                        ),
+                        const Spacer(),
+                        // Location
+                        if (item.sellerLocation.isNotEmpty) ...[
+                          Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                          const SizedBox(width: 2),
+                          Flexible(
+                            child: Text(
+                              item.sellerLocation,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: _adaptiveText(fontSize: 10.5, color: hc.textTertiary),
+                            ),
+                          ),
+                        ],
+                        // Save heart (hidden for own listings)
+                        if (!widget.isOwn) ...[
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () {
+                              _heartAnim.forward(from: 0);
+                              widget.onToggleSave();
+                            },
+                            child: ScaleTransition(
+                              scale: _heartScale,
+                              child: Icon(
+                                item.isSaved ? Icons.favorite : Icons.favorite_border,
+                                size: 18,
+                                color: item.isSaved ? HuddlColors.primary : hc.textTertiary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Grid card (kept for reference / future use) ─────────────────────────────
 class _MarketGridCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;

@@ -659,26 +659,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                       ),
                     ),
                   ),
-                  // "Meetup" badge — bottom-left
-                  Positioned(
-                    bottom: 14,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: _detailOrange,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Meetup',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Meetup category badge removed — redundant on detail screen
                 ],
               ),
             ),

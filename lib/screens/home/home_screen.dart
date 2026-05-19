@@ -1231,7 +1231,9 @@ class _HomeScreenState extends State<HomeScreen>
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Curated for you \u00B7 ${_smartFeed.length} updates since you last visited',
+                          _smartFeed.isEmpty
+                              ? 'Your personalised feed — RSVP to events & meetups to see updates here'
+                              : 'Your personalised feed \u00B7 ${_smartFeed.length} update${_smartFeed.length == 1 ? '' : 's'}',
                           style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary),
                         ),
                       ),
@@ -2143,105 +2145,101 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // ── Market carousel ───────────────────────────────────────────────────────
+  // ── Market section — single-column vertical list (matches Buy tab layout) ──
   Widget _buildMarketCarousel(dynamic hc) {
-    final items = _rehomeService.allItems.take(8).toList();
+    final items = _rehomeService.allItems.take(5).toList();
     if (items.isEmpty) {
       return _buildCarouselEmpty(hc, 'No items listed yet', Icons.storefront_outlined);
     }
-    return SizedBox(
-      height: 192,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: items.length,
-        itemBuilder: (context, i) {
-          final item = items[i];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: items.map((item) {
           final hasImage = item.imageUrls.isNotEmpty;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              setState(() => _marketTaps++);
-              Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ItemDetailScreen(item: item),
-              ));
-            },
-            child: Container(
-              width: 180,
-              margin: const EdgeInsets.only(right: 10),
-              decoration: BoxDecoration(
-                color: hc.surface,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Photo header with badge overlays (matches Events/Meetups pattern)
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: Stack(
-                      children: [
-                        SizedBox(
-                          width: double.infinity, height: 100,
-                          child: hasImage
-                              ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _marketImageFallback(item))
-                              : _marketImageFallback(item),
+          final priceStr = item.isFree
+              ? 'Free'
+              : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _marketTaps++);
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ItemDetailScreen(item: item),
+                ));
+              },
+              child: Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  color: hc.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6, offset: const Offset(0, 2))],
+                ),
+                child: Row(
+                  children: [
+                    // Square photo — left
+                    ClipRRect(
+                      borderRadius: const BorderRadius.horizontal(left: Radius.circular(14)),
+                      child: SizedBox(
+                        width: 100, height: 100,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            hasImage
+                                ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                                : _marketImageFallback(item),
+                            // Condition badge bottom-left
+                            Positioned(
+                              bottom: 5, left: 5,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: item.condition.color,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(item.condition.label,
+                                  style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
+                              ),
+                            ),
+                          ],
                         ),
-                        // Price badge — bottom-left (orange=paid, teal=free)
-                        Positioned(
-                          bottom: 6, left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: item.isFree ? HuddlColors.teal : HuddlColors.primary,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item.priceDisplay,
-                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        // Condition badge — top-right (colour from ItemCondition.color)
-                        Positioned(
-                          top: 6, right: 6,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: item.condition.color,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              item.condition.label,
-                              style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.title,
-                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 2),
-                        // Category as subtitle (price now shown as photo badge)
-                        Text(item.category.label,
-                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
-                          maxLines: 1, overflow: TextOverflow.ellipsis),
-                      ],
+                    // Info — right
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.title,
+                              style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                              maxLines: 2, overflow: TextOverflow.ellipsis),
+                            const SizedBox(height: 2),
+                            Text(item.category.label,
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary)),
+                            const Spacer(),
+                            Text(priceStr,
+                              style: GoogleFonts.poppins(
+                                fontSize: 15, fontWeight: FontWeight.w700,
+                                color: item.isFree ? HuddlColors.teal : HuddlColors.primary)),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    // Chevron
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Icon(Icons.chevron_right, size: 20, color: hc.textTertiary),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
-        },
+        }).toList(),
       ),
     );
   }
