@@ -1831,7 +1831,7 @@ class _HomeScreenState extends State<HomeScreen>
       return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
     }
     return SizedBox(
-      height: 130,
+      height: 192,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1841,9 +1841,8 @@ class _HomeScreenState extends State<HomeScreen>
           return GestureDetector(
             onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
             child: Container(
-              width: 140,
+              width: 180,
               margin: const EdgeInsets.only(right: 10),
-              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: hc.surface,
                 borderRadius: BorderRadius.circular(14),
@@ -1853,23 +1852,50 @@ class _HomeScreenState extends State<HomeScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 36, height: 36,
-                      child: _buildGroupImage(g.imageUrl),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity, height: 100,
+                          child: _buildGroupImage(g.imageUrl),
+                        ),
+                        Positioned(
+                          bottom: 6, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.primary,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.people_rounded, size: 9, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text('${g.memberCount}',
+                                  style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(g.name,
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                    maxLines: 2, overflow: TextOverflow.ellipsis),
-                  const Spacer(),
-                  Row(children: [
-                    Icon(Icons.people_outline, size: 10, color: hc.textTertiary),
-                    const SizedBox(width: 3),
-                    Text('${g.memberCount}',
-                      style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary)),
-                  ]),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(g.name,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 4),
+                        Text(g.category,
+                          style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1886,7 +1912,7 @@ class _HomeScreenState extends State<HomeScreen>
       return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place_outlined);
     }
     return SizedBox(
-      height: 148,
+      height: 192,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1914,9 +1940,42 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: SizedBox(
-                      width: double.infinity, height: 72,
-                      child: _buildMeetupImage(m.imageUrl, m.category),
+                    child: Stack(
+                      children: [
+                        SizedBox(
+                          width: double.infinity, height: 100,
+                          child: _buildMeetupImage(m.imageUrl, m.category),
+                        ),
+                        // Date badge overlay — matches Events card style
+                        Positioned(
+                          bottom: 6, left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.teal,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(m.dateDisplay,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                          ),
+                        ),
+                        if (isGoing)
+                          Positioned(
+                            top: 6, right: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Icon(Icons.check_circle, size: 9, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text('Going', style: GoogleFonts.poppins(fontSize: 8, fontWeight: FontWeight.w600, color: Colors.white)),
+                              ]),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(
@@ -1927,16 +1986,13 @@ class _HomeScreenState extends State<HomeScreen>
                         Text(m.title,
                           style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: hc.textPrimary),
                           maxLines: 1, overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Row(children: [
-                          Expanded(child: Text(m.dateDisplay,
+                          Icon(Icons.location_on_outlined, size: 10, color: hc.textTertiary),
+                          const SizedBox(width: 3),
+                          Expanded(child: Text(m.location,
                             style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary),
                             overflow: TextOverflow.ellipsis)),
-                          if (isGoing) ...[
-                            const Icon(Icons.check_circle, size: 10, color: HuddlColors.primary),
-                            const SizedBox(width: 2),
-                            Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
-                          ],
                         ]),
                       ],
                     ),
@@ -2073,7 +2129,7 @@ class _HomeScreenState extends State<HomeScreen>
       return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
     }
     return SizedBox(
-      height: 175,
+      height: 192,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2084,7 +2140,7 @@ class _HomeScreenState extends State<HomeScreen>
           return GestureDetector(
             onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
             child: Container(
-              width: 160,
+              width: 180,
               margin: const EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
                 color: hc.surface,
@@ -2100,7 +2156,7 @@ class _HomeScreenState extends State<HomeScreen>
                     child: Stack(
                       children: [
                         SizedBox(
-                          width: double.infinity, height: 90,
+                          width: double.infinity, height: 100,
                           child: hasImage
                               ? Image.network(s.imageUrl!, fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
@@ -2168,7 +2224,7 @@ class _HomeScreenState extends State<HomeScreen>
       return _buildCarouselEmpty(hc, 'No items listed yet', Icons.storefront_outlined);
     }
     return SizedBox(
-      height: 150,
+      height: 192,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2185,7 +2241,7 @@ class _HomeScreenState extends State<HomeScreen>
               ));
             },
             child: Container(
-              width: 130,
+              width: 180,
               margin: const EdgeInsets.only(right: 10),
               decoration: BoxDecoration(
                 color: hc.surface,
@@ -2199,7 +2255,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
                     child: SizedBox(
-                      width: double.infinity, height: 85,
+                      width: double.infinity, height: 100,
                       child: hasImage
                           ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => _marketImageFallback(item))
