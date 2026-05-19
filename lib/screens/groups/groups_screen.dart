@@ -3374,6 +3374,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
+      aiTagline: 'Your village for the beautiful, messy first year of motherhood.',
     ),
     _GroupItem(
       id: 'disc_dads_connect',
@@ -3387,6 +3388,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Dads'],
+      aiTagline: 'Real dads, real questions — judgement-free fatherhood support.',
     ),
     _GroupItem(
       id: 'disc_bump_to_baby',
@@ -3400,6 +3402,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Parents expecting a baby'],
+      aiTagline: 'From first scan to first smile — share every stage together.',
     ),
     _GroupItem(
       id: 'disc_pregnancy_antenatal',
@@ -3413,6 +3416,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Parents expecting a baby'],
+      aiTagline: 'Honest birth prep and antenatal advice from those who\'ve done it.',
     ),
     _GroupItem(
       id: 'disc_newborn_club',
@@ -3425,6 +3429,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Sleepless nights, big love — 0–3 months survival support.',
     ),
     _GroupItem(
       id: 'disc_single_parents',
@@ -3437,6 +3442,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Solo parenting is hard — but you don\'t have to do it alone.',
     ),
     _GroupItem(
       id: 'disc_lgbtq_parents',
@@ -3449,6 +3455,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Inclusive, proud and connected — all families welcome here.',
     ),
     _GroupItem(
       id: 'disc_adoption_fostering',
@@ -3461,6 +3468,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Navigating adoption and fostering with community at your side.',
     ),
 
     // ── LANGUAGE & CULTURAL ───────────────────────────────────────────────
@@ -3475,6 +3483,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'LANGUAGE & CULTURE',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Dutch families in Cambridge — tips, play dates and a taste of home.',
     ),
     _GroupItem(
       id: 'disc_german_parents',
@@ -3487,6 +3496,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'LANGUAGE & CULTURE',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'German families in Cambridge — Spielgruppen, Tipps und echte Verbindung.',
     ),
 
     // ── SLEEP & FEEDING ───────────────────────────────────────────────────
@@ -3501,6 +3511,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'SLEEP',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Finally get some sleep — routines and real advice that actually work.',
     ),
     _GroupItem(
       id: 'disc_breastfeeding',
@@ -3514,6 +3525,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
+      aiTagline: 'Latch help, supply questions and feeding wins — no judgement here.',
     ),
     _GroupItem(
       id: 'disc_weaning_first_foods',
@@ -3526,6 +3538,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FEEDING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'BLW or purée? First foods made easy with real-parent recipes.',
     ),
     _GroupItem(
       id: 'disc_child_nutrition',
@@ -3538,6 +3551,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FOOD & NUTRITION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Fussy eaters, packed lunches and building healthy food habits for life.',
     ),
     _GroupItem(
       id: 'disc_healthy_meals',
@@ -3550,6 +3564,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FOOD & NUTRITION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Nutritious family recipes that even the pickiest toddler will try.',
     ),
     _GroupItem(
       id: 'disc_allergies_dietary',
@@ -3562,6 +3577,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FOOD & NUTRITION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Managing allergies from diagnosis to school — you\'re not alone.',
     ),
 
     // ── EDUCATION & LEARNING ──────────────────────────────────────────────
@@ -3576,6 +3592,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'EDUCATION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Follow your child\'s curiosity — Montessori ideas for the home.',
     ),
     _GroupItem(
       id: 'disc_forest_school',
@@ -3588,6 +3605,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'EDUCATION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Mud, bugs and dens — nature-based learning for Cambridge kids.',
     ),
     _GroupItem(
       id: 'disc_home_education',
@@ -3600,6 +3618,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'EDUCATION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Curriculum ideas, local resources and community for home educators.',
     ),
     _GroupItem(
       id: 'disc_baby_sign_language',
@@ -3612,6 +3631,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'EDUCATION',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Help your baby communicate before words — signs that transform tantrums.',
     ),
 
     // ── ACTIVITIES & PLAY ─────────────────────────────────────────────────
@@ -3626,6 +3646,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'DIY sensory play ideas that light up your baby\'s developing brain.',
     ),
     _GroupItem(
       id: 'disc_toddler_activities',
@@ -3638,6 +3659,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Best classes, soft plays and playgroups for Cambridge toddlers.',
     ),
     _GroupItem(
       id: 'disc_cambridge_playgrounds',
@@ -3650,6 +3672,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PLAY & ACTIVITIES',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Discover Cambridge\'s best parks and playgrounds, rated by local parents.',
     ),
 
     // ── FITNESS & SPORT ───────────────────────────────────────────────────
@@ -3664,6 +3687,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FITNESS',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Run, pram and all — stay active with your baby in Cambridge.',
     ),
     _GroupItem(
       id: 'disc_postnatal_fitness',
@@ -3677,6 +3701,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
+      aiTagline: 'Rebuild strength safely after birth — expert advice and real support.',
     ),
     _GroupItem(
       id: 'disc_postnatal_yoga',
@@ -3690,6 +3715,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
+      aiTagline: 'Gentle movement for new mums — pelvic floor, calm and recovery.',
     ),
     _GroupItem(
       id: 'disc_buggy_bootcamp',
@@ -3702,6 +3728,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'FITNESS',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Outdoor workouts with your buggy — sociable, fun and effective.',
     ),
     _GroupItem(
       id: 'disc_cambridge_tennis',
@@ -3714,6 +3741,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'SPORT',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Junior coaching, club tips and family tennis events in Cambridge.',
     ),
     _GroupItem(
       id: 'disc_cambridge_sports',
@@ -3726,6 +3754,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'SPORT',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Clubs, fixtures and cheerleading for Cambridge\'s young sports stars.',
     ),
 
     // ── WELLBEING & SUPPORT ───────────────────────────────────────────────
@@ -3740,6 +3769,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'WELLBEING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Your mental health matters too — kind, honest and judgement-free.',
     ),
     _GroupItem(
       id: 'disc_nct_cambridge',
@@ -3753,6 +3783,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Parents expecting a baby'],
+      aiTagline: 'Stay connected with your NCT Cambridge group long after classes end.',
     ),
     _GroupItem(
       id: 'disc_special_needs_send',
@@ -3765,6 +3796,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'WELLBEING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Resources, advocacy and community for SEND families in Cambridge.',
     ),
     _GroupItem(
       id: 'disc_parents_multiples',
@@ -3777,6 +3809,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'PARENTING',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Twins, triplets and beyond — double the love, double the support.',
     ),
     _GroupItem(
       id: 'disc_dad_baby',
@@ -3790,6 +3823,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Dads'],
+      aiTagline: 'Just dads and babies — classes, meetups and no need to explain yourself.',
     ),
 
     // ── CHILDCARE & PRACTICALITIES ────────────────────────────────────────
@@ -3804,6 +3838,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'CHILDCARE',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Find nanny share partners and trusted childminders in Cambridge.',
     ),
     _GroupItem(
       id: 'disc_back_to_work',
@@ -3817,6 +3852,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       isDefault: false,
       isImageLocked: false,
       targetAudience: ['Mums'],
+      aiTagline: 'Returning after maternity leave — flexible work wins and real talk.',
     ),
     _GroupItem(
       id: 'disc_working_parents',
@@ -3829,6 +3865,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'WORK-LIFE',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Flexible work, childcare and career — the Cambridge parent juggle.',
     ),
     _GroupItem(
       id: 'disc_child_sleep_consultants',
@@ -3841,6 +3878,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'SLEEP',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'CIO, Ferber or gentle — share what sleep method actually worked.',
     ),
 
     // ── LIFESTYLE ─────────────────────────────────────────────────────────
@@ -3855,6 +3893,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'LIFESTYLE',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Cloth nappies, plastic-free play and raising planet-conscious kids.',
     ),
     _GroupItem(
       id: 'disc_travel_tribe',
@@ -3867,6 +3906,7 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       category: 'TRAVEL',
       isDefault: false,
       isImageLocked: false,
+      aiTagline: 'Flight survival, packing hacks and kid-friendly adventures worldwide.',
     ),
   ];
 

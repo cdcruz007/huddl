@@ -1248,23 +1248,52 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     return Scaffold(
       backgroundColor: hc.scaffold,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildHeader(hc),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildBuyTab(hc),
-                  _buildSellTab(hc),
-                  _buildSavedTab(hc),
-                ],
-              ),
+            // ── Main content column ──
+            Column(
+              children: [
+                _buildHeader(hc),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildBuyTab(hc),
+                      _buildSellTab(hc),
+                      _buildSavedTab(hc),
+                    ],
+                  ),
+                ),
+              ],
             ),
+            // ── FAB — only on Sell tab, same position as Groups/Meetups ──
+            if (_tabController.index == 1)
+              Positioned(
+                bottom: 24,
+                right: 16,
+                child: GestureDetector(
+                  onTap: _openCreateListing,
+                  child: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: HuddlColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-      floatingActionButton: _buildFAB(context, hc),
     );
   }
 
@@ -2517,48 +2546,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     );
   }
 
-  // == FAB =================================================================
-  // Material You: FAB on both Buy and Sell tabs (Android pattern).
-  // On Buy: "+" for new listing. On Sell: "+" for new listing (contextual).
-
-  Widget? _buildFAB(BuildContext context, HuddlContextColors hc) {
-    // Show FAB on Buy (0) and Sell (1) tabs
-    if (_tabController.index > 1) return null;
-
-    final bool isSellTab = _tabController.index == 1;
-
-    // Compute how far above the bottom edge the FAB must sit so it clears
-    // the floating bottom nav bar:
-    //   • safeArea.bottom  → iPhone home-indicator inset (~34 pt on modern iPhones)
-    //   • + 12 pt          → bottom padding applied to the nav bar container
-    //   • + 70 pt          → nav bar container height
-    //   • + 12 pt          → breathing room between FAB and nav bar
-    final double bottomInset = MediaQuery.of(context).padding.bottom + 12 + 70 + 12;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottomInset),
-      child: Semantics(
-        label: isSellTab ? 'Create new listing' : 'Create new listing',
-        hint: 'Opens the listing creation form',
-        button: true,
-        child: Material(
-          elevation: 6,
-          shadowColor: HuddlColors.primary.withValues(alpha: 0.4),
-          shape: const CircleBorder(),
-          color: HuddlColors.primary,
-          child: InkWell(
-            onTap: _openCreateListing,
-            customBorder: const CircleBorder(),
-            child: const SizedBox(
-              width: 56,
-              height: 56,
-              child: Icon(Icons.add, color: Colors.white, size: 28),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // == FAB removed — now rendered as Positioned inside Stack in build() ==
+  // Matches Groups/Meetups pattern: Positioned(bottom:24, right:16).
 }
 
 // =============================================================================

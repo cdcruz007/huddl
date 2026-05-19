@@ -418,23 +418,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
             color: _sectionTxt,
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (_step + 1) / 3,
-            backgroundColor: HuddlColors.divider,
-            valueColor: const AlwaysStoppedAnimation(HuddlColors.primary),
-            minHeight: 3,
-          ),
-        ),
+        // NO AppBar bottom — progress bar lives in the body so it doesn't
+        // produce an orange line above the blue photo banner on step 2.
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        child: _step == 0
-            ? _buildStep0()
-            : _step == 1
-                ? _buildStep1()
-                : _buildStep2(),
+      body: Column(
+        children: [
+          // ── Thin orange progress strip — only shown on steps 0 & 1.
+          // On step 2 the blue photo banner is flush below the AppBar so we
+          // hide the indicator to avoid any colour clash at that seam.
+          if (_step < 2)
+            LinearProgressIndicator(
+              value: (_step + 1) / 3,
+              backgroundColor: HuddlColors.divider,
+              valueColor: const AlwaysStoppedAnimation(HuddlColors.primary),
+              minHeight: 3,
+            ),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: _step == 0
+                  ? _buildStep0()
+                  : _step == 1
+                      ? _buildStep1()
+                      : _buildStep2(),
+            ),
+          ),
+        ],
       ),
     );
   }
