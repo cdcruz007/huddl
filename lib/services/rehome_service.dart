@@ -545,6 +545,15 @@ class RehomeService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Silently insert an item loaded from Firestore into the in-memory list
+  /// without triggering a Firestore write or notifying listeners.
+  /// Used by the home feed to pre-populate the carousel before the user
+  /// opens the Marketplace tab (which runs its own full load).
+  void silentInsert(RehomeItem item) {
+    if (_items.any((i) => i.id == item.id)) return;
+    _items.add(item);
+  }
+
   /// Add a new listing. Auto-tags with user's borough if not set.
   ///
   /// HYPERLOCAL: Items without a borough tag will be invisible in

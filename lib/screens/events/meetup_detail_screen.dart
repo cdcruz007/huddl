@@ -686,63 +686,36 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     ),
                   const SizedBox(height: 16),
 
-                  // Interested button — full width, light gray
-                  GestureDetector(
-                    onTap: _toggleGoing,
-                    child: Container(
-                      width: double.infinity,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: _detailGray,
-                        borderRadius: BorderRadius.circular(12),
+                  // Join / Leave button — single full-width CTA
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        _toggleGoing();
+                      },
+                      icon: Icon(
+                        _meetup.isGoing ? Icons.check_circle : Icons.group_add_outlined,
+                        size: 20,
+                        color: Colors.white,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _meetup.isGoing ? Icons.favorite : Icons.favorite_border,
-                            size: 20,
-                            color: _meetup.isGoing ? _detailOrange : _detailText,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _meetup.isGoing ? "I'm Going!" : 'Interested',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: _meetup.isGoing ? _detailOrange : _detailText,
-                            ),
-                          ),
-                        ],
+                      label: Text(
+                        _meetup.isGoing ? 'Joined' : 'Join',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Join meet up chat button — full width, orange pill
-                  GestureDetector(
-                    onTap: _shareToChat,
-                    child: Container(
-                      width: double.infinity,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: _detailOrange,
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.chat_bubble_outline, size: 20, color: Colors.white),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Join meet up chat',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _meetup.isGoing
+                            ? HuddlColors.teal
+                            : _detailOrange,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(28),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),

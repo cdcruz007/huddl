@@ -31,6 +31,8 @@ import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/rehome_service.dart';
 import '../../services/local_services_service.dart';
+import '../../services/firestore_service.dart';
+import '../../services/ai_event_discovery_service.dart';
 import '../../screens/marketplace/item_detail_screen.dart';
 import '../../screens/groups/group_chat_screen.dart';
 import '../../screens/groups/dm_chat_screen.dart';
@@ -273,17 +275,56 @@ class _HomeScreenState extends State<HomeScreen>
       }
 
       final groups = await _groupService.getUserGroups('current_user');
+
+      // ── Load Meetups from Firestore ──────────────────────────────────────
+      // The MeetupService singleton only contains locally-created meetups
+      // until loadFromFirestore() is called. Call it here so the home feed
+      // shows real Firestore meetups even when the user hasn't opened the
+      // Discover tab yet (which is where events_screen.dart normally calls it).
+      await _meetupService.loadFromFirestore().catchError((_) {});
+      await _meetupService.syncRsvpsFromFirestore().catchError((_) {});
+
       final allMeetups = _meetupService.meetups;
-      final upcomingMeetups = allMeetups.take(5).toList();
+      final upcomingMeetups = allMeetups
+          .where((m) => m.dateTime.isAfter(DateTime.now()))
+          .toList()
+        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      final upcomingMeetupsList = upcomingMeetups.take(8).toList();
+
+      // ── Load Events via AI Discovery ─────────────────────────────────────
+      // EventService._events is empty until AiEventDiscoveryService populates it.
+      // Call runDailyDiscovery() here so home feed shows events immediately.
+      try {
+        await AiEventDiscoveryService()
+            .runDailyDiscovery()
+            .timeout(const Duration(seconds: 6));
+      } catch (_) {}
+      await _eventService.syncRsvpsFromFirestore().catchError((_) {});
       final goingEvents = _eventService.goingEvents;
-      final newGroups = await _loadNewPublicGroups(borough);
+
+      // ── Load Groups from Firestore as fallback for carousel ──────────────
+      // _loadNewPublicGroups reads from BrowserStorage only (user-created groups).
+      // Also pull public Firestore groups so the Groups carousel is populated.
+      List<Group> newGroups = await _loadNewPublicGroups(borough);
+      if (newGroups.isEmpty) {
+        try {
+          final firestoreGroups = await FirestoreService()
+              .getDiscoverGroups()
+              .timeout(const Duration(seconds: 5));
+          // Filter to non-system groups only, same rules as _isDefaultOnboardingGroup
+          newGroups = firestoreGroups
+              .where((g) => !_isDefaultOnboardingGroup(g))
+              .take(8)
+              .toList();
+        } catch (_) {}
+      }
 
       List<BoroughMember> boroughMembers = [];
       if (pc != null) {
         boroughMembers = InvitationService.getBoroughMembers(pc);
       }
 
-      // Load services + market items for carousels (non-blocking)
+      // Load services for carousel (non-blocking)
       List<ServiceListing> featuredServices = [];
       try {
         featuredServices = await _servicesService
@@ -292,6 +333,24 @@ class _HomeScreenState extends State<HomeScreen>
             .timeout(const Duration(seconds: 4));
       } catch (_) {}
 
+      // ── Load Marketplace items from Firestore ────────────────────────────
+      // RehomeService._items is populated by the marketplace screen, but may
+      // be empty when the user lands on Home first.  Fetch from Firestore and
+      // insert into the service singleton so _rehomeService.allItems is populated.
+      if (_rehomeService.allItems.isEmpty) {
+        try {
+          final rawListings = await FirestoreService()
+              .getMarketplaceListings()
+              .timeout(const Duration(seconds: 5));
+          for (final map in rawListings) {
+            try {
+              final item = RehomeItem.fromFirestore(map);
+              _rehomeService.silentInsert(item);
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }
+
       setState(() {
         _name = _onboarding.name ?? 'there';
         _borough = borough;
@@ -299,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen>
         _userGroups = groups;
         _announcements = _announcementService.boroughAnnouncements;
         _feedItems = _feedService.feedItems;
-        _upcomingMeetups = upcomingMeetups;
+        _upcomingMeetups = upcomingMeetupsList;
         _goingEvents = goingEvents;
         _newPublicGroups = newGroups;
         _boroughMembers = boroughMembers;
