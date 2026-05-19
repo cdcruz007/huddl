@@ -1753,307 +1753,316 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Groups carousel ───────────────────────────────────────────────────────
   Widget _buildGroupsCarousel(dynamic hc) {
-    final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(5).toList();
+    final groups = _newPublicGroups.where((g) => !_isDefaultOnboardingGroup(g)).take(8).toList();
     if (groups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No new groups yet', Icons.people_outline);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: groups.map((g) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: GestureDetector(
-              onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: hc.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero photo
-                    SizedBox(
-                      height: 160, width: double.infinity,
-                      child: _buildGroupImage(g.imageUrl),
+    return SizedBox(
+      height: 300,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: groups.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final g = groups[index];
+          return GestureDetector(
+            onTap: () { HapticFeedback.selectionClick(); setState(() => _groupTaps++); _switchToTab(2); },
+            child: Container(
+              width: 220,
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero photo
+                  SizedBox(
+                    height: 150, width: 220,
+                    child: _buildGroupImage(g.imageUrl),
+                  ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(g.category.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(g.name,
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _buildAvatarStack(g.id.hashCode, hc),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text('${g.memberCount} members',
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                          _buildActionPill('Join', HuddlColors.primary, hc),
+                        ]),
+                      ],
                     ),
-                    // Card body
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(g.category.toUpperCase(),
-                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          Text(g.name,
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 10),
-                          Row(children: [
-                            _buildAvatarStack(g.id.hashCode, hc),
-                            const SizedBox(width: 6),
-                            Expanded(child: Text('${g.memberCount} members',
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
-                            _buildActionPill('Join', HuddlColors.primary, hc),
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
 
   // ── Meetups carousel ──────────────────────────────────────────────────────
   Widget _buildMeetupsCarousel(dynamic hc) {
-    final meetups = _upcomingMeetups.take(5).toList();
+    final meetups = _upcomingMeetups.take(8).toList();
     if (meetups.isEmpty) {
       return _buildCarouselEmpty(hc, 'No upcoming meetups', Icons.place_outlined);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: meetups.map((m) {
+    return SizedBox(
+      height: 320,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: meetups.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final m = meetups[index];
           final isGoing = m.isGoing;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _meetupTaps++);
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: hc.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3), width: 1.5) : null,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero photo with date badge
-                    SizedBox(
-                      height: 160, width: double.infinity,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          _buildMeetupImage(m.imageUrl, m.category),
-                          // Date badge — bottom-left
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _meetupTaps++);
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => MeetupDetailScreen(meetup: m)));
+            },
+            child: Container(
+              width: 220,
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: isGoing ? Border.all(color: HuddlColors.primary.withValues(alpha: 0.3), width: 1.5) : null,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero photo with date badge
+                  SizedBox(
+                    height: 150, width: 220,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildMeetupImage(m.imageUrl, m.category),
+                        // Date badge — bottom-left
+                        Positioned(
+                          bottom: 8, left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.teal,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                            ),
+                            child: Text(m.dateDisplay,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                          ),
+                        ),
+                        // Going badge — top-right
+                        if (isGoing)
                           Positioned(
-                            bottom: 10, left: 12,
+                            top: 8, right: 10,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: HuddlColors.teal,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                                color: HuddlColors.primary,
+                                borderRadius: BorderRadius.circular(7),
                               ),
-                              child: Text(m.dateDisplay,
-                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Icon(Icons.check_circle, size: 10, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
+                              ]),
                             ),
                           ),
-                          // Going badge — top-right
-                          if (isGoing)
-                            Positioned(
-                              top: 10, right: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.primary,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                  const Icon(Icons.check_circle, size: 11, color: Colors.white),
-                                  const SizedBox(width: 4),
-                                  Text('Going', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
-                                ]),
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                    // Card body
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(m.category.toUpperCase(),
-                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          Text(m.title,
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (m.location.isNotEmpty) ...[  
-                            const SizedBox(height: 3),
-                            Row(children: [
-                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
-                              const SizedBox(width: 3),
-                              Expanded(child: Text(m.location,
-                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
-                                maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            ]),
-                          ],
-                          const SizedBox(height: 10),
+                  ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(m.category.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(m.title,
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (m.location.isNotEmpty) ...[  
+                          const SizedBox(height: 3),
                           Row(children: [
-                            _buildAvatarStack(m.id.hashCode, hc),
-                            const SizedBox(width: 6),
-                            Expanded(child: Text('${m.attendeeCount} attending',
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
-                            _buildActionPill(
-                              isGoing ? 'Going ✓' : 'Join',
-                              isGoing ? HuddlColors.teal : HuddlColors.primary,
-                              hc,
-                              isActive: isGoing,
-                            ),
+                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                            const SizedBox(width: 2),
+                            Expanded(child: Text(m.location,
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ]),
                         ],
-                      ),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _buildAvatarStack(m.id.hashCode, hc),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text('${m.attendeeCount} attending',
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                          _buildActionPill(
+                            isGoing ? 'Going ✓' : 'Join',
+                            isGoing ? HuddlColors.teal : HuddlColors.primary,
+                            hc,
+                            isActive: isGoing,
+                          ),
+                        ]),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
 
   // ── Events carousel ───────────────────────────────────────────────────────
   Widget _buildEventsCarousel(dynamic hc) {
-    final events = _eventService.events.take(5).toList();
+    final events = _eventService.events.take(8).toList();
     if (events.isEmpty) {
       return _buildCarouselEmpty(hc, 'No events listed yet', Icons.event_outlined);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: events.map((e) {
+    return SizedBox(
+      height: 320,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: events.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final e = events[index];
           final isGoing = _goingEvents.any((ge) => ge.id == e.id);
           final eMap = e.toMap();
           final hasImage = e.imageUrl.isNotEmpty;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: hc.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1.5) : null,
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero photo
-                    SizedBox(
-                      height: 160, width: double.infinity,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          hasImage
-                              ? Image.network(e.imageUrl, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _eventImageFallback())
-                              : _eventImageFallback(),
-                          // Date badge — bottom-left
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => EventDetailScreen(event: eMap)));
+            },
+            child: Container(
+              width: 220,
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: isGoing ? Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4), width: 1.5) : null,
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero photo
+                  SizedBox(
+                    height: 150, width: 220,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        hasImage
+                            ? Image.network(e.imageUrl, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _eventImageFallback())
+                            : _eventImageFallback(),
+                        // Date badge — bottom-left
+                        Positioned(
+                          bottom: 8, left: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                            ),
+                            child: Text(e.dateDisplay,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
+                          ),
+                        ),
+                        // Going badge — top-right
+                        if (isGoing)
                           Positioned(
-                            bottom: 10, left: 12,
+                            top: 8, right: 10,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                               decoration: BoxDecoration(
-                                color: HuddlColors.accentAmber,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
+                                color: HuddlColors.teal,
+                                borderRadius: BorderRadius.circular(7),
                               ),
-                              child: Text(e.dateDisplay,
-                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
+                              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                const Icon(Icons.check_circle, size: 10, color: Colors.white),
+                                const SizedBox(width: 3),
+                                Text('Going', style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
+                              ]),
                             ),
                           ),
-                          // Going badge — top-right
-                          if (isGoing)
-                            Positioned(
-                              top: 10, right: 12,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: HuddlColors.teal,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                  const Icon(Icons.check_circle, size: 11, color: Colors.white),
-                                  const SizedBox(width: 4),
-                                  Text('Going', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
-                                ]),
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     ),
-                    // Card body
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(e.category.toUpperCase(),
-                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          Text(e.title,
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (e.location.isNotEmpty) ...[  
-                            const SizedBox(height: 3),
-                            Row(children: [
-                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
-                              const SizedBox(width: 3),
-                              Expanded(child: Text(e.location,
-                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
-                                maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            ]),
-                          ],
-                          const SizedBox(height: 10),
+                  ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(e.category.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(e.title,
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (e.location.isNotEmpty) ...[  
+                          const SizedBox(height: 3),
                           Row(children: [
-                            _buildAvatarStack(e.id.hashCode, hc),
-                            const SizedBox(width: 6),
-                            Expanded(child: Text('${e.attendees} attending',
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
-                            _buildActionPill(
-                              isGoing ? 'Going ✓' : 'Book',
-                              isGoing ? HuddlColors.teal : HuddlColors.accentAmber,
-                              hc,
-                              isActive: isGoing,
-                            ),
+                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                            const SizedBox(width: 2),
+                            Expanded(child: Text(e.location,
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ]),
                         ],
-                      ),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _buildAvatarStack(e.id.hashCode, hc),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text('${e.attendees} attending',
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                          _buildActionPill(
+                            isGoing ? 'Going ✓' : 'Book',
+                            isGoing ? HuddlColors.teal : HuddlColors.accentAmber,
+                            hc,
+                            isActive: isGoing,
+                          ),
+                        ]),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -2069,93 +2078,96 @@ class _HomeScreenState extends State<HomeScreen>
 
   // ── Services carousel ─────────────────────────────────────────────────────
   Widget _buildServicesCarousel(dynamic hc) {
-    final services = _featuredServices.take(5).toList();
+    final services = _featuredServices.take(8).toList();
     if (services.isEmpty) {
       return _buildCarouselEmpty(hc, 'No services listed yet', Icons.handshake_outlined);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: services.map((s) {
+    return SizedBox(
+      height: 320,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: services.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final s = services[index];
           final hasImage = s.imageUrl != null && s.imageUrl!.isNotEmpty;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: GestureDetector(
-              onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: hc.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero photo with category badge
-                    SizedBox(
-                      height: 160, width: double.infinity,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          hasImage
-                              ? Image.network(s.imageUrl!, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
-                              : _serviceImageFallback(s.category.emoji),
-                          // Category badge — top-right
-                          Positioned(
-                            top: 10, right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: HuddlColors.blueDark,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
-                              ),
-                              child: Text(s.category.displayName,
-                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.white)),
+          return GestureDetector(
+            onTap: () { HapticFeedback.selectionClick(); _switchToTab(2); },
+            child: Container(
+              width: 220,
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero photo with category badge
+                  SizedBox(
+                    height: 150, width: 220,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        hasImage
+                            ? Image.network(s.imageUrl!, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _serviceImageFallback(s.category.emoji))
+                            : _serviceImageFallback(s.category.emoji),
+                        // Category badge — top-right
+                        Positioned(
+                          top: 8, right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.blueDark,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
+                            child: Text(s.category.displayName,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white)),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    // Card body
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(s.category.displayName.toUpperCase(),
-                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                  ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s.category.displayName.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(s.name,
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (s.tagline.isNotEmpty) ...[  
+                          const SizedBox(height: 3),
+                          Text(s.tagline,
+                            style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
                             maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          Text(s.name,
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (s.tagline.isNotEmpty) ...[  
-                            const SizedBox(height: 3),
-                            Text(s.tagline,
-                              style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ],
-                          const SizedBox(height: 10),
-                          Row(children: [
-                            _buildAvatarStack(s.id.hashCode, hc),
-                            const SizedBox(width: 6),
-                            Expanded(child: Text(
-                              s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
-                            _buildActionPill('View', HuddlColors.blueDark, hc),
-                          ]),
                         ],
-                      ),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _buildAvatarStack(s.id.hashCode, hc),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text(
+                            s.endorsementCount > 0 ? '${s.endorsementCount} endorsed' : 'Recommended',
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                          _buildActionPill('View', HuddlColors.blueDark, hc),
+                        ]),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
@@ -2169,130 +2181,133 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // ── Market carousel — full-width cards matching Groups/Meetups style ─────
+  // ── Market carousel — horizontal scroll matching Groups/Meetups style ────
   Widget _buildMarketCarousel(dynamic hc) {
-    final items = _rehomeService.allItems.take(5).toList();
+    final items = _rehomeService.allItems.take(8).toList();
     if (items.isEmpty) {
       return _buildCarouselEmpty(hc, 'No items listed yet', Icons.storefront_outlined);
     }
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: items.map((item) {
+    return SizedBox(
+      height: 320,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final item = items[index];
           final hasImage = item.imageUrls.isNotEmpty;
           final priceStr = item.isFree
               ? 'Free'
               : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
           final priceColor = item.isFree ? HuddlColors.teal : HuddlColors.primary;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _marketTaps++);
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ItemDetailScreen(item: item),
-                ));
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: hc.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hero photo with condition badge overlay
-                    SizedBox(
-                      height: 160, width: double.infinity,
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          hasImage
-                              ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => _marketImageFallback(item))
-                              : _marketImageFallback(item),
-                          // Subtle gradient
-                          const DecoratedBox(
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _marketTaps++);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ItemDetailScreen(item: item),
+              ));
+            },
+            child: Container(
+              width: 220,
+              decoration: BoxDecoration(
+                color: hc.surface,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 3))],
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero photo with condition badge overlay
+                  SizedBox(
+                    height: 150, width: 220,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        hasImage
+                            ? Image.network(item.imageUrls.first, fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => _marketImageFallback(item))
+                            : _marketImageFallback(item),
+                        // Subtle gradient
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Color(0x22000000)],
+                              stops: [0.55, 1.0],
+                            ),
+                          ),
+                        ),
+                        // Condition badge — top-right
+                        Positioned(
+                          top: 8, right: 10,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [Colors.transparent, Color(0x22000000)],
-                                stops: [0.55, 1.0],
-                              ),
+                              color: item.condition.color,
+                              borderRadius: BorderRadius.circular(7),
+                              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
                             ),
+                            child: Text(item.condition.label,
+                              style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.white)),
                           ),
-                          // Condition badge — top-right
-                          Positioned(
-                            top: 10, right: 12,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: item.condition.color,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 4)],
-                              ),
-                              child: Text(item.condition.label,
-                                style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white)),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    // Card body
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(item.category.label.toUpperCase(),
-                            style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
-                            maxLines: 1, overflow: TextOverflow.ellipsis),
-                          const SizedBox(height: 4),
-                          Text(item.title,
-                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: hc.textPrimary),
-                            maxLines: 2, overflow: TextOverflow.ellipsis),
-                          if (item.sellerLocation.isNotEmpty) ...[
-                            const SizedBox(height: 3),
-                            Row(children: [
-                              Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
-                              const SizedBox(width: 3),
-                              Expanded(child: Text(item.sellerLocation,
-                                style: GoogleFonts.poppins(fontSize: 12, color: hc.textTertiary, fontStyle: FontStyle.italic),
-                                maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            ]),
-                          ],
-                          const SizedBox(height: 10),
+                  ),
+                  // Card body
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.category.label.toUpperCase(),
+                          style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600, color: hc.textTertiary, letterSpacing: 0.5),
+                          maxLines: 1, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(item.title,
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: hc.textPrimary),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        if (item.sellerLocation.isNotEmpty) ...[
+                          const SizedBox(height: 3),
                           Row(children: [
-                            _buildAvatarStack(item.id.hashCode, hc),
-                            const SizedBox(width: 6),
-                            Expanded(child: Text('Near you',
-                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary))),
-                            // Price pill (Groups "Join" button pattern)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: item.isFree
-                                    ? HuddlColors.teal.withValues(alpha: 0.10)
-                                    : const Color(0xFFF2F2F2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(priceStr,
-                                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700, color: priceColor)),
-                            ),
+                            Icon(Icons.location_on_outlined, size: 11, color: hc.textTertiary),
+                            const SizedBox(width: 2),
+                            Expanded(child: Text(item.sellerLocation,
+                              style: GoogleFonts.poppins(fontSize: 11, color: hc.textTertiary, fontStyle: FontStyle.italic),
+                              maxLines: 1, overflow: TextOverflow.ellipsis)),
                           ]),
                         ],
-                      ),
+                        const SizedBox(height: 10),
+                        Row(children: [
+                          _buildAvatarStack(item.id.hashCode, hc),
+                          const SizedBox(width: 5),
+                          Expanded(child: Text('Near you',
+                            style: GoogleFonts.poppins(fontSize: 10, color: hc.textTertiary))),
+                          // Price pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: item.isFree
+                                  ? HuddlColors.teal.withValues(alpha: 0.10)
+                                  : const Color(0xFFF2F2F2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(priceStr,
+                              style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700, color: priceColor)),
+                          ),
+                        ]),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }
