@@ -586,17 +586,38 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
 
-      // ── 1. Listings ────────────────────────────────────────────────────────
+      // ── 1a. All active listings (Buy tab) ─────────────────────────────────
       final docs = await FirestoreService().getMarketplaceListings();
       for (final d in docs) {
         final item = RehomeItem.fromFirestore(d);
         if (item.id.isEmpty) continue;
-        // Avoid duplicates (item already added by a local create action)
         if (_service.allItems.any((i) => i.id == item.id)) continue;
         _service.addListing(item);
-        // Track own listings
         if (uid != null && item.sellerId == uid) {
           _service.addMyListing(item);
+        }
+      }
+
+      // ── 1b. Own listings — ALL statuses (active + sold) for Sell tab ────────
+      // getMyListings() queries sellerId == uid with no status filter, so the
+      // user's sold history shows up in the Sell tab regardless of how old it is.
+      if (uid != null) {
+        try {
+          final myDocs = await FirestoreService().getMyListings();
+          for (final d in myDocs) {
+            final item = RehomeItem.fromFirestore(d);
+            if (item.id.isEmpty) continue;
+            // Add to global list if not already there
+            if (!_service.allItems.any((i) => i.id == item.id)) {
+              _service.addListing(item);
+            }
+            // Always register as own listing (avoids duplicates internally)
+            if (!_service.myListings.any((i) => i.id == item.id)) {
+              _service.addMyListing(item);
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) debugPrint('[Marketplace] getMyListings error: $e');
         }
       }
 
@@ -1664,13 +1685,12 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     final offers = _service.pendingOffers;
     final offersFirst = _ai.offersNeedAttention(offers);
 
-    // Separate active vs sold for adaptive display
+    // Separate active vs sold — show full sold history, no time filter
     final active = myListings.where((i) => !i.isSold).toList();
     final sold = myListings.where((i) => i.isSold).toList();
-    // Auto-collapse: only show recently-sold (within 48h)
-    final recentlySold = sold.where((i) {
-      return DateTime.now().difference(i.listedAt).inHours < 48;
-    }).toList();
+    // Sort sold: most recently sold first
+    sold.sort((a, b) => b.listedAt.compareTo(a.listedAt));
+    final recentlySold = sold; // Show all sold, not just last 48h
 
     return RefreshIndicator(
       color: HuddlColors.primary,
@@ -1699,7 +1719,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
           // ── Empty state ──
           // liveRegion: screen readers announce when seller's listings become empty
-          if (active.isEmpty && offers.isEmpty && recentlySold.isEmpty)
+          if (active.isEmpty && offers.isEmpty && sold.isEmpty)
             Semantics(
               liveRegion: true,
               child: Padding(
@@ -1714,7 +1734,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             ),
 
           // ── AI transparency note (subtle, non-intrusive) ──
-          if (active.isNotEmpty || offers.isNotEmpty)
+          if (active.isNotEmpty || offers.isNotEmpty || sold.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 20),
               child: Center(
@@ -1842,7 +1862,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(
-            'Recently sold',
+            'Sold history',
             style: _adaptiveText(
               fontSize: 13,
               fontWeight: FontWeight.w500,
