@@ -11,50 +11,54 @@ import '../../widgets/common/huddl_empty_state.dart';
 // =============================================================================
 // SERVICES SCREEN — HUDDL TRUSTED LOCAL DIRECTORY
 //
-// Three tabs:
-//   1. Directory   — Borough-scoped listing list. Category chips. Search.
-//                    Each card matches Groups/Meetups/Events card pattern:
-//                    hero gradient block + badges, name/tagline body,
-//                    endorser avatar stack + count + grey "Enquire" pill.
-//   2. Add / AI    — Two paths: AI extraction + manual form.
-//   3. My Listings — Listings the current user has added.
-//
-// Design language: matches Groups / Meetups / Events tabs exactly.
+// Single unified screen (no sub-tabs).
 //   • AnimatedCrossFade filter pill ↔ inline search
 //   • "Suggested for you" / "Search results" section label
-//   • Card: gradient hero block, overlapping badge pills, bottom avatar row
-//   • Grey "Enquire" pill — same spec as grey "Join" pill in other tabs
+//   • Card: same _GroupMessageRow shell (horizontal tile with rounded avatar)
+//   • AI badge  — shown when listingSource is 'places_api' / 'ai_discovered*'
+//   • Parent badge — shown when listingSource is 'parent_added'
+//   • + FAB (bottom-right) → opens Add / AI bottom sheet
 // =============================================================================
 
-// ── Category hero images — one curated photo per ServiceCategory ──────────────
+// ── Category hero images — stable Unsplash CDN URLs ──────────────────────────
 const Map<ServiceCategory, String> _kCategoryImages = {
   ServiceCategory.childcare:
-      'https://sspark.genspark.ai/cfimages?u1=lXQJOTgp%2BBgUHbIUlDooUhY1RjxmNpAY6dhMucQAvu%2FrpyRTNW1h4vpaBj0C2tkmYa%2BN07zzptHirLPADMQxg5MRNKPfnOEHKw3d23L%2B6cLg9Q%3D%3D&u2=0vonpIy3sTCMtw9X&width=2560',
+      'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=400&h=400&fit=crop',
   ServiceCategory.babysitting:
-      'https://sspark.genspark.ai/cfimages?u1=zUnqifKxClGrNUm6GoTXowYATp0XqFTSytIJR7pdCtSOp8MocMU812LDEl7DolWGS7P4Jk4R%2FBvqTKZj9tUV9A%2Fw1WNsHdo6ZvWETNScQIEhlg%3D%3D&u2=IIyyPruEViQXNViU&width=2560',
+      'https://images.unsplash.com/photo-1566004100631-35d015d6a491?w=400&h=400&fit=crop',
   ServiceCategory.cleaning:
-      'https://sspark.genspark.ai/cfimages?u1=Ir9IwEGTZIY2zHnOp1hqot8frnYUGm%2B%2FtyMbR%2BWKPTJF%2BweraxYXseqLe5IAgOnjgowSfifGoB%2FsHf9sVt6LEnh9vK%2BHHrW8zLmgHrkUgodPgw%3D%3D&u2=xUqpAqOwJ8FBMSlZ&width=2560',
+      'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&h=400&fit=crop',
   ServiceCategory.healthWellness:
-      'https://sspark.genspark.ai/cfimages?u1=gE36%2BF9IRRKA81Qe8wkFpnM9B3n8uj2pOOynW1kX4%2FNHvUEYpcDER%2FMU1cpIEJKMRXmxhv8m2WP0UGo%2Bik5Ixx7G0sEKbmQqwbfUbTLjpltAdxRxiN1GIOTpIgpo1QZ79%2Feq&u2=KnDk%2BdQFkvloygdp&width=2560',
+      'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop',
   ServiceCategory.education:
-      'https://sspark.genspark.ai/cfimages?u1=%2F0bNAL0Csqkyzu1%2Bjz15Z0tp%2F5tnLmJ7XLCFL%2FUGfHmqwVYvPW4Pn5aM5tkvBHXhDtNiCVkgrC%2FTh8w2gqElG17gY775fq9PGrK50Hn%2F05MNQ2rEegOyrExuTc30WzQ4v7UQFO7rLObrLqB7vrlpatdUDjWKPMn0ZGkwmpbiYrIcn6SMFnohWpTQfOcFcEO5&u2=lwHFEtk7ntXgewHG&width=2560',
+      'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&h=400&fit=crop',
   ServiceCategory.fitness:
-      'https://sspark.genspark.ai/cfimages?u1=AA3ZqHXUzMSz5RuWraTIKisgThzm09WpV%2BK78xNCqAXGyDwZCcTvMLVODNXx3KfHBj2wS4CdN%2FBrpOPaws9mD6RcDL6XBFTpwbkvJ%2FRi2qgl4%2FRxZSATwcNgx6caGZzRpNkBHeY5LrWf7s0N%2BwwKU4e64BCwHgJ1YjrAfuS0jJMPCzkeZFIlnw0k2i2ytzOfZSCy%2FjKFsc%2FN%2FSMzAaKniPJ1V45%2F0JiVnsydbP6NJjjrMtKvAMPxzdz0TWOnLZuwfvpjhvbynL9kOG1%2ButLO&u2=VzRgfy8MQafQjSCr&width=2560',
+      'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&h=400&fit=crop',
   ServiceCategory.firstAid:
-      'https://sspark.genspark.ai/cfimages?u1=loy08xxY9jBnV7BSEK2VzzjE7wmPR8LYQ1CynY17K%2BqbouTAmpaMVz4tiwvfOSEFVp9ePAYrpY1hkT67fSrVjHqDmNclcYvESyiNdo4jPDaB9dRb7ROp5v9L9wK8J5BCEdqGIQf7DjZ2p1K38FWzMlTVVku0zXvjTIt2&u2=%2BqrRuvb%2FmfoL91qi&width=2560',
+      'https://images.unsplash.com/photo-1516549655169-df83a0774514?w=400&h=400&fit=crop',
   ServiceCategory.doula:
-      'https://sspark.genspark.ai/cfimages?u1=T730qrMnzIlihb6AVRVEPf2LDcj%2FhdkMduB%2BSzbDhVcWQKBcwxhS8Yh%2Fdd%2FV%2BVPLEu6pdyZ22u2yYfpYMSB%2BnSKFMYOa5nVxsbLz073wnYW2%2Bhi0Oscq34cvvEBbfmjWxdMb2fV7PP3FqhNyGs8FPF6zieQFX320Ng%3D%3D&u2=dJRcXVAPVRoT%2FjuR&width=2560',
+      'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400&h=400&fit=crop',
   ServiceCategory.homeServices:
-      'https://sspark.genspark.ai/cfimages?u1=VQEnOudVNSytwnVj%2FvAiOyaKDAIOEPdImM348pslvy4UFflhtpoH%2BroVM2%2BTc8zT4PaMUMc6Mq%2FgliWTrU36qPwhJDK61qJl8Z4xIF0%2Fbq2ww9TxId52flaQzbW%2BqCSnz3kjQle8LLak25ag57dwwPWF9pMXuEsXqnrK5aD%2BPKxDUvvlarC8LIKHy2YrzoWFv8VVDUKwJvI%3D&u2=J0%2FOk1F0WA52PAYC&width=2560',
+      'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop',
   ServiceCategory.photography:
-      'https://sspark.genspark.ai/cfimages?u1=E6EGUX%2F81QxpI1lLVaVIi0%2FyiHSxpt3HdZvjgvuaviqbW6nKSOFR%2BTC6VIz0uKr2KEFTEGyNykOtHxBQquMVRCRNeyNUztdlCcLMU0qSJ2XhLg0xuw%3D%3D&u2=4PXKFb2zKZk5kNE0&width=2560',
+      'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400&h=400&fit=crop',
   ServiceCategory.food:
-      'https://sspark.genspark.ai/cfimages?u1=hyqXHGIn7Mt9RwSV2eb58nVtvwWDcTEEGr63uoGDwPO02UBYOIpd8lAtcGB5XeC3PsLGG2iPeg8X5SkMXB%2BIc%2FoF7zXb60X1Xxwt8r1hVx%2BLMBFCLwbCaZz2xoiK8npNHA%3D%3D&u2=p5wcIzklSiUvDaeZ&width=2560',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop',
   ServiceCategory.other:
-      'https://sspark.genspark.ai/cfimages?u1=vvpuu4fxcCh%2F2P6GC9ZVw0eSAJQN6nnLJ2YZROvppLjxFNixe5Id8LjI9BNiZDgm4KhOqzBjf%2Fh4ETocGLSdiWgS%2B7RhH6Sy9uXq3TKSPZnzHGR8i%2Bk0cx%2Bwr9c2gw3wx4vepGMBiqxoahiw9dQtZnTEVE3EdMuCtZK8D%2FrwU5AxL7%2Fo47N0CQ8wezk0tDYn8KYSyo2pu1Xo1Zozul76rKNvT2Wc0WfrYrYsy5zhBM%2Bryh9pa%2F5sAgKy4w%2FJiRU%2B3gGRFGWQZSMw8As%3D&u2=BhCAnYALcyZ1r%2BVK&width=2560',
+      'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=400&fit=crop',
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Source badge helpers ─────────────────────────────────────────────────────
+
+/// Returns true for any AI-discovered listing source.
+bool _isAiSource(String source) =>
+    source == 'places_api' ||
+    source.startsWith('ai_discovered') ||
+    source == 'ai_discovered_search';
+
+bool _isParentSource(String source) => source == 'parent_added';
+
+// ─── Main screen ─────────────────────────────────────────────────────────────
 
 class ServicesScreen extends StatefulWidget {
   final ValueNotifier<bool> searchTrigger;
@@ -65,86 +69,11 @@ class ServicesScreen extends StatefulWidget {
 }
 
 class _ServicesScreenState extends State<ServicesScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-  final _service = LocalServicesService();
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── Sub-tab bar (Directory / Add·AI / My Listings) ─────────────────
-        Container(
-          color: hc.surface,
-          child: TabBar(
-            controller: _tabController,
-            labelColor: HuddlColors.primary,
-            unselectedLabelColor: hc.textTertiary,
-            indicatorColor: HuddlColors.primary,
-            indicatorWeight: 2.5,
-            indicatorSize: TabBarIndicatorSize.label,
-            dividerColor: hc.divider,
-            labelStyle: GoogleFonts.poppins(
-                fontSize: 13, fontWeight: FontWeight.w600),
-            unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 13, fontWeight: FontWeight.w400),
-            tabs: const [
-              Tab(text: 'Directory'),
-              Tab(text: 'Add / AI'),
-              Tab(text: 'My Listings'),
-            ],
-          ),
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _DirectoryTab(
-                service: _service,
-                searchTrigger: widget.searchTrigger,
-              ),
-              _AddServiceTab(
-                service: _service,
-                onListingAdded: () => _tabController.animateTo(0),
-              ),
-              _MyListingsTab(service: _service),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── TAB 1: Directory ─────────────────────────────────────────────────────────
-
-class _DirectoryTab extends StatefulWidget {
-  final LocalServicesService service;
-  final ValueNotifier<bool> searchTrigger;
-  const _DirectoryTab({required this.service, required this.searchTrigger});
-
-  @override
-  State<_DirectoryTab> createState() => _DirectoryTabState();
-}
-
-class _DirectoryTabState extends State<_DirectoryTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
+
+  final _service = LocalServicesService();
 
   ServiceCategory? _selectedCategory;
   bool _isSearchActive = false;
@@ -195,7 +124,6 @@ class _DirectoryTabState extends State<_DirectoryTab>
   }
 
   // Keywords that signal an entry is an event/activity, not a service provider.
-  // These can slip in via AI extraction from group messages.
   static const _kEventKeywords = [
     'parkrun', 'park run', 'fun run', 'race', '5k', '10k', 'marathon',
     'community event', 'open day', 'open house', 'festival', 'fair',
@@ -210,7 +138,6 @@ class _DirectoryTabState extends State<_DirectoryTab>
   }
 
   List<ServiceListing> _filter(List<ServiceListing> all) {
-    // Strip out event/activity entries that the AI may have added incorrectly
     var result = all.where((l) => !_isEventLike(l)).toList();
     if (_selectedCategory != null) {
       result = result.where((l) => l.category == _selectedCategory).toList();
@@ -227,6 +154,15 @@ class _DirectoryTabState extends State<_DirectoryTab>
     return result;
   }
 
+  void _openAddSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AddServiceSheet(service: _service),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -234,235 +170,248 @@ class _DirectoryTabState extends State<_DirectoryTab>
     const Color filterText = Color(0xFF42464C);
     final bool hasActiveFilter = _selectedCategory != null;
 
-    return Column(
-      children: [
-        // ══ TOP HEADER — filter pill ↔ inline search (Events/Meetups pattern) ══
-        Container(
-          color: hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // AnimatedCrossFade: filter pill ↔ inline search bar
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 220),
-                crossFadeState: _isSearchActive
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showCategorySheet(context),
-                      child: Container(
-                        height: 44,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.08),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: 18,
-                              color: hasActiveFilter
-                                  ? HuddlColors.primary
-                                  : filterText,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              hasActiveFilter
-                                  ? '${_selectedCategory!.emoji} ${_selectedCategory!.displayName} •'
-                                  : 'Filter by category',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
+    return Scaffold(
+      backgroundColor: HuddlColors.background,
+      body: Column(
+        children: [
+          // ══ TOP HEADER — filter pill ↔ inline search ═══════════════════════
+          Container(
+            color: hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AnimatedCrossFade(
+                  duration: const Duration(milliseconds: 220),
+                  crossFadeState: _isSearchActive
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
+                  firstChild: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _showCategorySheet(context),
+                        child: Container(
+                          height: 44,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                size: 18,
                                 color: hasActiveFilter
                                     ? HuddlColors.primary
                                     : filterText,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (hasActiveFilter)
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _selectedCategory = null);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
-                          child: Text(
-                            'Clear',
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                // ── Inline search bar ───────────────────────────────────────
-                secondChild: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.background,
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: HuddlColors.primary.withValues(alpha: 0.35),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 14),
-                            const Icon(Icons.search,
-                                size: 18, color: HuddlColors.primary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchCtrl,
-                                focusNode: _searchFocus,
-                                onChanged: (v) =>
-                                    setState(() => _searchQuery = v.trim()),
+                              const SizedBox(width: 8),
+                              Text(
+                                hasActiveFilter
+                                    ? '${_selectedCategory!.emoji} ${_selectedCategory!.displayName} •'
+                                    : 'Filter by category',
                                 style: GoogleFonts.poppins(
-                                    fontSize: 14, color: filterText),
-                                decoration: InputDecoration(
-                                  hintText: 'Search cleaners, tutors…',
-                                  hintStyle: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: HuddlColors.textTertiary,
-                                  ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  color: hasActiveFilter
+                                      ? HuddlColors.primary
+                                      : filterText,
                                 ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      if (hasActiveFilter)
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _selectedCategory = null);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                            child: Text(
+                              'Clear',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.primary,
                               ),
                             ),
-                            if (_searchQuery.isNotEmpty)
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  _searchQuery = '';
-                                  _searchCtrl.clear();
-                                }),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.close,
-                                      size: 16,
-                                      color: HuddlColors.textTertiary),
+                          ),
+                        ),
+                    ],
+                  ),
+                  // ── Inline search bar ────────────────────────────────────
+                  secondChild: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: HuddlColors.background,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color:
+                                  HuddlColors.primary.withValues(alpha: 0.35),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 14),
+                              const Icon(Icons.search,
+                                  size: 18, color: HuddlColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchCtrl,
+                                  focusNode: _searchFocus,
+                                  onChanged: (v) =>
+                                      setState(() => _searchQuery = v.trim()),
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 14, color: filterText),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search cleaners, tutors…',
+                                    hintStyle: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: HuddlColors.textTertiary,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
                                 ),
                               ),
-                          ],
+                              if (_searchQuery.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () => setState(() {
+                                    _searchQuery = '';
+                                    _searchCtrl.clear();
+                                  }),
+                                  child: const Padding(
+                                    padding: EdgeInsets.only(right: 10),
+                                    child: Icon(Icons.close,
+                                        size: 16,
+                                        color: HuddlColors.textTertiary),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: _clearSearch,
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: _clearSearch,
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: HuddlColors.primary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 12),
-              // Section label — mirrors Events/Meetups pattern
-              Text(
-                _searchQuery.isEmpty ? 'Suggested for you' : 'Search results',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: filterText,
-                ),
-              ),
-              const SizedBox(height: 4),
-            ],
-          ),
-        ),
-
-        // ── Listing stream ──────────────────────────────────────────────────
-        Expanded(
-          child: ColoredBox(
-            color: HuddlColors.background,
-            child: StreamBuilder<List<ServiceListing>>(
-              stream: widget.service.listingsStream(category: _selectedCategory),
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator(
-                          color: HuddlColors.primary));
-                }
-                if (snap.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Text(
-                        'Could not load listings.\nCheck your connection.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                            fontSize: 14, color: context.hc.textSecondary),
-                      ),
-                    ),
-                  );
-                }
-                final all = snap.data ?? [];
-                final filtered = _filter(all);
-
-                if (filtered.isEmpty) {
-                  return _EmptyDirectory(
-                    hasFilter: _selectedCategory != null ||
-                        _searchQuery.isNotEmpty,
-                    onClear: () {
-                      setState(() {
-                        _selectedCategory = null;
-                        _searchCtrl.clear();
-                        _searchQuery = '';
-                      });
-                    },
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, i) => _ListingCard(
-                    listing: filtered[i],
-                    service: widget.service,
+                    ],
                   ),
-                );
-              },
+                ),
+
+                const SizedBox(height: 12),
+                Text(
+                  _searchQuery.isEmpty ? 'Suggested for you' : 'Search results',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: filterText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
             ),
           ),
-        ),
-      ],
+
+          // ── Listing stream ────────────────────────────────────────────────
+          Expanded(
+            child: ColoredBox(
+              color: HuddlColors.background,
+              child: StreamBuilder<List<ServiceListing>>(
+                stream: _service.listingsStream(category: _selectedCategory),
+                builder: (context, snap) {
+                  if (snap.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                        child: CircularProgressIndicator(
+                            color: HuddlColors.primary));
+                  }
+                  if (snap.hasError) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(
+                          'Could not load listings.\nCheck your connection.',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: context.hc.textSecondary),
+                        ),
+                      ),
+                    );
+                  }
+                  final all = snap.data ?? [];
+                  final filtered = _filter(all);
+
+                  if (filtered.isEmpty) {
+                    return _EmptyDirectory(
+                      hasFilter: _selectedCategory != null ||
+                          _searchQuery.isNotEmpty,
+                      onClear: () {
+                        setState(() {
+                          _selectedCategory = null;
+                          _searchCtrl.clear();
+                          _searchQuery = '';
+                        });
+                      },
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(0, 8, 0, 100),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) => _ListingCard(
+                      listing: filtered[i],
+                      service: _service,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+      // ── + FAB (matches Groups tab) ────────────────────────────────────────
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          _openAddSheet(context);
+        },
+        backgroundColor: HuddlColors.primary,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
     );
   }
 
-  // Category filter bottom sheet — replaces the horizontal chip row
+  // Category filter bottom sheet
   void _showCategorySheet(BuildContext context) {
     HapticFeedback.selectionClick();
     showModalBottomSheet(
@@ -498,7 +447,6 @@ class _DirectoryTabState extends State<_DirectoryTab>
               ),
             ),
             const SizedBox(height: 12),
-            // "All" option
             _CategorySheetTile(
               label: 'All categories',
               emoji: '🏠',
@@ -525,7 +473,7 @@ class _DirectoryTabState extends State<_DirectoryTab>
   }
 }
 
-// ─── Category sheet tile ────────────────────────────────────────────────────
+// ─── Category sheet tile ──────────────────────────────────────────────────────
 
 class _CategorySheetTile extends StatelessWidget {
   final String label;
@@ -569,8 +517,7 @@ class _CategorySheetTile extends StatelessWidget {
                 label,
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  fontWeight:
-                      selected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
                   color: selected ? HuddlColors.primary : hc.textPrimary,
                 ),
               ),
@@ -585,7 +532,48 @@ class _CategorySheetTile extends StatelessWidget {
   }
 }
 
-// ─── Listing card — matches Groups/Meetups/Events card pattern ───────────────
+// ─── Source badge chips ───────────────────────────────────────────────────────
+
+class _SourceBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _SourceBadge({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: color.withValues(alpha: 0.25), width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 9, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Listing card — identical shell to _GroupMessageRow ──────────────────────
 
 class _ListingCard extends StatefulWidget {
   final ServiceListing listing;
@@ -599,14 +587,14 @@ class _ListingCard extends StatefulWidget {
 
 class _ListingCardState extends State<_ListingCard> {
   bool _hasEndorsed = false;
-  bool _endorsing   = false;
+  bool _endorsing = false;
   late int _count;
 
   @override
   void initState() {
     super.initState();
     _hasEndorsed = widget.listing.hasEndorsed;
-    _count       = widget.listing.endorsementCount;
+    _count = widget.listing.endorsementCount;
     _checkEndorsed();
   }
 
@@ -621,7 +609,12 @@ class _ListingCardState extends State<_ListingCard> {
     HapticFeedback.mediumImpact();
     if (_hasEndorsed) {
       await widget.service.removeEndorsement(widget.listing.id);
-      if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
+      if (mounted) {
+        setState(() {
+          _hasEndorsed = false;
+          _count = (_count - 1).clamp(0, 9999);
+        });
+      }
     } else {
       final quote = await _showEndorseDialog();
       if (quote == null) {
@@ -630,7 +623,12 @@ class _ListingCardState extends State<_ListingCard> {
       }
       await widget.service.endorseListing(
           widget.listing.id, quote: quote.isEmpty ? null : quote);
-      if (mounted) setState(() { _hasEndorsed = true; _count = _count + 1; });
+      if (mounted) {
+        setState(() {
+          _hasEndorsed = true;
+          _count = _count + 1;
+        });
+      }
     }
     if (mounted) setState(() => _endorsing = false);
   }
@@ -664,7 +662,8 @@ class _ListingCardState extends State<_ListingCard> {
                   maxLength: 120,
                   style: GoogleFonts.poppins(fontSize: 13),
                   decoration: InputDecoration(
-                    hintText: '"Reliable, insured, brilliant with our kids"',
+                    hintText:
+                        '"Reliable, insured, brilliant with our kids"',
                     hintStyle: GoogleFonts.poppins(
                         fontSize: 12, color: context.hc.textTertiary),
                     filled: true,
@@ -694,8 +693,7 @@ class _ListingCardState extends State<_ListingCard> {
                 onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
                 child: Text('Endorse',
                     style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600)),
+                        color: Colors.white, fontWeight: FontWeight.w600)),
               ),
             ],
           );
@@ -707,28 +705,31 @@ class _ListingCardState extends State<_ListingCard> {
     final hc = context.hc;
     final listing = widget.listing;
     final catColor = _categoryColor(listing.category);
-    // Use per-listing image (from business website), falling back to category image
+
+    // Use per-listing image (Google photo), falling back to Unsplash category image
     final imageUrl = (listing.imageUrl?.isNotEmpty == true)
         ? listing.imageUrl!
         : (_kCategoryImages[listing.category] ??
-            _kCategoryImages[ServiceCategory.childcare]!);
+            _kCategoryImages[ServiceCategory.other]!);
 
-    // ── Verification badge ────────────────────────────────────────────────
-    String? badgeLabel;
-    Color? badgeColor;
+    // Source badge
+    final isAi = _isAiSource(listing.listingSource);
+    final isParent = _isParentSource(listing.listingSource);
+
+    // Verification badge
+    String? verifiedLabel;
+    Color? verifiedColor;
     if (listing.isVerified ||
         listing.verificationTier == VerificationTier.verified) {
-      badgeLabel = 'Verified';
-      badgeColor = HuddlColors.teal;
+      verifiedLabel = 'Verified';
+      verifiedColor = HuddlColors.teal;
     } else if (listing.verificationTier == VerificationTier.community ||
         listing.endorsementCount >= 3) {
-      badgeLabel = 'Community Pick';
-      badgeColor = HuddlColors.teal;
+      verifiedLabel = 'Community Pick';
+      verifiedColor = HuddlColors.teal;
     }
 
-    // ── Identical outer shell to _GroupMessageRow ─────────────────────────
-    // Padding(h:12, v:4) > Material(white, radius:16, elevation:1) >
-    // InkWell > Padding(h:14, v:12) > Row
+    // ── Same shell as _GroupMessageRow ────────────────────────────────────
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Material(
@@ -748,7 +749,7 @@ class _ListingCardState extends State<_ListingCard> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── 54 px rounded-square avatar (category photo) ────────
+                // ── 54 px rounded-square photo (Google Places / Unsplash) ──
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: Image.network(
@@ -774,58 +775,59 @@ class _ListingCardState extends State<_ListingCard> {
                 ),
                 const SizedBox(width: 12),
 
-                // ── Text column ─────────────────────────────────────────
+                // ── Text column ───────────────────────────────────────────
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Row 1 — name + optional badge + endorse pill
+                      // Row 1 — name + source badges + endorse pill
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Name (flexible, clips if long)
+                          // Name + inline badges
                           Expanded(
-                            child: Row(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 5,
                               children: [
-                                Flexible(
-                                  child: Text(
-                                    listing.name,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: _count > 0
-                                          ? FontWeight.w600
-                                          : FontWeight.w500,
-                                      color: hc.textPrimary,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  listing.name,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: _count > 0
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: hc.textPrimary,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                if (badgeLabel != null) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: badgeColor!
-                                          .withValues(alpha: 0.12),
-                                      borderRadius:
-                                          BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      badgeLabel,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: badgeColor,
-                                      ),
-                                    ),
+                                // AI badge
+                                if (isAi)
+                                  const _SourceBadge(
+                                    label: 'AI',
+                                    color: Color(0xFFFF6B35),
+                                    icon: Icons.auto_awesome,
                                   ),
-                                ],
+                                // Parent badge
+                                if (isParent)
+                                  const _SourceBadge(
+                                    label: 'Parent',
+                                    color: HuddlColors.teal,
+                                    icon: Icons.people_rounded,
+                                  ),
+                                // Verified badge
+                                if (verifiedLabel != null)
+                                  _SourceBadge(
+                                    label: verifiedLabel,
+                                    color: verifiedColor!,
+                                    icon: Icons.verified_rounded,
+                                  ),
                               ],
                             ),
                           ),
-                          // Endorse pill — far right of name row
+
+                          // Endorse pill — far right
                           const SizedBox(width: 8),
                           GestureDetector(
                             onTap: _endorsing ? null : _toggleEndorse,
@@ -864,9 +866,7 @@ class _ListingCardState extends State<_ListingCard> {
                                         ),
                                         const SizedBox(width: 4),
                                         Text(
-                                          _hasEndorsed
-                                              ? 'Endorsed'
-                                              : 'Endorse',
+                                          _hasEndorsed ? 'Endorsed' : 'Endorse',
                                           style: GoogleFonts.poppins(
                                             fontSize: 11,
                                             fontWeight: FontWeight.w600,
@@ -884,8 +884,7 @@ class _ListingCardState extends State<_ListingCard> {
 
                       const SizedBox(height: 3),
 
-                      // Row 2 — tagline + endorsement count (mirrors
-                      // _GroupMessageRow's subtitle row)
+                      // Row 2 — tagline + endorsement count
                       Row(
                         children: [
                           Expanded(
@@ -935,7 +934,7 @@ class _ListingCardState extends State<_ListingCard> {
   }
 }
 
-// ─── Inline tag chip (compact version for card body) ─────────────────────────
+// ─── Inline tag chip ─────────────────────────────────────────────────────────
 
 class _InlineTagChip extends StatelessWidget {
   final String tag;
@@ -1002,7 +1001,7 @@ class _VerifiedBadge extends StatelessWidget {
   }
 }
 
-// ─── Listing detail bottom sheet ───────────────────────────────────────────
+// ─── Listing detail bottom sheet ─────────────────────────────────────────────
 
 void _showListingDetail(BuildContext context, ServiceListing listing,
     LocalServicesService service) {
@@ -1078,7 +1077,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 ),
               ),
             ),
-            // ── Hero + name ────────────────────────────────────────────────
+            // ── Hero + name ──────────────────────────────────────────────
             Row(
               children: [
                 Container(
@@ -1106,10 +1105,27 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                           color: hc.textPrimary,
                         ),
                       ),
-                      Text(
-                        listing.category.displayName,
-                        style: GoogleFonts.poppins(
-                            fontSize: 13, color: hc.textSecondary),
+                      Row(
+                        children: [
+                          Text(
+                            listing.category.displayName,
+                            style: GoogleFonts.poppins(
+                                fontSize: 13, color: hc.textSecondary),
+                          ),
+                          const SizedBox(width: 6),
+                          if (_isAiSource(listing.listingSource))
+                            const _SourceBadge(
+                              label: 'AI Found',
+                              color: Color(0xFFFF6B35),
+                              icon: Icons.auto_awesome,
+                            ),
+                          if (_isParentSource(listing.listingSource))
+                            const _SourceBadge(
+                              label: 'Parent Added',
+                              color: HuddlColors.teal,
+                              icon: Icons.people_rounded,
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -1120,7 +1136,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ],
             ),
             const SizedBox(height: 14),
-            // ── Tagline ────────────────────────────────────────────────────
+            // ── Tagline ──────────────────────────────────────────────────
             if (listing.tagline.isNotEmpty) ...[
               Text(
                 listing.tagline,
@@ -1132,7 +1148,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 8),
             ],
-            // ── Description ────────────────────────────────────────────────
+            // ── Description ──────────────────────────────────────────────
             if (listing.description.isNotEmpty) ...[
               Text(
                 listing.description,
@@ -1141,18 +1157,17 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 12),
             ],
-            // ── Tags ───────────────────────────────────────────────────────
+            // ── Tags ────────────────────────────────────────────────────
             if (listing.tags.isNotEmpty) ...[
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: listing.tags
-                    .map((t) => _InlineTagChip(tag: t))
-                    .toList(),
+                children:
+                    listing.tags.map((t) => _InlineTagChip(tag: t)).toList(),
               ),
               const SizedBox(height: 16),
             ],
-            // ── Stats row ──────────────────────────────────────────────────
+            // ── Stats row ────────────────────────────────────────────────
             Row(
               children: [
                 _StatPill(
@@ -1169,7 +1184,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ],
             ),
             const SizedBox(height: 16),
-            // ── Contact CTAs ───────────────────────────────────────────────
+            // ── Contact CTAs ─────────────────────────────────────────────
             if (listing.phone != null) ...[
               _ContactRow(
                 icon: Icons.phone_outlined,
@@ -1204,7 +1219,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 8),
             ],
-            // ── Enquire via Huddl DM ───────────────────────────────────────
+            // ── Enquire via Huddl DM ────────────────────────────────────
             if (listing.ownerUid != null &&
                 listing.ownerUid !=
                     FirebaseAuth.instance.currentUser?.uid) ...[
@@ -1242,7 +1257,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 16),
             ],
-            // ── Endorsements section ───────────────────────────────────────
+            // ── Endorsements section ─────────────────────────────────────
             Row(
               children: [
                 Text(
@@ -1277,8 +1292,8 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
-                    child: CircularProgressIndicator(
-                        color: HuddlColors.teal)),
+                    child:
+                        CircularProgressIndicator(color: HuddlColors.teal)),
               )
             else if (_endorsements.isEmpty)
               Padding(
@@ -1298,7 +1313,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
   }
 }
 
-// ─── Endorsement tile ──────────────────────────────────────────────────────
+// ─── Endorsement tile ────────────────────────────────────────────────────────
 
 class _EndorsementTile extends StatelessWidget {
   final ServiceEndorsement endorsement;
@@ -1347,8 +1362,7 @@ class _EndorsementTile extends StatelessWidget {
               ),
             ],
           ),
-          if (endorsement.quote != null &&
-              endorsement.quote!.isNotEmpty) ...[
+          if (endorsement.quote != null && endorsement.quote!.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
               '"${endorsement.quote}"',
@@ -1366,7 +1380,7 @@ class _EndorsementTile extends StatelessWidget {
   }
 }
 
-// ─── Stat pill ─────────────────────────────────────────────────────────────
+// ─── Stat pill ───────────────────────────────────────────────────────────────
 
 class _StatPill extends StatelessWidget {
   final IconData icon;
@@ -1399,7 +1413,7 @@ class _StatPill extends StatelessWidget {
   }
 }
 
-// ─── Contact row ───────────────────────────────────────────────────────────
+// ─── Contact row ─────────────────────────────────────────────────────────────
 
 class _ContactRow extends StatelessWidget {
   final IconData icon;
@@ -1444,7 +1458,7 @@ class _ContactRow extends StatelessWidget {
   }
 }
 
-// ─── Empty state ───────────────────────────────────────────────────────────
+// ─── Empty state ─────────────────────────────────────────────────────────────
 
 class _EmptyDirectory extends StatelessWidget {
   final bool hasFilter;
@@ -1467,19 +1481,17 @@ class _EmptyDirectory extends StatelessWidget {
   }
 }
 
-// ─── TAB 2: Add / AI ──────────────────────────────────────────────────────────
+// ─── Add / AI bottom sheet (triggered by FAB) ────────────────────────────────
 
-class _AddServiceTab extends StatefulWidget {
+class _AddServiceSheet extends StatefulWidget {
   final LocalServicesService service;
-  final VoidCallback onListingAdded;
-  const _AddServiceTab(
-      {required this.service, required this.onListingAdded});
+  const _AddServiceSheet({required this.service});
 
   @override
-  State<_AddServiceTab> createState() => _AddServiceTabState();
+  State<_AddServiceSheet> createState() => _AddServiceSheetState();
 }
 
-class _AddServiceTabState extends State<_AddServiceTab> {
+class _AddServiceSheetState extends State<_AddServiceSheet> {
   final TextEditingController _chatPasteCtrl = TextEditingController();
   bool _extracting = false;
   List<ExtractedServiceRecommendation> _extracted = [];
@@ -1524,197 +1536,249 @@ class _AddServiceTabState extends State<_AddServiceTab> {
   @override
   Widget build(BuildContext context) {
     final hc = context.hc;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── AI extraction card ───────────────────────────────────────────
-          _SectionCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
+    return DraggableScrollableSheet(
+      initialChildSize: 0.70,
+      maxChildSize: 0.95,
+      minChildSize: 0.4,
+      expand: false,
+      builder: (_, scrollCtrl) => Container(
+        decoration: BoxDecoration(
+          color: hc.surface,
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: ListView(
+          controller: scrollCtrl,
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 40),
+          children: [
+            // Handle + title
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 4),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: hc.divider,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 8, 4, 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: HuddlColors.aiGradient,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.add_business_rounded,
+                        color: Colors.white, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Add a Service',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          'Paste a WhatsApp message or add manually',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, color: hc.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── AI extraction card ────────────────────────────────────────
+            _SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          gradient: HuddlColors.aiGradient,
+                          borderRadius: BorderRadius.circular(9),
+                        ),
+                        child: const Icon(Icons.auto_awesome,
+                            color: Colors.white, size: 14),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'AI Extraction',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: hc.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _chatPasteCtrl,
+                    maxLines: 4,
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: hc.textPrimary),
+                    decoration: InputDecoration(
+                      hintText:
+                          '"Has anyone used Sandra at Clean2Perfection? She\'s insured, reliable — 07700 900123"',
+                      hintStyle: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: hc.textTertiary,
+                          fontStyle: FontStyle.italic),
+                      filled: true,
+                      fillColor: hc.inputBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HuddlColors.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: _extracting
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.search, size: 18),
+                      label: Text(
+                        _extracting
+                            ? 'Analysing\u2026'
+                            : 'Extract recommendations',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600, fontSize: 14),
+                      ),
+                      onPressed: _extracting ? null : _runExtraction,
+                    ),
+                  ),
+                  if (_extractError != null) ...[
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        gradient: HuddlColors.aiGradient,
+                        color: HuddlColors.warningBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.auto_awesome,
-                          color: Colors.white, size: 16),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI Extraction',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: hc.textPrimary,
-                            ),
-                          ),
-                          Text(
-                            'Paste a WhatsApp message — AI finds the recommendation',
-                            style: GoogleFonts.poppins(
-                                fontSize: 11, color: hc.textSecondary),
-                          ),
-                        ],
+                      child: Text(
+                        _extractError!,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, color: HuddlColors.warningDark),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _chatPasteCtrl,
-                  maxLines: 5,
-                  style: GoogleFonts.poppins(
-                      fontSize: 13, color: hc.textPrimary),
-                  decoration: InputDecoration(
-                    hintText:
-                        '"Has anyone used Sandra at Clean2Perfection? She\'s insured, reliable, brilliant with our kids — 07700 900123"',
-                    hintStyle: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: hc.textTertiary,
-                        fontStyle: FontStyle.italic),
-                    filled: true,
-                    fillColor: hc.inputBg,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.all(12),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: HuddlColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                    ),
-                    icon: _extracting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.search, size: 18),
-                    label: Text(
-                      _extracting
-                          ? 'Analysing\u2026'
-                          : 'Extract recommendations',
+                  if (_extracted.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      '${_extracted.length} recommendation${_extracted.length > 1 ? 's' : ''} found',
                       style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600, fontSize: 14),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: hc.textPrimary,
+                      ),
                     ),
-                    onPressed: _extracting ? null : _runExtraction,
-                  ),
-                ),
-                if (_extractError != null) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: HuddlColors.warningBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _extractError!,
-                      style: GoogleFonts.poppins(
-                          fontSize: 13, color: HuddlColors.warningDark),
-                    ),
-                  ),
+                    const SizedBox(height: 8),
+                    ..._extracted.map((r) => _ExtractedRecommendationCard(
+                          rec: r,
+                          service: widget.service,
+                          onSubmit: (listingId) {
+                            if (listingId != null) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      '${r.name} added to the directory!'),
+                                  backgroundColor: HuddlColors.success,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                        )),
+                  ],
                 ],
-                if (_extracted.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    '${_extracted.length} recommendation${_extracted.length > 1 ? 's' : ''} found',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: hc.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  ..._extracted.map((r) => _ExtractedRecommendationCard(
-                        rec: r,
-                        service: widget.service,
-                        onSubmit: (listingId) {
-                          if (listingId != null) {
-                            widget.onListingAdded();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    '${r.name} added to the directory!'),
-                                backgroundColor: HuddlColors.success,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                      )),
-                ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          // ── Manual add toggle ────────────────────────────────────────────
-          GestureDetector(
-            onTap: () => setState(() => _showManual = !_showManual),
-            child: Row(
-              children: [
-                Icon(
-                  _showManual
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: hc.textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  _showManual ? 'Hide manual form' : 'Or add manually',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+
+            const SizedBox(height: 16),
+
+            // ── Manual add toggle ─────────────────────────────────────────
+            GestureDetector(
+              onTap: () => setState(() => _showManual = !_showManual),
+              child: Row(
+                children: [
+                  Icon(
+                    _showManual
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
                     color: hc.textSecondary,
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (_showManual) ...[
-            const SizedBox(height: 12),
-            _ManualAddForm(
-              service: widget.service,
-              onSubmit: (listingId) {
-                if (listingId != null) {
-                  widget.onListingAdded();
-                  setState(() => _showManual = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Listing added to the directory!'),
-                      backgroundColor: HuddlColors.success,
-                      behavior: SnackBarBehavior.floating,
+                  const SizedBox(width: 6),
+                  Text(
+                    _showManual ? 'Hide manual form' : 'Or add manually',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textSecondary,
                     ),
-                  );
-                }
-              },
+                  ),
+                ],
+              ),
             ),
+            if (_showManual) ...[
+              const SizedBox(height: 12),
+              _ManualAddForm(
+                service: widget.service,
+                onSubmit: (listingId) {
+                  if (listingId != null) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Listing added to the directory!'),
+                        backgroundColor: HuddlColors.success,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-// ─── Extracted recommendation card ────────────────────────────────────────
+// ─── Extracted recommendation card ───────────────────────────────────────────
 
 class _ExtractedRecommendationCard extends StatefulWidget {
   final ExtractedServiceRecommendation rec;
@@ -1811,11 +1875,11 @@ class _ExtractedRecommendationCardState
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: _confidenceColor(rec.confidence)
-                      .withValues(alpha: 0.12),
+                  color:
+                      _confidenceColor(rec.confidence).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1884,7 +1948,7 @@ Color _confidenceColor(String confidence) => switch (confidence) {
       _ => HuddlColors.textTertiary,
     };
 
-// ─── Manual add form ───────────────────────────────────────────────────────
+// ─── Manual add form ──────────────────────────────────────────────────────────
 
 class _ManualAddForm extends StatefulWidget {
   final LocalServicesService service;
@@ -2111,92 +2175,7 @@ class _FormField extends StatelessWidget {
   }
 }
 
-// ─── TAB 3: My Listings ───────────────────────────────────────────────────────
-
-class _MyListingsTab extends StatelessWidget {
-  final LocalServicesService service;
-  const _MyListingsTab({required this.service});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<List<ServiceListing>>(
-      stream: service.myListingsStream(),
-      builder: (context, snap) {
-        if (snap.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: CircularProgressIndicator(color: HuddlColors.primary));
-        }
-        final listings = snap.data ?? [];
-        if (listings.isEmpty) {
-          return const HuddlEmptyState(
-            illustration: HuddlIllustration.marketplace,
-            title: 'No listings yet',
-            subtitle: 'Listings you add to the directory will appear here.',
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-          itemCount: listings.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) =>
-              _MyListingCard(listing: listings[i], service: service),
-        );
-      },
-    );
-  }
-}
-
-class _MyListingCard extends StatelessWidget {
-  final ServiceListing listing;
-  final LocalServicesService service;
-  const _MyListingCard({required this.listing, required this.service});
-
-  @override
-  Widget build(BuildContext context) {
-    final hc = context.hc;
-    return Container(
-      decoration: BoxDecoration(
-        color: hc.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: hc.cardBorder,
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        leading: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _categoryColor(listing.category).withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(listing.category.emoji,
-                style: const TextStyle(fontSize: 20)),
-          ),
-        ),
-        title: Text(
-          listing.name,
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: hc.textPrimary,
-          ),
-        ),
-        subtitle: Text(
-          '${listing.endorsementCount} endorsements · ${listing.category.displayName}',
-          style: GoogleFonts.poppins(fontSize: 12, color: hc.textSecondary),
-        ),
-        trailing: listing.isVerified ||
-                listing.verificationTier == VerificationTier.community
-            ? _VerifiedBadge(tier: listing.verificationTier)
-            : null,
-        onTap: () => _showListingDetail(context, listing, service),
-      ),
-    );
-  }
-}
-
-// ─── Section card ──────────────────────────────────────────────────────────
+// ─── Section card ─────────────────────────────────────────────────────────────
 
 class _SectionCard extends StatelessWidget {
   final Widget child;
@@ -2228,7 +2207,7 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
-// ─── Category colour helper ────────────────────────────────────────────────
+// ─── Category colour helper ───────────────────────────────────────────────────
 
 Color _categoryColor(ServiceCategory cat) => switch (cat) {
       ServiceCategory.childcare => HuddlColors.categoryBaby,
