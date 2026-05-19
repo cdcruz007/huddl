@@ -368,15 +368,24 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // BUILD — matching Create Group / Create Meetup scaffold pattern
+  // BUILD — matching Create Meetup / Create Group scaffold pattern
   // ══════════════════════════════════════════════════════════════════════════
+
+  // Design tokens — mirrors create_meetup_screen.dart / create_group_screen.dart
+  static const _fieldBg    = HuddlColors.background;  // #F6F6F6 gray field fill
+  static const _fieldLine  = HuddlColors.divider;      // #D5D5D5 bottom underline
+  static const _sectionTxt = HuddlColors.textDark;     // #42464C section headers
+  static const _hintGray   = HuddlColors.textTertiary; // #949494 placeholder
+  static const _orange     = HuddlColors.primary;      // #FF965C accent
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // White scaffold — same as Create Meetup & Create Group so gray fields
+      // have visible contrast against the white background.
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
@@ -389,7 +398,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: context.hc.textPrimary)),
+                      color: _orange)),
             ),
           ),
         ),
@@ -405,8 +414,8 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                       : 'Item details',
           style: GoogleFonts.poppins(
             fontSize: 17,
-            fontWeight: FontWeight.w600,
-            color: context.hc.textPrimary,
+            fontWeight: FontWeight.w700,
+            color: _sectionTxt,
           ),
         ),
         bottom: PreferredSize(
@@ -607,7 +616,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // STEP 2: Details — peach photo banner + underline fields (Create Group style)
+  // STEP 2: Item details — blue photo banner + gray-filled fields (Create Meetup style)
   // ═══════════════════════════════════════════════════════════════════════════
 
   Widget _buildStep2() {
@@ -618,32 +627,32 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Photo banner (full-width, matching Create Group) ──
+                  // ── Photo banner — full-width blue (Create Meetup / Create Group style) ──
                   _buildPhotoArea(),
-                  const SizedBox(height: 16),
 
-                  // Selection summary chip
+                  // ── Selection summary chip ──
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.08),
+                        color: _orange.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.info_outline, size: 16, color: HuddlColors.primary),
+                          Icon(Icons.info_outline, size: 16, color: _orange),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${_selectedAge?.shortLabel ?? ''} \u2022 ${_selectedCategory?.label ?? ''} \u2022 ${_selectedCondition?.label ?? ''}',
+                              '${_selectedAge?.shortLabel ?? ''} • ${_selectedCategory?.label ?? ''} • ${_selectedCondition?.label ?? ''}',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: HuddlColors.primary,
+                                color: _orange,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -655,7 +664,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary,
+                                  color: _orange,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
@@ -665,96 +674,93 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 20),
-
-                  // ── Item name — gray-filled field (matching Create Group _buildGrayField) ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                    child: _sectionLabel('Item name'),
-                  ),
+                  // ── Form fields — same padding/spacing as Create Meetup ──
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildGrayFormField(
-                      controller: _titleController,
-                      hint: 'e.g. Silver Cross pram with accessories',
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Enter a title' : null,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // ── Price — gray-filled field + Free toggle ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                    child: _sectionLabel('Price'),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _buildGrayFormField(
-                            controller: _priceController,
-                            hint: '£0.00',
-                            keyboardType: TextInputType.number,
-                            enabled: !_isFree,
-                            validator: (v) {
-                              if (_isFree) return null;
-                              if (v == null || v.trim().isEmpty) return 'Enter a price or select Free';
-                              return null;
-                            },
-                            onChanged: (_) => setState(() {}),
-                          ),
+                        const SizedBox(height: 22),
+
+                        // Item name
+                        _sectionLabel('Item name'),
+                        const SizedBox(height: 6),
+                        _buildGrayFormField(
+                          controller: _titleController,
+                          hint: 'e.g. Silver Cross pram with accessories',
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter a title' : null,
+                          onChanged: (_) => setState(() {}),
                         ),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isFree = !_isFree;
-                              if (_isFree) _priceController.clear();
-                            });
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _isFree ? HuddlColors.primary : Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: _isFree ? HuddlColors.primary : HuddlColors.gray300,
+
+                        const SizedBox(height: 20),
+
+                        // Price
+                        _sectionLabel('Price'),
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: _buildGrayFormField(
+                                controller: _priceController,
+                                hint: '£0.00',
+                                keyboardType: TextInputType.number,
+                                enabled: !_isFree,
+                                validator: (v) {
+                                  if (_isFree) return null;
+                                  if (v == null || v.trim().isEmpty) return 'Enter a price or select Free';
+                                  return null;
+                                },
+                                onChanged: (_) => setState(() {}),
                               ),
                             ),
-                            child: Text(
-                              'Free',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: _isFree ? Colors.white : HuddlColors.textSecondary,
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isFree = !_isFree;
+                                  if (_isFree) _priceController.clear();
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: _isFree ? _orange : Colors.white,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _isFree ? _orange : HuddlColors.divider,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Free',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _isFree ? Colors.white : _hintGray,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ),
+
+                        const SizedBox(height: 20),
+
+                        // Description
+                        _sectionLabel('Description'),
+                        const SizedBox(height: 6),
+                        _buildGrayFormField(
+                          controller: _descriptionController,
+                          hint: 'Describe the item — condition, brand, what\'s included...',
+                          maxLines: 4,
+                          validator: (v) => v == null || v.trim().isEmpty ? 'Enter a description' : null,
+                          onChanged: (_) => setState(() {}),
+                        ),
+
+                        const SizedBox(height: 36),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // ── Description — gray-filled multiline (matching Create Group) ──
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
-                    child: _sectionLabel('Description'),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: _buildGrayFormField(
-                      controller: _descriptionController,
-                      hint: 'Describe the item — condition, brand, what\'s included...',
-                      maxLines: 4,
-                      validator: (v) => v == null || v.trim().isEmpty ? 'Enter a description' : null,
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -776,20 +782,20 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
   // COMPONENT WIDGETS — matching Create Group / Create Meetup design language
   // ══════════════════════════════════════════════════════════════════════════
 
-  /// Section label — bold dark text matching Create Group _sectionHeader (16/w700)
+  /// Section label — bold dark text, exact match of Create Meetup _sectionHeader (16/w700/_sectionTxt)
   Widget _sectionLabel(String text) {
     return Text(
       text,
       style: GoogleFonts.poppins(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: context.hc.textPrimary,
+        color: _sectionTxt,
       ),
     );
   }
 
-  /// Gray-filled text form field — matches Create Group _buildGrayField style:
-  /// background fill (#F6F6F6), bottom underline divider, no outer border.
+  /// Gray-filled text form field — exact match of Create Meetup _buildGrayField:
+  /// #F6F6F6 background fill, #D5D5D5 bottom underline (1.2px), no border, 14/15 padding.
   Widget _buildGrayFormField({
     required TextEditingController controller,
     required String hint,
@@ -800,11 +806,9 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     void Function(String)? onChanged,
   }) {
     return Container(
-      decoration: BoxDecoration(
-        color: HuddlColors.background,
-        border: const Border(
-          bottom: BorderSide(color: HuddlColors.divider, width: 1.2),
-        ),
+      decoration: const BoxDecoration(
+        color: _fieldBg,
+        border: Border(bottom: BorderSide(color: _fieldLine, width: 1.2)),
       ),
       child: TextFormField(
         controller: controller,
@@ -812,13 +816,10 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         keyboardType: keyboardType,
         enabled: enabled,
         textInputAction: maxLines == 1 ? TextInputAction.next : TextInputAction.newline,
-        style: GoogleFonts.poppins(
-          fontSize: 15,
-          color: enabled ? context.hc.textPrimary : context.hc.textTertiary,
-        ),
+        style: GoogleFonts.poppins(fontSize: 15, color: _sectionTxt),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 15, color: context.hc.textTertiary),
+          hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
@@ -1027,71 +1028,79 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
     bool showBack = false,
   }) {
     return Container(
+      color: Colors.white,
       padding: EdgeInsets.fromLTRB(
-          20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
-      decoration: BoxDecoration(
-        color: context.hc.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+          20, 10, 20, MediaQuery.of(context).padding.bottom + 14),
       child: Row(
         children: [
-          if (showBack)
+          if (showBack) ...[
             Expanded(
               flex: 1,
-              child: OutlinedButton(
-                onPressed: () => setState(() => _step--),
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: HuddlColors.gray300),
-                  shape: RoundedRectangleBorder(
+              child: GestureDetector(
+                onTap: () => setState(() => _step--),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: HuddlColors.divider, width: 1.2),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                child: Text(
-                  'Back',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    color: context.hc.textSecondary,
+                  child: Center(
+                    child: Text(
+                      'Back',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: _hintGray,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
-          if (showBack) const SizedBox(width: 12),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             flex: 2,
-            child: ElevatedButton(
-              onPressed: enabled ? onTap : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: HuddlColors.primary,
-                disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.3),
-                shape: RoundedRectangleBorder(
+            child: GestureDetector(
+              onTap: enabled ? onTap : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: enabled
+                      ? const LinearGradient(
+                          colors: [HuddlColors.primaryLight, HuddlColors.primary],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        )
+                      : null,
+                  color: enabled ? null : HuddlColors.divider,
                   borderRadius: BorderRadius.circular(26),
+                  boxShadow: enabled
+                      ? [BoxShadow(
+                          color: HuddlColors.primary.withValues(alpha: 0.30),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        )]
+                      : null,
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
+                child: Center(
+                  child: _isCreating && label.contains('...')
+                      ? const SizedBox(
+                          width: 20, height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                        )
+                      : Text(
+                          label,
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: enabled ? Colors.white : HuddlColors.textTertiary,
+                          ),
+                        ),
+                ),
               ),
-              child: _isCreating && label.contains('...')
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
-                    )
-                  : Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
           ),
         ],
