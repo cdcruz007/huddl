@@ -470,18 +470,9 @@ class _HomeScreenState extends State<HomeScreen>
     final List<_SmartFeedItem> items = [];
     final now = DateTime.now();
 
-    // 1. Top AI nudge (only the single most relevant)
-    final topNudge = _aiFeedService.activeNudges.isNotEmpty
-        ? _aiFeedService.activeNudges.first
-        : null;
-    if (topNudge != null) {
-      items.add(_SmartFeedItem(
-        type: _SmartFeedType.aiNudge,
-        score: topNudge.relevanceScore + 0.05,
-        reason: 'Personalised for you',
-        nudge: topNudge,
-      ));
-    }
+    // 1. AI nudge is shown in the Noticeboard section above the smart feed,
+    //    so we intentionally skip adding it here to avoid duplication.
+    //    (topNudge is read by _buildNoticeboardSection directly.)
 
     // 2. Upcoming meetups user is attending (high priority — max 2)
     final goingMeetups = _upcomingMeetups.where((m) => m.isGoing).take(2);
@@ -510,78 +501,13 @@ class _HomeScreenState extends State<HomeScreen>
       ));
     }
 
-    // 3. Announcements (ranked: own posts always first, then pinned, then
-    //    engagement + recency — max 4 so a user's new post is never buried)
-    final currentUserName = _announcementService.currentUserName;
-    final sortedAnn = List<Announcement>.from(_announcements)
-      ..sort((a, b) {
-        // Own posts always surface to the top
-        final aIsOwn = a.authorName == currentUserName ? 1 : 0;
-        final bIsOwn = b.authorName == currentUserName ? 1 : 0;
-        if (aIsOwn != bIsOwn) return bIsOwn.compareTo(aIsOwn);
-        // Then pinned
-        if (a.isPinned != b.isPinned) return a.isPinned ? -1 : 1;
-        // Then recency-weighted engagement: each hour of age reduces score by 1
-        final hoursAgeA = now.difference(a.createdAt).inHours;
-        final hoursAgeB = now.difference(b.createdAt).inHours;
-        final scoreA = a.likes * 2 + a.comments * 3 - hoursAgeA;
-        final scoreB = b.likes * 2 + b.comments * 3 - hoursAgeB;
-        return scoreB.compareTo(scoreA);
-      });
-    for (var i = 0; i < sortedAnn.length && i < 4; i++) {
-      final a = sortedAnn[i];
-      final isOwn = a.authorName == currentUserName;
-      final isNew = now.difference(a.createdAt).inMinutes < 30;
-      final score = 0.70 +
-          (a.isPinned ? 0.15 : 0.0) +
-          (a.likes > 3 ? 0.05 : 0.0) +
-          (isOwn ? 0.10 : 0.0);
-      items.add(_SmartFeedItem(
-        type: _SmartFeedType.announcement,
-        score: score.clamp(0.0, 1.0),
-        reason: isOwn && isNew
-            ? 'Just posted by you'
-            : a.isPinned
-                ? 'Pinned by community'
-                : a.likes > 3
-                    ? 'Popular in $_borough'
-                    : 'Recent',
-        announcement: a,
-      ));
-    }
+    // 3. Announcements are already rendered inside the Noticeboard section
+    //    (see _buildNoticeboardSection → topAnnouncements) so we do NOT add
+    //    them here again — doing so caused every post to appear twice on screen.
 
-    // 4. Nearby meetups not yet joined (max 2, adaptive)
-    final suggestedMeetups = _upcomingMeetups
-        .where((m) => !m.isGoing)
-        .take(_meetupTaps > 2 ? 3 : 2);
-    for (final m in suggestedMeetups) {
-      items.add(_SmartFeedItem(
-        type: _SmartFeedType.suggestedMeetup,
-        score: 0.65 + (_meetupTaps > 2 ? 0.1 : 0.0),
-        reason: '${m.attendeeCount} parents going',
-        meetup: m,
-      ));
-    }
-
-    // 5. New groups (max 2, adaptive)
-    // FILTER: exclude ALL default onboarding groups using multi-signal check.
-    // isImageLocked alone is insufficient for docs created before the field
-    // existed — _isDefaultOnboardingGroup() adds name-pattern and category
-    // guards as defence-in-depth.
-    final userCreatedGroups = _newPublicGroups
-        .where((g) => !_isDefaultOnboardingGroup(g))
-        .toList();
-    if (userCreatedGroups.isNotEmpty) {
-      for (var i = 0; i < userCreatedGroups.length && i < (_groupTaps > 2 ? 3 : 2); i++) {
-        final g = userCreatedGroups[i];
-        items.add(_SmartFeedItem(
-          type: _SmartFeedType.group,
-          score: 0.55 + (_groupTaps > 2 ? 0.1 : 0.0),
-          reason: '${g.memberCount} members',
-          group: g,
-        ));
-      }
-    }
+    // 4 & 5. Meetups and groups are already shown in dedicated horizontal
+    //         carousels above the smart feed — adding them here again causes
+    //         duplication. Skipped intentionally.
 
     // 6. Community activity feed (AI-ranked — max 4)
     final ranked = _aiFeedService.rankFeedItems(_feedItems);
@@ -613,11 +539,10 @@ class _HomeScreenState extends State<HomeScreen>
     });
 
     // ── Fixed section order (score only breaks ties within each section) ──
-    // 0. Community posts / announcements  (own posts first, then recent)
+    // Note: announcements live in the Noticeboard; meetups/groups in carousels;
+    //       AI nudge in the Noticeboard tip row — none duplicated here.
     // 1. Upcoming meetups & events the user is going to  (soonest first)
-    // 2. Suggested meetups & new groups  (by score within section)
-    // 3. Community activity feed  (AI-ranked)
-    // 4. AI nudge / Parenting tip  (always at the bottom of the feed)
+    // 2. Community activity feed  (AI-ranked)
     const sectionOrder = {
       _SmartFeedType.announcement:       0,
       _SmartFeedType.meetup:             1,
