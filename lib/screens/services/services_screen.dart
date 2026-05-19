@@ -1118,6 +1118,102 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ],
             ),
             const SizedBox(height: 14),
+            // ── "Added by parent" row — only on parent_added listings ────
+            if (_isParentSource(listing.listingSource) &&
+                listing.parentName != null &&
+                listing.parentName!.isNotEmpty) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: HuddlColors.teal.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: HuddlColors.teal.withValues(alpha: 0.22)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: HuddlColors.teal.withValues(alpha: 0.15),
+                      child: Text(
+                        listing.parentName![0].toUpperCase(),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: HuddlColors.teal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recommended by',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: HuddlColors.teal.withValues(alpha: 0.8),
+                            ),
+                          ),
+                          Text(
+                            listing.parentName!,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.teal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Message this parent if they are a Huddl member
+                    if (listing.createdByUid.isNotEmpty &&
+                        listing.createdByUid !=
+                            FirebaseAuth.instance.currentUser?.uid)
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).pushNamed(
+                            '/dm_chat',
+                            arguments: {
+                              'recipientId':   listing.createdByUid,
+                              'recipientName': listing.parentName,
+                              'recipientAvatarColor': '#3580F0',
+                              'conversationId': '',
+                            },
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: HuddlColors.teal,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.chat_bubble_outline_rounded,
+                                  size: 13, color: Colors.white),
+                              const SizedBox(width: 5),
+                              Text(
+                                'Message',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
             // ── Tagline ──────────────────────────────────────────────────
             if (listing.tagline.isNotEmpty) ...[
               Text(
@@ -1475,6 +1571,7 @@ class _AddServiceSheet extends StatefulWidget {
 
 class _AddServiceSheetState extends State<_AddServiceSheet> {
   final TextEditingController _chatPasteCtrl = TextEditingController();
+  final TextEditingController _parentNameCtrl = TextEditingController();
   bool _extracting = false;
   List<ExtractedServiceRecommendation> _extracted = [];
   String? _extractError;
@@ -1483,6 +1580,7 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
   @override
   void dispose() {
     _chatPasteCtrl.dispose();
+    _parentNameCtrl.dispose();
     super.dispose();
   }
 
@@ -1635,6 +1733,67 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // ─ Parent name for attribution ────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(11),
+                    decoration: BoxDecoration(
+                      color: HuddlColors.teal.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                          color: HuddlColors.teal.withValues(alpha: 0.25)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.person_outline_rounded,
+                                size: 14, color: HuddlColors.teal),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Your name in the borough (optional)',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: HuddlColors.teal,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'So other parents can message you about this recommendation.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: HuddlColors.teal.withValues(alpha: 0.85),
+                              height: 1.4),
+                        ),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _parentNameCtrl,
+                          style: GoogleFonts.poppins(
+                              fontSize: 13, color: hc.textPrimary),
+                          decoration: InputDecoration(
+                            hintText: 'e.g. Sarah from Chesterton',
+                            hintStyle: GoogleFonts.poppins(
+                                fontSize: 12, color: hc.textTertiary),
+                            filled: true,
+                            fillColor: hc.inputBg,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            isDense: true,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1691,6 +1850,9 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
                     ..._extracted.map((r) => _ExtractedRecommendationCard(
                           rec: r,
                           service: widget.service,
+                          parentName: _parentNameCtrl.text.trim().isEmpty
+                              ? null
+                              : _parentNameCtrl.text.trim(),
                           onSubmit: (listingId) {
                             if (listingId != null) {
                               Navigator.pop(context);
@@ -1766,11 +1928,13 @@ class _ExtractedRecommendationCard extends StatefulWidget {
   final ExtractedServiceRecommendation rec;
   final LocalServicesService service;
   final void Function(String? listingId) onSubmit;
+  final String? parentName;
 
   const _ExtractedRecommendationCard({
     required this.rec,
     required this.service,
     required this.onSubmit,
+    this.parentName,
   });
 
   @override
@@ -1793,6 +1957,7 @@ class _ExtractedRecommendationCardState
       tags: widget.rec.tags,
       phone: widget.rec.phone,
       website: widget.rec.website,
+      parentName: widget.parentName,
     );
     if (mounted) {
       setState(() {
@@ -1949,6 +2114,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
   final _phoneCtrl = TextEditingController();
   final _websiteCtrl = TextEditingController();
   final _tagsCtrl = TextEditingController();
+  final _parentNameCtrl = TextEditingController();
   ServiceCategory _category = ServiceCategory.other;
   bool _submitting = false;
 
@@ -1960,6 +2126,7 @@ class _ManualAddFormState extends State<_ManualAddForm> {
     _phoneCtrl.dispose();
     _websiteCtrl.dispose();
     _tagsCtrl.dispose();
+    _parentNameCtrl.dispose();
     super.dispose();
   }
 
@@ -1980,9 +2147,8 @@ class _ManualAddFormState extends State<_ManualAddForm> {
       category: _category,
       tags: tags,
       phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-      website: _websiteCtrl.text.trim().isEmpty
-          ? null
-          : _websiteCtrl.text.trim(),
+      website: _websiteCtrl.text.trim().isEmpty ? null : _websiteCtrl.text.trim(),
+      parentName: _parentNameCtrl.text.trim().isEmpty ? null : _parentNameCtrl.text.trim(),
     );
     if (mounted) {
       setState(() => _submitting = false);
@@ -2078,6 +2244,51 @@ class _ManualAddFormState extends State<_ManualAddForm> {
               label: 'Website / Instagram (optional)',
               hint: 'instagram.com/sandracleans',
               keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 10),
+            // ── Who's recommending this? ─────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: HuddlColors.teal.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: HuddlColors.teal.withValues(alpha: 0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.person_outline_rounded,
+                          size: 15, color: HuddlColors.teal),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Your recommendation (optional)',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuddlColors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Add your name so other parents can message you about your experience with this provider.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        color: HuddlColors.teal.withValues(alpha: 0.85),
+                        height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  _FormField(
+                    controller: _parentNameCtrl,
+                    label: 'Your name in the borough',
+                    hint: 'e.g. Sarah from Chesterton',
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(

@@ -224,6 +224,11 @@ class ServiceListing {
   /// Falls back to category image in the UI if null or empty.
   final String? imageUrl;
 
+  /// The name the adding parent uses in their borough (e.g. "Sarah from Chesterton").
+  /// Optional — only set on parent-added listings. Lets other parents identify
+  /// and DM the person who added/endorsed the service.
+  final String? parentName;
+
   const ServiceListing({
     required this.id,
     required this.name,
@@ -248,6 +253,7 @@ class ServiceListing {
     this.aiRating,
     this.aiDiscoveredAt,
     this.imageUrl,
+    this.parentName,
   });
 
   ServiceListing copyWith({
@@ -274,6 +280,7 @@ class ServiceListing {
     double? aiRating,
     DateTime? aiDiscoveredAt,
     String? imageUrl,
+    String? parentName,
   }) => ServiceListing(
         id:                  id                  ?? this.id,
         name:                name                ?? this.name,
@@ -298,6 +305,7 @@ class ServiceListing {
         aiRating:            aiRating            ?? this.aiRating,
         aiDiscoveredAt:      aiDiscoveredAt      ?? this.aiDiscoveredAt,
         imageUrl:            imageUrl            ?? this.imageUrl,
+        parentName:          parentName          ?? this.parentName,
       );
 
   Map<String, dynamic> toFirestore() => {
@@ -321,6 +329,7 @@ class ServiceListing {
         if (aiRating != null)       'aiRating':       aiRating,
         if (aiDiscoveredAt != null) 'aiDiscoveredAt': Timestamp.fromDate(aiDiscoveredAt!),
         if (imageUrl != null && imageUrl!.isNotEmpty) 'imageUrl': imageUrl,
+        if (parentName != null && parentName!.isNotEmpty) 'parentName': parentName,
       };
 
   factory ServiceListing.fromFirestore(
@@ -357,6 +366,7 @@ class ServiceListing {
           ? (d['aiDiscoveredAt'] as Timestamp).toDate()
           : null,
       imageUrl:       d['imageUrl'] as String?,
+      parentName:     d['parentName'] as String?,
     );
   }
 }
@@ -613,6 +623,7 @@ class LocalServicesService {
     String? phone,
     String? website,
     String? borough,
+    String? parentName,   // the adding parent's name as known in their borough
   }) async {
     final uid = _auth.currentUser?.uid;
     if (uid == null) return null;
@@ -631,6 +642,7 @@ class LocalServicesService {
         website:          website,
         ownerUid:         null,
         createdByUid:     uid,
+        parentName:       parentName?.trim().isEmpty == true ? null : parentName?.trim(),
         verificationTier: VerificationTier.none,
         isVerified:       false,
         endorsementCount: 0,
