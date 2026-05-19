@@ -360,8 +360,13 @@ class _MessagesTabState extends State<_MessagesTab> {
   bool _hasLoadError = false;
   String _errorMessage = '';
   String _searchQuery = '';
-  bool _summariesLoaded = false;
   bool _showAiSuggestions = false;
+
+  // ── Chat catch-up state ───────────────────────────────────────────────
+  Map<String, ChatSummary> _catchUpSummaries = {};
+  bool _catchUpLoading = false;
+  bool _catchUpExpanded = true;   // starts open so user sees it immediately
+  bool _catchUpDismissed = false;
 
   // ── Deep search state ─────────────────────────────────────────────────
   List<MessageSearchResult> _deepSearchResults = [];
@@ -388,7 +393,6 @@ class _MessagesTabState extends State<_MessagesTab> {
       widget.searchNotifier.addListener(_onSearchChanged);
       _loadGroups();
       _loadMutedAndPinned();
-      _loadDemoSummaries();
       _subscribeToFirestoreGroups();
     });
   }
@@ -585,9 +589,89 @@ class _MessagesTabState extends State<_MessagesTab> {
     } catch (_) {}
   }
 
-  Future<void> _loadDemoSummaries() async {
-    await _summariser.generateDemoSummaries();
-    if (mounted) setState(() => _summariesLoaded = true);
+  /// Load AI catch-up summaries for all the user's groups based on
+  /// actual messages stored in BrowserStorage since last login.
+  /// Called after _loadGroups() so _allGroups is populated.
+  Future<void> _loadRealCatchUpSummaries() async {
+    if (_allGroups.isEmpty) return;
+    if (mounted) setState(() => _catchUpLoading = true);
+
+    // Determine "last seen" cutoff — use stored timestamp or fallback to 24h ago
+    final lastSeenRaw = await BrowserStorage.getString('huddl_last_messages_seen');
+    final lastSeen = lastSeenRaw != null
+        ? (DateTime.tryParse(lastSeenRaw) ?? DateTime.now().subtract(const Duration(hours: 24)))
+        : DateTime.now().subtract(const Duration(hours: 24));
+
+    final newSummaries = <String, ChatSummary>{};
+
+    for (final group in _allGroups) {
+      try {
+        // Collect all messages for this group from BrowserStorage
+        final List<Map<String, dynamic>> allMsgs = [];
+
+        // Text messages
+        final textRaw = await BrowserStorage.getString('gc_user_texts_${group.id}');
+        if (textRaw != null) {
+          final msgs = (json.decode(textRaw) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+          allMsgs.addAll(msgs.map((m) => {
+            'senderName': m['senderName'] ?? m['author'] ?? 'Someone',
+            'text': m['message'] ?? m['text'] ?? '',
+            'timestamp': m['timestamp'],
+          }));
+        }
+
+        // Forwarded / card messages
+        final fwdRaw = await BrowserStorage.getString('group_messages_${group.id}');
+        if (fwdRaw != null) {
+          final msgs = (json.decode(fwdRaw) as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+          for (final m in msgs) {
+            String text = m['message'] as String? ?? '';
+            if (m['isMeetupCard'] == true) text = '[Shared a meetup] $text';
+            if (m['isEventCard'] == true) text = '[Shared an event] $text';
+            if (m['isItemCard'] == true) text = '[Shared a listing] $text';
+            allMsgs.add({
+              'senderName': m['senderName'] ?? 'Someone',
+              'text': text,
+              'timestamp': m['timestamp'],
+            });
+          }
+        }
+
+        // Filter to messages newer than lastSeen
+        final newMsgs = allMsgs.where((m) {
+          final ts = DateTime.tryParse(m['timestamp'] as String? ?? '');
+          return ts != null && ts.isAfter(lastSeen);
+        }).toList();
+
+        // Only generate summary if there are new messages
+        if (newMsgs.isNotEmpty) {
+          final summary = await _summariser.generateSummary(
+            groupId: group.id,
+            groupName: group.name,
+            messages: newMsgs,
+            lastReadIndex: 0,
+          );
+          newSummaries[group.id] = summary;
+        }
+      } catch (_) {
+        // Skip this group on error
+      }
+    }
+
+    // Store the current time as the new "last seen" marker
+    await BrowserStorage.setString(
+      'huddl_last_messages_seen',
+      DateTime.now().toIso8601String(),
+    );
+
+    if (mounted) {
+      setState(() {
+        _catchUpSummaries = newSummaries;
+        _catchUpLoading = false;
+      });
+    }
   }
 
   // ── Muted & Pinned persistence ────────────────────────────────────
@@ -816,6 +900,8 @@ class _MessagesTabState extends State<_MessagesTab> {
         _applyFilter();
         _isLoading = false;
       });
+      // Load real chat summaries now that _allGroups is populated
+      _loadRealCatchUpSummaries();
     } catch (e) {
       // Show error state with empty list — no fake demo data in production
       setState(() {
@@ -1545,105 +1631,347 @@ class _MessagesTabState extends State<_MessagesTab> {
     );
   }
 
-  // AI Assistant sheet removed — AI is now invisible. Kept for future use.
+  // ── AI Catch-Up Section ───────────────────────────────────────────────────
+  // Shown at the top of the Messages tab. Summarises new messages across all
+  // the user's groups since their last visit. Expandable + dismissible.
 
-  /// Build the normal conversation list (no search active).
   Widget _buildAiCatchUpCard() {
-    if (!_summariesLoaded) return const SizedBox();
-    final groupIds = ['new_parents_cambridge', 'dads_connect', 'toddler_adventures'];
-    final activeSummaries = groupIds
-        .map((id) => _summariser.getSummary(id))
-        .whereType<ChatSummary>()
-        .where((s) => !s.isDismissed && s.unreadCount > 10)
-        .toList();
-    if (activeSummaries.isEmpty) return const SizedBox();
-    final summary = activeSummaries.first;
+    // Show loading shimmer while summaries are being generated
+    if (_catchUpLoading) {
+      return _buildCatchUpLoadingShimmer();
+    }
 
-    // ── Compact "Invisible AI" card ──────────────────────────────────────
+    // Dismissed for this session
+    if (_catchUpDismissed) return const SizedBox.shrink();
+
+    // No summaries to show
+    final summaries = _catchUpSummaries.values
+        .where((s) => !s.isDismissed && s.unreadCount > 0)
+        .toList()
+      ..sort((a, b) => b.unreadCount.compareTo(a.unreadCount));
+
+    if (summaries.isEmpty) return const SizedBox.shrink();
+
+    final totalUnread = summaries.fold<int>(0, (sum, s) => sum + s.unreadCount);
+
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       decoration: BoxDecoration(
-        color: HuddlColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: HuddlColors.gray200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            HuddlColors.primary.withValues(alpha: 0.07),
+            HuddlColors.teal.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.18)),
+      ),
+      child: Column(
+        children: [
+          // ── Header row — tap to expand/collapse ───────────────────────
+          InkWell(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setState(() => _catchUpExpanded = !_catchUpExpanded);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 34, height: 34,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(9),
+                    ),
+                    child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.primary),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Catch up on your chats',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          '$totalUnread new message${totalUnread == 1 ? '' : 's'} across ${summaries.length} group${summaries.length == 1 ? '' : 's'}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, color: context.hc.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Expand/collapse chevron
+                  AnimatedRotation(
+                    turns: _catchUpExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 22, color: context.hc.textTertiary),
+                  ),
+                  const SizedBox(width: 2),
+                  // Dismiss button
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.close, size: 16, color: context.hc.textTertiary),
+                    onPressed: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => _catchUpDismissed = true);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // ── Expandable per-group summary rows ─────────────────────────
+          AnimatedCrossFade(
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: Column(
+              children: [
+                Container(height: 1, color: HuddlColors.primary.withValues(alpha: 0.10)),
+                ...summaries.take(5).map((s) => _buildGroupSummaryRow(s)),
+                const SizedBox(height: 4),
+              ],
+            ),
+            crossFadeState: _catchUpExpanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            duration: const Duration(milliseconds: 220),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGroupSummaryRow(ChatSummary summary) {
+    // Find the matching _GroupItem to get its imageUrl
+    final groupItem = _allGroups.cast<_GroupItem?>().firstWhere(
+      (g) => g?.id == summary.groupId, orElse: () => null,
+    );
+    final imageUrl = groupItem?.imageUrl ?? '';
+    final isDefault = groupItem?.isDefault ?? true;
+
+    // Category icon colour
+    const iconColors = [
+      HuddlColors.primary, HuddlColors.teal, HuddlColors.accentAmber,
+      HuddlColors.blueDark, Color(0xFF9B59B6),
+    ];
+    final accentColor = iconColors[summary.groupId.hashCode.abs() % iconColors.length];
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GroupChatScreen(
+              groupId: summary.groupId,
+              groupName: summary.groupName,
+              groupImageUrl: imageUrl,
+              isDefaultGroup: isDefault,
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Group avatar
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: accentColor.withValues(alpha: 0.12),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: imageUrl.isNotEmpty
+                    ? Image.network(imageUrl, fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.people_rounded, size: 20, color: accentColor))
+                    : Icon(Icons.people_rounded, size: 20, color: accentColor),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Group name + unread badge
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          summary.groupName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w700,
+                            color: context.hc.textPrimary,
+                          ),
+                          maxLines: 1, overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${summary.unreadCount} new',
+                          style: GoogleFonts.poppins(
+                            fontSize: 9, fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  // AI overview text
+                  Text(
+                    summary.overviewText,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11, color: context.hc.textSecondary, height: 1.35,
+                    ),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                  ),
+                  // Key topics / action indicator
+                  if (summary.mentionedTopics.isNotEmpty || summary.hasActionItems) ...[
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        if (summary.hasActionItems) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: HuddlColors.accentAmber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: HuddlColors.accentAmber.withValues(alpha: 0.4)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.priority_high_rounded, size: 9, color: HuddlColors.accentAmber),
+                                const SizedBox(width: 3),
+                                Text('Needs reply',
+                                    style: GoogleFonts.poppins(fontSize: 9, fontWeight: FontWeight.w600,
+                                        color: HuddlColors.accentAmber)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                        ],
+                        ...summary.mentionedTopics.take(2).map((topic) =>
+                          Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: context.hc.surface,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: context.hc.divider),
+                              ),
+                              child: Text(
+                                topic,
+                                style: GoogleFonts.poppins(fontSize: 9, color: context.hc.textTertiary),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  // Upcoming plan note
+                  if (summary.upcomingPlanNote != null && summary.upcomingPlanNote!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event_rounded, size: 10, color: HuddlColors.teal),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              summary.upcomingPlanNote!,
+                              style: GoogleFonts.poppins(
+                                fontSize: 10, color: HuddlColors.teal,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Go to chat arrow
+            Icon(Icons.chevron_right_rounded, size: 18, color: context.hc.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCatchUpLoadingShimmer() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        color: HuddlColors.primary.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: HuddlColors.primary.withValues(alpha: 0.12)),
+      ),
       child: Row(
         children: [
-          // Unread badge
           Container(
-            width: 32, height: 32,
+            width: 34, height: 34,
             decoration: BoxDecoration(
-              color: HuddlColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: HuddlColors.primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: const Icon(Icons.mark_chat_unread_outlined, size: 15, color: HuddlColors.primary),
+            child: const Icon(Icons.auto_awesome, size: 18, color: HuddlColors.primary),
           ),
           const SizedBox(width: 10),
-          // Summary text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${summary.unreadCount} unread in ${summary.groupName}',
+                  'Building your catch-up summary…',
                   style: GoogleFonts.poppins(
                     fontSize: 12, fontWeight: FontWeight.w600,
-                    color: context.hc.textPrimary,
+                    color: context.hc.textSecondary,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  summary.overviewText,
-                  style: GoogleFonts.poppins(fontSize: 11, color: context.hc.textSecondary, height: 1.3),
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  'AI is reading your group chats',
+                  style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 6),
-          // Quick jump
-          GestureDetector(
-            onTap: () {
-              Navigator.pushNamed(context, '/group_chat', arguments: {
-                'groupId': summary.groupId,
-                'groupName': summary.groupName,
-                'groupImageUrl': '',
-                'isDefaultGroup': true,
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: HuddlColors.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text('View', style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white,
-              )),
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Dismiss
-          GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              _summariser.dismissSummary(summary.groupId);
-              setState(() {});
-            },
-            child: Semantics(
-              label: 'Dismiss summary',
-              button: true,
-              child: SizedBox(
-                width: 28, height: 28,
-                child: Icon(Icons.close, size: 14, color: context.hc.textTertiary),
-              ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 16, height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: HuddlColors.primary.withValues(alpha: 0.5),
             ),
           ),
         ],
