@@ -72,6 +72,8 @@ class _EventsScreenState extends State<EventsScreen>
   final ValueNotifier<bool> _eventSearchTrigger  = ValueNotifier<bool>(false);
   // Fires true to open inline search in the Services tab.
   final ValueNotifier<bool> _serviceSearchTrigger = ValueNotifier<bool>(false);
+  // Fires true to reset/close search mode when leaving the Services tab.
+  final ValueNotifier<bool> _serviceResetTrigger = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -82,9 +84,12 @@ class _EventsScreenState extends State<EventsScreen>
       // so the FAB never shows/hides based on a mid-swipe index.
       if (!_tabController.indexIsChanging) {
         if (_selectedTab != _tabController.index) {
-          // If leaving the Groups tab, reset any active search.
+          // Reset search mode when leaving the Groups or Services tab.
           if (_selectedTab == 0 && _tabController.index != 0) {
             _groupResetTrigger.value = true;
+          }
+          if (_selectedTab == 3 && _tabController.index != 3) {
+            _serviceResetTrigger.value = true;
           }
           setState(() { _selectedTab = _tabController.index; });
         }
@@ -114,6 +119,7 @@ class _EventsScreenState extends State<EventsScreen>
     _meetupSearchTrigger.dispose();
     _eventSearchTrigger.dispose();
     _serviceSearchTrigger.dispose();
+    _serviceResetTrigger.dispose();
     super.dispose();
   }
 
@@ -411,10 +417,14 @@ class _EventsScreenState extends State<EventsScreen>
                     controller: _tabController,
                     onTap: (index) {
                       // Immediately update FAB when user taps a tab.
-                      // Also: tapping the Groups tab while already on it
-                      // dismisses any active search and returns to tiled view.
-                      if (index == 0) {
+                      // Tapping Groups while already on it → dismisses search.
+                      // Tapping Services while already on it → dismisses search.
+                      // Tapping any tab while on Groups/Services → dismisses their search.
+                      if (index == 0 || _selectedTab == 0) {
                         _groupResetTrigger.value = true;
+                      }
+                      if (index == 3 || _selectedTab == 3) {
+                        _serviceResetTrigger.value = true;
                       }
                       setState(() { _selectedTab = index; });
                     },
@@ -462,7 +472,10 @@ class _EventsScreenState extends State<EventsScreen>
                     eventService: _eventService,
                     searchTrigger: _eventSearchTrigger,
                   ),
-                  ServicesScreen(searchTrigger: _serviceSearchTrigger),
+                  ServicesScreen(
+                    searchTrigger: _serviceSearchTrigger,
+                    resetTrigger: _serviceResetTrigger,
+                  ),
                 ],
               ),
             ),

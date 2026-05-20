@@ -75,7 +75,13 @@ const Color _kBadgeParent = HuddlColors.teal;
 
 class ServicesScreen extends StatefulWidget {
   final ValueNotifier<bool> searchTrigger;
-  const ServicesScreen({super.key, required this.searchTrigger});
+  /// Set to `true` to exit search mode (e.g. when the user navigates away).
+  final ValueNotifier<bool>? resetTrigger;
+  const ServicesScreen({
+    super.key,
+    required this.searchTrigger,
+    this.resetTrigger,
+  });
 
   @override
   State<ServicesScreen> createState() => _ServicesScreenState();
@@ -97,9 +103,16 @@ class _ServicesScreenState extends State<ServicesScreen>
   @override
   void initState() {
     super.initState();
-    // searchTrigger from the top AppBar magnifier now focuses the inline bar
     widget.searchTrigger.addListener(_onSearchTrigger);
+    widget.resetTrigger?.addListener(_onResetTrigger);
     _triggerAiRefreshIfDue();
+  }
+
+  void _onResetTrigger() {
+    if (widget.resetTrigger?.value == true) {
+      widget.resetTrigger?.value = false;
+      _deactivateSearch();
+    }
   }
 
   // AppBar magnifier tap activates search mode (inline bar + compact rows)
@@ -134,6 +147,7 @@ class _ServicesScreenState extends State<ServicesScreen>
   @override
   void dispose() {
     widget.searchTrigger.removeListener(_onSearchTrigger);
+    widget.resetTrigger?.removeListener(_onResetTrigger);
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
