@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -55,6 +56,53 @@ const List<Color> _kAvatarPalette = [
   HuddlColors.primary,
   Color(0xFF7B61FF),
 ];
+
+// ─── Shimmer placeholder for image load ──────────────────────────────────────
+Widget _buildImageShimmer({required double height, required Color color}) {
+  return _ShimmerBox(height: height, color: color);
+}
+
+class _ShimmerBox extends StatefulWidget {
+  final double height;
+  final Color color;
+  const _ShimmerBox({required this.height, required this.color});
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        height: widget.height,
+        width: double.infinity,
+        color: widget.color.withValues(alpha: 0.08 + 0.06 * _anim.value),
+      ),
+    );
+  }
+}
 
 // ─── Source badge helpers ─────────────────────────────────────────────────────
 
@@ -638,6 +686,18 @@ class _BadgePill extends StatelessWidget {
   }
 }
 
+// ─── Relative-time helper ────────────────────────────────────────────────────
+String _relativeTime(DateTime dt) {
+  final diff = DateTime.now().difference(dt);
+  if (diff.inSeconds < 60)  return 'Just now';
+  if (diff.inMinutes < 60)  return '${diff.inMinutes}m ago';
+  if (diff.inHours < 24)    return '${diff.inHours}h ago';
+  if (diff.inDays < 7)      return '${diff.inDays}d ago';
+  if (diff.inDays < 30)     return '${(diff.inDays / 7).floor()}w ago';
+  if (diff.inDays < 365)    return '${(diff.inDays / 30).floor()}mo ago';
+  return '${(diff.inDays / 365).floor()}y ago';
+}
+
 // ─── Search result row — compact Meetups-style (shown when _isSearchActive) ──────────────
 // Thumbnail 56×56 left | CATEGORY / Name / Location · Count | Endorse pill right
 
@@ -671,21 +731,33 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
     if (_endorsing) return;
     setState(() => _endorsing = true);
     HapticFeedback.mediumImpact();
-    if (_hasEndorsed) {
-      await widget.service.removeEndorsement(widget.listing.id);
-      if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
-    } else {
-      final quote = await _showEndorseDialog();
-      if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
-      await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+    try {
+      if (_hasEndorsed) {
+        await widget.service.removeEndorsement(widget.listing.id);
+        if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
+      } else {
+        final quote = await _showEndorseDialog();
+        if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
+        await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+        if (mounted) {
+          setState(() { _hasEndorsed = true; _count = _count + 1; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("You've endorsed ${widget.listing.name}!"),
+              backgroundColor: HuddlColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (_) {
       if (mounted) {
-        setState(() { _hasEndorsed = true; _count = _count + 1; });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("You've endorsed ${widget.listing.name}!"),
-            backgroundColor: HuddlColors.success,
+          const SnackBar(
+            content: Text('Something went wrong. Please try again.'),
+            backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -751,7 +823,9 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
     final imageUrl = (listing.imageUrl?.isNotEmpty == true)
         ? listing.imageUrl!
         : (_kCategoryImages[listing.category] ?? _kCategoryImages[ServiceCategory.other]!);
-    final locationText = listing.tagline.isNotEmpty ? listing.tagline : listing.borough;
+    final locationText = _isParentSource(listing.listingSource)
+        ? listing.borough
+        : (listing.tagline.isNotEmpty ? listing.tagline : listing.borough);
     final countText = _count > 0 ? '$_count endorsements' : '0 endorsements';
 
     return GestureDetector(
@@ -774,6 +848,10 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
+                frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                  if (wasSynchronouslyLoaded || frame != null) return child;
+                  return _buildImageShimmer(height: 56, color: catColor);
+                },
                 errorBuilder: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
@@ -913,21 +991,33 @@ class _ListingCardState extends State<_ListingCard> {
     if (_endorsing) return;
     setState(() => _endorsing = true);
     HapticFeedback.mediumImpact();
-    if (_hasEndorsed) {
-      await widget.service.removeEndorsement(widget.listing.id);
-      if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
-    } else {
-      final quote = await _showEndorseDialog();
-      if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
-      await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+    try {
+      if (_hasEndorsed) {
+        await widget.service.removeEndorsement(widget.listing.id);
+        if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
+      } else {
+        final quote = await _showEndorseDialog();
+        if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
+        await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+        if (mounted) {
+          setState(() { _hasEndorsed = true; _count = _count + 1; });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("You've endorsed ${widget.listing.name}!"),
+              backgroundColor: HuddlColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
+    } catch (_) {
       if (mounted) {
-        setState(() { _hasEndorsed = true; _count = _count + 1; });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("You've endorsed ${widget.listing.name}!"),
-            backgroundColor: HuddlColors.success,
+          const SnackBar(
+            content: Text('Something went wrong. Please try again.'),
+            backgroundColor: HuddlColors.error,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -1090,6 +1180,10 @@ class _ListingCardState extends State<_ListingCard> {
                     fit: BoxFit.cover,
                     width: double.infinity,
                     height: 190,
+                    frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                      if (wasSynchronouslyLoaded || frame != null) return child;
+                      return _buildImageShimmer(height: 190, color: catColor);
+                    },
                     errorBuilder: (_, __, ___) => Container(
                       height: 190,
                       color: catColor.withValues(alpha: 0.14),
@@ -1172,9 +1266,11 @@ class _ListingCardState extends State<_ListingCard> {
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
-                          listing.tagline.isNotEmpty
-                              ? listing.tagline
-                              : listing.borough,
+                          _isParentSource(listing.listingSource)
+                              ? listing.borough
+                              : (listing.tagline.isNotEmpty
+                                  ? listing.tagline
+                                  : listing.borough),
                           style: GoogleFonts.poppins(
                             fontSize: 12.5,
                             color: context.hc.textTertiary,
@@ -1589,17 +1685,53 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               ),
               const SizedBox(height: 14),
             ],
-            // ── Tagline ──────────────────────────────────────────────────
-            if (listing.tagline.isNotEmpty) ...[
-              Text(
-                listing.tagline,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: hc.textPrimary,
+            // ── Tagline / Address — source-aware ─────────────────────────
+            if (_isParentSource(listing.listingSource)) ...[
+              // parent-added: tagline holds the endorser's description → "About"
+              if (listing.tagline.isNotEmpty) ...[
+                Text(
+                  'About',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: hc.textTertiary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 4),
+                Text(
+                  listing.tagline,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: hc.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ] else ...[
+              // AI-discovered: tagline holds the formatted Places API address → pin icon
+              if (listing.tagline.isNotEmpty) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.location_on_outlined,
+                        size: 15, color: hc.textTertiary),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        listing.tagline,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: hc.textSecondary,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+              ],
             ],
             // ── Description ──────────────────────────────────────────────
             if (listing.description.isNotEmpty) ...[
@@ -1890,6 +2022,14 @@ class _EndorsementTile extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 4),
+          Text(
+            _relativeTime(endorsement.createdAt),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: hc.textTertiary,
+            ),
+          ),
         ],
       ),
     );
@@ -2015,6 +2155,32 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
   String? _extractError;
   bool _showManual = false;
 
+  // ── Rate-limit constants ──────────────────────────────────────────────────
+  static const String _kRateLimitKey = 'ai_extract_rate_limit_v1';
+  static const int _kDailyLimit = 10;
+
+  /// Returns null if the call is allowed, or a human-readable reason string
+  /// if the daily limit has been reached.
+  Future<String?> _checkRateLimit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10); // "YYYY-MM-DD"
+    final stored = prefs.getString(_kRateLimitKey); // "YYYY-MM-DD:N"
+    int usedToday = 0;
+    if (stored != null) {
+      final parts = stored.split(':');
+      if (parts.length == 2 && parts[0] == today) {
+        usedToday = int.tryParse(parts[1]) ?? 0;
+      }
+    }
+    if (usedToday >= _kDailyLimit) {
+      return 'You\'ve reached the daily limit of $_kDailyLimit AI extractions. '
+          'Limit resets at midnight.';
+    }
+    // Increment and persist
+    await prefs.setString(_kRateLimitKey, '$today:${usedToday + 1}');
+    return null; // allowed
+  }
+
   @override
   void dispose() {
     _chatPasteCtrl.dispose();
@@ -2025,6 +2191,14 @@ class _AddServiceSheetState extends State<_AddServiceSheet> {
   Future<void> _runExtraction() async {
     final text = _chatPasteCtrl.text.trim();
     if (text.isEmpty) return;
+
+    // Check rate limit before showing spinner
+    final rateLimitMsg = await _checkRateLimit();
+    if (rateLimitMsg != null) {
+      if (mounted) setState(() => _extractError = rateLimitMsg);
+      return;
+    }
+
     setState(() {
       _extracting = true;
       _extracted = [];
