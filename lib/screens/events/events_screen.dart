@@ -653,8 +653,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   void _onSearchTrigger() {
     if (widget.searchTrigger.value) {
       widget.searchTrigger.value = false;
-      setState(() => _isSearchActive = true);
-      Future.microtask(() => _searchFocusNode.requestFocus());
+      if (_isSearchActive) {
+        // Second tap on search icon collapses back to filter pill (no Cancel button)
+        _clearSearch();
+      } else {
+        setState(() => _isSearchActive = true);
+        Future.microtask(() => _searchFocusNode.requestFocus());
+      }
     }
   }
 
@@ -1596,72 +1601,59 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     const Spacer(),
                   ],
                 ),
-                // ── Inline search pill ────────────────────────────────────
-                secondChild: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.background,
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                              color: HuddlColors.primary.withValues(alpha: 0.35),
-                              width: 1.5),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 14),
-                            const Icon(Icons.search, size: 18,
-                                color: HuddlColors.primary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _localSearchController,
-                                focusNode: _searchFocusNode,
-                                onChanged: (v) =>
-                                    setState(() => _localSearchQuery = v),
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14, color: filterText),
-                                decoration: InputDecoration(
-                                  hintText: 'Search meetups…',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: HuddlColors.textTertiary),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ),
-                            if (_localSearchQuery.isNotEmpty)
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  _localSearchQuery = '';
-                                  _localSearchController.clear();
-                                }),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.close, size: 16,
-                                      color: HuddlColors.textTertiary),
-                                ),
-                              ),
-                          ],
+                // ── Inline search field (no Cancel — matches Groups UX) ───
+                secondChild: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 12, right: 6),
+                        child: Icon(Icons.search, size: 18,
+                            color: HuddlColors.primary),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _localSearchController,
+                          focusNode: _searchFocusNode,
+                          textAlignVertical: TextAlignVertical.center,
+                          onChanged: (v) =>
+                              setState(() => _localSearchQuery = v),
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: filterText),
+                          decoration: InputDecoration(
+                            hintText: 'Search meetups',
+                            hintStyle: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: HuddlColors.textTertiary),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding:
+                                const EdgeInsets.only(bottom: 2),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: _clearSearch,
-                      child: Text('Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                      if (_localSearchQuery.isNotEmpty)
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _localSearchQuery = '';
+                            _localSearchController.clear();
+                          }),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(Icons.close, size: 16,
+                                color: HuddlColors.textTertiary),
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 10),
+                    ],
+                  ),
                 ),
               ),
 
