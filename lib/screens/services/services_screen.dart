@@ -89,7 +89,6 @@ class _ServicesScreenState extends State<ServicesScreen>
   final _service = LocalServicesService();
 
   ServiceCategory? _selectedCategory;
-  bool _isSearchActive = false;
   String _searchQuery = '';
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
@@ -97,32 +96,19 @@ class _ServicesScreenState extends State<ServicesScreen>
   @override
   void initState() {
     super.initState();
+    // searchTrigger from the top AppBar magnifier now focuses the inline bar
     widget.searchTrigger.addListener(_onSearchTrigger);
-    _searchFocus.addListener(() {
-      if (!_searchFocus.hasFocus && _isSearchActive && _searchQuery.isEmpty) {
-        _clearSearch();
-      }
-    });
     _triggerAiRefreshIfDue();
   }
 
+  // AppBar magnifier tap focuses the always-visible search bar directly
   void _onSearchTrigger() {
     if (widget.searchTrigger.value) {
       widget.searchTrigger.value = false;
-      setState(() => _isSearchActive = true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _searchFocus.requestFocus();
       });
     }
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _isSearchActive = false;
-      _searchQuery = '';
-      _searchCtrl.clear();
-    });
-    _searchFocus.unfocus();
   }
 
   Future<void> _triggerAiRefreshIfDue() async {
@@ -192,141 +178,148 @@ class _ServicesScreenState extends State<ServicesScreen>
       backgroundColor: HuddlColors.background,
       body: Column(
         children: [
-          // ══ TOP HEADER — filter pill ↔ inline search ═══════════════════════
+          // ══ TOP HEADER — always-visible search + filter pill ══════════════
+          // Matches Groups and Meetups exactly:
+          //   Row 1: persistent pill search bar (height 40, inputBg, orange icon)
+          //   Row 2: filter pill + optional Clear link
+          //   Row 3: section label ("Suggested for you" / "Search results")
           Container(
             color: hc.surface,
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AnimatedCrossFade(
-                  duration: const Duration(milliseconds: 220),
-                  crossFadeState: _isSearchActive
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  firstChild: Row(
+                // ── Row 1: Search bar — always visible (Groups/Meetups style) ─
+                Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => _showCategorySheet(context),
-                        child: Container(
-                          height: 44,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(28),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.08),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
+                      const Padding(
+                        padding: EdgeInsets.only(left: 12, right: 6),
+                        child: Icon(Icons.search, size: 18,
+                            color: HuddlColors.primary),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _searchCtrl,
+                          focusNode: _searchFocus,
+                          textAlignVertical: TextAlignVertical.center,
+                          onChanged: (v) =>
+                              setState(() => _searchQuery = v.trim()),
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: filterText),
+                          decoration: InputDecoration(
+                            hintText: 'Search services…',
+                            hintStyle: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: HuddlColors.textTertiary,
+                            ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding:
+                                const EdgeInsets.only(bottom: 2),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.tune_rounded,
-                                size: 18,
+                        ),
+                      ),
+                      if (_searchQuery.isNotEmpty)
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _searchQuery = '');
+                            _searchCtrl.clear();
+                            _searchFocus.unfocus();
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(Icons.close,
+                                size: 16,
+                                color: HuddlColors.textTertiary),
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 10),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                // ── Row 2: Filter pill + Clear ────────────────────────────────
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _showCategorySheet(context),
+                      child: Container(
+                        height: 36,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        decoration: BoxDecoration(
+                          color: hasActiveFilter
+                              ? HuddlColors.primary.withValues(alpha: 0.08)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: hasActiveFilter
+                                ? HuddlColors.primary.withValues(alpha: 0.3)
+                                : hc.divider,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.tune_rounded,
+                              size: 16,
+                              color: hasActiveFilter
+                                  ? HuddlColors.primary
+                                  : filterText,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              hasActiveFilter
+                                  ? _selectedCategory!.displayName
+                                  : 'Filter by category',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
                                 color: hasActiveFilter
                                     ? HuddlColors.primary
                                     : filterText,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                hasActiveFilter
-                                    ? '${_selectedCategory!.displayName} •'
-                                    : 'Filter by category',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: hasActiveFilter
-                                      ? HuddlColors.primary
-                                      : filterText,
-                                ),
-                              ),
-                            ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (hasActiveFilter) ...[
+                      const SizedBox(width: 10),
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _selectedCategory = null);
+                        },
+                        child: Text(
+                          'Clear',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: HuddlColors.primary,
                           ),
                         ),
                       ),
-                      const Spacer(),
-                      if (hasActiveFilter)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _selectedCategory = null);
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 4, vertical: 8),
-                            child: Text(
-                              'Clear',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
                     ],
-                  ),
-                  // ── Inline search bar (grey pill — matches Meetups/Groups) ─
-                  secondChild: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.background,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.only(left: 12, right: 6),
-                          child: Icon(Icons.search, size: 18,
-                              color: HuddlColors.primary),
-                        ),
-                        Expanded(
-                          child: TextField(
-                            controller: _searchCtrl,
-                            focusNode: _searchFocus,
-                            textAlignVertical: TextAlignVertical.center,
-                            onChanged: (v) =>
-                                setState(() => _searchQuery = v.trim()),
-                            style: GoogleFonts.poppins(
-                                fontSize: 14, color: filterText),
-                            decoration: InputDecoration(
-                              hintText: 'Search cleaners, tutors…',
-                              hintStyle: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: HuddlColors.textTertiary,
-                              ),
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              isDense: true,
-                              contentPadding:
-                                  const EdgeInsets.only(bottom: 2),
-                            ),
-                          ),
-                        ),
-                        if (_searchQuery.isNotEmpty)
-                          GestureDetector(
-                            onTap: () { _clearSearch(); },
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
-                              child: Icon(Icons.close,
-                                  size: 16,
-                                  color: HuddlColors.textTertiary),
-                            ),
-                          )
-                        else
-                          const SizedBox(width: 10),
-                      ],
-                    ),
-                  ),
+                  ],
                 ),
 
                 const SizedBox(height: 12),
+
+                // ── Row 3: Section label ──────────────────────────────────────
                 Text(
                   _searchQuery.isEmpty ? 'Suggested for you' : 'Search results',
                   style: GoogleFonts.poppins(
