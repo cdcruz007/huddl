@@ -1294,8 +1294,8 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 ),
               ],
             ),
-            // ── FAB — only on Sell tab, same position as Groups/Meetups ──
-            if (_tabController.index == 1)
+            // ── FAB — visible on Buy and Sell tabs ────────────────────────
+            if (_tabController.index == 0 || _tabController.index == 1)
               Positioned(
                 bottom: 24,
                 right: 16,
@@ -1480,7 +1480,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
               fontSize: 15,
               fontWeight: FontWeight.w400,
             ),
-            indicatorColor: HuddlColors.yellow,
+            indicatorColor: HuddlColors.primary,
             indicatorWeight: 3,
             indicatorSize: TabBarIndicatorSize.label,
             dividerColor: hc.divider,
@@ -1651,15 +1651,20 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         );
                       },
                     )
-                  // ── Full listing cards (default) ──────────────────────
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                  // ── 2-column grid (default) ───────────────────────────
+                  : GridView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 0.72,
+                      ),
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, index) {
                         final uid = FirebaseAuth.instance.currentUser?.uid;
                         final isOwn = uid != null && items[index].sellerId == uid;
-                        return _MarketListCard(
+                        return _MarketGridBuyCard(
                           item: items[index],
                           isOwn: isOwn,
                           onTap: () => _openItemDetail(items[index]),
@@ -2748,6 +2753,293 @@ Widget _buildItemImage(String url, RehomeItem item) {
 //     → "Message" action pill (grey resting, matches Events "Join")
 // =============================================================================
 
+// =============================================================================
+// BUY TAB — 2-COLUMN GRID CARD
+// Half-screen-width card: photo (top, fills width, fixed ratio) + body.
+// Image area:
+//   - Count badge top-left (grey pill, hidden if only 1 photo)
+//   - Condition badge top-right (scrim pill)
+//   - Save heart bottom-right (white circle)
+// Body: category (small caps), bold title (2 lines max), price (right),
+//       location row, bottom "Near you" label.
+// =============================================================================
+class _MarketGridBuyCard extends StatefulWidget {
+  final RehomeItem item;
+  final VoidCallback onTap;
+  final VoidCallback onToggleSave;
+  final bool isOwn;
+
+  const _MarketGridBuyCard({
+    required this.item,
+    required this.onTap,
+    required this.onToggleSave,
+    this.isOwn = false,
+  });
+
+  @override
+  State<_MarketGridBuyCard> createState() => _MarketGridBuyCardState();
+}
+
+class _MarketGridBuyCardState extends State<_MarketGridBuyCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _heartAnim;
+  late Animation<double> _heartScale;
+
+  @override
+  void initState() {
+    super.initState();
+    _heartAnim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 250));
+    _heartScale = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+    ]).animate(CurvedAnimation(parent: _heartAnim, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _heartAnim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final hc = context.hc;
+    final photoCount = item.imageUrls.length;
+
+    return Semantics(
+      label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
+          '${item.ageStage.shortLabel}, ${item.sellerLocation}.',
+      button: true,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: hc.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.07),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Image area (fixed aspect) ───────────────────────────────
+              Expanded(
+                flex: 5,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Photo or category fallback
+                    _buildItemImage(
+                      item.imageUrls.isNotEmpty ? item.imageUrls.first : '',
+                      item,
+                    ),
+                    // Bottom gradient scrim
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Photo count badge — top-left (hidden when only 1 photo)
+                    if (photoCount > 1)
+                      Positioned(
+                        top: 8, left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.52),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.photo_library_outlined,
+                                  size: 10, color: Colors.white),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$photoCount',
+                                style: _adaptiveText(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    // Condition badge — top-right
+                    Positioned(
+                      top: 8, right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: item.isFree
+                              ? HuddlColors.teal.withValues(alpha: 0.90)
+                              : Colors.black.withValues(alpha: 0.52),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          item.isFree ? 'Free' : item.condition.label,
+                          style: _adaptiveText(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Save heart — bottom-right
+                    Positioned(
+                      bottom: 8, right: 8,
+                      child: Semantics(
+                        label: item.isSaved
+                            ? 'Remove ${item.title} from saved'
+                            : 'Save ${item.title}',
+                        button: true,
+                        child: InkWell(
+                          onTap: () {
+                            _heartAnim.forward(from: 0);
+                            widget.onToggleSave();
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedBuilder(
+                            animation: _heartScale,
+                            builder: (_, __) => Transform.scale(
+                              scale: _heartScale.value,
+                              child: Container(
+                                width: 30, height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.10),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  item.isSaved
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  size: 15,
+                                  color: item.isSaved
+                                      ? HuddlColors.error
+                                      : HuddlColors.textHint,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // ── Card body ───────────────────────────────────────────────
+              Expanded(
+                flex: 4,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Category row + price right-aligned
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.category.label.toUpperCase(),
+                              style: _adaptiveText(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: hc.textTertiary,
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          Text(
+                            item.priceDisplay,
+                            style: _adaptiveText(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: item.isFree ? HuddlColors.teal : _kMarketBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      // Title
+                      Expanded(
+                        child: Text(
+                          item.title,
+                          style: _adaptiveText(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: hc.textPrimary,
+                            height: 1.25,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Location row
+                      Row(
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              size: 11, color: hc.textTertiary),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              item.sellerLocation.isNotEmpty
+                                  ? item.sellerLocation
+                                  : 'Near you',
+                              style: _adaptiveText(
+                                fontSize: 11,
+                                color: hc.textTertiary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _MarketItemCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;
@@ -2796,10 +3088,6 @@ class _MarketItemCardState extends State<_MarketItemCard>
   Widget build(BuildContext context) {
     final item = widget.item;
     final hc = context.hc;
-
-    // Seller avatar count label — fake-realistic "X interested" number
-    final interestedCount =
-        12 + ((item.id.hashCode.abs()) % 38); // 12–49
 
     return Semantics(
       label: '${item.title}, ${item.priceDisplay}, ${item.condition.label}, '
@@ -3041,7 +3329,7 @@ class _MarketItemCardState extends State<_MarketItemCard>
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          '$interestedCount interested',
+                          'Near you',
                           style: _adaptiveText(
                             fontSize: 12,
                             color: hc.textTertiary,
@@ -4126,10 +4414,22 @@ class _SellListingTileState extends State<_SellListingTile>
                           ],
                         ),
                       ),
-                      // More actions hint (progressive disclosure affordance)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 4),
-                        child: Icon(Icons.more_vert, size: 18, color: hc.textTertiary),
+                      // More actions — tappable ⋮ button (48dp target)
+                      Semantics(
+                        label: 'More actions for ${item.title}',
+                        button: true,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            widget.onLongPress();
+                          },
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+                            child: Icon(Icons.more_vert,
+                                size: 18, color: hc.textTertiary),
+                          ),
+                        ),
                       ),
                     ],
                   ),

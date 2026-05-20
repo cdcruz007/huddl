@@ -390,7 +390,49 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
         surfaceTintColor: Colors.white,
         automaticallyImplyLeading: false,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
+          onTap: () {
+            // Show discard confirmation when there is unsaved wizard progress
+            final hasProgress = _selectedAge != null ||
+                _selectedCategory != null ||
+                _selectedCondition != null ||
+                _titleController.text.isNotEmpty ||
+                _pickedImages.isNotEmpty;
+            if (!hasProgress || _isEditing) {
+              Navigator.pop(context);
+              return;
+            }
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                backgroundColor:
+                    Theme.of(ctx).scaffoldBackgroundColor,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+                title: const Text('Discard listing?'),
+                content:
+                    const Text('Your progress will be lost.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text('Keep editing',
+                        style: GoogleFonts.poppins(
+                            color: _orange,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx); // close dialog
+                      Navigator.pop(context); // close wizard
+                    },
+                    child: Text('Discard',
+                        style: GoogleFonts.poppins(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ],
+              ),
+            );
+          },
           child: Center(
             child: Padding(
               padding: const EdgeInsets.only(left: 4),
@@ -426,13 +468,14 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
           // ── Thin orange progress strip — only shown on steps 0 & 1.
           // On step 2 the blue photo banner is flush below the AppBar so we
           // hide the indicator to avoid any colour clash at that seam.
-          if (_step < 2)
-            LinearProgressIndicator(
-              value: (_step + 1) / 3,
-              backgroundColor: HuddlColors.divider,
-              valueColor: const AlwaysStoppedAnimation(HuddlColors.primary),
-              minHeight: 3,
-            ),
+          // Progress bar visible at all 3 steps — fills 1/3 → 2/3 → 3/3
+          LinearProgressIndicator(
+            value: (_step + 1) / 3,
+            backgroundColor: HuddlColors.divider,
+            valueColor:
+                const AlwaysStoppedAnimation(HuddlColors.primary),
+            minHeight: 3,
+          ),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),

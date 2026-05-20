@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -82,6 +83,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   bool _showFullDescription = false;
   bool _openingChat = false;
   final _reportService = ReportService();
+  bool _hasAlreadyReported = false;
 
   RehomeItem get item => widget.item;
   // Compare against the real Firebase Auth UID so items created by the
@@ -104,11 +106,32 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           return;
         });
       }
+      // Check if current user has already reported this listing
+      _checkAlreadyReported();
     });
   }
 
   void _refresh() {
     if (mounted) setState(() {});
+  }
+
+  /// Check Firestore to see if the current user has already reported this listing.
+  Future<void> _checkAlreadyReported() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || item.id.isEmpty) return;
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('reports')
+          .where('messageId', isEqualTo: item.id)
+          .where('reporterId', isEqualTo: uid)
+          .limit(1)
+          .get();
+      if (mounted) {
+        setState(() => _hasAlreadyReported = snap.docs.isNotEmpty);
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('[ItemDetail] _checkAlreadyReported error: $e');
+    }
   }
 
   @override
@@ -621,13 +644,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                   targetUserId: item.sellerId,
                                   type: selectedType!,
                                   context: ReportContext.listing,
+                                  chatName: item.title,
                                 );
                                 if (mounted) {
+                                  if (ok) {
+                                    setState(() => _hasAlreadyReported = true);
+                                  }
                                   ScaffoldMessenger.of(context)
                                       .showSnackBar(
                                     SnackBar(
                                       content: Text(ok
-                                          ? 'Report submitted. Thank you.'
+                                          ? 'Report submitted. Thank you for keeping Huddl safe.'
                                           : 'Could not submit report. Please try again.'),
                                       backgroundColor: ok
                                           ? HuddlColors.teal
@@ -708,8 +735,27 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: _ItemCircleButton(
-                          icon: Icons.flag_outlined,
-                          onTap: _showReportListingSheet,
+                          icon: _hasAlreadyReported
+                              ? Icons.flag
+                              : Icons.flag_outlined,
+                          color: _hasAlreadyReported
+                              ? HuddlColors.error
+                              : Colors.white,
+                          onTap: _hasAlreadyReported
+                              ? () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text(
+                                          'You\'ve already reported this listing.'),
+                                      backgroundColor: hc.textTertiary,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
+                                    ),
+                                  );
+                                }
+                              : _showReportListingSheet,
                         ),
                       ),
                     if (_isOwnItem) const SizedBox(width: 8),
@@ -829,30 +875,101 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
                         Divider(height: 1, color: hc.divider),
 
-                        // Seller row — clean, no border box
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                          child: Row(
-                            children: [
-                              MemberAvatar(name: item.sellerName, size: 42),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item.sellerName,
-                                      style: _adaptiveText(fontSize: 14, fontWeight: FontWeight.w600, color: hc.textPrimary)),
-                                    const SizedBox(height: 2),
-                                    Row(children: [
-                                      Icon(Icons.location_on_outlined, size: 12, color: hc.textTertiary),
-                                      const SizedBox(width: 3),
-                                      Text(item.sellerLocation,
-                                        style: _adaptiveText(fontSize: 12, color: hc.textTertiary)),
-                                    ]),
-                                  ],
+                        // Seller row — tappable, navigates to seller profile
+                        Semantics(
+                          label: 'View ${item.sellerName}\'s profile',
+                          button: true,
+                          child: InkWell(
+                            onTap: () {
+                              // Navigate to seller's public profile / listings
+                              // using the existing profile push pattern
+                              HapticFeedback.selectionClick();
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: hc.surface,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(20)),
                                 ),
+                                builder: (_) => SafeArea(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const HuddlBottomSheetHandle(),
+                                        const SizedBox(height: 16),
+                                        MemberAvatar(name: item.sellerName, size: 56),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          item.sellerName,
+                                          style: _adaptiveText(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            color: hc.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.location_on_outlined,
+                                                size: 13, color: hc.textTertiary),
+                                            const SizedBox(width: 3),
+                                            Text(item.sellerLocation,
+                                                style: _adaptiveText(
+                                                    fontSize: 13,
+                                                    color: hc.textTertiary)),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Text(
+                                          'Seller on Huddl',
+                                          style: _adaptiveText(
+                                            fontSize: 13,
+                                            color: hc.textTertiary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                              child: Row(
+                                children: [
+                                  MemberAvatar(name: item.sellerName, size: 42),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item.sellerName,
+                                            style: _adaptiveText(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: hc.textPrimary)),
+                                        const SizedBox(height: 2),
+                                        Row(children: [
+                                          Icon(Icons.location_on_outlined,
+                                              size: 12, color: hc.textTertiary),
+                                          const SizedBox(width: 3),
+                                          Text(item.sellerLocation,
+                                              style: _adaptiveText(
+                                                  fontSize: 12,
+                                                  color: hc.textTertiary)),
+                                        ]),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(Icons.chevron_right,
+                                      size: 18, color: hc.textTertiary),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
 
