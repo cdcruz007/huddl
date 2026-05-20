@@ -1534,20 +1534,78 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
     return Column(
       children: [
-        // ══ TOP HEADER — filter pill + inline search ══════════════════════════
-        Container(
-          color: context.hc.surface,
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Filter pill ↔ inline search (AnimatedCrossFade) ─────────
-              AnimatedCrossFade(
-                duration: const Duration(milliseconds: 220),
-                crossFadeState: _isSearchActive
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: Row(
+        // ══ TOP HEADER ════════════════════════════════════════════════════════
+        // Search active → inline search field only (no filter pill, no headings)
+        // Search inactive → filter pill + section label + distance indicator
+        if (_isSearchActive)
+          // ── Search field row (mirrors Groups inline search exactly) ────────
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: context.hc.inputBg,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12, right: 6),
+                    child: Icon(Icons.search, size: 18,
+                        color: HuddlColors.primary),
+                  ),
+                  Expanded(
+                    child: TextField(
+                      controller: _localSearchController,
+                      focusNode: _searchFocusNode,
+                      textAlignVertical: TextAlignVertical.center,
+                      onChanged: (v) =>
+                          setState(() => _localSearchQuery = v),
+                      style: GoogleFonts.poppins(
+                          fontSize: 14, color: filterText),
+                      decoration: InputDecoration(
+                        hintText: 'Search meetups',
+                        hintStyle: GoogleFonts.poppins(
+                            fontSize: 14,
+                            color: HuddlColors.textTertiary),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        isDense: true,
+                        contentPadding:
+                            const EdgeInsets.only(bottom: 2),
+                      ),
+                    ),
+                  ),
+                  if (_localSearchQuery.isNotEmpty)
+                    GestureDetector(
+                      onTap: () => setState(() {
+                        _localSearchQuery = '';
+                        _localSearchController.clear();
+                      }),
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Icon(Icons.close, size: 16,
+                            color: HuddlColors.textTertiary),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 10),
+                ],
+              ),
+            ),
+          )
+        else
+          // ── Filter pill + section label + distance (default state) ──────────
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Filter pill row
+                Row(
                   children: [
                     Semantics(
                       label: _hasActiveFilter
@@ -1558,7 +1616,8 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         onTap: () => _showFilterSheet(context),
                         child: Container(
                           height: 44,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(28),
@@ -1582,7 +1641,8 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                _hasActiveFilter && _filterPillLabel.isNotEmpty
+                                _hasActiveFilter &&
+                                        _filterPillLabel.isNotEmpty
                                     ? _filterPillLabel
                                     : 'Filter and sort',
                                 style: GoogleFonts.poppins(
@@ -1601,119 +1661,61 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     const Spacer(),
                   ],
                 ),
-                // ── Inline search field (no Cancel — matches Groups UX) ───
-                secondChild: Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: context.hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
+
+                // Active participant badge (set via filter sheet)
+                if (_selectedParticipant != 'All') ...[
+                  const SizedBox(height: 10),
+                  Row(
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(left: 12, right: 6),
-                        child: Icon(Icons.search, size: 18,
-                            color: HuddlColors.primary),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _localSearchController,
-                          focusNode: _searchFocusNode,
-                          textAlignVertical: TextAlignVertical.center,
-                          onChanged: (v) =>
-                              setState(() => _localSearchQuery = v),
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: filterText),
-                          decoration: InputDecoration(
-                            hintText: 'Search meetups',
-                            hintStyle: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: HuddlColors.textTertiary),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            isDense: true,
-                            contentPadding:
-                                const EdgeInsets.only(bottom: 2),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: HuddlColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color:
+                                  HuddlColors.primary.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.people_outline,
+                                size: 14, color: HuddlColors.primary),
+                            const SizedBox(width: 5),
+                            Text(_selectedParticipant,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: HuddlColors.primary)),
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(
+                                    () => _selectedParticipant = 'All');
+                              },
+                              child: const Icon(Icons.close,
+                                  size: 14, color: HuddlColors.primary),
+                            ),
+                          ],
                         ),
                       ),
-                      if (_localSearchQuery.isNotEmpty)
-                        GestureDetector(
-                          onTap: () => setState(() {
-                            _localSearchQuery = '';
-                            _localSearchController.clear();
-                          }),
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(Icons.close, size: 16,
-                                color: HuddlColors.textTertiary),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 10),
                     ],
                   ),
-                ),
-              ),
+                ],
 
-              // ── Active participant badge (set via filter sheet) ──────────
-              if (_selectedParticipant != 'All') ...[
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: HuddlColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: HuddlColors.primary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.people_outline,
-                              size: 14, color: HuddlColors.primary),
-                          const SizedBox(width: 5),
-                          Text(_selectedParticipant,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: HuddlColors.primary)),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              HapticFeedback.lightImpact();
-                              setState(() => _selectedParticipant = 'All');
-                            },
-                            child: const Icon(Icons.close,
-                                size: 14, color: HuddlColors.primary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 12),
+                // Section label
+                Text(
+                  'Suggested for you',
+                  style: GoogleFonts.poppins(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: sectionText,
+                  ),
                 ),
-              ],
-
-              const SizedBox(height: 12),
-              // ── Section label ───────────────────────────────────────────
-              Text(
-                _localSearchQuery.isEmpty
-                    ? 'Suggested for you'
-                    : 'Search results',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: sectionText,
-                ),
-              ),
-              // ── Distance indicator ──────────────────────────────────────
-              // Shows the active radius (or "Online") below the section header.
-              // Hidden during search — the label is irrelevant when searching by keyword.
-              if (_localSearchQuery.isEmpty) ...[
+                // Distance indicator
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -1735,15 +1737,12 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
               ],
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
-        ),
-        // ── Smart Nudge banner ─────────────────────────────────────
-        // Contextual one-liner from MeetupAiService — only shown when relevant.
-        // Dismissed per-session via _aiService.dismissNudge(); hides during search.
-        if (_activeNudge != null && _localSearchQuery.isEmpty)
+        // ── Smart Nudge banner (hidden during search) ─────────────
+        if (_activeNudge != null && !_isSearchActive)
           _SmartNudgeBanner(
             nudge: _activeNudge!,
             onDismiss: () {
@@ -1753,6 +1752,21 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             onAction: _activeNudge!.actionLabel != null
                 ? widget.onCreateMeetup
                 : null,
+          ),
+
+        // ── 'Search results' label shown above list when search active ──
+        if (_isSearchActive)
+          Container(
+            color: context.hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Text(
+              _localSearchQuery.isEmpty ? 'Meetups' : 'Search results',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: filterText,
+              ),
+            ),
           ),
 
         // ── List — light gray scaffold bg ─────────────────────────
