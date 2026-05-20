@@ -53,11 +53,18 @@ class EventsScreen extends StatefulWidget {
   const EventsScreen({super.key});
 
   @override
-  State<EventsScreen> createState() => _EventsScreenState();
+  State<EventsScreen> createState() => EventsScreenState();
 }
 
-class _EventsScreenState extends State<EventsScreen>
+class EventsScreenState extends State<EventsScreen>
     with SingleTickerProviderStateMixin {
+
+  /// Called by MainShell when the user leaves the Discover tab via the bottom
+  /// nav, ensuring the Services sub-tab resets from compact search back to
+  /// the full hero-card view.
+  void resetServicesSearch() {
+    _serviceResetTrigger.value = true;
+  }
   late TabController _tabController;
   int _selectedTab = 0; // Tracks the settled tab index for FAB logic
   final MeetupService _meetupService = MeetupService();

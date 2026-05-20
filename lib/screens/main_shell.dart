@@ -38,6 +38,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   // because every screen's initState async work raced with the build phase.
   final Set<int> _activatedTabs = {0}; // Home is always pre-activated
 
+  /// Key to reach EventsScreen (Discover tab) so we can reset Services search
+  /// whenever the user leaves the Discover tab via the bottom nav.
+  final GlobalKey<EventsScreenState> _eventsKey = GlobalKey<EventsScreenState>();
+
   // ── Active chat tracking (used to suppress duplicate foreground banners) ──
   // When the user is already inside a group chat or DM, the OS shows the FCM
   // heads-up banner AND our SnackBar would fire simultaneously.  By tracking
@@ -292,6 +296,10 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
   void _switchTab(int index) {
     if (index < 0 || index >= 6) return;
     if (!mounted) return;
+    // Reset Services search mode whenever the user leaves the Discover tab (2).
+    if (_currentIndex == 2 && index != 2) {
+      _eventsKey.currentState?.resetServicesSearch();
+    }
     setState(() {
       _activatedTabs.add(index);
       _currentIndex = index;
@@ -308,7 +316,7 @@ class MainShellState extends State<MainShell> with WidgetsBindingObserver {
     switch (index) {
       case 0: return const HomeScreen();
       case 1: return const GroupsScreen();
-      case 2: return const EventsScreen();
+      case 2: return EventsScreen(key: _eventsKey);
       case 3: return const MarketplaceScreen();
       case 4: return const InsightsScreen();
       case 5: return const ProfileScreen();
