@@ -36,8 +36,12 @@ import '../../services/voice_message_service.dart';
 import '../../services/firestore_service.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────
-// My-bubble: solid brand orange (Figma spec)
-const Color _kMyBubble = HuddlColors.primary;
+// My-bubble: solid brand orange (Figma spec #E8724A)
+const Color _kMyBubble    = HuddlColors.primary;
+// Received-bubble: light grey (Figma spec #F5F5F5)
+const Color _kTheirBubble = Color(0xFFF5F5F5);
+// Timestamp colour (Figma spec #999999)
+const Color _kTimestamp   = Color(0xFF999999);
 
 /// Maps borough member IDs to realistic profile photo URLs
 const Map<String, String> _kMemberProfilePhotos = {
@@ -572,7 +576,7 @@ class _DMChatScreenState extends State<DMChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.hc.scaffold,
+      backgroundColor: Colors.white,   // Figma: white chat background
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -2820,20 +2824,23 @@ class _DMBubble extends StatelessWidget {
                   ),
                 if (!isMe) const SizedBox(width: 8),
                 Flexible(
-                  child: Container(
+                  child: Column(
+                    crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    children: [
+                    Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
                       color: isHighlighted
                           ? HuddlColors.primary.withValues(alpha: 0.12)
                           : isMe
-                              ? _kMyBubble
-                              : HuddlColors.background,
+                              ? _kMyBubble       // #E8724A
+                              : _kTheirBubble,   // #F5F5F5
                       borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isMe ? 16 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 16),
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: Radius.circular(isMe ? 18 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 18),
                       ),
                     ),
                     child: Column(
@@ -2845,28 +2852,36 @@ class _DMBubble extends StatelessWidget {
                             : Text(
                                 message.message,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: isMe ? HuddlColors.white : context.hc.textPrimary,
+                                  fontSize: 15,
+                                  color: isMe ? HuddlColors.white : const Color(0xFF1A1A1A),
                                   height: 1.4,
                                 ),
                               ),
-                        const SizedBox(height: 4),
-                        // Time + status ticks
-                        Row(
+                      ],
+                    ),
+                  ),
+                      // Timestamp row — outside bubble (Figma spec)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 3,
+                          left: isMe ? 0 : 2,
+                          right: isMe ? 2 : 0,
+                        ),
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (isSaved) ...[
+                              Icon(Icons.bookmark, size: 11,
+                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
+                              const SizedBox(width: 3),
+                            ],
                             Text(
                               _formatTime(message.timestamp),
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : context.hc.textTertiary,
+                                fontSize: 11,
+                                color: _kTimestamp,
                               ),
                             ),
-                            if (isSaved) ...[
-                              Icon(Icons.bookmark, size: 12,
-                                  color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : HuddlColors.primary.withValues(alpha: 0.6)),
-                              const SizedBox(width: 4),
-                            ],
                             if (isMe) ...[
                               const SizedBox(width: 4),
                               if (message.status == MessageStatus.error && onResend != null)
@@ -2904,13 +2919,13 @@ class _DMBubble extends StatelessWidget {
                             ],
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                      ),       // end timestamp Padding
+                    ],         // end Flexible > Column children
+                  ),           // end Flexible > Column
+                ),             // end Flexible
+              ],               // end outer Row children
+            ),                 // end outer Row
+          ),                   // end GestureDetector
         ),
         // Emoji reactions row
         if (reactions.isNotEmpty)

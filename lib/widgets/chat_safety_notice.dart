@@ -41,7 +41,7 @@ Future<void> showChatSafetyNoticeIfNeeded(BuildContext context) async {
   if (!context.mounted) return;
   await showDialog<void>(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: true,   // tapping outside dismisses (Figma spec)
     builder: (_) => const _ChatSafetyNoticeDialog(),
   );
 }

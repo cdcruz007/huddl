@@ -49,8 +49,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
-// My-bubble: solid brand orange (Figma spec)
-const Color _kMyBubble = HuddlColors.primary;
+// My-bubble: solid brand orange (Figma spec #E8724A)
+const Color _kMyBubble    = HuddlColors.primary;          // #E8724A
+// Received-bubble: light grey (Figma spec #F5F5F5)
+const Color _kTheirBubble = Color(0xFFF5F5F5);
+// Timestamp / secondary text
+const Color _kTimestamp   = Color(0xFF999999);
 
 class GroupChatScreen extends StatefulWidget {
   /// Fires the groupId string whenever the current user sends any message
@@ -3290,7 +3294,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: context.hc.scaffold,
+      backgroundColor: Colors.white,   // Figma: white chat background (not grey)
       appBar: _isSearching ? _buildSearchAppBar() : _buildAppBar(context),
       body: Column(
         children: [
@@ -5562,6 +5566,7 @@ class _ChatBubble extends StatelessWidget {
                     crossAxisAlignment:
                         isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
+                      // Sender name — group chat only, orange (Figma spec)
                       if (showAvatar && !isMe)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4),
@@ -5571,8 +5576,8 @@ class _ChatBubble extends StatelessWidget {
                               message.senderName,
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: HuddlColors.textTertiary,
+                                fontWeight: FontWeight.w700,
+                                color: HuddlColors.primary,  // #E8724A (Figma spec)
                               ),
                             ),
                           ),
@@ -5584,13 +5589,13 @@ class _ChatBubble extends StatelessWidget {
                           color: isHighlighted
                               ? HuddlColors.primary.withValues(alpha: 0.12)
                               : isMe
-                                  ? _kMyBubble
-                                  : HuddlColors.background,
+                                  ? _kMyBubble        // #E8724A
+                                  : _kTheirBubble,    // #F5F5F5
                           borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(16),
-                            topRight: const Radius.circular(16),
-                            bottomLeft: Radius.circular(isMe ? 16 : 4),
-                            bottomRight: Radius.circular(isMe ? 4 : 16),
+                            topLeft: const Radius.circular(18),
+                            topRight: const Radius.circular(18),
+                            bottomLeft: Radius.circular(isMe ? 18 : 4),
+                            bottomRight: Radius.circular(isMe ? 4 : 18),
                           ),
                         ),
                         child: Column(
@@ -5602,33 +5607,40 @@ class _ChatBubble extends StatelessWidget {
                                 : Text(
                                     message.message,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: isMe ? HuddlColors.white : context.hc.textPrimary,
+                                      fontSize: 15,
+                                      color: isMe ? HuddlColors.white : const Color(0xFF1A1A1A),
                                       height: 1.4,
                                     ),
                                   ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (isSaved) ...[
-                                  Icon(Icons.bookmark, size: 12,
-                                      color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : HuddlColors.primary.withValues(alpha: 0.6)),
-                                  const SizedBox(width: 4),
-                                ],
-                                Text(
-                                  _formatTime(message.timestamp),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 10,
-                                    color: isMe ? HuddlColors.white.withValues(alpha: 0.7) : context.hc.textTertiary,
-                                  ),
-                                ),
-                                if (isMe && messageStatus != null) ...[
-                                  const SizedBox(width: 4),
-                                  _GroupMessageStatusIcon(status: messageStatus!),
-                                ],
-                              ],
+                          ],
+                        ),
+                      ),
+                      // Timestamp row — outside bubble, below it (Figma spec)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          top: 3,
+                          left: isMe ? 0 : 2,
+                          right: isMe ? 2 : 0,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (isSaved) ...[
+                              Icon(Icons.bookmark, size: 11,
+                                  color: HuddlColors.primary.withValues(alpha: 0.6)),
+                              const SizedBox(width: 3),
+                            ],
+                            Text(
+                              _formatTime(message.timestamp),
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: _kTimestamp,
+                              ),
                             ),
+                            if (isMe && messageStatus != null) ...[
+                              const SizedBox(width: 4),
+                              _GroupMessageStatusIcon(status: messageStatus!),
+                            ],
                           ],
                         ),
                       ),
@@ -5949,12 +5961,12 @@ class _GroupDeletedMessageBubble extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: context.hc.scaffold,
+            color: _kTheirBubble,
             borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(16),
-              topRight: const Radius.circular(16),
-              bottomLeft: Radius.circular(isMe ? 16 : 4),
-              bottomRight: Radius.circular(isMe ? 4 : 16),
+              topLeft: const Radius.circular(18),
+              topRight: const Radius.circular(18),
+              bottomLeft: Radius.circular(isMe ? 18 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 18),
             ),
             border: Border.all(color: context.hc.divider, width: 0.5),
           ),
@@ -6356,8 +6368,8 @@ class _GroupImageBubble extends StatelessWidget {
                       senderName,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _colorFromHex(senderAvatar),
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.primary,  // orange sender name (Figma)
                       ),
                     ),
                   ),
@@ -6365,10 +6377,10 @@ class _GroupImageBubble extends StatelessWidget {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isMe ? 16 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 16),
+                        topLeft: const Radius.circular(18),
+                        topRight: const Radius.circular(18),
+                        bottomLeft: Radius.circular(isMe ? 18 : 4),
+                        bottomRight: Radius.circular(isMe ? 4 : 18),
                       ),
                       child: Container(
                         constraints:
@@ -6484,8 +6496,12 @@ class _GroupImageBubble extends StatelessWidget {
   Widget _brokenImage() => Container(
         width: 200,
         height: 200,
-        color: HuddlColors.background,
-        child: Icon(Icons.broken_image, color: HuddlColors.textTertiary, size: 48),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE0E0E0),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.image_not_supported_outlined,
+            color: Color(0xFFBDBDBD), size: 40),
       );
 
   String _fmtTime(DateTime dt) {
@@ -6587,20 +6603,20 @@ class _GroupLocationBubble extends StatelessWidget {
                       senderName,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: _colorFromHex(senderAvatar),
+                        fontWeight: FontWeight.w700,
+                        color: HuddlColors.primary,  // orange (Figma spec)
                       ),
                     ),
                   ),
                 Container(
                   constraints: const BoxConstraints(maxWidth: 240),
                   decoration: BoxDecoration(
-                    color: isMe ? HuddlColors.primary.withValues(alpha: 0.10) : HuddlColors.white,
+                    color: isMe ? _kMyBubble : _kTheirBubble,
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(16),
-                      topRight: const Radius.circular(16),
-                      bottomLeft: Radius.circular(isMe ? 16 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 16),
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isMe ? 18 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 18),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -6811,15 +6827,6 @@ class _GroupAttachSheet extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Utility ───────────────────────────────────────────────────────────────
-Color _colorFromHex(String hex) {
-  final clean = hex.replaceAll('#', '');
-  if (clean.length == 6) {
-    return Color(int.parse('FF$clean', radix: 16));
-  }
-  return HuddlColors.primary;
 }
 
 // ── Group member model for admin features ─────────────────────────────────
