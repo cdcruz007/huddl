@@ -313,22 +313,6 @@ class _FilterSortRow extends StatelessWidget {
     required this.onSortTap,
   });
 
-  static const List<(KnowledgeCategory, String, IconData)> _cats = [
-    (KnowledgeCategory.pregnancy,       'Pregnancy',     Icons.pregnant_woman_outlined),
-    (KnowledgeCategory.baby,            'Baby',          Icons.child_care_outlined),
-    (KnowledgeCategory.toddler,         'Toddler',       Icons.emoji_people_outlined),
-    (KnowledgeCategory.feeding,         'Feeding',       Icons.restaurant_outlined),
-    (KnowledgeCategory.sleep,           'Sleep',         Icons.bedtime_outlined),
-    (KnowledgeCategory.health,          'Health',        Icons.favorite_outline),
-    (KnowledgeCategory.mentalHealth,    'Wellbeing',     Icons.self_improvement_outlined),
-    (KnowledgeCategory.education,       'Education',     Icons.school_outlined),
-    (KnowledgeCategory.finance,         'Finance',       Icons.account_balance_outlined),
-    (KnowledgeCategory.safety,          'Safety',        Icons.shield_outlined),
-    (KnowledgeCategory.senDisability,   'SEN',           Icons.accessibility_outlined),
-    (KnowledgeCategory.dadSpecific,     'Dads',          Icons.face_outlined),
-    (KnowledgeCategory.parentalWellbeing,'Self-Care',    Icons.spa_outlined),
-  ];
-
   String get _sortLabel {
     switch (sortBy) {
       case 'newest': return 'Newest';
@@ -343,136 +327,54 @@ class _FilterSortRow extends StatelessWidget {
     final hasFilter = selectedCategory != null;
     final sortActive = sortBy != 'relevance';
     return Padding(
-      padding: const EdgeInsets.only(top: 10, bottom: 4),
-      child: SizedBox(
-        height: 40,
-        child: ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          children: [
-            // ── Sort pill ──────────────────────────────────────────
-            GestureDetector(
-              onTap: onSortTap,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: (sortActive || hasFilter)
-                      ? HuddlColors.primary
-                      : (isDark ? HuddlColors.darkSurface : Colors.white),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: (sortActive || hasFilter)
-                        ? HuddlColors.primary
-                        : HuddlColors.inputBorderLight,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.tune_rounded,
-                      size: 15,
-                      color: (sortActive || hasFilter)
-                          ? Colors.white
-                          : HuddlColors.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      (sortActive || hasFilter) ? _sortLabel : 'Filter & Sort',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: (sortActive || hasFilter)
-                            ? Colors.white
-                            : HuddlColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+      child: GestureDetector(
+        onTap: onSortTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            color: (sortActive || hasFilter)
+                ? HuddlColors.primary
+                : (isDark ? HuddlColors.darkSurface : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: (sortActive || hasFilter)
+                  ? HuddlColors.primary
+                  : HuddlColors.inputBorderLight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
-            ),
-            // ── Category chips ─────────────────────────────────────
-            _CategoryChip(
-              label: 'All',
-              icon: Icons.auto_awesome_outlined,
-              isSelected: selectedCategory == null,
-              onTap: () => onCategorySelected(null),
-              isDark: isDark,
-            ),
-            const SizedBox(width: 8),
-            ..._cats.map((entry) {
-              final (cat, label, icon) = entry;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _CategoryChip(
-                  label: label,
-                  icon: icon,
-                  isSelected: selectedCategory == cat,
-                  onTap: () => onCategorySelected(selectedCategory == cat ? null : cat),
-                  isDark: isDark,
-                ),
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _CategoryChip({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? HuddlColors.primary.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? HuddlColors.primary : HuddlColors.inputBorderLight,
-            width: isSelected ? 1.5 : 1,
+            ],
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 13,
-                color: isSelected ? HuddlColors.primary : HuddlColors.textSecondary),
-            const SizedBox(width: 4),
-            Text(label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? HuddlColors.primary : HuddlColors.textSecondary,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.tune_rounded,
+                size: 15,
+                color: (sortActive || hasFilter)
+                    ? Colors.white
+                    : HuddlColors.textSecondary,
               ),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Text(
+                (sortActive || hasFilter) ? _sortLabel : 'Filter & Sort',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: (sortActive || hasFilter)
+                      ? Colors.white
+                      : HuddlColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
