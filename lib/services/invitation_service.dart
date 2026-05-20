@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'browser_storage.dart';
 import '../models/group.dart';
@@ -363,6 +364,37 @@ class InvitationService extends ChangeNotifier {
 
     notifyListeners();
     _log('Joined public group: "${group.name}"');
+
+    // ── Section 5H / 6D: Update Firestore members[] array and write joinedAt ─
+    final me = FirebaseAuth.instance.currentUser;
+    final myId = me?.uid ?? '';
+    if (myId.isNotEmpty) {
+      try {
+        final db = FirebaseFirestore.instance;
+        // Add to members[] array
+        await db.collection('groups').doc(group.id).update({
+          'members': FieldValue.arrayUnion([myId]),
+        });
+        // Write memberActivity.joinedAt (write-once via merge — only sets
+        // joinedAt if the field doesn't already exist)
+        final actRef = db
+            .collection('groups')
+            .doc(group.id)
+            .collection('memberActivity')
+            .doc(myId);
+        final actDoc = await actRef.get();
+        if (!actDoc.exists || actDoc.data()?['joinedAt'] == null) {
+          await actRef.set({
+            'userId': myId,
+            'messageCount': 0,
+            'joinedAt': FieldValue.serverTimestamp(),
+            'lastActiveAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('[InvitationService] Firestore join update error: $e');
+      }
+    }
 
     // ── Notify group creator that a new member joined ──────────────────────
     if (group.creatorId != null && group.creatorId!.isNotEmpty) {

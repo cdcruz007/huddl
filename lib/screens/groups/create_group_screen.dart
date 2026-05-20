@@ -18,6 +18,7 @@ import '../../services/firestore_service.dart';
 import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/ai_api_helper.dart';
 
@@ -937,8 +938,31 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
           'lastSenderName': 'System',
           'lastMessageTime': newGroup.lastMessageTime?.toIso8601String(),
           if (aiTagline != null && aiTagline.isNotEmpty) 'aiTagline': aiTagline,
+          // ── Section 5H: Admin role fields ──────────────────────────────
+          'createdBy': FirebaseAuth.instance.currentUser?.uid ?? '',
+          'admins': [FirebaseAuth.instance.currentUser?.uid ?? ''],
+          'members': [FirebaseAuth.instance.currentUser?.uid ?? ''],
         });
         persistedId = firestoreId;
+        // ── Section 5H: Write memberActivity sub-collection for creator ──
+        final creatorUid = FirebaseAuth.instance.currentUser?.uid;
+        if (creatorUid != null && firestoreId.isNotEmpty) {
+          try {
+            await FirebaseFirestore.instance
+                .collection('groups')
+                .doc(firestoreId)
+                .collection('memberActivity')
+                .doc(creatorUid)
+                .set({
+              'userId': creatorUid,
+              'messageCount': 0,
+              'joinedAt': FieldValue.serverTimestamp(),
+              'lastActiveAt': FieldValue.serverTimestamp(),
+            });
+          } catch (e) {
+            if (kDebugMode) debugPrint('⚠️ create_group: memberActivity write failed: $e');
+          }
+        }
       } catch (e) {
         if (kDebugMode) debugPrint('⚠️ create_group: Firestore write failed, using local ID: $e');
       }

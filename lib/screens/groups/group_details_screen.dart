@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../models/group.dart';
@@ -14,6 +15,8 @@ import '../../services/saved_message_service.dart';
 import '../../services/dm_service.dart';
 import '../../services/firestore_service.dart';
 import 'group_polls_screen.dart';
+import 'edit_group_screen.dart';
+import 'manage_admins_screen.dart';
 
 // ── Design tokens — use HuddlColors as single source of truth ────────
 
@@ -54,14 +57,17 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
   final InvitationService _invitationService = InvitationService();
   final SavedMessageService _savedMessageService = SavedMessageService();
   bool _isCreator = false;
+  // ── Section 6A: true admin detection from Firestore admins[] array ──────
+  bool _isAdminFromFirestore = false;
   int? _firestoreMemberCount; // live count from Firestore
+  int? _firestoreMembersListCount; // count from members[] array
 
   /// Public groups are immutable -- details cannot be changed by anyone.
   bool get _isPublicGroup => !widget.isPrivate;
 
-  /// Editing is only allowed for private group creator or admins.
-  bool get _isAdmin => _isCreator; // In a real app, check admin list from backend
-  bool get _canEdit => _isAdmin && !_isPublicGroup;
+  /// Section 6A: Admin = present in admins[] array OR is creator (backward compat)
+  bool get _isAdmin => _isAdminFromFirestore || _isCreator;
+  bool get _canEdit => _isAdmin;
 
   // Editable fields for creators
   late String _editableName;
@@ -83,6 +89,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     _descEditController.text = _editableDescription;
     _checkJoinStatus();
     _loadMemberCount();
+    _loadAdminStatus(); // Section 6A: load admin status from Firestore
   }
 
   Future<void> _loadMemberCount() async {
@@ -92,6 +99,29 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         setState(() => _firestoreMemberCount = group.memberCount);
       }
     } catch (_) {}
+  }
+
+  /// Section 6A: Load admin status from Firestore admins[] array.
+  /// Falls back to creator check if Firestore is unavailable.
+  Future<void> _loadAdminStatus() async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final doc = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupId)
+          .get();
+      if (!mounted) return;
+      final data = doc.data() ?? {};
+      final admins = List<String>.from(data['admins'] ?? []);
+      final members = List<String>.from(data['members'] ?? []);
+      setState(() {
+        _isAdminFromFirestore = admins.contains(uid);
+        _firestoreMembersListCount = members.length;
+      });
+    } catch (_) {
+      // Admin status defaults to creator check if Firestore unavailable
+    }
   }
 
   @override
@@ -434,40 +464,20 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     child: TextButton(
                       onPressed: () async {
                         Navigator.pop(c);
-                        final onboarding = OnboardingDataService();
-                        await onboarding.initialize();
-                        final userName = onboarding.name ?? 'You';
-
-                        // 1. Remove from invitation service
-                        await _invitationService.leaveGroup(widget.groupId, userName);
-
-                        // 2. Remove from DefaultGroupService memberships
-                        final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
-                        final userId = firebaseUid ?? 'user_${onboarding.name?.hashCode ?? 0}';
-                        await DefaultGroupService().leaveGroup(userId, widget.groupId);
-
-                        // 3. Remove from user-created groups storage
-                        try {
-                          final raw = await BrowserStorage.getString('user_created_groups_v1');
-                          if (raw != null) {
-                            final List<dynamic> groups = json.decode(raw);
-                            groups.removeWhere((j) => (j as Map<String, dynamic>)['id'] == widget.groupId);
-                            await BrowserStorage.setString('user_created_groups_v1', json.encode(groups));
-                          }
-                        } catch (_) {}
-
-                        // 4. Persist left group to prevent re-join on reload
-                        try {
-                          final leftRaw = await BrowserStorage.getString('left_groups_v1');
-                          final List<String> leftIds = leftRaw != null
-                              ? List<String>.from(json.decode(leftRaw) as List)
-                              : [];
-                          if (!leftIds.contains(widget.groupId)) {
-                            leftIds.add(widget.groupId);
-                            await BrowserStorage.setString('left_groups_v1', json.encode(leftIds));
-                          }
-                        } catch (_) {}
-
+                        // Remove from Firestore members/admins arrays
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        if (uid != null) {
+                          try {
+                            await FirebaseFirestore.instance
+                                .collection('groups')
+                                .doc(widget.groupId)
+                                .update({
+                              'members': FieldValue.arrayRemove([uid]),
+                              'admins': FieldValue.arrayRemove([uid]),
+                            });
+                          } catch (_) {}
+                        }
+                        await _executeLocalLeave();
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1066,6 +1076,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     return 'Community';
   }
 
+  // ─── Section 3D: Role-aware three-dot menu ────────────────────────────────
   void _showMoreActions(BuildContext ctx) {
     showModalBottomSheet(
       context: ctx,
@@ -1079,8 +1090,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 40,
-              height: 4,
+              width: 40, height: 4,
               decoration: BoxDecoration(
                   color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
             ),
@@ -1088,7 +1098,6 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
 
             // ── NON-MEMBER: only show Share + Join ───────────────────────
             if (!_isJoined) ...[
-              // Info banner for non-members
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1103,11 +1112,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                     Expanded(
                       child: Text(
                         'Join this group to access member features.',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: context.hc.textSecondary,
-                          height: 1.4,
-                        ),
+                        style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
                       ),
                     ),
                   ],
@@ -1116,32 +1121,45 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               const SizedBox(height: 4),
               ListTile(
                 leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
-                title: Text('Share group',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _shareGroup();
-                },
+                title: Text('Share group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
               ListTile(
                 leading: Icon(Icons.group_add_outlined, color: HuddlColors.primary),
-                title: Text('Join group',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: HuddlColors.primary)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _joinGroup();
-                },
+                title: Text('Join group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.primary)),
+                onTap: () { Navigator.pop(c); _joinGroup(); },
               ),
             ],
 
-            // ── MEMBER: show full member options ─────────────────────────
+            // ── MEMBER (admin or regular) ─────────────────────────────────
             if (_isJoined) ...[
-              // Info notices for public / non-admin private group members
-              if (_isPublicGroup)
+
+              // ── ADMIN banner (replaces the lock notice) ──────────────
+              if (_isAdmin)
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.teal.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: HuddlColors.teal.withValues(alpha: 0.25)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.shield_outlined, size: 18, color: HuddlColors.teal),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'You\'re an admin of this group',
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: HuddlColors.teal, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // ── PUBLIC group notice (member, non-admin only) ──────────
+              if (_isPublicGroup && !_isAdmin)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -1156,16 +1174,14 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       Expanded(
                         child: Text(
                           'This is a public group. Group details cannot be changed by any member.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textSecondary,
-                            height: 1.4,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
                         ),
                       ),
                     ],
                   ),
                 ),
+
+              // ── PRIVATE non-admin notice ──────────────────────────────
               if (!_isPublicGroup && !_isAdmin)
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -1180,46 +1196,73 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Only the group creator or admins can edit group details.',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: context.hc.textSecondary,
-                            height: 1.4,
-                          ),
+                          'Only admins can edit group details.',
+                          style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4),
                         ),
                       ),
                     ],
                   ),
                 ),
-              // Edit option — private-group admin/creator only
-              if (_canEdit)
+
+              // ── ADMIN-ONLY options ────────────────────────────────────
+              if (_isAdmin) ...[
                 ListTile(
                   leading: Icon(Icons.edit_outlined, color: context.hc.textPrimary),
-                  title: Text('Edit group details',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15, fontWeight: FontWeight.w500)),
+                  title: Text('Edit group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                   onTap: () {
                     Navigator.pop(c);
-                    _toggleEditing();
+                    Navigator.push(
+                      ctx,
+                      MaterialPageRoute(
+                        builder: (_) => EditGroupScreen(
+                          groupId: widget.groupId,
+                          groupName: _editableName,
+                          groupDescription: _editableDescription,
+                          groupImageUrl: widget.groupImageUrl,
+                          isPrivate: widget.isPrivate,
+                          onGroupUpdated: (newName, newDesc) {
+                            if (mounted) {
+                              setState(() {
+                                _editableName = newName;
+                                _editableDescription = newDesc;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    );
                   },
                 ),
+                ListTile(
+                  leading: Icon(Icons.manage_accounts_outlined, color: context.hc.textPrimary),
+                  title: Text('Manage admins', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                  onTap: () {
+                    Navigator.pop(c);
+                    Navigator.push(
+                      ctx,
+                      MaterialPageRoute(
+                        builder: (_) => ManageAdminsScreen(
+                          groupId: widget.groupId,
+                          groupName: _editableName,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+
+              // ── ALL MEMBERS options ───────────────────────────────────
               ListTile(
                 leading: Icon(Icons.notifications_outlined, color: context.hc.textPrimary),
-                title: Text('Mute notifications',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Mute notifications', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(c);
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Notifications muted')),
-                  );
+                  ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('Notifications muted')));
                 },
               ),
               ListTile(
                 leading: Icon(Icons.bookmark_outline, color: context.hc.textPrimary),
-                title: Text('Saved messages',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500)),
+                title: Text('Saved messages', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
                 onTap: () {
                   Navigator.pop(c);
                   Navigator.pushNamed(ctx, '/saved_messages_for_group', arguments: {
@@ -1230,40 +1273,31 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
               ),
               ListTile(
                 leading: Icon(Icons.share_outlined, color: context.hc.textPrimary),
-                title: Text('Share group',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15, fontWeight: FontWeight.w500)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _shareGroup();
-                },
+                title: Text('Share group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                onTap: () { Navigator.pop(c); _shareGroup(); },
               ),
-              ListTile(
-                leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
-                title: Text('Leave group',
-                    style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: HuddlColors.error)),
-                onTap: () {
-                  Navigator.pop(c);
-                  _showLeaveGroupDialog();
-                },
-              ),
-              // Delete group — only for private group admins/creator
-              if (widget.isPrivate && _isAdmin)
+
+              // ── ADMIN: Delete group ───────────────────────────────────
+              if (_isAdmin)
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: HuddlColors.error),
-                  title: Text('Delete group',
-                      style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.error)),
-                  onTap: () {
-                    Navigator.pop(c);
-                    _confirmDeleteGroup(ctx);
-                  },
+                  title: Text('Delete group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                  onTap: () { Navigator.pop(c); _confirmDeleteGroup(ctx); },
                 ),
+
+              // ── Leave group (admin → admin leave flow, member → standard) ─
+              ListTile(
+                leading: const Icon(Icons.exit_to_app, color: HuddlColors.error),
+                title: Text('Leave group', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+                onTap: () {
+                  Navigator.pop(c);
+                  if (_isAdmin) {
+                    _handleAdminLeave(ctx);
+                  } else {
+                    _showLeaveGroupDialog();
+                  }
+                },
+              ),
             ],
 
             const SizedBox(height: 8),
@@ -1273,7 +1307,41 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
     );
   }
 
-  void _confirmDeleteGroup(BuildContext ctx) {
+  // ─── Section 6D: Admin leave flow ─────────────────────────────────────────
+
+  /// Entry point — determine which Case applies and route accordingly.
+  Future<void> _handleAdminLeave(BuildContext ctx) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) { _showLeaveGroupDialog(); return; }
+
+      final doc = await FirebaseFirestore.instance.collection('groups').doc(widget.groupId).get();
+      final data = doc.data() ?? {};
+      final admins  = List<String>.from(data['admins']  ?? []);
+      final members = List<String>.from(data['members'] ?? []);
+
+      final otherMembers = members.where((id) => id != uid).toList();
+      final otherAdmins  = admins.where((id)  => id != uid).toList();
+
+      if (!context.mounted) return;
+
+      if (otherAdmins.isNotEmpty) {
+        // Case 1: other admins exist
+        _showLeaveGroupDialog();
+      } else if (otherMembers.isEmpty) {
+        // Case 3: sole member — offer delete
+        _showSoleMemberDeleteModal(ctx);
+      } else {
+        // Case 2: sole admin, other members exist — show successor picker
+        _showSuccessorPickerSheet(ctx, otherMembers);
+      }
+    } catch (_) {
+      _showLeaveGroupDialog(); // fallback to standard flow
+    }
+  }
+
+  /// Case 3: Sole member — leave deletes the group.
+  void _showSoleMemberDeleteModal(BuildContext ctx) {
     showDialog(
       context: ctx,
       builder: (c) => Dialog(
@@ -1284,34 +1352,19 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: HuddlColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
+                width: 56, height: 56,
+                decoration: BoxDecoration(color: HuddlColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
                 child: const Icon(Icons.delete_outline, size: 32, color: HuddlColors.error),
               ),
               const SizedBox(height: 18),
-              Text(
-                'Delete this group?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.hc.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Text('Leave and delete this group?',
+                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text(
-                'This will permanently delete the group and all messages. All members will be removed. This action cannot be undone.',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: context.hc.textSecondary,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
+                'You\'re the only member. Leaving will permanently delete this group and all its content. This cannot be undone.',
+                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
               const SizedBox(height: 12),
@@ -1320,30 +1373,383 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                   Expanded(
                     child: TextButton(
                       onPressed: () => Navigator.pop(c),
-                      child: Text('Cancel',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                      child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
                   Expanded(
                     child: TextButton(
-                      onPressed: () {
+                      onPressed: () async {
                         Navigator.pop(c);
-                        // Pop back to messages list
-                        Navigator.pop(ctx);
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(ctx).showSnackBar(
-                            SnackBar(
-                              content: Text('${widget.groupName} has been deleted'),
-                              backgroundColor: HuddlColors.primary,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        await _executeGroupDelete(ctx);
+                      },
+                      child: Text('Delete group', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Case 2: Sole admin — show successor picker bottom sheet.
+  void _showSuccessorPickerSheet(BuildContext ctx, List<String> otherMemberIds) {
+    String? selectedSuccessorId;
+    String? selectedSuccessorName;
+
+    showModalBottomSheet(
+      context: ctx,
+      backgroundColor: context.hc.surface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (c) => StatefulBuilder(
+        builder: (c, setSheet) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.65,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            expand: false,
+            builder: (_, scroll) => Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(width: 40, height: 4,
+                  decoration: BoxDecoration(color: context.hc.divider, borderRadius: BorderRadius.circular(2))),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text('Who should take over as admin?',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                    textAlign: TextAlign.center),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'Pick a member to become the new admin, or we\'ll automatically assign the most active member.',
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary, height: 1.5),
+                    textAlign: TextAlign.center),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _fetchMembersWithActivity(otherMemberIds),
+                    builder: (_, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator(color: HuddlColors.primary));
+                      }
+                      final memberList = snap.data ?? [];
+                      return ListView.builder(
+                        controller: scroll,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: memberList.length,
+                        itemBuilder: (_, i) {
+                          final m = memberList[i];
+                          final mid = m['uid'] as String;
+                          final mname = m['name'] as String;
+                          final msgCount = m['messageCount'] as int;
+                          final isSelected = selectedSuccessorId == mid;
+                          return GestureDetector(
+                            onTap: () => setSheet(() {
+                              selectedSuccessorId = mid;
+                              selectedSuccessorName = mname;
+                            }),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: isSelected ? HuddlColors.primary.withValues(alpha: 0.07) : context.hc.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: isSelected ? HuddlColors.primary : context.hc.divider),
+                              ),
+                              child: Row(
+                                children: [
+                                  MemberAvatar(name: mname, size: 40, accentColor: HuddlColors.primary),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(mname, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary)),
+                                        Text('$msgCount messages', style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary)),
+                                      ],
+                                    ),
+                                  ),
+                                  if (isSelected) const Icon(Icons.check_circle, color: HuddlColors.primary, size: 22),
+                                ],
+                              ),
                             ),
                           );
-                        }
+                        },
+                      );
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(c).padding.bottom + 16),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity, height: 52,
+                        child: ElevatedButton(
+                          onPressed: selectedSuccessorId == null ? null : () async {
+                            Navigator.pop(c);
+                            await _executeAdminHandoff(ctx, selectedSuccessorId!, selectedSuccessorName!);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: HuddlColors.primary,
+                            disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            selectedSuccessorName != null ? 'Leave and assign ${selectedSuccessorName!}' : 'Leave and assign',
+                            style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () async {
+                          Navigator.pop(c);
+                          await _executeAutoPromotion(ctx);
+                        },
+                        child: Text('Skip — assign automatically',
+                          style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary,
+                            decoration: TextDecoration.underline)),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => Navigator.pop(c),
+                        child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textTertiary)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Fetch member display names + activity counts for the successor picker.
+  Future<List<Map<String, dynamic>>> _fetchMembersWithActivity(List<String> uids) async {
+    final db = FirebaseFirestore.instance;
+    final List<Map<String, dynamic>> result = [];
+    // Fetch activity counts
+    final Map<String, int> counts = {};
+    try {
+      for (final uid in uids) {
+        final actDoc = await db.collection('groups').doc(widget.groupId)
+            .collection('memberActivity').doc(uid).get();
+        counts[uid] = (actDoc.data()?['messageCount'] as int?) ?? 0;
+      }
+    } catch (_) {}
+    // Fetch user names in batches of 10
+    for (int i = 0; i < uids.length; i += 10) {
+      final batch = uids.sublist(i, (i + 10).clamp(0, uids.length));
+      try {
+        final snap = await db.collection('users').where(FieldPath.documentId, whereIn: batch).get();
+        for (final doc in snap.docs) {
+          final name = (doc.data()['name'] as String?)?.trim() ?? 'Member';
+          result.add({'uid': doc.id, 'name': name, 'messageCount': counts[doc.id] ?? 0});
+        }
+      } catch (_) {}
+    }
+    result.sort((a, b) => (b['messageCount'] as int).compareTo(a['messageCount'] as int));
+    return result;
+  }
+
+  /// Execute admin handoff — assign chosen successor, then leave.
+  Future<void> _executeAdminHandoff(BuildContext ctx, String successorId, String successorName) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final ref = FirebaseFirestore.instance.collection('groups').doc(widget.groupId);
+      await ref.update({
+        'admins': FieldValue.arrayUnion([successorId]),
+      });
+      await ref.update({
+        'admins': FieldValue.arrayRemove([uid]),
+        'members': FieldValue.arrayRemove([uid]),
+      });
+      await _executeLocalLeave();
+      if (ctx.mounted) {
+        Navigator.pop(ctx);
+        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+          content: Text('Left ${widget.groupName}. $successorName is the new admin.'),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      }
+    } catch (_) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          backgroundColor: HuddlColors.error,
+        ));
+      }
+    }
+  }
+
+  /// Execute auto-promotion — pick most active member, then leave.
+  Future<void> _executeAutoPromotion(BuildContext ctx) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final db = FirebaseFirestore.instance;
+      // Query memberActivity to find most active member (excluding self)
+      final actSnap = await db.collection('groups').doc(widget.groupId)
+          .collection('memberActivity')
+          .orderBy('messageCount', descending: true)
+          .orderBy('joinedAt', descending: false)
+          .limit(10)
+          .get();
+      String? promoteeId;
+      for (final doc in actSnap.docs) {
+        final id = doc.data()['userId'] as String? ?? doc.id;
+        if (id != uid) { promoteeId = id; break; }
+      }
+      if (promoteeId == null) {
+        // Fallback: pick any other member
+        final groupDoc = await db.collection('groups').doc(widget.groupId).get();
+        final members = List<String>.from(groupDoc.data()?['members'] ?? []);
+        promoteeId = members.firstWhere((id) => id != uid, orElse: () => '');
+      }
+      if (promoteeId.isNotEmpty) {
+        await db.collection('groups').doc(widget.groupId).update({
+          'admins': FieldValue.arrayUnion([promoteeId]),
+        });
+      }
+      await db.collection('groups').doc(widget.groupId).update({
+        'admins': FieldValue.arrayRemove([uid]),
+        'members': FieldValue.arrayRemove([uid]),
+      });
+      await _executeLocalLeave();
+      if (ctx.mounted) {
+        Navigator.pop(ctx);
+        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+          content: Text('Left ${widget.groupName}'),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      }
+    } catch (_) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          backgroundColor: HuddlColors.error,
+        ));
+      }
+    }
+  }
+
+  /// Helper: removes user from local storage and invitation service.
+  Future<void> _executeLocalLeave() async {
+    final onboarding = OnboardingDataService();
+    await onboarding.initialize();
+    final userName = onboarding.name ?? 'You';
+    final firebaseUid = FirebaseAuth.instance.currentUser?.uid;
+    final userId = firebaseUid ?? 'user_${onboarding.name?.hashCode ?? 0}';
+
+    await _invitationService.leaveGroup(widget.groupId, userName);
+    await DefaultGroupService().leaveGroup(userId, widget.groupId);
+
+    try {
+      final raw = await BrowserStorage.getString('user_created_groups_v1');
+      if (raw != null) {
+        final List<dynamic> groups = json.decode(raw);
+        groups.removeWhere((j) => (j as Map<String, dynamic>)['id'] == widget.groupId);
+        await BrowserStorage.setString('user_created_groups_v1', json.encode(groups));
+      }
+    } catch (_) {}
+
+    try {
+      final leftRaw = await BrowserStorage.getString('left_groups_v1');
+      final List<String> leftIds = leftRaw != null ? List<String>.from(json.decode(leftRaw) as List) : [];
+      if (!leftIds.contains(widget.groupId)) {
+        leftIds.add(widget.groupId);
+        await BrowserStorage.setString('left_groups_v1', json.encode(leftIds));
+      }
+    } catch (_) {}
+  }
+
+  /// Execute full group deletion (Cases 3 & 4).
+  Future<void> _executeGroupDelete(BuildContext ctx) async {
+    try {
+      final db = FirebaseFirestore.instance;
+      await db.collection('groups').doc(widget.groupId).delete();
+      await _executeLocalLeave();
+      if (ctx.mounted) {
+        Navigator.pop(ctx);
+        ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+          content: Text('${widget.groupName} has been deleted'),
+          backgroundColor: HuddlColors.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      }
+    } catch (_) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(
+          content: Text('Something went wrong. Please try again.'),
+          backgroundColor: HuddlColors.error,
+        ));
+      }
+    }
+  }
+
+  // ─── Case 4: Explicit delete (from three-dot menu) ────────────────────────
+  void _confirmDeleteGroup(BuildContext ctx) {
+    final memberCount = _firestoreMembersListCount ?? _firestoreMemberCount ?? widget.memberCount ?? 0;
+    showDialog(
+      context: ctx,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(color: HuddlColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: const Icon(Icons.delete_outline, size: 32, color: HuddlColors.error),
+              ),
+              const SizedBox(height: 18),
+              Text('Delete this group?',
+                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              Text(
+                'This will permanently delete the group, all messages, and remove all $memberCount member${memberCount == 1 ? '' : 's'}. This cannot be undone.',
+                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              Divider(height: 1, color: context.hc.divider),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c),
+                      child: Text('Cancel', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: context.hc.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(c);
+                        await _executeGroupDelete(ctx);
                       },
-                      child: Text('Delete',
-                        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                      child: Text('Delete group', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: HuddlColors.error)),
                     ),
                   ),
                 ],

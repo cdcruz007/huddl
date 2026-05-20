@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/user_privacy_prefs_service.dart';
+import 'manage_admins_screen.dart';
 
 // ── Design tokens ────────────────────────────────────────────────────────
 const Color _kOnline = HuddlColors.teal;
@@ -36,10 +37,14 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   List<_Member> _members = [];
   bool _isLoading = true;
   String? _error;
+  // Section 6E: current user's admin status from Firestore admins[] array
+  bool _currentUserIsAdmin = false;
+  String? _currentUid;
 
   @override
   void initState() {
     super.initState();
+    _currentUid = FirebaseAuth.instance.currentUser?.uid;
     _loadMembers();
   }
 
@@ -60,6 +65,10 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       final data = groupDoc.data() ?? {};
       List<String> memberIds = List<String>.from(data['memberIds'] ?? []);
       final creatorId = widget.creatorId ?? data['creatorId'] as String?;
+      // Section 6E: detect admin status from admins[] array
+      final adminIds = List<String>.from(data['admins'] ?? []);
+      final isAdminFromFirestore = _currentUid != null && adminIds.contains(_currentUid);
+      final isCreatorCheck = _currentUid != null && _currentUid == (widget.creatorId ?? data['creatorId']);
 
       // Bug 3b fix: if memberIds is empty (common for onboarding-created groups
       // that weren't written with a memberIds array), fall back to querying the
@@ -107,10 +116,12 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
           // Bug 4 fix: read photoUrl from the user document
           final photoUrl = (ud['photoUrl'] as String?)?.trim();
 
+          // Section 6E: use admins[] array for role detection; fall back to creatorId
+          final isAdminMember = adminIds.contains(uid) || isCreator;
           loaded.add(_Member(
             uid: uid,
             name: isCurrentUser ? 'You' : name,
-            role: isCreator ? 'admin' : 'member',
+            role: isAdminMember ? 'admin' : 'member',
             accentColor: _colorForUid(uid),
             isOnline: isOnline,
             parentType: (ud['parentType'] as String?) ?? '',
@@ -129,7 +140,11 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
         return a.name.compareTo(b.name);
       });
 
-      setState(() { _members = loaded; _isLoading = false; });
+      setState(() {
+        _members = loaded;
+        _isLoading = false;
+        _currentUserIsAdmin = isAdminFromFirestore || isCreatorCheck;
+      });
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupMembersScreen] Error loading members: $e');
       setState(() { _isLoading = false; _error = 'Could not load members. Tap to retry.'; });
@@ -307,7 +322,28 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
                             separatorBuilder: (_, __) =>
                                 Divider(height: 1, indent: 72, color: context.hc.divider),
                             itemBuilder: (context, index) {
-                              return _MemberTile(member: filtered[index]);
+                              final m = filtered[index];
+                              return _MemberTile(
+                                member: m,
+                                currentUserIsAdmin: _currentUserIsAdmin,
+                                currentUid: _currentUid,
+                                groupId: widget.groupId,
+                                groupName: widget.groupName,
+                                onMemberRemoved: () {
+                                  setState(() => _members.removeWhere((x) => x.uid == m.uid));
+                                },
+                                onAdminManage: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ManageAdminsScreen(
+                                        groupId: widget.groupId,
+                                        groupName: widget.groupName,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
                             },
                           ),
           ),
@@ -317,9 +353,144 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
   }
 }
 
+// ── Section 6E: Member tile with admin action controls ────────────────────
 class _MemberTile extends StatelessWidget {
   final _Member member;
-  const _MemberTile({required this.member});
+  final bool currentUserIsAdmin;
+  final String? currentUid;
+  final String groupId;
+  final String groupName;
+  final VoidCallback? onMemberRemoved;
+  final VoidCallback? onAdminManage;
+
+  const _MemberTile({
+    required this.member,
+    required this.currentUserIsAdmin,
+    required this.currentUid,
+    required this.groupId,
+    required this.groupName,
+    this.onMemberRemoved,
+    this.onAdminManage,
+  });
+
+  // Returns true if the current user can act on this row
+  bool get _canActOnMember =>
+      currentUserIsAdmin && member.uid != currentUid;
+
+  void _showOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                  color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
+            ),
+            const SizedBox(height: 16),
+            // Make admin
+            ListTile(
+              leading: Icon(Icons.shield_outlined, color: context.hc.textPrimary),
+              title: Text('Make admin',
+                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: context.hc.textPrimary)),
+              onTap: () {
+                Navigator.pop(c);
+                onAdminManage?.call();
+              },
+            ),
+            // Remove from group
+            ListTile(
+              leading: const Icon(Icons.person_remove_outlined, color: HuddlColors.error),
+              title: Text('Remove from group',
+                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: HuddlColors.error)),
+              onTap: () {
+                Navigator.pop(c);
+                _confirmRemove(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmRemove(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (c) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Remove ${member.name}?',
+                style: GoogleFonts.poppins(fontSize: 17, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 12),
+              Text('Remove ${member.name} from this group? They will need to rejoin if they want to participate.',
+                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              Divider(height: 1, color: context.hc.divider),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c, false),
+                      child: Text('Cancel',
+                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                    ),
+                  ),
+                  Container(width: 1, height: 40, color: context.hc.divider),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: Text('Remove',
+                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance.collection('groups').doc(groupId).update({
+          'members': FieldValue.arrayRemove([member.uid]),
+          'admins':  FieldValue.arrayRemove([member.uid]),
+        });
+        onMemberRemoved?.call();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('${member.name} has been removed from $groupName.'),
+            backgroundColor: HuddlColors.primary,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Failed to remove member. Please try again.'),
+            backgroundColor: HuddlColors.error,
+          ));
+        }
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +506,6 @@ class _MemberTile extends StatelessWidget {
           isOnline: (member.name == 'You')
               ? (member.isOnline && UserPrivacyPrefsService().showOnlineStatus)
               : member.isOnline,
-          // Bug 4 fix: pass photoUrl so real profile photos are shown
           imageUrl: member.photoUrl,
         ),
         title: Row(
@@ -343,10 +513,7 @@ class _MemberTile extends StatelessWidget {
             Text(
               member.name,
               style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: context.hc.textPrimary,
-              ),
+                fontSize: 14, fontWeight: FontWeight.w500, color: context.hc.textPrimary),
             ),
             if (member.role == 'admin') ...[
               const SizedBox(width: 8),
@@ -359,10 +526,7 @@ class _MemberTile extends StatelessWidget {
                 child: Text(
                   'Admin',
                   style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: HuddlColors.primary,
-                  ),
+                    fontSize: 10, fontWeight: FontWeight.w600, color: HuddlColors.primary),
                 ),
               ),
             ],
@@ -373,11 +537,16 @@ class _MemberTile extends StatelessWidget {
               ? '${member.isOnline ? 'Online' : 'Offline'} · ${member.borough}'
               : (member.isOnline ? 'Online' : 'Offline'),
           style: GoogleFonts.poppins(
-            fontSize: 12,
-            color: member.isOnline ? _kOnline : context.hc.textTertiary,
-          ),
+            fontSize: 12, color: member.isOnline ? _kOnline : context.hc.textTertiary),
         ),
-        trailing: Icon(Icons.chevron_right, color: context.hc.textTertiary),
+        // Section 6E: show ⋮ button for admin users (not on own row)
+        trailing: _canActOnMember
+            ? IconButton(
+                icon: Icon(Icons.more_vert, color: context.hc.textTertiary, size: 22),
+                onPressed: () => _showOptions(context),
+                tooltip: 'Member options',
+              )
+            : Icon(Icons.chevron_right, color: context.hc.textTertiary),
         onTap: () {},
       ),
     );

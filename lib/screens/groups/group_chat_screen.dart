@@ -1047,6 +1047,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) setState(() => _messageStatuses[firestoreId] = MessageStatus.delivered);
       });
+      // ── Section 6D: Increment memberActivity for auto-promotion logic ──
+      _incrementMemberActivity(currentUid);
     } catch (e) {
       if (kDebugMode) debugPrint('[GroupChat] Firestore send error: $e');
       // Still show as sent locally even if Firestore fails (optimistic ID kept)
@@ -5138,6 +5140,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   String get _userTextMsgKey => 'gc_user_texts_${widget.groupId}';
   String get _userMediaMsgKey => 'gc_user_media_${widget.groupId}';
   String get _userReactionsKey => 'gc_reactions_${widget.groupId}';
+
+  /// Section 6D: Atomically increment messageCount in memberActivity sub-collection.
+  /// Fire-and-forget — message send must not wait for this.
+  void _incrementMemberActivity(String uid) {
+    if (uid.isEmpty) return;
+    FirebaseFirestore.instance
+        .collection('groups')
+        .doc(widget.groupId)
+        .collection('memberActivity')
+        .doc(uid)
+        .set({
+      'userId': uid,
+      'messageCount': FieldValue.increment(1),
+      'lastActiveAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true)).catchError((e) {
+      if (kDebugMode) debugPrint('[GroupChat] memberActivity increment error: $e');
+    });
+  }
 
   /// Fires the messageSent notifier, always incrementing seq so the
   /// Messages-tab listener triggers even for back-to-back sends.
