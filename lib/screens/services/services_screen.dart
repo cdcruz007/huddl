@@ -127,11 +127,7 @@ class ServicesScreen extends StatefulWidget {
   State<ServicesScreen> createState() => _ServicesScreenState();
 }
 
-class _ServicesScreenState extends State<ServicesScreen>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
+class _ServicesScreenState extends State<ServicesScreen> {
   final _service = LocalServicesService();
 
   ServiceCategory? _selectedCategory;
@@ -235,7 +231,6 @@ class _ServicesScreenState extends State<ServicesScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     final hc = context.hc;
     const Color filterText = Color(0xFF42464C);
     final bool hasActiveFilter = _selectedCategory != null;
