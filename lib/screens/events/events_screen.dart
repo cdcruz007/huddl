@@ -1754,21 +1754,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 : null,
           ),
 
-        // ── 'Search results' label shown above list when search active ──
-        if (_isSearchActive)
-          Container(
-            color: context.hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Text(
-              _localSearchQuery.isEmpty ? 'Meetups' : 'Search results',
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: filterText,
-              ),
-            ),
-          ),
-
         // ── List — light gray scaffold bg ─────────────────────────
         Expanded(
           child: ColoredBox(

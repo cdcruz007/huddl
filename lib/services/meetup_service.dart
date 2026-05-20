@@ -642,7 +642,7 @@ class MeetupService extends ChangeNotifier {
         isFree: false,
         price: 12.0,
         targetAudience: ['Expecting parents', 'Mums'],
-        imageUrl: Meetup.categoryFallbackUrl('Social'),
+        imageUrl: 'https://images.pexels.com/photos/3822622/pexels-photo-3822622.jpeg?auto=compress&cs=tinysrgb&w=800',
       ),
       Meetup(
         id: 'demo_4',
@@ -691,7 +691,7 @@ class MeetupService extends ChangeNotifier {
         isFree: false,
         price: 8.50,
         targetAudience: ['Mums', 'Aspiring parents'],
-        imageUrl: Meetup.categoryFallbackUrl('Social'),
+        imageUrl: 'https://images.pexels.com/photos/3662667/pexels-photo-3662667.jpeg?auto=compress&cs=tinysrgb&w=800',
       ),
       Meetup(
         id: 'demo_7',
@@ -707,7 +707,7 @@ class MeetupService extends ChangeNotifier {
         attendeeCount: 11,
         isFree: true,
         targetAudience: ['Aspiring parents'],
-        imageUrl: Meetup.categoryFallbackUrl('Social'),
+        imageUrl: 'https://images.pexels.com/photos/7551442/pexels-photo-7551442.jpeg?auto=compress&cs=tinysrgb&w=800',
       ),
       Meetup(
         id: 'demo_8',
@@ -724,7 +724,7 @@ class MeetupService extends ChangeNotifier {
         isFree: false,
         price: 15.0,
         targetAudience: ['Kids', 'Mums', 'Dads'],
-        imageUrl: Meetup.categoryFallbackUrl('Social'),
+        imageUrl: 'https://images.pexels.com/photos/3662770/pexels-photo-3662770.jpeg?auto=compress&cs=tinysrgb&w=800',
       ),
     ];
 
