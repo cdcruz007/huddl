@@ -2788,7 +2788,7 @@ class _GroupMessageRow extends StatelessWidget {
                   imageUrl: group.imageUrl,
                   groupName: group.name,
                   groupId: group.id,
-                  size: 54,
+                  size: 80,
                   isOnline: hasUnread,
                 ),
                 const SizedBox(width: 12),
@@ -2962,11 +2962,11 @@ class _InvitationCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
                   color: HuddlColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: _buildGroupImage(invitation.groupImageUrl),
@@ -3194,7 +3194,7 @@ class _DMMessageRow extends StatelessWidget {
                 MemberAvatar(
                   name: conversation.recipientName,
                   imageUrl: conversation.recipientPhotoUrl,
-                  size: 54,
+                  size: 80,
                   accentColor: color,
                   showOnlineDot: true,
                   isOnline: DMService().isUserOnline(conversation.recipientId),
@@ -3447,7 +3447,7 @@ class _GroupAvatar extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(size * 0.25),
             color: HuddlColors.primary.withValues(alpha: 0.08),
           ),
           clipBehavior: Clip.antiAlias,
