@@ -1471,19 +1471,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          // Distance tick labels
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: ['1 km', '5 km', '10 km', '<50 km'].map((t) => Text(
-                              t,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                                color: textPrimary,
-                              ),
-                            )).toList(),
-                          ),
-                          const SizedBox(height: 4),
                           // Slider
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
@@ -3050,73 +3037,59 @@ class _EventsTabState extends State<_EventsTab> {
                       ),
                   ],
                 ),
-                // ── Inline search bar ──────────────────────────────────
-                secondChild: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: HuddlColors.background,
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                              color: HuddlColors.primary.withValues(alpha: 0.35),
-                              width: 1.5),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 14),
-                            const Icon(Icons.search, size: 18,
-                                color: HuddlColors.primary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _localSearchController,
-                                focusNode: _searchFocusNode,
-                                onChanged: (v) =>
-                                    setState(() => _localSearchQuery = v),
-                                style: GoogleFonts.poppins(
-                                    fontSize: 14, color: filterText),
-                                decoration: InputDecoration(
-                                  hintText: 'Search events\u2026',
-                                  hintStyle: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: HuddlColors.textTertiary),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ),
-                            if (_localSearchQuery.isNotEmpty)
-                              GestureDetector(
-                                onTap: () => setState(() {
-                                  _localSearchQuery = '';
-                                  _localSearchController.clear();
-                                }),
-                                child: const Padding(
-                                  padding: EdgeInsets.only(right: 10),
-                                  child: Icon(Icons.close, size: 16,
-                                      color: HuddlColors.textTertiary),
-                                ),
-                              ),
-                          ],
+                // ── Inline search bar (grey pill — matches Meetups/Groups) ─
+                secondChild: Container(
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: context.hc.inputBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(left: 12, right: 6),
+                        child: Icon(Icons.search, size: 18,
+                            color: HuddlColors.primary),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: _localSearchController,
+                          focusNode: _searchFocusNode,
+                          textAlignVertical: TextAlignVertical.center,
+                          onChanged: (v) =>
+                              setState(() => _localSearchQuery = v),
+                          style: GoogleFonts.poppins(
+                              fontSize: 14, color: filterText),
+                          decoration: InputDecoration(
+                            hintText: 'Search events',
+                            hintStyle: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: HuddlColors.textTertiary),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            isDense: true,
+                            contentPadding:
+                                const EdgeInsets.only(bottom: 2),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    GestureDetector(
-                      onTap: _clearSearch,
-                      child: Text(
-                        'Cancel',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: HuddlColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+                      if (_localSearchQuery.isNotEmpty)
+                        GestureDetector(
+                          onTap: () => setState(() {
+                            _localSearchQuery = '';
+                            _localSearchController.clear();
+                          }),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(Icons.close, size: 16,
+                                color: HuddlColors.textTertiary),
+                          ),
+                        )
+                      else
+                        const SizedBox(width: 10),
+                    ],
+                  ),
                 ),
               ),
 
@@ -3796,15 +3769,6 @@ class _EventsTabState extends State<_EventsTab> {
                                   fontWeight: FontWeight.w700,
                                   color: textPrimary)),
                           const SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: ['1 km','5 km','10 km','<50 km'].map((t) =>
-                              Text(t, style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: textPrimary))
-                            ).toList(),
-                          ),
-                          const SizedBox(height: 4),
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
                               activeTrackColor: orange,
