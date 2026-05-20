@@ -230,7 +230,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                               const SizedBox(width: 8),
                               Text(
                                 hasActiveFilter
-                                    ? '${_selectedCategory!.emoji} ${_selectedCategory!.displayName} •'
+                                    ? '${_selectedCategory!.displayName} •'
                                     : 'Filter by category',
                                 style: GoogleFonts.poppins(
                                   fontSize: 15,
@@ -545,6 +545,37 @@ class _CategorySheetTile extends StatelessWidget {
   }
 }
 
+// ─── Service category initial avatar (replaces emoji in compact list thumbnail) ─
+// Shows the first 1-2 letters of the listing name on a soft-coloured background,
+// matching the existing initials-avatar pattern used across the Huddl app.
+
+class _ServiceCategoryInitial extends StatelessWidget {
+  final String name;
+  final Color color;
+
+  const _ServiceCategoryInitial({required this.name, required this.color});
+
+  String get _initial {
+    final words = name.trim().split(RegExp(r'\s+'));
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    }
+    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _initial,
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: color,
+      ),
+    );
+  }
+}
+
 // ─── Overlaid badge pill (Events-style: solid colour, white text) ────────────
 
 class _BadgePill extends StatelessWidget {
@@ -731,8 +762,8 @@ class _ListingCardState extends State<_ListingCard> {
                       height: 190,
                       color: catColor.withValues(alpha: 0.14),
                       child: Center(
-                        child: Text(listing.category.emoji,
-                            style: const TextStyle(fontSize: 52)),
+                        child: Icon(Icons.store_mall_directory_outlined,
+                            size: 48, color: catColor.withValues(alpha: 0.6)),
                       ),
                     ),
                   ),
@@ -778,21 +809,14 @@ class _ListingCardState extends State<_ListingCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Category row — small uppercase label (mirrors Event date row)
-                  Row(
-                    children: [
-                      Text(listing.category.emoji,
-                          style: const TextStyle(fontSize: 13)),
-                      const SizedBox(width: 5),
-                      Text(
-                        listing.category.displayName.toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: HuddlColors.textTertiary,
-                        ),
-                      ),
-                    ],
+                  // Category row — small uppercase label (no emoji — Huddl design standard)
+                  Text(
+                    listing.category.displayName.toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: HuddlColors.textTertiary,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   // Bold listing name — 2-line max (mirrors Event title style)
@@ -1080,8 +1104,10 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
-                    child: Text(listing.category.emoji,
-                        style: const TextStyle(fontSize: 26)),
+                    child: _ServiceCategoryInitial(
+                        name: listing.name,
+                        color: catColor,
+                      ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -2008,9 +2034,6 @@ class _ExtractedRecommendationCardState
         children: [
           Row(
             children: [
-              Text(rec.category.emoji,
-                  style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   rec.name,
