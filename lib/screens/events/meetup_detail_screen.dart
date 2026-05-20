@@ -11,6 +11,7 @@ import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'edit_meetup_screen.dart';
 
 
 
@@ -156,6 +157,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         : _meetup.organiserId == 'current_user';
   }
 
+  bool get _isFull =>
+      _meetup.maxAttendees != null &&
+      _meetup.attendeeCount >= _meetup.maxAttendees! &&
+      !_meetup.isGoing;
+
+  bool get _hasEnded => _meetup.dateTime.isBefore(DateTime.now());
+
   /// Show the more options bottom sheet (organiser controls)
   void _showMoreOptions() {
     showModalBottomSheet(
@@ -242,6 +250,27 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                     onTap: () {
                       Navigator.pop(ctx);
                       _showManageAttendees();
+                    },
+                  ),
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+                  ListTile(
+                    leading: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.blueBackground,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.edit_outlined, color: HuddlColors.teal, size: 20),
+                    ),
+                    title: Text('Edit meetup', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditMeetupScreen(meetup: _meetup),
+                        ),
+                      );
                     },
                   ),
                   const Divider(height: 1, indent: 16, endIndent: 16),
@@ -563,17 +592,52 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () {
+            onPressed: (_isFull || _hasEnded) ? null : () {
               HapticFeedback.mediumImpact();
+              if (!_meetup.isGoing) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle, color: Colors.white, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "You're going to \${_meetup.title}!",
+                            style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: HuddlColors.teal,
+                    behavior: SnackBarBehavior.floating,
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+              }
               _toggleGoing();
             },
             icon: Icon(
-              _meetup.isGoing ? Icons.check_circle : Icons.group_add_outlined,
+              _hasEnded
+                  ? Icons.event_busy_outlined
+                  : _isFull
+                      ? Icons.group_off_outlined
+                      : _meetup.isGoing
+                          ? Icons.check_circle
+                          : Icons.group_add_outlined,
               color: Colors.white,
               size: 20,
             ),
             label: Text(
-              _meetup.isGoing ? 'Joined' : 'Join',
+              _hasEnded
+                  ? 'Ended'
+                  : _isFull
+                      ? 'Full'
+                      : _meetup.isGoing
+                          ? 'Joined'
+                          : 'Join',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -581,7 +645,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _meetup.isGoing ? HuddlColors.teal : _detailOrange,
+              backgroundColor: _hasEnded || _isFull
+                  ? HuddlColors.textTertiary
+                  : _meetup.isGoing
+                      ? HuddlColors.teal
+                      : _detailOrange,
+              disabledBackgroundColor: HuddlColors.textTertiary,
+              disabledForegroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(26),
               ),

@@ -118,10 +118,21 @@ class _EventsScreenState extends State<EventsScreen>
   }
 
   void _navigateToCreateMeetup() async {
-    await Navigator.push(
+    final newMeetup = await Navigator.push<Meetup>(
       context,
       MaterialPageRoute(builder: (_) => const CreateMeetupScreen()),
     );
+    if (newMeetup != null && mounted) {
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: newMeetup),
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+          transitionDuration: const Duration(milliseconds: 300),
+        ),
+      );
+    }
   }
 
 
@@ -1514,7 +1525,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          ..._audienceLabels.map(checkboxRow).toList(),
+                          ..._audienceLabels.map(checkboxRow),
                           const SizedBox(height: 28),
 
                           // ══ SECTION 4 — CATEGORY ════════════════
@@ -3208,7 +3219,7 @@ class _EventsTabState extends State<_EventsTab> {
   bool          _evFreeOnly        = false;
   DateTimeRange? _evDateRange;
   String        _evSortBy          = 'mostPopular'; // 'mostPopular' | 'latest' | 'smartSort'
-  String        _evLocalization    = 'none';   // kept for legacy format filter compat
+  final String  _evLocalization    = 'none';   // kept for legacy format filter compat
 
   // ── Smart Sort / user profile for Events ─────────────────────────────
   static const _evAudienceLabels = [
@@ -3782,7 +3793,7 @@ class _EventsTabState extends State<_EventsTab> {
 
                           // ── SECTION 3: PARTICIPANTS ────────────
                           sectionHeading('Show events for'),
-                          ..._evAudienceLabels.map(checkboxRow).toList(),
+                          ..._evAudienceLabels.map(checkboxRow),
                           const SizedBox(height: 28),
 
                           // ── SECTION 4: CATEGORY ────────────────
@@ -4164,7 +4175,7 @@ class _MeetupSearchPlaceholder extends StatelessWidget {
 }
 
 // ── Large card widget (default feed view) ────────────────────────────────────
-class _MeetupCard extends StatelessWidget {
+class _MeetupCard extends StatefulWidget {
   final Meetup meetup;
   final bool canAccess;
   final VoidCallback? onAccessDenied;
@@ -4179,14 +4190,66 @@ class _MeetupCard extends StatelessWidget {
     this.onView,
   });
 
+  @override
+  State<_MeetupCard> createState() => _MeetupCardState();
+}
+
+class _MeetupCardState extends State<_MeetupCard> {
+  Meetup get meetup => widget.meetup;
+  final _meetupService = MeetupService();
+
   // ── Design tokens (Figma-exact) ────────────────────────────────
   static const _cardText = HuddlColors.textDark;     // primary dark text — Figma #42464C
   static const _cardMeta = HuddlColors.textTertiary; // secondary gray meta — Figma #949494
 
+  bool get _isFull =>
+      meetup.maxAttendees != null &&
+      meetup.attendeeCount >= meetup.maxAttendees!;
+
+  void _handleJoin(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    if (!meetup.isGoing) {
+      // Show green "You're going" toast
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  "You're going to \${meetup.title}!",
+                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
+    try {
+      _meetupService.toggleGoing(meetup.id);
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Couldn't update RSVP. Please try again."),
+          backgroundColor: HuddlColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final catStyle = _meetupCategoryStyle(meetup.category);
-    final isRestricted = !canAccess;
+    final isRestricted = !widget.canAccess;
 
     // Price display
     final priceText = meetup.isFree
@@ -4207,9 +4270,9 @@ class _MeetupCard extends StatelessWidget {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          onView?.call();
+          widget.onView?.call();
           if (isRestricted) {
-            onAccessDenied?.call();
+            widget.onAccessDenied?.call();
             return;
           }
           Navigator.push(
@@ -4461,49 +4524,57 @@ class _MeetupCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Join / Restricted button — Groups-style grey pill
+                        // Join / Joined / Full / Restricted button
                         Semantics(
                           label: isRestricted
                               ? 'Restricted meetup'
-                              : 'Join ${meetup.title}',
+                              : _isFull && !meetup.isGoing
+                                  ? 'This meetup is full'
+                                  : meetup.isGoing
+                                      ? 'You are going to ${meetup.title}'
+                                      : 'Join ${meetup.title}',
                           button: true,
                           child: GestureDetector(
                             onTap: () {
                               HapticFeedback.lightImpact();
-                              onView?.call();
+                              widget.onView?.call();
                               if (isRestricted) {
-                                onAccessDenied?.call();
+                                widget.onAccessDenied?.call();
                                 return;
                               }
-                              Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  pageBuilder: (_, __, ___) =>
-                                      MeetupDetailScreen(meetup: meetup),
-                                  transitionsBuilder: (_, anim, __, child) =>
-                                      FadeTransition(opacity: anim, child: child),
-                                  transitionDuration:
-                                      const Duration(milliseconds: 300),
-                                ),
-                              );
+                              if (_isFull && !meetup.isGoing) return; // Full — block join
+                              _handleJoin(context);
                             },
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 10),
                               decoration: BoxDecoration(
                                 color: isRestricted
                                     ? const Color(0xFFF0F0F0)
-                                    : const Color(0xFFF2F2F2),
+                                    : _isFull && !meetup.isGoing
+                                        ? const Color(0xFFFFE5D5)
+                                        : meetup.isGoing
+                                            ? HuddlColors.teal
+                                            : HuddlColors.primary,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                isRestricted ? 'Restricted' : 'Join',
+                                isRestricted
+                                    ? 'Restricted'
+                                    : _isFull && !meetup.isGoing
+                                        ? 'Full'
+                                        : meetup.isGoing
+                                            ? 'Joined'
+                                            : 'Join',
                                 style: GoogleFonts.poppins(
                                   fontSize: 13,
-                                  fontWeight: FontWeight.w500,
+                                  fontWeight: FontWeight.w600,
                                   color: isRestricted
                                       ? HuddlColors.textTertiary
-                                      : _cardText,
+                                      : _isFull && !meetup.isGoing
+                                          ? HuddlColors.primary
+                                          : Colors.white,
                                 ),
                               ),
                             ),

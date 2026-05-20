@@ -69,7 +69,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   final _maxAgeCtrl = TextEditingController();
 
   // ── Privacy ──
-  String _privacy = '';
+  String _privacy = 'public';
   String? _selectedGroupId;
   String? _selectedGroupName;
   List<Group> _userGroups = [];
@@ -222,12 +222,11 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
   bool get _isFormValid =>
       _titleCtrl.text.trim().isNotEmpty &&
-      _locationCtrl.text.trim().isNotEmpty &&
+      (_locationCtrl.text.trim().isNotEmpty || _isOnline) &&
       _selectedDate != null &&
       _startTime != null &&
       _endTime != null &&
-      _selectedCategories.isNotEmpty &&
-      _pickedImageUrl != null; // Photo is required
+      _selectedCategories.isNotEmpty;  // Photo is optional
 
   // ── Pickers ──────────────────────────────────────────────────────────
   void _pickDate() async {
@@ -260,7 +259,25 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       context: context,
       initialTime: _endTime ?? const TimeOfDay(hour: 15, minute: 0),
     );
-    if (time != null) setState(() => _endTime = time);
+    if (time != null) {
+      // Validate: end time must be after start time
+      if (_startTime != null) {
+        final startMinutes = _startTime!.hour * 60 + _startTime!.minute;
+        final endMinutes = time.hour * 60 + time.minute;
+        if (endMinutes <= startMinutes) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: const Text('End time must be after start time'),
+              backgroundColor: HuddlColors.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ));
+          }
+          return;
+        }
+      }
+      setState(() => _endTime = time);
+    }
   }
 
   // ── Image picker ──────────────────────────────────────────────────
@@ -319,11 +336,8 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     if (!mounted) return;
 
     if (!_isFormValid) {
-      final missingPhoto = _pickedImageUrl == null;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(missingPhoto
-            ? 'Please add a cover photo for your meetup'
-            : 'Please fill in all required fields'),
+        content: const Text('Please fill in all required fields'),
         backgroundColor: HuddlColors.error,
         behavior: SnackBarBehavior.floating,
         shape:
@@ -444,8 +458,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       content: Row(children: [
         const Icon(Icons.check_circle, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Expanded(
-            child: Text('"${meetup.title}" created — group chat added to Messages')),
+        const Expanded(child: Text('Meetup created!')),
       ]),
       backgroundColor: HuddlColors.teal,
       behavior: SnackBarBehavior.floating,
@@ -455,7 +468,10 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
 
     // Record usage for subscription tracking
     subService.recordMeetupCreate();
-    Navigator.pop(context, meetup);
+    // Navigate to the newly created meetup detail screen
+    if (mounted) {
+      Navigator.pop(context, meetup);
+    }
   }
 
   /// Auto-create a group chat under Messages tab so the creator (and future
@@ -595,6 +611,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                           _buildGrayField(
                             controller: _titleCtrl,
                             hint: 'Meetup name',
+                            maxLength: 80,
                             onChanged: (_) { setState(() {}); _saveDraft(); },
                           ),
 
@@ -671,6 +688,56 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
   // APP BAR
   // ══════════════════════════════════════════════════════════════════════
 
+  bool get _hasUnsavedChanges =>
+      _titleCtrl.text.isNotEmpty ||
+      _descriptionCtrl.text.isNotEmpty ||
+      _locationCtrl.text.isNotEmpty ||
+      _pickedImageUrl != null ||
+      _selectedDate != null ||
+      _startTime != null ||
+      _selectedCategories.isNotEmpty;
+
+  void _handleBackNavigation() {
+    if (_hasUnsavedChanges) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: context.hc.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Discard changes?',
+            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Your meetup details will be lost if you go back now.',
+            style: GoogleFonts.poppins(fontSize: 14, color: _hintGray),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                'Keep editing',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: _accentOrange),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Discard',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: HuddlColors.error),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -678,7 +745,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       surfaceTintColor: Colors.white,
       automaticallyImplyLeading: false,
       leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
+        onTap: () => _handleBackNavigation(),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.only(left: 8),
@@ -769,6 +836,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     required TextEditingController controller,
     required String hint,
     int maxLines = 1,
+    int? maxLength,
     TextInputType keyboardType = TextInputType.text,
     void Function(String)? onChanged,
   }) {
@@ -780,6 +848,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
+        maxLength: maxLength,
         keyboardType: keyboardType,
         style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
         decoration: InputDecoration(
@@ -788,6 +857,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           border: InputBorder.none,
+          counterText: '', // hide character counter to keep clean UI
         ),
         onChanged: onChanged,
       ),
@@ -802,35 +872,59 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          decoration: const BoxDecoration(
-            color: _fieldBg,
-            border: Border(bottom: BorderSide(color: _fieldLine, width: 1.2)),
-          ),
-          child: Row(
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 14),
-                child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
-              ),
-              Expanded(
-                child: TextField(
-                  controller: _locationCtrl,
-                  style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
-                  decoration: InputDecoration(
-                    hintText: 'Add a location or address',
-                    hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                    border: InputBorder.none,
-                  ),
-                  onChanged: (_) { setState(() {}); _saveDraft(); },
+        // Location input — hidden when Online toggle is ON
+        if (!_isOnline) ...[
+          Container(
+            decoration: const BoxDecoration(
+              color: _fieldBg,
+              border: Border(bottom: BorderSide(color: _fieldLine, width: 1.2)),
+            ),
+            child: Row(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 14),
+                  child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: TextField(
+                    controller: _locationCtrl,
+                    style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
+                    decoration: InputDecoration(
+                      hintText: 'Add a location or address',
+                      hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (_) { setState(() {}); _saveDraft(); },
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
+          const SizedBox(height: 10),
+        ] else ...[
+          // Online label shown instead of address field
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: _accentOrange.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: _accentOrange.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.wifi, size: 18, color: _accentOrange),
+                const SizedBox(width: 10),
+                Text(
+                  'Online meetup',
+                  style: GoogleFonts.poppins(fontSize: 14, color: _accentOrange, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
         Row(
           children: [
             Transform.scale(
@@ -839,7 +933,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
               child: CupertinoSwitch(
                 value: _isOnline,
                 activeTrackColor: _accentOrange,
-                onChanged: (v) => setState(() => _isOnline = v),
+                onChanged: (v) {
+                  setState(() {
+                    _isOnline = v;
+                    if (v) _locationCtrl.clear(); // clear address when switching to online
+                  });
+                  _saveDraft();
+                },
               ),
             ),
             const SizedBox(width: 6),
@@ -1084,9 +1184,9 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
         final selected = _selectedCategories.contains(label);
         return GestureDetector(
           onTap: () => setState(() {
-            if (selected) {
-              _selectedCategories.remove(label);
-            } else {
+            // Single-select: clear previous selection first
+            _selectedCategories.clear();
+            if (!selected) {
               _selectedCategories.add(label);
             }
           }),

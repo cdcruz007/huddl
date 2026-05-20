@@ -380,6 +380,19 @@ class MeetupService extends ChangeNotifier {
     }
   }
 
+  /// Update an existing meetup (organiser only — edit flow).
+  void updateMeetup(Meetup updated) {
+    final index = _meetups.indexWhere((m) => m.id == updated.id);
+    if (index < 0) return;
+    _meetups[index] = updated;
+    notifyListeners();
+    _persistUserMeetups();
+    // If image was updated and is a base64, persist separately
+    if (updated.imageUrl.startsWith('data:')) {
+      _persistMeetupImage(updated.id, updated.imageUrl);
+    }
+  }
+
   /// Delete / cancel a meetup (organiser only).
   /// Returns the meetup data before deletion (for cancellation messages).
   Meetup? cancelMeetup(String meetupId) {
