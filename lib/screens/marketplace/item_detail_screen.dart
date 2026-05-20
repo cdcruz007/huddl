@@ -1062,6 +1062,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   // == IMAGE HELPER — handles data:URI (base64), http URL, empty ==============
+  // Each image is wrapped in InteractiveViewer for pinch-to-zoom (P3 audit).
+  // min 1×, max 4×. Pan is unrestricted when zoomed so users can explore
+  // corners of the photo after pinching in.
 
   Widget _buildDetailImage(String url) {
     final fallback = Container(
@@ -1071,27 +1074,53 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             size: 56, color: HuddlColors.primary.withValues(alpha: 0.6)),
       ),
     );
-    if (url.isEmpty) return fallback;
-    if (url.startsWith('data:')) {
+
+    Widget imageWidget;
+    if (url.isEmpty) {
+      imageWidget = fallback;
+    } else if (url.startsWith('data:')) {
       try {
         final comma = url.indexOf(',');
         if (comma >= 0) {
           final bytes = base64Decode(url.substring(comma + 1));
-          return Image.memory(bytes,
+          imageWidget = Image.memory(bytes,
               fit: BoxFit.cover,
               width: double.infinity,
               errorBuilder: (_, __, ___) => fallback);
+        } else {
+          imageWidget = fallback;
         }
-      } catch (_) {}
-      return fallback;
+      } catch (_) {
+        imageWidget = fallback;
+      }
+    } else if (url.startsWith('http')) {
+      imageWidget = Image.network(
+        url,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (_, __, ___) => fallback,
+        loadingBuilder: (_, child, progress) {
+          if (progress == null) return child;
+          // Shimmer placeholder while the full-res image streams in
+          return _DetailShimmer();
+        },
+      );
+    } else {
+      imageWidget = fallback;
     }
-    if (url.startsWith('http')) {
-      return Image.network(url,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          errorBuilder: (_, __, ___) => fallback);
-    }
-    return fallback;
+
+    // Wrap every image in InteractiveViewer so the user can pinch-to-zoom.
+    // constrained:false lets the zoomed image overflow the SliverAppBar clip
+    // boundary naturally. The PageView still handles swipe when scale == 1.
+    return InteractiveViewer(
+      minScale: 1.0,
+      maxScale: 4.0,
+      // Allow panning only when zoomed (scale > 1); at scale 1 horizontal
+      // drag falls through to the PageView's own gesture recogniser.
+      panEnabled: true,
+      clipBehavior: Clip.hardEdge,
+      child: imageWidget,
+    );
   }
 
   // == PHOTO GALLERY =========================================================
@@ -1404,6 +1433,65 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// DETAIL SHIMMER — standalone StatefulWidget shimmer for the 300px hero area.
+// Pure-Dart AnimationController + LinearGradient — no external package needed.
+// =============================================================================
+class _DetailShimmer extends StatefulWidget {
+  const _DetailShimmer();
+
+  @override
+  State<_DetailShimmer> createState() => _DetailShimmerState();
+}
+
+class _DetailShimmerState extends State<_DetailShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
+    final highlight =
+        isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
+
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value + 1, 0),
+            colors: [base, highlight, base],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
       ),
     );
   }

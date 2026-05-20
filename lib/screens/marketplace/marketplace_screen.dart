@@ -2703,6 +2703,77 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 // SHARED IMAGE HELPER — handles data:URI (base64), http, and empty URLs
 // =============================================================================
 
+// =============================================================================
+// SHIMMER WIDGET — pure-Dart animated shimmer, no external package required.
+// Used as a loading placeholder for all image areas in the Market module.
+//
+// Usage:
+//   _ShimmerBox(width: double.infinity, height: double.infinity)
+//   _ShimmerBox(width: 64, height: 64, radius: 10)
+// =============================================================================
+class _ShimmerBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double radius;
+
+  const _ShimmerBox({
+    required this.width,
+    required this.height,
+    this.radius = 0,
+  });
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -2.0, end: 2.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOutSine),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE8E8E8);
+    final highlight = isDark ? const Color(0xFF3D3D3D) : const Color(0xFFF5F5F5);
+
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(widget.radius),
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value + 1, 0),
+            colors: [base, highlight, base],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 Widget _buildItemImage(String url, RehomeItem item) {
   final fallback = Container(
     color: HuddlColors.primary.withValues(alpha: 0.08),
@@ -2725,9 +2796,17 @@ Widget _buildItemImage(String url, RehomeItem item) {
     return fallback;
   }
   if (url.startsWith('http')) {
-    return Image.network(url, fit: BoxFit.cover, width: double.infinity,
-        height: double.infinity,
-        errorBuilder: (_, __, ___) => fallback);
+    return Image.network(
+      url,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => fallback,
+      loadingBuilder: (_, child, progress) {
+        if (progress == null) return child;
+        return const _ShimmerBox(width: double.infinity, height: double.infinity);
+      },
+    );
   }
   return fallback;
 }
@@ -3430,6 +3509,10 @@ class _MarketSearchRow extends StatelessWidget {
                         height: 64,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
+                        loadingBuilder: (_, child, progress) {
+                          if (progress == null) return child;
+                          return const _ShimmerBox(width: 64, height: 64, radius: 10);
+                        },
                       )
                     : _MarketPhotoFallback(item: item),
               ),
@@ -3651,6 +3734,11 @@ class _MarketListCardState extends State<_MarketListCard>
                           fit: BoxFit.cover,
                           alignment: Alignment.center,
                           errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
+                          loadingBuilder: (_, child, progress) {
+                            if (progress == null) return child;
+                            return const _ShimmerBox(
+                                width: double.infinity, height: 160);
+                          },
                         )
                       : _MarketPhotoFallback(item: item),
                   // Subtle gradient at bottom for text legibility
