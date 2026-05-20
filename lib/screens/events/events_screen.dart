@@ -5622,6 +5622,75 @@ _CatStyle _meetupCategoryStyle(String category) {
 
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SHARED — skeleton shimmer widget (no external package required)
+// Displays an animated left-to-right shimmer during image load.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _ShimmerBox extends StatefulWidget {
+  final double? width;
+  final double? height;
+
+  const _ShimmerBox({
+    this.width,
+    this.height,
+  });
+
+  @override
+  State<_ShimmerBox> createState() => _ShimmerBoxState();
+}
+
+class _ShimmerBoxState extends State<_ShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        return Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment(_anim.value - 1, 0),
+                end: Alignment(_anim.value + 1, 0),
+                colors: const [
+                  Color(0xFFE8E8E8),
+                  Color(0xFFF5F5F5),
+                  Color(0xFFEEEEEE),
+                  Color(0xFFF5F5F5),
+                  Color(0xFFE8E8E8),
+                ],
+                stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+              ),
+            ),
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SHARED — universal cover-image builder (data-URI, http, asset, fallback)
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -5638,12 +5707,10 @@ Widget _buildCoverImage({
         ),
       );
 
-  Widget placeholder() => Container(
-        color: fallbackColor.withValues(alpha: 0.12),
-        child: Center(
-          child: Icon(fallbackIcon, size: 40,
-              color: fallbackColor.withValues(alpha: 0.4)),
-        ),
+  // Skeleton shimmer shown while network image is downloading
+  Widget placeholder() => const _ShimmerBox(
+        width: double.infinity,
+        height: double.infinity,
       );
 
   if (imageUrl.isEmpty) return Semantics(label: semanticLabel, image: true, child: fallback());

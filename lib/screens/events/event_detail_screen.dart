@@ -3,11 +3,29 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/invisible_ai_service.dart';
+
+// ── matchReasonIcons: maps Cloud Function icon keys → Flutter IconData ──────
+// Keys match the strings written by the generateEventRecommendations CF.
+const Map<String, IconData> _matchReasonIcons = {
+  'location' : Icons.location_on,
+  'age'      : Icons.child_care,
+  'star'     : Icons.star_rounded,
+  'calendar' : Icons.calendar_today,
+  'category' : Icons.category,
+  'uk_wide'  : Icons.public,
+  'people'   : Icons.people,
+  'free'     : Icons.money_off,
+  'online'   : Icons.videocam,
+  'new'      : Icons.fiber_new,
+};
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -22,17 +40,29 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   final EventService _eventService = EventService();
   final AiEventRecommenderService _recommender = AiEventRecommenderService();
   final InvisibleAiService _invisibleAi = InvisibleAiService();
+
+  // ── Local AI state (summary + client-side fallback scoring) ──────────────
   ScoredEvent? _scoredEvent;
   AiEventSummary? _aiSummary;
   bool _aiReady = false;
-  bool? _userFeedback;
+
+  // ── Firestore userRecommendations state ──────────────────────────────────
+  // Populated by _loadFirestoreRecommendation() once Firebase read completes.
+  int?  _firestoreMatchScore;                         // matchScore (0-100)
+  List<Map<String, dynamic>> _firestoreMatchReasons = []; // [{icon,label}]
+  bool? _firestoreIsDiscoverNew;                      // isDiscoverSomethingNew
+  bool? _userFeedback;                                // feedbackGiven
+  bool  _feedbackSubmitting = false;                  // CF call in-flight guard
+  bool  _firestoreLoaded    = false;                  // read attempt done flag
 
   @override
   void initState() {
     super.initState();
     _loadAiRecommendation();
+    _loadFirestoreRecommendation();
   }
 
+  // ── Local AI load (summary + client-side fallback scoring) ───────────────
   Future<void> _loadAiRecommendation() async {
     await _recommender.initialize();
     await _invisibleAi.initialize();
@@ -40,21 +70,137 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     if (eventId.isEmpty) return;
     final allScored = _recommender.rankAllEvents();
     final match = allScored.where((s) => s.event.id == eventId);
-    // Generate AI summary
     final summary = _invisibleAi.summarizeEvent(widget.event);
-    // Track view
     _invisibleAi.trackEventView(widget.event);
-    // Check existing feedback
-    final fb = _invisibleAi.getFeedback(eventId);
     if (mounted) {
       setState(() {
         _scoredEvent = match.isNotEmpty ? match.first : null;
-        _aiSummary = summary;
-        _userFeedback = fb;
-        _aiReady = true;
+        _aiSummary   = summary;
+        _aiReady     = true;
       });
     }
   }
+
+  // ── Firestore userRecommendations/{userId}/events/{eventId} read ─────────
+  // Written by the generateEventRecommendations Cloud Function.
+  // Falls back gracefully if user is unauthenticated or document doesn't exist.
+  Future<void> _loadFirestoreRecommendation() async {
+    final eventId = widget.event['id'] as String? ?? '';
+    if (eventId.isEmpty) {
+      if (mounted) setState(() => _firestoreLoaded = true);
+      return;
+    }
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      if (userId.isEmpty) {
+        // Not signed in — use local feedback as fallback
+        final localFb = _invisibleAi.getFeedback(eventId);
+        if (mounted) setState(() { _userFeedback = localFb; _firestoreLoaded = true; });
+        return;
+      }
+
+      final docSnap = await FirebaseFirestore.instance
+          .collection('userRecommendations')
+          .doc(userId)
+          .collection('events')
+          .doc(eventId)
+          .get();
+
+      if (!mounted) return;
+
+      if (docSnap.exists) {
+        final data = docSnap.data()!;
+
+        // matchScore — number 0-100
+        final score = (data['matchScore'] as num?)?.toInt();
+
+        // matchReasons — [{icon: String, label: String}]
+        final rawReasons = data['matchReasons'];
+        final reasons = <Map<String, dynamic>>[];
+        if (rawReasons is List) {
+          for (final r in rawReasons) {
+            if (r is Map) {
+              reasons.add({
+                'icon' : (r['icon']  as String? ?? 'star'),
+                'label': (r['label'] as String? ?? ''),
+              });
+            }
+          }
+        }
+
+        // isDiscoverSomethingNew — overrides the local Firestore default (false)
+        final isDiscoverNew = data['isDiscoverSomethingNew'] as bool?;
+
+        // feedbackGiven — previously persisted feedback
+        final fb = data['feedbackGiven'] as bool?;
+
+        setState(() {
+          _firestoreMatchScore    = score;
+          _firestoreMatchReasons  = reasons;
+          _firestoreIsDiscoverNew = isDiscoverNew;
+          _userFeedback           = fb;
+          _firestoreLoaded        = true;
+          // Push Cloud Function's isDiscoverSomethingNew into the event map so
+          // the Summary section badge reflects the server-authoritative value.
+          if (isDiscoverNew != null) {
+            widget.event['isDiscoverSomethingNew'] = isDiscoverNew;
+          }
+        });
+      } else {
+        // No CF recommendation doc yet — load local feedback as fallback
+        final localFb = _invisibleAi.getFeedback(eventId);
+        setState(() { _userFeedback = localFb; _firestoreLoaded = true; });
+      }
+    } catch (_) {
+      // Any error — graceful degradation; keep local scoring + local feedback
+      if (mounted) setState(() => _firestoreLoaded = true);
+    }
+  }
+
+  // ── recordRecommendationFeedback Cloud Function call ─────────────────────
+  // Primary: calls the Cloud Function (persists to Firestore + updates user
+  // likedCategories). Secondary: always writes locally via _invisibleAi for
+  // offline resilience. CF failure (offline/not yet deployed) is silenced.
+  Future<void> _submitRecommendationFeedback(bool isPositive) async {
+    final id = widget.event['id'] as String? ?? '';
+    if (id.isEmpty || _feedbackSubmitting) return;
+
+    // Optimistic UI
+    setState(() { _userFeedback = isPositive; _feedbackSubmitting = true; });
+
+    // Always persist locally (offline resilience)
+    _invisibleAi.submitFeedback(id, isPositive);
+
+    try {
+      final callable = FirebaseFunctions.instance
+          .httpsCallable('recordRecommendationFeedback');
+      await callable.call(<String, dynamic>{
+        'eventId'   : id,
+        'isHelpful' : isPositive,
+      });
+    } catch (_) {
+      // CF unreachable (offline / not yet deployed) — local write is the fallback
+    } finally {
+      if (mounted) setState(() => _feedbackSubmitting = false);
+    }
+  }
+
+  // ── Effective recommendation accessors ───────────────────────────────────
+  // Prefers Firestore CF data; falls back to client-side scoring.
+
+  /// Effective match score: CF value if available, else local scoring.
+  int? get _effectiveMatchScore =>
+      _firestoreMatchScore ?? _scoredEvent?.score.round();
+
+  /// Show recommendation section when score ≥ 40 from either source.
+  bool get _showRecommendationSection {
+    if (_firestoreMatchScore != null) return _firestoreMatchScore! >= 40;
+    return _scoredEvent != null && _scoredEvent!.score >= 40;
+  }
+
+  /// Show feedback widget once at least one data source has loaded.
+  bool get _showFeedbackSection =>
+      (_firestoreLoaded || _aiReady) && _showRecommendationSection;
 
   bool get _isRegistered {
     final id = widget.event['id'] as String? ?? '';
@@ -412,16 +558,17 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 _buildAttendeesSection(e, color),
                 const SizedBox(height: 8),
 
-                // AI Recommendation section with feedback
-                if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
-                  _buildAiRecommendationSection(_scoredEvent!),
-                if (_aiReady && _scoredEvent != null && _scoredEvent!.reasons.isNotEmpty)
+                // AI Recommendation section — Firestore CF data preferred,
+                // local AiEventRecommenderService scoring as fallback.
+                if (_showRecommendationSection)
+                  _buildAiRecommendationSection(),
+                if (_showRecommendationSection)
                   const SizedBox(height: 8),
 
-                // AI Feedback (human-in-the-loop)
-                if (_aiReady && _scoredEvent != null && _scoredEvent!.score >= 40)
+                // AI Feedback — calls recordRecommendationFeedback CF
+                if (_showFeedbackSection)
                   _buildAiFeedbackSection(),
-                if (_aiReady && _scoredEvent != null && _scoredEvent!.score >= 40)
+                if (_showFeedbackSection)
                   const SizedBox(height: 8),
 
                 // What to expect — dynamic from event data
@@ -543,8 +690,10 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   // ── AI Quick Summary section ──────────────────────────────────────────
   Widget _buildAiSummarySection(AiEventSummary summary) {
-    // isDiscoverSomethingNew: check event data from widget.event map
-    final isDiscoverNew = widget.event['isDiscoverSomethingNew'] == true;
+    // Prefer the server-authoritative Firestore CF value (_firestoreIsDiscoverNew)
+    // when available; fall back to the event map value (set on discovery ingestion).
+    final isDiscoverNew = _firestoreIsDiscoverNew
+        ?? (widget.event['isDiscoverSomethingNew'] == true);
 
     return Container(
       color: context.hc.surface,
@@ -737,14 +886,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      final id = widget.event['id'] as String? ?? '';
-                      if (id.isNotEmpty) {
-                        _invisibleAi.submitFeedback(id, true);
-                        setState(() => _userFeedback = true);
-                      }
-                    },
+                    onTap: _feedbackSubmitting
+                        ? null
+                        : () {
+                            HapticFeedback.lightImpact();
+                            _submitRecommendationFeedback(true);
+                          },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -767,14 +914,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      final id = widget.event['id'] as String? ?? '';
-                      if (id.isNotEmpty) {
-                        _invisibleAi.submitFeedback(id, false);
-                        setState(() => _userFeedback = false);
-                      }
-                    },
+                    onTap: _feedbackSubmitting
+                        ? null
+                        : () {
+                            HapticFeedback.lightImpact();
+                            _submitRecommendationFeedback(false);
+                          },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
@@ -808,9 +953,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   }
 
   // ── AI Recommendation section ────────────────────────────────────────
-  Widget _buildAiRecommendationSection(ScoredEvent scored) {
-    final reasons = scored.reasons.take(4).toList();
-    final scorePercent = scored.score.round();
+  // Prefers Firestore Cloud Function data (matchScore + matchReasons with
+  // icon keys mapped via _matchReasonIcons). Falls back to local scoring.
+  Widget _buildAiRecommendationSection() {
+    final scorePercent = _effectiveMatchScore ?? 0;
+    final bool useFirestore =
+        _firestoreMatchScore != null && _firestoreMatchReasons.isNotEmpty;
 
     return Container(
       color: context.hc.surface,
@@ -870,38 +1018,72 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          // Reason list
-          ...reasons.map((reason) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: HuddlColors.teal.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+          // Reason list ─────────────────────────────────────────────────────
+          // A) Firestore CF reasons: {icon: String key, label: String}
+          //    → icon key resolved via _matchReasonIcons map
+          // B) Local fallback: MatchReason with emoji + label
+          if (useFirestore)
+            ..._firestoreMatchReasons.take(4).map((reason) {
+              final iconKey  = reason['icon']  as String? ?? 'star';
+              final label    = reason['label'] as String? ?? '';
+              final iconData = _matchReasonIcons[iconKey] ?? Icons.star_rounded;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.teal.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(iconData, size: 16, color: HuddlColors.teal),
                     ),
-                    child: Center(
-                      child: Text(reason.emoji, style: const TextStyle(fontSize: 15)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      reason.label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: context.hc.textSecondary,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w500,
+                          color: context.hc.textSecondary,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                  ],
+                ),
+              );
+            })
+          else if (_scoredEvent != null)
+            ..._scoredEvent!.reasons.take(4).map((reason) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: BoxDecoration(
+                        color: HuddlColors.teal.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Text(reason.emoji,
+                            style: const TextStyle(fontSize: 15)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        reason.label,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13, fontWeight: FontWeight.w500,
+                          color: context.hc.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -1346,6 +1528,63 @@ class _ExpectItem extends StatelessWidget {
   }
 }
 
+// ── Skeleton shimmer for image loading in event detail ─────────────────────
+class _DetailShimmerBox extends StatefulWidget {
+  const _DetailShimmerBox();
+
+  @override
+  State<_DetailShimmerBox> createState() => _DetailShimmerBoxState();
+}
+
+class _DetailShimmerBoxState extends State<_DetailShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+    _anim = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(_anim.value - 1, 0),
+            end: Alignment(_anim.value + 1, 0),
+            colors: const [
+              Color(0xFFD0D0D0),
+              Color(0xFFE8E8E8),
+              Color(0xFFDDDDDD),
+              Color(0xFFE8E8E8),
+              Color(0xFFD0D0D0),
+            ],
+            stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Universal cover-image builder for event detail ─────────────────────────
 Widget _buildEventDetailCover({
   required String imageUrl,
@@ -1385,7 +1624,7 @@ Widget _buildEventDetailCover({
     return gradientFallback();
   }
 
-  // http(s) URL — use Image.network for reliable web rendering
+  // http(s) URL — shimmer during load, gradient fallback on error
   if (imageUrl.startsWith('http')) {
     return Image.network(
       imageUrl,
@@ -1394,7 +1633,8 @@ Widget _buildEventDetailCover({
       height: double.infinity,
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
-        return gradientFallback(showIcon: false);
+        // Show skeleton shimmer while the hero image is downloading
+        return const _DetailShimmerBox();
       },
       errorBuilder: (_, __, ___) => gradientFallback(),
     );

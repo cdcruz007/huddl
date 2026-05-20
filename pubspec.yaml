@@ -49,6 +49,9 @@ dependencies:
   audioplayers: 6.1.0              # Audio playback for voice message bubbles
   path_provider: ^2.1.4            # Temp directory for voice recordings
 
+  # Cloud Functions callable (Events recommendation feedback + Firestore reads)
+  cloud_functions: 5.0.0           # Firebase Cloud Functions callable — pinned for firebase_core 3.1.0
+
   # Native OS share sheet (Events share button, deep-links)
   share_plus: ^10.0.0              # Native Share sheet on iOS/Android/Web (web compat with firebase_auth_web)
 
