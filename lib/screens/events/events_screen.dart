@@ -668,10 +668,8 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
   /// Human-readable distance label shown beneath the section header.
   String get _distanceLabel {
-    if (_distanceKm <= 1.0)  return 'Within 1 km';
-    if (_distanceKm <= 5.0)  return 'Within 5 km';
-    if (_distanceKm <= 10.0) return 'Within 10 km';
-    return 'Within 50 km';
+    if (_distanceKm >= 50.0) return 'Up to 50 km';
+    return 'Within ${_distanceKm.toInt()} km';
   }
 
   @override
@@ -1589,18 +1587,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
                             ),
                             child: Slider(
-                              value: [1.0, 5.0, 10.0, 50.0].reduce(
-                                (a, b) => (a - sheetDistanceKm).abs() < (b - sheetDistanceKm).abs() ? a : b,
-                              ),
+                              value: sheetDistanceKm.clamp(1.0, 50.0),
                               min: 1,
                               max: 50,
-                              divisions: 3,
+                              divisions: 49,
                               onChanged: (v) {
                                 setSheetState(() {
-                                  final snapped = [1.0, 5.0, 10.0, 50.0].reduce(
-                                    (a, b) => (a - v).abs() < (b - v).abs() ? a : b,
-                                  );
-                                  sheetDistanceKm = snapped;
+                                  sheetDistanceKm = v.roundToDouble();
                                 });
                               },
                             ),
@@ -1612,6 +1605,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                                Text('25 km',
                                     style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         color: const Color(0xFFB0B0B0))),
@@ -3485,11 +3482,8 @@ class _EventsTabState extends State<_EventsTab> {
     /// Human-readable distance label shown beneath the section header.
   /// Mirrors the original _distanceLabel getter removed in the dead-code sweep.
   String get _evDistanceLabel {
-    if (_evLocalization == 'online') return 'Online';
-    if (_evDistanceKm <= 1.0)  return 'Within 1 km';
-    if (_evDistanceKm <= 5.0)  return 'Within 5 km';
-    if (_evDistanceKm <= 10.0) return 'Within 10 km';
-    return 'Within 50 km';
+    if (_evDistanceKm >= 50.0) return 'Up to 50 km';
+    return 'Within ${_evDistanceKm.toInt()} km';
   }
 
   // ── Events filter bottom sheet — Figma-exact ─────────────────
@@ -4042,13 +4036,13 @@ class _EventsTabState extends State<_EventsTab> {
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
                             ),
                             child: Slider(
-                              value: [1.0,5.0,10.0,50.0].reduce(
-                                  (a,b) => (a-sheetDistanceKm).abs()<(b-sheetDistanceKm).abs()?a:b),
-                              min: 1, max: 50, divisions: 3,
+                              value: sheetDistanceKm.clamp(1.0, 50.0),
+                              min: 1,
+                              max: 50,
+                              divisions: 49,
                               onChanged: (v) {
                                 setSheetState(() {
-                                  sheetDistanceKm = [1.0,5.0,10.0,50.0].reduce(
-                                      (a,b) => (a-v).abs()<(b-v).abs()?a:b);
+                                  sheetDistanceKm = v.roundToDouble();
                                 });
                               },
                             ),
@@ -4060,6 +4054,10 @@ class _EventsTabState extends State<_EventsTab> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text('1 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                                Text('25 km',
                                     style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         color: const Color(0xFFB0B0B0))),
