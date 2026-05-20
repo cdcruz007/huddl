@@ -1722,6 +1722,63 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
     sold.sort((a, b) => b.listedAt.compareTo(a.listedAt));
     final recentlySold = sold; // Show all sold, not just last 48h
 
+    // ── Search-active: flat filtered compact list ─────────────────────────
+    if (_isSearchActive) {
+      final q = _searchQuery.toLowerCase().trim();
+      final filtered = myListings.where((item) {
+        if (q.isEmpty) return true;
+        return item.title.toLowerCase().contains(q) ||
+            item.category.label.toLowerCase().contains(q) ||
+            item.sellerLocation.toLowerCase().contains(q);
+      }).toList();
+
+      return Column(
+        children: [
+          // Count row
+          Container(
+            color: hc.surface,
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '${filtered.length} listing${filtered.length == 1 ? '' : 's'}${q.isNotEmpty ? ' matching "$_searchQuery"' : ''}',
+                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
+              ),
+            ),
+          ),
+          Expanded(
+            child: filtered.isEmpty
+                ? _buildEmptyState(
+                    hc: hc,
+                    illustration: HuddlIllustration.marketplaceEmpty,
+                    title: 'No listings found',
+                    subtitle: 'Try a different search term.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(0, 4, 0, 100),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      indent: 92,
+                      endIndent: 0,
+                      color: hc.divider,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = filtered[index];
+                      return _MarketSearchRow(
+                        item: item,
+                        isOwn: true,
+                        onTap: () => _openItemDetail(item),
+                        onToggleSave: () {},
+                      );
+                    },
+                  ),
+          ),
+        ],
+      );
+    }
+
     return RefreshIndicator(
       color: HuddlColors.primary,
       onRefresh: () async {
@@ -2481,8 +2538,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // == SAVED TAB =============================================================
 
   Widget _buildSavedTab(HuddlContextColors hc) {
-    final saved = _service.savedItems;
-    if (saved.isEmpty) {
+    final allSaved = _service.savedItems;
+
+    // Filter by search query when search is active
+    final q = _isSearchActive ? _searchQuery.toLowerCase().trim() : '';
+    final saved = q.isEmpty
+        ? allSaved
+        : allSaved.where((item) {
+            return item.title.toLowerCase().contains(q) ||
+                item.category.label.toLowerCase().contains(q) ||
+                item.sellerLocation.toLowerCase().contains(q);
+          }).toList();
+
+    if (allSaved.isEmpty) {
       // liveRegion: screen readers announce when saved list becomes empty
       return Semantics(
         liveRegion: true,
@@ -2497,7 +2565,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
 
     return Column(
       children: [
-        // liveRegion: screen readers announce saved-item count changes
+        // Count row
         Semantics(
           liveRegion: true,
           child: Padding(
@@ -2505,28 +2573,54 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '${saved.length} saved item${saved.length == 1 ? '' : 's'}',
-                style: _adaptiveText(
-                  fontSize: 11,
-                  color: hc.textTertiary,
-                ),
+                '${saved.length} saved item${saved.length == 1 ? '' : 's'}${q.isNotEmpty ? ' matching "$_searchQuery"' : ''}',
+                style: _adaptiveText(fontSize: 11, color: hc.textTertiary),
               ),
             ),
           ),
         ),
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-            itemCount: saved.length,
-            itemBuilder: (context, index) => _MarketItemCard(
-              item: saved[index],
-              onTap: () => _openItemDetail(saved[index]),
-              onToggleSave: () {
-                HapticFeedback.lightImpact();
-                _service.toggleSaved(saved[index].id);
-              },
-            ),
-          ),
+          child: saved.isEmpty
+              ? _buildEmptyState(
+                  hc: hc,
+                  illustration: HuddlIllustration.saved,
+                  title: 'No saved items found',
+                  subtitle: 'Try a different search term.',
+                )
+              : _isSearchActive
+                  // ── Compact search rows ────────────────────────────────
+                  ? ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(0, 4, 0, 100),
+                      itemCount: saved.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        indent: 92,
+                        endIndent: 0,
+                        color: hc.divider,
+                      ),
+                      itemBuilder: (context, index) => _MarketSearchRow(
+                        item: saved[index],
+                        onTap: () => _openItemDetail(saved[index]),
+                        onToggleSave: () {
+                          HapticFeedback.lightImpact();
+                          _service.toggleSaved(saved[index].id);
+                        },
+                      ),
+                    )
+                  // ── Full hero cards (default) ──────────────────────────
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      itemCount: saved.length,
+                      itemBuilder: (context, index) => _MarketItemCard(
+                        item: saved[index],
+                        onTap: () => _openItemDetail(saved[index]),
+                        onToggleSave: () {
+                          HapticFeedback.lightImpact();
+                          _service.toggleSaved(saved[index].id);
+                        },
+                      ),
+                    ),
         ),
       ],
     );
