@@ -17,8 +17,12 @@ import 'edit_meetup_screen.dart';
 
 class MeetupDetailScreen extends StatefulWidget {
   final Meetup meetup;
+  /// Optional callback invoked when user taps a tag (participant or category).
+  /// Receives the tag string (e.g. 'Mums', 'Coffee'). Parent can use it to
+  /// apply a filter to the meetup feed after popping.
+  final void Function(String tag)? onTagFilter;
 
-  const MeetupDetailScreen({super.key, required this.meetup});
+  const MeetupDetailScreen({super.key, required this.meetup, this.onTagFilter});
 
   @override
   State<MeetupDetailScreen> createState() => _MeetupDetailScreenState();
@@ -163,6 +167,81 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       !_meetup.isGoing;
 
   bool get _hasEnded => _meetup.dateTime.isBefore(DateTime.now());
+
+  /// Called when user taps a tag chip. Invokes the parent callback (if set)
+  /// and pops back to the feed so the filter is visible immediately.
+  void _handleTagTap(String tag) {
+    if (widget.onTagFilter != null) {
+      widget.onTagFilter!(tag);
+      Navigator.pop(context);
+    } else {
+      // No parent callback — show bottom sheet with tag info + explore option
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: context.hc.surface,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (ctx) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: context.hc.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text(
+                  tag,
+                  style: GoogleFonts.poppins(
+                    fontSize: 20, fontWeight: FontWeight.w700,
+                    color: context.hc.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Go back to the Meetups feed to browse more "$tag" meetups.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14, color: context.hc.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx); // close sheet
+                      Navigator.pop(context); // pop back to feed
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: HuddlColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text(
+                      'Explore "$tag" meetups',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15, fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  }
 
   /// Show the more options bottom sheet (organiser controls)
   void _showMoreOptions() {
@@ -548,29 +627,37 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         : '\u00A3${_meetup.price?.toStringAsFixed(0) ?? ''}';
 
     // Tags: participant labels in blue, category labels in orange
-    // Build inline rich text: participants (blue) + categories (orange)
     final participants = _meetup.targetAudience;
     final category = _meetup.category;
-    // Build a single RichText line with comma-separated colored tags
-    final List<TextSpan> tagSpans = [];
-    for (int i = 0; i < participants.length; i++) {
-      tagSpans.add(TextSpan(
-        text: participants[i],
-        style: GoogleFonts.poppins(fontSize: 14, color: _detailBlue, fontWeight: FontWeight.w400),
-      ));
-      if (i < participants.length - 1 || category.isNotEmpty) {
-        tagSpans.add(TextSpan(
-          text: ', ',
-          style: GoogleFonts.poppins(fontSize: 14, color: _detailMeta),
+    // Build tappable tag chips — each calls onTagFilter then pops back to feed
+    List<Widget> buildTagChips() {
+      final chips = <Widget>[];
+      for (final p in participants) {
+        chips.add(_TagChip(
+          label: p,
+          color: _detailBlue,
+          onTap: () => _handleTagTap(p),
         ));
       }
+      if (category.isNotEmpty) {
+        // Map short category code to display label
+        const codeToLabel = {
+          'Coffee': 'Coffee & tea', 'Playdate': 'Playdate',
+          'Sport': 'Sports & exercise', 'Walk': 'Parks & Walks',
+          'Social': 'Hanging out', 'Food': 'Food & nutrition',
+          'Other': 'Other',
+        };
+        final label = codeToLabel[category] ?? category;
+        chips.add(_TagChip(
+          label: label,
+          color: _detailOrange,
+          onTap: () => _handleTagTap(category),
+        ));
+      }
+      return chips;
     }
-    if (category.isNotEmpty) {
-      tagSpans.add(TextSpan(
-        text: category,
-        style: GoogleFonts.poppins(fontSize: 14, color: _detailOrange, fontWeight: FontWeight.w400),
-      ));
-    }
+    final tagChips = buildTagChips();
+
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -765,16 +852,18 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Tags row — participants (blue) + categories (orange) inline
-                  if (tagSpans.isNotEmpty)
-                    RichText(
-                      text: TextSpan(children: tagSpans),
+                  // Tags row — tappable participant (blue) + category (orange) chips
+                  if (tagChips.isNotEmpty)
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: tagChips,
                     ),
                   const SizedBox(height: 16),
 
                   // Attendees row — avatar stack + "N interested" + chevron
                   GestureDetector(
-                    onTap: () {}, // preserve existing attendees navigation hook
+                    onTap: _showManageAttendees,
                     child: Row(
                       children: [
                         SizedBox(
@@ -832,11 +921,17 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Location info row
-                  _InfoRow(
-                    icon: Icons.location_on_outlined,
-                    text: _meetup.location,
-                  ),
+                  // Location info row — show wifi banner for online meetups
+                  if (_meetup.isOnline)
+                    _InfoRow(
+                      icon: Icons.wifi_outlined,
+                      text: 'Online meetup',
+                    )
+                  else
+                    _InfoRow(
+                      icon: Icons.location_on_outlined,
+                      text: _meetup.location.isEmpty ? 'Location TBC' : _meetup.location,
+                    ),
                   const SizedBox(height: 12),
 
                   // Date/time info row
@@ -1080,6 +1175,38 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
 }
 
 // ── Info row — icon + text (Figma detail screen rows) ────────────────────
+
+// ── Tappable tag chip used in detail screen ─────────────────────────────────
+class _TagChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _TagChip({required this.label, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.30)),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _InfoRow extends StatelessWidget {
   final IconData icon;

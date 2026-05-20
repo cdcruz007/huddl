@@ -1874,12 +1874,31 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.tune_rounded,
-                                size: 18,
-                                color: _hasActiveFilter
-                                    ? HuddlColors.primary
-                                    : filterText,
+                              // Icon with orange dot badge when filters active
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    Icons.tune_rounded,
+                                    size: 18,
+                                    color: _hasActiveFilter
+                                        ? HuddlColors.primary
+                                        : filterText,
+                                  ),
+                                  if (_hasActiveFilter)
+                                    Positioned(
+                                      top: -3,
+                                      right: -3,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: HuddlColors.primary,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(width: 8),
                               Text(
@@ -2044,6 +2063,24 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           onAccessDenied: () => _showAccessDeniedDialog(context, meetup),
                           boostReason: boostReasons[meetup.id],
                           onView: () => _aiService.trackMeetupView(meetup.id, meetup.category),
+                          onTagFilter: (tag) {
+                            // Apply tag as a participant or category filter
+                            const participantLabels = ['Mums', 'Dads', 'Aspiring parents',
+                                'Parents expecting a baby', 'Kids'];
+                            if (participantLabels.contains(tag)) {
+                              setState(() => _selectedParticipant = tag);
+                            } else {
+                              // Category tag — map code to sheet label and apply
+                              const codeToLabel = {
+                                'Coffee': 'Coffee & tea', 'Playdate': 'Playdate',
+                                'Sport': 'Sports & exercise', 'Walk': 'Parks & Walks',
+                                'Social': 'Hanging out', 'Food': 'Food & nutrition',
+                                'Other': 'Other',
+                              };
+                              final label = codeToLabel[tag] ?? tag;
+                              setState(() { _sheetCategories.clear(); _sheetCategories.add(label); });
+                            }
+                          },
                         );
                       },
                     ),
@@ -4181,6 +4218,8 @@ class _MeetupCard extends StatefulWidget {
   final VoidCallback? onAccessDenied;
   final String? boostReason; // AI-generated boost reason (subtle sparkle)
   final VoidCallback? onView; // track AI view for learning
+  /// Called when user taps a tag inside the detail screen and wants to filter
+  final void Function(String tag)? onTagFilter;
 
   const _MeetupCard({
     required this.meetup,
@@ -4188,6 +4227,7 @@ class _MeetupCard extends StatefulWidget {
     this.onAccessDenied,
     this.boostReason,
     this.onView,
+    this.onTagFilter,
   });
 
   @override
@@ -4278,7 +4318,10 @@ class _MeetupCardState extends State<_MeetupCard> {
           Navigator.push(
             context,
             PageRouteBuilder(
-              pageBuilder: (_, __, ___) => MeetupDetailScreen(meetup: meetup),
+              pageBuilder: (_, __, ___) => MeetupDetailScreen(
+                meetup: meetup,
+                onTagFilter: widget.onTagFilter,
+              ),
               transitionsBuilder: (_, animation, __, child) =>
                   FadeTransition(opacity: animation, child: child),
               transitionDuration: const Duration(milliseconds: 300),

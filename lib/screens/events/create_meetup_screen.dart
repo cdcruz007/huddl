@@ -434,6 +434,7 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
       groupId: _selectedGroupId,
       groupName: _selectedGroupName,
       invitedMemberIds: _privacy == 'private' ? _selectedMemberIds.toList() : [],
+      isOnline: _isOnline,
       borough: _userBorough,
       targetAudience: _participants.entries
           .where((e) => e.value)

@@ -74,6 +74,7 @@ class Meetup {
   final List<String> invitedMemberIds; // For private meetups: IDs of invited members
   final String? borough; // Borough this meetup belongs to for visibility
   final List<String> targetAudience; // Participant types: Mums, Dads, Aspiring parents, Expecting parents, Kids
+  final bool isOnline; // Whether this is a virtual/online meetup
   final DateTime createdAt;
 
   Meetup({
@@ -105,6 +106,7 @@ class Meetup {
     this.invitedMemberIds = const [],
     this.borough,
     this.targetAudience = const [],
+    this.isOnline = false,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -113,6 +115,7 @@ class Meetup {
     bool? isGoing,
     bool? isFree,
     double? price,
+    bool? isOnline,
     List<String>? attendeeNames,
     List<MeetupAttendee>? invitees,
     List<String>? invitedMemberIds,
@@ -147,6 +150,7 @@ class Meetup {
       invitedMemberIds: invitedMemberIds ?? this.invitedMemberIds,
       borough: borough,
       targetAudience: targetAudience ?? this.targetAudience,
+      isOnline: isOnline ?? this.isOnline,
       createdAt: createdAt,
     );
   }
@@ -183,52 +187,58 @@ class Meetup {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'title': title,
+    // Firestore spec field names (spec-aligned) + legacy aliases for backward compat
+    'name': title,          'title': title,         // spec: name
+    'createdBy': organiserId, 'organiserId': organiserId, // spec: createdBy
+    'photoUrl': imageUrl,   'imageUrl': imageUrl,   // spec: photoUrl (base64 stored separately)
+    'participants': targetAudience, 'targetAudience': targetAudience, // spec: participants
+    'scopedGroupId': groupId, 'groupId': groupId,   // spec: scopedGroupId
     'description': description,
     'category': category,
     'dateDisplay': dateDisplay,
     'timeDisplay': timeDisplay,
-    'dateTime': dateTime.toIso8601String(),
-    'location': location,
+    'date': dateTime.toIso8601String(), 'dateTime': dateTime.toIso8601String(), // spec: date
+    'startTime': timeDisplay.split(' - ').first,    // spec: startTime (parsed from timeDisplay)
+    'endTime': timeDisplay.split(' - ').last,       // spec: endTime
+    'location': location.isEmpty && isOnline ? null : location, // spec: nullable for online
     'organiserName': organiserName,
-    'organiserId': organiserId,
     'attendeeCount': attendeeCount,
     'maxAttendees': maxAttendees,
     'isGoing': isGoing,
     'attendeeNames': attendeeNames,
-    'imageUrl': imageUrl, // Preserve original (base64 stored separately if needed)
     'isFree': isFree,
     'price': price,
     'privacy': privacy.index,
+    'isRepeat': repeat != MeetupRepeat.none,  // spec: isRepeat Boolean
     'repeat': repeat.index,
-    'repeatDisplay': repeatDisplay,
+    'repeatFrequency': repeatDisplay, 'repeatDisplay': repeatDisplay, // spec: repeatFrequency
     'repeatDays': repeatDays,
     'repeatEndDate': repeatEndDate?.toIso8601String(),
-    'groupId': groupId,
     'groupName': groupName,
     'invitees': invitees.map((i) => i.toJson()).toList(),
-    'invitedMemberIds': invitedMemberIds,
+    'attendees': invitedMemberIds, 'invitedMemberIds': invitedMemberIds, // spec: attendees
     'borough': borough,
-    'targetAudience': targetAudience,
+    'isOnline': isOnline,
     'createdAt': createdAt.toIso8601String(),
   };
 
   factory Meetup.fromJson(Map<String, dynamic> j) => Meetup(
     id: j['id'] ?? '',
-    title: j['title'] ?? '',
+    // Read spec keys first, fall back to legacy keys for backward compat
+    title: (j['name'] ?? j['title'] ?? '') as String,
     description: j['description'] ?? '',
     category: j['category'] ?? 'Other',
     dateDisplay: j['dateDisplay'] ?? '',
     timeDisplay: j['timeDisplay'] ?? '',
-    dateTime: DateTime.tryParse(j['dateTime'] ?? '') ?? DateTime.now(),
-    location: j['location'] ?? '',
+    dateTime: DateTime.tryParse(j['date'] ?? j['dateTime'] ?? '') ?? DateTime.now(),
+    location: (j['location'] as String?) ?? '',
     organiserName: j['organiserName'] ?? '',
-    organiserId: j['organiserId'] ?? 'current_user',
+    organiserId: (j['createdBy'] ?? j['organiserId'] ?? 'current_user') as String,
     attendeeCount: (j['attendeeCount'] as num?)?.toInt() ?? 1,
     maxAttendees: (j['maxAttendees'] as num?)?.toInt(),
     isGoing: j['isGoing'] ?? false,
     attendeeNames: List<String>.from(j['attendeeNames'] ?? []),
-    imageUrl: j['imageUrl'] ?? '',
+    imageUrl: (j['photoUrl'] ?? j['imageUrl'] ?? '') as String,
     isFree: j['isFree'] ?? true,
     price: j['price'] != null ? (j['price'] as num).toDouble() : null,
     privacy: () {
@@ -245,14 +255,15 @@ class Meetup {
     repeatDisplay: j['repeatDisplay'],
     repeatDays: j['repeatDays'] != null ? List<int>.from(j['repeatDays']) : null,
     repeatEndDate: j['repeatEndDate'] != null ? DateTime.tryParse(j['repeatEndDate']) : null,
-    groupId: j['groupId'],
-    groupName: j['groupName'],
+    groupId: (j['scopedGroupId'] ?? j['groupId']) as String?,
+    groupName: j['groupName'] as String?,
     invitees: (j['invitees'] as List<dynamic>?)
         ?.map((i) => MeetupAttendee.fromJson(i as Map<String, dynamic>))
         .toList() ?? [],
-    invitedMemberIds: List<String>.from(j['invitedMemberIds'] ?? []),
+    invitedMemberIds: List<String>.from(j['attendees'] ?? j['invitedMemberIds'] ?? []),
     borough: j['borough'],
-    targetAudience: List<String>.from(j['targetAudience'] ?? []),
+    targetAudience: List<String>.from(j['participants'] ?? j['targetAudience'] ?? []),
+    isOnline: j['isOnline'] as bool? ?? false,
     createdAt: DateTime.tryParse(j['createdAt'] ?? '') ?? DateTime.now(),
   );
 }

@@ -117,7 +117,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
     _maxAttendees = m.maxAttendees;
 
     _isFree = m.isFree;
-    _isOnline = m.location == 'Online';
+    _isOnline = m.isOnline || m.location.toLowerCase() == 'online';
     _selectedDate = m.dateTime;
     _pickedImageUrl = m.imageUrl.isNotEmpty ? m.imageUrl : null;
 
@@ -369,6 +369,7 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
       groupId: _selectedGroupId,
       groupName: _selectedGroupName,
       invitedMemberIds: widget.meetup.invitedMemberIds,
+      isOnline: _isOnline,
       borough: widget.meetup.borough,
       targetAudience: _participants.entries.where((e) => e.value).map((e) => e.key).toList(),
       createdAt: widget.meetup.createdAt,
