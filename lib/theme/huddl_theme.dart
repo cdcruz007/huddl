@@ -60,6 +60,8 @@ class HuddlTheme {
         space: 0,
       ),
       tabBarTheme: _tabBarTheme(),
+      datePickerTheme: _datePickerTheme(),
+      timePickerTheme: _timePickerTheme(),
     );
   }
 
@@ -207,6 +209,136 @@ class HuddlTheme {
       unselectedLabelStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400),
       indicatorColor: HuddlColors.primary,
       indicatorSize: TabBarIndicatorSize.label,
+    );
+  }
+
+  // ── Date picker — Huddl brand (orange header, rounded corners) ────────────
+  static DatePickerThemeData _datePickerTheme() {
+    return DatePickerThemeData(
+      // Dialog chrome
+      backgroundColor: HuddlColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 8,
+      shadowColor: Colors.black12,
+
+      // Header band — brand orange
+      headerBackgroundColor: HuddlColors.primary,
+      headerForegroundColor: HuddlColors.white,
+      headerHeadlineStyle: GoogleFonts.poppins(
+        fontSize: 28, fontWeight: FontWeight.w700, color: HuddlColors.white),
+      headerHelpStyle: GoogleFonts.poppins(
+        fontSize: 12, fontWeight: FontWeight.w500, color: HuddlColors.white),
+
+      // Day grid
+      dayStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400),
+      weekdayStyle: GoogleFonts.poppins(
+        fontSize: 11, fontWeight: FontWeight.w600, color: HuddlColors.textTertiary),
+
+      // Selected day — filled orange circle
+      todayBorder: const BorderSide(color: HuddlColors.primary, width: 1.5),
+      todayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.white;
+        return HuddlColors.primary;
+      }),
+      dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.white;
+        if (states.contains(WidgetState.disabled)) return HuddlColors.textHint;
+        return HuddlColors.textDark;
+      }),
+      dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+        return Colors.transparent;
+      }),
+
+      // Year picker
+      yearStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w400),
+      yearForegroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.white;
+        if (states.contains(WidgetState.disabled)) return HuddlColors.textHint;
+        return HuddlColors.textDark;
+      }),
+      yearBackgroundColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+        return Colors.transparent;
+      }),
+
+      // Range selection tint
+      rangeSelectionBackgroundColor: HuddlColors.primary.withValues(alpha: 0.12),
+
+      // Action buttons — text style
+      cancelButtonStyle: TextButton.styleFrom(
+        foregroundColor: HuddlColors.textTertiary,
+        textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      confirmButtonStyle: TextButton.styleFrom(
+        foregroundColor: HuddlColors.primary,
+        textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
+  // ── Time picker — Huddl brand (orange clock hand + dial) ─────────────────
+  static TimePickerThemeData _timePickerTheme() {
+    return TimePickerThemeData(
+      // Dialog
+      backgroundColor: HuddlColors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 8,
+
+      // Help text
+      helpTextStyle: GoogleFonts.poppins(
+        fontSize: 11, fontWeight: FontWeight.w600,
+        color: HuddlColors.textTertiary, letterSpacing: 0.8),
+
+      // Hour/minute entry boxes
+      hourMinuteTextStyle: GoogleFonts.poppins(
+        fontSize: 56, fontWeight: FontWeight.w300, color: HuddlColors.textDark),
+      hourMinuteShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      hourMinuteColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return HuddlColors.primary.withValues(alpha: 0.12);
+        }
+        return HuddlColors.background;
+      }),
+      hourMinuteTextColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+        return HuddlColors.textDark;
+      }),
+
+      // AM/PM
+      dayPeriodTextStyle: GoogleFonts.poppins(
+        fontSize: 14, fontWeight: FontWeight.w600),
+      dayPeriodBorderSide: const BorderSide(color: HuddlColors.divider),
+      dayPeriodShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      dayPeriodColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
+          return HuddlColors.primary.withValues(alpha: 0.12);
+        }
+        return Colors.transparent;
+      }),
+      dayPeriodTextColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.primary;
+        return HuddlColors.textSecondary;
+      }),
+
+      // Dial
+      dialHandColor: HuddlColors.primary,
+      dialBackgroundColor: HuddlColors.primary.withValues(alpha: 0.08),
+      dialTextColor: WidgetStateColor.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return HuddlColors.white;
+        return HuddlColors.textDark;
+      }),
+      entryModeIconColor: HuddlColors.primary,
+
+      // Action buttons
+      cancelButtonStyle: TextButton.styleFrom(
+        foregroundColor: HuddlColors.textTertiary,
+        textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      confirmButtonStyle: TextButton.styleFrom(
+        foregroundColor: HuddlColors.primary,
+        textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

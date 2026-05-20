@@ -19,6 +19,7 @@ import '../../services/subscription_service.dart';
 import '../../widgets/upgrade_prompt.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
+import '../../widgets/places_autocomplete_field.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CREATE MEETUP — premium card-based form, Figma-aligned redesign
@@ -887,17 +888,13 @@ class _CreateMeetupScreenState extends State<CreateMeetupScreen> {
                   child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
                 ),
                 Expanded(
-                  child: TextField(
+                  child: PlacesAutocompleteField(
                     controller: _locationCtrl,
-                    style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
-                    decoration: InputDecoration(
-                      hintText: 'Add a location or address',
-                      hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (_) { setState(() {}); _saveDraft(); },
+                    accentColor: _accentOrange,
+                    onPlaceSelected: (address) {
+                      setState(() {});
+                      _saveDraft();
+                    },
                   ),
                 ),
               ],

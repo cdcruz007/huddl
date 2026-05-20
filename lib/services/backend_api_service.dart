@@ -292,6 +292,40 @@ class BackendApiService {
     }
   }
 
+  /// Fan-out a cancellation push to every confirmed attendee of a deleted meetup.
+  ///
+  /// Calls POST /api/meetups/notify-cancelled on the backend, which:
+  ///   1. Looks up each attendeeUid's fcmToken in Firestore
+  ///   2. Sends an FCM v1 notification to each token
+  ///   3. Also writes a notifications_queue doc for Cloud Function fallback
+  ///
+  /// Non-fatal — errors are logged but never surface to the UI.
+  Future<void> notifyMeetupCancelled({
+    required String meetupId,
+    required String meetupTitle,
+    required String organiserName,
+    required String dateDisplay,
+    required List<String> attendeeUids,
+  }) async {
+    try {
+      if (attendeeUids.isEmpty) return;
+      final headers = await _authHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/api/meetups/notify-cancelled'),
+        headers: headers,
+        body: jsonEncode({
+          'meetupId': meetupId,
+          'meetupTitle': meetupTitle,
+          'organiserName': organiserName,
+          'dateDisplay': dateDisplay,
+          'attendeeUids': attendeeUids,
+        }),
+      ).timeout(const Duration(seconds: 12));
+    } catch (e) {
+      if (kDebugMode) debugPrint('[BackendApiService] notifyMeetupCancelled error: $e');
+    }
+  }
+
   /// Push a notification to the DM recipient.
   /// Called immediately after [RealtimeDMService.sendMessage] writes to Firestore.
   /// Non-fatal — errors are logged but never bubble up to the UI.

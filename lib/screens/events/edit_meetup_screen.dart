@@ -11,6 +11,7 @@ import '../../services/browser_storage.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../models/group.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../widgets/places_autocomplete_field.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // EDIT MEETUP — pre-populated form using existing meetup data
@@ -633,17 +634,12 @@ class _EditMeetupScreenState extends State<EditMeetupScreen> {
                   child: Icon(Icons.location_on_outlined, size: 20, color: _accentOrange),
                 ),
                 Expanded(
-                  child: TextField(
+                  child: PlacesAutocompleteField(
                     controller: _locationCtrl,
-                    style: GoogleFonts.poppins(fontSize: 15, color: _sectionText),
-                    decoration: InputDecoration(
-                      hintText: 'Add a location or address',
-                      hintStyle: GoogleFonts.poppins(fontSize: 15, color: _hintGray),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (_) => setState(() => _isDirty = true),
+                    accentColor: _accentOrange,
+                    onPlaceSelected: (address) {
+                      setState(() => _isDirty = true);
+                    },
                   ),
                 ),
               ],

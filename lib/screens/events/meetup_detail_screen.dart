@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,6 +12,8 @@ import '../../services/browser_storage.dart';
 import '../../models/group.dart';
 import '../groups/forward_message_sheet.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../services/backend_api_service.dart';
 import 'edit_meetup_screen.dart';
 
 
@@ -563,14 +566,13 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
     final cancelled = _meetupService.cancelMeetup(_meetup.id);
     if (cancelled == null) return;
 
-    // Send cancellation message to the meetup group chat
     final meetupGroupId = 'meetup_group_${cancelled.id}';
     final cancellationMsg =
         'The creator of the meetup group has unfortunately cancelled this meetup. '
         'Please feel free to set one up as a replacement if you would still '
         'be keen to arrange a similar meetup.';
 
-    // Store cancellation notice in the group chat
+    // ── 1. Store cancellation notice in local group chat ──────────────────
     await BrowserStorage.setString(
       'meetup_cancelled_$meetupGroupId',
       json.encode({
@@ -582,11 +584,7 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
       }),
     );
 
-    // Real RSVP'd attendees would be notified via Firestore/FCM here.
-    // attendeeNames is no longer populated with fake data — notifications
-    // are handled server-side when real users RSVP via rsvpMeetup().
-
-    // Remove the meetup group chat from Messages
+    // ── 2. Remove the meetup group chat from Messages ─────────────────────
     try {
       final groupKey = 'user_created_groups_v1';
       final existing = await BrowserStorage.getString(groupKey);
@@ -597,6 +595,58 @@ class _MeetupDetailScreenState extends State<MeetupDetailScreen> {
         await BrowserStorage.setString(groupKey, json.encode(groups));
       }
     } catch (_) {}
+
+    // ── 3. FCM push to all confirmed attendees ────────────────────────────
+    // Step A: collect confirmed attendee UIDs from Firestore rsvps sub-collection
+    // (invitedMemberIds covers private-invite list; rsvps covers public joiners)
+    final attendeeUids = <String>{};
+    try {
+      // Pull from the meetup's rsvps sub-collection
+      final rsvpSnap = await FirebaseFirestore.instance
+          .collection('meetups')
+          .doc(cancelled.id)
+          .collection('rsvps')
+          .where('going', isEqualTo: true)
+          .get();
+      for (final doc in rsvpSnap.docs) {
+        attendeeUids.add(doc.id); // doc ID is the UID
+      }
+    } catch (_) {} // non-fatal — fallback to invitedMemberIds
+
+    // Also include explicitly invited members (private meetups)
+    attendeeUids.addAll(cancelled.invitedMemberIds);
+
+    // Remove the organiser — no need to push to themselves
+    final organiserId = FirebaseAuth.instance.currentUser?.uid ?? cancelled.organiserId;
+    attendeeUids.remove(organiserId);
+
+    // Step B: write a notifications_queue doc so Cloud Function also fires
+    try {
+      await FirebaseFirestore.instance
+          .collection('notifications_queue')
+          .add({
+        'type': 'meetup_cancelled',
+        'meetupId': cancelled.id,
+        'meetupTitle': cancelled.title,
+        'organiserName': cancelled.organiserName,
+        'dateDisplay': cancelled.dateDisplay,
+        'attendeeUids': attendeeUids.toList(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'processed': false,
+      });
+    } catch (_) {} // non-fatal
+
+    // Step C: also dispatch directly via backend API (FCM v1)
+    final organiserName = cancelled.organiserName.isNotEmpty
+        ? cancelled.organiserName
+        : 'Your organiser';
+    unawaited(BackendApiService().notifyMeetupCancelled(
+      meetupId: cancelled.id,
+      meetupTitle: cancelled.title,
+      organiserName: organiserName,
+      dateDisplay: cancelled.dateDisplay,
+      attendeeUids: attendeeUids.toList(),
+    ));
 
     if (!mounted) return;
     Navigator.pop(context);
