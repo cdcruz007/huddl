@@ -3130,21 +3130,21 @@ class _MarketSearchRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // ── Square thumbnail 64×64 ──────────────────────────────────
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: hasImage
-                  ? Image.network(
-                      item.imageUrls.first,
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
-                    )
-                  : SizedBox(
-                      width: 64,
-                      height: 64,
-                      child: _MarketPhotoFallback(item: item),
-                    ),
+            SizedBox(
+              width: 64,
+              height: 64,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: hasImage
+                    ? Image.network(
+                        item.imageUrls.first,
+                        width: 64,
+                        height: 64,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
+                      )
+                    : _MarketPhotoFallback(item: item),
+              ),
             ),
             const SizedBox(width: 12),
             // ── Centre text block ───────────────────────────────────────
