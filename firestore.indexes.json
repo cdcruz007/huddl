@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "memberActivity",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "messageCount", "order": "DESCENDING" },
+        { "fieldPath": "joinedAt",     "order": "ASCENDING"  }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

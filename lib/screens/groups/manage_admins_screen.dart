@@ -130,6 +130,38 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
   }
 
   Future<void> _removeAdmin(_AdminMember member) async {
+    // ── Sole-admin guard ────────────────────────────────────────────────────
+    // If this member is the only admin, removing them would leave the group
+    // without any admin.  Two sub-cases:
+    //
+    //   • Current user is the sole admin and is self-demoting:
+    //     Trigger auto-promotion (promote most-active member → then remove
+    //     self from admins), mirroring the leave-flow Case 2 logic.
+    //
+    //   • A different admin is the sole admin and the current user is somehow
+    //     trying to remove them (should not happen via normal UI, but guarded
+    //     defensively):
+    //     Block the operation and explain.
+    if (_admins.length == 1) {
+      if (member.uid == _currentUid) {
+        // Self-demotion as sole admin → auto-promote most active member first
+        await _autoPromoteAndDemoteSelf();
+      } else {
+        // Attempting to remove the last remaining admin → block
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text(
+              'This is the only admin. Assign another admin first before removing them.'),
+            backgroundColor: HuddlColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ));
+        }
+      }
+      return;
+    }
+    // ── Normal demotion ─────────────────────────────────────────────────────
+
     final confirmed = await _confirmDialog(
       title: 'Remove ${member.name} as admin?',
       body: 'They will become a regular member of the group.',
@@ -158,6 +190,108 @@ class _ManageAdminsScreenState extends State<ManageAdminsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Failed to update admin. Please try again.'),
+          backgroundColor: HuddlColors.error,
+        ));
+      }
+    }
+  }
+
+  /// Sole-admin self-demotion path: promote the most active non-admin member
+  /// (by messageCount DESC, joinedAt ASC from the memberActivity sub-collection)
+  /// then remove the current user from the admins array.
+  Future<void> _autoPromoteAndDemoteSelf() async {
+    final uid = _currentUid;
+    if (uid == null) return;
+
+    final db = FirebaseFirestore.instance;
+
+    // Show a blocking dialog explaining what is about to happen
+    final proceed = await _confirmDialog(
+      title: 'You are the only admin',
+      body: 'Before stepping down, the most active member will automatically '
+            'become the new admin. Proceed?',
+      confirmLabel: 'Proceed',
+      confirmColor: HuddlColors.primary,
+    );
+    if (!proceed) return;
+
+    try {
+      // ── Step 1: Find most active non-admin member ──────────────────────
+      String? promoteeId;
+      try {
+        final actSnap = await db
+            .collection('groups')
+            .doc(widget.groupId)
+            .collection('memberActivity')
+            .orderBy('messageCount', descending: true)
+            .orderBy('joinedAt', descending: false)
+            .limit(10)
+            .get();
+
+        for (final doc in actSnap.docs) {
+          final id = doc.data()['userId'] as String? ?? doc.id;
+          if (id != uid) {
+            promoteeId = id;
+            break;
+          }
+        }
+      } catch (_) {
+        // Composite index may not exist yet — fall through to members fallback
+      }
+
+      if (promoteeId == null) {
+        // Fallback: pick any member who is not the current user
+        final groupDoc = await db.collection('groups').doc(widget.groupId).get();
+        final allMembers = List<String>.from(groupDoc.data()?['members'] ?? []);
+        promoteeId = allMembers.firstWhere((id) => id != uid, orElse: () => '');
+      }
+
+      // At this point promoteeId is guaranteed non-null (fallback assigned '' above)
+      final resolvedPromoteeId = promoteeId;
+
+      // ── Step 2: Promote selected member and demote self ─────────────────
+      if (resolvedPromoteeId.isNotEmpty) {
+        await db.collection('groups').doc(widget.groupId).update({
+          'admins': FieldValue.arrayUnion([resolvedPromoteeId]),
+        });
+      }
+
+      await db.collection('groups').doc(widget.groupId).update({
+        'admins': FieldValue.arrayRemove([uid]),
+      });
+
+      // ── Step 3: Reflect changes in local state ───────────────────────────
+      if (mounted) {
+        setState(() {
+          // Remove self from admins list
+          final selfMember = _admins.firstWhere(
+            (m) => m.uid == uid,
+            orElse: () => _AdminMember(uid: uid, name: 'You', isCreator: false),
+          );
+          _admins.removeWhere((m) => m.uid == uid);
+          _members.add(selfMember);
+
+          // Move promotee from members to admins
+          if (resolvedPromoteeId.isNotEmpty) {
+            final idx = _members.indexWhere((m) => m.uid == resolvedPromoteeId);
+            if (idx != -1) {
+              final promoted = _members.removeAt(idx);
+              _admins.insert(0, promoted);
+            }
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Admin role transferred successfully.'),
+          backgroundColor: HuddlColors.teal,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Failed to transfer admin role. Please try again.'),
           backgroundColor: HuddlColors.error,
         ));
       }

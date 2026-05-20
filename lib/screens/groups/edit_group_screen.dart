@@ -1,15 +1,19 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // EDIT GROUP SCREEN — Section 6B
-// Admin-only screen to edit group name, description, audience, and privacy.
-// Accessed via Group Detail → three-dot menu → "Edit group".
+// Admin-only screen to edit group name, description, audience, privacy,
+// and group photo. Accessed via Group Detail → ⋮ → "Edit group".
 // ═══════════════════════════════════════════════════════════════════════════
 
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/huddl_colors.dart';
+import '../../widgets/image_editor_widget.dart';
 
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
@@ -17,9 +21,10 @@ class EditGroupScreen extends StatefulWidget {
   final String groupDescription;
   final String groupImageUrl;
   final bool isPrivate;
-  /// Called when Save succeeds — passes new name and description so the
-  /// Group Detail screen can update its local state without a reload.
-  final void Function(String newName, String newDescription)? onGroupUpdated;
+  /// Called when Save succeeds — passes new name, description, and imageUrl
+  /// so the Group Detail screen can update its local state without a reload.
+  final void Function(String newName, String newDescription,
+      {String? newImageUrl})? onGroupUpdated;
 
   const EditGroupScreen({
     super.key,
@@ -52,8 +57,14 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   // Privacy
   String _privacy = 'public'; // 'public' | 'group' | 'private'
 
+  // ── Photo state ───────────────────────────────────────────────────────────
+  /// Non-null only when the admin has picked a new image this session.
+  /// Stored as a base64 data-URI (same pattern as CreateGroupScreen).
+  String? _newImageDataUri;
+  bool _isUploadingImage = false;
+
   bool _isLoading = true;
-  bool _isSaving = false;
+  bool _isSaving  = false;
   bool _hasChanges = false;
 
   @override
@@ -74,9 +85,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   }
 
   void _onFieldChanged() {
-    final changed = _nameCtrl.text.trim() != widget.groupName ||
+    final textChanged = _nameCtrl.text.trim() != widget.groupName ||
         _descCtrl.text.trim() != widget.groupDescription;
-    if (changed != _hasChanges) setState(() => _hasChanges = changed);
+    if (textChanged != _hasChanges) setState(() => _hasChanges = textChanged);
   }
 
   Future<void> _loadGroupData() async {
@@ -88,11 +99,11 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       if (!mounted) return;
       final data = doc.data() ?? {};
       final audience = List<String>.from(data['targetAudience'] ?? []);
-      final privacy = (data['privacy'] as String?) ?? (widget.isPrivate ? 'private' : 'public');
-
+      final privacy  = (data['privacy'] as String?) ??
+          (widget.isPrivate ? 'private' : 'public');
       setState(() {
         _selectedAudience.addAll(audience);
-        _privacy = privacy;
+        _privacy   = privacy;
         _isLoading = false;
       });
     } catch (_) {
@@ -100,23 +111,111 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     }
   }
 
+  // ── Image picker ──────────────────────────────────────────────────────────
+
+  void _showImageSourceSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.hc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: context.hc.divider, borderRadius: BorderRadius.circular(2)),
+            ),
+            Text('Change group photo',
+              style: GoogleFonts.poppins(
+                fontSize: 16, fontWeight: FontWeight.w700, color: context.hc.textPrimary)),
+            const SizedBox(height: 16),
+            ListTile(
+              leading: Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: HuddlColors.primary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.photo_library_outlined, color: HuddlColors.primary),
+              ),
+              title: Text('Choose from gallery',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickFrom(ImageSource.gallery);
+              },
+            ),
+            // Camera is only useful on real devices; skip on web
+            if (!kIsWeb)
+              ListTile(
+                leading: Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(
+                    color: HuddlColors.primary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.camera_alt_outlined, color: HuddlColors.primary),
+                ),
+                title: Text('Take a photo',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _pickFrom(ImageSource.camera);
+                },
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickFrom(ImageSource source) async {
+    setState(() => _isUploadingImage = true);
+    try {
+      final file = await ImageEditorWidget.pickGroupImageWithSource(context, source);
+      if (file != null && mounted) {
+        final bytes   = await file.readAsBytes();
+        final base64  = base64Encode(bytes);
+        final mime    = file.path.toLowerCase().endsWith('.png')
+            ? 'image/png' : 'image/jpeg';
+        setState(() {
+          _newImageDataUri = 'data:$mime;base64,$base64';
+          _hasChanges = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Could not update image: $e'),
+          backgroundColor: HuddlColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  // ── Discard confirmation ──────────────────────────────────────────────────
+
   void _onAudienceToggle(String option) {
     setState(() {
-      if (_selectedAudience.contains(option)) {
-        _selectedAudience.remove(option);
-      } else {
-        _selectedAudience.add(option);
-      }
+      _selectedAudience.contains(option)
+          ? _selectedAudience.remove(option)
+          : _selectedAudience.add(option);
       _hasChanges = true;
     });
   }
 
   void _onPrivacyChanged(String? value) {
     if (value == null) return;
-    setState(() {
-      _privacy = value;
-      _hasChanges = true;
-    });
+    setState(() { _privacy = value; _hasChanges = true; });
   }
 
   Future<bool> _onWillPop() async {
@@ -131,11 +230,14 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('Discard changes?',
-                style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w700, color: context.hc.textPrimary),
+                style: GoogleFonts.poppins(
+                  fontSize: 18, fontWeight: FontWeight.w700,
+                  color: context.hc.textPrimary),
                 textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Text('Your edits won\'t be saved.',
-                style: GoogleFonts.poppins(fontSize: 14, color: context.hc.textSecondary, height: 1.5),
+                style: GoogleFonts.poppins(
+                  fontSize: 14, color: context.hc.textSecondary, height: 1.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 24),
               Divider(height: 1, color: context.hc.divider),
@@ -146,7 +248,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, false),
                       child: Text('Keep editing',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: context.hc.textSecondary)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w600,
+                          color: context.hc.textSecondary)),
                     ),
                   ),
                   Container(width: 1, height: 40, color: context.hc.divider),
@@ -154,7 +258,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                     child: TextButton(
                       onPressed: () => Navigator.pop(c, true),
                       child: Text('Discard',
-                        style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: HuddlColors.error)),
+                        style: GoogleFonts.poppins(
+                          fontSize: 15, fontWeight: FontWeight.w600,
+                          color: HuddlColors.error)),
                     ),
                   ),
                 ],
@@ -167,6 +273,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     return discard ?? false;
   }
 
+  // ── Save ──────────────────────────────────────────────────────────────────
+
   Future<void> _saveChanges() async {
     if (!_formKey.currentState!.validate()) return;
     final name = _nameCtrl.text.trim();
@@ -176,16 +284,31 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
-      await FirebaseFirestore.instance.collection('groups').doc(widget.groupId).update({
-        'name': name,
-        'description': _descCtrl.text.trim(),
-        'targetAudience': _selectedAudience.toList(),
-        'privacy': _privacy,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'updatedBy': uid ?? '',
-      });
 
-      widget.onGroupUpdated?.call(name, _descCtrl.text.trim());
+      final Map<String, dynamic> update = {
+        'name':          name,
+        'description':   _descCtrl.text.trim(),
+        'targetAudience': _selectedAudience.toList(),
+        'privacy':       _privacy,
+        'updatedAt':     FieldValue.serverTimestamp(),
+        'updatedBy':     uid ?? '',
+      };
+
+      // Include new image if one was picked
+      if (_newImageDataUri != null) {
+        update['imageUrl'] = _newImageDataUri!;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupId)
+          .update(update);
+
+      widget.onGroupUpdated?.call(
+        name,
+        _descCtrl.text.trim(),
+        newImageUrl: _newImageDataUri,
+      );
 
       if (mounted) {
         setState(() => _isSaving = false);
@@ -220,6 +343,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     }
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -246,8 +371,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
             'Edit group',
             style: GoogleFonts.poppins(
               fontSize: 17, fontWeight: FontWeight.w600,
-              color: context.hc.textPrimary,
-            ),
+              color: context.hc.textPrimary),
           ),
           centerTitle: true,
           bottom: PreferredSize(
@@ -257,7 +381,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
         ),
         bottomNavigationBar: Container(
           color: context.hc.surface,
-          padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+          padding: EdgeInsets.fromLTRB(
+              20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
           child: SizedBox(
             width: double.infinity,
             height: 52,
@@ -265,24 +390,30 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
               onPressed: (!_hasChanges || _isSaving) ? null : _saveChanges,
               style: ElevatedButton.styleFrom(
                 backgroundColor: HuddlColors.primary,
-                disabledBackgroundColor: HuddlColors.primary.withValues(alpha: 0.4),
+                disabledBackgroundColor:
+                    HuddlColors.primary.withValues(alpha: 0.4),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(26)),
               ),
               child: _isSaving
                   ? const SizedBox(
                       width: 22, height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                   : Text(
                       'Save changes',
                       style: GoogleFonts.poppins(
-                        fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
                     ),
             ),
           ),
         ),
         body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: HuddlColors.primary))
+            ? const Center(
+                child: CircularProgressIndicator(color: HuddlColors.primary))
             : Form(
                 key: _formKey,
                 child: SingleChildScrollView(
@@ -290,47 +421,39 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Group photo (display only — tappable to change in future) ─
-                      if (widget.groupImageUrl.isNotEmpty)
-                        Container(
-                          width: double.infinity,
-                          height: 160,
-                          margin: const EdgeInsets.only(bottom: 24),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-                          child: Image.network(
-                            widget.groupImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: HuddlColors.primary.withValues(alpha: 0.1),
-                              child: const Icon(Icons.image_outlined, size: 48, color: HuddlColors.primary),
-                            ),
-                          ),
-                        ),
+                      // ── Group photo (tappable to change) ──────────────────
+                      _buildPhotoSection(),
+                      const SizedBox(height: 24),
 
-                      // ── Group title ──────────────────────────────────────────
+                      // ── Group title ───────────────────────────────────────
                       _sectionLabel('Group title'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _nameCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        style: GoogleFonts.poppins(fontSize: 15, color: context.hc.textPrimary),
-                        decoration: _inputDecoration('e.g. Hackney Toddler Playgroup'),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Group title is required' : null,
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, color: context.hc.textPrimary),
+                        decoration: _inputDecoration(
+                            'e.g. Hackney Toddler Playgroup'),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Group title is required'
+                            : null,
                         maxLength: 80,
                         onTap: () => HapticFeedback.selectionClick(),
                       ),
 
                       const SizedBox(height: 20),
 
-                      // ── Group description ────────────────────────────────────
+                      // ── Group description ─────────────────────────────────
                       _sectionLabel('Group description'),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _descCtrl,
                         textCapitalization: TextCapitalization.sentences,
-                        style: GoogleFonts.poppins(fontSize: 15, color: context.hc.textPrimary),
-                        decoration: _inputDecoration('e.g. who this group is for, what activities are planned.'),
+                        style: GoogleFonts.poppins(
+                            fontSize: 15, color: context.hc.textPrimary),
+                        decoration: _inputDecoration(
+                            'e.g. who this group is for, activities planned…'),
                         maxLines: 4,
                         minLines: 3,
                         onTap: () => HapticFeedback.selectionClick(),
@@ -338,30 +461,33 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
                       const SizedBox(height: 28),
 
-                      // ── Who is this group for? ───────────────────────────────
+                      // ── Who is this group for? ────────────────────────────
                       _sectionLabel('Who is this group for?'),
                       const SizedBox(height: 12),
-                      ..._audienceOptions.map((opt) => _audienceCheckbox(opt)),
+                      ..._audienceOptions.map(_audienceCheckbox),
 
                       const SizedBox(height: 28),
 
-                      // ── Privacy settings ─────────────────────────────────────
+                      // ── Privacy settings ──────────────────────────────────
                       _sectionLabel('Privacy settings'),
                       const SizedBox(height: 12),
                       _privacyOption(
                         value: 'public',
                         label: 'Public',
-                        description: 'Everyone in your local community can see and join your group.',
+                        description:
+                            'Everyone in your local community can see and join.',
                       ),
                       _privacyOption(
                         value: 'group',
                         label: 'Group',
-                        description: 'Only members of a specific group can see and join your group.',
+                        description:
+                            'Only members of a specific group can see and join.',
                       ),
                       _privacyOption(
                         value: 'private',
                         label: 'Private',
-                        description: 'Invite only — choose specific people to invite.',
+                        description:
+                            'Invite only — choose specific people to invite.',
                       ),
 
                       const SizedBox(height: 40),
@@ -373,18 +499,133 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     );
   }
 
+  // ── Photo section widget ──────────────────────────────────────────────────
+
+  Widget _buildPhotoSection() {
+    return GestureDetector(
+      onTap: _isUploadingImage ? null : _showImageSourceSheet,
+      child: Stack(
+        children: [
+          // ── Photo container ─────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            height: 160,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: HuddlColors.primary.withValues(alpha: 0.08),
+            ),
+            child: _buildPhotoContent(),
+          ),
+
+          // ── Overlay: "Change photo" affordance ──────────────────────────
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.black.withValues(alpha: 0.30),
+              ),
+              child: _isUploadingImage
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.20),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                              Icons.camera_alt_outlined,
+                              color: Colors.white, size: 22),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Change photo',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoContent() {
+    // Newly picked image (base64 data-URI)
+    if (_newImageDataUri != null) {
+      try {
+        final dataUri = Uri.parse(_newImageDataUri!);
+        final bytes   = dataUri.data?.contentAsBytes();
+        if (bytes != null) {
+          return Image.memory(
+            Uint8List.fromList(bytes),
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: 160,
+          );
+        }
+      } catch (_) {}
+    }
+    // Existing Firestore image (network URL or data-URI from old save)
+    if (widget.groupImageUrl.isNotEmpty) {
+      if (widget.groupImageUrl.startsWith('data:')) {
+        try {
+          final dataUri = Uri.parse(widget.groupImageUrl);
+          final bytes   = dataUri.data?.contentAsBytes();
+          if (bytes != null) {
+            return Image.memory(
+              Uint8List.fromList(bytes),
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 160,
+            );
+          }
+        } catch (_) {}
+      } else {
+        return Image.network(
+          widget.groupImageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: 160,
+          errorBuilder: (_, __, ___) => _photoPlaceholder(),
+        );
+      }
+    }
+    return _photoPlaceholder();
+  }
+
+  Widget _photoPlaceholder() => Center(
+    child: Icon(Icons.image_outlined, size: 48,
+        color: HuddlColors.primary.withValues(alpha: 0.4)),
+  );
+
+  // ── Helper widgets ────────────────────────────────────────────────────────
+
   Widget _sectionLabel(String text) => Text(
     text,
     style: GoogleFonts.poppins(
-      fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
+      fontSize: 14, fontWeight: FontWeight.w600,
+      color: context.hc.textPrimary),
   );
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: GoogleFonts.poppins(fontSize: 14, color: context.hc.textTertiary),
+    hintStyle: GoogleFonts.poppins(
+        fontSize: 14, color: context.hc.textTertiary),
     filled: true,
     fillColor: context.hc.surface,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
       borderSide: BorderSide(color: context.hc.divider),
@@ -401,7 +642,8 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: HuddlColors.error),
     ),
-    counterStyle: GoogleFonts.poppins(fontSize: 11, color: context.hc.textTertiary),
+    counterStyle: GoogleFonts.poppins(
+        fontSize: 11, color: context.hc.textTertiary),
   );
 
   Widget _audienceCheckbox(String option) {
@@ -409,7 +651,10 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); _onAudienceToggle(option); },
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _onAudienceToggle(option);
+        },
         child: Row(
           children: [
             AnimatedContainer(
@@ -428,10 +673,14 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                   : null,
             ),
             const SizedBox(width: 12),
-            Text(option,
+            Text(
+              option,
               style: GoogleFonts.poppins(
-                fontSize: 14, color: context.hc.textPrimary,
-                fontWeight: selected ? FontWeight.w500 : FontWeight.w400)),
+                fontSize: 14,
+                color: context.hc.textPrimary,
+                fontWeight:
+                    selected ? FontWeight.w500 : FontWeight.w400),
+            ),
           ],
         ),
       ),
@@ -447,7 +696,10 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: GestureDetector(
-        onTap: () { HapticFeedback.selectionClick(); _onPrivacyChanged(value); },
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _onPrivacyChanged(value);
+        },
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -459,7 +711,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                 shape: BoxShape.circle,
                 color: Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? HuddlColors.primary : context.hc.divider,
+                  color: isSelected
+                      ? HuddlColors.primary
+                      : context.hc.divider,
                   width: isSelected ? 5 : 1.5,
                 ),
               ),
@@ -469,13 +723,23 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label,
+                  Text(
+                    label,
                     style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.w600,
-                      color: isSelected ? HuddlColors.primary : context.hc.textPrimary)),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? HuddlColors.primary
+                          : context.hc.textPrimary),
+                  ),
                   const SizedBox(height: 2),
-                  Text(description,
-                    style: GoogleFonts.poppins(fontSize: 12, color: context.hc.textSecondary, height: 1.4)),
+                  Text(
+                    description,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: context.hc.textSecondary,
+                      height: 1.4),
+                  ),
                 ],
               ),
             ),

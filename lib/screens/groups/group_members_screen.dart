@@ -63,19 +63,23 @@ class _GroupMembersScreenState extends State<GroupMembersScreen> {
       }
 
       final data = groupDoc.data() ?? {};
-      List<String> memberIds = List<String>.from(data['memberIds'] ?? []);
+      // Read from memberIds[] (canonical) then fall back to members[] (admin-role field)
+      // so both legacy and new groups always show their member list.
+      final rawMemberIds = List<String>.from(data['memberIds'] ?? []);
+      final rawMembers   = List<String>.from(data['members']   ?? []);
+      // Union both arrays so a member present in either field is included
+      List<String> memberIds = {...rawMemberIds, ...rawMembers}.toList();
       final creatorId = widget.creatorId ?? data['creatorId'] as String?;
       // Section 6E: detect admin status from admins[] array
       final adminIds = List<String>.from(data['admins'] ?? []);
       final isAdminFromFirestore = _currentUid != null && adminIds.contains(_currentUid);
       final isCreatorCheck = _currentUid != null && _currentUid == (widget.creatorId ?? data['creatorId']);
 
-      // Bug 3b fix: if memberIds is empty (common for onboarding-created groups
-      // that weren't written with a memberIds array), fall back to querying the
-      // users collection for anyone whose groupIds array contains this groupId.
+      // Bug 3b fix: if both memberIds[] and members[] are empty (e.g. onboarding-
+      // created groups), fall back to querying users.groupIds.
       if (memberIds.isEmpty) {
         if (kDebugMode) {
-          debugPrint('[GroupMembersScreen] memberIds empty for ${widget.groupId}, '
+          debugPrint('[GroupMembersScreen] memberIds+members empty for ${widget.groupId}, '
               'falling back to groupIds query');
         }
         try {
@@ -469,8 +473,10 @@ class _MemberTile extends StatelessWidget {
     if (confirmed == true) {
       try {
         await FirebaseFirestore.instance.collection('groups').doc(groupId).update({
-          'members': FieldValue.arrayRemove([member.uid]),
-          'admins':  FieldValue.arrayRemove([member.uid]),
+          'memberIds': FieldValue.arrayRemove([member.uid]),
+          'members':   FieldValue.arrayRemove([member.uid]),
+          'admins':    FieldValue.arrayRemove([member.uid]),
+          'memberCount': FieldValue.increment(-1),
         });
         onMemberRemoved?.call();
         if (context.mounted) {

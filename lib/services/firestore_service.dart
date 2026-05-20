@@ -143,22 +143,24 @@ class FirestoreService {
         );
   }
 
-  /// Join a group.
+  /// Join a group — keeps memberIds[] and members[] in sync.
   Future<void> joinGroup(String groupId) async {
     final uid = _uid;
     if (uid == null) return;
     await _db.collection('groups').doc(groupId).update({
       'memberIds': FieldValue.arrayUnion([uid]),
+      'members':   FieldValue.arrayUnion([uid]),
       'memberCount': FieldValue.increment(1),
     });
   }
 
-  /// Leave a group.
+  /// Leave a group — keeps memberIds[] and members[] in sync.
   Future<void> leaveGroup(String groupId) async {
     final uid = _uid;
     if (uid == null) return;
     await _db.collection('groups').doc(groupId).update({
       'memberIds': FieldValue.arrayRemove([uid]),
+      'members':   FieldValue.arrayRemove([uid]),
       'memberCount': FieldValue.increment(-1),
     });
   }
@@ -168,7 +170,11 @@ class FirestoreService {
     final uid = _uid;
     if (uid == null) throw Exception('Not authenticated');
     groupData['creatorId'] = uid;
+    // Canonical read field used everywhere in the codebase
     groupData['memberIds'] = [uid];
+    // Unified write: keep members[] in sync with memberIds[] from the start
+    // (the admin-role system reads members[], legacy reads use memberIds[])
+    groupData['members'] = groupData['members'] ?? [uid];
     groupData['createdAt'] = FieldValue.serverTimestamp();
     groupData['lastMessageTime'] = FieldValue.serverTimestamp();
     final ref = await _db.collection('groups').add(groupData);

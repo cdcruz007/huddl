@@ -371,9 +371,12 @@ class InvitationService extends ChangeNotifier {
     if (myId.isNotEmpty) {
       try {
         final db = FirebaseFirestore.instance;
-        // Add to members[] array
+        // Keep both memberIds[] (canonical read field) and members[]
+        // (admin-role field) in sync on every join.
         await db.collection('groups').doc(group.id).update({
-          'members': FieldValue.arrayUnion([myId]),
+          'memberIds': FieldValue.arrayUnion([myId]),
+          'members':   FieldValue.arrayUnion([myId]),
+          'memberCount': FieldValue.increment(1),
         });
         // Write memberActivity.joinedAt (write-once via merge — only sets
         // joinedAt if the field doesn't already exist)

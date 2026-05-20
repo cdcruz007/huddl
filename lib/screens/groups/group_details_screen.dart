@@ -171,10 +171,22 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
       });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Joined ${widget.groupName}! Check your Messages tab.'),
-          backgroundColor: HuddlColors.primary,
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Joined ${widget.groupName}! Go to Messages tab to start chatting.',
+                  style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: HuddlColors.teal,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
@@ -472,8 +484,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                                 .collection('groups')
                                 .doc(widget.groupId)
                                 .update({
-                              'members': FieldValue.arrayRemove([uid]),
-                              'admins': FieldValue.arrayRemove([uid]),
+                              'memberIds': FieldValue.arrayRemove([uid]),
+                              'members':   FieldValue.arrayRemove([uid]),
+                              'admins':    FieldValue.arrayRemove([uid]),
                             });
                           } catch (_) {}
                         }
@@ -1220,7 +1233,7 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
                           groupDescription: _editableDescription,
                           groupImageUrl: widget.groupImageUrl,
                           isPrivate: widget.isPrivate,
-                          onGroupUpdated: (newName, newDesc) {
+                          onGroupUpdated: (newName, newDesc, {String? newImageUrl}) {
                             if (mounted) {
                               setState(() {
                                 _editableName = newName;
@@ -1574,8 +1587,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         'admins': FieldValue.arrayUnion([successorId]),
       });
       await ref.update({
-        'admins': FieldValue.arrayRemove([uid]),
-        'members': FieldValue.arrayRemove([uid]),
+        'admins':    FieldValue.arrayRemove([uid]),
+        'members':   FieldValue.arrayRemove([uid]),
+        'memberIds': FieldValue.arrayRemove([uid]),
       });
       await _executeLocalLeave();
       if (ctx.mounted) {
@@ -1627,8 +1641,9 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen> {
         });
       }
       await db.collection('groups').doc(widget.groupId).update({
-        'admins': FieldValue.arrayRemove([uid]),
-        'members': FieldValue.arrayRemove([uid]),
+        'admins':    FieldValue.arrayRemove([uid]),
+        'members':   FieldValue.arrayRemove([uid]),
+        'memberIds': FieldValue.arrayRemove([uid]),
       });
       await _executeLocalLeave();
       if (ctx.mounted) {
