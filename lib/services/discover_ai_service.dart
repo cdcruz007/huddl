@@ -423,6 +423,10 @@ class DiscoverAiService with BoroughAiContext {
         audiences.contains('Parents expecting a baby')) {
       score += 10;
     }
+    if (stagesOfLife.contains('has_children') &&
+        audiences.contains('Kids')) {
+      score += 10;
+    }
 
     // 5. Popularity boost (log scale)
     if (memberCount > 1000) {

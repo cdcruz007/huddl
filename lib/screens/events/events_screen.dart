@@ -15,6 +15,9 @@ import '../../services/meetup_ai_service.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
+import '../../services/discover_ai_service.dart';
+import '../../services/onboarding_data_service.dart';
+import '../../services/postcode_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
@@ -555,16 +558,15 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   ];
 
   // ── Participant filter options (matches create-meetup form) ───
-  static const _participantOptions = [
-    'Mums', 'Dads', 'Aspiring parents', 'Expecting parents', 'Kids',
+  // 'Kids' added so Meetups matches Events; Groups uses a slightly different set
+  static const _audienceLabels = [
+    'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads', 'Kids',
   ];
 
   String _selectedCategory = 'All'; // top chip-row (feed header)
   String _selectedParticipant = 'All'; // legacy single-select (kept for compat)
 
   // ── Extended filter state (filter sheet) ─────────────────────
-  /// 'none' | 'online' | 'live'
-  String _localization = 'none';
   double _distanceKm = 10.0;
   /// Multi-select categories from sheet (labels, e.g. 'Hanging out')
   final Set<String> _sheetCategories = {};
@@ -572,8 +574,15 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   final Set<String> _sheetParticipants = {};
   bool _showFreeOnly = false;
   DateTimeRange? _dateRange;
-  /// 'mostPopular' | 'latest'
+  /// 'mostPopular' | 'latest' | 'smartSort'
   String _sortBy = 'mostPopular';
+
+  // ── Smart Sort / user profile ─────────────────────────────────
+  bool _aiSmartSortEnabled = true;
+  String? _userParentType;
+  List<String> _userStagesOfLife = [];
+  String? _userBorough;
+  final DiscoverAiService _discoverAiService = DiscoverAiService();
 
   Set<String> _joinedGroupIds = {};
   final MeetupAiService _aiService = MeetupAiService();
@@ -590,7 +599,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   bool get _hasActiveFilter {
     return _selectedCategory != 'All'
         || _selectedParticipant != 'All'
-        || _localization != 'none'
         || _sheetCategories.isNotEmpty
         || _sheetParticipants.isNotEmpty
         || _showFreeOnly
@@ -614,7 +622,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     final int count = [
       if (_sheetCategories.isNotEmpty) true,
       if (_sheetParticipants.isNotEmpty) true,
-      if (_localization != 'none') true,
       if (_showFreeOnly) true,
       if (_dateRange != null) true,
       if (_sortBy != 'mostPopular') true,
@@ -622,10 +629,10 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     if (count == 0 && _selectedCategory != 'All') return _selectedCategory;
     if (count == 0 && _selectedParticipant != 'All') return _selectedParticipant;
     if (count == 1) {
-      if (_localization != 'none') return _localization == 'online' ? 'Online' : 'Live';
       if (_sheetCategories.isNotEmpty) return _sheetCategories.first;
       if (_sheetParticipants.isNotEmpty) return _sheetParticipants.first;
       if (_showFreeOnly) return 'Free only';
+      if (_sortBy == 'smartSort') return 'Smart Sort';
       if (_sortBy != 'mostPopular') return 'Latest';
     }
     if (count > 1) return '$count filters';
@@ -633,9 +640,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   }
 
   /// Human-readable distance label shown beneath the section header.
-  /// Mirrors the original _distanceLabel getter removed in the dead-code sweep.
   String get _distanceLabel {
-    if (_localization == 'online') return 'Online';
     if (_distanceKm <= 1.0)  return 'Within 1 km';
     if (_distanceKm <= 5.0)  return 'Within 5 km';
     if (_distanceKm <= 10.0) return 'Within 10 km';
@@ -647,6 +652,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     super.initState();
     _loadUserContext();
     _initAi();
+    _loadUserProfile();
     widget.searchTrigger.addListener(_onSearchTrigger);
   }
 
@@ -685,6 +691,52 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     if (mounted) {
       setState(() => _aiReady = true);
     }
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      final onboarding = OnboardingDataService();
+      await onboarding.initialize();
+      if (mounted) {
+        setState(() {
+          _userParentType = onboarding.parentType;
+          _userStagesOfLife = List<String>.from(onboarding.stagesOfLife);
+          // Add 'has_children' stage if user has children recorded
+          if (onboarding.children.isNotEmpty &&
+              !_userStagesOfLife.contains('has_children')) {
+            _userStagesOfLife = [..._userStagesOfLife, 'has_children'];
+          }
+          final postcode = onboarding.postcode;
+          _userBorough = PostcodeService().getBoroughFromPostcode(postcode);
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Score factor pills shown in the Smart Sort card for Meetups.
+  /// Mirrors _buildScoreFactors() in groups_screen.dart.
+  List<String> _buildMeetupScoreFactors() {
+    final factors = <String>[];
+    if (_userBorough != null && _userBorough!.isNotEmpty &&
+        _userBorough != 'Unknown Borough') {
+      factors.add('\u{1F4CD} ${_userBorough!}');
+    }
+    if (_userParentType == 'mum') {
+      factors.add('\u{1F469} Mums');
+    } else if (_userParentType == 'dad') {
+      factors.add('\u{1F468} Dads');
+    }
+    if (_userStagesOfLife.contains('expecting')) {
+      factors.add('\u{1F930} Expecting');
+    }
+    if (_userStagesOfLife.contains('new_parent')) {
+      factors.add('\u{1F476} New parent');
+    }
+    if (_userStagesOfLife.contains('has_children')) {
+      factors.add('\u{1F9D2} Kids');
+    }
+    factors.add('\u2B50 Popularity');
+    return factors;
   }
 
   Future<void> _loadUserContext() async {
@@ -775,17 +827,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     // We use location == 'Online' or category to infer; or we use the
     // existing `isOnline` flag in the data layer where available.
     // For robustness we check both.
-    if (_localization == 'online') {
-      result = result.where((m) =>
-        m.location.toLowerCase().contains('online') ||
-        m.category.toLowerCase().contains('online')
-      ).toList();
-    } else if (_localization == 'live') {
-      result = result.where((m) =>
-        !m.location.toLowerCase().contains('online') &&
-        !m.category.toLowerCase().contains('online')
-      ).toList();
-    }
+    // Localization filter removed — all meetups are in-person community events
 
     // ── 6. Free only ──────────────────────────────────────────────
     if (_showFreeOnly) {
@@ -885,13 +927,13 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     HapticFeedback.selectionClick();
 
     // ── Local copies of all filter state for the sheet ────────
-    String        sheetLocalization    = _localization;
     double        sheetDistanceKm      = _distanceKm;
     Set<String>   sheetCategories      = Set<String>.from(_sheetCategories);
     Set<String>   sheetParticipants    = Set<String>.from(_sheetParticipants);
     bool          sheetFreeOnly        = _showFreeOnly;
     DateTimeRange? sheetDateRange      = _dateRange;
     String        sheetSortBy          = _sortBy;
+    bool          sheetSmartSort       = _aiSmartSortEnabled;
 
     showModalBottomSheet(
       context: context,
@@ -915,9 +957,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
           const Color trackInactive= Color(0xFFD5D5D5);
           const Color toggleOff    = Color(0xFFD5D5D5);
 
-          final bool isOnline = sheetLocalization == 'online';
-
-          // ── Helper: section heading ────────────────────────────
+          // ── Helper: section heading ──────────────────────────────────
           Widget sectionHeading(String title) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
             child: Text(
@@ -930,36 +970,260 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             ),
           );
 
-          // ── Helper: localization chip ─────────────────────────
-          Widget locChip(String label, String value) {
-            final sel = sheetLocalization == value;
+          // ── Helper: checkbox row (matches Groups "Show groups for" pattern) ──
+          Widget checkboxRow(String label) {
+            final isChecked = sheetParticipants.contains(label);
             return GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () {
                 HapticFeedback.selectionClick();
                 setSheetState(() {
-                  sheetLocalization = (sheetLocalization == value) ? 'none' : value;
+                  if (isChecked) {
+                    sheetParticipants.remove(label);
+                  } else {
+                    sheetParticipants.add(label);
+                  }
                 });
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
-                decoration: BoxDecoration(
-                  color: sel ? blue : chipBg,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                    color: sel ? Colors.white : textPrimary,
-                  ),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26, height: 26,
+                      decoration: BoxDecoration(
+                        color: isChecked ? orange : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isChecked ? orange : dividerColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: isChecked
+                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
-          // ── Helper: filter chip (Participants / Category) ─────
+          // ── Smart Sort card (mirrors Groups exactly) ───────────────────────
+          final sampleScore = _discoverAiService.getGroupRecommendationScore(
+            {'id': 'sample', 'category': 'PARENTING', 'memberCount': 500,
+             'creatorBorough': _userBorough, 'targetAudience': <String>[]},
+            userBorough: _userBorough,
+            parentType: _userParentType,
+            stagesOfLife: _userStagesOfLife,
+          );
+          final scoreFactors = _buildMeetupScoreFactors();
+
+          Widget smartSortCard = GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setSheetState(() => sheetSortBy = 'smartSort');
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                gradient: sheetSortBy == 'smartSort'
+                    ? LinearGradient(
+                        colors: [
+                          orange.withValues(alpha: 0.12),
+                          blue.withValues(alpha: 0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: sheetSortBy == 'smartSort' ? null : chipBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: sheetSortBy == 'smartSort'
+                      ? orange.withValues(alpha: 0.45)
+                      : dividerColor,
+                  width: sheetSortBy == 'smartSort' ? 1.5 : 1,
+                ),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 34, height: 34,
+                        decoration: BoxDecoration(
+                          color: sheetSortBy == 'smartSort'
+                              ? orange
+                              : orange.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.auto_awesome_rounded,
+                          size: 18,
+                          color: sheetSortBy == 'smartSort' ? Colors.white : orange,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Smart Sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14, fontWeight: FontWeight.w700,
+                                    color: sheetSortBy == 'smartSort'
+                                        ? orange : textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                        colors: [blue, orange]),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text('AI',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9, fontWeight: FontWeight.w700,
+                                      color: Colors.white, letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text('Personalised to your profile',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: textSecGray)),
+                          ],
+                        ),
+                      ),
+                      if (sheetSortBy == 'smartSort')
+                        Icon(Icons.check_circle, size: 22, color: orange),
+                    ],
+                  ),
+                  if (scoreFactors.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: scoreFactors.map((f) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: orange.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: orange.withValues(alpha: 0.18)),
+                        ),
+                        child: Text(f,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, fontWeight: FontWeight.w500,
+                            color: orange,
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Meetups are ranked by how well they match your profile — '
+                    'location, parenting stage, interests, and activity.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: textSecGray, height: 1.45),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: dividerColor),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        sheetSmartSort
+                            ? Icons.psychology_rounded
+                            : Icons.psychology_alt_outlined,
+                        size: 16,
+                        color: sheetSmartSort ? orange : textSecGray,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          sheetSmartSort
+                              ? 'AI ranking active'
+                              : 'AI ranking off — showing default order',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w500,
+                            color: sheetSmartSort ? orange : textSecGray,
+                          ),
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.82,
+                        alignment: Alignment.centerRight,
+                        child: Switch(
+                          value: sheetSmartSort,
+                          activeThumbColor: orange,
+                          activeTrackColor: orange.withValues(alpha: 0.35),
+                          onChanged: (val) {
+                            HapticFeedback.selectionClick();
+                            setSheetState(() {
+                              sheetSmartSort = val;
+                              if (val) sheetSortBy = 'smartSort';
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (sheetSmartSort) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text('Match quality',
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, color: textSecGray)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (sampleScore / 100).clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: orange.withValues(alpha: 0.12),
+                              valueColor:
+                                  const AlwaysStoppedAnimation<Color>(orange),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('${sampleScore.round()}%',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, fontWeight: FontWeight.w600,
+                            color: orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+
+          // ── Helper: filter chip (Category only) ───────────────────────────
           Widget filterChip({
             required String label,
             required bool isSelected,
@@ -1072,7 +1336,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
           // ── Count active sheet filters for CTA label ──────────
           int activeCount = 0;
-          if (sheetLocalization != 'none') activeCount++;
           if (sheetCategories.isNotEmpty) activeCount++;
           if (sheetParticipants.isNotEmpty) activeCount++;
           if (sheetFreeOnly) activeCount++;
@@ -1149,7 +1412,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   setSheetState(() {
-                                    sheetLocalization  = 'none';
                                     sheetDistanceKm    = 10.0;
                                     sheetCategories    = {};
                                     sheetParticipants  = {};
@@ -1184,17 +1446,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // ══ SECTION 1 — LOCALIZATION ═══════════
-                          sectionHeading('Localization'),
-                          Row(
-                            children: [
-                              locChip('Online', 'online'),
-                              const SizedBox(width: 10),
-                              locChip('Live', 'live'),
-                            ],
-                          ),
-                          const SizedBox(height: 28),
-
                           // ══ SECTION 2 — DISTANCE ═══════════════
                           Row(
                             children: [
@@ -1203,7 +1454,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                 style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: isOnline ? textSecGray : textPrimary,
+                                  color: textPrimary,
                                 ),
                               ),
                             ],
@@ -1217,7 +1468,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w400,
-                                color: isOnline ? textSecGray : textPrimary,
+                                color: textPrimary,
                               ),
                             )).toList(),
                           ),
@@ -1225,9 +1476,9 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           // Slider
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
-                              activeTrackColor: isOnline ? trackInactive : orange,
+                              activeTrackColor: orange,
                               inactiveTrackColor: trackInactive,
-                              thumbColor: isOnline ? textSecGray : orange,
+                              thumbColor: orange,
                               overlayColor: orange.withValues(alpha: 0.15),
                               trackHeight: 3,
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
@@ -1239,7 +1490,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               min: 1,
                               max: 50,
                               divisions: 3,
-                              onChanged: isOnline ? null : (v) {
+                              onChanged: (v) {
                                 setSheetState(() {
                                   // snap to 4 discrete values
                                   final snapped = [1.0, 5.0, 10.0, 50.0].reduce(
@@ -1251,47 +1502,19 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                             ),
                           ),
                           // Online info message
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 200),
-                            child: isOnline
-                                ? Padding(
-                                    padding: const EdgeInsets.only(top: 4, bottom: 4),
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.info_outline_rounded, size: 16, color: orange),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Online events have no distance',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 13,
-                                            color: orange,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                : const SizedBox.shrink(),
-                          ),
+                          
                           const SizedBox(height: 28),
 
-                          // ══ SECTION 3 — PARTICIPANTS ════════════
-                          sectionHeading('Participants'),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 10,
-                            children: _participantOptions.map((p) {
-                              final sel = sheetParticipants.contains(p);
-                              return filterChip(
-                                label: p,
-                                isSelected: sel,
-                                onTap: () => setSheetState(() {
-                                  if (sel) { sheetParticipants.remove(p); }
-                                  else { sheetParticipants.add(p); }
-                                }),
-                              );
-                            }).toList(),
+                          // ══ SECTION 3 — SHOW MEETUPS FOR (checkboxes) ═════
+                          Text('Show meetups for',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
                           ),
+                          const SizedBox(height: 10),
+                          ..._audienceLabels.map(checkboxRow).toList(),
                           const SizedBox(height: 28),
 
                           // ══ SECTION 4 — CATEGORY ════════════════
@@ -1420,12 +1643,20 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           ),
                           const SizedBox(height: 28),
 
-                          // ══ SECTION 7 — SORT BY ══════════════════
-                          sectionHeading('Sort by'),
+                          // ══ SECTION 7 — SORT BY ════════════════
+                          Text('Sort by',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          smartSortCard,
+                          const SizedBox(height: 6),
                           radioRow('Most popular', 'mostPopular'),
                           Divider(height: 1, thickness: 1, color: dividerColor),
                           radioRow('Latest', 'latest'),
-
                           const SizedBox(height: 8),
                         ],
                       ),
@@ -1447,7 +1678,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                           onTap: () {
                             HapticFeedback.mediumImpact();
                             setState(() {
-                              _localization      = sheetLocalization;
                               _distanceKm        = sheetDistanceKm;
                               _sheetCategories
                                 ..clear()
@@ -1458,6 +1688,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               _showFreeOnly      = sheetFreeOnly;
                               _dateRange         = sheetDateRange;
                               _sortBy            = sheetSortBy;
+                              _aiSmartSortEnabled = sheetSmartSort;
                             });
                             Navigator.pop(ctx);
                           },
@@ -1720,9 +1951,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                 Row(
                   children: [
                     Icon(
-                      _localization == 'online'
-                          ? Icons.wifi_rounded
-                          : Icons.place_outlined,
+                      Icons.place_outlined,
                       size: 13,
                       color: HuddlColors.textTertiary,
                     ),
@@ -2522,6 +2751,7 @@ class _EventsTabState extends State<_EventsTab> {
   void initState() {
     super.initState();
     _initServices();
+    _loadEventsUserProfile();
     widget.searchTrigger.addListener(_onSearchTrigger);
   }
 
@@ -2531,6 +2761,50 @@ class _EventsTabState extends State<_EventsTab> {
     _localSearchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadEventsUserProfile() async {
+    try {
+      final onboarding = OnboardingDataService();
+      await onboarding.initialize();
+      if (mounted) {
+        setState(() {
+          _evUserParentType = onboarding.parentType;
+          _evUserStagesOfLife = List<String>.from(onboarding.stagesOfLife);
+          if (onboarding.children.isNotEmpty &&
+              !_evUserStagesOfLife.contains('has_children')) {
+            _evUserStagesOfLife = [..._evUserStagesOfLife, 'has_children'];
+          }
+          final postcode = onboarding.postcode;
+          _evUserBorough = PostcodeService().getBoroughFromPostcode(postcode);
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Score factor pills shown in the Smart Sort card for Events.
+  List<String> _buildEventsScoreFactors() {
+    final factors = <String>[];
+    if (_evUserBorough != null && _evUserBorough!.isNotEmpty &&
+        _evUserBorough != 'Unknown Borough') {
+      factors.add('\u{1F4CD} ${_evUserBorough!}');
+    }
+    if (_evUserParentType == 'mum') {
+      factors.add('\u{1F469} Mums');
+    } else if (_evUserParentType == 'dad') {
+      factors.add('\u{1F468} Dads');
+    }
+    if (_evUserStagesOfLife.contains('expecting')) {
+      factors.add('\u{1F930} Expecting');
+    }
+    if (_evUserStagesOfLife.contains('new_parent')) {
+      factors.add('\u{1F476} New parent');
+    }
+    if (_evUserStagesOfLife.contains('has_children')) {
+      factors.add('\u{1F9D2} Kids');
+    }
+    factors.add('\u2B50 Popularity');
+    return factors;
   }
 
   Future<void> _initServices() async {
@@ -2927,16 +3201,26 @@ class _EventsTabState extends State<_EventsTab> {
 
   String _activeManualFilter = 'All';
 
-  // ── Extended Events filter state (mirrors Meetup filter Figma) ─
-  String        _evLocalization    = 'none';   // 'none' | 'online' | 'live'
+  // ── Extended Events filter state (mirrors Meetup/Groups filter) ──────────
   double        _evDistanceKm      = 10.0;
   final Set<String>   _evParticipants    = {};
   final Set<String>   _evCategories      = {};
   bool          _evFreeOnly        = false;
   DateTimeRange? _evDateRange;
-  String        _evSortBy          = 'mostPopular'; // 'mostPopular' | 'latest'
+  String        _evSortBy          = 'mostPopular'; // 'mostPopular' | 'latest' | 'smartSort'
+  String        _evLocalization    = 'none';   // kept for legacy format filter compat
 
-  /// Human-readable distance label shown beneath the section header.
+  // ── Smart Sort / user profile for Events ─────────────────────────────
+  static const _evAudienceLabels = [
+    'Aspiring parents', 'Parents expecting a baby', 'Mums', 'Dads', 'Kids',
+  ];
+  bool          _evSmartSortEnabled = true;
+  String?       _evUserParentType;
+  List<String>  _evUserStagesOfLife = [];
+  String?       _evUserBorough;
+  final DiscoverAiService _evDiscoverAiService = DiscoverAiService();
+
+    /// Human-readable distance label shown beneath the section header.
   /// Mirrors the original _distanceLabel getter removed in the dead-code sweep.
   String get _evDistanceLabel {
     if (_evLocalization == 'online') return 'Online';
@@ -2951,13 +3235,13 @@ class _EventsTabState extends State<_EventsTab> {
     HapticFeedback.selectionClick();
 
     // Snapshot all state into local sheet vars
-    String         sheetLocalization  = _evLocalization;
     double         sheetDistanceKm    = _evDistanceKm;
     Set<String>    sheetParticipants  = Set<String>.from(_evParticipants);
     Set<String>    sheetCategories    = Set<String>.from(_evCategories);
     bool           sheetFreeOnly      = _evFreeOnly;
     DateTimeRange? sheetDateRange     = _evDateRange;
     String         sheetSortBy        = _evSortBy;
+    bool           sheetSmartSort     = _evSmartSortEnabled;
     // Legacy price/format preserved for existing filter logic
     String         sheetPrice         = _priceFilter;
     String         sheetFormat        = _formatFilter;
@@ -2984,8 +3268,6 @@ class _EventsTabState extends State<_EventsTab> {
           const Color trackInactive= Color(0xFFD5D5D5);
           const Color toggleOff    = Color(0xFFD5D5D5);
 
-          final bool isOnline = sheetLocalization == 'online';
-
           // ── Section heading ────────────────────────────────────
           Widget sectionHeading(String title) => Padding(
             padding: const EdgeInsets.only(bottom: 14),
@@ -2999,44 +3281,260 @@ class _EventsTabState extends State<_EventsTab> {
             ),
           );
 
-          // ── Localization chip ──────────────────────────────────
-          Widget locChip(String label, String value) {
-            final sel = sheetLocalization == value;
+          // ── Checkbox row (matches Groups "Show groups for" pattern) ──
+          Widget checkboxRow(String label) {
+            final isChecked = sheetParticipants.contains(label);
             return GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () {
                 HapticFeedback.selectionClick();
                 setSheetState(() {
-                  sheetLocalization = (sheetLocalization == value) ? 'none' : value;
-                  // Sync legacy format filter
-                  if (sheetLocalization == 'online') {
-                    sheetFormat = 'Online';
-                  } else if (sheetLocalization == 'live') {
-                    sheetFormat = 'In-Person';
+                  if (isChecked) {
+                    sheetParticipants.remove(label);
                   } else {
-                    sheetFormat = 'All';
+                    sheetParticipants.add(label);
                   }
                 });
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
-                decoration: BoxDecoration(
-                  color: sel ? blue : chipBg,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: sel ? FontWeight.w600 : FontWeight.w400,
-                    color: sel ? Colors.white : textPrimary,
-                  ),
+              child: Container(
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 26, height: 26,
+                      decoration: BoxDecoration(
+                        color: isChecked ? orange : Colors.transparent,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isChecked ? orange : dividerColor,
+                          width: 2,
+                        ),
+                      ),
+                      child: isChecked
+                          ? const Icon(Icons.check, size: 18, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
           }
 
-          // ── Filter chip (multi-select) ─────────────────────────
+          // ── Smart Sort card (mirrors Groups/Meetups exactly) ──────────────────
+          final evSampleScore = _evDiscoverAiService.getGroupRecommendationScore(
+            {'id': 'sample', 'category': 'PARENTING', 'memberCount': 500,
+             'creatorBorough': _evUserBorough, 'targetAudience': <String>[]},
+            userBorough: _evUserBorough,
+            parentType: _evUserParentType,
+            stagesOfLife: _evUserStagesOfLife,
+          );
+          final evScoreFactors = _buildEventsScoreFactors();
+
+          Widget smartSortCard = GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              setSheetState(() => sheetSortBy = 'smartSort');
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                gradient: sheetSortBy == 'smartSort'
+                    ? LinearGradient(
+                        colors: [
+                          orange.withValues(alpha: 0.12),
+                          blue.withValues(alpha: 0.08),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: sheetSortBy == 'smartSort' ? null : chipBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: sheetSortBy == 'smartSort'
+                      ? orange.withValues(alpha: 0.45)
+                      : dividerColor,
+                  width: sheetSortBy == 'smartSort' ? 1.5 : 1,
+                ),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 34, height: 34,
+                        decoration: BoxDecoration(
+                          color: sheetSortBy == 'smartSort'
+                              ? orange
+                              : orange.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.auto_awesome_rounded,
+                          size: 18,
+                          color: sheetSortBy == 'smartSort' ? Colors.white : orange,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Smart Sort',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14, fontWeight: FontWeight.w700,
+                                    color: sheetSortBy == 'smartSort'
+                                        ? orange : textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                        colors: [blue, orange]),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text('AI',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9, fontWeight: FontWeight.w700,
+                                      color: Colors.white, letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text('Personalised to your profile',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 11, color: textSecGray)),
+                          ],
+                        ),
+                      ),
+                      if (sheetSortBy == 'smartSort')
+                        Icon(Icons.check_circle, size: 22, color: orange),
+                    ],
+                  ),
+                  if (evScoreFactors.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6, runSpacing: 6,
+                      children: evScoreFactors.map((f) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: orange.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                              color: orange.withValues(alpha: 0.18)),
+                        ),
+                        child: Text(f,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, fontWeight: FontWeight.w500,
+                            color: orange,
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Text(
+                    'Events are ranked by how well they match your profile — '
+                    'location, parenting stage, interests, and activity.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: textSecGray, height: 1.45),
+                  ),
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: dividerColor),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(
+                        sheetSmartSort
+                            ? Icons.psychology_rounded
+                            : Icons.psychology_alt_outlined,
+                        size: 16,
+                        color: sheetSmartSort ? orange : textSecGray,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          sheetSmartSort
+                              ? 'AI ranking active'
+                              : 'AI ranking off — showing default order',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w500,
+                            color: sheetSmartSort ? orange : textSecGray,
+                          ),
+                        ),
+                      ),
+                      Transform.scale(
+                        scale: 0.82,
+                        alignment: Alignment.centerRight,
+                        child: Switch(
+                          value: sheetSmartSort,
+                          activeThumbColor: orange,
+                          activeTrackColor: orange.withValues(alpha: 0.35),
+                          onChanged: (val) {
+                            HapticFeedback.selectionClick();
+                            setSheetState(() {
+                              sheetSmartSort = val;
+                              if (val) sheetSortBy = 'smartSort';
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (sheetSmartSort) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Text('Match quality',
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, color: textSecGray)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (evSampleScore / 100).clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: orange.withValues(alpha: 0.12),
+                              valueColor:
+                                  const AlwaysStoppedAnimation<Color>(orange),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text('${evSampleScore.round()}%',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11, fontWeight: FontWeight.w600,
+                            color: orange,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+
+          // ── Filter chip (Category only) ───────────────────────────────────
           Widget filterChip({
             required String label,
             required bool isSelected,
@@ -3129,13 +3627,10 @@ class _EventsTabState extends State<_EventsTab> {
             'Performance & shows': Icons.theater_comedy_outlined,
           };
 
-          const List<String> participantOptions = [
-            'Mums', 'Dads', 'Kids', 'Aspiring parents', 'Expecting parents',
-          ];
+
 
           // ── Active count for CTA label ─────────────────────────
           int activeCount = 0;
-          if (sheetLocalization != 'none') activeCount++;
           if (sheetParticipants.isNotEmpty) activeCount++;
           if (sheetCategories.isNotEmpty) activeCount++;
           if (sheetFreeOnly) activeCount++;
@@ -3207,13 +3702,13 @@ class _EventsTabState extends State<_EventsTab> {
                                 onTap: () {
                                   HapticFeedback.lightImpact();
                                   setSheetState(() {
-                                    sheetLocalization = 'none';
                                     sheetDistanceKm   = 10.0;
                                     sheetParticipants = {};
                                     sheetCategories   = {};
                                     sheetFreeOnly     = false;
                                     sheetDateRange    = null;
-                                    sheetSortBy       = 'mostPopular';
+                                    sheetSortBy       = 'smartSort';
+                                    sheetSmartSort    = true;
                                     sheetPrice        = 'All';
                                     sheetFormat       = 'All';
                                   });
@@ -3246,36 +3741,27 @@ class _EventsTabState extends State<_EventsTab> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
 
-                          // ── SECTION 1: LOCALIZATION ────────────
-                          sectionHeading('Localization'),
-                          Row(children: [
-                            locChip('Online', 'online'),
-                            const SizedBox(width: 10),
-                            locChip('Live', 'live'),
-                          ]),
-                          const SizedBox(height: 28),
-
                           // ── SECTION 2: DISTANCE ────────────────
                           Text('Distance',
                               style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
-                                  color: isOnline ? textSecGray : textPrimary)),
+                                  color: textPrimary)),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: ['1 km','5 km','10 km','<50 km'].map((t) =>
                               Text(t, style: GoogleFonts.poppins(
                                   fontSize: 12,
-                                  color: isOnline ? textSecGray : textPrimary))
+                                  color: textPrimary))
                             ).toList(),
                           ),
                           const SizedBox(height: 4),
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
-                              activeTrackColor: isOnline ? trackInactive : orange,
+                              activeTrackColor: orange,
                               inactiveTrackColor: trackInactive,
-                              thumbColor: isOnline ? textSecGray : orange,
+                              thumbColor: orange,
                               overlayColor: orange.withValues(alpha: 0.15),
                               trackHeight: 3,
                               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
@@ -3284,7 +3770,7 @@ class _EventsTabState extends State<_EventsTab> {
                               value: [1.0,5.0,10.0,50.0].reduce(
                                   (a,b) => (a-sheetDistanceKm).abs()<(b-sheetDistanceKm).abs()?a:b),
                               min: 1, max: 50, divisions: 3,
-                              onChanged: isOnline ? null : (v) {
+                              onChanged: (v) {
                                 setSheetState(() {
                                   sheetDistanceKm = [1.0,5.0,10.0,50.0].reduce(
                                       (a,b) => (a-v).abs()<(b-v).abs()?a:b);
@@ -3292,38 +3778,11 @@ class _EventsTabState extends State<_EventsTab> {
                               },
                             ),
                           ),
-                          AnimatedSize(
-                            duration: const Duration(milliseconds: 200),
-                            child: isOnline
-                              ? Padding(
-                                  padding: const EdgeInsets.only(top: 4, bottom: 4),
-                                  child: Row(children: [
-                                    Icon(Icons.info_outline_rounded, size: 16, color: orange),
-                                    const SizedBox(width: 6),
-                                    Text('Online events have no distance',
-                                        style: GoogleFonts.poppins(
-                                            fontSize: 13, color: orange)),
-                                  ]),
-                                )
-                              : const SizedBox.shrink(),
-                          ),
                           const SizedBox(height: 28),
 
                           // ── SECTION 3: PARTICIPANTS ────────────
-                          sectionHeading('Participants'),
-                          Wrap(
-                            spacing: 8, runSpacing: 10,
-                            children: participantOptions.map((p) {
-                              final sel = sheetParticipants.contains(p);
-                              return filterChip(
-                                label: p, isSelected: sel,
-                                onTap: () => setSheetState(() {
-                                  if (sel) { sheetParticipants.remove(p); }
-                                  else { sheetParticipants.add(p); }
-                                }),
-                              );
-                            }).toList(),
-                          ),
+                          sectionHeading('Show events for'),
+                          ..._evAudienceLabels.map(checkboxRow).toList(),
                           const SizedBox(height: 28),
 
                           // ── SECTION 4: CATEGORY ────────────────
@@ -3427,6 +3886,8 @@ class _EventsTabState extends State<_EventsTab> {
 
                           // ── SECTION 7: SORT BY ─────────────────
                           sectionHeading('Sort by'),
+                          smartSortCard,
+                          const SizedBox(height: 8),
                           radioRow('Most popular', 'mostPopular'),
                           Divider(height: 1, thickness: 1, color: dividerColor),
                           radioRow('Latest', 'latest'),
@@ -3455,7 +3916,7 @@ class _EventsTabState extends State<_EventsTab> {
                             HapticFeedback.mediumImpact();
                             setState(() {
                               // Commit extended filter state
-                              _evLocalization = sheetLocalization;
+                              _evSmartSortEnabled = sheetSmartSort;
                               _evDistanceKm   = sheetDistanceKm;
                               _evParticipants
                                 ..clear()
@@ -3469,16 +3930,7 @@ class _EventsTabState extends State<_EventsTab> {
                               // Also commit legacy filters for existing Events filter logic
                               _priceFilter  = sheetPrice;
                               _formatFilter = sheetFormat;
-                              if (sheetLocalization == 'online') {
-                                _activeManualFilter = 'Online';
-                              } else if (sheetLocalization == 'live') {
-                                _activeManualFilter = 'In-Person';
-                              } else {
-                                if (_activeManualFilter == 'Online' ||
-                                    _activeManualFilter == 'In-Person') {
-                                  _activeManualFilter = 'All';
-                                }
-                              }
+
                             });
                             Navigator.pop(ctx);
                           },

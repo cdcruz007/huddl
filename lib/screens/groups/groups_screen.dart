@@ -3650,7 +3650,11 @@ class _DiscoverTabState extends State<_DiscoverTab> {
       if (mounted) {
         setState(() {
           _userParentType = _onboardingService.parentType;
-          _userStagesOfLife = _onboardingService.stagesOfLife;
+          _userStagesOfLife = List<String>.from(_onboardingService.stagesOfLife);
+          if (_onboardingService.children.isNotEmpty &&
+              !_userStagesOfLife.contains('has_children')) {
+            _userStagesOfLife = [..._userStagesOfLife, 'has_children'];
+          }
           final postcode = _onboardingService.postcode;
           _userBorough = PostcodeService().getBoroughFromPostcode(postcode);
           _hasLoadError = false;
@@ -5046,6 +5050,9 @@ class _DiscoverTabState extends State<_DiscoverTab> {
     }
     if (_userStagesOfLife.contains('new_parent')) {
       factors.add('👶 New parent');
+    }
+    if (_userStagesOfLife.contains('has_children')) {
+      factors.add('🧒 Kids');
     }
     factors.add('⭐ Popularity');
     return factors;
