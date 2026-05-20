@@ -330,6 +330,7 @@ class FirestoreService {
     double? latitude,
     double? longitude,
     String? locationLabel,
+    String? liveUntil,    // ISO-8601 expiry for live_location type
     // Contact fields
     String? contactName,
     String? contactPhone,
@@ -372,6 +373,8 @@ class FirestoreService {
       if (latitude != null) 'latitude': latitude,
       if (longitude != null) 'longitude': longitude,
       if (locationLabel != null) 'locationLabel': locationLabel,
+      if (liveUntil != null) 'liveUntil': liveUntil,
+      'liveExpired': false,
       // Contact
       if (contactName != null) 'contactName': contactName,
       if (contactPhone != null) 'contactPhone': contactPhone,
@@ -455,6 +458,34 @@ class FirestoreService {
     }
 
     return ref.id;
+  }
+
+  /// Patches latitude/longitude on an existing live_location message doc.
+  /// Called every ~5 seconds by the sender's GPS stream.
+  Future<void> updateGroupMessageLocation({
+    required String messageId,
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      await _db.collection('group_messages').doc(messageId).update({
+        'latitude': latitude,
+        'longitude': longitude,
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] live location update error: $e');
+    }
+  }
+
+  /// Marks a live_location message as expired (stops remote viewers tracking).
+  Future<void> expireLiveLocationMessage(String messageId) async {
+    try {
+      await _db.collection('group_messages').doc(messageId).update({
+        'liveExpired': true,
+      });
+    } catch (e) {
+      if (kDebugMode) debugPrint('[FirestoreService] expire live location error: $e');
+    }
   }
 
   // ═════════════════════════════════════════════════════════════════════════

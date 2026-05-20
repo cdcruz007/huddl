@@ -190,6 +190,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   /// Track Firestore message IDs already shown to avoid duplicates
   final Set<String> _firestoreMsgIds = {};
 
+  // ── Live location state ────────────────────────────────────────────────────
+  StreamSubscription<Position>? _liveLocationSub;
+  Timer? _liveLocationTimer;           // countdown tick every second
+  String? _activeLiveMessageId;        // Firestore doc ID being patched
+  DateTime? _activeLiveUntil;          // expiry timestamp for our own share
+  int? _activeLiveMsgLocalIndex;       // index in _imageMessages for our bubble
+
   /// Live group image URL — starts as widget.groupImageUrl, then resolved
   /// from Firestore if the widget value is blank (e.g. opened via notification).
   late String _liveGroupImageUrl;
@@ -271,6 +278,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     MainShell.shellKey.currentState?.setActiveGroupChat(null);
     _forwardedMsgTimer?.cancel();
     _firestoreMsgSub?.cancel();
+    // Stop live location stream if still active
+    _liveLocationSub?.cancel();
+    _liveLocationTimer?.cancel();
     _messageController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
@@ -375,30 +385,54 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
 
         // ── Location pin from another device ───────────────────────────────
-        if (msgType == 'location') {
+        if (msgType == 'location' || msgType == 'live_location') {
           final lat = (m['latitude'] as num?)?.toDouble();
           final lng = (m['longitude'] as num?)?.toDouble();
           final locLabel = m['locationLabel'] as String? ?? 'Location';
-          // Deduplicate by approximate lat/lng match
-          final alreadyHave = _imageMessages.any((img) =>
-              img.isLocationPin &&
-              img.latitude == lat &&
-              img.longitude == lng &&
-              img.senderId == senderId);
-          if (!alreadyHave) {
-            _imageMessages.add(_GroupImageMessage(
-              imageUrl: 'location_pin',
-              isMe: false,
-              timestamp: ts,
-              senderName: m['senderName'] as String? ?? 'Member',
-              senderAvatar: m['senderAvatar'] as String? ?? '',
-              senderId: senderId,
-              isLocationPin: true,
-              latitude: lat,
-              longitude: lng,
-              locationLabel: locLabel,
-            ));
-            added = true;
+          final isLive = msgType == 'live_location';
+          final liveUntilStr = m['liveUntil'] as String?;
+          final liveUntil = liveUntilStr != null ? DateTime.tryParse(liveUntilStr) : null;
+          final liveExpired = m['liveExpired'] as bool? ?? false;
+          final firestoreMsgId = m['id'] as String?;
+
+          // Check if we already have a bubble for this message ID
+          final existingIdx = _imageMessages.indexWhere((img) =>
+              img.isLocationPin && img.liveMessageId == firestoreMsgId && firestoreMsgId != null);
+
+          if (existingIdx >= 0) {
+            // Patch existing live bubble with updated coords
+            if (isLive && !liveExpired) {
+              _imageMessages[existingIdx] = _imageMessages[existingIdx].copyWithLive(
+                latitude: lat,
+                longitude: lng,
+              );
+              added = true;
+            }
+          } else {
+            // Deduplicate static location by lat/lng/sender
+            final alreadyHave = !isLive && _imageMessages.any((img) =>
+                img.isLocationPin &&
+                img.latitude == lat &&
+                img.longitude == lng &&
+                img.senderId == senderId);
+            if (!alreadyHave) {
+              _imageMessages.add(_GroupImageMessage(
+                imageUrl: 'location_pin',
+                isMe: false,
+                timestamp: ts,
+                senderName: m['senderName'] as String? ?? 'Member',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                senderId: senderId,
+                isLocationPin: true,
+                isLiveLocation: isLive && !liveExpired,
+                latitude: lat,
+                longitude: lng,
+                locationLabel: locLabel,
+                liveUntil: liveUntil,
+                liveMessageId: firestoreMsgId,
+              ));
+              added = true;
+            }
           }
           continue;
         }
@@ -642,28 +676,52 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         }
 
         // ── Location history (cross-device) ───────────────────────────────
-        if (msgType == 'location') {
+        if (msgType == 'location' || msgType == 'live_location') {
           final lat = (m['latitude'] as num?)?.toDouble();
           final lng = (m['longitude'] as num?)?.toDouble();
           final locLabel = m['locationLabel'] as String? ?? 'Location';
-          final alreadyHave = _imageMessages.any((img) =>
-              img.isLocationPin &&
-              img.latitude == lat &&
-              img.longitude == lng &&
-              img.senderId == senderId);
-          if (!alreadyHave) {
-            _imageMessages.add(_GroupImageMessage(
-              imageUrl: 'location_pin',
-              isMe: isMe,
-              timestamp: ts,
-              senderName: m['senderName'] as String? ?? 'Member',
-              senderAvatar: m['senderAvatar'] as String? ?? '',
-              senderId: senderId,
-              isLocationPin: true,
-              latitude: lat,
-              longitude: lng,
-              locationLabel: locLabel,
-            ));
+          final isLive = msgType == 'live_location';
+          final liveUntilStr = m['liveUntil'] as String?;
+          final liveUntil = liveUntilStr != null ? DateTime.tryParse(liveUntilStr) : null;
+          final liveExpired = m['liveExpired'] as bool? ?? false;
+          final firestoreMsgId = m['id'] as String?;
+
+          final existingIdx = firestoreMsgId != null
+              ? _imageMessages.indexWhere((img) =>
+                  img.isLocationPin && img.liveMessageId == firestoreMsgId)
+              : -1;
+
+          if (existingIdx >= 0) {
+            // Patch existing live bubble coords
+            if (isLive && !liveExpired) {
+              _imageMessages[existingIdx] = _imageMessages[existingIdx].copyWithLive(
+                latitude: lat,
+                longitude: lng,
+              );
+            }
+          } else {
+            final alreadyHave = !isLive && _imageMessages.any((img) =>
+                img.isLocationPin &&
+                img.latitude == lat &&
+                img.longitude == lng &&
+                img.senderId == senderId);
+            if (!alreadyHave) {
+              _imageMessages.add(_GroupImageMessage(
+                imageUrl: 'location_pin',
+                isMe: isMe,
+                timestamp: ts,
+                senderName: m['senderName'] as String? ?? 'Member',
+                senderAvatar: m['senderAvatar'] as String? ?? '',
+                senderId: senderId,
+                isLocationPin: true,
+                isLiveLocation: isLive && !liveExpired,
+                latitude: lat,
+                longitude: lng,
+                locationLabel: locLabel,
+                liveUntil: liveUntil,
+                liveMessageId: firestoreMsgId,
+              ));
+            }
           }
           continue;
         }
@@ -3397,6 +3455,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                 locationName: imgMsg.locationLabel,
                                 latitude: imgMsg.latitude,
                                 longitude: imgMsg.longitude,
+                                isLive: imgMsg.isLiveLocation,
+                                liveUntil: imgMsg.liveUntil,
+                                onStopSharing: imgMsg.isLiveLocation && imgMsg.isMe
+                                    ? () => _stopLiveLocationShare()
+                                    : null,
                               );
                             }
                             return _GroupImageBubble(
@@ -4843,11 +4906,80 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
   }
 
+  // ── Live location helpers ──────────────────────────────────────────────────
+
+  /// Stops the currently active live location share (called by sender tapping
+  /// "Stop sharing" in the bubble, or when the timer expires).
+  Future<void> _stopLiveLocationShare() async {
+    _liveLocationSub?.cancel();
+    _liveLocationSub = null;
+    _liveLocationTimer?.cancel();
+    _liveLocationTimer = null;
+
+    final msgId = _activeLiveMessageId;
+    _activeLiveMessageId = null;
+    _activeLiveUntil = null;
+    _activeLiveMsgLocalIndex = null;
+
+    if (msgId != null) {
+      await FirestoreService().expireLiveLocationMessage(msgId);
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Starts broadcasting position updates to Firestore every 5 seconds.
+  void _startLiveLocationBroadcast(String messageId, DateTime liveUntil) {
+    _activeLiveMessageId = messageId;
+    _activeLiveUntil = liveUntil;
+
+    // GPS stream — update every 5 seconds or when moved >5 m
+    // Use platform-appropriate settings
+    final LocationSettings locationSettings = kIsWeb
+        ? const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 5,
+          )
+        : AndroidSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 5,
+            intervalDuration: const Duration(seconds: 5),
+          );
+    _liveLocationSub = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    ).listen((pos) async {
+      if (_activeLiveMessageId == null) return;
+      // Patch Firestore doc
+      await FirestoreService().updateGroupMessageLocation(
+        messageId: _activeLiveMessageId!,
+        latitude: pos.latitude,
+        longitude: pos.longitude,
+      );
+      // Update local bubble so the sender sees their own movement
+      if (_activeLiveMsgLocalIndex != null && mounted) {
+        final idx = _activeLiveMsgLocalIndex!;
+        if (idx < _imageMessages.length) {
+          setState(() {
+            _imageMessages[idx] = _imageMessages[idx].copyWithLive(
+              latitude: pos.latitude,
+              longitude: pos.longitude,
+            );
+          });
+        }
+      }
+    }, onError: (e) {
+      if (kDebugMode) debugPrint('[LiveLocation] stream error: $e');
+    });
+
+    // Auto-stop when duration expires
+    final remaining = (_activeLiveUntil ?? liveUntil).difference(DateTime.now());
+    _liveLocationTimer = Timer(remaining, () => _stopLiveLocationShare());
+  }
+
   Future<void> _handleLocationShare() async {
     if (!mounted) return;
     final userName = _onboardingService.name ?? 'You';
 
-    // ── 1. Permission check (native only; web uses browser prompt via geolocator) ──
+    // ── 1. Permission check ────────────────────────────────────────────────
     if (!kIsWeb) {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -4880,15 +5012,23 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       }
     }
 
-    // ── 2. Show "getting location…" progress snackbar ──────────────────────
+    // ── 2. Duration picker sheet ───────────────────────────────────────────
+    if (!mounted) return;
+    final int? durationMinutes = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _LiveLocationDurationSheet(),
+    );
+    if (durationMinutes == null) return; // user dismissed
+
+    // ── 3. Getting location snackbar ───────────────────────────────────────
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
             const SizedBox(
-              width: 16,
-              height: 16,
+              width: 16, height: 16,
               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
             ),
             const SizedBox(width: 12),
@@ -4902,11 +5042,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ),
     );
 
-    // ── 3. Obtain real GPS position ─────────────────────────────────────────
+    // ── 4. Obtain initial GPS fix ──────────────────────────────────────────
     double? lat;
     double? lng;
-    const String label = 'My location';
-
     try {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -4920,10 +5058,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Could not get your location. Please try again.',
-            style: GoogleFonts.poppins(fontSize: 13),
-          ),
+          content: Text('Could not get your location. Please try again.',
+              style: GoogleFonts.poppins(fontSize: 13)),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -4935,8 +5071,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
-    // ── 4. Add to local UI state ────────────────────────────────────────────
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? 'current_user';
+    final liveUntil = DateTime.now().add(Duration(minutes: durationMinutes));
+    final durationLabel = durationMinutes < 60
+        ? '${durationMinutes}m'
+        : '${(durationMinutes / 60).round()}h';
+
+    // ── 5. Add optimistic local bubble ────────────────────────────────────
     final msg = _GroupImageMessage(
       imageUrl: 'location_pin',
       isMe: true,
@@ -4945,29 +5086,57 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       senderAvatar: '#FF975C',
       senderId: currentUid,
       isLocationPin: true,
+      isLiveLocation: true,
       latitude: lat,
       longitude: lng,
-      locationLabel: label,
+      locationLabel: 'Live location · $durationLabel',
+      liveUntil: liveUntil,
     );
     setState(() {
       _imageMessages.add(msg);
+      _activeLiveMsgLocalIndex = _imageMessages.length - 1;
     });
-    await _persistUserMediaMessages();
     _fireMessageSentNotifier();
     _scrollToEnd();
 
-    // ── 5. Write to Firestore so other devices see the location pin ─────────
+    // ── 6. Write to Firestore ─────────────────────────────────────────────
     try {
-      await FirestoreService().sendGroupMessage(
+      final msgId = await FirestoreService().sendGroupMessage(
         groupId: widget.groupId,
-        message: '📍 Location',
-        type: 'location',
+        message: '📍 Live location',
+        type: 'live_location',
         latitude: lat,
         longitude: lng,
-        locationLabel: label,
+        locationLabel: 'Live location · $durationLabel',
+        liveUntil: liveUntil.toIso8601String(),
       );
+      // Back-fill the liveMessageId on the local bubble
+      if (mounted && _activeLiveMsgLocalIndex != null) {
+        final idx = _activeLiveMsgLocalIndex!;
+        if (idx < _imageMessages.length) {
+          setState(() {
+            _imageMessages[idx] = _GroupImageMessage(
+              imageUrl: _imageMessages[idx].imageUrl,
+              isMe: _imageMessages[idx].isMe,
+              timestamp: _imageMessages[idx].timestamp,
+              senderName: _imageMessages[idx].senderName,
+              senderAvatar: _imageMessages[idx].senderAvatar,
+              senderId: _imageMessages[idx].senderId,
+              isLocationPin: true,
+              isLiveLocation: true,
+              latitude: _imageMessages[idx].latitude,
+              longitude: _imageMessages[idx].longitude,
+              locationLabel: _imageMessages[idx].locationLabel,
+              liveUntil: liveUntil,
+              liveMessageId: msgId,
+            );
+          });
+        }
+      }
+      // ── 7. Start GPS broadcast stream ──────────────────────────────────
+      _startLiveLocationBroadcast(msgId, liveUntil);
     } catch (e) {
-      if (kDebugMode) debugPrint('[GroupChat] Location Firestore write error: $e');
+      if (kDebugMode) debugPrint('[GroupChat] Live location Firestore write error: $e');
     }
   }
 
@@ -6273,6 +6442,10 @@ class _GroupImageMessage {
   final double? latitude;
   final double? longitude;
   final String? locationLabel;
+  // ── Live location extras ──────────────────────────────────────────────────
+  final bool isLiveLocation;
+  final DateTime? liveUntil;     // when live sharing expires
+  final String? liveMessageId;  // Firestore doc ID so we can patch it
 
   const _GroupImageMessage({
     required this.imageUrl,
@@ -6286,7 +6459,34 @@ class _GroupImageMessage {
     this.latitude,
     this.longitude,
     this.locationLabel,
+    this.isLiveLocation = false,
+    this.liveUntil,
+    this.liveMessageId,
   });
+
+  /// Returns a copy with updated live coords/expiry.
+  _GroupImageMessage copyWithLive({
+    double? latitude,
+    double? longitude,
+    DateTime? liveUntil,
+  }) {
+    return _GroupImageMessage(
+      imageUrl: imageUrl,
+      isMe: isMe,
+      timestamp: timestamp,
+      senderName: senderName,
+      senderAvatar: senderAvatar,
+      senderId: senderId,
+      bytes: bytes,
+      isLocationPin: isLocationPin,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationLabel: locationLabel,
+      isLiveLocation: isLiveLocation,
+      liveUntil: liveUntil ?? this.liveUntil,
+      liveMessageId: liveMessageId,
+    );
+  }
 }
 
 class _GroupDocumentMessage {
@@ -6535,7 +6735,7 @@ class _GroupImageBubble extends StatelessWidget {
 // GROUP LOCATION BUBBLE — shared location in group chat
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _GroupLocationBubble extends StatelessWidget {
+class _GroupLocationBubble extends StatefulWidget {
   final bool isMe;
   final DateTime timestamp;
   final String senderName;
@@ -6544,6 +6744,9 @@ class _GroupLocationBubble extends StatelessWidget {
   final String? locationName;
   final double? latitude;
   final double? longitude;
+  final bool isLive;
+  final DateTime? liveUntil;
+  final VoidCallback? onStopSharing;
 
   const _GroupLocationBubble({
     required this.isMe,
@@ -6554,31 +6757,108 @@ class _GroupLocationBubble extends StatelessWidget {
     this.locationName,
     this.latitude,
     this.longitude,
+    this.isLive = false,
+    this.liveUntil,
+    this.onStopSharing,
   });
 
-  Future<void> _openInMaps(BuildContext context) async {
-    final lat = latitude ?? 52.2053;
-    final lng = longitude ?? 0.1218;
-    final label = locationName ?? 'My Location';
+  @override
+  State<_GroupLocationBubble> createState() => _GroupLocationBubbleState();
+}
+
+class _GroupLocationBubbleState extends State<_GroupLocationBubble> {
+  Timer? _countdownTimer;
+  Duration _remaining = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateRemaining();
+    if (widget.isLive && widget.liveUntil != null) {
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() => _updateRemaining());
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(_GroupLocationBubble old) {
+    super.didUpdateWidget(old);
+    // Coords changed — rebuild (map thumbnail will refresh)
+    if (old.latitude != widget.latitude || old.longitude != widget.longitude) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    super.dispose();
+  }
+
+  void _updateRemaining() {
+    if (widget.liveUntil == null) {
+      _remaining = Duration.zero;
+      return;
+    }
+    final r = widget.liveUntil!.difference(DateTime.now());
+    _remaining = r.isNegative ? Duration.zero : r;
+    if (_remaining == Duration.zero) {
+      _countdownTimer?.cancel();
+    }
+  }
+
+  bool get _isStillLive =>
+      widget.isLive &&
+      widget.liveUntil != null &&
+      widget.liveUntil!.isAfter(DateTime.now());
+
+  String get _countdownLabel {
+    if (!_isStillLive) return 'Ended';
+    final totalSec = _remaining.inSeconds;
+    if (totalSec >= 3600) {
+      final h = (totalSec ~/ 3600);
+      final m = ((totalSec % 3600) ~/ 60);
+      return '${h}h ${m.toString().padLeft(2, '0')}m';
+    }
+    final m = (totalSec ~/ 60).toString().padLeft(2, '0');
+    final s = (totalSec % 60).toString().padLeft(2, '0');
+    return '$m:$s';
+  }
+
+  String _mapThumbnailUrl() {
+    final lat = widget.latitude ?? 52.2053;
+    final lng = widget.longitude ?? 0.1218;
+    return 'https://staticmap.openstreetmap.de/staticmap.php'
+        '?center=$lat,$lng&zoom=15&size=300x120&markers=$lat,$lng,red-pushpin';
+  }
+
+  Future<void> _openInMaps() async {
+    final lat = widget.latitude ?? 52.2053;
+    final lng = widget.longitude ?? 0.1218;
+    final label = widget.locationName ?? 'My Location';
     final googleUrl = Uri.parse(
         'https://www.google.com/maps/search/?api=1&query=$lat,$lng');
     try {
       await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
     } catch (_) {
-      final geoUrl = Uri.parse('geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})');
+      final geoUrl = Uri.parse(
+          'geo:$lat,$lng?q=$lat,$lng(${Uri.encodeComponent(label)})');
       try {
         await launchUrl(geoUrl);
       } catch (_) {
         try {
           await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
         } catch (_) {
-          if (context.mounted) {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Could not open maps'),
                 backgroundColor: HuddlColors.error,
                 behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
             );
           }
@@ -6587,56 +6867,57 @@ class _GroupLocationBubble extends StatelessWidget {
     }
   }
 
-  /// Builds a Google Maps Static API thumbnail URL (no API key needed for basic tiles)
-  String _mapThumbnailUrl() {
-    final lat = latitude ?? 52.2053;
-    final lng = longitude ?? 0.1218;
-    // Use OpenStreetMap static tile via staticmap.openstreetmap.de (free, no key)
-    return 'https://staticmap.openstreetmap.de/staticmap.php'
-        '?center=$lat,$lng&zoom=15&size=300x120&markers=$lat,$lng,red-pushpin';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final bool stillLive = _isStillLive;
+
     return Padding(
       padding: EdgeInsets.only(
-        top: 12, bottom: 4,
-        left: isMe ? 60 : 0,
-        right: isMe ? 0 : 60,
+        top: 12,
+        bottom: 4,
+        left: widget.isMe ? 60 : 0,
+        right: widget.isMe ? 0 : 60,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
-        mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment: widget.isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
         children: [
-          if (!isMe) ...[
-            _SenderAvatar(colorHex: senderAvatar, name: senderName, senderId: senderId),
+          if (!widget.isMe) ...[
+            _SenderAvatar(
+                colorHex: widget.senderAvatar,
+                name: widget.senderName,
+                senderId: widget.senderId),
             const SizedBox(width: 8),
           ],
           Flexible(
             child: Column(
-              crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: widget.isMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
-                if (!isMe)
+                if (!widget.isMe)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Text(
-                      senderName,
+                      widget.senderName,
                       style: GoogleFonts.poppins(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
-                        color: HuddlColors.primary,  // orange (Figma spec)
+                        color: HuddlColors.primary,
                       ),
                     ),
                   ),
                 Container(
-                  constraints: const BoxConstraints(maxWidth: 240),
+                  constraints: const BoxConstraints(maxWidth: 260),
                   decoration: BoxDecoration(
-                    color: isMe ? _kMyBubble : _kTheirBubble,
+                    color: widget.isMe ? _kMyBubble : _kTheirBubble,
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isMe ? 18 : 4),
-                      bottomRight: Radius.circular(isMe ? 4 : 18),
+                      bottomLeft: Radius.circular(widget.isMe ? 18 : 4),
+                      bottomRight: Radius.circular(widget.isMe ? 4 : 18),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -6647,97 +6928,228 @@ class _GroupLocationBubble extends StatelessWidget {
                     ],
                   ),
                   child: GestureDetector(
-                    onTap: () => _openInMaps(context),
+                    onTap: _openInMaps,
                     child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── Real map thumbnail ──────────────────────────────
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        child: Stack(
-                          children: [
-                            Image.network(
-                              _mapThumbnailUrl(),
-                              height: 130,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (ctx, child, progress) {
-                                if (progress == null) return child;
-                                return Container(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── Map thumbnail ──────────────────────────────────
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          child: Stack(
+                            children: [
+                              // Key forces rebuild when coords change
+                              Image.network(
+                                _mapThumbnailUrl(),
+                                key: ValueKey('${widget.latitude}_${widget.longitude}'),
+                                height: 130,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (ctx, child, progress) {
+                                  if (progress == null) return child;
+                                  return Container(
+                                    height: 130,
+                                    color: HuddlColors.successBg,
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: HuddlColors.primaryDark,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                errorBuilder: (_, __, ___) => Container(
                                   height: 130,
                                   color: HuddlColors.successBg,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: HuddlColors.primaryDark,
+                                  child: const Icon(Icons.map_outlined,
+                                      size: 40,
+                                      color: HuddlColors.primaryDark),
+                                ),
+                              ),
+                              // Red pin overlay
+                              Positioned.fill(
+                                child: Align(
+                                  alignment: const Alignment(0, -0.1),
+                                  child: Icon(
+                                    Icons.location_on,
+                                    size: 36,
+                                    color: HuddlColors.error,
+                                    shadows: const [
+                                      Shadow(
+                                          color: Colors.black26,
+                                          blurRadius: 4)
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // LIVE badge top-left
+                              if (widget.isLive)
+                                Positioned(
+                                  top: 8,
+                                  left: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: stillLive
+                                          ? HuddlColors.teal
+                                          : Colors.grey.shade600,
+                                      borderRadius:
+                                          BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (stillLive) ...[
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Text(
+                                          stillLive ? 'LIVE' : 'ENDED',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                );
-                              },
-                              errorBuilder: (_, __, ___) => Container(
-                                height: 130,
-                                color: HuddlColors.successBg,
-                                child: const Icon(Icons.map_outlined, size: 40, color: HuddlColors.primaryDark),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // ── Label row ─────────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 8, 10, 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                widget.isLive && stillLive
+                                    ? Icons.location_on
+                                    : Icons.location_on_outlined,
+                                size: 16,
+                                color: widget.isLive && stillLive
+                                    ? HuddlColors.teal
+                                    : context.hc.textSecondary,
                               ),
-                            ),
-                            // Red pin overlay centred on the map
-                            Positioned.fill(
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: Icon(
-                                  Icons.location_on,
-                                  size: 36,
-                                  color: HuddlColors.error,
-                                  shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  widget.locationName ?? 'My location',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: context.hc.textPrimary,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Row(
-                          children: [
-                            Icon(Icons.location_on_outlined, size: 16, color: context.hc.textSecondary),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                locationName ?? 'My location',
+                              Text(
+                                _fmtTime(widget.timestamp),
                                 style: GoogleFonts.poppins(
-                                  fontSize: 13,
+                                    fontSize: 10,
+                                    color: context.hc.textTertiary),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ── Countdown row (live only) ──────────────────────
+                        if (widget.isLive)
+                          Padding(
+                            padding:
+                                const EdgeInsets.fromLTRB(10, 0, 10, 6),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.access_time_rounded,
+                                  size: 13,
+                                  color: stillLive
+                                      ? HuddlColors.teal
+                                      : context.hc.textTertiary,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  stillLive
+                                      ? 'Updating · $_countdownLabel left'
+                                      : 'Live sharing ended',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: stillLive
+                                        ? HuddlColors.teal
+                                        : context.hc.textTertiary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                        // ── Open in Maps link ─────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                          child: Row(
+                            children: [
+                              Icon(Icons.open_in_new,
+                                  size: 13, color: HuddlColors.primary),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Open in Google Maps',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: context.hc.textPrimary,
+                                  color: HuddlColors.primary,
                                 ),
                               ),
-                            ),
-                            Text(
-                              _fmtTime(timestamp),
-                              style: GoogleFonts.poppins(fontSize: 10, color: context.hc.textTertiary),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                      // Open in Maps link
-                      Container(
-                        padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                        child: Row(
-                          children: [
-                            Icon(Icons.open_in_new, size: 13, color: HuddlColors.primary),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Open in Google Maps',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: HuddlColors.primary,
+
+                        // ── Stop sharing button (sender only, live only) ───
+                        if (widget.onStopSharing != null && stillLive)
+                          GestureDetector(
+                            onTap: widget.onStopSharing,
+                            child: Container(
+                              margin:
+                                  const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: HuddlColors.error
+                                    .withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: HuddlColors.error
+                                        .withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.stop_circle_outlined,
+                                      size: 15, color: HuddlColors.error),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Stop sharing',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: HuddlColors.error,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -6752,6 +7164,126 @@ class _GroupLocationBubble extends StatelessWidget {
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
     return '$h:$m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LIVE LOCATION DURATION SHEET
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _LiveLocationDurationSheet extends StatelessWidget {
+  const _LiveLocationDurationSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final options = [
+      (minutes: 15,   label: '15 minutes'),
+      (minutes: 30,   label: '30 minutes'),
+      (minutes: 60,   label: '1 hour'),
+      (minutes: 120,  label: '2 hours'),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: context.hc.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: context.hc.textTertiary.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: HuddlColors.teal.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.location_on,
+                        color: HuddlColors.teal, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Share Live Location',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: context.hc.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Your movement will be visible to the group',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: context.hc.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 24),
+            // Duration options
+            ...options.map((opt) => InkWell(
+              onTap: () => Navigator.of(context).pop(opt.minutes),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: context.hc.surface,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: context.hc.textTertiary
+                                .withValues(alpha: 0.25)),
+                      ),
+                      child: Icon(Icons.access_time_rounded,
+                          size: 20, color: context.hc.textSecondary),
+                    ),
+                    const SizedBox(width: 14),
+                    Text(
+                      opt.label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: context.hc.textPrimary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.chevron_right,
+                        color: context.hc.textTertiary, size: 20),
+                  ],
+                ),
+              ),
+            )),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 }
 
