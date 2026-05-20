@@ -696,6 +696,13 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   }
 
   void _onTabChanged() {
+    // Dismiss search bar when the user switches tabs.
+    if (_isSearchActive) {
+      _searchController.clear();
+      _searchFocus.unfocus();
+      _isSearchActive = false;
+      _searchQuery = '';
+    }
     setState(() {});
   }
 
@@ -1612,30 +1619,63 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                         )
                       : null,
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final uid = FirebaseAuth.instance.currentUser?.uid;
-                    final isOwn = uid != null && items[index].sellerId == uid;
-                    return _MarketListCard(
-                      item: items[index],
-                      isOwn: isOwn,
-                      onTap: () => _openItemDetail(items[index]),
-                      onToggleSave: () {
-                        HapticFeedback.lightImpact();
-                        final item = items[index];
-                        if (!item.isSaved) {
-                          _ai.recordSave(item);
-                        } else {
-                          _ai.recordUnsave(item);
-                        }
-                        _service.toggleSaved(item.id);
+              : _isSearchActive
+                  // ── Compact search rows (search active) ──────────────
+                  ? ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(0, 4, 0, 100),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        indent: 92,
+                        endIndent: 0,
+                        color: context.hc.divider,
+                      ),
+                      itemBuilder: (context, index) {
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        final isOwn = uid != null && items[index].sellerId == uid;
+                        return _MarketSearchRow(
+                          item: items[index],
+                          isOwn: isOwn,
+                          onTap: () => _openItemDetail(items[index]),
+                          onToggleSave: () {
+                            HapticFeedback.lightImpact();
+                            final item = items[index];
+                            if (!item.isSaved) {
+                              _ai.recordSave(item);
+                            } else {
+                              _ai.recordUnsave(item);
+                            }
+                            _service.toggleSaved(item.id);
+                          },
+                        );
                       },
-                    );
-                  },
-                ),
+                    )
+                  // ── Full listing cards (default) ──────────────────────
+                  : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      itemBuilder: (context, index) {
+                        final uid = FirebaseAuth.instance.currentUser?.uid;
+                        final isOwn = uid != null && items[index].sellerId == uid;
+                        return _MarketListCard(
+                          item: items[index],
+                          isOwn: isOwn,
+                          onTap: () => _openItemDetail(items[index]),
+                          onToggleSave: () {
+                            HapticFeedback.lightImpact();
+                            final item = items[index];
+                            if (!item.isSaved) {
+                              _ai.recordSave(item);
+                            } else {
+                              _ai.recordUnsave(item);
+                            }
+                            _service.toggleSaved(item.id);
+                          },
+                        );
+                      },
+                    ),
         ),
       ],
     );
@@ -2951,6 +2991,178 @@ class _MarketItemCardState extends State<_MarketItemCard>
 
 // ─── Single-column list card (Buy tab) ───────────────────────────────────────
 // ─── Market full card (Groups/Meetups style — hero photo + card body) ─────────
+// ─── Compact search result row ────────────────────────────────────────────────
+// Shown in Buy/Sell tabs when _isSearchActive == true.
+// Layout: 64×64 thumbnail | category / title / location | price pill
+// Mirrors _ServiceSearchRow and _GroupMessageRow patterns.
+class _MarketSearchRow extends StatelessWidget {
+  final RehomeItem item;
+  final VoidCallback onTap;
+  final VoidCallback onToggleSave;
+  final bool isOwn;
+
+  const _MarketSearchRow({
+    required this.item,
+    required this.onTap,
+    required this.onToggleSave,
+    this.isOwn = false,
+  });
+
+  Color get _conditionColor {
+    switch (item.condition.label.toLowerCase()) {
+      case 'new':       return const Color(0xFF2DBE8A);
+      case 'like new':  return const Color(0xFF5B9CFF);
+      case 'good':      return HuddlColors.primary;
+      default:          return HuddlColors.textTertiary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hc = context.hc;
+    final hasImage = item.imageUrls.isNotEmpty;
+    final priceStr = item.isFree
+        ? 'Free'
+        : '£${item.price % 1 == 0 ? item.price.toInt() : item.price.toStringAsFixed(2)}';
+    final priceColor = item.isFree ? HuddlColors.teal : _kMarketBlue;
+
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: hc.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ── Square thumbnail 64×64 ──────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: hasImage
+                  ? Image.network(
+                      item.imageUrls.first,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _MarketPhotoFallback(item: item),
+                    )
+                  : SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: _MarketPhotoFallback(item: item),
+                    ),
+            ),
+            const SizedBox(width: 12),
+            // ── Centre text block ───────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Category label — small caps
+                  Text(
+                    item.category.label.toUpperCase(),
+                    style: _adaptiveText(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textTertiary,
+                      letterSpacing: 0.4,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  // Title
+                  Text(
+                    item.title,
+                    style: _adaptiveText(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: hc.textPrimary,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  // Location row
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 12, color: hc.textTertiary),
+                      const SizedBox(width: 2),
+                      Expanded(
+                        child: Text(
+                          item.sellerLocation.isNotEmpty
+                              ? item.sellerLocation
+                              : 'Near you',
+                          style: _adaptiveText(
+                              fontSize: 11,
+                              color: hc.textTertiary,
+                              fontStyle: FontStyle.italic),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            // ── Right: condition badge + price pill ─────────────────────
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Condition badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (isOwn
+                            ? HuddlColors.textTertiary
+                            : _conditionColor)
+                        .withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isOwn ? 'Yours' : item.condition.label,
+                    style: _adaptiveText(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isOwn ? HuddlColors.textTertiary : _conditionColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Price pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: item.isFree
+                        ? HuddlColors.teal.withValues(alpha: 0.10)
+                        : const Color(0xFFF2F2F2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    priceStr,
+                    style: _adaptiveText(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: priceColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Full listing card (default Buy/Saved view) ───────────────────────────────
 class _MarketListCard extends StatefulWidget {
   final RehomeItem item;
   final VoidCallback onTap;
