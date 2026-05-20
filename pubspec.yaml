@@ -49,6 +49,9 @@ dependencies:
   audioplayers: 6.1.0              # Audio playback for voice message bubbles
   path_provider: ^2.1.4            # Temp directory for voice recordings
 
+  # Native OS share sheet (Events share button, deep-links)
+  share_plus: ^10.0.0              # Native Share sheet on iOS/Android/Web (web compat with firebase_auth_web)
+
   # Location — real GPS on Android/iOS; browser Geolocation API on Web
   geolocator: ^12.0.0              # Cross-platform GPS (Android/iOS/Web) — v12 compatible with firebase_auth_web
 

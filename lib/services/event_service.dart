@@ -44,14 +44,28 @@ class Event {
   final String location;
   final int attendees;
   final bool isFree;
-  final String price; // e.g. "\$18" or "" if free
+  final String price; // e.g. "£18" or "" if free
   final bool isOnline;
   final Color color;
   final IconData icon;
   final String organiser;
   final String organiserLogo;
+  final String organiserUrl;   // External organiser website URL
   final String imageUrl;
   final bool isUserCreated;
+
+  // ── UK-wide scope & sourcing ─────────────────────────────────
+  final String scope;              // "uk_wide" | "borough" | "local"
+  final bool isNew;                // true if within 20-day newUntil window
+  final DateTime? newUntil;        // createdAt + 20 days; isNew hides after this
+  final bool isExternallySourced;  // true for scraped/discovered events
+  final String sourceName;         // e.g. "NHS Website", "Cambridge City Council"
+
+  // ── Audience & content ───────────────────────────────────────
+  final List<String> suitableFor;     // e.g. ["all_families", "mums", "babies"]
+  final List<String> summaryBullets;  // bullet points for Summary section
+  final List<String> whatToExpect;    // bullet points for What to Expect section
+  final int attendeeCount;            // maintained via FieldValue.increment
 
   // ── AI Recommendation metadata ──────────────────────────────────
   final String borough;             // Borough this event targets
@@ -86,8 +100,18 @@ class Event {
     required this.icon,
     this.organiser = '',
     this.organiserLogo = '',
+    this.organiserUrl = '',
     this.imageUrl = '',
     this.isUserCreated = false,
+    this.scope = 'uk_wide',
+    this.isNew = false,
+    this.newUntil,
+    this.isExternallySourced = false,
+    this.sourceName = '',
+    this.suitableFor = const [],
+    this.summaryBullets = const [],
+    this.whatToExpect = const [],
+    this.attendeeCount = 0,
     this.borough = '',
     this.suitableAgeRange,
     this.tags = const [],
@@ -101,6 +125,14 @@ class Event {
     this.sourceUrl = '',
   });
 
+  /// Returns true when this event should show the "New" amber badge.
+  /// Evaluated at render time so it auto-hides once newUntil is exceeded.
+  bool get showNewBadge {
+    if (!isNew) return false;
+    if (newUntil == null) return true;
+    return DateTime.now().isBefore(newUntil!);
+  }
+
   /// Convert to the map expected by existing card widgets.
   Map<String, dynamic> toMap() {
     return {
@@ -111,6 +143,7 @@ class Event {
       'time': timeDisplay,
       'location': location,
       'attendees': attendees,
+      'attendeeCount': attendeeCount,
       'isFree': isFree,
       'price': price,
       'isOnline': isOnline,
@@ -118,12 +151,23 @@ class Event {
       'icon': icon,
       'organiser': organiser,
       'organiserLogo': organiserLogo,
+      'organiserUrl': organiserUrl,
       'imageUrl': imageUrl,
       'borough': borough,
+      'scope': scope,
+      'isNew': showNewBadge,
+      'isExternallySourced': isExternallySourced || isAiDiscovered,
+      'sourceName': sourceName.isNotEmpty ? sourceName : (aiSource?.name ?? ''),
+      'suitableFor': suitableFor,
+      'summaryBullets': summaryBullets,
+      'whatToExpect': whatToExpect,
       'isAiDiscovered': isAiDiscovered,
       'aiSourceName': aiSource?.name ?? '',
       'aiSourceIcon': aiSource?.icon ?? Icons.language,
       'sourceUrl': sourceUrl,
+      // isDiscoverSomethingNew is set by Cloud Function after ingestion;
+      // default false here — Firestore document overrides on read.
+      'isDiscoverSomethingNew': false,
     };
   }
 }

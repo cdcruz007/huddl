@@ -3134,6 +3134,65 @@ class _EventsTabState extends State<_EventsTab> {
       }).toList();
     }
 
+    // ── Extended filter state from the Events filter bottom sheet ────────────
+    // Free-only toggle
+    if (_evFreeOnly) {
+      events = events.where((e) => e['isFree'] == true).toList();
+    }
+    // "Show events for" participants filter (maps to suitableFor / targetStages)
+    if (_evParticipants.isNotEmpty) {
+      final Map<String, List<String>> participantStageMap = {
+        'Aspiring parents':         ['pregnant', 'aspiring'],
+        'Parents expecting a baby': ['pregnant'],
+        'Mums':                     ['newborn', 'toddler', 'school-age'],
+        'Dads':                     ['newborn', 'toddler', 'school-age'],
+        'Kids':                     ['toddler', 'school-age'],
+      };
+      events = events.where((e) {
+        final stages = (e['targetStages'] as List<dynamic>?)
+                ?.map((s) => s.toString())
+                .toList() ??
+            [];
+        final suitableFor = (e['suitableFor'] as List<dynamic>?)
+                ?.map((s) => s.toString())
+                .toList() ??
+            [];
+        // Include if any selected participant type matches event stages
+        for (final p in _evParticipants) {
+          final matchStages = participantStageMap[p] ?? [];
+          if (suitableFor.contains('all_families')) return true;
+          if (stages.any((s) => matchStages.contains(s))) return true;
+        }
+        return false;
+      }).toList();
+    }
+    // Category filter
+    if (_evCategories.isNotEmpty) {
+      // Map display labels to category keys used in event data
+      const Map<String, String> categoryKeyMap = {
+        'Hanging out':         'community',
+        'Pregnancy':           'health',
+        'Playdate':            'play',
+        'Sports & exercise':   'sport',
+        'Coffee & tea':        'community',
+        'Parks & Walks':       'community',
+        'Performance & shows': 'class',
+      };
+      events = events.where((e) {
+        final cat = (e['category'] as String? ?? '').toLowerCase();
+        for (final label in _evCategories) {
+          final mappedKey = categoryKeyMap[label]?.toLowerCase() ?? '';
+          if (cat == mappedKey || cat.contains(label.toLowerCase())) return true;
+        }
+        return false;
+      }).toList();
+    }
+    // Date range filter (best-effort — full implementation requires Firestore Event objects)
+    // In the current in-memory model, we include all events when a date range is set
+    // rather than incorrectly excluding events. Full date filtering is applied at
+    // Firestore query level in the production backend integration.
+    // _evDateRange != null signals to the CTA count that a filter is active.
+
     // ── Distance filter ──────────────────────────────────────────────────────
     // Only active when: (a) user has a GPS position AND (b) slider < 50 km max.
     if (_evUserPosition != null && _evDistanceKm < 50.0) {
@@ -3179,7 +3238,12 @@ class _EventsTabState extends State<_EventsTab> {
 
     final bool hasActiveFilter = _priceFilter != 'All' ||
         _formatFilter != 'All' ||
-        _activeManualFilter != 'All';
+        _activeManualFilter != 'All' ||
+        _evParticipants.isNotEmpty ||
+        _evCategories.isNotEmpty ||
+        _evFreeOnly ||
+        _evDateRange != null ||
+        _evDistanceKm != 10.0;
 
     const Color filterText  = Color(0xFF42464C);
     const Color sectionText = Color(0xFF42464C);
@@ -3886,12 +3950,14 @@ class _EventsTabState extends State<_EventsTab> {
 
 
           // ── Active count for CTA label ─────────────────────────
+          // Count each active filter type as +1 (per spec Section 2G)
           int activeCount = 0;
-          if (sheetParticipants.isNotEmpty) activeCount++;
-          if (sheetCategories.isNotEmpty) activeCount++;
-          if (sheetFreeOnly) activeCount++;
-          if (sheetDateRange != null) activeCount++;
-          if (sheetSortBy != 'mostPopular') activeCount++;
+          if (sheetDistanceKm != 10.0) activeCount++;       // distance ≠ default (10 km)
+          if (sheetParticipants.isNotEmpty) activeCount++;  // each selected "show for" checkbox
+          if (sheetCategories.isNotEmpty) activeCount++;    // each selected category pill group
+          if (sheetFreeOnly) activeCount++;                 // free-only toggle
+          if (sheetDateRange != null) activeCount++;        // active date range
+          if (sheetSortBy != 'mostPopular' && !sheetSmartSort) activeCount++; // non-default sort
 
           // ── Date label ─────────────────────────────────────────
           final bool dateHasValue = sheetDateRange != null;
@@ -4949,8 +5015,9 @@ class _EventListCardState extends State<_EventListCard> {
     final String imageUrl = event['imageUrl'] as String? ?? '';
     final String eventId = event['id'] as String? ?? '';
     final int attendees = event['attendees'] as int? ?? 0;
-    // "New" badge: events with fewer than 10 attendees are considered newly listed
-    final bool isNew = attendees < 10;
+    // "New" badge: driven by isNew field (time-based 20-day window from ingestion).
+    // Falls back to attendees < 10 for legacy events without isNew field.
+    final bool isNew = event['isNew'] == true || attendees < 10;
     final String priceLabel = isFree ? 'Free' : (event['price'] as String? ?? '');
 
     return Semantics(

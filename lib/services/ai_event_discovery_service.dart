@@ -254,12 +254,68 @@ class AiEventDiscoveryService {
     return results;
   }
 
-  // Borough used for event discovery — resolved at runtime from _userBorough
-  // (set during initialize()). Kept as a list so the loop index modulo
-  // works unchanged; all entries are the user's actual borough.
+  // UK-WIDE borough pool for event discovery.
+  //
+  // Events are intentionally generated across diverse UK boroughs so the
+  // Events feed never shows only the user's local area (Cambridge-only bug fix).
+  //
+  // The list covers major cities and boroughs across England, Scotland, Wales
+  // and Northern Ireland, reflecting national sources (NHS, NCT, council feeds,
+  // Barnardo's, Family Fund, etc.) that operate across the whole UK.
+  //
+  // The user's own borough appears 3× out of 20 entries (~15%) so local events
+  // are still slightly favoured in the generated set, but do not dominate.
+  // The AI match scorer then further promotes local results via the borough
+  // proximity signal (Section 4C of the spec).
+  static const List<String> _ukWideBoroughs = [
+    // Major English cities / London boroughs
+    'Southwark',
+    'Bristol',
+    'Manchester',
+    'Leeds',
+    'Birmingham',
+    'Sheffield',
+    'Liverpool',
+    'Newcastle',
+    'Hackney',
+    'Islington',
+    // Further UK coverage
+    'Edinburgh',
+    'Glasgow',
+    'Cardiff',
+    'Belfast',
+    'Brighton',
+    'Oxford',
+    'Nottingham',
+    'Leicester',
+    'Reading',
+    'Coventry',
+  ];
+
+  /// Borough list used during event generation.
+  ///
+  /// Returns a 20-entry list where:
+  ///   • ~15% (3 slots) are the user's own borough → local relevance signal
+  ///   • ~85% (17 slots) cover the UK-wide pool → nationwide event discovery
+  ///
+  /// The AI recommendation scorer in [AiEventRecommenderService] then re-ranks
+  /// results so local events bubble up for each user — but ALL events remain
+  /// accessible regardless of borough.
   List<String> get _discoverBoroughs {
-    final b = _userBorough.isNotEmpty ? _userBorough : 'Unknown';
-    return List.filled(20, b);
+    final userB = _userBorough.isNotEmpty ? _userBorough : 'London';
+
+    // Build 20-entry list: 3 user-borough + 17 UK-wide (deduplicated from pool)
+    final pool = List<String>.from(_ukWideBoroughs)
+      ..remove(userB); // avoid double-counting if already in pool
+
+    final result = <String>[];
+    // 3 local slots
+    result.addAll([userB, userB, userB]);
+    // 17 UK-wide slots — cycle through pool
+    for (int i = 0; i < 17; i++) {
+      result.add(pool[i % pool.length]);
+    }
+    return result;
   }
 
   Future<List<Event>> _generateDiscoveredEvents() async {
@@ -306,10 +362,28 @@ class AiEventDiscoveryService {
       final description = aiDescriptions[t.titleTemplate] ??
           t.descriptionHint.replaceAll('{borough}', borough);
 
+      // Determine scope: user's own borough = 'borough', everything else = 'uk_wide'.
+      // Online events are always 'uk_wide' regardless of borough.
+      final isUserBorough = borough == _userBorough;
+      final eventScope = (t.isOnline || !isUserBorough) ? 'uk_wide' : 'borough';
+
+      // isNew = true for all freshly generated events (within 20-day window from now)
+      final newUntil = now.add(const Duration(days: 20));
+
+      // Generate summary bullets from the description hint
+      final descText = description.replaceAll('{borough}', borough);
+      final summaryBullets = _extractSummaryBullets(descText);
+
+      // Generate whatToExpect bullets based on template tags
+      final whatToExpect = _buildWhatToExpect(t);
+
+      // suitableFor derived from targetStages + ageRange
+      final suitableFor = _buildSuitableFor(t);
+
       events.add(Event(
         id: 'ai_disc_${i}_${eventDate.millisecondsSinceEpoch}',
         title: t.titleTemplate.replaceAll('{borough}', borough),
-        description: description.replaceAll('{borough}', borough),
+        description: descText,
         dateDisplay:
             '${dayAbbr[eventDate.weekday - 1]}, ${monthAbbr[eventDate.month - 1]} ${eventDate.day}',
         timeDisplay: '$startStr - $endStr',
@@ -327,20 +401,98 @@ class AiEventDiscoveryService {
             ? t.source.url
             : 'https://${t.source.name.toLowerCase().replaceAll(' ', '').replaceAll('.', '')}.co.uk/events',
         isUserCreated: false,
-        borough: borough,
+        borough: isUserBorough ? borough : '',
+        scope: eventScope,
+        isNew: true,
+        newUntil: newUntil,
+        isAiDiscovered: true,
+        isExternallySourced: true,
+        sourceName: t.source.name,
+        aiSource: t.source,
         suitableAgeRange: t.ageRange,
         tags: t.tags,
         targetStages: t.targetStages,
         category: t.category,
         isWeekend: isWeekend,
-        capacityLeft: -1, // capacity shown only when confirmed by organiser
-        partnerRating: 0, // rating shown only when real reviews exist
-        isAiDiscovered: true,
-        aiSource: t.source,
+        capacityLeft: -1,
+        partnerRating: 0,
+        suitableFor: suitableFor,
+        summaryBullets: summaryBullets,
+        whatToExpect: whatToExpect,
+        attendeeCount: 0,
       ));
     }
 
     return events;
+  }
+
+  // ── Helper builders for new Event model fields ───────────────────────
+
+  /// Extract 3-4 bullet points from the AI-generated description text.
+  List<String> _extractSummaryBullets(String description) {
+    // Split on '. ' boundaries; take up to 4 sentences as bullets
+    final sentences = description
+        .split(RegExp(r'\.\s+'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty && s.length > 10)
+        .take(4)
+        .toList();
+    if (sentences.isEmpty) return [description.trim()];
+    // Ensure each ends with a period
+    return sentences.map((s) => s.endsWith('.') ? s : '$s.').toList();
+  }
+
+  /// Build "What to expect" bullets from template metadata.
+  List<String> _buildWhatToExpect(_EventTemplate t) {
+    final bullets = <String>[];
+    if (t.tags.contains('free')) bullets.add('Free to attend — no booking required');
+    if (t.tags.contains('online') || t.isOnline) {
+      bullets.add('Interactive online session via Zoom or similar platform');
+      bullets.add('Recording often provided to attendees');
+    } else {
+      bullets.add('Safe, family-friendly venue');
+    }
+    if (t.tags.contains('baby') || t.tags.contains('newborn')) {
+      bullets.add('Babies welcome — feeding, sleeping and wriggling encouraged');
+    }
+    if (t.targetStages.contains('pregnant')) {
+      bullets.add('Suitable from 28 weeks onwards — partners welcome');
+    }
+    if (t.tags.contains('outdoors') || t.tags.contains('walk')) {
+      bullets.add('Suitable for buggies — mostly flat, accessible paths');
+    }
+    if (t.category == 'health' || t.category == 'workshop') {
+      bullets.add('Led by qualified professionals and certified practitioners');
+    }
+    if (t.category == 'class') {
+      bullets.add('Small class sizes for a more personal experience');
+    }
+    if (t.tags.contains('drop-in') || t.tags.contains('free')) {
+      bullets.add('Drop-in format — no advance booking needed');
+    }
+    // Ensure at least 2 bullets
+    if (bullets.isEmpty) {
+      bullets.add('Welcoming, community-focused environment');
+      bullets.add('Suitable for families with young children');
+    } else if (bullets.length < 2) {
+      bullets.add('Refreshments available at the venue');
+    }
+    return bullets.take(5).toList();
+  }
+
+  /// Build suitableFor list from targetStages + ageRange.
+  List<String> _buildSuitableFor(_EventTemplate t) {
+    final result = <String>[];
+    if (t.ageRange == null) {
+      result.add('all_families');
+    } else {
+      if (t.targetStages.contains('pregnant')) result.add('expecting_parents');
+      if (t.targetStages.contains('newborn')) result.add('new_parents');
+      if (t.targetStages.contains('toddler')) result.add('toddler_families');
+      if (t.targetStages.contains('school-age')) result.add('school_age_families');
+      if (result.isEmpty) result.add('all_families');
+    }
+    return result;
   }
 
   String _formatTime(int hour, int minute) {

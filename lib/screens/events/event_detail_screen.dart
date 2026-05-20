@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/huddl_widgets.dart';
 import '../../services/event_service.dart';
 import '../../services/ai_event_recommender_service.dart';
 import '../../services/invisible_ai_service.dart';
-import '../groups/forward_message_sheet.dart';
 
 class EventDetailScreen extends StatefulWidget {
   final Map<String, dynamic> event;
@@ -60,6 +61,23 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     return id.isNotEmpty && _eventService.isGoing(id);
   }
 
+  /// True if the event date has passed — CTA shows "Ended" and is disabled.
+  bool get _hasEnded {
+    final dateStr = widget.event['date'] as String? ?? '';
+    try {
+      // Try to parse from dateTime field first (most reliable)
+      final rawDt = widget.event['dateTime'];
+      if (rawDt is DateTime) return rawDt.isBefore(DateTime.now());
+      // Fallback: parse from date + time display strings
+      // We use a simple heuristic: if date string contains a year < current year, it's ended
+      if (dateStr.isEmpty) return false;
+      // Try ISO format
+      final parsed = DateTime.tryParse(dateStr);
+      if (parsed != null) return parsed.isBefore(DateTime.now());
+    } catch (_) {}
+    return false;
+  }
+
   void _shareEvent() {
     HapticFeedback.mediumImpact();
     final e = widget.event;
@@ -68,36 +86,33 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     final time = e['time'] as String? ?? '';
     final location = e['location'] as String? ?? '';
     final organiser = e['organiser'] as String? ?? '';
-    final shareText = title.isNotEmpty
-        ? '$title\n📅 $date${time.isNotEmpty ? ' · $time' : ''}\n📍 $location${organiser.isNotEmpty ? '\nBy $organiser' : ''}'
-        : 'Check out this event on Huddl!';
+    final eventId = e['id'] as String? ?? '';
 
-    // Build a serialisable eventData map for the rich card
-    // Note: Color and IconData cannot be serialised, so we use
-    // the category string to reconstruct styling in EventInviteCard.
-    final eventData = <String, dynamic>{
-      'id': e['id'] ?? '',
-      'title': title,
-      'date': date,
-      'time': time,
-      'location': location,
-      'organiser': organiser,
-      'category': e['category'] ?? 'community',
-      'isFree': e['isFree'] ?? true,
-      'price': e['price'] ?? '',
-      'attendees': e['attendees'] ?? 0,
-      'imageUrl': e['imageUrl'] ?? '',
-      'isOnline': e['isOnline'] ?? false,
-      'description': e['description'] ?? '',
-      'borough': e['borough'] ?? '',
-    };
+    // Build share text + deep-link for native OS share sheet
+    final shareText = StringBuffer();
+    if (title.isNotEmpty) shareText.write(title);
+    if (date.isNotEmpty) shareText.write('\n📅 $date${time.isNotEmpty ? ' · $time' : ''}');
+    if (location.isNotEmpty) shareText.write('\n📍 $location');
+    if (organiser.isNotEmpty) shareText.write('\nBy $organiser');
+    shareText.write('\n\nDiscover family events on Huddl!');
+    if (eventId.isNotEmpty) {
+      shareText.write('\nhttps://huddl.app/events/$eventId');
+    }
 
-    showForwardSheet(
-      context: context,
-      messageText: shareText,
-      eventData: eventData,
-      isEventCard: true,
+    // Use native OS share sheet via share_plus
+    Share.share(
+      shareText.toString(),
+      subject: title.isNotEmpty ? title : 'Check out this event on Huddl!',
     );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    if (url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   @override
@@ -299,11 +314,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 if (_aiReady && _aiSummary != null)
                   const SizedBox(height: 8),
 
-                // ── AI Discovered source section ─────────────────────
-                if (e['isAiDiscovered'] == true)
+                // ── "Newly found for you" section ────────────────────
+                // Show for AI-discovered OR externally-sourced events
+                if (e['isAiDiscovered'] == true ||
+                    e['isExternallySourced'] == true)
                   _buildAiDiscoveredSection(e),
-                if (e['isAiDiscovered'] == true)
+                if (e['isAiDiscovered'] == true ||
+                    e['isExternallySourced'] == true)
                   const SizedBox(height: 8),
+
+
 
                 // Details
                 Container(
@@ -404,48 +424,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 if (_aiReady && _scoredEvent != null && _scoredEvent!.score >= 40)
                   const SizedBox(height: 8),
 
-                // What to expect
-                Container(
-                  color: context.hc.surface,
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'What to expect',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.hc.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _ExpectItem(
-                        icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
-                        text: 'Professional facilitators',
-                      ),
-                      _ExpectItem(
-                        icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
-                        text: 'All materials provided',
-                      ),
-                      _ExpectItem(
-                        icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
-                        text: isOnline
-                            ? 'Interactive online session'
-                            : 'Safe, family-friendly venue',
-                      ),
-                      _ExpectItem(
-                        icon: Icons.check_circle_outline,
-                        color: HuddlColors.teal,
-                        text: 'Certificate of attendance',
-                      ),
-                    ],
-                  ),
-                ),
+                // What to expect — dynamic from event data
+                _buildWhatToExpectSection(e, isOnline),
                 const SizedBox(height: 100),
               ],
             ),
@@ -470,50 +450,73 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         child: SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: () async {
+            // Disabled when event has ended
+            onPressed: _hasEnded ? null : () async {
               HapticFeedback.mediumImpact();
               final id = widget.event['id'] as String? ?? '';
+              final eventTitle = widget.event['title'] as String? ?? 'this event';
               if (id.isNotEmpty) {
+                final wasGoing = _eventService.isGoing(id);
                 final nowGoing = _eventService.toggleGoing(id);
                 if (nowGoing) {
                   await _eventService.createEventGroupChat(id);
                 }
-              }
-              setState(() {});
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(
-                          _isRegistered ? Icons.check_circle : Icons.close,
-                          color: context.hc.surface,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(_isRegistered
-                              ? 'Joined! Check Messages for the event chat.'
-                              : 'You\'ve left this event.'),
-                        ),
-                      ],
+                if (mounted) {
+                  // Update attendee count in the local event map
+                  final currentCount = widget.event['attendees'] as int? ?? 0;
+                  if (nowGoing && !wasGoing) {
+                    widget.event['attendees'] = currentCount + 1;
+                    widget.event['attendeeCount'] = currentCount + 1;
+                  } else if (!nowGoing && wasGoing) {
+                    widget.event['attendees'] = (currentCount - 1).clamp(0, 99999);
+                    widget.event['attendeeCount'] = (currentCount - 1).clamp(0, 99999);
+                  }
+                  setState(() {});
+                  final isNowGoing = _eventService.isGoing(id);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            isNowGoing ? Icons.check_circle : Icons.close,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              isNowGoing
+                                  ? 'You\'re going to $eventTitle!'
+                                  : 'You\'ve left this event.',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 13, color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor:
+                          isNowGoing ? const Color(0xFF27AE60) : HuddlColors.textSecondary,
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      duration: const Duration(seconds: 4),
                     ),
-                    backgroundColor:
-                        _isRegistered ? HuddlColors.teal : HuddlColors.textSecondary,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
-                );
+                  );
+                }
               }
             },
             icon: Icon(
-              _isRegistered ? Icons.check_circle : Icons.group_add_outlined,
+              _hasEnded
+                  ? Icons.event_busy
+                  : _isRegistered
+                      ? Icons.check_circle
+                      : Icons.group_add_outlined,
               color: context.hc.surface,
               size: 20,
             ),
             label: Text(
-              _isRegistered ? 'Joined' : 'Join',
+              _hasEnded ? 'Ended' : (_isRegistered ? 'Going' : 'Join'),
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -521,7 +524,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isRegistered ? HuddlColors.teal : color,
+              backgroundColor: _hasEnded
+                  ? context.hc.textTertiary
+                  : (_isRegistered ? HuddlColors.teal : color),
+              disabledBackgroundColor: context.hc.textTertiary,
+              disabledForegroundColor: Colors.white70,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(26),
               ),
@@ -536,6 +543,9 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   // ── AI Quick Summary section ──────────────────────────────────────────
   Widget _buildAiSummarySection(AiEventSummary summary) {
+    // isDiscoverSomethingNew: check event data from widget.event map
+    final isDiscoverNew = widget.event['isDiscoverSomethingNew'] == true;
+
     return Container(
       color: context.hc.surface,
       width: double.infinity,
@@ -561,18 +571,42 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     fontSize: 14, fontWeight: FontWeight.w600, color: context.hc.textPrimary),
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: HuddlColors.teal.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+              // ✨ Discover Something New badge — shown when AI flags novelty
+              if (isDiscoverNew)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFFD700).withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('\u2728', style: TextStyle(fontSize: 11)),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Discover Something New',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10, fontWeight: FontWeight.w600,
+                          color: const Color(0xFF856404)),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: HuddlColors.teal.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    summary.vibe,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.teal),
+                  ),
                 ),
-                child: Text(
-                  summary.vibe,
-                  style: GoogleFonts.poppins(
-                    fontSize: 10, fontWeight: FontWeight.w500, color: HuddlColors.teal),
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -598,30 +632,40 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               ],
             ),
           ),
-          // Key highlights
-          if (summary.highlights.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ...summary.highlights.map((h) => Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4),
-                    child: Icon(Icons.check_circle, size: 14, color: HuddlColors.teal),
+          // Key highlights — prefer summaryBullets from event data, fall back to AI highlights
+          Builder(builder: (_) {
+            final rawBullets = widget.event['summaryBullets'];
+            final List<String> bullets = (rawBullets is List && rawBullets.isNotEmpty)
+                ? List<String>.from(rawBullets)
+                : summary.highlights;
+            if (bullets.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                ...bullets.map((h) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Icon(Icons.check_circle, size: 14, color: HuddlColors.teal),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          h,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12, color: context.hc.textSecondary, height: 1.4),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      h,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12, color: context.hc.textSecondary, height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            )),
-          ],
+                )),
+              ],
+            );
+          }),
         ],
       ),
     );
@@ -865,8 +909,11 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 
   // ── AI Discovered source section ────────────────────────────────────
   Widget _buildAiDiscoveredSection(Map<String, dynamic> e) {
-    final sourceName = e['aiSourceName'] as String? ?? 'the web';
+    final sourceName = (e['sourceName'] as String? ?? '').isNotEmpty
+        ? e['sourceName'] as String
+        : (e['aiSourceName'] as String? ?? 'the web');
     final sourceIcon = e['aiSourceIcon'] as IconData? ?? Icons.language;
+    final sourceUrl = e['sourceUrl'] as String? ?? '';
 
     return Container(
       color: context.hc.surface,
@@ -948,12 +995,20 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                               color: context.hc.textTertiary,
                             ),
                           ),
-                          Text(
-                            sourceName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: HuddlColors.teal,
+                          GestureDetector(
+                            onTap: sourceUrl.isNotEmpty
+                                ? () => _launchUrl(sourceUrl)
+                                : null,
+                            child: Text(
+                              sourceName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: HuddlColors.teal,
+                                decoration: sourceUrl.isNotEmpty
+                                    ? TextDecoration.underline
+                                    : TextDecoration.none,
+                              ),
                             ),
                           ),
                         ],
@@ -1014,6 +1069,59 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ],
       ),
     );
+  }
+
+  // ── Dynamic "What to expect" section ─────────────────────────────────
+  Widget _buildWhatToExpectSection(Map<String, dynamic> e, bool isOnline) {
+    // Prefer dynamic whatToExpect from event data
+    final rawExpect = e['whatToExpect'];
+    final List<String> bullets = (rawExpect is List && rawExpect.isNotEmpty)
+        ? List<String>.from(rawExpect)
+        : _buildFallbackWhatToExpect(isOnline);
+
+    // Hide section entirely when no bullets
+    if (bullets.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      color: context.hc.surface,
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'What to expect',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: context.hc.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...bullets.map((bullet) => _ExpectItem(
+            icon: Icons.check_circle_outline,
+            color: HuddlColors.teal,
+            text: bullet,
+          )),
+        ],
+      ),
+    );
+  }
+
+  /// Fallback bullets when event has no whatToExpect data.
+  List<String> _buildFallbackWhatToExpect(bool isOnline) {
+    if (isOnline) {
+      return [
+        'Interactive online session',
+        'Link shared on registration',
+        'Recording available after the session',
+      ];
+    }
+    return [
+      'Safe, family-friendly venue',
+      'Welcoming, community-focused environment',
+      'Babies and young children welcome',
+    ];
   }
 
   // ── Attendees section ─────────────────────────────────────────────────
