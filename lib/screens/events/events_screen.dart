@@ -1459,6 +1459,7 @@ class _MeetupsTabState extends State<_MeetupsTab> {
 
                           // ══ SECTION 2 — DISTANCE ═══════════════
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 'Distance',
@@ -1466,6 +1467,24 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: textPrimary,
+                                ),
+                              ),
+                              // Live selected-value badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  sheetDistanceKm >= 50
+                                      ? 'Up to 50 km'
+                                      : 'Within ${sheetDistanceKm.toInt()} km',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: orange,
+                                  ),
                                 ),
                               ),
                             ],
@@ -1490,7 +1509,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               divisions: 3,
                               onChanged: (v) {
                                 setSheetState(() {
-                                  // snap to 4 discrete values
                                   final snapped = [1.0, 5.0, 10.0, 50.0].reduce(
                                     (a, b) => (a - v).abs() < (b - v).abs() ? a : b,
                                   );
@@ -1499,9 +1517,24 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               },
                             ),
                           ),
-                          // Online info message
-                          
-                          const SizedBox(height: 28),
+                          // Min / max scale labels beneath the track
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('1 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                                Text('50 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
 
                           // ══ SECTION 3 — SHOW MEETUPS FOR (checkboxes) ═════
                           Text('Show meetups for',
@@ -3763,11 +3796,33 @@ class _EventsTabState extends State<_EventsTab> {
                         children: [
 
                           // ── SECTION 2: DISTANCE ────────────────
-                          Text('Distance',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                  color: textPrimary)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Distance',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                      color: textPrimary)),
+                              // Live selected-value badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  sheetDistanceKm >= 50
+                                      ? 'Up to 50 km'
+                                      : 'Within ${sheetDistanceKm.toInt()} km',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: orange),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 10),
                           SliderTheme(
                             data: SliderTheme.of(ctx).copyWith(
@@ -3790,7 +3845,24 @@ class _EventsTabState extends State<_EventsTab> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 28),
+                          // Min / max scale labels beneath the track
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('1 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                                Text('50 km',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 11,
+                                        color: const Color(0xFFB0B0B0))),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
 
                           // ── SECTION 3: PARTICIPANTS ────────────
                           sectionHeading('Show events for'),
