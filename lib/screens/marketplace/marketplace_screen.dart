@@ -3209,25 +3209,40 @@ class _MarketSearchRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Condition badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: (isOwn
-                            ? HuddlColors.textTertiary
-                            : _conditionColor)
-                        .withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    isOwn ? 'Yours' : item.condition.label,
-                    style: _adaptiveText(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: isOwn ? HuddlColors.textTertiary : _conditionColor,
+                // Condition badge — three-way: Sold / Yours / condition label
+                Builder(builder: (context) {
+                  final isSoldOwn = isOwn && item.isSold;
+                  final badgeLabel = isSoldOwn
+                      ? 'Sold'
+                      : isOwn
+                          ? 'Yours'
+                          : item.condition.label;
+                  final badgeBg = isSoldOwn
+                      ? HuddlColors.error.withValues(alpha: 0.90)
+                      : isOwn
+                          ? HuddlColors.textTertiary.withValues(alpha: 0.12)
+                          : _conditionColor.withValues(alpha: 0.12);
+                  final badgeFg = isSoldOwn
+                      ? Colors.white
+                      : isOwn
+                          ? HuddlColors.textTertiary
+                          : _conditionColor;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: badgeBg,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                  ),
-                ),
+                    child: Text(
+                      badgeLabel,
+                      style: _adaptiveText(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: badgeFg,
+                      ),
+                    ),
+                  );
+                }),
                 const SizedBox(height: 6),
                 // Price pill
                 Container(
