@@ -1796,11 +1796,23 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                     },
                     color: HuddlColors.primary,
                     child: ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                      padding: EdgeInsets.fromLTRB(
+                          _isSearchActive ? 0 : 16,
+                          8,
+                          _isSearchActive ? 0 : 16,
+                          80),
                       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                       itemCount: filtered.length,
                       itemBuilder: (_, i) {
                         final meetup = filtered[i];
+                        if (_isSearchActive) {
+                          // ── Compact row (matches Groups search result style) ──
+                          return _MeetupSearchRow(
+                            meetup: meetup,
+                            canAccess: _canAccessMeetup(meetup),
+                            onAccessDenied: () => _showAccessDeniedDialog(context, meetup),
+                          );
+                        }
                         return _MeetupCard(
                           meetup: meetup,
                           canAccess: _canAccessMeetup(meetup),
@@ -3566,6 +3578,155 @@ class _SectionLabel extends StatelessWidget {
 }
 
 /// ── MEET-UP CARD ────────────────────────────────────────────────────────────
+// ── Compact search-result row — mirrors the Groups tab search row style ──────
+class _MeetupSearchRow extends StatelessWidget {
+  final Meetup meetup;
+  final bool canAccess;
+  final VoidCallback? onAccessDenied;
+
+  const _MeetupSearchRow({
+    required this.meetup,
+    this.canAccess = true,
+    this.onAccessDenied,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isJoined = meetup.isGoing;
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        if (!canAccess) { onAccessDenied?.call(); return; }
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MeetupDetailScreen(meetup: meetup),
+          ),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: context.hc.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            // Thumbnail — 56×56 rounded rect
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: meetup.imageUrl.isNotEmpty
+                  ? Image.network(
+                      meetup.imageUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _MeetupSearchPlaceholder(title: meetup.title),
+                    )
+                  : _MeetupSearchPlaceholder(title: meetup.title),
+            ),
+            const SizedBox(width: 12),
+            // Text block
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category + date — small caps
+                  Text(
+                    '${meetup.category.toUpperCase()}  ·  ${meetup.dateDisplay.toUpperCase()}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: context.hc.textTertiary,
+                      letterSpacing: 0.4,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  // Title
+                  Text(
+                    meetup.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  // Location + attendee count
+                  Text(
+                    '${meetup.location}  ·  ${meetup.attendeeCount} attending',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: context.hc.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Join / Joined button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isJoined
+                    ? HuddlColors.teal.withValues(alpha: 0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isJoined
+                      ? HuddlColors.teal.withValues(alpha: 0.4)
+                      : context.hc.divider,
+                ),
+              ),
+              child: Text(
+                isJoined ? 'Joined' : 'Join',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isJoined ? HuddlColors.teal : context.hc.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MeetupSearchPlaceholder extends StatelessWidget {
+  final String title;
+  const _MeetupSearchPlaceholder({required this.title});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        color: HuddlColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Center(
+        child: Text(
+          title.isNotEmpty ? title[0].toUpperCase() : 'M',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: HuddlColors.primary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Large card widget (default feed view) ────────────────────────────────────
 class _MeetupCard extends StatelessWidget {
   final Meetup meetup;
   final bool canAccess;
