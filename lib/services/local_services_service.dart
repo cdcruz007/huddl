@@ -558,8 +558,6 @@ class LocalServicesService {
       {
         'endorsementCount': FieldValue.increment(1),
         'updatedAt':        FieldValue.serverTimestamp(),
-        // Auto-promote to community pick at 3 endorsements
-        'verificationTier': FieldValue.serverTimestamp(), // overwritten below
       },
     );
     await batch.commit();
@@ -604,7 +602,12 @@ class LocalServicesService {
 
   // ── Record view ────────────────────────────────────────────────────────────
 
+  // Session-level dedup: each listing is counted at most once per app session.
+  final Set<String> _viewedThisSession = {};
+
   void recordView(String listingId) {
+    if (_viewedThisSession.contains(listingId)) return;
+    _viewedThisSession.add(listingId);
     _db.collection(_collection).doc(listingId).update({
       'viewCount': FieldValue.increment(1),
     }).catchError((e) {
@@ -802,6 +805,7 @@ If no service recommendations are found, respond with exactly: []
           .collection(_collection)
           .doc(listingId)
           .collection('endorsements')
+          .orderBy('createdAt', descending: true)
           .limit(limit)
           .get();
       return snap.docs

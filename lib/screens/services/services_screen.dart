@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
 import '../../theme/huddl_colors.dart';
@@ -48,20 +49,11 @@ const Map<ServiceCategory, String> _kCategoryImages = {
       'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=400&fit=crop',
 };
 
-// ── Avatar photo pool (same pool as Events / Groups tabs) ──────────────────────
-const List<String> _kAvatarPool = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face',
+// ── Avatar colour palette for endorser initial circles ─────────────────────────
+const List<Color> _kAvatarPalette = [
+  HuddlColors.teal,
+  HuddlColors.primary,
+  Color(0xFF7B61FF),
 ];
 
 // ─── Source badge helpers ─────────────────────────────────────────────────────
@@ -686,7 +678,17 @@ class _ServiceSearchRowState extends State<_ServiceSearchRow> {
       final quote = await _showEndorseDialog();
       if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
       await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
-      if (mounted) setState(() { _hasEndorsed = true; _count = _count + 1; });
+      if (mounted) {
+        setState(() { _hasEndorsed = true; _count = _count + 1; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("You've endorsed ${widget.listing.name}!"),
+            backgroundColor: HuddlColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
     if (mounted) setState(() => _endorsing = false);
   }
@@ -918,7 +920,17 @@ class _ListingCardState extends State<_ListingCard> {
       final quote = await _showEndorseDialog();
       if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
       await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
-      if (mounted) setState(() { _hasEndorsed = true; _count = _count + 1; });
+      if (mounted) {
+        setState(() { _hasEndorsed = true; _count = _count + 1; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("You've endorsed ${widget.listing.name}!"),
+            backgroundColor: HuddlColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
     }
     if (mounted) setState(() => _endorsing = false);
   }
@@ -930,7 +942,7 @@ class _ListingCardState extends State<_ListingCard> {
           return AlertDialog(
             backgroundColor: context.hc.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text('Endorse \${widget.listing.name}',
+            title: Text('Endorse ${widget.listing.name}',
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -973,6 +985,53 @@ class _ListingCardState extends State<_ListingCard> {
           );
         },
       );
+
+  // Builds 1-3 overlapping coloured initial circles from real endorser data.
+  // Falls back to category-coloured circles if recentEndorsements is sparse.
+  List<Widget> _buildAvatarStack(ServiceListing listing, Color catColor) {
+    final endorsers = listing.recentEndorsements;
+    const int max = 3;
+    final int shown = endorsers.length.clamp(0, max);
+    final palette = _kAvatarPalette;
+    return [
+      SizedBox(
+        width: 6.0 + (shown > 0 ? shown * 18.0 : 18.0),
+        height: 24,
+        child: Stack(
+          children: [
+            for (int i = 0; i < (shown > 0 ? shown : 1); i++)
+              Positioned(
+                left: i * 18.0,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: palette[i % palette.length].withValues(alpha: 0.18),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Center(
+                    child: Text(
+                      shown > 0
+                          ? (endorsers[i].firstName.isNotEmpty
+                              ? endorsers[i].firstName[0].toUpperCase()
+                              : '?')
+                          : '?',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: palette[i % palette.length],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 6),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1136,44 +1195,15 @@ class _ListingCardState extends State<_ListingCard> {
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
               child: Row(
                 children: [
-                  // Overlapping avatar circles — deterministic from listing id
-                  SizedBox(
-                    width: 62,
-                    height: 24,
-                    child: Stack(
-                      children: [
-                        for (int i = 0; i < 3; i++)
-                          Positioned(
-                            left: i * 18.0,
-                            child: Container(
-                              width: 24,
-                              height: 24,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 1.5),
-                              ),
-                              child: ClipOval(
-                                child: Image.network(
-                                  _kAvatarPool[
-                                      (listing.id.hashCode + i).abs() % _kAvatarPool.length],
-                                  width: 24,
-                                  height: 24,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: catColor.withValues(alpha: 0.25),
-                                    child: Icon(Icons.person, size: 12, color: catColor),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
+                  // Overlapping avatar circles — real endorser initials or placeholder
+                  if (_count > 0) ...
+                    _buildAvatarStack(listing, catColor)
+                  else
+                    const SizedBox(width: 8),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      _count > 0 ? '\$_count endorsed' : '0 endorsements',
+                      _count > 0 ? '$_count endorsed' : '0 endorsements',
                       style: GoogleFonts.poppins(
                         fontSize: 11,
                         color: context.hc.textTertiary,
@@ -1316,11 +1346,23 @@ class _ListingDetailSheet extends StatefulWidget {
 class _ListingDetailSheetState extends State<_ListingDetailSheet> {
   List<ServiceEndorsement> _endorsements = [];
   bool _loadingEndorsements = true;
+  // Endorse state mirrored locally so the detail sheet updates without reload
+  late bool _hasEndorsed;
+  late int _endorseCount;
+  bool _endorsing = false;
 
   @override
   void initState() {
     super.initState();
+    _hasEndorsed = widget.listing.hasEndorsed;
+    _endorseCount = widget.listing.endorsementCount;
     _load();
+    _checkEndorsed();
+  }
+
+  Future<void> _checkEndorsed() async {
+    final result = await widget.service.hasEndorsed(widget.listing.id);
+    if (mounted) setState(() => _hasEndorsed = result);
   }
 
   Future<void> _load() async {
@@ -1332,6 +1374,40 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
         _loadingEndorsements = false;
       });
     }
+  }
+
+  Future<void> _toggleEndorse() async {
+    if (_endorsing) return;
+    setState(() => _endorsing = true);
+    HapticFeedback.mediumImpact();
+    if (_hasEndorsed) {
+      await widget.service.removeEndorsement(widget.listing.id);
+      if (mounted) {
+        setState(() {
+          _hasEndorsed = false;
+          _endorseCount = (_endorseCount - 1).clamp(0, 9999);
+        });
+      }
+    } else {
+      await widget.service.endorseListing(widget.listing.id);
+      if (mounted) {
+        setState(() {
+          _hasEndorsed = true;
+          _endorseCount = _endorseCount + 1;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("You've endorsed ${widget.listing.name}!"),
+            backgroundColor: HuddlColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // Reload endorsements list to show new entry
+        _load();
+      }
+    }
+    if (mounted) setState(() => _endorsing = false);
   }
 
   @override
@@ -1549,32 +1625,84 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
               children: [
                 _StatPill(
                   icon: Icons.thumb_up_rounded,
-                  label: '${listing.endorsementCount} endorsements',
+                  label: '$_endorseCount ${_endorseCount == 1 ? "endorsement" : "endorsements"}',
                   color: HuddlColors.teal,
                 ),
                 const SizedBox(width: 8),
                 _StatPill(
                   icon: Icons.visibility_outlined,
-                  label: '${listing.viewCount} views',
+                  label: '${listing.viewCount} ${listing.viewCount == 1 ? "view" : "views"}',
                   color: HuddlColors.teal,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            // ── Endorse CTA ───────────────────────────────────────────────
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _hasEndorsed
+                      ? HuddlColors.teal.withValues(alpha: 0.1)
+                      : HuddlColors.primary,
+                  foregroundColor:
+                      _hasEndorsed ? HuddlColors.teal : Colors.white,
+                  elevation: _hasEndorsed ? 0 : 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: _hasEndorsed
+                        ? BorderSide(
+                            color: HuddlColors.teal.withValues(alpha: 0.4))
+                        : BorderSide.none,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: _endorsing ? null : _toggleEndorse,
+                icon: _endorsing
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color:
+                              _hasEndorsed ? HuddlColors.teal : Colors.white,
+                        ),
+                      )
+                    : Icon(
+                        _hasEndorsed
+                            ? Icons.thumb_up_rounded
+                            : Icons.thumb_up_off_alt_rounded,
+                        size: 18,
+                      ),
+                label: Text(
+                  _hasEndorsed ? 'Endorsed' : 'Endorse this service',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             // ── Contact CTAs ─────────────────────────────────────────────
             if (listing.phone != null) ...[
               _ContactRow(
                 icon: Icons.phone_outlined,
                 label: listing.phone!,
                 color: HuddlColors.teal,
-                onTap: () {
+                onTap: () async {
                   HapticFeedback.selectionClick();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Call ${listing.phone}'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  final uri = Uri(scheme: 'tel', path: listing.phone);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Cannot call ${listing.phone}'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 8),
@@ -1584,14 +1712,25 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                 icon: Icons.language_outlined,
                 label: listing.website!,
                 color: HuddlColors.teal,
-                onTap: () {
+                onTap: () async {
                   HapticFeedback.selectionClick();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Opening ${listing.website}'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  final raw = listing.website!;
+                  final hasScheme = raw.startsWith('http://') ||
+                      raw.startsWith('https://');
+                  final uri = Uri.parse(hasScheme ? raw : 'https://$raw');
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri,
+                        mode: LaunchMode.externalApplication);
+                  } else {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Cannot open ${listing.website}'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 8),
@@ -1654,7 +1793,7 @@ class _ListingDetailSheetState extends State<_ListingDetailSheet> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${listing.endorsementCount}',
+                    '$_endorseCount',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
