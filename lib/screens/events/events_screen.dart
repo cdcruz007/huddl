@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/huddl_colors.dart';
 import '../../services/meetup_service.dart';
@@ -16,6 +18,8 @@ import '../../services/ai_event_recommender_service.dart';
 import '../../services/ai_event_discovery_service.dart';
 import '../../services/invisible_ai_service.dart';
 import '../../services/discover_ai_service.dart';
+import '../../services/location_service.dart';
+import '../../services/geocoding_service.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../services/postcode_service.dart';
 import '../groups/groups_screen.dart' show DiscoverGroupsTab;
@@ -600,6 +604,18 @@ class _MeetupsTabState extends State<_MeetupsTab> {
   bool _aiReady = false;
   SmartNudge? _activeNudge; // contextual banner shown above the list
 
+  // ── Distance filter — GPS + geocoding ───────────────────────
+  /// The user's GPS position, fetched once when the filter sheet opens.
+  Position? _userPosition;
+  /// Status from the last location fetch attempt.
+  LocationStatus? _locationStatus;
+  /// Singleton services
+  final LocationService _locationService = LocationService();
+  final GeocodingService _geocodingService = GeocodingService();
+  /// Pre-geocoded lat/lng cache for meetup locations (keyed by location string).
+  /// Shared across filter calls — avoids re-geocoding on every build.
+  final Map<String, _LatLng?> _meetupLatLngCache = {};
+
   // ── Local search ──────────────────────────────────────────────
   bool _isSearchActive = false;
   String _localSearchQuery = '';
@@ -665,6 +681,46 @@ class _MeetupsTabState extends State<_MeetupsTab> {
     _initAi();
     _loadUserProfile();
     widget.searchTrigger.addListener(_onSearchTrigger);
+    // Silently attempt location fetch on tab init so it's ready when the
+    // filter sheet opens.  We do NOT ask for permission here — that happens
+    // only when the user opens the filter sheet.
+    _prefetchLocation();
+  }
+
+  Future<void> _prefetchLocation() async {
+    // Only fetch if already granted — no permission dialog on tab open.
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      final result = await _locationService.getUserPosition();
+      if (mounted && result.hasPosition) {
+        setState(() {
+          _userPosition = result.position;
+          _locationStatus = LocationStatus.success;
+        });
+        // Pre-warm geocoding cache for currently visible meetup addresses
+        unawaited(_geocodingService.prewarm(
+          widget.meetupService.meetups.map((m) => m.location),
+        ));
+      }
+    }
+  }
+
+  /// Called when the user taps "Enable location" in the filter sheet.
+  Future<void> _requestLocationPermission(VoidCallback onUpdate) async {
+    final result = await _locationService.getUserPosition();
+    if (mounted) {
+      setState(() {
+        _userPosition = result.position;
+        _locationStatus = result.status;
+      });
+      onUpdate();
+      if (result.hasPosition) {
+        unawaited(_geocodingService.prewarm(
+          widget.meetupService.meetups.map((m) => m.location),
+        ));
+      }
+    }
   }
 
   void _onSearchTrigger() {
@@ -855,7 +911,39 @@ class _MeetupsTabState extends State<_MeetupsTab> {
       ).toList();
     }
 
-    // ── 8. Sort ───────────────────────────────────────────────────
+    // ── 8. Distance filter ────────────────────────────────────────
+    // Only active when: (a) user has a GPS position AND (b) slider is not
+    // at max (50 km = "any distance").
+    if (_userPosition != null && _distanceKm < 50.0) {
+      result = result.where((m) {
+        // Skip distance check for online / TBC locations
+        final loc = m.location.trim().toLowerCase();
+        if (loc.isEmpty || loc == 'online' || loc.contains('online event') ||
+            loc == 'tbc' || loc == 'tbd') {
+          return true; // always include vague locations
+        }
+        // Use already-geocoded result from cache if available
+        final cacheKey = m.location.trim().toLowerCase();
+        if (_meetupLatLngCache.containsKey(cacheKey)) {
+          final cached = _meetupLatLngCache[cacheKey];
+          if (cached == null) return true; // unresolvable → include
+          final km = LocationService.distanceInKm(
+            _userPosition!, cached.lat, cached.lng);
+          return km <= _distanceKm;
+        }
+        // Not yet geocoded — include and geocode asynchronously
+        _geocodingService.geocode(m.location).then((latLng) {
+          if (!mounted) return;
+          setState(() {
+            _meetupLatLngCache[cacheKey] =
+                latLng != null ? _LatLng(latLng.lat, latLng.lng) : null;
+          });
+        });
+        return true; // optimistic include until geocoded
+      }).toList();
+    }
+
+    // ── 9. Sort ───────────────────────────────────────────────────
     if (_sortBy == 'latest') {
       result.sort((a, b) => a.dateTime.compareTo(b.dateTime));
     } else {
@@ -1534,6 +1622,44 @@ class _MeetupsTabState extends State<_MeetupsTab> {
                               ],
                             ),
                           ),
+                          // Location status banner (shown only when GPS unavailable)
+                          if (_userPosition == null) ...[
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () {
+                                if (_locationStatus == LocationStatus.permissionDeniedForever) {
+                                  _locationService.openSettings();
+                                } else {
+                                  _requestLocationPermission(() => setSheetState(() {}));
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFF9E9E9E)),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _locationStatus == LocationStatus.permissionDeniedForever
+                                            ? 'Distance filter needs location. Tap to open Settings.'
+                                            : _locationStatus == LocationStatus.serviceDisabled
+                                                ? 'Enable location services to filter by distance.'
+                                                : 'Tap to enable location and filter by distance.',
+                                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF757575)),
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
 
                           // ══ SECTION 3 — SHOW MEETUPS FOR (checkboxes) ═════
@@ -2794,6 +2920,14 @@ class _EventsTabState extends State<_EventsTab> {
   Map<String, dynamic> _activeParsedFilters = {};
 
   // ── Manual filter state (set via bottom sheet) ─────────────
+  // ── Distance filter ─── GPS + geocoding ──────────────────────────────────
+  Position? _evUserPosition;
+  LocationStatus? _evLocationStatus;
+  final LocationService _evLocationService = LocationService();
+  final GeocodingService _evGeocodingService = GeocodingService();
+  final Map<String, _LatLng?> _evLatLngCache = {};
+
+  // ── Manual filter state (set via bottom sheet) ──────────────
   String _priceFilter = 'All';   // All | Free | Paid
   String _formatFilter = 'All';  // All | Online | In-Person
 
@@ -2821,6 +2955,42 @@ class _EventsTabState extends State<_EventsTab> {
     _initServices();
     _loadEventsUserProfile();
     widget.searchTrigger.addListener(_onSearchTrigger);
+    _prefetchEvLocation();
+  }
+
+  Future<void> _prefetchEvLocation() async {
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      final result = await _evLocationService.getUserPosition();
+      if (mounted && result.hasPosition) {
+        setState(() {
+          _evUserPosition = result.position;
+          _evLocationStatus = LocationStatus.success;
+        });
+        final locations = widget.eventService.eventMaps
+            .map((e) => e['location'] as String? ?? '')
+            .where((l) => l.isNotEmpty);
+        unawaited(_evGeocodingService.prewarm(locations));
+      }
+    }
+  }
+
+  Future<void> _requestEvLocationPermission(VoidCallback onUpdate) async {
+    final result = await _evLocationService.getUserPosition();
+    if (mounted) {
+      setState(() {
+        _evUserPosition = result.position;
+        _evLocationStatus = result.status;
+      });
+      onUpdate();
+      if (result.hasPosition) {
+        final locations = widget.eventService.eventMaps
+            .map((e) => e['location'] as String? ?? '')
+            .where((l) => l.isNotEmpty);
+        unawaited(_evGeocodingService.prewarm(locations));
+      }
+    }
   }
 
   @override
@@ -2965,6 +3135,44 @@ class _EventsTabState extends State<_EventsTab> {
         if (_formatFilter == 'In-Person') return e['isOnline'] != true;
         return true;
       }).toList();
+    }
+
+    // ── Distance filter ──────────────────────────────────────────────────────
+    // Only active when: (a) user has a GPS position AND (b) slider < 50 km max.
+    if (_evUserPosition != null && _evDistanceKm < 50.0) {
+      final List<Map<String, dynamic>> distanceFiltered = [];
+      for (final e in events) {
+        final address = (e['location'] as String? ?? '').trim();
+        final loc = address.toLowerCase();
+        // Always include vague / online locations
+        if (loc.isEmpty || loc == 'online' || loc.contains('online event') ||
+            loc == 'tbc' || loc == 'tbd') {
+          distanceFiltered.add(e);
+          continue;
+        }
+        final cacheKey = loc;
+        if (_evLatLngCache.containsKey(cacheKey)) {
+          final cached = _evLatLngCache[cacheKey];
+          if (cached == null) {
+            distanceFiltered.add(e); // unresolvable → include
+          } else {
+            final km = LocationService.distanceInKm(
+                _evUserPosition!, cached.lat, cached.lng);
+            if (km <= _evDistanceKm) distanceFiltered.add(e);
+          }
+        } else {
+          // Not yet geocoded — include optimistically; geocode async
+          distanceFiltered.add(e);
+          _evGeocodingService.geocode(address).then((latLng) {
+            if (!mounted) return;
+            setState(() {
+              _evLatLngCache[cacheKey] =
+                  latLng != null ? _LatLng(latLng.lat, latLng.lng) : null;
+            });
+          });
+        }
+      }
+      events = distanceFiltered;
     }
 
     // AI-powered intelligent sort
@@ -3862,6 +4070,44 @@ class _EventsTabState extends State<_EventsTab> {
                               ],
                             ),
                           ),
+                          // Location status banner (shown only when GPS unavailable)
+                          if (_evUserPosition == null) ...[
+                            const SizedBox(height: 8),
+                            GestureDetector(
+                              onTap: () {
+                                if (_evLocationStatus == LocationStatus.permissionDeniedForever) {
+                                  _evLocationService.openSettings();
+                                } else {
+                                  _requestEvLocationPermission(() => setSheetState(() {}));
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF5F5F5),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_off_rounded, size: 18, color: Color(0xFF9E9E9E)),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _evLocationStatus == LocationStatus.permissionDeniedForever
+                                            ? 'Distance filter needs location. Tap to open Settings.'
+                                            : _evLocationStatus == LocationStatus.serviceDisabled
+                                                ? 'Enable location services to filter by distance.'
+                                                : 'Tap to enable location and filter by distance.',
+                                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF757575)),
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFBDBDBD)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 24),
 
                           // ── SECTION 3: PARTICIPANTS ────────────
@@ -5486,4 +5732,14 @@ class _SmartNudgeBanner extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── _LatLng ─────────────────────────────────────────────────────────────────
+// Lightweight lat/lng holder used by the distance-filter cache in both
+// _MeetupsTabState and _EventsTabState.  Avoids importing LatLng from the
+// GeocodingService directly (which would create a circular dependency).
+class _LatLng {
+  final double lat;
+  final double lng;
+  const _LatLng(this.lat, this.lng);
 }
