@@ -90,6 +90,7 @@ class _ServicesScreenState extends State<ServicesScreen>
 
   ServiceCategory? _selectedCategory;
   String _searchQuery = '';
+  bool _isSearchActive = false;
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocus = FocusNode();
 
@@ -101,14 +102,25 @@ class _ServicesScreenState extends State<ServicesScreen>
     _triggerAiRefreshIfDue();
   }
 
-  // AppBar magnifier tap focuses the always-visible search bar directly
+  // AppBar magnifier tap activates search mode (inline bar + compact rows)
   void _onSearchTrigger() {
     if (widget.searchTrigger.value) {
       widget.searchTrigger.value = false;
+      setState(() => _isSearchActive = true);
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        _searchFocus.requestFocus();
+        if (mounted) _searchFocus.requestFocus();
       });
     }
+  }
+
+  /// Exits search mode and resets query — called by Cancel tap or back gesture.
+  void _deactivateSearch() {
+    _searchCtrl.clear();
+    _searchFocus.unfocus();
+    setState(() {
+      _isSearchActive = false;
+      _searchQuery = '';
+    });
   }
 
   Future<void> _triggerAiRefreshIfDue() async {
@@ -178,165 +190,189 @@ class _ServicesScreenState extends State<ServicesScreen>
       backgroundColor: HuddlColors.background,
       body: Column(
         children: [
-          // ══ TOP HEADER — always-visible search + filter pill ══════════════
-          // Matches Groups and Meetups exactly:
-          //   Row 1: persistent pill search bar (height 40, inputBg, orange icon)
-          //   Row 2: filter pill + optional Clear link
-          //   Row 3: section label ("Suggested for you" / "Search results")
-          Container(
-            color: hc.surface,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Row 1: Search bar — always visible (Groups/Meetups style) ─
-                Container(
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: hc.inputBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
+          // ══ TOP HEADER ═══════════════════════════════════════════════════════
+          // Default  : filter pill + "Suggested for you" label
+          // Search   : inline search bar pill only (matches Groups/Meetups exactly)
+          if (!_isSearchActive)
+            // ── Default header: filter pill + section label ────────────────
+            Container(
+              color: hc.surface,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Filter pill row
+                  Row(
                     children: [
-                      const Padding(
-                        padding: EdgeInsets.only(left: 12, right: 6),
-                        child: Icon(Icons.search, size: 18,
-                            color: HuddlColors.primary),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _searchCtrl,
-                          focusNode: _searchFocus,
-                          textAlignVertical: TextAlignVertical.center,
-                          onChanged: (v) =>
-                              setState(() => _searchQuery = v.trim()),
-                          style: GoogleFonts.poppins(
-                              fontSize: 14, color: filterText),
-                          decoration: InputDecoration(
-                            hintText: 'Search services…',
-                            hintStyle: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: HuddlColors.textTertiary,
-                            ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            isDense: true,
-                            contentPadding:
-                                const EdgeInsets.only(bottom: 2),
-                          ),
-                        ),
-                      ),
-                      if (_searchQuery.isNotEmpty)
-                        GestureDetector(
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            setState(() => _searchQuery = '');
-                            _searchCtrl.clear();
-                            _searchFocus.unfocus();
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(Icons.close,
-                                size: 16,
-                                color: HuddlColors.textTertiary),
-                          ),
-                        )
-                      else
-                        const SizedBox(width: 10),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                // ── Row 2: Filter pill + Clear ────────────────────────────────
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showCategorySheet(context),
-                      child: Container(
-                        height: 36,
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        decoration: BoxDecoration(
-                          color: hasActiveFilter
-                              ? HuddlColors.primary.withValues(alpha: 0.08)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
+                      GestureDetector(
+                        onTap: () => _showCategorySheet(context),
+                        child: Container(
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
                             color: hasActiveFilter
-                                ? HuddlColors.primary.withValues(alpha: 0.3)
-                                : hc.divider,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.tune_rounded,
-                              size: 16,
+                                ? HuddlColors.primary.withValues(alpha: 0.08)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
                               color: hasActiveFilter
-                                  ? HuddlColors.primary
-                                  : filterText,
+                                  ? HuddlColors.primary.withValues(alpha: 0.3)
+                                  : hc.divider,
+                              width: 1,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              hasActiveFilter
-                                  ? _selectedCategory!.displayName
-                                  : 'Filter by category',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.tune_rounded,
+                                size: 16,
                                 color: hasActiveFilter
                                     ? HuddlColors.primary
                                     : filterText,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (hasActiveFilter) ...[
-                      const SizedBox(width: 10),
-                      GestureDetector(
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          setState(() => _selectedCategory = null);
-                        },
-                        child: Text(
-                          'Clear',
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: HuddlColors.primary,
+                              const SizedBox(width: 6),
+                              Text(
+                                hasActiveFilter
+                                    ? _selectedCategory!.displayName
+                                    : 'Filter by category',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: hasActiveFilter
+                                      ? HuddlColors.primary
+                                      : filterText,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
+                      if (hasActiveFilter) ...[
+                        const SizedBox(width: 10),
+                        GestureDetector(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            setState(() => _selectedCategory = null);
+                          },
+                          child: Text(
+                            'Clear',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: HuddlColors.primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-
-                const SizedBox(height: 12),
-
-                // ── Row 3: Section label ──────────────────────────────────────
-                Text(
-                  _searchQuery.isEmpty ? 'Suggested for you' : 'Search results',
-                  style: GoogleFonts.poppins(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: filterText,
                   ),
-                ),
-                const SizedBox(height: 4),
-              ],
+                  const SizedBox(height: 12),
+                  // Section label
+                  Text(
+                    'Suggested for you',
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: filterText,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                ],
+              ),
             ),
-          ),
+
+          if (_isSearchActive)
+            // ── Search header: inline pill + Cancel (Groups/Meetups pattern) ─
+            Container(
+              color: hc.surface,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: hc.inputBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(left: 12, right: 6),
+                            child: Icon(Icons.search, size: 18,
+                                color: HuddlColors.primary),
+                          ),
+                          Expanded(
+                            child: TextField(
+                              controller: _searchCtrl,
+                              focusNode: _searchFocus,
+                              textAlignVertical: TextAlignVertical.center,
+                              onChanged: (v) =>
+                                  setState(() => _searchQuery = v.trim()),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 14, color: filterText),
+                              decoration: InputDecoration(
+                                hintText: 'Search services…',
+                                hintStyle: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  color: HuddlColors.textTertiary,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                isDense: true,
+                                contentPadding:
+                                    const EdgeInsets.only(bottom: 2),
+                              ),
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty)
+                            GestureDetector(
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                setState(() => _searchQuery = '');
+                                _searchCtrl.clear();
+                              },
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Icon(Icons.close,
+                                    size: 16,
+                                    color: HuddlColors.textTertiary),
+                              ),
+                            )
+                          else
+                            const SizedBox(width: 10),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Cancel — exits search mode entirely (back to big cards)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      _deactivateSearch();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Text(
+                        'Cancel',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: HuddlColors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           // ── Listing stream ────────────────────────────────────────────────
           Expanded(
             child: ColoredBox(
-              color: HuddlColors.background,
+              color: _isSearchActive ? hc.surface : HuddlColors.background,
               child: StreamBuilder<List<ServiceListing>>(
                 stream: _service.listingsStream(category: _selectedCategory),
                 builder: (context, snap) {
@@ -375,6 +411,19 @@ class _ServicesScreenState extends State<ServicesScreen>
                     );
                   }
 
+                  if (_isSearchActive) {
+                    // ── Compact search result rows (Groups/Meetups pattern) ──
+                    return ListView.builder(
+                      padding: const EdgeInsets.only(top: 4, bottom: 80),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) => _ServiceSearchRow(
+                        listing: filtered[i],
+                        service: _service,
+                      ),
+                    );
+                  }
+
+                  // ── Default: full hero-image cards ──────────────────────
                   return ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
                     itemCount: filtered.length,
@@ -577,6 +626,237 @@ class _BadgePill extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Search result row — compact Meetups-style (shown when _isSearchActive) ──────────────
+// Thumbnail 56×56 left | CATEGORY / Name / Location · Count | Endorse pill right
+
+class _ServiceSearchRow extends StatefulWidget {
+  final ServiceListing listing;
+  final LocalServicesService service;
+  const _ServiceSearchRow({required this.listing, required this.service});
+  @override
+  State<_ServiceSearchRow> createState() => _ServiceSearchRowState();
+}
+
+class _ServiceSearchRowState extends State<_ServiceSearchRow> {
+  bool _hasEndorsed = false;
+  bool _endorsing   = false;
+  late int _count;
+
+  @override
+  void initState() {
+    super.initState();
+    _hasEndorsed = widget.listing.hasEndorsed;
+    _count       = widget.listing.endorsementCount;
+    _checkEndorsed();
+  }
+
+  Future<void> _checkEndorsed() async {
+    final result = await widget.service.hasEndorsed(widget.listing.id);
+    if (mounted) setState(() => _hasEndorsed = result);
+  }
+
+  Future<void> _toggleEndorse() async {
+    if (_endorsing) return;
+    setState(() => _endorsing = true);
+    HapticFeedback.mediumImpact();
+    if (_hasEndorsed) {
+      await widget.service.removeEndorsement(widget.listing.id);
+      if (mounted) setState(() { _hasEndorsed = false; _count = (_count - 1).clamp(0, 9999); });
+    } else {
+      final quote = await _showEndorseDialog();
+      if (quote == null) { if (mounted) setState(() => _endorsing = false); return; }
+      await widget.service.endorseListing(widget.listing.id, quote: quote.isEmpty ? null : quote);
+      if (mounted) setState(() { _hasEndorsed = true; _count = _count + 1; });
+    }
+    if (mounted) setState(() => _endorsing = false);
+  }
+
+  Future<String?> _showEndorseDialog() => showDialog<String>(
+        context: context,
+        builder: (ctx) {
+          final ctrl = TextEditingController();
+          return AlertDialog(
+            backgroundColor: context.hc.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text('Endorse ${widget.listing.name}',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Add a personal note (optional)',
+                    style: GoogleFonts.poppins(fontSize: 13, color: context.hc.textSecondary)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: ctrl,
+                  maxLines: 3,
+                  maxLength: 120,
+                  style: GoogleFonts.poppins(fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: '"Reliable, insured, brilliant with our kids"',
+                    hintStyle: GoogleFonts.poppins(fontSize: 12, color: context.hc.textTertiary),
+                    filled: true,
+                    fillColor: context.hc.inputBg,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.all(12),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, null),
+                  child: Text('Cancel',
+                      style: GoogleFonts.poppins(color: context.hc.textSecondary))),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: HuddlColors.primary,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                onPressed: () => Navigator.pop(ctx, ctrl.text.trim()),
+                child: Text('Endorse',
+                    style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
+            ],
+          );
+        },
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final listing = widget.listing;
+    final catColor = _categoryColor(listing.category);
+    final imageUrl = (listing.imageUrl?.isNotEmpty == true)
+        ? listing.imageUrl!
+        : (_kCategoryImages[listing.category] ?? _kCategoryImages[ServiceCategory.other]!);
+    final locationText = listing.tagline.isNotEmpty ? listing.tagline : listing.borough;
+    final countText = _count > 0 ? '$_count endorsements' : '0 endorsements';
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        widget.service.recordView(listing.id);
+        _showListingDetail(context, listing, widget.service);
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        color: context.hc.surface,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            // ── Square thumbnail 56×56 ────────────────────────────────────
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: catColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      listing.name.isNotEmpty ? listing.name[0].toUpperCase() : 'S',
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: catColor,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // ── 3-line text block ─────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    listing.category.displayName.toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: context.hc.textTertiary,
+                      letterSpacing: 0.4,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    listing.name,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: context.hc.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$locationText  ·  $countText',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: context.hc.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            // ── Endorse / Endorsed pill (mirrors Meetups Join pill) ───────
+            GestureDetector(
+              onTap: _endorsing ? null : _toggleEndorse,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _hasEndorsed
+                      ? HuddlColors.teal.withValues(alpha: 0.1)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _hasEndorsed
+                        ? HuddlColors.teal.withValues(alpha: 0.4)
+                        : context.hc.divider,
+                  ),
+                ),
+                child: _endorsing
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _hasEndorsed ? HuddlColors.teal : HuddlColors.primary,
+                        ),
+                      )
+                    : Text(
+                        _hasEndorsed ? 'Endorsed' : 'Endorse',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: _hasEndorsed ? HuddlColors.teal : context.hc.textPrimary,
+                        ),
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
