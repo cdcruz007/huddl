@@ -48,22 +48,40 @@ void main() async {
     debugPrint('Firebase init error: $e');
   }
 
-  // ── One-time data reset (safe version — runs AFTER Firebase init) ─────────
-  // v4: Only clears BrowserStorage when no Firebase Auth session is active.
-  //     The old v3 reset ran unconditionally and cleared SharedPreferences for
-  //     returning signed-in users, wiping cached name/postcode/etc. on install.
-  //     That empty local data was then pushed back to Firestore by
-  //     syncCurrentUserProfile(), overwriting real profile data with blanks.
+  // ── One-time data reset (safe version v5 — waits for async auth restore) ────
+  // v5 fix: On web, FirebaseAuth.instance.currentUser is null immediately after
+  //         init even for signed-in users because auth state rehydration is async.
+  //         v4 used a synchronous currentUser check which returned null for all
+  //         returning web users, triggering BrowserStorage.clear() on every cold
+  //         start and wiping cached name/postcode/etc.
+  //
+  //         Fix: await authStateChanges().first with a short timeout so we get
+  //         the real auth state before deciding whether to clear storage.
+  //         If the timeout fires (e.g. no network) we default to NOT clearing —
+  //         better to show stale data than to wipe a real user's local cache.
   try {
-    final resetDone = await BrowserStorage.getString('data_reset_v4');
+    final resetDone = await BrowserStorage.getString('data_reset_v5');
     if (resetDone == null) {
-      // Firebase is now initialized — we can safely check current user
-      final hasFirebaseUser = FirebaseAuth.instance.currentUser != null;
+      // Wait for Firebase Auth to rehydrate the session (up to 4s).
+      // On web this bridges the async gap between init() and currentUser.
+      bool hasFirebaseUser = false;
+      try {
+        final user = await FirebaseAuth.instance
+            .authStateChanges()
+            .first
+            .timeout(const Duration(seconds: 4));
+        hasFirebaseUser = user != null;
+      } catch (_) {
+        // Timeout or error — assume user might be signed in, do NOT clear
+        hasFirebaseUser = true;
+      }
+
       if (!hasFirebaseUser) {
-        // No signed-in user: safe to clear stale demo/legacy cache
+        // Truly no signed-in user: safe to clear stale demo/legacy cache
         await BrowserStorage.clear();
       }
-      // Mark both v3 and v4 done regardless of whether we cleared
+      // Mark v3, v4, v5 all done so we never re-run any of them
+      await BrowserStorage.setString('data_reset_v5', 'done');
       await BrowserStorage.setString('data_reset_v4', 'done');
       await BrowserStorage.setString('data_reset_v3', 'done');
     }
@@ -157,11 +175,16 @@ void main() async {
   // This ensures the borough field is always up-to-date for the borough
   // member picker, including users who were already logged in before this
   // feature was added.
+  //
+  // v5 fix: Do NOT guard with currentUser != null here — on web, currentUser
+  // is still null at this point even for authenticated users (async rehydration).
+  // syncCurrentUserProfile() has its own uid == null guard inside and is safe
+  // to call unconditionally. By this point the v5 reset block above has already
+  // awaited authStateChanges().first, which triggers auth rehydration, so
+  // currentUser SHOULD be non-null — but we skip the guard to be safe.
   try {
-    if (FirebaseAuth.instance.currentUser != null) {
-      await HuddlUserService().syncCurrentUserProfile()
-          .timeout(const Duration(seconds: 5));
-    }
+    await HuddlUserService().syncCurrentUserProfile()
+        .timeout(const Duration(seconds: 8));
   } catch (_) {}
 
   // ── Push notifications — DEFERRED to MainShell ────────────────────────

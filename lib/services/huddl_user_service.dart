@@ -115,6 +115,27 @@ class HuddlUserService {
             _onboarding.setPhoneNumber(subscriber, countryCode: firestoreCountry);
             _onboarding.setPhoneVerified(true);
           }
+          // ── Restore children, bio, borough — missing from original restore ──
+          final firestoreChildren = data['children'];
+          if (firestoreChildren is List && firestoreChildren.isNotEmpty && _onboarding.children.isEmpty) {
+            final parsed = firestoreChildren
+                .whereType<Map>()
+                .map((c) => {
+                      'name': (c['name'] as String?) ?? '',
+                      'birthday': (c['birthday'] as String?) ?? '',
+                    })
+                .where((c) => c['name']!.isNotEmpty)
+                .toList();
+            if (parsed.isNotEmpty) _onboarding.setChildren(parsed);
+          }
+          final firestoreBio = (data['bio'] as String?) ?? '';
+          if (firestoreBio.isNotEmpty && (_onboarding.bio == null || _onboarding.bio!.isEmpty)) {
+            _onboarding.setBio(firestoreBio);
+          }
+          final firestoreBorough = (data['borough'] as String?) ?? '';
+          if (firestoreBorough.isNotEmpty && (_onboarding.borough == null || _onboarding.borough!.isEmpty)) {
+            _onboarding.setBorough(firestoreBorough);
+          }
           _log('syncCurrentUserProfile: restored local state from Firestore for uid=$uid');
 
           // Only update presence fields — DO NOT overwrite data-bearing fields
