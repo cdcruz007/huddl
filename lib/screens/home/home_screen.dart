@@ -26,7 +26,7 @@ import '../../services/ai_feed_service.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../services/daily_ai_refresh_service.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
 import '../../services/firebase_auth_service.dart';
 import '../../services/huddl_notification_service.dart';
 import '../../services/rehome_service.dart';
@@ -4475,37 +4475,11 @@ class _CommentsSheetState extends State<_CommentsSheet> {
             // ── Comment list ────────────────────────────────────────────────
             Flexible(
               child: _comments.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              HuddlIllustration.chat,
-                              height: 100,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, __, ___) => Icon(
-                                Icons.chat_bubble_outline,
-                                size: 40,
-                                color: hc.textTertiary.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No comments yet',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 14, color: hc.textTertiary),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Be the first to comment!',
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, color: HuddlColors.textLight),
-                            ),
-                          ],
-                        ),
-                      ),
+                  ? const HuddlEmptyState(
+                      mood: HuddlMood.waving,
+                      title: 'No comments yet',
+                      subtitle: 'Be the first to comment!',
+                      characterSize: 100,
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.all(16),

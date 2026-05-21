@@ -15,7 +15,8 @@ import 'item_detail_screen.dart';
 import '../rehome/create_listing_screen.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../widgets/borough_badge.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
+import '../../widgets/huddl_empty_states.dart';
 
 
 
@@ -1596,7 +1597,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: items.isEmpty
               ? _buildEmptyState(
                   hc: hc,
-                  illustration: HuddlIllustration.marketplaceEmpty,
+                  illustration: 'marketplace',
                   title: 'No items found',
                   subtitle: _hasActiveFilters || _searchQuery.isNotEmpty
                       ? 'Try adjusting your filters to see more results.'
@@ -1755,7 +1756,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
             child: filtered.isEmpty
                 ? _buildEmptyState(
                     hc: hc,
-                    illustration: HuddlIllustration.marketplaceEmpty,
+                    illustration: 'marketplace',
                     title: 'No listings found',
                     subtitle: 'Try a different search term.',
                   )
@@ -1818,7 +1819,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
                 padding: const EdgeInsets.only(top: 32),
                 child: _buildEmptyState(
                   hc: hc,
-                  illustration: HuddlIllustration.marketplaceEmpty,
+                  illustration: 'marketplace',
                   title: 'No listings yet',
                   subtitle: 'Tap above to snap a photo and list your first item.',
                 ),
@@ -2561,7 +2562,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
         liveRegion: true,
         child: _buildEmptyState(
           hc: hc,
-          illustration: HuddlIllustration.saved,
+          illustration: 'saved',
           title: 'No saved items',
           subtitle: 'Tap the heart on items you love\nto save them here.',
         ),
@@ -2588,7 +2589,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
           child: saved.isEmpty
               ? _buildEmptyState(
                   hc: hc,
-                  illustration: HuddlIllustration.saved,
+                  illustration: 'saved',
                   title: 'No saved items found',
                   subtitle: 'Try a different search term.',
                 )
@@ -2634,65 +2635,39 @@ class _MarketplaceScreenState extends State<MarketplaceScreen>
   // == EMPTY STATE ===========================================================
 
   Widget _buildEmptyState({
+    // hc kept for call-site compatibility — unused after migration
     required HuddlContextColors hc,
+    // illustration kept for call-site compatibility — mood derived internally
     required String illustration,
     required String title,
     required String subtitle,
     Widget? action,
-    // Legacy icon param kept for call-sites that use action widgets inline
     IconData? icon,
   }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              illustration,
-              height: 160,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: HuddlColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Icon(
-                  icon ?? Icons.storefront_outlined,
-                  size: 40,
-                  color: HuddlColors.primary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: _adaptiveText(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: hc.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtitle,
-              style: _adaptiveText(
-                fontSize: 14,
-                color: hc.textTertiary,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
+    // Derive mood from the legacy illustration constant
+    final mood = illustration.contains('saved')
+        ? HuddlMood.neutral
+        : illustration.contains('marketplace')
+            ? HuddlMood.curious
+            : HuddlMood.neutral;
+
+    if (action != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              HuddlEmptyState(mood: mood, title: title, subtitle: subtitle),
+              const SizedBox(height: 8),
               action,
             ],
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    }
+    return HuddlEmptyState(mood: mood, title: title, subtitle: subtitle);
   }
 
   // == FAB removed — now rendered as Positioned inside Stack in build() ==

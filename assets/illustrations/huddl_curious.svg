@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- Question mark -->
+  <text x="152" y="52" font-family="Georgia, serif" font-size="32" font-weight="700" fill="#3580F0">?</text>
+  <!-- Shadow -->
+  <ellipse cx="100" cy="228" rx="42" ry="9" fill="#3580F0" opacity="0.12"/>
+  <!-- Body (slightly tilted via transform) -->
+  <g transform="rotate(-7,100,118)">
+    <circle cx="100" cy="118" r="72" fill="#3580F0"/>
+    <ellipse cx="78" cy="94" rx="26" ry="17" fill="#5B9DF5" opacity="0.35"/>
+  </g>
+  <!-- Left arm down -->
+  <path d="M36 122 Q10 140 14 166" stroke="#3580F0" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <circle cx="14" cy="172" r="14" fill="#F5E6D3"/>
+  <!-- Right arm raised to cheek -->
+  <path d="M164 112 Q188 80 172 56" stroke="#3580F0" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <circle cx="168" cy="50" r="14" fill="#F5E6D3"/>
+  <!-- Face (tilted) -->
+  <g transform="rotate(-10,100,112)">
+    <circle cx="100" cy="112" r="42" fill="#F5E6D3"/>
+    <!-- Raised eyebrow left -->
+    <path d="M80 100 Q88 95 96 100" stroke="#2c2c2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Raised eyebrow right (higher) -->
+    <path d="M104 97 Q112 91 120 97" stroke="#2c2c2c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Wide curious eyes -->
+    <ellipse cx="88" cy="108" rx="6.5" ry="7.5" fill="#2c2c2c"/>
+    <ellipse cx="112" cy="107" rx="5.5" ry="6.5" fill="#2c2c2c"/>
+    <circle cx="91" cy="105" r="2.2" fill="white"/>
+    <circle cx="115" cy="104" r="2" fill="white"/>
+    <!-- Open hmm mouth -->
+    <ellipse cx="100" cy="124" rx="8" ry="5" fill="#c0907a"/>
+  </g>
+  <!-- Scarf -->
+  <path d="M66 148 Q100 160 134 148" stroke="#E8724A" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M118 152 Q126 168 122 180" stroke="#E8724A" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <!-- Legs -->
+  <rect x="72" y="182" width="22" height="30" rx="11" fill="#2A5FBF"/>
+  <rect x="106" y="182" width="22" height="30" rx="11" fill="#2A5FBF"/>
+  <!-- Feet -->
+  <ellipse cx="83" cy="213" rx="16" ry="9" fill="#1a1a1a"/>
+  <ellipse cx="117" cy="213" rx="16" ry="9" fill="#1a1a1a"/>
+</svg>

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../services/onboarding_data_service.dart';
 import '../../theme/huddl_colors.dart';
 import '../../widgets/onboarding_progress_bar.dart';
@@ -87,12 +88,11 @@ class _ParentTypeScreenState extends State<ParentTypeScreen> {
                     // Illustration at bottom
                     const SizedBox(height: 12),
                     Center(
-                      child: Image.asset(
-                        'assets/images/illustrations/man__woman__female__male__person__shapes__shape__layout.png',
+                      child: SvgPicture.asset(
+                        'assets/illustrations/onboarding_05_role.svg',
                         height: 140,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) =>
-                            const SizedBox(height: 140),
+                        placeholderBuilder: (_) => const SizedBox(height: 140),
                       ),
                     ),
 

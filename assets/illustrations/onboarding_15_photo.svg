@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="240" height="240">
+  <!-- Outer glow circle -->
+  <circle cx="120" cy="120" r="115" fill="#E6F0FE"/>
+  <!-- Inner circle — avatar background -->
+  <circle cx="120" cy="120" r="85" fill="#3580F0"/>
+  <!-- Body sheen -->
+  <ellipse cx="96" cy="90" rx="30" ry="20" fill="#5B9DF5" opacity="0.35"/>
+  <!-- Face -->
+  <circle cx="120" cy="112" r="52" fill="#F5E6D3"/>
+  <!-- Warm closed eyes — welcoming -->
+  <path d="M103 102 Q110 96 117 102" stroke="#2c2c2c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M123 102 Q130 96 137 102" stroke="#2c2c2c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Big warm smile -->
+  <path d="M104 122 Q120 138 136 122" stroke="#2c2c2c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Rosy cheeks -->
+  <ellipse cx="100" cy="118" rx="12" ry="8" fill="#E8724A" opacity="0.2"/>
+  <ellipse cx="140" cy="118" rx="12" ry="8" fill="#E8724A" opacity="0.2"/>
+  <!-- Scarf visible at bottom of face -->
+  <path d="M86 154 Q120 168 154 154" stroke="#E8724A" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <!-- Camera icon overlay — bottom right — shows this is a photo placeholder -->
+  <circle cx="182" cy="182" r="28" fill="white"/>
+  <circle cx="182" cy="182" r="24" fill="#3580F0"/>
+  <!-- Camera body -->
+  <rect x="170" y="176" width="24" height="16" rx="3" fill="white"/>
+  <circle cx="182" cy="184" r="5" fill="#3580F0"/>
+  <rect x="177" y="173" width="10" height="5" rx="2" fill="white"/>
+</svg>

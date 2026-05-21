@@ -26,7 +26,8 @@ import '../groups/groups_screen.dart' show DiscoverGroupsTab;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
+import '../../widgets/huddl_empty_states.dart';
 import '../services/services_screen.dart';
 
 // ── Shared avatar URLs for meetup attendee stack (mirrors _kMemberAvatars in groups_screen) ──
@@ -2183,7 +2184,6 @@ class _MeetupsTabState extends State<_MeetupsTab> {
             child: filtered.isEmpty
                 ? _EmptyState(
                     icon: _hasActiveFilter ? Icons.filter_list_off : Icons.groups_outlined,
-                    illustration: HuddlIllustration.meetup,
                     title: _hasActiveFilter ? 'No meetups match' : 'No meet-ups yet',
                     subtitle: _hasActiveFilter
                         ? 'Try adjusting your filters to see more meetups.'
@@ -2826,7 +2826,6 @@ class _ImGoingTabWrapperState extends State<ImGoingTab> {
     if (allGoing.isEmpty) {
       return _EmptyState(
         icon: Icons.event_available_outlined,
-        illustration: HuddlIllustration.events,
         title: "You're not going to anything yet",
         subtitle:
             "Tap 'Count Me In' on a meetup or event to add it here!",
@@ -3489,7 +3488,6 @@ class _EventsTabState extends State<_EventsTab> {
                     icon: hasActiveFilter
                         ? Icons.filter_list_off
                         : Icons.event_outlined,
-                    illustration: HuddlIllustration.events,
                     title: _localSearchQuery.isNotEmpty
                         ? 'No matches'
                         : hasActiveFilter
@@ -5573,10 +5571,7 @@ class _FilterChipState extends State<_FilterChip>
 
 class _EmptyState extends StatelessWidget {
   /// Legacy icon param kept for call-site compatibility — ignored when
-  /// [illustration] is provided. Pass a [HuddlIllustration] asset path via
-  /// [illustration] to show the brand illustration instead.
-  final IconData icon;
-  final String? illustration;
+  final IconData icon; // kept for call-site compatibility — unused in render
   final String title;
   final String subtitle;
   final String? actionLabel;
@@ -5584,7 +5579,6 @@ class _EmptyState extends StatelessWidget {
 
   const _EmptyState({
     required this.icon,
-    this.illustration,
     required this.title,
     required this.subtitle,
     this.actionLabel,
@@ -5594,11 +5588,11 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HuddlEmptyState(
-      illustration: illustration ?? HuddlIllustration.events,
+      mood: HuddlMood.neutral,
       title: title,
       subtitle: subtitle,
-      actionLabel: actionLabel,
-      onAction: onAction,
+      ctaLabel: actionLabel,
+      onCta: onAction,
     );
   }
 }

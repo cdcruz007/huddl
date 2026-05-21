@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- Confetti -->
+  <rect x="28" y="22" width="10" height="7" rx="2" fill="#E8724A" opacity="0.9" transform="rotate(-20,33,25)"/>
+  <rect x="155" y="18" width="7" height="10" rx="2" fill="#3580F0" opacity="0.8" transform="rotate(15,158,23)"/>
+  <circle cx="46" cy="38" r="5" fill="#F5C518" opacity="0.9"/>
+  <circle cx="156" cy="34" r="5" fill="#2BAE9E" opacity="0.9"/>
+  <rect x="68" y="14" width="9" height="6" rx="2" fill="#E8724A" opacity="0.7" transform="rotate(30,72,17)"/>
+  <rect x="124" y="12" width="6" height="9" rx="2" fill="#2BAE9E" opacity="0.8" transform="rotate(-25,127,16)"/>
+  <circle cx="100" cy="10" r="4" fill="#F5C518" opacity="0.85"/>
+  <rect x="170" y="50" width="8" height="6" rx="2" fill="#E8724A" opacity="0.6" transform="rotate(10,174,53)"/>
+  <circle cx="22" cy="60" r="4" fill="#3580F0" opacity="0.7"/>
+  <!-- Shadow -->
+  <ellipse cx="100" cy="228" rx="42" ry="9" fill="#3580F0" opacity="0.12"/>
+  <!-- Body (slightly raised) -->
+  <circle cx="100" cy="112" r="72" fill="#3580F0"/>
+  <ellipse cx="78" cy="88" rx="26" ry="17" fill="#5B9DF5" opacity="0.35"/>
+  <!-- Left arm UP -->
+  <path d="M36 108 Q8 72 20 46" stroke="#3580F0" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <circle cx="22" cy="40" r="14" fill="#F5E6D3"/>
+  <!-- Right arm UP -->
+  <path d="M164 108 Q192 72 180 46" stroke="#3580F0" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <circle cx="178" cy="40" r="14" fill="#F5E6D3"/>
+  <!-- Face -->
+  <circle cx="100" cy="106" r="42" fill="#F5E6D3"/>
+  <!-- Happy squinting eyes -->
+  <path d="M82 98 Q88 92 94 98" stroke="#2c2c2c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M106 98 Q112 92 118 98" stroke="#2c2c2c" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Big grin -->
+  <path d="M82 118 Q100 134 118 118" stroke="#2c2c2c" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Scarf -->
+  <path d="M66 142 Q100 154 134 142" stroke="#E8724A" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <path d="M118 146 Q126 162 122 174" stroke="#E8724A" stroke-width="9" stroke-linecap="round" fill="none"/>
+  <!-- Legs -->
+  <rect x="72" y="176" width="22" height="30" rx="11" fill="#2A5FBF"/>
+  <rect x="106" y="176" width="22" height="30" rx="11" fill="#2A5FBF"/>
+  <!-- Feet -->
+  <ellipse cx="83" cy="207" rx="16" ry="9" fill="#1a1a1a"/>
+  <ellipse cx="117" cy="207" rx="16" ry="9" fill="#1a1a1a"/>
+</svg>

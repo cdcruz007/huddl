@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../theme/huddl_colors.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
 import '../../services/biometric_auth_service.dart';
 import '../../services/firebase_auth_service.dart';
 
@@ -279,11 +279,9 @@ class _WelcomeIllustrationState extends State<_WelcomeIllustration>
                 BlendMode.srcATop,
               )
             : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-        child: Image.network(
-          HuddlIllustration.auth,
-          height: 180,
-          fit: BoxFit.contain,
-          errorBuilder: (_, __, ___) => const SizedBox(height: 180),
+        child: HuddlCharacter(
+          mood: widget.hasFailed ? HuddlMood.curious : HuddlMood.supportive,
+          size: 180,
         ),
       ),
     );

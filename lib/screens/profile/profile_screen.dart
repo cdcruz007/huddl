@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../widgets/image_editor_widget.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
+import '../../widgets/huddl_empty_states.dart';
 import 'dart:convert';
 import '../../theme/huddl_colors.dart';
 import '../../services/onboarding_data_service.dart';
@@ -2749,10 +2750,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _showSheet(
       title: 'My Groups ($_totalGroupCount)',
       builder: (c) => all.isEmpty
-          ? HuddlEmptyState(
-              illustration: HuddlIllustration.groupsEmpty,
-              title: 'No groups yet',
-              subtitle: 'Join groups from the Discover tab.',
+          ? MyGroupsEmptyState(
+              onCta: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/discover');
+              },
             )
           : ListView.separated(
               shrinkWrap: true,
@@ -2883,10 +2885,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _showSheet(
       title: 'My Meetups ($totalCount)',
       builder: (c) => totalCount == 0
-          ? HuddlEmptyState(
-              illustration: HuddlIllustration.events,
-              title: 'No meetups yet',
-              subtitle: 'Meetups you create or attend will appear here.',
+          ? MyMeetupsEmptyState(
+              onCta: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/discover');
+              },
             )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3075,10 +3078,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const HuddlEmptyState(
-                  illustration: HuddlIllustration.marketplaceEmpty,
-                  title: 'No listings yet',
-                  subtitle: 'Items you list on Market will appear here.',
+                MyListingsEmptyState(
+                  onCta: () {
+                    Navigator.pop(context);
+                    Navigator.pushNamed(context, '/market');
+                  },
                 ),
                 const SizedBox(height: 8),
                 Padding(
@@ -3253,11 +3257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           final msgs = svc.savedMessages;
           final threads = svc.savedThreads;
           if (msgs.isEmpty && threads.isEmpty) {
-            return const HuddlEmptyState(
-                illustration: HuddlIllustration.saved,
-                title: 'No saved items',
-                subtitle: 'Long-press a message to save it, or save reply threads from groups.',
-              );
+            return const SavedMessagesEmptyState();
           }
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -4097,7 +4097,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           if (blocked.isEmpty) {
             return const HuddlEmptyState(
-                illustration: HuddlIllustration.marketplace,
+                mood: HuddlMood.neutral,
                 title: 'No blocked users',
                 subtitle: 'Users you block from groups or DMs will appear here.',
               );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/huddl_colors.dart';
 
 // Soft salmon/peach matching the supplied screenshots: light warm coral.
@@ -18,22 +19,19 @@ class _OnboardingCarouselScreenState extends State<OnboardingCarouselScreen> {
 
   static const _pages = [
     _PageData(
-      illustration:
-          'assets/images/illustrations/onboarding_welcome_illustration.png',
+      illustration: 'assets/illustrations/onboarding_01_welcome.svg',
       title: 'Welcome to Huddl!',
       subtitle: 'The app for ALL parents,',
       body: 'Connect with parents who are at the same stage of their parenting journey as you.',
     ),
     _PageData(
-      illustration:
-          'assets/images/illustrations/onboarding_chat_illustration.png',
+      illustration: 'assets/illustrations/onboarding_02_community.svg',
       title: 'Join local community groups and build trusted networks',
       subtitle: null,
       body: 'Connect with like-minded people. Others are here to share their story.',
     ),
     _PageData(
-      illustration:
-          'assets/images/illustrations/onboarding_two_people_illustration.png',
+      illustration: 'assets/illustrations/onboarding_03_neighbours.svg',
       title: 'You are the Mum and Dad next door',
       subtitle: null,
       body: "At Huddl, you're not just another person on a forum filled with strangers.",
@@ -177,10 +175,10 @@ class _CarouselPage extends StatelessWidget {
         children: [
           // Illustration
           Expanded(
-            child: Image.asset(
+            child: SvgPicture.asset(
               data.illustration,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              placeholderBuilder: (_) => const SizedBox.shrink(),
             ),
           ),
 

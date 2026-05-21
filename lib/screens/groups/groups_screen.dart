@@ -30,7 +30,8 @@ import '../events/events_screen.dart' show ImGoingTab;
 import '../../widgets/borough_badge.dart';
 import '../../services/borough_scope_guard.dart';
 import '../../utils/borough_ui_helpers.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
+import '../../widgets/huddl_empty_states.dart';
 import '../../services/firestore_service.dart';
 import 'group_chat_screen.dart' show GroupChatScreen;
 
@@ -5610,16 +5611,15 @@ class _DiscoverTabState extends State<_DiscoverTab> {
             if (groups.isEmpty)
               SliverToBoxAdapter(
                 child: HuddlEmptyState(
-                  illustration: HuddlIllustration.community,
-                  illustrationHeight: 180,
+                  mood: hasActiveFilters ? HuddlMood.curious : HuddlMood.neutral,
                   title: hasActiveFilters
                       ? 'No groups match your search'
-                      : 'No groups in your area yet',
+                      : 'Your crew is out there',
                   subtitle: hasActiveFilters
                       ? 'Try adjusting your filters or search terms.'
-                      : 'Be the first to create a group\nfor parents in your borough!',
-                  actionLabel: hasActiveFilters ? 'Clear filters' : null,
-                  onAction: hasActiveFilters
+                      : 'Parents near you are already chatting — jump in and say hi.',
+                  ctaLabel: hasActiveFilters ? 'Clear filters' : null,
+                  onCta: hasActiveFilters
                       ? () {
                           HapticFeedback.lightImpact();
                           setState(() {
@@ -6311,11 +6311,7 @@ class _SavedTabState extends State<_SavedTab> {
 
     // No saved items at all — show empty state (no search bar needed)
     if (allMessages.isEmpty && allThreads.isEmpty && allEvents.isEmpty) {
-      return HuddlEmptyState(
-        illustration: HuddlIllustration.saved,
-        title: 'No saved items yet',
-        subtitle: 'Bookmark events to save them here,\nor long-press a message to save it.',
-      );
+      return const SavedMessagesEmptyState();
     }
 
     final filtered = _filteredSaved();
@@ -7506,13 +7502,7 @@ class _EmptyMessagesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return HuddlEmptyState(
-      illustration: HuddlIllustration.chat,
-      title: 'No groups yet',
-      subtitle: 'Join a group to start chatting\nwith your community.',
-      actionLabel: 'Find a group',
-      onAction: onSearch,
-    );
+    return ConnectEmptyState(onCta: onSearch);
   }
 }
 

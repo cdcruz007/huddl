@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/local_services_service.dart';
 import '../../services/ai_directory_service.dart';
 import '../../theme/huddl_colors.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
 
 // =============================================================================
 // SERVICES SCREEN — HUDDL TRUSTED LOCAL DIRECTORY
@@ -2119,15 +2119,15 @@ class _EmptyDirectory extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HuddlEmptyState(
-      illustration: HuddlIllustration.community,
+      mood: hasFilter ? HuddlMood.curious : HuddlMood.supportive,
       title: hasFilter
           ? 'No listings match your filter'
           : 'No listings in your area yet',
       subtitle: hasFilter
           ? 'Try a different category or search term'
           : 'Be the first to add a trusted local pro.\nPaste a WhatsApp recommendation or add manually.',
-      actionLabel: hasFilter ? 'Clear filters' : null,
-      onAction: hasFilter ? onClear : null,
+      ctaLabel: hasFilter ? 'Clear filters' : null,
+      onCta: hasFilter ? onClear : null,
     );
   }
 }

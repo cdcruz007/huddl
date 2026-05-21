@@ -7,7 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../theme/huddl_colors.dart';
-import '../../widgets/common/huddl_empty_state.dart';
+import '../../widgets/huddl_character.dart';
 import '../../models/group.dart';
 import '../../models/direct_message.dart';
 import '../main_shell.dart';
@@ -5591,9 +5591,8 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Widget _emptyState() {
-    return HuddlEmptyState(
-      illustration: HuddlIllustration.chat,
-      illustrationHeight: 180,
+    return const HuddlEmptyState(
+      mood: HuddlMood.waving,
       title: 'No messages yet',
       subtitle: 'Say hello and start the conversation!',
     );
