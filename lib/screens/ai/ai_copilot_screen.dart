@@ -11,7 +11,20 @@ import 'package:url_launcher/url_launcher.dart';
 // =============================================================================
 
 class AiCopilotScreen extends StatefulWidget {
-  const AiCopilotScreen({super.key});
+  /// Optional text pre-populated into the input bar when the screen opens.
+  /// If non-empty and [autoSend] is true, the message is sent immediately.
+  final String? initialMessage;
+
+  /// When true and [initialMessage] is non-empty, the message is sent
+  /// automatically after the AI has initialised.  Defaults to false so the
+  /// user can review/edit the text before sending.
+  final bool autoSend;
+
+  const AiCopilotScreen({
+    super.key,
+    this.initialMessage,
+    this.autoSend = false,
+  });
 
   @override
   State<AiCopilotScreen> createState() => _AiCopilotScreenState();
@@ -32,7 +45,23 @@ class _AiCopilotScreenState extends State<AiCopilotScreen> {
 
   Future<void> _init() async {
     await _copilot.initialize();
-    if (mounted) setState(() => _isInitialized = true);
+    if (!mounted) return;
+    setState(() => _isInitialized = true);
+
+    // Pre-populate the input bar with any initial message passed from the
+    // home screen composer.  If autoSend is set, fire it immediately.
+    final initial = widget.initialMessage?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      if (widget.autoSend) {
+        await _sendMessage(initial);
+      } else {
+        _inputController.text = initial;
+        // Position cursor at end
+        _inputController.selection = TextSelection.collapsed(
+          offset: initial.length,
+        );
+      }
+    }
   }
 
   @override

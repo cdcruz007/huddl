@@ -122,9 +122,8 @@ class _HomeScreenState extends State<HomeScreen>
     return (total > 0 ? total : meetupNotifs).clamp(0, 9);
   }
 
-  // ── Post composer ─────────────────────────────────────────────────────────
+  // ── Post composer / assistant launcher ─────────────────────────────────────
   final TextEditingController _postController = TextEditingController();
-  bool _isPosting = false;
   String _aiPostHint = '';
 
   // ── Animations ────────────────────────────────────────────────────────────
@@ -610,50 +609,6 @@ class _HomeScreenState extends State<HomeScreen>
     final shellState = MainShell.shellKey.currentState;
     if (shellState != null) {
       shellState.switchTab(index);
-    }
-  }
-
-  // ── Post actions ──────────────────────────────────────────────────────────
-  Future<void> _postAnnouncement() async {
-    final text = _postController.text.trim();
-    if (text.isEmpty) return;
-    setState(() => _isPosting = true);
-    try {
-      await _announcementService.post(text);
-      _postController.clear();
-      FocusScope.of(context).unfocus();
-      setState(() {
-        _announcements = _announcementService.boroughAnnouncements;
-        _isPosting = false;
-      });
-      _buildSmartFeed();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Posted to your community!',
-                style: GoogleFonts.poppins(fontSize: 13)),
-            backgroundColor: HuddlColors.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isPosting = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to post. Please try again.',
-                style: GoogleFonts.poppins(fontSize: 13)),
-            backgroundColor: HuddlColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
     }
   }
 
@@ -2407,9 +2362,24 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// Smart post composer with AI-generated contextual hints
+  /// Opens the Huddl Assistant screen, optionally passing any text the user
+  /// has typed in the composer as an initial message.
+  void _openAssistant() {
+    HapticFeedback.mediumImpact();
+    final text = _postController.text.trim();
+    _postController.clear();
+    Navigator.pushNamed(
+      context,
+      '/copilot',
+      arguments: text.isNotEmpty
+          ? {'initialMessage': text, 'autoSend': false}
+          : null,
+    );
+  }
+
   Widget _buildSmartPostComposer(dynamic hc, bool isDark) {
     return Semantics(
-      label: 'Post to your community notice board',
+      label: 'Ask the huddl assistant',
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
         padding: const EdgeInsets.all(12),
@@ -2437,7 +2407,7 @@ class _HomeScreenState extends State<HomeScreen>
                 decoration: InputDecoration(
                   hintText: _aiPostHint.isNotEmpty
                       ? _aiPostHint
-                      : 'Post to your $_borough neighbours...',
+                      : 'Ask huddl assistant anything...',
                   hintStyle: GoogleFonts.poppins(
                     fontSize: 13,
                     color: hc.textTertiary,
@@ -2454,20 +2424,15 @@ class _HomeScreenState extends State<HomeScreen>
                 maxLines: 2,
                 minLines: 1,
                 textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _postAnnouncement(),
+                onSubmitted: (_) => _openAssistant(),
               ),
             ),
             const SizedBox(width: 6),
             Semantics(
-              label: 'Send post',
+              label: 'Open huddl assistant',
               button: true,
               child: GestureDetector(
-                onTap: _isPosting
-                    ? null
-                    : () {
-                        HapticFeedback.mediumImpact();
-                        _postAnnouncement();
-                      },
+                onTap: _openAssistant,
                 child: SizedBox(
                   width: 42,
                   height: 42,
@@ -2478,17 +2443,8 @@ class _HomeScreenState extends State<HomeScreen>
                         color: HuddlColors.primary,
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: _isPosting
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: context.hc.surface,
-                              ),
-                            )
-                          : const Icon(Icons.send_rounded,
-                              size: 16, color: HuddlColors.white),
+                      child: const Icon(Icons.arrow_forward_rounded,
+                          size: 16, color: HuddlColors.white),
                     ),
                   ),
                 ),

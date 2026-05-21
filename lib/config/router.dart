@@ -179,8 +179,12 @@ class AppRouter {
         );
 
       case '/copilot':
+        final copilotArgs = settings.arguments as Map<String, dynamic>? ?? {};
         return SlidePageRoute(
-          page: const AiCopilotScreen(),
+          page: AiCopilotScreen(
+            initialMessage: copilotArgs['initialMessage'] as String?,
+            autoSend: copilotArgs['autoSend'] as bool? ?? false,
+          ),
           direction: SlideDirection.up,
         );
 
