@@ -3142,11 +3142,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
 
   void _showBlockedUsersSheet() {
+    // Display-name cache: uid → resolved name (populated from Firestore)
+    final Map<String, String> nameCache = {};
+
     _showSheet(
       title: 'Blocked Users',
       builder: (c) => StatefulBuilder(
         builder: (ctx, setLocal) {
           final blocked = _blockService.blockedUserIds;
+
+          // Kick off a name lookup for every uid not yet in cache
+          for (final uid in blocked) {
+            if (!nameCache.containsKey(uid)) {
+              // Seed with uid so we never re-fetch
+              nameCache[uid] = uid;
+              FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
+                  .get()
+                  .then((doc) {
+                final data = doc.data();
+                final name = (data?['displayName'] as String?)?.trim() ??
+                    (data?['name'] as String?)?.trim() ??
+                    uid;
+                if (ctx.mounted) {
+                  setLocal(() => nameCache[uid] = name.isEmpty ? uid : name);
+                }
+              }).catchError((_) {});
+            }
+          }
+
           if (blocked.isEmpty) {
             return const HuddlEmptyState(
                 illustration: HuddlIllustration.marketplace,
@@ -3165,7 +3190,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         fontWeight: FontWeight.w600,
                         color: context.hc.textTertiary)),
               ),
-              ...blocked.map((userId) => ListTile(
+              ...blocked.map((userId) {
+                final displayName = nameCache[userId] ?? userId;
+                final initial = displayName.isNotEmpty
+                    ? displayName[0].toUpperCase()
+                    : 'U';
+                return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                     leading: Container(
                       width: 40,
@@ -3176,7 +3206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          userId.isNotEmpty ? userId[0].toUpperCase() : 'U',
+                          initial,
                           style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -3184,7 +3214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    title: Text(userId,
+                    title: Text(displayName,
                         style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -3216,7 +3246,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         color: HuddlColors.primary),
                                   ),
                                   const SizedBox(height: 16),
-                                  Text('Unblock $userId?',
+                                  Text('Unblock $displayName?',
                                       style: GoogleFonts.poppins(
                                           fontSize: 17,
                                           fontWeight: FontWeight.w700,
@@ -3277,8 +3307,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         setLocal(() {});
                         setState(() {});
                         if (ctx.mounted) {
+                          final shown = nameCache[userId] ?? userId;
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('$userId unblocked',
+                            content: Text('$shown unblocked',
                                 style: GoogleFonts.poppins(fontSize: 13)),
                             backgroundColor: HuddlColors.primary,
                             behavior: SnackBarBehavior.floating,
@@ -3293,7 +3324,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               fontWeight: FontWeight.w600,
                               color: HuddlColors.primary)),
                     ),
-                  )),
+                  );
+              }),
               const SizedBox(height: 16),
             ],
           );
@@ -3306,8 +3338,119 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // GDPR — VIEW MY DATA
   // ═══════════════════════════════════════════════════════════════════════════
 
-  /// Compiles all personal data held for the user and returns it as a
-  /// human-readable map. Used by both "View My Data" and "Export My Data".
+  /// Async version of [_compileUserData] that enriches the export with
+  /// server-side Firestore data (GDPR Art. 20 — all data we hold, not just
+  /// what is currently cached locally).
+  Future<Map<String, dynamic>> _compileUserDataAsync() async {
+    // Start with the fast local snapshot as the baseline
+    final base = _compileUserData();
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return base;
+
+    // Fetch cloud data concurrently — all are best-effort (null on failure).
+    Future<QuerySnapshot<Map<String, dynamic>>?> safeQuery(
+        Query<Map<String, dynamic>> q) async {
+      try {
+        return await q.get().timeout(const Duration(seconds: 8));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    Future<DocumentSnapshot<Map<String, dynamic>>?> safeDoc(
+        DocumentReference<Map<String, dynamic>> ref) async {
+      try {
+        return await ref.get().timeout(const Duration(seconds: 8));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final db = FirebaseFirestore.instance;
+    final results = await Future.wait([
+      // 0 — All Firestore groups the user is a member of
+      safeQuery(db.collection('groups').where('memberIds', arrayContains: uid)),
+      // 1 — All meetups created by the user
+      safeQuery(db.collection('meetups').where('creatorId', isEqualTo: uid)),
+      // 2 — All group messages sent by the user
+      safeQuery(db.collection('group_messages').where('senderId', isEqualTo: uid)),
+      // 3 — EHCP deadlines subcollection
+      safeQuery(db.collection('users').doc(uid).collection('deadlines')),
+      // 4 — User's Firestore profile document
+      safeDoc(db.collection('users').doc(uid)),
+    ]);
+
+    final groupsSnap    = results[0] as QuerySnapshot<Map<String, dynamic>>?;
+    final meetupsSnap   = results[1] as QuerySnapshot<Map<String, dynamic>>?;
+    final messagesSnap  = results[2] as QuerySnapshot<Map<String, dynamic>>?;
+    final deadlinesSnap = results[3] as QuerySnapshot<Map<String, dynamic>>?;
+    final userDoc       = results[4] as DocumentSnapshot<Map<String, dynamic>>?;
+
+    // Build enriched sections
+    final enriched = Map<String, dynamic>.from(base);
+
+    // Enrich profile with Firestore values (more authoritative than local)
+    if (userDoc != null && userDoc.exists) {
+      final d = userDoc.data()!;
+      final profile = Map<String, dynamic>.from(enriched['Profile'] as Map);
+      profile['Firebase UID'] = uid;
+      profile['Email'] = d['email'] ?? 'Not set';
+      profile['Account created'] = d['createdAt']?.toString() ?? 'Unknown';
+      profile['Last updated'] = d['updatedAt']?.toString() ?? 'Unknown';
+      enriched['Profile'] = profile;
+    }
+
+    // Cloud Groups (all Firestore memberships, not just local cache)
+    if (groupsSnap != null) {
+      enriched['Groups (Cloud — all devices)'] = groupsSnap.docs.isEmpty
+          ? 'No group memberships on server'
+          : groupsSnap.docs
+              .map((d) => '${d.data()['name'] ?? d.id} (id: ${d.id})')
+              .toList();
+    }
+
+    // Cloud Meetups
+    if (meetupsSnap != null) {
+      enriched['Meetups Created (Cloud)'] = meetupsSnap.docs.isEmpty
+          ? 'No meetups created'
+          : meetupsSnap.docs.map((d) {
+              final data = d.data();
+              return '${data['title'] ?? d.id} on ${data['date'] ?? 'Unknown date'}';
+            }).toList();
+    }
+
+    // Cloud Messages
+    if (messagesSnap != null) {
+      enriched['Messages Sent (Cloud)'] = {
+        'Total messages sent': messagesSnap.docs.length,
+        'Note': 'Message content not included for privacy. '
+            'Contact privacy@huddl.app for a full message archive.',
+      };
+    }
+
+    // EHCP Deadlines
+    if (deadlinesSnap != null) {
+      enriched['EHCP Deadlines (Cloud)'] = deadlinesSnap.docs.isEmpty
+          ? 'No EHCP deadlines saved'
+          : deadlinesSnap.docs.map((d) {
+              final data = d.data();
+              final date = data['date'] != null
+                  ? DateTime.fromMillisecondsSinceEpoch(
+                          data['date'] as int)
+                      .toIso8601String()
+                      .substring(0, 10)
+                  : 'No date';
+              return '${data['title'] ?? d.id} ($date) '
+                  '— ${data['isCompleted'] == true ? "completed" : "pending"}';
+            }).toList();
+    }
+
+    return enriched;
+  }
+
+  /// Synchronous snapshot — used by "View My Data" (instant, no network).
+  /// Uses only locally cached state.
   Map<String, dynamic> _compileUserData() {
     final allGroups = [..._userGroups, ..._discoveredGroups];
     final savedService = SavedMessageService();
@@ -3618,7 +3761,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : const Icon(Icons.download, size: 20),
                     label: Text(
                         exporting
-                            ? 'Compiling your data...'
+                            ? 'Fetching your data from all devices...'
                             : exported
                                 ? 'Export complete'
                                 : 'Export my data',
@@ -3637,8 +3780,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? null
                         : () async {
                             setLocal(() => exporting = true);
-                            // Actually compile user data
-                            final data = _compileUserData();
+                            // Fetch both local + Firestore cloud data (Art. 20)
+                            final data = await _compileUserDataAsync();
                             final buffer = StringBuffer();
                             buffer.writeln('=== HUDDL — YOUR PERSONAL DATA EXPORT ===');
                             buffer.writeln('Generated: ${DateTime.now().toString().substring(0, 19)}');
@@ -4160,6 +4303,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           : () async {
                               setLocal(() => isDeleting = true);
 
+                              // ── 0. Deregister FCM token BEFORE deleting Auth ──
+                              // Must happen while uid is still valid.
+                              await PushNotificationService().deregisterToken();
+
                               // ── 1. Delete Firebase Auth account (+ Firestore doc) ──
                               final authService = FirebaseAuthService();
                               final deleteError =
@@ -4504,6 +4651,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Navigator.pop(c);
             _showLocationSheet();
           }),
+          _helpTile(Icons.lock_reset, 'Change password',
+              'Update your login password', () {
+            Navigator.pop(c);
+            _showChangePasswordSheet();
+          }),
           const Divider(indent: 16, endIndent: 16),
           _helpTile(Icons.help_outline, 'Help & Support', 'FAQs and contact',
               () {
@@ -4589,22 +4741,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onPressed: () async {
                         Navigator.pop(c);
 
-                        // 1. Deregister FCM token — prevents push notifications
-                        //    being delivered to a device no longer linked to this
-                        //    account. Best-effort; sign-out proceeds regardless.
-                        try {
-                          final uid = FirebaseAuth.instance.currentUser?.uid;
-                          if (uid != null) {
-                            await FirebaseFirestore.instance
-                                .collection('users')
-                                .doc(uid)
-                                .set({'fcmToken': ''},
-                                    SetOptions(merge: true));
-                          }
-                        } catch (_) {}
+                        // 1. Deregister FCM token — deletes token from device
+                        //    (iOS/Android) and clears Firestore fcmToken field.
+                        //    Must happen BEFORE signOut so uid is still valid.
+                        await PushNotificationService().deregisterToken();
 
-                        // 2. Sign out from Firebase Auth — MUST happen after FCM
-                        //    clear so we can still write while authenticated.
+                        // 2. Sign out from Firebase Auth
                         try {
                           await FirebaseAuthService().signOut();
                         } catch (_) {}
@@ -4617,8 +4759,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         UserPrivacyPrefsService().reset();
 
                         // 5. Navigate directly to login, removing every route
-                        //    (bypasses splash which would re-detect the auth
-                        //    token and bounce straight back to /home)
                         if (mounted) {
                           Navigator.of(context)
                               .pushNamedAndRemoveUntil('/login', (r) => false);

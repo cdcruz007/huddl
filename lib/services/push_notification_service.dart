@@ -173,6 +173,48 @@ class PushNotificationService {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
+  // PUBLIC: deregister FCM token on logout / account deletion
+  // ─────────────────────────────────────────────────────────────────────────
+
+  /// Deletes the FCM registration token from the device and clears the stored
+  /// token on Firestore.  Must be called **before** Firebase Auth sign-out so
+  /// we still have a valid uid to write to.
+  ///
+  /// On iOS, [FirebaseMessaging.deleteToken()] invalidates the APNs token
+  /// binding so the device stops receiving push notifications immediately.
+  /// On Android it rotates the token so old pushes to the old token fail.
+  /// On Web, FCM token management requires a VAPID key — we fall back to just
+  /// clearing the Firestore field.
+  Future<void> deregisterToken() async {
+    final uid = _auth.currentUser?.uid;
+    // 1. Delete the FCM token from the device (mobile only — web skips gracefully)
+    if (!kIsWeb) {
+      try {
+        await _messaging.deleteToken();
+        _log('FCM token deleted from device');
+      } catch (e) {
+        _log('deleteToken error (non-fatal): $e');
+      }
+    }
+    // 2. Clear the token stored in Firestore so the backend stops targeting
+    //    this device.  Works on web too — the uid is still valid pre-signOut.
+    if (uid != null) {
+      try {
+        await _db.collection('users').doc(uid).set(
+          {'fcmToken': '', 'fcmUpdatedAt': FieldValue.serverTimestamp()},
+          SetOptions(merge: true),
+        );
+        _log('FCM token cleared in Firestore for uid=$uid');
+      } catch (e) {
+        _log('Firestore fcmToken clear error (non-fatal): $e');
+      }
+    }
+    _initialised = false;
+    onForegroundMessage = null;
+    onNotificationTap = null;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
   // INTERNAL HELPERS
   // ─────────────────────────────────────────────────────────────────────────
 
