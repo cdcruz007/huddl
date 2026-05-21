@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'huddl_character.dart';
+import '../theme/huddl_colors.dart';
 
 // ─────────────────────────────────────────────
 // CONNECT TAB — No conversations
@@ -197,14 +198,14 @@ class CopilotWelcomeState extends StatelessWidget {
                   (chip) => ActionChip(
                     label: Text(chip),
                     onPressed: () => onChipTap(chip),
-                    backgroundColor: const Color(0xFFE6F0FE),
+                    backgroundColor: HuddlColors.peachLight,
                     labelStyle: const TextStyle(
-                      color: Color(0xFF3580F0),
+                      color: HuddlColors.primary,
                       fontSize: 13,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(999),
-                      side: const BorderSide(color: Color(0xFF3580F0), width: 1),
+                      side: const BorderSide(color: HuddlColors.primary, width: 1),
                     ),
                   ),
                 )

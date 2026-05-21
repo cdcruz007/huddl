@@ -42,7 +42,24 @@ class HuddlUserService {
   /// Call this after successful login/OTP verification or after onboarding
   /// completes. Writes all profile fields including the resolved borough.
   Future<void> syncCurrentUserProfile() async {
-    final uid = _uid;
+    // ── Async uid resolution ─────────────────────────────────────────────────
+    // On web, FirebaseAuth.instance.currentUser is null immediately after
+    // Firebase.initializeApp() even for authenticated users because auth
+    // rehydration is async. Waiting for authStateChanges().first bridges this
+    // gap. If the stream times out (no network) we fall back to the synchronous
+    // currentUser — if that is also null the function exits safely.
+    String? uid = _uid;
+    if (uid == null) {
+      try {
+        final user = await _auth
+            .authStateChanges()
+            .first
+            .timeout(const Duration(seconds: 5));
+        uid = user?.uid;
+      } catch (_) {
+        uid = _uid; // last resort: synchronous check after timeout
+      }
+    }
     if (uid == null) {
       _log('syncCurrentUserProfile: no authenticated user');
       return;

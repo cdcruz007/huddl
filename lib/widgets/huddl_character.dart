@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/huddl_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 /// The emotional states of the Huddl character.
@@ -137,7 +138,7 @@ class HuddlEmptyState extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: onCta,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3580F0),
+                    backgroundColor: HuddlColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

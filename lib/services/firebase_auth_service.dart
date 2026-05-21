@@ -980,11 +980,25 @@ class FirebaseAuthService {
   /// at least the user's name was restored. Returns `false` on any error or
   /// if the profile document doesn't exist.
   Future<bool> restoreProfileFromFirestore() async {
-    if (uid == null) return false;
+    // Resolve uid asynchronously — on web, currentUser is null immediately
+    // after Firebase.initializeApp() even for authenticated users.
+    String? resolvedUid = uid;
+    if (resolvedUid == null) {
+      try {
+        final user = await _auth
+            .authStateChanges()
+            .first
+            .timeout(const Duration(seconds: 5));
+        resolvedUid = user?.uid;
+      } catch (_) {
+        resolvedUid = uid; // last resort
+      }
+    }
+    if (resolvedUid == null) return false;
     try {
       final doc = await _db
           .collection('users')
-          .doc(uid)
+          .doc(resolvedUid)
           .get()
           .timeout(const Duration(seconds: 5));
       if (!doc.exists) return false;
@@ -1018,7 +1032,7 @@ class FirebaseAuthService {
         if (firestoreName.isNotEmpty) {
           try {
             final nameParts = firestoreName.trim().split(' ');
-            await _db.collection('users').doc(uid).update({
+            await _db.collection('users').doc(resolvedUid).update({
               'name': firestoreName,
               'firstName': nameParts.first,
               if (nameParts.length > 1) 'lastName': nameParts.sublist(1).join(' '),
@@ -1124,7 +1138,7 @@ class FirebaseAuthService {
       try {
         final subDocs = await _db
             .collection('subscriptions')
-            .where('userId', isEqualTo: uid)
+            .where('userId', isEqualTo: resolvedUid)
             .get()
             .timeout(const Duration(seconds: 5));
         if (subDocs.docs.isNotEmpty) {
